@@ -313,15 +313,15 @@ suite('Build', async () => {
 
     test('Copy compile_commands.json to a pre-determined path', async () => {
         expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
-        let retc = await cmt.configureInternal(ConfigureTrigger.runTests);
-        expect(retc).to.eq(0);
-        expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
-        const newSettings: Partial<ExtensionConfigurationSettings> = {copyCompileCommands: compdb_cp_path};
+        const newSettings: Partial<ExtensionConfigurationSettings> = {};
         if (process.platform === 'win32') {
             newSettings.generator = 'Ninja';  // VS generators don't create compile_commands.json
         }
+        let retc = await cmt.configureInternal(ConfigureTrigger.runTests);
+        expect(retc).to.eq(0);
+        expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
+        newSettings.copyCompileCommands = compdb_cp_path;
         testEnv.config.updatePartial(newSettings);
-        testEnv.config.updatePartial({ copyCompileCommands: compdb_cp_path });
         retc = await cmt.configureInternal(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;

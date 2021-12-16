@@ -76,10 +76,8 @@ suite('Variable Substitution', async () => {
 
         const cacheEntry = cache.get('workspaceHash') as api.CacheEntry;
         expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[workspaceHash] unexpected cache entry type');
-        expect(cacheEntry.key)
-            .to.eq('workspaceHash', '[workspaceHash] unexpected cache entry key name');
-        expect(cacheEntry.as<string>())
-            .to.eq(makeHashString(testEnv.projectFolder.location), '[workspaceHash] substitution incorrect');
+        expect(cacheEntry.key).to.eq('workspaceHash', '[workspaceHash] unexpected cache entry key name');
+        expect(cacheEntry.as<string>()).to.eq(makeHashString(testEnv.projectFolder.location), '[workspaceHash] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[workspaceHash] unexpected cache entry value type');
     }).timeout(100000);
 

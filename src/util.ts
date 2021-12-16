@@ -637,6 +637,9 @@ export function isBoolean(x: any): x is boolean {
 }
 
 export function makeHashString(str: string): string {
+    if (process.platform === 'win32') {
+        str = normalizePath(str, {normCase: 'always'});
+    }
     const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     hash.update(str);
