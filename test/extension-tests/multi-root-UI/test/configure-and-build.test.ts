@@ -10,7 +10,6 @@ import {
 import * as fs_ from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmake-tools';
 
 const workername: string = process.platform;
 
