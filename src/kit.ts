@@ -48,8 +48,7 @@ export const USER_KITS_FILEPATH = path.join(paths.dataDir, 'cmake-tools-kits.jso
 /**
  * The old path where kits were stored. Upgraded in 1.1.3
  */
-export const OLD_USER_KITS_FILEPATH
-    = path.join(process.platform === 'win32' ? paths.roamingDataDir : paths.dataDir, 'cmake-tools.json');
+export const OLD_USER_KITS_FILEPATH = path.join(process.platform === 'win32' ? paths.roamingDataDir : paths.dataDir, 'cmake-tools.json');
 
 /**
  * Representation of a CMake generator, along with a toolset and platform
@@ -706,16 +705,15 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
         env = '';
     }
 
-    const vars
-        = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
-            const mat = /(\w+) := ?(.*)/.exec(line);
-            if (mat) {
-                acc.set(mat[1], mat[2]);
-            } else {
-                log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
-            }
-            return acc;
-        }, new Map());
+    const vars = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
+        const mat = /(\w+) := ?(.*)/.exec(line);
+        if (mat) {
+            acc.set(mat[1], mat[2]);
+        } else {
+            log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
+        }
+        return acc;
+    }, new Map());
     const include_env = vars.get('INCLUDE') ?? '';
     if (include_env === '') {
         log.error(localize('script.run.error.check',
@@ -823,16 +821,15 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     }
 
     // split and trim env vars
-    const vars
-        = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
-            const match = /(\w+)=?(.*)/.exec(line);
-            if (match) {
-                acc.set(match[1], match[2]);
-            } else {
-                log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
-            }
-            return acc;
-        }, new Map());
+    const vars = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
+        const match = /(\w+)=?(.*)/.exec(line);
+        if (match) {
+            acc.set(match[1], match[2]);
+        } else {
+            log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
+        }
+        return acc;
+    }, new Map());
     log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', kit.environmentSetupScript, JSON.stringify([...vars])));
     return vars;
 }

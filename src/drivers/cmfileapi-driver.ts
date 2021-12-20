@@ -345,8 +345,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 filepath: 'A special target to build all available targets',
                 targetType: 'META'
             }];
-            return [...metaTargets, ...targets].filter((value, idx, self) => self.findIndex(e => value.name === e.name)
-                === idx);
+            return [...metaTargets, ...targets].filter((value, idx, self) => self.findIndex(e => value.name === e.name) === idx);
         } else {
             return [];
         }
