@@ -95,6 +95,7 @@
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
             },
         },
         {
@@ -120,6 +121,7 @@
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
             },
         },
         {

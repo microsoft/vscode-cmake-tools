@@ -1037,7 +1037,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
         if (isClangGNUCLI) {
             if (undefined === cmakeTools) {
-                log.error(localize("failed.to.scan.for.kits", "Failed to scan for kits: cmakeTools is undefined"));
+                log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: cmakeTools is undefined"));
                 return null;
             } else {
                 const cmake_executable = await cmakeTools.getCMakeExecutable();
