@@ -80,11 +80,14 @@ export class LegacyCMakeDriver extends CMakeDriver {
     }
 
     async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
+        // Ensure the binary directory exists
+        const binary_dir = this.binaryDir;
+        await fs.mkdir_p(binary_dir);
+
         // Dup args so we can modify them
         const args = Array.from(args_);
-        args.push('-H' + util.lightNormalizePath(this.sourceDir));
-        const bindir = util.lightNormalizePath(this.binaryDir);
-        args.push('-B' + bindir);
+        args.push(util.lightNormalizePath(this.sourceDir));
+
         const gen = this.generator;
         if (gen) {
             args.push(`-G${gen.name}`);
@@ -102,8 +105,10 @@ export class LegacyCMakeDriver extends CMakeDriver {
             return 0;
         } else {
             log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
-            const env = await this.getConfigureEnvironment();
-            const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env }).result;
+            const res = await this.executeCommand(cmake, args, outputConsumer, {
+                environment: await this.getConfigureEnvironment(),
+                cwd: binary_dir
+            }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
             if (res.retc === 0) {
