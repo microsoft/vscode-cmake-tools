@@ -404,7 +404,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const cmake_files = path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', cache));
-            await fs.unlink(cache);
+            try {
+                await fs.unlink(cache);
+            } catch {
+                log.error(localize('unlink.failed', 'Failed to remove cache file {0}', this.cachePath));
+            }
         }
         if (await fs.exists(cmake_files)) {
             log.info(localize('removing', 'Removing {0}', cmake_files));

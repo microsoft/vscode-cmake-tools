@@ -127,7 +127,11 @@ export class CMakeFileApiDriver extends CMakeDriver {
             if (cacheExists && this.config.configureOnOpen !== false) {
                 // No need to remove the other CMake files for the generator change to work properly
                 log.info(localize('removing', 'Removing {0}', this.cachePath));
-                await fs.unlink(this.cachePath);
+                try {
+                    await fs.unlink(this.cachePath);
+                } catch {
+                    log.warning(localize('unlink.failed', 'Failed to remove cache file {0}', this.cachePath));
+                }
             }
 
             this._generatorInformation = this.generator;
