@@ -19,6 +19,7 @@ test.txt
 *.backup
 *.db*
 *.vsix
+**/.vscode/CMakeTools
 **/nls.*.json
 **/*.nls.json
 **/*.nls.*.json

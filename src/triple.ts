@@ -129,7 +129,7 @@ export function computeTargetTriple(target: TargetTriple): string {
 
 export function parseTargetTriple(triple: string): TargetTriple | undefined {
     const triples = triple.split("-");
-    let foundArch = "unknown";
+    let foundArch = 'unknown';
     let foundOs = 'unknown';
     let foundAbi = 'unknown';
     let foundLibc = 'unknown';
@@ -139,7 +139,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
             const archReg = TriplePossibleArch[key];
             if (archReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundArch === "unknown") {
+                if (foundArch === 'unknown') {
                     foundArch = key;
                     break;
                 }
@@ -150,7 +150,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
             const osReg = TriplePossibleOS[key];
             if (osReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundOs === "unknown" || foundOs === 'none') {
+                if (foundOs === 'unknown' || foundOs === 'none') {
                     // os other than none have higher priority
                     // so we not break
                     foundOs = key;
@@ -162,7 +162,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
             const abiReg = TriplePossibleABI[key];
             if (abiReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundAbi === "unknown") {
+                if (foundAbi === 'unknown') {
                     foundAbi = key;
                     break;
                 }
@@ -173,7 +173,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
             const libcReg = possibleLibC.regexp;
             if (libcReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundLibc === "unknown") {
+                if (foundLibc === 'unknown') {
                     foundLibc = possibleLibC.key;
                     break;
                 }
