@@ -7,7 +7,7 @@ async function main() {
         // The folder containing the Extension Manifest package.json
         // Passed to `--extensionDevelopmentPath`
         const extensionDevelopmentPath = path.resolve(__dirname, '../../../../');
-        const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1" };
+        const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1", "CMT_QUIET_CONSOLE": "1" };
 
         // The path to the extension test runner script
         const extensionTestsPath = path.resolve(__dirname, './index');

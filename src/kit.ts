@@ -160,7 +160,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     }
     const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
     if (exec.retc !== 0) {
-        log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
+        log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns {1}): {2}', vendor, exec.retc, binPath));
         return null;
     }
     let version_re: RegExp;
@@ -374,6 +374,11 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 }
 
 async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Promise<Ret | null>): Promise<Ret[]> {
+    if (process.env['CMT_TESTING'] === '1' && process.platform === 'win32' && dir.indexOf('AppData') > 0 && dir.indexOf('Local') > 0) {
+        // This folder causes problems with tests on Windows.
+        log.debug(localize('skipping.scan.of.appdata', 'Skipping scan of %LocalAppData% folder'));
+        return [];
+    }
     if (!await fs.exists(dir)) {
         log.debug(localize('skipping.scan.of.not.existing.path', 'Skipping scan of not existing path {0}', dir));
         return [];
@@ -402,7 +407,9 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
         if (e.code === 'EACCESS' || e.code === 'EPERM') {
             return [];
         }
-        throw e;
+        console.log('unexpected file system error');
+        console.log(e);
+        return [];
     }
 
     const prs = await Promise.all(bins.map(b => mapper(b)));
@@ -877,7 +884,7 @@ const VsGenerators: { [key: string]: string } = {
 };
 
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string> | null> {
-    console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
+    log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
     const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
     const majorVersion = parseInt(inst.installationVersion);
     let vcvarsScript: string = 'vcvarsall.bat';
@@ -1012,7 +1019,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools: CMakeTools | undefined): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools?: CMakeTools): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
         const isClangGNUCLI = (path.basename(binPath, '.exe') === 'clang');
         const isClangCL = (path.basename(binPath, '.exe') === 'clang-cl');
@@ -1030,11 +1037,10 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
         if (isClangGNUCLI) {
             if (undefined === cmakeTools) {
-                log.error(localize("failed.to.scan.for.kits", "Failed to scan for kits: cmakeTools is undefined"));
-
+                log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: cmakeTools is undefined"));
                 return null;
             } else {
-                const cmake_executable = await cmakeTools?.getCMakeExecutable();
+                const cmake_executable = await cmakeTools.getCMakeExecutable();
                 if (undefined === cmake_executable.version) {
                     return null;
                 } else {
@@ -1073,7 +1079,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools: CMakeTools | undefined): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools?: CMakeTools): Promise<Promise<Kit[]>[]> {
     const vs_installs = await vsInstallations();
     const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeTools));
     return results;
@@ -1185,6 +1191,7 @@ export async function findCLCompilerPath(env: Map<string, string>): Promise<stri
 }
 
 export interface KitScanOptions {
+    ignorePath?: boolean;
     scanDirs?: string[];
     minGWSearchDirs?: string[];
 }
@@ -1193,7 +1200,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitScanOptions) {
+export async function scanForKits(cmakeTools?: CMakeTools, opt?: KitScanOptions) {
     const kit_options = opt || {};
 
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
@@ -1211,8 +1218,18 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
 
         // Search directories on `PATH` for compiler binaries
         if (process.env.hasOwnProperty('PATH')) {
-            const sep = isWin32 ? ';' : ':';
-            for (const dir of (process.env.PATH as string).split(sep)) {
+            if (opt && opt.ignorePath) {
+                log.debug(localize('skip.scan.path', 'Skipping scan of PATH'));
+            } else {
+                const sep = isWin32 ? ';' : ':';
+                for (const dir of (process.env.PATH as string).split(sep)) {
+                    scan_paths.add(dir);
+                }
+            }
+        }
+
+        if (opt?.scanDirs) {
+            for (const dir of opt.scanDirs) {
                 scan_paths.add(dir);
             }
         }

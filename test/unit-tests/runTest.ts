@@ -14,11 +14,15 @@ async function main() {
 
         // The current folder is the default workspace.
         // The driver tests change the default workspace folder.
-        const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/unit-tests');
+        const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/unit-tests/test-project-without-cmakelists');
 
         const launchArgs = ["--disable-extensions", testWorkspace];
 
-        const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1" };
+        const extensionTestsEnv: { [key: string]: string | undefined } = {
+            "CMT_TESTING": "1",
+            "CMT_QUIET_CONSOLE": "1",
+            "TEST_FILTER": process.env.TEST_FILTER ?? ".*"
+        };
 
         // Download VS Code, unzip it and run the integration test
         await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });

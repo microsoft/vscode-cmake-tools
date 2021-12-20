@@ -2,7 +2,7 @@
 import { CMakeTools, ConfigureTrigger } from '@cmt/cmake-tools';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
-import { logFilePath } from '@cmt/logging';
+import { ExtensionConfigurationSettings } from '@cmt/config';
 import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
@@ -13,15 +13,7 @@ import {
 } from '@test/util';
 import * as path from 'path';
 
-let workername: string = process.platform;
-
-if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {
-    workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
-}
-
-if (process.env.TRAVIS_OS_NAME) {
-    workername = process.env.TRAVIS_OS_NAME;
-}
+const workername: string = process.platform;
 
 suite('Build', async () => {
     let cmt: CMakeTools;
@@ -50,7 +42,6 @@ suite('Build', async () => {
 
         cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
         const kit = await getFirstSystemKit(cmt);
-        console.log("Using following kit in next test: ", kit.name);
         await cmt.setKit(kit);
         testEnv.projectFolder.buildDirectory.clear();
     });
@@ -58,17 +49,6 @@ suite('Build', async () => {
     teardown(async function (this: Mocha.Context) {
         this.timeout(100000);
         await cmt.asyncDispose();
-        const logPath = logFilePath();
-        testEnv.clean();
-        if (await fs.exists(logPath)) {
-            if (this.currentTest?.state === "failed") {
-                const logContent = await fs.readFile(logPath);
-                logContent.toString().split('\n').forEach(line => {
-                    console.log(line);
-                });
-            }
-            await fs.writeFile(logPath, "");
-        }
     });
 
     suiteTeardown(async () => {
@@ -130,7 +110,7 @@ suite('Build', async () => {
         // Select compiler build node dependent
         const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
             linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
         };
         if (!(workername in os_compilers)) {
             this.skip();
@@ -159,8 +139,8 @@ suite('Build', async () => {
                 { kitLabel: /^Generator switch test GCC no generator$/, generator: '' }
             ],
             win32: [
-                { kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-                { kitLabel: /^Generator switch test GCC no generator - Win/, generator: '' }
+                {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
+                {kitLabel: /^Generator switch test VS 2019 no generator/, generator: ''}
             ]
         };
         if (!(workername in os_compilers)) {
@@ -208,7 +188,7 @@ suite('Build', async () => {
             // Select compiler build node dependent
             const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
                 linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-                win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+                win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
             };
             if (!(workername in os_compilers)) {
                 this.skip();
@@ -237,8 +217,8 @@ suite('Build', async () => {
                     { kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja' }
                 ],
                 win32: [
-                    { kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-                    { kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
+                    {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
+                    {kitLabel: /^Generator switch test VS 2019 Ninja/, generator: 'Ninja'}
                 ]
             };
             if (!(workername in os_compilers)) {
@@ -271,8 +251,8 @@ suite('Build', async () => {
                 { kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja' }
             ],
             win32: [
-                { kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-                { kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
+                {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
+                {kitLabel: /^Generator switch test VS 2019 no generator/, generator: 'Ninja'}
             ]
         };
         if (!(workername in os_compilers)) {
@@ -333,10 +313,16 @@ suite('Build', async () => {
 
     test('Copy compile_commands.json to a pre-determined path', async () => {
         expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
-        let retc = await cmt.configureInternal(ConfigureTrigger.runTests);
+        const newSettings: Partial<ExtensionConfigurationSettings> = {};
+        if (process.platform === 'win32') {
+            newSettings.generator = 'Ninja';  // VS generators don't create compile_commands.json
+            testEnv.config.updatePartial(newSettings);
+        }
+        let retc = await cmt.cleanConfigure(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
-        testEnv.config.updatePartial({ copyCompileCommands: compdb_cp_path });
+        newSettings.copyCompileCommands = compdb_cp_path;
+        testEnv.config.updatePartial(newSettings);
         retc = await cmt.configureInternal(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
