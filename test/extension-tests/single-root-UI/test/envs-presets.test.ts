@@ -3,7 +3,7 @@ import { CMakeCache } from '@cmt/cache';
 import { DefaultEnvironment, expect } from '@test/util';
 import * as vscode from 'vscode';
 
-suite('[Environment Variables in Presets]', async () => {
+suite('Environment Variables in Presets', async () => {
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {

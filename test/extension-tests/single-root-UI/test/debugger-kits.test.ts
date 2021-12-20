@@ -2,7 +2,7 @@ import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-suite('[Debug/Launch interface using Kits and Variants]', async () => {
+suite('Debug/Launch interface using Kits and Variants', async () => {
     let testEnv: DefaultEnvironment;
     let cmakeTools: CMakeTools;
 

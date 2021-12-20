@@ -759,11 +759,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const child = this.executeCommand(program, args, undefined, { silent: true });
         try {
             const result = await child.result;
-            log.trace(localize('command.version.test.return.code', '{0} returned code {1}', `${program} --version`, nullableValueToString(result.retc)));
+            log.trace(localize('command.version.test.return.code', '"{0}" returned code {1}', `${program} --version`, nullableValueToString(result.retc)));
             return result.retc === 0;
         } catch (e: any) {
             const e2: NodeJS.ErrnoException = e;
-            log.debug(localize('command.version.test.return.code', '{0} returned code {1}', `${program} --version`, nullableValueToString(e2.code)));
+            log.debug(localize('command.version.test.return.code', '"{0}" returned code {1}', `${program} --version`, nullableValueToString(e2.code)));
             if (e2.code === 'ENOENT') {
                 return false;
             }
@@ -854,7 +854,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const child = this.executeCommand(program, args, undefined, { silent: true, cwd });
         try {
             const result = await child.result;
-            log.trace(localize('command.version.test.return.code', '{0} returned code {1}', `${program} ${arg}`, nullableValueToString(result.retc)));
+            log.trace(localize('command.version.test.return.code', '"{0}" returned code {1}', `${program} ${arg}`, nullableValueToString(result.retc)));
             // Various compilers will output into stdout, others in stderr.
             // It's safe to concat them into one string to search in, since it's enough to analyze
             // the first match (stderr can't print a different version than stdout).
@@ -865,7 +865,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return match ? match[captureGroup] : "error";
         } catch (e: any) {
             const e2: NodeJS.ErrnoException = e;
-            log.debug(localize('compiler.version.return.code', '{0} returned code {1}', `${program} ${arg}`, nullableValueToString(e2.code)));
+            log.debug(localize('compiler.version.return.code', '"{0}" returned code {1}', `${program} ${arg}`, nullableValueToString(e2.code)));
             return "error";
         }
     }

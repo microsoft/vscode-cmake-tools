@@ -11,15 +11,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-let workername: string = process.platform;
-
-if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {
-    workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
-}
-
-if (process.env.TRAVIS_OS_NAME) {
-    workername = process.env.TRAVIS_OS_NAME;
-}
+const workername: string = process.platform;
 
 suite('Build using Kits and Variants', async () => {
     let testEnv: DefaultEnvironment;
@@ -42,6 +34,7 @@ suite('Build using Kits and Variants', async () => {
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
+        await vscode.commands.executeCommand('cmake.scanForKits');
     });
 
     setup(async function (this: Mocha.Context) {

@@ -179,15 +179,15 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
             // Set kit without a preferred generator
             await driver.setKit({ name: 'GCC' }, []);
-            expect(await driver.cleanConfigure(ConfigureTrigger.runTests, []), 'clean configure').to.be.eq(0);
+            expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(0);
             const kit1 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 
             // Set kit with a list of two default preferred generators, for comparison
             await driver.setKit({ name: 'GCC' }, [{ name: 'Ninja' }, { name: 'Unix Makefiles' }]);
-            expect(await driver.configure(ConfigureTrigger.runTests, []), 'configure with Ninja').to.be.eq(0);
+            expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
             const kit2 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 
-            expect(kit1, 'value of CMAKE_GENERATOR').to.be.equal(kit2);
+            expect(kit1).to.be.equal(kit2);
         }).timeout(90000);
 
         test('Try build on empty dir', async () => {

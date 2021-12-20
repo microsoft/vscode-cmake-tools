@@ -18,7 +18,7 @@ async function main() {
         const extensionTestsEnv: { [key: string]: string | undefined } = {
             "CMT_TESTING": "1",
             "CMT_QUIET_CONSOLE": "1",
-            "TEST_FILTER": ".*"
+            "TEST_FILTER": process.env.TEST_FILTER ?? ".*"
         };
 
         // Download VS Code, unzip it and run the integration test
