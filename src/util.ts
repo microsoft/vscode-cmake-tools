@@ -678,6 +678,13 @@ export function isCodespaces(): boolean {
     return !!process.env["CODESPACES"];
 }
 
+/**
+ * Returns true if the extension is currently running tests.
+ */
+export function isTestMode(): boolean {
+    return process.env['CMT_TESTING'] === '1';
+}
+
 export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
     const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
     return recGetAllFilePaths(dir.fsPath, regex, await readDir(dir.fsPath), []);

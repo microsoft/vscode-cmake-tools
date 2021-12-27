@@ -19,14 +19,14 @@ interface VSCMakePaths {
 
 class WindowsEnvironment {
     get AppData(): string | undefined {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');
         }
         return process.env['APPDATA'];
     }
 
     get LocalAppData(): string | undefined {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');
         }
         return process.env['LOCALAPPDATA'];

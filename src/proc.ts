@@ -187,7 +187,7 @@ export function execute(command: string,
                             line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.output(line_acc);
-                            } else if (process.env['CMT_TESTING']) {
+                            } else if (util.isTestMode()) {
                                 log.info(line_acc);
                             }
                             line_acc = '';
@@ -207,7 +207,7 @@ export function execute(command: string,
                             stderr_line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.error(stderr_line_acc);
-                            } else if (process.env['CMT_TESTING'] && stderr_line_acc) {
+                            } else if (util.isTestMode() && stderr_line_acc) {
                                 log.info(stderr_line_acc);
                             }
                             stderr_line_acc = '';
