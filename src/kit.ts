@@ -374,7 +374,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 }
 
 async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Promise<Ret | null>): Promise<Ret[]> {
-    if (process.env['CMT_TESTING'] === '1' && process.platform === 'win32' && dir.indexOf('AppData') > 0 && dir.indexOf('Local') > 0) {
+    if (util.isTestMode() && process.platform === 'win32' && dir.indexOf('AppData') > 0 && dir.indexOf('Local') > 0) {
         // This folder causes problems with tests on Windows.
         log.debug(localize('skipping.scan.of.appdata', 'Skipping scan of %LocalAppData% folder'));
         return [];
@@ -1294,8 +1294,7 @@ export async function scanForKitsIfNeeded(cmt: CMakeTools): Promise<boolean> {
     const kitsVersionCurrent = 2;
 
     // Scan also when there is no kits version saved in the state.
-    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
-        process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
+    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
         await kitsController.KitsController.scanForKits(cmt);
         await cmt.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);

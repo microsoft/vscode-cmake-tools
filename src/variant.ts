@@ -381,7 +381,7 @@ export class VariantManager implements vscode.Disposable {
                 }
             }
             return false;
-        } else if (process.env['CMT_TESTING'] === '1') {
+        } else if (util.isTestMode()) {
             await this.publishActiveKeywordSettings(this.activeKeywordSetting ?? items[0].keywordSettings);
             return true;
         } else {
