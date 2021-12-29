@@ -164,7 +164,7 @@
       {
         "command": "cmake.editKits",
         "title": "%cmake-tools.command.cmake.editKits.title%",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
