@@ -1519,7 +1519,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             this._isBusy.set(true);
             return await vscode.window.withProgress(
                 {
-                    location: vscode.ProgressLocation.Notification,
+                    location: vscode.ProgressLocation.Window,
                     title: localize('building.target', 'Building: {0}', targetName),
                     cancellable: true
                 },
@@ -1528,7 +1528,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     consumer.onProgress(pr => {
                         const increment = pr.value - old_progress;
                         if (increment >= 1) {
-                            progress.report({ increment });
+                            progress.report({ increment, message: `${pr.value}%` });
                             old_progress += increment;
                         }
                     });
