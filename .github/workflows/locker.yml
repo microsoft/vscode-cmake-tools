@@ -15,7 +15,7 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v2
       - name: Install Actions
-        run: cd ./.github/actions && npm install --production && npm run build && cd ../..
+        run: cd ./.github/actions && npm install --production && cd ../..
       - name: Run Locker
         uses: ./.github/actions/locker
         with:
