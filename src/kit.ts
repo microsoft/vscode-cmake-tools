@@ -292,11 +292,33 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         if (version === null) {
             return null;
         }
-        const gxx_fname = fname.replace(/gcc/, 'g++');
-        const gxx_bin = path.join(path.dirname(bin), gxx_fname);
-        const gccCompilers: { [lang: string]: string } = { C: bin };
-        if (await fs.exists(gxx_bin)) {
-            gccCompilers.CXX = gxx_bin;
+        const gccCompilers: { [lang: string]: string } = { };
+        const gxx_fname1 = fname.replace(/gcc/, 'g++');
+        const gxx_bin1 = path.join(path.dirname(bin), gxx_fname1);
+        if (await fs.exists(gxx_bin1)) {
+            // Names like x86_64-pc-linux-gnu-gcc-11.1.0
+            gccCompilers.C = bin;
+            // Names like x86_64-pc-linux-gnu-g++-11.1.0
+            gccCompilers.CXX = gxx_bin1;
+        } else {
+            const fname2 = fname.replace(/gcc(-\d+(\.\d+(\.\d+)?)?)/, 'gcc');
+            const bin2 = path.join(path.dirname(bin), fname2);
+            const gxx_fname2 = fname.replace(/gcc(-\d+(\.\d+(\.\d+)?)?)/, 'g++');
+            const gxx_bin2 = path.join(path.dirname(bin), gxx_fname2);
+            // Ensure the version is match
+            const version2 = await getCompilerVersion('GCC', bin2, pr);
+            const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            if (version_is_match && await fs.exists(bin2)) {
+                // Names like x86_64-pc-linux-gnu-gcc
+                gccCompilers.C = bin2;
+            } else {
+                // Names like x86_64-pc-linux-gnu-gcc-11.1.0
+                gccCompilers.C = bin;
+            }
+            if (version_is_match && await fs.exists(gxx_bin2)) {
+                // Names like x86_64-pc-linux-gnu-g++
+                gccCompilers.CXX = gxx_bin2;
+            }
         }
         const gccKit: Kit = {
             name: version.detectedName,
@@ -357,12 +379,34 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             return null;
         }
 
+        const clangCompilers: { [lang: string]: string } = { };
         const clangxx_fname = fname.replace(/^clang/, 'clang++');
-        const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
+        const clangxx_bin1 = path.join(path.dirname(bin), clangxx_fname);
         log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
-        const clangCompilers: { [lang: string]: string } = { C: bin };
-        if (await fs.exists(clangxx_bin)) {
-            clangCompilers.CXX = clangxx_bin;
+        if (await fs.exists(clangxx_bin1)) {
+            // names like clang-13
+            clangCompilers.C = bin;
+            // names like clang++-13
+            clangCompilers.CXX = clangxx_bin1;
+        } else {
+            const fname2 = fname.replace(/clang(-\d+(\.\d+(\.\d+)?)?)/, 'clang');
+            const bin2 = path.join(path.dirname(bin), fname2);
+            const clangxx_fname2 = fname.replace(/clang(-\d+(\.\d+(\.\d+)?)?)/, 'clang++');
+            const clangxx_bin2 = path.join(path.dirname(bin), clangxx_fname2);
+            // Ensure the version is match
+            const version2 = await getCompilerVersion('Clang', bin2, pr);
+            const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            if (version_is_match && await fs.exists(bin2)) {
+                // names like clang
+                clangCompilers.C = bin2;
+            } else {
+                // names like clang-13
+                clangCompilers.C = bin;
+            }
+            if (version_is_match && await fs.exists(clangxx_bin2)) {
+                // names like clang++
+                clangCompilers.CXX = clangxx_bin2;
+            }
         }
         return {
             name: version.detectedName,
