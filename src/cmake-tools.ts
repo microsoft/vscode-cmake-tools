@@ -2169,6 +2169,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
         };
 
+        let executablePath = shlex.quote(executable.path);
+
+        if (process.platform === 'win32') {
+            executablePath = executablePath.replace(/\\/g, "/");
+            
+            if (vscode.env.shell.indexOf("powershell") > 0) {
+                executablePath = `.${executablePath}`;
+            }
+        }
+
         if (!this._launchTerminal) {
             this._launchTerminal = vscode.window.createTerminal(termOptions);
         }
@@ -2178,8 +2188,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             launchArgs = user_config.args.join(" ");
         }
 
-        const quoted = shlex.quote(executable.path);
-        this._launchTerminal.sendText(`${quoted} ${launchArgs}`);
+        this._launchTerminal.sendText(`${executablePath} ${launchArgs}`);
         this._launchTerminal.show(true);
         return this._launchTerminal;
     }
