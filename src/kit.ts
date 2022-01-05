@@ -189,7 +189,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
         }
     }
     if (version === '' || target === undefined) {
-        log.debug(localize('bad.compiler.binary.output', 'Bad {0} binary "{1} -v" version:{2} output: {3}', vendor, binPath, version, exec.stderr));
+        log.debug(localize('bad.compiler.binary.output', 'Bad {0} binary. {1} reports version: {2} output: {3}', vendor, `"${binPath} -v"`, version, exec.stderr));
         return null;
     }
     const thread_model_mat = /Thread model:\s+(.*)/.exec(exec.stderr);
