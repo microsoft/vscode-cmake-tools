@@ -303,7 +303,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         } else {
             const fname2 = fname.replace(/gcc(-\d+(\.\d+(\.\d+)?)?)/, 'gcc');
             const bin2 = path.join(path.dirname(bin), fname2);
-            const gxx_fname2 = fname.replace(/gcc(-\d+(\.\d+(\.\d+)?)?)/, 'g++');
+            const gxx_fname2 = fname2.replace(/gcc/, 'g++');
             const gxx_bin2 = path.join(path.dirname(bin), gxx_fname2);
             // Ensure the version is match
             const version2 = await getCompilerVersion('GCC', bin2, pr);
@@ -384,27 +384,27 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         const clangxx_bin1 = path.join(path.dirname(bin), clangxx_fname);
         log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
         if (await fs.exists(clangxx_bin1)) {
-            // names like clang-13
+            // Names like clang-13
             clangCompilers.C = bin;
-            // names like clang++-13
+            // Names like clang++-13
             clangCompilers.CXX = clangxx_bin1;
         } else {
             const fname2 = fname.replace(/clang(-\d+(\.\d+(\.\d+)?)?)/, 'clang');
             const bin2 = path.join(path.dirname(bin), fname2);
-            const clangxx_fname2 = fname.replace(/clang(-\d+(\.\d+(\.\d+)?)?)/, 'clang++');
+            const clangxx_fname2 = fname2.replace(/clang/, 'clang++');
             const clangxx_bin2 = path.join(path.dirname(bin), clangxx_fname2);
             // Ensure the version is match
             const version2 = await getCompilerVersion('Clang', bin2, pr);
             const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
             if (version_is_match && await fs.exists(bin2)) {
-                // names like clang
+                // Names like clang
                 clangCompilers.C = bin2;
             } else {
-                // names like clang-13
+                // Names like clang-13
                 clangCompilers.C = bin;
             }
             if (version_is_match && await fs.exists(clangxx_bin2)) {
-                // names like clang++
+                // Names like clang++
                 clangCompilers.CXX = clangxx_bin2;
             }
         }
