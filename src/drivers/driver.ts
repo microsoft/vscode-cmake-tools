@@ -1623,8 +1623,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const buildArgs: string[] = this.config.buildArgs.slice(0);
             const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
 
-            // Only add '-j' argument if parallelJobs > 1
-            if (this.config.numJobs > 1) {
+            // for msbuild generators, only add '-j' argument if parallelJobs > 1
+            if ((gen && !/Visual Studio/.test(gen)) || this.config.numJobs > 1) {
                 // Prefer using CMake's build options to set parallelism over tool-specific switches.
                 // The feature is not available until version 3.14.
                 if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
