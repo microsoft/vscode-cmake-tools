@@ -308,6 +308,10 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             // Ensure the version is match
             const version2 = await fs.exists(bin2) ? await getCompilerVersion('GCC', bin2, pr) : null;
             const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            // For the kits with only `x86_64-pc-linux-gnu-gcc` provided:
+            // We will have bin2 === bin1 because the regex did not make a replacement,
+            // then version_match will be true, but no C++ compiler will be found,
+            // so we will correctly skip setting the CXX compiler.
             if (version_is_match) {
                 // Names like x86_64-pc-linux-gnu-gcc
                 gccCompilers.C = bin2;
@@ -396,6 +400,10 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             // Ensure the version is match
             const version2 = await fs.exists(bin2) ? await getCompilerVersion('Clang', bin2, pr) : null;
             const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            // For the kits with only `clang` provided:
+            // We will have bin2 === bin1 because the regex did not make a replacement,
+            // then version_match will be true, but no C++ compiler will be found,
+            // so we will correctly skip setting the CXX compiler.
             if (version_is_match) {
                 // Names like clang
                 clangCompilers.C = bin2;
