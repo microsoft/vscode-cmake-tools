@@ -1,7 +1,7 @@
 name: Question Closer
 on:
-  schedule:
-    - cron: 20 11 * * * # Run at 11:20 AM UTC (3:20 AM PST, 4:20 AM PDT)
+#  schedule:
+#    - cron: 20 11 * * * # Run at 11:20 AM UTC (3:20 AM PST, 4:20 AM PDT)
   workflow_dispatch:
    inputs:
      readonly:

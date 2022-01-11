@@ -1,7 +1,7 @@
 name: Locker
 on:
-  schedule:
-    - cron: 30 11 * * * # Run at 11:30 AM UTC (3:30 AM PST, 4:30 AM PDT)
+#  schedule:
+#    - cron: 30 11 * * * # Run at 11:30 AM UTC (3:30 AM PST, 4:30 AM PDT)
   workflow_dispatch:
    inputs:
      readonly:
