@@ -4,6 +4,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.logErrorToIssue = exports.errorLoggingIssue = exports.getRateLimit = exports.daysAgoToHumanReadbleDate = exports.daysAgoToTimestamp = exports.normalizeIssue = exports.getRequiredInput = exports.getInput = void 0;
 const core = require("@actions/core");
 const github_1 = require("@actions/github");
 const octokit_1 = require("../api/octokit");

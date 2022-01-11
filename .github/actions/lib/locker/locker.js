@@ -4,6 +4,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Locker = void 0;
 const utils_1 = require("../common/utils");
 const actionBase_1 = require("../common/actionBase");
 class Locker extends actionBase_1.ActionBase {

@@ -4,6 +4,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.StaleCloser = void 0;
 const actionBase_1 = require("../common/actionBase");
 const utils_1 = require("../common/utils");
 class StaleCloser extends actionBase_1.ActionBase {
@@ -38,11 +39,11 @@ class StaleCloser extends actionBase_1.ActionBase {
                 ) {
                     if (!lastComment ||
                         lastComment.author.isGitHubApp ||
-                        pingTimestamp == undefined ||
+                        pingTimestamp === undefined ||
                         // TODO: List the collaborators once per go rather than checking a single user each issue
                         this.additionalTeam.includes(lastComment.author.name) ||
                         await issue.hasWriteAccess(lastComment.author)) {
-                        if (pingTimestamp != undefined) {
+                        if (pingTimestamp !== undefined) {
                             if (lastComment) {
                                 console.log(`Last comment on issue ${hydrated.number} by ${lastComment.author.name}. Closing.`);
                             }
@@ -71,7 +72,7 @@ class StaleCloser extends actionBase_1.ActionBase {
                             }
                         }
                         await issue.closeIssue();
-                        if (this.setMilestoneId != undefined) {
+                        if (this.setMilestoneId !== undefined) {
                             console.log(`Setting milestone of issue ${hydrated.number} to id ${+this.setMilestoneId}`);
                             await issue.setMilestone(+this.setMilestoneId);
                         }

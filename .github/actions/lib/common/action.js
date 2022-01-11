@@ -4,6 +4,7 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Action = void 0;
 const octokit_1 = require("../api/octokit");
 const github_1 = require("@actions/github");
 const utils_1 = require("./utils");
