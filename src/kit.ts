@@ -306,9 +306,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             const gxx_fname2 = fname2.replace(/gcc/, 'g++');
             const gxx_bin2 = path.join(path.dirname(bin), gxx_fname2);
             // Ensure the version is match
-            const version2 = await getCompilerVersion('GCC', bin2, pr);
+            const version2 = await fs.exists(bin2) ? await getCompilerVersion('GCC', bin2, pr) : null;
             const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
-            if (version_is_match && await fs.exists(bin2)) {
+            if (version_is_match) {
                 // Names like x86_64-pc-linux-gnu-gcc
                 gccCompilers.C = bin2;
             } else {
@@ -394,9 +394,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             const clangxx_fname2 = fname2.replace(/clang/, 'clang++');
             const clangxx_bin2 = path.join(path.dirname(bin), clangxx_fname2);
             // Ensure the version is match
-            const version2 = await getCompilerVersion('Clang', bin2, pr);
+            const version2 = await fs.exists(bin2) ? await getCompilerVersion('Clang', bin2, pr) : null;
             const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
-            if (version_is_match && await fs.exists(bin2)) {
+            if (version_is_match) {
                 // Names like clang
                 clangCompilers.C = bin2;
             } else {
