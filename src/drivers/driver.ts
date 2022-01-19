@@ -785,7 +785,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         for (const gen of preferredGenerators) {
             const gen_name = gen.name;
             const generator_present = await (async (): Promise<boolean> => {
-                if (gen_name === 'Ninja') {
+                if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
                     return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
                 }
                 if (gen_name === 'MinGW Makefiles') {
