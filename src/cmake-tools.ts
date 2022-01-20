@@ -1041,7 +1041,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
             const cmake = await this.getCMakeExecutable();
             if (!cmake.isPresent) {
-                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or your settings contain the correct path ({1})?', `"${cmake.path}"`, 'cmake.cmakePath'));
+                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
                 telemetry.logEvent('CMakeExecutableNotFound');
                 return null;
             }
