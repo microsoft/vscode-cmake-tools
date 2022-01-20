@@ -1259,8 +1259,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     if (drv) {
                         let old_prog = 0;
                         const prog_sub = drv.onProgress(pr => {
-                            const new_prog
-                                = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                            const new_prog = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
                             const increment = new_prog - old_prog;
                             if (increment >= 1) {
                                 old_prog += increment;
