@@ -1,6 +1,5 @@
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
-import { logFilePath } from '@cmt/logging';
 import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
@@ -11,22 +10,12 @@ import {
 import * as fs_ from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmake-tools';
 
-let workername: string = process.platform;
-
-if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {
-    workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
-}
-
-if (process.env.TRAVIS_OS_NAME) {
-    workername = process.env.TRAVIS_OS_NAME;
-}
+const workername: string = process.platform;
 
 suite('Build', async () => {
-    let testEnv: DefaultEnvironment;
+    let folder2: DefaultEnvironment;
     let compdb_cp_path: string;
-    let cmakeTools: CMakeTools;
 
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -34,44 +23,31 @@ suite('Build', async () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
-        compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-        cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        folder2 = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
+        compdb_cp_path = path.join(folder2.projectFolder.location, 'compdb_cp.json');
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
-        await vscode.commands.executeCommand('cmake.scanForKits');
         await clearExistingKitConfigurationFile();
+        await vscode.commands.executeCommand('cmake.scanForKits');
     });
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        const kit = await getFirstSystemKit(cmakeTools);
-        console.log("Using following kit in next test: ", kit.name);
+        const kit = await getFirstSystemKit();
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
-        testEnv.projectFolder.buildDirectory.clear();
+        folder2.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function (this: Mocha.Context) {
-        this.timeout(100000);
-        const logPath = logFilePath();
-        testEnv.clean();
-        if (await fs.exists(logPath)) {
-            if (this.currentTest?.state === "failed") {
-                const logContent = await fs.readFile(logPath);
-                logContent.toString().split('\n').forEach(line => {
-                    console.log(line);
-                });
-            }
-            await fs.writeFile(logPath, "");
-        }
+
     });
 
     suiteTeardown(async () => {
-        if (testEnv) {
-            testEnv.teardown();
+        if (folder2) {
+            folder2.teardown();
         }
         if (await fs.exists(compdb_cp_path)) {
             await fs.unlink(compdb_cp_path);
@@ -81,25 +57,25 @@ suite('Build', async () => {
     test('Configure', async () => {
         expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
         // Didn't configure this folder
-        expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(false, 'cache present');
+        expect(folder2.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(false, 'cache present');
     }).timeout(100000);
 
     test('ConfigureAll', async () => {
         expect(await vscode.commands.executeCommand('cmake.configureAll')).to.be.eq(0);
 
-        expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
+        expect(folder2.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
     }).timeout(200000);
 
     test('Build', async () => {
         expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
 
-        expect(fs_.existsSync(path.join(testEnv.projectFolder.buildDirectory.location, testEnv.executableResult))).to.eql(false, 'Wrong folder built');
+        expect(fs_.existsSync(path.join(folder2.projectFolder.buildDirectory.location, folder2.executableResult))).to.eql(false, 'Wrong folder built');
     }).timeout(200000);
 
     test('BuildAll', async () => {
         expect(await vscode.commands.executeCommand('cmake.buildAll')).to.be.eq(0);
 
-        const result = await testEnv.result.getResultAsJson();
+        const result = await folder2.result.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(200000);
 
@@ -107,7 +83,7 @@ suite('Build', async () => {
         expect(await vscode.commands.executeCommand('cmake.configureAll')).to.be.eq(0);
         expect(await vscode.commands.executeCommand('cmake.buildAll')).to.be.eq(0);
 
-        const result = await testEnv.result.getResultAsJson();
+        const result = await folder2.result.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(200000);
 
@@ -118,7 +94,7 @@ suite('Build', async () => {
         await vscode.commands.executeCommand('cmake.setDefaultTarget', vscode.workspace.workspaceFolders![1], 'runTestTarget');
         expect(await vscode.commands.executeCommand('cmake.buildAll')).to.be.eq(0);
 
-        const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
+        const resultFile = new TestProgramResult(folder2.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(200000);
@@ -127,7 +103,7 @@ suite('Build', async () => {
         // Select compiler build node dependent
         const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
             linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
         };
         if (!(workername in os_compilers)) {
             this.skip();
@@ -135,43 +111,41 @@ suite('Build', async () => {
         const compiler = os_compilers[workername];
 
         // Run test
-        testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[0].kitLabel)).name);
+        folder2.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
 
         await vscode.commands.executeCommand('cmake.buildAll');
 
-        testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[1].kitLabel)).name);
+        folder2.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
 
         await vscode.commands.executeCommand('cmake.buildAll');
-        const result = await testEnv.result.getResultAsJson();
+        const result = await folder2.result.getResultAsJson();
         expect(result['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(100000);
+    }).timeout(150000);
 
-    test('Test kit switch between different preferred generators and compilers',
-        async function (this: Mocha.Context) {
-            // Select compiler build node dependent
-            const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-                linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-                win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
-            };
-            if (!(workername in os_compilers)) {
-                this.skip();
-            }
-            const compiler = os_compilers[workername];
+    test('Test kit switch between different preferred generators and compilers', async function (this: Mocha.Context) {
+        // Select compiler build node dependent
+        const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
+            linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
+            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
+        };
+        if (!(workername in os_compilers)) {
+            this.skip();
+        }
+        const compiler = os_compilers[workername];
 
-            testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[0].kitLabel)).name);
-            await vscode.commands.executeCommand('cmake.buildAll');
+        folder2.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
+        await vscode.commands.executeCommand('cmake.buildAll');
 
-            testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[1].kitLabel)).name);
-            await vscode.commands.executeCommand('cmake.buildAll');
+        folder2.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
+        await vscode.commands.executeCommand('cmake.buildAll');
 
-            const result = await testEnv.result.getResultAsJson();
-            expect(result['compiler']).to.eql(compiler[1].compiler);
-        })
-        .timeout(100000);
+        const result = await folder2.result.getResultAsJson();
+        expect(result['compiler']).to.eql(compiler[1].compiler);
+    }).timeout(150000);
 
     test('Test build twice', async function (this: Mocha.Context) {
         console.log('1. Build');
@@ -216,6 +190,6 @@ suite('Build', async () => {
         expect(await vscode.commands.executeCommand('cmake.buildAll')).eq(0);
         await vscode.commands.executeCommand('cmake.cleanRebuildAll');
         expect(await vscode.commands.executeCommand('cmake.buildAll')).eq(0);
-        await testEnv.result.getResultAsJson();
+        await folder2.result.getResultAsJson();
     }).timeout(400000);
 });

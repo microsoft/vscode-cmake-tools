@@ -637,6 +637,9 @@ export function isBoolean(x: any): x is boolean {
 }
 
 export function makeHashString(str: string): string {
+    if (process.platform === 'win32') {
+        str = normalizePath(str, {normCase: 'always'});
+    }
     const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     hash.update(str);
@@ -673,6 +676,13 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
 
 export function isCodespaces(): boolean {
     return !!process.env["CODESPACES"];
+}
+
+/**
+ * Returns true if the extension is currently running tests.
+ */
+export function isTestMode(): boolean {
+    return process.env['CMT_TESTING'] === '1';
 }
 
 export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {

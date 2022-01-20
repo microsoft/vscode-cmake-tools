@@ -187,7 +187,7 @@ export class VariantManager implements vscode.Disposable {
     /**
      * Watches for changes to the variants file on the filesystem
      */
-    private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true });
+    private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true, followSymlinks: false });
 
     private customVariantsFileExists: boolean = false;
 
@@ -381,7 +381,7 @@ export class VariantManager implements vscode.Disposable {
                 }
             }
             return false;
-        } else if (process.env['CMT_TESTING'] === '1') {
+        } else if (util.isTestMode()) {
             await this.publishActiveKeywordSettings(this.activeKeywordSetting ?? items[0].keywordSettings);
             return true;
         } else {

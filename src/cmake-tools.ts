@@ -19,8 +19,7 @@ import { ExecutionOptions, ExecutionResult } from './api';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import { BadHomeDirectoryError } from '@cmt/drivers/cms-client';
 import { CMakeServerClientDriver, NoGeneratorError } from '@cmt/drivers/cms-driver';
-import { CTestDriver } from './ctest';
-import { BasicTestResults } from './ctest';
+import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
@@ -997,7 +996,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     await this.workspaceContext.state.setActiveKitName(kit.name);
                     this._statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
-                    void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit "{0}".', error));
+                    void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit "{0}".', error.message));
                     this._statusMessage.set(localize('error.on.switch.status', 'Error on switch of kit ({0})', error.message));
                     this._cmakeDriver = Promise.resolve(null);
                     this._activeKit = null;
@@ -1156,31 +1155,30 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     }
                 });
             }
-        } else {
+        } else if (this.workspaceContext.config.copyCompileCommands) {
             // single file with known path
             const compdb_path = path.join(await this.binaryDir, 'compile_commands.json');
             if (await fs.exists(compdb_path)) {
-                compdb_paths.push(compdb_path);
-
-                if (this.workspaceContext.config.copyCompileCommands) {
-                    // Now try to copy the compdb to the user-requested path
-                    const copy_dest = this.workspaceContext.config.copyCompileCommands;
-                    const expanded_dest = await expandString(copy_dest, opts);
-                    const pardir = path.dirname(expanded_dest);
+                // Now try to copy the compdb to the user-requested path
+                const copy_dest = this.workspaceContext.config.copyCompileCommands;
+                const expanded_dest = await expandString(copy_dest, opts);
+                const pardir = path.dirname(expanded_dest);
+                try {
+                    log.debug(localize('copy.compile.commands', 'Copying compile_commands.json from {0} to {1}', compdb_path, expanded_dest));
+                    await fs.mkdir_p(pardir);
                     try {
-                        await fs.mkdir_p(pardir);
-                        try {
-                            await fs.copyFile(compdb_path, expanded_dest);
-                        } catch (e: any) {
-                            // Just display the error. It's the best we can do.
-                            void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
-                        }
+                        await fs.copyFile(compdb_path, expanded_dest);
                     } catch (e: any) {
-                        void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
-                            'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
-                            compdb_path, expanded_dest, pardir, e.toString()));
+                        // Just display the error. It's the best we can do.
+                        void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
                     }
+                } catch (e: any) {
+                    void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
+                        'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
+                        compdb_path, expanded_dest, pardir, e.toString()));
                 }
+            } else {
+                log.debug(localize('cannot.copy.compile.commands', 'Cannot copy compile_commands.json because it does not exist at {0}', compdb_path));
             }
         }
 
@@ -1361,9 +1359,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
      * Wraps pre/post configure logic around an actual configure function
      * @param cb The actual configure callback. Called to do the configure
      */
-    private async _doConfigure(type: ConfigureType,
-        progress: ProgressHandle,
-        cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
+    private async _doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
             return -1;

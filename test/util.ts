@@ -29,20 +29,29 @@ export async function getExtension() {
 
 let AVAIL_KITS: Promise<Kit[]> | null = null;
 
-export async function getSystemKits(cmakeTools: CMakeTools): Promise<Kit[]> {
+export async function getSystemKits(cmakeTools?: CMakeTools): Promise<Kit[]> {
     if (AVAIL_KITS === null) {
-        AVAIL_KITS = scanForKits(cmakeTools);
+        AVAIL_KITS = scanForKits(cmakeTools, { ignorePath: process.platform === 'win32' });
     }
     return AVAIL_KITS;
 }
 
-export async function getFirstSystemKit(cmakeTools: CMakeTools): Promise<Kit> {
+/**
+ * @returns a Visual Studio kit on Windows, a GCC or Clang kit on mac/linux
+ */
+export async function getFirstSystemKit(cmakeTools?: CMakeTools): Promise<Kit> {
     const kits = await getSystemKits(cmakeTools);
     console.assert(kits.length >= 1, 'No kits found for testing');
-    return kits[0];
+    return kits.find(kit => {
+        if (process.platform === 'win32') {
+            return !!kit.visualStudio;
+        } else {
+            return !!kit.compilers;
+        }
+    })!;
 }
 
-export async function getMatchingSystemKit(cmakeTools: CMakeTools, re: RegExp): Promise<Kit> {
+export async function getMatchingSystemKit(cmakeTools: CMakeTools | undefined, re: RegExp): Promise<Kit> {
     const kits = await getSystemKits(cmakeTools);
     return getMatchingKit(kits, re);
 }
@@ -55,7 +64,7 @@ export async function getMatchingProjectKit(re: RegExp, dir: string): Promise<Ki
 function getMatchingKit(kits: Kit[], re: RegExp): Kit {
     const kit = kits.find(k => re.test(k.name));
     if (!kit) {
-        throw new Error(`No kit matching expression: ${re}`);
+        throw new Error(`Unable to find a Kit matching the expression: ${re}`);
     }
     return kit;
 }

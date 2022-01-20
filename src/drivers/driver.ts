@@ -404,7 +404,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const cmake_files = path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', cache));
-            await fs.unlink(cache);
+            try {
+                await fs.unlink(cache);
+            } catch {
+                log.error(localize('unlink.failed', 'Failed to remove cache file {0}', this.cachePath));
+            }
         }
         if (await fs.exists(cmake_files)) {
             log.info(localize('removing', 'Removing {0}', cmake_files));
@@ -610,16 +614,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return cb();
     }
 
-    private async _refreshExpansions(showCommandOnly?: boolean) {
-        if (!showCommandOnly) {
-            log.debug('Run _refreshExpansions');
-        }
-
+    private async _refreshExpansions() {
         return this.doRefreshExpansions(async () => {
-            if (!showCommandOnly) {
-                log.debug('Run _refreshExpansions cb');
-            }
-
             this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
 
             const opts = this.expansionOptions;
@@ -632,11 +628,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (installPrefix) {
                     this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
                 }
-            }
-
-            const copyCompileCommands = this.config.copyCompileCommands;
-            if (copyCompileCommands) {
-                this._copyCompileCommandsPath = util.lightNormalizePath(await expand.expandString(copyCompileCommands, opts));
             }
         });
     }
@@ -664,14 +655,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this._installDir;
     }
     private _installDir: string | null = null;
-
-    /**
-     * Path to copy compile_commands.json to
-     */
-    get copyCompileCommandsPath(): string | null {
-        return this._copyCompileCommandsPath;
-    }
-    private _copyCompileCommandsPath: string | null = null;
 
     /**
      * @brief Get the path to the CMakeCache file in the build directory
@@ -780,11 +763,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const child = this.executeCommand(program, args, undefined, { silent: true });
         try {
             const result = await child.result;
-            log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
+            log.trace(localize('command.version.test.return.code', '"{0}" returned code {1}', `${program} ${args.join(' ')}`, nullableValueToString(result.retc)));
             return result.retc === 0;
         } catch (e: any) {
             const e2: NodeJS.ErrnoException = e;
-            log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
+            log.debug(localize('command.version.test.return.code', '"{0}" returned code {1}', `${program} ${args.join(' ')}`, nullableValueToString(e2.code)));
             if (e2.code === 'ENOENT') {
                 return false;
             }
@@ -802,7 +785,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         for (const gen of preferredGenerators) {
             const gen_name = gen.name;
             const generator_present = await (async (): Promise<boolean> => {
-                if (gen_name === 'Ninja') {
+                if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
                     return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
                 }
                 if (gen_name === 'MinGW Makefiles') {
@@ -867,8 +850,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this.configure(trigger, extra_args, consumer);
     }
 
-    async testCompilerVersion(program: string, cwd: string, arg: string | undefined,
-        regexp: RegExp, captureGroup: number): Promise<string | undefined> {
+    async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp, captureGroup: number): Promise<string | undefined> {
         const args = [];
         if (arg) {
             args.push(arg);
@@ -876,7 +858,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const child = this.executeCommand(program, args, undefined, { silent: true, cwd });
         try {
             const result = await child.result;
-            console.log(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
+            log.trace(localize('command.version.test.return.code', '"{0}" returned code {1}', `${program} ${arg}`, nullableValueToString(result.retc)));
             // Various compilers will output into stdout, others in stderr.
             // It's safe to concat them into one string to search in, since it's enough to analyze
             // the first match (stderr can't print a different version than stdout).
@@ -887,7 +869,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return match ? match[captureGroup] : "error";
         } catch (e: any) {
             const e2: NodeJS.ErrnoException = e;
-            console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
+            log.debug(localize('compiler.version.return.code', '"{0}" returned code {1}', `${program} ${arg}`, nullableValueToString(e2.code)));
             return "error";
         }
     }
@@ -1131,8 +1113,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // since some compilers can output their version without a specific switch.
         let version;
         if (compiler?.versionOutputRegexp) {
-            version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch,
-                RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
+            version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch, RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
         } else {
             version = "unknown";
         }
@@ -1229,7 +1210,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         try {
             // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
             // (example: cmake.sourceDirectory).
-            await this._refreshExpansions(showCommandOnly);
+            await this._refreshExpansions();
             if (!showCommandOnly) {
                 if (!shouldUseCachedConfiguration) {
                     log.debug(localize('start.configure', 'Start configure'), extra_args);
@@ -1273,7 +1254,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             // A more complete round of expansions
-            await this._refreshExpansions(showCommandOnly);
+            await this._refreshExpansions();
 
             const timeStart: number = new Date().getTime();
             let retc: number;
@@ -1570,7 +1551,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     private async _beforeConfigureOrBuild(showCommandOnly?: boolean): Promise<boolean> {
         if (!showCommandOnly) {
-            log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+            log.debug(localize('running.pre-configure.checks', 'Running pre-configure checks and steps'));
         }
 
         if (!this.sourceDir) {

@@ -64,7 +64,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     return ret;
 }
 
-suite('[Configuration]', () => {
+suite('Configuration', () => {
     test('Create a read from a configuration', () => {
         const conf = createConfig({ parallelJobs: 13 });
         expect(conf.parallelJobs).to.eq(13);

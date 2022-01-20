@@ -187,6 +187,8 @@ export function execute(command: string,
                             line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.output(line_acc);
+                            } else if (util.isTestMode()) {
+                                log.info(line_acc);
                             }
                             line_acc = '';
                             // Erase the first line from the list
@@ -205,6 +207,8 @@ export function execute(command: string,
                             stderr_line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.error(stderr_line_acc);
+                            } else if (util.isTestMode() && stderr_line_acc) {
+                                log.info(stderr_line_acc);
                             }
                             stderr_line_acc = '';
                             // Erase the first line from the list

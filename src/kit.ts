@@ -159,7 +159,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     }
     const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
     if (exec.retc !== 0) {
-        log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
+        log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns {1}): {2}', vendor, exec.retc, binPath));
         return null;
     }
     let version_re: RegExp;
@@ -291,11 +291,37 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         if (version === null) {
             return null;
         }
-        const gxx_fname = fname.replace(/gcc/, 'g++');
-        const gxx_bin = path.join(path.dirname(bin), gxx_fname);
-        const gccCompilers: { [lang: string]: string } = { C: bin };
-        if (await fs.exists(gxx_bin)) {
-            gccCompilers.CXX = gxx_bin;
+        const gccCompilers: { [lang: string]: string } = { };
+        const gxx_fname1 = fname.replace(/gcc/, 'g++');
+        const gxx_bin1 = path.join(path.dirname(bin), gxx_fname1);
+        if (await fs.exists(gxx_bin1)) {
+            // Names like x86_64-pc-linux-gnu-gcc-11.1.0
+            gccCompilers.C = bin;
+            // Names like x86_64-pc-linux-gnu-g++-11.1.0
+            gccCompilers.CXX = gxx_bin1;
+        } else {
+            const fname2 = fname.replace(/gcc(-\d+(\.\d+(\.\d+)?)?)/, 'gcc');
+            const bin2 = path.join(path.dirname(bin), fname2);
+            const gxx_fname2 = fname2.replace(/gcc/, 'g++');
+            const gxx_bin2 = path.join(path.dirname(bin), gxx_fname2);
+            // Ensure the version is match
+            const version2 = await fs.exists(bin2) ? await getCompilerVersion('GCC', bin2, pr) : null;
+            const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            // For the kits with only `x86_64-pc-linux-gnu-gcc` provided:
+            // We will have bin2 === bin1 because the regex did not make a replacement,
+            // then version_match will be true, but no C++ compiler will be found,
+            // so we will correctly skip setting the CXX compiler.
+            if (version_is_match) {
+                // Names like x86_64-pc-linux-gnu-gcc
+                gccCompilers.C = bin2;
+            } else {
+                // Names like x86_64-pc-linux-gnu-gcc-11.1.0
+                gccCompilers.C = bin;
+            }
+            if (version_is_match && await fs.exists(gxx_bin2)) {
+                // Names like x86_64-pc-linux-gnu-g++
+                gccCompilers.CXX = gxx_bin2;
+            }
         }
         const gccKit: Kit = {
             name: version.detectedName,
@@ -356,12 +382,38 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             return null;
         }
 
+        const clangCompilers: { [lang: string]: string } = { };
         const clangxx_fname = fname.replace(/^clang/, 'clang++');
-        const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
+        const clangxx_bin1 = path.join(path.dirname(bin), clangxx_fname);
         log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
-        const clangCompilers: { [lang: string]: string } = { C: bin };
-        if (await fs.exists(clangxx_bin)) {
-            clangCompilers.CXX = clangxx_bin;
+        if (await fs.exists(clangxx_bin1)) {
+            // Names like clang-13
+            clangCompilers.C = bin;
+            // Names like clang++-13
+            clangCompilers.CXX = clangxx_bin1;
+        } else {
+            const fname2 = fname.replace(/clang(-\d+(\.\d+(\.\d+)?)?)/, 'clang');
+            const bin2 = path.join(path.dirname(bin), fname2);
+            const clangxx_fname2 = fname2.replace(/clang/, 'clang++');
+            const clangxx_bin2 = path.join(path.dirname(bin), clangxx_fname2);
+            // Ensure the version is match
+            const version2 = await fs.exists(bin2) ? await getCompilerVersion('Clang', bin2, pr) : null;
+            const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            // For the kits with only `clang` provided:
+            // We will have bin2 === bin1 because the regex did not make a replacement,
+            // then version_match will be true, but no C++ compiler will be found,
+            // so we will correctly skip setting the CXX compiler.
+            if (version_is_match) {
+                // Names like clang
+                clangCompilers.C = bin2;
+            } else {
+                // Names like clang-13
+                clangCompilers.C = bin;
+            }
+            if (version_is_match && await fs.exists(clangxx_bin2)) {
+                // Names like clang++
+                clangCompilers.CXX = clangxx_bin2;
+            }
         }
         return {
             name: version.detectedName,
@@ -373,6 +425,11 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 }
 
 async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Promise<Ret | null>): Promise<Ret[]> {
+    if (util.isTestMode() && process.platform === 'win32' && dir.indexOf('AppData') > 0 && dir.indexOf('Local') > 0) {
+        // This folder causes problems with tests on Windows.
+        log.debug(localize('skipping.scan.of.appdata', 'Skipping scan of %LocalAppData% folder'));
+        return [];
+    }
     if (!await fs.exists(dir)) {
         log.debug(localize('skipping.scan.of.not.existing.path', 'Skipping scan of not existing path {0}', dir));
         return [];
@@ -401,7 +458,9 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
         if (e.code === 'EACCESS' || e.code === 'EPERM') {
             return [];
         }
-        throw e;
+        console.log('unexpected file system error');
+        console.log(e);
+        return [];
     }
 
     const prs = await Promise.all(bins.map(b => mapper(b)));
@@ -874,7 +933,7 @@ const VsGenerators: { [key: string]: string } = {
 };
 
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string> | null> {
-    console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
+    log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
     const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
     const majorVersion = parseInt(inst.installationVersion);
     let vcvarsScript: string = 'vcvarsall.bat';
@@ -1009,7 +1068,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools: CMakeTools | undefined): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools?: CMakeTools): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
         const isClangGNUCLI = (path.basename(binPath, '.exe') === 'clang');
         const isClangCL = (path.basename(binPath, '.exe') === 'clang-cl');
@@ -1027,11 +1086,10 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
         if (isClangGNUCLI) {
             if (undefined === cmakeTools) {
-                log.error(localize("failed.to.scan.for.kits", "Failed to scan for kits: cmakeTools is undefined"));
-
+                log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: cmakeTools is undefined"));
                 return null;
             } else {
-                const cmake_executable = await cmakeTools?.getCMakeExecutable();
+                const cmake_executable = await cmakeTools.getCMakeExecutable();
                 if (undefined === cmake_executable.version) {
                     return null;
                 } else {
@@ -1070,7 +1128,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools: CMakeTools | undefined): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools?: CMakeTools): Promise<Promise<Kit[]>[]> {
     const vs_installs = await vsInstallations();
     const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeTools));
     return results;
@@ -1182,6 +1240,7 @@ export async function findCLCompilerPath(env: Map<string, string>): Promise<stri
 }
 
 export interface KitScanOptions {
+    ignorePath?: boolean;
     scanDirs?: string[];
     minGWSearchDirs?: string[];
 }
@@ -1190,7 +1249,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitScanOptions) {
+export async function scanForKits(cmakeTools?: CMakeTools, opt?: KitScanOptions) {
     const kit_options = opt || {};
 
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
@@ -1208,8 +1267,18 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
 
         // Search directories on `PATH` for compiler binaries
         if (process.env.hasOwnProperty('PATH')) {
-            const sep = isWin32 ? ';' : ':';
-            for (const dir of (process.env.PATH as string).split(sep)) {
+            if (opt && opt.ignorePath) {
+                log.debug(localize('skip.scan.path', 'Skipping scan of PATH'));
+            } else {
+                const sep = isWin32 ? ';' : ':';
+                for (const dir of (process.env.PATH as string).split(sep)) {
+                    scan_paths.add(dir);
+                }
+            }
+        }
+
+        if (opt?.scanDirs) {
+            for (const dir of opt.scanDirs) {
                 scan_paths.add(dir);
             }
         }
@@ -1274,8 +1343,7 @@ export async function scanForKitsIfNeeded(cmt: CMakeTools): Promise<boolean> {
     const kitsVersionCurrent = 2;
 
     // Scan also when there is no kits version saved in the state.
-    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
-        process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
+    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
         await kitsController.KitsController.scanForKits(cmt);
         await cmt.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
