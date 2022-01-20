@@ -785,7 +785,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         for (const gen of preferredGenerators) {
             const gen_name = gen.name;
             const generator_present = await (async (): Promise<boolean> => {
-                if (gen_name === 'Ninja') {
+                if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
                     return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
                 }
                 if (gen_name === 'MinGW Makefiles') {
@@ -1650,8 +1650,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', ...targets]
                 .concat(buildArgs, buildToolArgs);
             const opts = this.expansionOptions;
-            const expanded_args_promises
-                = args.map(async (value: string) => expand.expandString(value, { ...opts, envOverride: build_env }));
+            const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...opts, envOverride: build_env }));
             const expanded_args = await Promise.all(expanded_args_promises) as string[];
 
             log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(expanded_args)));
@@ -1671,8 +1670,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     outputEnc = 'utf8';
                 }
             }
-            const exeOpt: proc.ExecutionOptions
-                = { environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask };
+            const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask };
             const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
             this._currentBuildProcess = child;
             await child.result;
