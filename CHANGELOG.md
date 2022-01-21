@@ -1,5 +1,8 @@
 # What's New?
 
+## 1.10.0
+- Test the existence of a property instead of the value when expanding preset conditions. [#2329](https://github.com/microsoft/vscode-cmake-tools/issues/2329)
+
 ## 1.9.2
 Bug fixes:
 - Fix infinite recursion into symlinks. [#2257](https://github.com/microsoft/vscode-cmake-tools/issues/2257)
