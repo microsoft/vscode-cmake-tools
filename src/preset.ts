@@ -161,7 +161,7 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
         } else if (util.isArrayOfString(preset.inherits)) {
             return preset.inherits.every(parentName => evaluateParent(parentName));
         }
-        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits "{1}"', preset.name, preset.inherits));
+        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits {1}', preset.name, `"${preset.inherits}"`));
         return false;
     }
     return true;
@@ -182,9 +182,9 @@ export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], re
             return evaluateCondition(condition);
         } catch (e) {
             if (e instanceof MissingConditionPropertyError) {
-                log.error(localize('missing.condition.property', 'Preset {0}: Missing required property "{1}" on condition object', preset.name, e.propertyName));
+                log.error(localize('missing.condition.property', 'Preset {0}: Missing required property {1} on condition object', preset.name, `"${e.propertyName}"`));
             } else if (e instanceof InvalidConditionTypeError) {
-                log.error(localize('invalid.condition.type', 'Preset {0}: Invalid condition type "{1}"', preset.name, e.type));
+                log.error(localize('invalid.condition.type', 'Preset {0}: Invalid condition type {1}', preset.name, `"${e.type}"`));
             } else {
                 // unexpected error
                 throw e;
@@ -688,23 +688,23 @@ export async function expandConfigurePreset(folder: string,
         if (!preset.binaryDir) {
             const defaultValue = '${sourceDir}/out/build/${presetName}';
 
-            log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value "{1}"', preset.name, defaultValue));
+            log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value {1}', preset.name, `"${defaultValue}"`));
             preset.binaryDir = defaultValue;
         }
         if (!preset.generator) {
             const defaultValue = preferredGeneratorName ?? 'Ninja';
 
-            log.debug(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value "{1}"', preset.name, defaultValue));
+            log.debug(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value {1}', preset.name, `"${defaultValue}"`));
             preset.generator = defaultValue;
         }
     } else {
         // toolchainFile and installDir added in presets v3
         if (preset.toolchainFile) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property "{1}" is unsupported in presets v2', preset.name, 'toolchainFile'));
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
             return null;
         }
         if (preset.installDir) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property "{1}" is unsupported in presets v2', preset.name, 'installDir'));
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
             return null;
         }
     }
@@ -775,10 +775,10 @@ function getToolset(preset: ConfigurePreset): Toolset {
         result = parseToolset(preset.toolset.value);
     }
 
-    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using '{1}' by default", preset.name, 'host=x86');
+    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using {1} by default", preset.name, '"host=x86"');
     if (result) {
         if (result.name === 'x86' || result.name === 'x64') {
-            log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean '{2}'?", preset.name, result.name, `host=${result.name}`));
+            log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified {1}, did you mean {2}?", preset.name, `"${result.name}"`, `"host=${result.name}"`));
         }
         if (!result.host) {
             log.warning(noToolsetArchWarning);
@@ -963,8 +963,8 @@ async function expandConfigurePresetHelper(folder: string,
                     }
                     if (latestVsIndex < 0) {
                         log.error(localize('specified.cl.not.found',
-                            "Configure preset {0}: Compiler '{1}' with toolset '{2}' and architecture '{3}' was not found, you may need to run 'CMake: Scan for Compilers' if it exists on your computer.",
-                            preset.name, `${compilerName}.exe`, toolset.version ? `${toolset.version},${toolset.host}` : toolset.host, arch));
+                            "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
+                            preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
                     } else {
                         compilerEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
                         // if ninja isn't on path, try to look for it in a VS install

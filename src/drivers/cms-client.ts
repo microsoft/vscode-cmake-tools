@@ -417,7 +417,7 @@ export class CMakeServerClient {
                     if (pr) {
                         pr.resolve(reply);
                     } else {
-                        log.error(localize('cookie.not.known.message', 'CMake server cookie "{0}" does not correspond to a known message', cookied.cookie));
+                        log.error(localize('cookie.not.known.message', 'CMake server cookie {0} does not correspond to a known message', `"${cookied.cookie}"`));
                     }
                     return;
                 }
@@ -427,7 +427,7 @@ export class CMakeServerClient {
                     if (pr) {
                         pr.reject(err);
                     } else {
-                        log.error(localize('cookie.not.known.message', 'CMake server cookie "{0}" does not correspond to a known message', cookied.cookie));
+                        log.error(localize('cookie.not.known.message', 'CMake server cookie {0} does not correspond to a known message', `"${cookied.cookie}"`));
                     }
                     return;
                 }
@@ -665,10 +665,9 @@ export class CMakeServerClient {
                             hsparams.platform = generator.platform;
                             hsparams.toolset = generator.toolset;
 
-                            const configureMessage: string = localize('configuring.using.generator',
-                                'Configuring using the "{0}" CMake generator', hsparams.generator);
+                            const configureMessage: string = localize('configuring.using.generator', 'Configuring using the {0} CMake generator', `"${hsparams.generator}"`);
                             const extraMessage: string = hsparams.platform || hsparams.toolset ?
-                                localize('with.platform.and.toolset', ' with platform "{0}" and toolset {1}', hsparams.platform, JSON.stringify(hsparams.toolset || {})) :
+                                localize('with.platform.and.toolset', ' with platform {0} and toolset {1}', `"${hsparams.platform}"`, JSON.stringify(`"${hsparams.toolset}"` || {})) :
                                 "";
                             log.info(configureMessage + extraMessage);
                         }

@@ -553,8 +553,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         if (this.buildTypesSeen.size > 0 && !this.buildTypesSeen.has(opts.activeBuildTypeVariant || "")) {
             const configName = opts.codeModelContent.configurations[0].name;
             log.warning(localize('build.type.out.of.sync',
-                "The build configurations generated do not contain the active build configuration. Using '{0}' for CMAKE_BUILD_TYPE instead of '{1}' to ensure that IntelliSense configurations can be found",
-                configName, opts.activeBuildTypeVariant));
+                "The build configurations generated do not contain the active build configuration. Using {0} for CMAKE_BUILD_TYPE instead of {1} to ensure that IntelliSense configurations can be found",
+                `"${configName}"`, `"${opts.activeBuildTypeVariant}"`));
             opts.activeBuildTypeVariant = configName;
         }
         for (const config of opts.codeModelContent.configurations) {
