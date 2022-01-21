@@ -34,6 +34,7 @@ suite('cmake', async () => {
         await cmt.allTargetName;  // Using an cmaketools command which creates the instance once.
 
         expect(testEnv.errorMessagesQueue.length).to.eql(1);  // Expect only cmake error message
-        expect(testEnv.errorMessagesQueue[0]).to.contain('Check to make sure it is installed or your settings contain the correct path');
+        expect(testEnv.errorMessagesQueue[0]).to.contain('Bad CMake executable');
+        expect(testEnv.errorMessagesQueue[0]).to.contain('Check to make sure it is installed');
     }).timeout(60000);
 });
