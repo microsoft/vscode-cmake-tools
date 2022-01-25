@@ -93,7 +93,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             } else {
                 expect(allTargetName).to.eq('all');
             }
-        }).timeout(60000);
+        }).timeout(60000 * 2);
 
         test('Check binary dir', async () => {
             const config = ConfigurationReader.create();
