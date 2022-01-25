@@ -291,7 +291,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         if (version === null) {
             return null;
         }
-        const gccCompilers: { [lang: string]: string } = { };
+        const gccCompilers: { [lang: string]: string } = {};
         const gxx_fname1 = fname.replace(/gcc/, 'g++');
         const gxx_bin1 = path.join(path.dirname(bin), gxx_fname1);
         if (await fs.exists(gxx_bin1)) {
@@ -382,7 +382,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             return null;
         }
 
-        const clangCompilers: { [lang: string]: string } = { };
+        const clangCompilers: { [lang: string]: string } = {};
         const clangxx_fname = fname.replace(/^clang/, 'clang++');
         const clangxx_bin1 = path.join(path.dirname(bin), clangxx_fname);
         log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
