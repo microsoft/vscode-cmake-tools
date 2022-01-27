@@ -95,7 +95,7 @@ suite('Kits scan test', async () => {
 
         // Don't care about the result, just check that we don't throw during the test
         await kit.scanForKits(cmt, { ignorePath: process.platform === 'win32' });
-    }).timeout(120000); // Compiler detection can run a little slow
+    }).timeout(120000 * 2); // Compiler detection can run a little slow
 
     test('Detect a GCC compiler file', async () => {
         const compiler = path.join(fakebin, 'gcc-42.1');
