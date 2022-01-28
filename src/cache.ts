@@ -220,7 +220,7 @@ export class CMakeCache {
             if (entry) {
                 entry.choices = list;
             } else {
-                log.warning(localize('ignore.strings.for.nonexisting.entry', 'Ignoring `STRINGS` property for nonexisting cache entry {0}', `"${name}"`));
+                log.warning(localize('ignore.strings.for.nonexisting.entry', 'Ignoring {1} property for nonexisting cache entry {0}', `"${name}"`, '"STRINGS"'));
             }
         });
 

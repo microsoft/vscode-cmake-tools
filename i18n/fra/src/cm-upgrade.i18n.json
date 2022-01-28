@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "Réponse différente de 200 durant le téléchargement du programme d'installation de la nouvelle version de CMake",
 	"downloaded.to.path": "Téléchargement effectué de {0} sur {1}",
-	"program.need.for.installer": "CMake Tools a besoin du programme '{0}' pour exécuter le programme d'installation de CMake",
+	"program.need.for.installer": "CMake Tools a besoin du programme {0} pour exécuter le programme d'installation de CMake",
 	"downloading.filename": "Téléchargement de {0}",
 	"running.cmake.installer": "Exécution du programme d'installation de CMake",
 	"failed.to.authorize": "Échec de l'autorisation d'exécution de l'installation de CMake.",
