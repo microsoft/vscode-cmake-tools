@@ -1,12 +1,12 @@
 name: More Info Needed Closer
 on:
-#  schedule:
-#    - cron: 10 11 * * * # Run at 11:10 AM UTC (3:10 AM PST, 4:10 AM PDT)
+  schedule:
+    - cron: 10 11 * * * # Run at 11:10 AM UTC (3:10 AM PST, 4:10 AM PDT)
   workflow_dispatch:
    inputs:
      readonly:
        description: "readonly: Specify true or 1 to prevent changes from being commited to GitHub"
-       default: true
+       default: false
 
 jobs:
   main:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install Actions
         run: cd ./.github/actions && npm install --production && cd ../..
-      - name: Stale Closer
+      - name: More Info Needed Closer
         uses: ./.github/actions/staleCloser
         with:
           readonly: ${{ github.event.inputs.readonly }}
