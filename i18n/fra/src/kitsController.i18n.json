@@ -19,7 +19,7 @@
 	"select.a.kit.placeholder": "Sélectionner un kit pour {0}",
 	"user.cancelled.kit.selection": "L'utilisateur a annulé la sélection du kit",
 	"user.selected.kit": "L'utilisateur a sélectionné le kit {0}",
-	"kit.references.non-existent": "Le kit \"{0}\" référence un fichier binaire de compilateur inexistant [{1}]. Que voulez-vous faire ?",
+	"kit.references.non-existent": "Le kit {0} référence un fichier binaire de compilateur inexistant [{1}]. Que voulez-vous faire ?",
 	"remove.it.button": "Supprimer",
 	"keep.it.button": "Conserver",
 	"pruning.kit": "Nettoyage du kit",

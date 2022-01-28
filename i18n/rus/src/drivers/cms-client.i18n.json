@@ -17,5 +17,5 @@
 	"cant.yet.handle.message": "Еще не удалось обработать сообщения ({0}).",
 	"sending.message.to.cmake-server": "Отправка сообщения команде cmake-server: {0}",
 	"configuring.using.generator": "Настройка с использованием генератора CMake \"{0}\"",
-	"with.platform.and.toolset": " с платформой \"{0}\" и набором инструментов {1}"
+	"with.platform.and.toolset": " с платформой \"{0}\" и набором инструментов \"{1}\""
 }

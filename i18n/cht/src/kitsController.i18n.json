@@ -19,7 +19,7 @@
 	"select.a.kit.placeholder": "選取 {0} 的套件",
 	"user.cancelled.kit.selection": "使用者已取消套件選取",
 	"user.selected.kit": "使用者已選取套件 {0}",
-	"kit.references.non-existent": "套件 \"{0}\" 參考了不存在的編譯器二進位檔 [{1}]。要執行什麼作業?",
+	"kit.references.non-existent": "套件 \"{0}\" 參考不存在的編譯器二進位檔 [{1}]。要執行什麼作業？",
 	"remove.it.button": "移除它",
 	"keep.it.button": "保留它",
 	"pruning.kit": "正在剪除套件",

@@ -13,7 +13,7 @@
 	"protocol.error.cmake": "Erro de protocolo ao se comunicar com CMake. Esta entrada foi obtida: {0}",
 	"received.message.from.make-server": "Mensagem recebida do servidor do CMake: {0}",
 	"invalid.cookie": "Cookie inválido: {0}",
-	"cookie.not.known.message": "O cookie \"{0}\" do servidor do CMake não corresponde a uma mensagem conhecida",
+	"cookie.not.known.message": "O cookie do servidor CMake {0} não corresponde a uma mensagem conhecida",
 	"cant.yet.handle.message": "Ainda não é possível processar as mensagens de {0}",
 	"sending.message.to.cmake-server": "Enviando mensagem para o servidor do CMake: {0}",
 	"configuring.using.generator": "Configurando usando o gerador do CMake \"{0}\"",

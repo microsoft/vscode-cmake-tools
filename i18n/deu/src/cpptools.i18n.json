@@ -9,6 +9,6 @@
 	"unknown.control.gflag.c": "Unbekanntes C-Standardsteuerungsflag: {0}",
 	"unknown.control.gflag": "Unbekanntes Standardsteuerungsflag: {0}",
 	"unknown language": "Unbekannte Sprache: {0}",
-	"build.type.out.of.sync": "Die generierten Buildkonfigurationen enthalten nicht die aktive Buildkonfiguration. Die Verwendung von \"{0}\" für CMAKE_BUILD_TYPE anstelle von \"{1}\" stellt sicher, dass IntelliSense-Konfigurationen gefunden werden können.",
+	"build.type.out.of.sync": "Die generierten Buildkonfigurationen enthalten nicht die aktive Buildkonfiguration. Die Verwendung von „{0}“ für CMAKE_BUILD_TYPE anstelle von „{1}“ stellt sicher, dass IntelliSense-Konfigurationen gefunden werden können.",
 	"path.not.found.in.cmake.cache": "Für mindestens eine Quelldatei wurde der Pfad zum Compiler nicht im CMake-Cache gefunden. Wenn Sie eine Toolkettendatei verwenden, müssen Sie beim Festlegen des C- und/oder C++-Compilerpfads wahrscheinlich die CACHE-Option angeben."
 }

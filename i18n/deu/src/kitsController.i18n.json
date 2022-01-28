@@ -19,7 +19,7 @@
 	"select.a.kit.placeholder": "Kit für \"{0}\" auswählen",
 	"user.cancelled.kit.selection": "Vom Benutzer abgebrochene Kitauswahl",
 	"user.selected.kit": "Vom Benutzer ausgewähltes Kit \"{0}\"",
-	"kit.references.non-existent": "Das Kit \"{0}\" verweist auf eine nicht vorhandene Compilerbinärdatei [{1}]. Wie möchten Sie vorgehen?",
+	"kit.references.non-existent": "Das Kit „{0}“ verweist auf eine nicht vorhandene Compilerbinärdatei [{1}]. Wie möchten Sie vorgehen?",
 	"remove.it.button": "Entfernen",
 	"keep.it.button": "Beibehalten",
 	"pruning.kit": "Kit wird bereinigt.",

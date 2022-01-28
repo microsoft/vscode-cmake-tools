@@ -19,5 +19,6 @@
 	"missing.setting.in.variant": "バリアントの定義に設定 \"{0}\" がありません。",
 	"missing.variant.choice": "バリアントの定義に、\"{1}\" に対するバリアントの選択 \"{0}\" がありません。",
 	"incompatible.variant": "最後のバリアントの選択は、現在のバリアントの定義と互換性がありません。",
-	"using.default.variant.choices": "バリアント定義から既定のバリアント選択を使用しています。"
+	"using.default.variant.choices": "バリアント定義から既定のバリアント選択を使用しています。",
+	"select.a.variant.placeholder": "ビルド バリアントを選択してください"
 }

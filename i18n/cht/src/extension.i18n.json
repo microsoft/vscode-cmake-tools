@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "正在重新讀取套件",
 	"dispose.cmake.tools": "處置 CMake 工具",
-	"configure.this.project": "是否要設定專案 '{0}'?",
+	"configure.this.project": "是否設定專案 \"{0}\"?",
 	"yes.button": "是",
 	"not.now.button": "現在不要",
 	"always.configure.on.open": "永遠在開啟時設定專案嗎?",
@@ -20,7 +20,7 @@
 	"configure.recommended": "建議您在升級為新套件定義後重新設定。",
 	"using.cache.to.configure.workspace.on.open": "使用快取在開放式 {0} 上設定工作區",
 	"update.code.model.for.cpptools": "更新 cpptools 的程式碼模型",
-	"update.intellisense.disabled": "無法更新組態提供者，因為 C_Cpp.intelliSenseEngine 設為 '停用'",
+	"update.intellisense.disabled": "未更新設定提供者，因為 {0} 設定為 {1}",
 	"filed.to.open.cache.file.on.code.model.update": "無法在程式碼模型更新時開啟 CMake 快取檔案",
 	"opening.text.editor.for": "正在開啟 {0} 的文字編輯器",
 	"no.kits.file.what.to.do": "沒有套件檔案存在。要執行什麼作業?",

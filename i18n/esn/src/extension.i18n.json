@@ -20,7 +20,7 @@
 	"configure.recommended": "Se recomienda volver a configurar después de actualizar a una nueva definición de los kits.",
 	"using.cache.to.configure.workspace.on.open": "Usando la caché para configurar el área de trabajo en {0} que se ha abierto",
 	"update.code.model.for.cpptools": "Actualizar el modelo de código para cpptools",
-	"update.intellisense.disabled": "No se actualiza el proveedor de configuración porque C_Cpp.intelliSenseEngine está establecido en \"Deshabilitado\"",
+	"update.intellisense.disabled": "No se está actualizando el proveedor de configuración porque {0} está establecido en {1}",
 	"filed.to.open.cache.file.on.code.model.update": "No se pudo abrir el archivo caché de CMake en la actualización del modelo de código.",
 	"opening.text.editor.for": "Abriendo el editor de texto para {0}",
 	"no.kits.file.what.to.do": "No hay ningún archivo de kits presente. ¿Qué quiere hacer?",

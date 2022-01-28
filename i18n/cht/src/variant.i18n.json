@@ -19,5 +19,6 @@
 	"missing.setting.in.variant": "變化定義中缺少設定 \"{0}\"。",
 	"missing.variant.choice": "變化定義中的 \"{1}\" 缺少變化選項 \"{0}\"。",
 	"incompatible.variant": "上一個變化選取項目與目前的變化定義不相容。",
-	"using.default.variant.choices": "正在使用變化定義中的預設變化選項。"
+	"using.default.variant.choices": "正在使用變化定義中的預設變化選項。",
+	"select.a.variant.placeholder": "選取建組變體"
 }

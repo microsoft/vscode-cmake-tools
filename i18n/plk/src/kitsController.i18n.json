@@ -19,7 +19,7 @@
 	"select.a.kit.placeholder": "Wybierz zestaw dla: {0}",
 	"user.cancelled.kit.selection": "Użytkownik anulował wybór zestawu",
 	"user.selected.kit": "Użytkownik wybrał zestaw {0}",
-	"kit.references.non-existent": "Zestaw „{0}” przywołuje nieistniejący plik binarny kompilatora [{1}]. Co chcesz zrobić?",
+	"kit.references.non-existent": "Zestaw {0} przywołuje nieistniejący plik binarny kompilatora [{1}]. Co chcesz zrobić?",
 	"remove.it.button": "Usuń ten element",
 	"keep.it.button": "Pozostaw",
 	"pruning.kit": "Zestaw oczyszczania",
