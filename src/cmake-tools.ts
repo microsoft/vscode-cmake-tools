@@ -1173,7 +1173,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy {0} to {1}: {2}', `"${compdb_path}"`, `"${expanded_dest}"`, e.toString()));
                     }
                 } catch (e: any) {
-                    void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
+                    void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.1',
                         'Tried to copy {0} to {1}, but failed to create the parent directory {2}: {3}',
                         `"${compdb_path}"`, `"${expanded_dest}"`, `"${pardir}"`, e.toString()));
                 }
@@ -1196,7 +1196,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             try {
                 await fs.mkdir_p(pardir);
             } catch (e: any) {
-                void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
+                void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.2',
                     'Tried to copy compilation database to {0}, but failed to create the parent directory {1}: {2}',
                     `"${expanded_dest}"`, `"${pardir}"`, e.toString()));
                 return;
@@ -1211,7 +1211,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 await fs.writeFile(expanded_dest, CompilationDatabase.toJson(new_db));
             } catch (e: any) {
                 // Just display the error. It's the best we can do.
-                void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to write merged compilation database to {0}: {1}', `"${expanded_dest}"`, e.toString()));
+                void vscode.window.showErrorMessage(localize('failed.to.merge', 'Failed to write merged compilation database to {0}: {1}', `"${expanded_dest}"`, e.toString()));
                 return;
             }
         }

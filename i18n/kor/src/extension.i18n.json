@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "키트를 다시 읽는 중",
 	"dispose.cmake.tools": "CMake 도구 삭제",
-	"configure.this.project": "'{0}' 프로젝트를 구성하시겠습니까?",
+	"configure.this.project": "{0} 프로젝트를 구성하시겠습니까?",
 	"yes.button": "예",
 	"not.now.button": "나중에",
 	"always.configure.on.open": "항상 프로젝트를 열 때 구성하시겠습니까?",
