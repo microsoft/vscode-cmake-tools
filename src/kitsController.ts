@@ -570,7 +570,14 @@ export class KitsController {
 
         // Update the new kits we know about.
         const new_kits_by_name = discovered_kits.reduce(
-            (acc, kit) => ({ ...acc, [kit.name]: kit }),
+            (acc, kit) => {
+                // Try to keep the best match (e.g. compilers for C and CXX exist)
+                if (!acc[kit.name]?.compilers || !kit.compilers ||
+                    Object.keys(kit.compilers).length >= Object.keys(acc[kit.name].compilers!).length) {
+                    return { ...acc, [kit.name]: kit };
+                }
+                return acc;
+            },
             old_kits_by_name
         );
 

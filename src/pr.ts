@@ -49,6 +49,8 @@ export namespace fs {
 
     export const walk = promisify(walk_);
 
+    export const realpath = promisify(fs_.realpath);
+
     /**
      * Try and stat() a file. If stat() fails for *any reason*, returns `null`.
      * @param filePath The file to try and stat()
