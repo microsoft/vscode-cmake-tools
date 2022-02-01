@@ -479,9 +479,9 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
         try {
             const kit: Kit | null = await kitIfCompiler(bin, pr);
             if (kit?.compilers) {
-                for (const lang of Object.getOwnPropertyNames(kit.compilers)) {
-                    kit.compilers[lang] = await fs.realpath(kit.compilers[lang]);
-                }
+                log.trace(`Kit found: ${kit.name}`);
+                log.trace(`        C: ${kit.compilers['C']}`);
+                log.trace(`      CXX: ${kit.compilers['CXX']}`);
             }
             return kit;
         } catch (e) {
