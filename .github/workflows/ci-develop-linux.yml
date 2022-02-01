@@ -37,5 +37,5 @@ jobs:
         uses: actions/upload-artifact@v2.2.4
         with:
           name: TestLogs
-          path: test/**/log.txt
+          path: ~/.local/share/**/log.txt
           if-no-files-found: warn
