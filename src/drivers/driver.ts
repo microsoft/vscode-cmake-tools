@@ -515,6 +515,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
         await this.doSetKit(needs_clean, async () => {
             await this._setKit(kit, preferredGenerators);
+            await this._refreshExpansions();
         });
     }
 
