@@ -10,7 +10,7 @@ import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/code-pages';
 import { ConfigureTrigger } from "@cmt/cmake-tools";
 import { ArgsCompileCommand } from '@cmt/compdb';
-import { ConfigurationReader } from '@cmt/config';
+import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
@@ -515,6 +515,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
         await this.doSetKit(needs_clean, async () => {
             await this._setKit(kit, preferredGenerators);
+            await this._refreshExpansions();
         });
     }
 
@@ -1617,21 +1618,29 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const buildArgs: string[] = this.config.buildArgs.slice(0);
             const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
 
-            // Only add '-j' argument if parallelJobs > 1
-            if (this.config.numJobs > 1) {
+            const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
+            const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number|undefined>('parallelJobs');
+            let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
+            // for Ninja generator, don't '-j' argument if user didn't define number of jobs
+            // let numJobs: number | undefined = this.config.numJobs;
+            if (numJobs === undefined && gen && !/Ninja/.test(gen)) {
+                numJobs = defaultNumJobs();
+            }
+            // for msbuild generators, only add '-j' argument if parallelJobs > 1
+            if (numJobs && ((gen && !/Visual Studio/.test(gen)) || numJobs > 1)) {
                 // Prefer using CMake's build options to set parallelism over tool-specific switches.
                 // The feature is not available until version 3.14.
                 if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
                     buildArgs.push('-j');
-                    if (this.config.numJobs) {
-                        buildArgs.push(this.config.numJobs.toString());
+                    if (numJobs) {
+                        buildArgs.push(numJobs.toString());
                     }
                 } else {
                     if (gen) {
                         if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
-                            buildToolArgs.push('-j', this.config.numJobs.toString());
+                            buildToolArgs.push('-j', numJobs.toString());
                         } else if (/Visual Studio/.test(gen) && targets !== ['clean']) {
-                            buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
+                            buildToolArgs.push('/maxcpucount:' + numJobs.toString());
                         }
                     }
                 }
