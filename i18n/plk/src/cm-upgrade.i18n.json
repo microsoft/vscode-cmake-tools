@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "Odpowiedź inna niż 200 podczas pobierania nowego instalatora narzędzia CMake",
 	"downloaded.to.path": "Pobrano element {0} do lokalizacji {1}",
-	"program.need.for.installer": "Narzędzia CMake Tools wymagają programu „{0}”, aby uruchomić instalatora narzędzia CMake",
+	"program.need.for.installer": "Narzędzia CMake Tools wymagają programu {0}, aby uruchomić instalatora narzędzia CMake",
 	"downloading.filename": "Pobieranie {0}",
 	"running.cmake.installer": "Uruchamianie instalatora narzędzia CMake",
 	"failed.to.authorize": "Nie można zautoryzować na potrzeby uruchomienia instalacji narzędzia CMake.",

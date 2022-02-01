@@ -173,8 +173,8 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
             return description.createConfig(debuggerPathOverride, target);
         }
         log.warning(localize('invalid.miDebuggerPath.override',
-            "'{0}' in '{1}' must be an absolute path to a debugger (variable expansion is not currently supported). Got: '{2}'",
-            "miDebuggerPath", "cmake.debugConfig", debuggerPathOverride));
+            '{0} in {1} must be an absolute path to a debugger (variable expansion is not currently supported). Got: {2}',
+            '"miDebuggerPath"', '"cmake.debugConfig"', `"${debuggerPathOverride}"`));
     }
 
     const compiler_path = searchForCompilerPathInCache(cache);

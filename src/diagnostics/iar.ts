@@ -6,8 +6,7 @@ import * as vscode from 'vscode';
 
 import { oneLess, RawDiagnosticParser, FeedLineResult, RawDiagnostic } from './util';
 
-const CODE_REGEX
-    = /^\"(?<file>.*)\",(?<line>\d+)\s+(?<severity>[A-Za-z ]+)\[(?<code>[A-Za-z]+[0-9]+)\]:(?<message_start>.*)$/;
+const CODE_REGEX = /^\"(?<file>.*)\",(?<line>\d+)\s+(?<severity>[A-Za-z ]+)\[(?<code>[A-Za-z]+[0-9]+)\]:(?<message_start>.*)$/;
 
 const POINTER_REGEX = /^( +)\^$/;
 

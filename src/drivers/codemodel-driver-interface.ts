@@ -1,7 +1,6 @@
 import { CMakeCache } from "@cmt/cache";
 
-export type TargetTypeString
-    = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
+export type TargetTypeString = 'STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY';
 
 /** Describes a cmake target */
 export interface CodeModelTarget {
