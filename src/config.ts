@@ -15,6 +15,9 @@ import { Environment } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+export function defaultNumJobs (): number {
+    return os.cpus().length + 2;
+}
 
 const log = logging.createLogger('config');
 
@@ -103,7 +106,7 @@ export interface ExtensionConfigurationSettings {
     configureArgs: string[];
     buildArgs: string[];
     buildToolArgs: string[];
-    parallelJobs: number;
+    parallelJobs: number | undefined;
     ctestPath: string;
     ctest: { parallelJobs: number };
     parseBuildDiagnostics: boolean;
@@ -280,7 +283,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get buildToolArgs(): string[] {
         return this.configData.buildToolArgs;
     }
-    get parallelJobs(): number {
+    get parallelJobs(): number | undefined {
         return this.configData.parallelJobs;
     }
     get ctest_parallelJobs(): number | null {
@@ -357,18 +360,20 @@ export class ConfigurationReader implements vscode.Disposable {
         return communicationMode;
     }
 
-    get numJobs(): number {
-        const jobs = this.parallelJobs;
-        if (!!jobs) {
-            return jobs;
+    get numJobs(): number | undefined {
+        if (this.parallelJobs === undefined) {
+            return undefined;
+        } else if (this.parallelJobs === 0) {
+            return defaultNumJobs();
+        } else {
+            return this.parallelJobs;
         }
-        return os.cpus().length + 2;
     }
 
     get numCTestJobs(): number {
         const ctest_jobs = this.ctest_parallelJobs;
         if (!ctest_jobs) {
-            return this.numJobs;
+            return this.numJobs || defaultNumJobs();
         }
         return ctest_jobs;
     }
