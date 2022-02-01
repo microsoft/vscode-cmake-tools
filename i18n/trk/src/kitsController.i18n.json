@@ -19,7 +19,7 @@
 	"select.a.kit.placeholder": "{0} için bir Set seçin",
 	"user.cancelled.kit.selection": "Kullanıcı Set seçimini iptal etti",
 	"user.selected.kit": "Kullanıcı {0} setini seçti",
-	"kit.references.non-existent": "\"{0}\" seti mevcut olmayan bir derleyici ikilisine [{1}] başvuruyor. Ne yapmak istiyorsunuz?",
+	"kit.references.non-existent": "{0} seti mevcut olmayan bir derleyici ikilisine [{1}] başvuruyor. Ne yapmak istersiniz?",
 	"remove.it.button": "Kaldır",
 	"keep.it.button": "Sakla",
 	"pruning.kit": "Set ayıklanıyor",

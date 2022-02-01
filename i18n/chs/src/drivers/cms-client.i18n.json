@@ -13,9 +13,9 @@
 	"protocol.error.cmake": "与 CMake 通信时出现协议错误! 已获取此输入: {0}",
 	"received.message.from.make-server": "已收到来自 cmake-server 的消息: {0}",
 	"invalid.cookie": "cookie 无效: {0}",
-	"cookie.not.known.message": "CMake 服务器 Cookie“{0}”与已知消息不对应",
+	"cookie.not.known.message": "CMake 服务器 Cookie {0} 与已知消息不对应",
 	"cant.yet.handle.message": "尚无法处理 {0} 条消息",
 	"sending.message.to.cmake-server": "将消息发送到 cmake-server: {0}",
-	"configuring.using.generator": "正在使用“{0}”CMake 生成器进行配置",
-	"with.platform.and.toolset": " 平台:“{0}”，工具集: {1}"
+	"configuring.using.generator": "正在使用 {0} CMake 生成器进行配置",
+	"with.platform.and.toolset": " 通过平台 {0} 和工具集 {1}"
 }

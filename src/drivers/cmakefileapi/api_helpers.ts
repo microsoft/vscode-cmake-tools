@@ -182,8 +182,7 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
 function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject,
     root_paths: index_api.CodeModelKind.PathInfo): CodeModelFileGroup[] {
     const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
-        const compileFlags
-            = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
+        const compileFlags = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
 
         return {
             isGenerated: false,
@@ -223,8 +222,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
     // each compileGroup has its separate sysroot.
     let sysroot;
     if (targetObject.compileGroups) {
-        const all_sysroots
-            = targetObject.compileGroups.map(x => !!x.sysroot ? x.sysroot.path : undefined).filter(x => x !== undefined);
+        const all_sysroots = targetObject.compileGroups.map(x => !!x.sysroot ? x.sysroot.path : undefined).filter(x => x !== undefined);
         sysroot = all_sysroots.length !== 0 ? all_sysroots[0] : undefined;
     }
 
@@ -269,9 +267,7 @@ export async function loadConfig(paths: index_api.CodeModelKind.PathInfo,
 export async function loadExtCodeModelContent(reply_path: string, codeModel_filename: string) {
     const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
 
-    const configurations
-        = await Promise.all((codeModelContent.configurations)
-            .map(config_element => loadConfig(codeModelContent.paths, reply_path, config_element)));
+    const configurations = await Promise.all(codeModelContent.configurations.map(config_element => loadConfig(codeModelContent.paths, reply_path, config_element)));
 
     return { configurations } as CodeModelContent;
 }

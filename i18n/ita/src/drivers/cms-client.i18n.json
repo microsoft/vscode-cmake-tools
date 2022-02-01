@@ -13,9 +13,9 @@
 	"protocol.error.cmake": "Errore di protocollo durante le comunicazioni con CMake. Input restituito: {0}",
 	"received.message.from.make-server": "Messaggio ricevuto da cmake-server: {0}",
 	"invalid.cookie": "Cookie non valido: {0}",
-	"cookie.not.known.message": "Il cookie \"{0}\" del server CMake non corrisponde a un messaggio noto",
+	"cookie.not.known.message": "Il cookie {0} del server CMake non corrisponde a un messaggio noto",
 	"cant.yet.handle.message": "Non è ancora possibile gestire i messaggi del protocollo {0}",
 	"sending.message.to.cmake-server": "Invio del messaggio a cmake-server: {0}",
-	"configuring.using.generator": "Configurazione con il generatore CMake \"{0}\"",
-	"with.platform.and.toolset": " con la piattaforma \"{0}\" e il set di strumenti {1}"
+	"configuring.using.generator": "Configurazione con il generatore CMake {0}",
+	"with.platform.and.toolset": " con la piattaforma {0} e il set di strumenti {1}"
 }
