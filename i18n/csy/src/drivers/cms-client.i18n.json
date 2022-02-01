@@ -13,7 +13,7 @@
 	"protocol.error.cmake": "Chyba protokolu při komunikaci s CMake! Byl obdržen tento vstup: {0}",
 	"received.message.from.make-server": "Přijala se zpráva z programu cmake-server: {0}",
 	"invalid.cookie": "Neplatný soubor cookie: {0}",
-	"cookie.not.known.message": "Soubor cookie serveru CMake {0} neodpovídá známé zprávě.",
+	"cookie.not.known.message": "Soubor cookie serveru CMake {0} neodpovídá známé zprávě",
 	"cant.yet.handle.message": "Zprávy {0} se zatím nedají zpracovat.",
 	"sending.message.to.cmake-server": "Posílá se zpráva do programu cmake-server: {0}",
 	"configuring.using.generator": "Probíhá konfigurace pomocí generátoru CMake {0}.",

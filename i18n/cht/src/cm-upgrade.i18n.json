@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "下載新的 CMake 安裝程式時發生非 200 的回應",
 	"downloaded.to.path": "已將 {0} 下載至 {1}",
-	"program.need.for.installer": "CMake 工具需要 '{0}' 程式才能執行 CMake 安裝程式",
+	"program.need.for.installer": "CMake 工具需要 {0} 程式才能執行 CMake 安裝程式",
 	"downloading.filename": "正在下載 {0}",
 	"running.cmake.installer": "正在執行 CMake 安裝程式",
 	"failed.to.authorize": "無法授權執行 CMake 安裝。",
