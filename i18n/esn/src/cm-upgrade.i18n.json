@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "Se obtuvo una respuesta que no es 200 al descargar el instalador de CMake nuevo.",
 	"downloaded.to.path": "Se descargó {0} en {1}.",
-	"program.need.for.installer": "Las Herramientas de CMake requieren el programa \"{0}\" para ejecutar el instalador de CMake.",
+	"program.need.for.installer": "Las Herramientas de CMake requieren el programa {0} para ejecutar el instalador de CMake.",
 	"downloading.filename": "Descargando {0}",
 	"running.cmake.installer": "Ejecutando el instalador de CMake",
 	"failed.to.authorize": "No se pudo autorizar para ejecutar la instalación de CMake.",

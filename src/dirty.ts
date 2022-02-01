@@ -49,14 +49,13 @@ export class InputFileSet {
     }
 
     static async create(cmake_inputs: CMakeInputsContent): Promise<InputFileSet> {
-        const input_files
-            = await Promise.all(util.map(util.flatMap(cmake_inputs.buildFiles, entry => entry.sources), src => {
-                // Map input file paths to files relative to the source directory
-                if (!path.isAbsolute(src)) {
-                    src = util.platformNormalizePath(path.join(cmake_inputs.sourceDirectory, src));
-                }
-                return InputFile.create(src);
-            }));
+        const input_files = await Promise.all(util.map(util.flatMap(cmake_inputs.buildFiles, entry => entry.sources), src => {
+            // Map input file paths to files relative to the source directory
+            if (!path.isAbsolute(src)) {
+                src = util.platformNormalizePath(path.join(cmake_inputs.sourceDirectory, src));
+            }
+            return InputFile.create(src);
+        }));
         return new InputFileSet(input_files);
     }
 

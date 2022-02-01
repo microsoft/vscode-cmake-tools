@@ -11,6 +11,7 @@ import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { CppDebugConfiguration } from './debugger';
+import { Environment } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -25,10 +26,6 @@ export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'autom
 export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
 export type TouchBarButtonVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
-
-interface HardEnv {
-    [key: string]: string;
-}
 
 export interface AdvancedTouchBarConfig {
     configure?: TouchBarButtonVisibility;
@@ -118,10 +115,10 @@ export interface ExtensionConfigurationSettings {
     defaultVariants: object;
     ctestArgs: string[];
     ctestDefaultArgs: string[];
-    environment: HardEnv;
-    configureEnvironment: HardEnv;
-    buildEnvironment: HardEnv;
-    testEnvironment: HardEnv;
+    environment: Environment;
+    configureEnvironment: Environment;
+    buildEnvironment: Environment;
+    testEnvironment: Environment;
     mingwSearchDirs: string[];
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
@@ -357,9 +354,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get cmakeCommunicationMode(): CMakeCommunicationMode {
         let communicationMode = this.configData.cmakeCommunicationMode;
         if (communicationMode === "automatic" && this.useCMakeServer) {
-            log.warning(localize(
-                'please.upgrade.configuration',
-                'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
+            log.warning(localize('please.upgrade.configuration', 'The setting {0} is replaced by {1}. Please upgrade your configuration.', '"useCMakeServer"', '"cmakeCommunicationMode"'));
             communicationMode = 'serverApi';
         }
         return communicationMode;
@@ -452,10 +447,10 @@ export class ConfigurationReader implements vscode.Disposable {
         defaultVariants: new vscode.EventEmitter<object>(),
         ctestArgs: new vscode.EventEmitter<string[]>(),
         ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
-        environment: new vscode.EventEmitter<HardEnv>(),
-        configureEnvironment: new vscode.EventEmitter<HardEnv>(),
-        buildEnvironment: new vscode.EventEmitter<HardEnv>(),
-        testEnvironment: new vscode.EventEmitter<HardEnv>(),
+        environment: new vscode.EventEmitter<Environment>(),
+        configureEnvironment: new vscode.EventEmitter<Environment>(),
+        buildEnvironment: new vscode.EventEmitter<Environment>(),
+        testEnvironment: new vscode.EventEmitter<Environment>(),
         mingwSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),

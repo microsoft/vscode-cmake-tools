@@ -13,12 +13,12 @@
 	"parsing.cmake.cache.string": "Analisi della stringa della cache di CMake",
 	"failed.to.read.line.from.cmake.cache.file": "Non è stato possibile leggere una riga da un file di cache di CMake {0}",
 	"read.line.in.cache": "Leggi la riga nella cache con {0}={1}, {2}={3}, {4}={5}",
-	"cache.entry.unknown": "La voce della cache '{0}' ha un tipo sconosciuto: '{1}'",
+	"cache.entry.unknown": "La voce della cache {0} ha un tipo sconosciuto: {1}",
 	"constructing.new.cache.entry": "Costruzione di una nuova voce della cache dalla riga specificata",
-	"nonexisting.advanced.entry": "Voce della cache non esistente '{0}' contrassegnata come avanzata",
-	"ignore.strings.for.nonexisting.entry": "La proprietà' STRINGs ' verrà ignorata per la voce della cache non esistente '{0}'",
+	"nonexisting.advanced.entry": "Voce della cache non esistente {0} contrassegnata come avanzata",
+	"ignore.strings.for.nonexisting.entry": "La proprietà `STRINGS` verrà ignorata per la voce della cache non esistente {0}",
 	"parsed.cache.entries": "Sono state analizzate {0} voci della cache",
-	"cache.value.truncation.warning": "NewLine trovati nella voce della cache '{0}'. Il valore è stato troncato a '{1}'",
+	"cache.value.truncation.warning": "NewLine trovati nella voce della cache {0}. Il valore è stato troncato a {1}",
 	"get.cache.key": "Recupera la chiave della cache {0}={1}",
 	"get.cache.key.missing": "Recupera la chiave della cache {0}= [[Mancante]]"
 }

@@ -238,7 +238,7 @@ export class KitsController {
         }
         if (!avail.find(kit => kit.name === SpecialKits.Unspecified)) {
             // We should _always_ have the 'UnspecifiedKit'.
-            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
+            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find {0}', '"SpecialKits.Unspecified"'));
             return false;
         }
 
@@ -386,8 +386,8 @@ export class KitsController {
                 }
                 const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
                     localize('kit.references.non-existent',
-                        'The kit "{0}" references a non-existent compiler binary [{1}]. What would you like to do?',
-                        kit.name, missing.path),
+                        'The kit {0} references a non-existent compiler binary [{1}]. What would you like to do?',
+                        `"${kit.name}"`, missing.path),
                     {},
                     {
                         action: 'remove',

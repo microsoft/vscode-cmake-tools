@@ -6,10 +6,10 @@ import * as cache from '@cmt/cache';
 import { CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
 import { fs } from '@cmt/pr';
-import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
+import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -302,15 +302,12 @@ export interface CMakeCacheEntry {
 export interface CacheReply extends ReplyMessage, CacheContent { inReplyTo: 'cache' }
 
 // Union type that represents any of the request types.
-export type SomeRequestMessage
-    = (HandshakeRequest | GlobalSettingsRequest | SetGlobalSettingsRequest | ConfigureRequest | ComputeRequest | CodeModelRequest | CacheRequest);
+export type SomeRequestMessage = (HandshakeRequest | GlobalSettingsRequest | SetGlobalSettingsRequest | ConfigureRequest | ComputeRequest | CodeModelRequest | CacheRequest);
 
 // Union type that represents a response type
-export type SomeReplyMessage
-    = (HandshakeReply | GlobalSettingsReply | SetGlobalSettingsReply | ConfigureReply | ComputeReply | CodeModelReply | CacheReply);
+export type SomeReplyMessage = (HandshakeReply | GlobalSettingsReply | SetGlobalSettingsReply | ConfigureReply | ComputeReply | CodeModelReply | CacheReply);
 
-export type SomeMessage
-    = (SomeReplyMessage | SomeRequestMessage | ProgressMessage | ErrorMessage | MessageMessage | HelloMessage | SignalMessage);
+export type SomeMessage = (SomeReplyMessage | SomeRequestMessage | ProgressMessage | ErrorMessage | MessageMessage | HelloMessage | SignalMessage);
 
 /**
  * The initial parameters when setting up the CMake client. The client init
@@ -324,7 +321,7 @@ export interface ClientInit {
     onOtherOutput(m: string): Promise<void>;
     onProgress(m: ProgressMessage): Promise<void>;
     onDirty(): Promise<void>;
-    environment: NodeJS.ProcessEnv;
+    environment: Environment;
     sourceDir: string;
     binaryDir: string;
     tmpdir: string;
@@ -420,7 +417,7 @@ export class CMakeServerClient {
                     if (pr) {
                         pr.resolve(reply);
                     } else {
-                        log.error(localize('cookie.not.known.message', 'CMake server cookie "{0}" does not correspond to a known message', cookied.cookie));
+                        log.error(localize('cookie.not.known.message', 'CMake server cookie {0} does not correspond to a known message', `"${cookied.cookie}"`));
                     }
                     return;
                 }
@@ -430,7 +427,7 @@ export class CMakeServerClient {
                     if (pr) {
                         pr.reject(err);
                     } else {
-                        log.error(localize('cookie.not.known.message', 'CMake server cookie "{0}" does not correspond to a known message', cookied.cookie));
+                        log.error(localize('cookie.not.known.message', 'CMake server cookie {0} does not correspond to a known message', `"${cookied.cookie}"`));
                     }
                     return;
                 }
@@ -556,12 +553,11 @@ export class CMakeServerClient {
             pipe_file = `/tmp/cmake-server-${Math.random()}`;
         }
         this._pipeFilePath = pipe_file;
-        const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables,
-            params.environment as proc.EnvironmentVariables);
-        const child
-            = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
-                env: final_env, cwd: params.binaryDir
-            });
+        const final_env = EnvironmentUtils.merge([process.env, params.environment]);
+        const child = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
+            env: final_env,
+            cwd: params.binaryDir
+        });
         log.debug(localize('started.new.cmake.server.instance', 'Started new CMake Server instance with PID {0}', child.pid));
         child.stdout.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
         child.stderr.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
@@ -631,8 +627,7 @@ export class CMakeServerClient {
                 onHello: async (msg: HelloMessage) => {
                     // We've gotten the hello message. We need to commense handshake
                     try {
-                        const hsparams: HandshakeParams
-                            = { buildDirectory: params.binaryDir, protocolVersion: msg.supportedProtocolVersions[0] };
+                        const hsparams: HandshakeParams = { buildDirectory: params.binaryDir, protocolVersion: msg.supportedProtocolVersions[0] };
 
                         const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
                         const have_cache = await fs.exists(cache_path);
@@ -669,10 +664,9 @@ export class CMakeServerClient {
                             hsparams.platform = generator.platform;
                             hsparams.toolset = generator.toolset;
 
-                            const configureMessage: string = localize('configuring.using.generator',
-                                'Configuring using the "{0}" CMake generator', hsparams.generator);
+                            const configureMessage: string = localize('configuring.using.generator', 'Configuring using the {0} CMake generator', `"${hsparams.generator}"`);
                             const extraMessage: string = hsparams.platform || hsparams.toolset ?
-                                localize('with.platform.and.toolset', ' with platform "{0}" and toolset {1}', hsparams.platform, JSON.stringify(hsparams.toolset || {})) :
+                                localize('with.platform.and.toolset', ' with platform {0} and toolset {1}', `"${hsparams.platform}"`, JSON.stringify(`"${hsparams.toolset}"` || {})) :
                                 "";
                             log.info(configureMessage + extraMessage);
                         }

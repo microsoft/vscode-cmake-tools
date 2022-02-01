@@ -108,7 +108,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async doBuild(): Promise<any> {
         if (this.command !== "build") {
-            this.writeEmitter.fire(localize("not.a.build.command", "\"{0}\" is not a recognized build command.", this.command) + this.endOfLine);
+            this.writeEmitter.fire(localize("not.a.build.command", '{0} is not a recognized build command.', `"${this.command}"`) + this.endOfLine);
             this.closeEmitter.fire(-1);
             return;
         }

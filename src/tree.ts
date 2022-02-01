@@ -153,8 +153,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
         const ret: BaseNode[] = [];
         const subdirs = [...this._subdirs.values()].sort((a, b) => a.pathPart.localeCompare(b.pathPart));
         ret.push(...subdirs);
-        const leaves =
-            [...this._leaves.values()].sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
+        const leaves = [...this._leaves.values()].sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
         ret.push(...leaves);
         return ret;
     }
@@ -310,8 +309,7 @@ export class TargetNode extends BaseNode {
                 dark: path.join(thisExtension().extensionPath, "res/dark", icon)
             };
             item.id = this.id;
-            const canBuild
-                = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
+            const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
             const canRun = this._type === 'UTILITY';
             item.contextValue = [
                 `nodeType=target`,

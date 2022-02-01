@@ -13,9 +13,9 @@
 	"protocol.error.cmake": "Błąd protokołu podczas komunikacji z narzędziem CMake! Uzyskano następujące dane wejściowe: {0}",
 	"received.message.from.make-server": "Odebrano komunikat z programu cmake-server: {0}",
 	"invalid.cookie": "Nieprawidłowy plik cookie: {0}",
-	"cookie.not.known.message": "Plik cookie serwera narzędzia CMake „{0}” nie odpowiada znanemu komunikatowi",
+	"cookie.not.known.message": "Plik cookie serwera narzędzia CMake {0} nie odpowiada znanemu komunikatowi",
 	"cant.yet.handle.message": "Nie można jeszcze obsłużyć komunikatów {0}",
 	"sending.message.to.cmake-server": "Wysyłanie komunikatu do programu cmake-server: {0}",
-	"configuring.using.generator": "Konfigurowanie korzystania z generatora narzędzia CMake „{0}”",
-	"with.platform.and.toolset": " z platformą „{0}” i zestawem narzędzi {1}"
+	"configuring.using.generator": "Konfigurowanie korzystania z generatora narzędzia CMake {0}",
+	"with.platform.and.toolset": " z platformą {0} i zestawem narzędzi {1}"
 }
