@@ -29,7 +29,7 @@ import { CMakeGenerator, Kit } from './kit';
 import { LegacyCMakeDriver } from '@cmt/drivers/legacy-driver';
 import * as logging from './logging';
 import { fs } from './pr';
-import { buildCmdStr, EnvironmentVariables } from './proc';
+import { buildCmdStr, DebuggerEnvironmentVariable } from './proc';
 import { Property } from './prop';
 import rollbar from './rollbar';
 import * as telemetry from './telemetry';
@@ -44,6 +44,7 @@ import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableF
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
+import { Environment, EnvironmentUtils } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -242,7 +243,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     await this.workspaceContext.state.setConfigurePresetName(configurePreset);
                     this._statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
-                    void vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset "{0}".', error));
+                    void vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset {0}.', `"${error}"`));
                     this._statusMessage.set(localize('error.on.switch.config.preset', 'Error on switch of configure preset ({0})', error.message));
                     this._cmakeDriver = Promise.resolve(null);
                     await this.resetPresets();
@@ -301,7 +302,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     await this.workspaceContext.state.setBuildPresetName(expandedBuildPreset.configurePreset, buildPreset);
                     this._statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
-                    void vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset "{0}".', error));
+                    void vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset {0}.', `"${error}"`));
                     this._statusMessage.set(localize('error.on.switch.build.preset', 'Error on switch of build preset ({0})', error.message));
                     this._cmakeDriver = Promise.resolve(null);
                     this._buildPreset.set(null);
@@ -362,7 +363,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
                     this._statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
-                    void vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset "{0}".', error));
+                    void vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset {0}.', `"${error}"`));
                     this._statusMessage.set(localize('error.on.switch.test.preset', 'Error on switch of test preset ({0})', error.message));
                     this._cmakeDriver = Promise.resolve(null);
                     this._testPreset.set(null);
@@ -601,7 +602,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
 
                     const result = showCMakeLists ? changeSourceDirectory : await vscode.window.showErrorMessage(
-                        localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
+                        localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder {0}. How would you like to proceed?', `"${this.folderName}"`),
                         quickStart, changeSourceDirectory, ignoreCMakeListsMissing);
 
                     if (result === quickStart) {
@@ -706,7 +707,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     private async _startNewCMakeDriver(cmake: CMakeExecutable): Promise<CMakeDriver> {
         log.debug(localize('starting.cmake.driver', 'Starting CMake driver'));
         if (!cmake.isPresent) {
-            throw new Error(localize('bad.cmake.executable', 'Bad CMake executable "{0}".', cmake.path));
+            throw new Error(localize('bad.cmake.executable', 'Bad CMake executable {0}.', `"${cmake.path}"`));
         }
 
         const workspace = this.folder.uri.fsPath;
@@ -996,7 +997,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     await this.workspaceContext.state.setActiveKitName(kit.name);
                     this._statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
-                    void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit "{0}".', error.message));
+                    void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit {0}.', `"${error.message}"`));
                     this._statusMessage.set(localize('error.on.switch.status', 'Error on switch of kit ({0})', error.message));
                     this._cmakeDriver = Promise.resolve(null);
                     this._activeKit = null;
@@ -1041,7 +1042,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
             const cmake = await this.getCMakeExecutable();
             if (!cmake.isPresent) {
-                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable "{0}". Is it installed or settings contain the correct path (cmake.cmakePath)?', cmake.path));
+                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
                 telemetry.logEvent('CMakeExecutableNotFound');
                 return null;
             }
@@ -1057,7 +1058,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     if (e instanceof BadHomeDirectoryError) {
                         void vscode.window
                             .showErrorMessage(
-                                localize('source.directory.does.not.match', 'The source directory "{0}" does not match the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.', e.expecting, e.cached),
+                                localize('source.directory.does.not.match', 'The source directory {0} does not match the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.', `"${e.expecting}"`, e.cached),
                                 {},
                                 { title: localize('clean.configure.title', 'Clean Configure') }
                             )
@@ -1142,7 +1143,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     private async _refreshCompileDatabase(opts: ExpansionOptions): Promise<void> {
         const compdb_paths: string[] = [];
         if (this.workspaceContext.config.mergedCompileCommands && this.workspaceContext.config.copyCompileCommands) {
-            log.warning(localize('merge.and.copy.compile.commands', "Setting cmake.copyCompileCommands is ignored while cmake.mergedCompileCommands is defined."));
+            log.warning(localize('merge.and.copy.compile.commands', "The {0} setting is ignored when {1} is defined.", 'cmake.copyCompileCommands', 'cmake.mergedCompileCommands'));
         }
 
         if (this.workspaceContext.config.mergedCompileCommands) {
@@ -1164,21 +1165,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 const expanded_dest = await expandString(copy_dest, opts);
                 const pardir = path.dirname(expanded_dest);
                 try {
-                    log.debug(localize('copy.compile.commands', 'Copying compile_commands.json from {0} to {1}', compdb_path, expanded_dest));
+                    log.debug(localize('copy.compile.commands', 'Copying {2} from {0} to {1}', compdb_path, expanded_dest, 'compile_commands.json'));
                     await fs.mkdir_p(pardir);
                     try {
                         await fs.copyFile(compdb_path, expanded_dest);
                     } catch (e: any) {
                         // Just display the error. It's the best we can do.
-                        void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
+                        void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy {0} to {1}: {2}', `"${compdb_path}"`, `"${expanded_dest}"`, e.toString()));
                     }
                 } catch (e: any) {
-                    void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
-                        'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
-                        compdb_path, expanded_dest, pardir, e.toString()));
+                    void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.1',
+                        'Tried to copy {0} to {1}, but failed to create the parent directory {2}: {3}',
+                        `"${compdb_path}"`, `"${expanded_dest}"`, `"${pardir}"`, e.toString()));
                 }
             } else {
-                log.debug(localize('cannot.copy.compile.commands', 'Cannot copy compile_commands.json because it does not exist at {0}', compdb_path));
+                log.debug(localize('cannot.copy.compile.commands', 'Cannot copy {1} because it does not exist at {0}', compdb_path, 'compile_commands.json'));
             }
         }
 
@@ -1196,9 +1197,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             try {
                 await fs.mkdir_p(pardir);
             } catch (e: any) {
-                void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
-                    'Tried to copy compilation database to "{0}", but failed to create the parent directory "{1}": {2}',
-                    expanded_dest, pardir, e.toString()));
+                void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.2',
+                    'Tried to copy compilation database to {0}, but failed to create the parent directory {1}: {2}',
+                    `"${expanded_dest}"`, `"${pardir}"`, e.toString()));
                 return;
             }
             if (await fs.exists(expanded_dest) && (await fs.stat(expanded_dest)).isDirectory()) {
@@ -1211,7 +1212,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 await fs.writeFile(expanded_dest, CompilationDatabase.toJson(new_db));
             } catch (e: any) {
                 // Just display the error. It's the best we can do.
-                void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to write merged compilation database to "{0}": {1}', expanded_dest, e.toString()));
+                void vscode.window.showErrorMessage(localize('failed.to.merge', 'Failed to write merged compilation database to {0}: {1}', `"${expanded_dest}"`, e.toString()));
                 return;
             }
         }
@@ -1259,8 +1260,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     if (drv) {
                         let old_prog = 0;
                         const prog_sub = drv.onProgress(pr => {
-                            const new_prog
-                                = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                            const new_prog = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
                             const increment = new_prog - old_prog;
                             if (increment >= 1) {
                                 old_prog += increment;
@@ -1519,7 +1519,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             this._isBusy.set(true);
             return await vscode.window.withProgress(
                 {
-                    location: vscode.ProgressLocation.Notification,
+                    location: vscode.ProgressLocation.Window,
                     title: localize('building.target', 'Building: {0}', targetName),
                     cancellable: true
                 },
@@ -1528,7 +1528,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     consumer.onProgress(pr => {
                         const increment = pr.value - old_progress;
                         if (increment >= 1) {
-                            progress.report({ increment });
+                            progress.report({ increment, message: `${pr.value}%` });
                             old_progress += increment;
                         }
                     });
@@ -2038,6 +2038,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     /**
+     * Both debugTarget and launchTarget called this funciton, so it's refactored out
+     * Array.concat's performance would not beat the Dict.merge a lot.
+     * This is also the point to fixing the issue #1987
+     */
+    async _getTargetLaunchEnvironment(drv: CMakeDriver | null, debug_env?: DebuggerEnvironmentVariable[]): Promise<Environment> {
+        const env = util.fromDebuggerEnvironmentVars(debug_env);
+
+        // Add environment variables from ConfigureEnvironment.
+        const configureEnv = await drv?.getConfigureEnvironment();
+
+        return EnvironmentUtils.merge([env, configureEnv]);
+    }
+
+    /**
      * Implementation of `cmake.debugTarget`
      */
     async debugTarget(name?: string): Promise<vscode.DebugSession | null> {
@@ -2062,7 +2076,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
         const targetExecutable = await this.prepareLaunchTargetExecutable(name);
         if (!targetExecutable) {
-            log.error(localize('failed.to.prepare.target', 'Failed to prepare executable target with name \'{0}\'', name));
+            log.error(localize('failed.to.prepare.target', 'Failed to prepare executable target with name {0}', `"${name}"`));
             return null;
         }
 
@@ -2097,15 +2111,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // Add debug configuration from settings.
         const user_config = this.workspaceContext.config.debugConfig;
         Object.assign(debug_config, user_config);
-        // Add environment variables from configurePreset.
-        if (this.configurePreset?.environment) {
-            const configure_preset_environment = await drv.getConfigureEnvironment();
-            debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.makeDebuggerEnvironmentVars(configure_preset_environment)) : [];
-        }
-
+        const launchEnv = await this._getTargetLaunchEnvironment(drv, debug_config.environment);
+        debug_config.environment = util.makeDebuggerEnvironmentVars(launchEnv);
         log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
             workspace: this.folder.uri.toString(),
-            config: debug_config
+            config: debug_config,
+            environment: debug_config.environment
         }));
 
         const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('debugConfig');
@@ -2147,22 +2158,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
 
         const user_config = this.workspaceContext.config.debugConfig;
-        let launchEnv: EnvironmentVariables = {};
 
         const drv = await this.getCMakeDriverInstance();
-        if (user_config.environment) {
-            const debugConfigEnvironment: { name: string; value: string }[] = user_config.environment;
-            debugConfigEnvironment.forEach(envVar => {
-                launchEnv[envVar.name] = envVar.value;
-            });
-        }
-
-        // Add environment variables from configurePreset.
-        if (drv && this.configurePreset?.environment) {
-            const configure_preset_environment = await drv.getConfigureEnvironment();
-            launchEnv = util.mergeEnvironment(launchEnv, configure_preset_environment);
-        }
-
+        const launchEnv = await this._getTargetLaunchEnvironment(drv, user_config.environment);
         const termOptions: vscode.TerminalOptions = {
             name: 'CMake/Launch',
             env: launchEnv,

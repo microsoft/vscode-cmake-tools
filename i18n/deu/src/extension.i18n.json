@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Kits werden erneut gelesen.",
 	"dispose.cmake.tools": "CMake Tools entfernen",
-	"configure.this.project": "Möchten Sie das Projekt \"{0}\" konfigurieren?",
+	"configure.this.project": "Möchten Sie das Projekt {0} konfigurieren?",
 	"yes.button": "Ja",
 	"not.now.button": "Nicht jetzt",
 	"always.configure.on.open": "Projekte beim Öffnen immer konfigurieren?",
@@ -20,9 +20,9 @@
 	"configure.recommended": "Nach dem Upgrade auf eine neue Definition der Kits wird eine Neukonfiguration empfohlen.",
 	"using.cache.to.configure.workspace.on.open": "Verwenden von Cache zum Konfigurieren des Arbeitsbereichs bei geöffneten {0}",
 	"update.code.model.for.cpptools": "Codemodell für cpptools aktualisieren",
-	"update.intellisense.disabled": "Der Konfigurationsanbieter wird nicht aktualisiert, da C_Cpp.intelliSenseEngine auf \"Disabled\" festgelegt ist.",
+	"update.intellisense.disabled": "Der Konfigurationsanbieter wird nicht aktualisiert, da {0} auf {1} festgelegt ist.",
 	"filed.to.open.cache.file.on.code.model.update": "Fehler beim Öffnen der CMake-Cachedatei für das Codemodellupdate.",
-	"opening.text.editor.for": "Der Text-Editor für \"{0}\" wird geöffnet.",
+	"opening.text.editor.for": "Der Text-Editor für {0} wird geöffnet.",
 	"no.kits.file.what.to.do": "Es ist keine Kitdatei vorhanden. Wie möchten Sie vorgehen?",
 	"scan.for.kits.button": "Nach Kits suchen",
 	"cancel.button": "Abbrechen",
@@ -41,7 +41,7 @@
 	"cmake.finished.returned": "{0} abgeschlossen ({1} zurückgegeben)",
 	"cmake.finished.returned.unserializable": "{0} abgeschlossen (nicht serialisierbarer Wert zurückgegeben)",
 	"loading.extension.commands": "Erweiterungsbefehle werden geladen.",
-	"register.command": "CMakeTools-Erweiterungsbefehl \"{0}\" registrieren",
+	"register.command": "CMakeTools-Erweiterungsbefehl {0} registrieren",
 	"uninstall.old.cmaketools": "Deinstallieren Sie alle älteren Versionen der CMake Tools-Erweiterung. Sie wird jetzt von Microsoft ab Version 1.2.0 veröffentlicht.",
 	"deactivate.cmaketools": "CMakeTools deaktivieren"
 }
