@@ -3,6 +3,7 @@
 ## 1.10.0
 Bug Fixes:
 - ${buildKit} is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
+- Test the existence of a property instead of the value when expanding preset conditions. [#2329](https://github.com/microsoft/vscode-cmake-tools/issues/2329)
 
 ## 1.9.2
 Bug fixes:
