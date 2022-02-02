@@ -454,7 +454,7 @@ export function setCompilers(_kits: Kit[]) {
 function merge<T extends Object>(target: T, base: T) {
     Object.keys(base).forEach(key => {
         const field = key as keyof T;
-        if (!target[field]) {
+        if (!target.hasOwnProperty(field)) {
             target[field] = base[field] as never;
         }
     });
