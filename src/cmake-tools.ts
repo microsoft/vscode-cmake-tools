@@ -2170,7 +2170,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
         if (process.platform === 'win32') {
             executablePath = executablePath.replace(/\\/g, "/");
-            
+
             if (vscode.env.shell.indexOf("PowerShell") > 0) {
                 executablePath = `.${executablePath}`;
             }
