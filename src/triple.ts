@@ -129,17 +129,17 @@ export function computeTargetTriple(target: TargetTriple): string {
 
 export function parseTargetTriple(triple: string): TargetTriple | undefined {
     const triples = triple.split("-");
-    let foundArch = "unknow";
-    let foundOs = 'unknow';
-    let foundAbi = 'unknow';
-    let foundLibc = 'unknow';
+    let foundArch = 'unknown';
+    let foundOs = 'unknown';
+    let foundAbi = 'unknown';
+    let foundLibc = 'unknown';
     const elementToSkip: string[] = [];
     for (const tripleElement of triples) {
         for (const key of Object.keys(TriplePossibleArch)) {
             const archReg = TriplePossibleArch[key];
             if (archReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundArch === "unknow") {
+                if (foundArch === 'unknown') {
                     foundArch = key;
                     break;
                 }
@@ -150,7 +150,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
             const osReg = TriplePossibleOS[key];
             if (osReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundOs === "unknow" || foundOs === 'none') {
+                if (foundOs === 'unknown' || foundOs === 'none') {
                     // os other than none have higher priority
                     // so we not break
                     foundOs = key;
@@ -162,7 +162,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
             const abiReg = TriplePossibleABI[key];
             if (abiReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundAbi === "unknow") {
+                if (foundAbi === 'unknown') {
                     foundAbi = key;
                     break;
                 }
@@ -173,7 +173,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
             const libcReg = possibleLibC.regexp;
             if (libcReg.exec(tripleElement) !== null) {
                 elementToSkip.push(tripleElement);
-                if (foundLibc === "unknow") {
+                if (foundLibc === 'unknown') {
                     foundLibc = possibleLibC.key;
                     break;
                 }
@@ -189,11 +189,11 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
 
     return {
         triple,
-        targetOs: foundOs === 'unknow' ? 'none' : foundOs,
+        targetOs: foundOs === 'unknown' ? 'none' : foundOs,
         targetArch: foundArch,
         vendors,
-        abi: foundAbi === 'unknow' ? '' : foundAbi,
-        libc: foundLibc === 'unknow' ? '' : foundLibc
+        abi: foundAbi === 'unknown' ? '' : foundAbi,
+        libc: foundLibc === 'unknown' ? '' : foundLibc
     };
 }
 

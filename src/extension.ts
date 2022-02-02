@@ -529,13 +529,13 @@ class ExtensionManager implements vscode.Disposable {
             await scanForKitsIfNeeded(cmt);
 
         let should_configure = cmt.workspaceContext.config.configureOnOpen;
-        if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
+        if (should_configure === null && !util.isTestMode()) {
             interface Choice1 {
                 title: string;
                 doConfigure: boolean;
             }
             const chosen = await vscode.window.showInformationMessage<Choice1>(
-                localize('configure.this.project', 'Would you like to configure project \'{0}\'?', ws.name),
+                localize('configure.this.project', 'Would you like to configure project {0}?', `"${ws.name}"`),
                 {},
                 { title: localize('yes.button', 'Yes'), doConfigure: true },
                 { title: localize('not.now.button', 'Not now'), doConfigure: false }
@@ -700,7 +700,7 @@ class ExtensionManager implements vscode.Disposable {
         );
         rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
             if (vscode.workspace.getConfiguration('C_Cpp', folder.folder).get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
-                log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because C_Cpp.intelliSenseEngine is set to \'Disabled\''));
+                log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because {0} is set to {1}', '"C_Cpp.intelliSenseEngine"', '"Disabled"'));
                 return;
             }
             if (!this._cppToolsAPI) {
@@ -717,16 +717,7 @@ class ExtensionManager implements vscode.Disposable {
                     return;
                 }
                 const drv: CMakeDriver | null = await cmt.getCMakeDriverInstance();
-                const env: Map<string, string> = new Map<string, string>();
                 const configureEnv = await drv?.getConfigureEnvironment();
-                if (configureEnv) {
-                    for (const key in configureEnv) {
-                        const value = configureEnv[key];
-                        if (util.isString(value)) {
-                            env.set(key, value);
-                        }
-                    }
-                }
 
                 const isMultiConfig = !!cache.get('CMAKE_CONFIGURATION_TYPES');
                 if (drv) {
@@ -745,7 +736,7 @@ class ExtensionManager implements vscode.Disposable {
                     }
                 })();
 
-                const clCompilerPath = await findCLCompilerPath(env);
+                const clCompilerPath = await findCLCompilerPath(configureEnv);
                 this._configProvider.cpptoolsVersion = cpptools.getVersion();
                 let codeModelContent;
                 if (cmt.codeModelContent) {
@@ -943,7 +934,7 @@ class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to select an active kit
      */
     async selectKit(folder?: vscode.WorkspaceFolder): Promise<boolean> {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
             return false;
         }
@@ -1473,7 +1464,7 @@ class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to add an active configure preset
      */
     async addConfigurePreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             log.trace(localize('add.config.preset.in.test.mode', 'Running CMakeTools in test mode. addConfigurePreset is disabled.'));
             return false;
         }
@@ -1490,7 +1481,7 @@ class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to add an active build preset
      */
     async addBuildPreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             log.trace(localize('add.build.preset.in.test.mode', 'Running CMakeTools in test mode. addBuildPreset is disabled.'));
             return false;
         }
@@ -1507,7 +1498,7 @@ class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to add an active test preset
      */
     async addTestPreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             log.trace(localize('add.test.preset.in.test.mode', 'Running CMakeTools in test mode. addTestPreset is disabled.'));
             return false;
         }
@@ -1525,7 +1516,7 @@ class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to select an active configure preset
      */
     async selectConfigurePreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             log.trace(localize('selecting.config.preset.in.test.mode', 'Running CMakeTools in test mode. selectConfigurePreset is disabled.'));
             return false;
         }
@@ -1553,7 +1544,7 @@ class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to select an active build preset
      */
     async selectBuildPreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             log.trace(localize('selecting.build.preset.in.test.mode', 'Running CMakeTools in test mode. selectBuildPreset is disabled.'));
             return false;
         }
@@ -1575,7 +1566,7 @@ class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to select an active test preset
      */
     async selectTestPreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
-        if (process.env['CMT_TESTING'] === '1') {
+        if (util.isTestMode()) {
             log.trace(localize('selecting.test.preset.in.test.mode', 'Running CMakeTools in test mode. selectTestPreset is disabled.'));
             return false;
         }

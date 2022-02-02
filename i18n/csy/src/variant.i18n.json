@@ -16,8 +16,9 @@
 	"invalid.variants": "Byly zadány neplatné varianty:",
 	"loaded.default.variants": "Načetly se výchozí varianty.",
 	"loaded.new.variants.set": "Načetla se nová sada variant.",
-	"missing.setting.in.variant": "Chybí nastavení {0} v definici varianty.",
+	"missing.setting.in.variant": "V definici varianty chybí nastavení {0}.",
 	"missing.variant.choice": "V definici varianty chybí volba varianty {0} u {1}.",
 	"incompatible.variant": "Poslední výběr varianty je nekompatibilní s přítomnou definicí varianty.",
-	"using.default.variant.choices": "Používají se výchozí volby variant z definice variant."
+	"using.default.variant.choices": "Používají se výchozí volby variant z definice variant.",
+	"select.a.variant.placeholder": "Vyberte variantu sestavení."
 }

@@ -100,7 +100,7 @@ export class KitsController {
         }
 
         const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeTools.folder)].concat(await KitsController.expandAdditionalKitFiles(cmakeTools));
-        const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true });
+        const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
         const kitsController = new KitsController(cmakeTools, kitsWatcher);
         chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
             kitsController.readKits(KitsReadMode.folderKits)));
@@ -238,7 +238,7 @@ export class KitsController {
         }
         if (!avail.find(kit => kit.name === SpecialKits.Unspecified)) {
             // We should _always_ have the 'UnspecifiedKit'.
-            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
+            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find {0}', '"SpecialKits.Unspecified"'));
             return false;
         }
 
@@ -386,8 +386,8 @@ export class KitsController {
                 }
                 const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
                     localize('kit.references.non-existent',
-                        'The kit "{0}" references a non-existent compiler binary [{1}]. What would you like to do?',
-                        kit.name, missing.path),
+                        'The kit {0} references a non-existent compiler binary [{1}]. What would you like to do?',
+                        `"${kit.name}"`, missing.path),
                     {},
                     {
                         action: 'remove',

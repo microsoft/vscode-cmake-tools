@@ -14,6 +14,7 @@ import * as util from './util';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { ExecutionResult } from './api';
+import { Environment, EnvironmentUtils } from './environmentVariables';
 export { ExecutionResult } from './api';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -71,14 +72,13 @@ export interface Subprocess {
 export interface BuildCommand {
     command: string;
     args?: string[];
-    build_env?: { [key: string]: string };
+    build_env?: Environment;
 }
 
-export interface EnvironmentVariables { [key: string]: string }
 export interface DebuggerEnvironmentVariable { name: string; value: string }
 
 export interface ExecutionOptions {
-    environment?: EnvironmentVariables;
+    environment?: Environment;
     shell?: boolean;
     silent?: boolean;
     cwd?: string;
@@ -120,14 +120,14 @@ export function execute(command: string,
     if (!options) {
         options = {};
     }
-    const localeOverride: EnvironmentVariables = {
+    const localeOverride = EnvironmentUtils.create({
         LANG: "C",
         LC_ALL: "C"
-    };
-    const final_env = util.mergeEnvironment(
-        process.env as EnvironmentVariables,
-        options.environment || {},
-        options.overrideLocale ? localeOverride : {});
+    });
+    const final_env = EnvironmentUtils.merge([
+        process.env,
+        options.environment,
+        options.overrideLocale ? localeOverride : {}]);
 
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
@@ -187,6 +187,8 @@ export function execute(command: string,
                             line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.output(line_acc);
+                            } else if (util.isTestMode()) {
+                                log.info(line_acc);
                             }
                             line_acc = '';
                             // Erase the first line from the list
@@ -205,6 +207,8 @@ export function execute(command: string,
                             stderr_line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.error(stderr_line_acc);
+                            } else if (util.isTestMode() && stderr_line_acc) {
+                                log.info(stderr_line_acc);
                             }
                             stderr_line_acc = '';
                             // Erase the first line from the list

@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.10.0
+Bug Fixes:
+- ${buildKit} is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
+
 ## 1.9.2
 Bug fixes:
 - Fix infinite recursion into symlinks. [#2257](https://github.com/microsoft/vscode-cmake-tools/issues/2257)

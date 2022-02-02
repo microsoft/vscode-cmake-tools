@@ -13,12 +13,12 @@
 	"parsing.cmake.cache.string": "Analyse de la chaîne de cache CMake",
 	"failed.to.read.line.from.cmake.cache.file": "Échec de la lecture d'une ligne dans un fichier cache CMake {0}",
 	"read.line.in.cache": "Lire la ligne dans le cache avec {0}={1}, {2}={3}, {4}={5}",
-	"cache.entry.unknown": "L'entrée de cache '{0}' a un type inconnu : '{1}'",
+	"cache.entry.unknown": "L'entrée de cache {0} a un type inconnu{1}.",
 	"constructing.new.cache.entry": "Construction d'une entrée de cache à partir de la ligne spécifiée",
-	"nonexisting.advanced.entry": "Entrée de cache inexistante «{0}» marquée comme avancée",
-	"ignore.strings.for.nonexisting.entry": "La propriété « STRINGS » est ignorée pour l’entrée de cache inexistante «{0}»",
+	"nonexisting.advanced.entry": "Entrée de cache inexistante {0} marquée comme avancée",
+	"ignore.strings.for.nonexisting.entry": "La propriété « STRINGS » est ignorée pour l’entrée de cache inexistante {0}.",
 	"parsed.cache.entries": "{0} entrées de cache analysées",
-	"cache.value.truncation.warning": "Saut(s) trouvé(s) dans l’entrée de cache «{0}». La valeur a été tronquée en «{1}»",
+	"cache.value.truncation.warning": "Saut(s) trouvé(s) dans l’entrée de cache {0}. La valeur a été tronquée en {1}.",
 	"get.cache.key": "Obtenir la clé de cache {0}={1}",
 	"get.cache.key.missing": "Obtenir la clé de cache {0}=[[Manquant]]"
 }

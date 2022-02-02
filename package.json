@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.9.2",
+  "version": "1.10.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "native"
   ],
   "engines": {
-    "vscode": "^1.53.0"
+    "vscode": "^1.56.0"
   },
   "categories": [
     "Other"
@@ -164,7 +164,7 @@
       {
         "command": "cmake.editKits",
         "title": "%cmake-tools.command.cmake.editKits.title%",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -2017,7 +2017,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.53.0",
+    "@types/vscode": "1.56.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@typescript-eslint/eslint-plugin": "^4.22.1",
@@ -2054,7 +2054,7 @@
     "typescript": "^4.1.5",
     "vsce": "^1.95.0",
     "vscode-nls-dev": "^3.3.2",
-    "vscode-test": "^1.5.2",
+    "vscode-test": "^1.6.1",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0"
   },

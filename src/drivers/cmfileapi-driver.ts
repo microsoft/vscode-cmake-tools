@@ -127,7 +127,11 @@ export class CMakeFileApiDriver extends CMakeDriver {
             if (cacheExists && this.config.configureOnOpen !== false) {
                 // No need to remove the other CMake files for the generator change to work properly
                 log.info(localize('removing', 'Removing {0}', this.cachePath));
-                await fs.unlink(this.cachePath);
+                try {
+                    await fs.unlink(this.cachePath);
+                } catch {
+                    log.warning(localize('unlink.failed', 'Failed to remove cache file {0}', this.cachePath));
+                }
             }
 
             this._generatorInformation = this.generator;
@@ -224,9 +228,11 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
         // Dup args so we can modify them
         const args = Array.from(args_);
-        args.push(`-H${util.lightNormalizePath(this.sourceDir)}`);
-        const bindir = util.lightNormalizePath(this.binaryDir);
-        args.push(`-B${bindir}`);
+
+        // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
+        args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
+        args.push(`-B${util.lightNormalizePath(this.binaryDir)}`);
+
         const gen = this.generator;
         let has_gen = false;
         for (const arg of args) {
@@ -343,8 +349,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 filepath: 'A special target to build all available targets',
                 targetType: 'META'
             }];
-            return [...metaTargets, ...targets].filter((value, idx, self) => self.findIndex(e => value.name === e.name)
-                === idx);
+            return [...metaTargets, ...targets].filter((value, idx, self) => self.findIndex(e => value.name === e.name) === idx);
         } else {
             return [];
         }

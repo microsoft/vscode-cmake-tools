@@ -8,7 +8,6 @@ import { expect } from 'chai';
 import * as chaiString from 'chai-string';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 
 chai.use(chaiString);
 
@@ -22,22 +21,14 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function cleanupBuildDir(build_dir: string): boolean {
-    if (fs.existsSync(build_dir)) {
-        rimraf.sync(build_dir);
-    }
+    fs.rmSync(build_dir, {recursive: true, force: true});
     return !fs.existsSync(build_dir);
 }
 
 let driver: CMakeDriver | null = null;
 
-export function makeCodeModelDriverTestsuite(
-    driver_generator: (cmake: CMakeExecutable,
-        config: ConfigurationReader,
-        kit: Kit | null,
-        workspaceFolder: string | null,
-        preconditionHandler: CMakePreconditionProblemSolver,
-        preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
-    suite('CMake-CodeModel-Driver tests', () => {
+export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+    suite(`CMake CodeModel ${driverName} Driver tests`, () => {
         const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
         const workspacePath: string = 'test/unit-tests/driver/workspace';
         const root = getTestRootFilePath(workspacePath);
@@ -49,14 +40,13 @@ export function makeCodeModelDriverTestsuite(
         let kitDefault: Kit;
         if (process.platform === 'win32') {
             kitDefault = {
-                name: 'Visual Studio Community 2017 - amd64',
-                visualStudio: 'VisualStudio.15.0',
-                visualStudioArchitecture: 'amd64',
-                preferredGenerator: { name: 'Visual Studio 15 2017', platform: 'x64' }
+                name: 'Visual Studio Community 2019',
+                visualStudio: 'VisualStudio.16.0',
+                visualStudioArchitecture: 'x64',
+                preferredGenerator: {name: 'Visual Studio 16 2019', platform: 'x64', toolset: 'host=x64'}
             } as Kit;
         } else {
-            kitDefault
-                = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' } } as Kit;
+            kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' } } as Kit;
         }
 
         setup(async function (this: Mocha.Context, done) {
@@ -191,7 +181,7 @@ export function makeCodeModelDriverTestsuite(
 
             // compile flags for file groups
             if (process.platform === 'win32') {
-                expect(compile_information!.compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1  ');
+                expect(compile_information!.compileFlags?.trim()).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
             }
         }).timeout(90000);
 
@@ -227,7 +217,7 @@ export function makeCodeModelDriverTestsuite(
 
             // compile flags for file groups
             if (process.platform === 'win32') {
-                expect(target!.fileGroups![0].compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1  ');
+                expect(target!.fileGroups![0].compileFlags?.trim()).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
             }
         }).timeout(90000);
 
@@ -281,7 +271,11 @@ export function makeCodeModelDriverTestsuite(
                 expect(target!.fileGroups).to.be.not.undefined;
                 const compile_information = target!.fileGroups!.find(t => !!t.language);
                 expect(compile_information).to.be.not.undefined;
-                expect(compile_information!.sources).to.include(sourcefile_name);
+                const sources: string[] = [];
+                compile_information!.sources.forEach(source => {
+                    sources.push(path.normalize(source).toLowerCase());
+                });
+                expect(sources).to.include(path.normalize(sourcefile_name).toLowerCase());
             }
         }).timeout(90000);
     });

@@ -19,7 +19,7 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function getPathWithoutCompilers() {
-    if (process.arch === 'win32') {
+    if (process.platform === 'win32') {
         return 'C:\\TMP';
     } else {
         return '/tmp';
@@ -84,21 +84,18 @@ suite('Kits scan test', async () => {
         });
     });
 
-    test('Detect system kits never throws',
-        async () => {
-            const build_loc = 'build';
-            const exe_res = 'output.txt';
+    test('Detect system kits never throws', async () => {
+        const build_loc = 'build';
+        const exe_res = 'output.txt';
 
-            testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-            cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
+        cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
-            await clearExistingKitConfigurationFile();
+        await clearExistingKitConfigurationFile();
 
-            // Don't care about the result, just check that we don't throw during the test
-            await kit.scanForKits(cmt);
-        })
-        // Compiler detection can run a little slow
-        .timeout(60000);
+        // Don't care about the result, just check that we don't throw during the test
+        await kit.scanForKits(cmt, { ignorePath: process.platform === 'win32' });
+    }).timeout(120000 * 2); // Compiler detection can run a little slow
 
     test('Detect a GCC compiler file', async () => {
         const compiler = path.join(fakebin, 'gcc-42.1');
@@ -165,8 +162,7 @@ suite('Kits scan test', async () => {
         expect(compkit!.environmentVariables).to.be.undefined;
     });
 
-    // Test is broken, the use of env path has changed
-    test.skip('Detect an MinGW compiler file on windows', async () => {
+    test('Detect an MinGW compiler file on windows', async () => {
         if (process.platform !== 'win32') {
             return;
         }
@@ -180,7 +176,7 @@ suite('Kits scan test', async () => {
 
         expect(compkit!.name).to.eq('GCC 6.3.0 x86_64-w64-mingw32');
         expect(compkit!.preferredGenerator!.name).to.eq('MinGW Makefiles');
-        expect(compkit!.environmentVariables!.PATH).include('fakebin');
+        expect(compkit!.environmentVariables!.CMT_MINGW_PATH).include('fakebin');
     });
 
     test('Detect non-compiler program', async () => {
