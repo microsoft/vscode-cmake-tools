@@ -2161,7 +2161,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
 
         if (options && options.env) {
-           options.env[this._launchTerminalTargetName] = executable.name;
+            options.env[this._launchTerminalTargetName] = executable.name;
         }
 
         return vscode.window.createTerminal(options);
