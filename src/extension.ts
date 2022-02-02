@@ -717,16 +717,7 @@ class ExtensionManager implements vscode.Disposable {
                     return;
                 }
                 const drv: CMakeDriver | null = await cmt.getCMakeDriverInstance();
-                const env: Map<string, string> = new Map<string, string>();
                 const configureEnv = await drv?.getConfigureEnvironment();
-                if (configureEnv) {
-                    for (const key in configureEnv) {
-                        const value = configureEnv[key];
-                        if (util.isString(value)) {
-                            env.set(key, value);
-                        }
-                    }
-                }
 
                 const isMultiConfig = !!cache.get('CMAKE_CONFIGURATION_TYPES');
                 if (drv) {
@@ -745,7 +736,7 @@ class ExtensionManager implements vscode.Disposable {
                     }
                 })();
 
-                const clCompilerPath = await findCLCompilerPath(env);
+                const clCompilerPath = await findCLCompilerPath(configureEnv);
                 this._configProvider.cpptoolsVersion = cpptools.getVersion();
                 let codeModelContent;
                 if (cmt.codeModelContent) {

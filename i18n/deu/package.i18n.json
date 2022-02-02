@@ -80,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Zusätzliche Argumente, die beim Konfigurieren an CMake übergeben werden sollen.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Zusätzliche Argumente, die beim Erstellen an CMake übergeben werden.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Zusätzliche Argumente, die beim Erstellen an das zugrunde liegende Buildtool übergeben werden sollen.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Die Anzahl paralleler Buildaufträge. Verwenden Sie 0, um die Anzahl von CPUs automatisch zu ermitteln. Das Festlegen auf 1 deaktiviert die Buildparallelität.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Die Anzahl paralleler Buildaufträge. Verwenden Sie null, um die Anzahl von CPUs automatisch zu ermitteln. Das Festlegen auf 1 deaktiviert die Buildparallelität.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Pfad zur ausführbaren CTest-Datei. Bei NULL erfolgt ein Rückschluss von \"cmake.cmakePath\". (Die Beibehaltung von NULL wird empfohlen.)",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Die Anzahl paralleler Testaufträge. Verwenden Sie 0, um den Wert von \"cmake.parallelJobs\" zu verwenden.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Hiermit wird Compilerausgabe auf Warnungen und Fehler analysiert.",

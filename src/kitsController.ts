@@ -238,7 +238,7 @@ export class KitsController {
         }
         if (!avail.find(kit => kit.name === SpecialKits.Unspecified)) {
             // We should _always_ have the 'UnspecifiedKit'.
-            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
+            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find {0}', '"SpecialKits.Unspecified"'));
             return false;
         }
 

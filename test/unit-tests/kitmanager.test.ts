@@ -4,6 +4,7 @@ import { expect } from '@test/util';
 import * as path from 'path';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
+import { EnvironmentUtils } from '@cmt/environmentVariables';
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
@@ -11,7 +12,7 @@ function getTestResourceFilePath(filename: string): string {
 }
 
 // for safety, ensure we reset the state of the process.env after every test since we're manipulating it in this suite.
-const env = { ...process.env };
+const env = EnvironmentUtils.create(process.env);
 
 suite('Kits test', async () => {
     teardown(() => {
@@ -60,7 +61,7 @@ suite('Kits test', async () => {
         expect(env_vars).to.not.be.undefined;
 
         if (env_vars) {
-            const env_vars_arr = Array.from(env_vars);
+            const env_vars_arr = Array.from(Object.entries(env_vars));
             // must contain all env vars, not only the ones we defined!
             expect(env_vars_arr.length).to.be.greaterThan(2);
             expect(env_vars_arr).to.deep.include(['TESTVAR12', 'abc']);
