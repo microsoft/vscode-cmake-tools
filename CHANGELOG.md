@@ -4,6 +4,7 @@
 Bug Fixes:
 - ${buildKit} is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
 - Test the existence of a property instead of the value when expanding preset conditions. [#2329](https://github.com/microsoft/vscode-cmake-tools/issues/2329)
+- Fix Launch the selected target cannot launch multiple targets. [#2240](https://github.com/microsoft/vscode-cmake-tools/issues/2120) [@ColinDuquesnoy](https://github.com/ColinDuquesnoy)
 
 ## 1.9.2
 Bug fixes:
@@ -11,7 +12,6 @@ Bug fixes:
 - Fix `Show Build Command` for folders that do not use CMake Presets. [#2211](https://github.com/microsoft/vscode-cmake-tools/issues/2211)
 - Fix presets not shown when a common dependency is inherited more than once. [#2210](https://github.com/microsoft/vscode-cmake-tools/issues/2210)
 - Fix IntelliSense usage of short name from variants file for buildType. [#2120](https://github.com/microsoft/vscode-cmake-tools/issues/2120) [@gost-serb](https://github.com/gost-serb)
-- Fix Launch the selected target cannot launch multiple targets. [#2240](https://github.com/microsoft/vscode-cmake-tools/issues/2120) [@ColinDuquesnoy](https://github.com/ColinDuquesnoy)
 
 ## 1.9.1
 Bug fixes:
