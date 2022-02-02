@@ -86,7 +86,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     }
     private endOfLine: string = "\r\n";
 
-    constructor(private command: string, private defaultTargets: string[], private options: { cwd?: string , environment?: Environment } = {}, private cmakeDriver?: CMakeDriver) {
+    constructor(private command: string, private defaultTargets: string[], private options: { cwd?: string ; environment?: Environment } = {}, private cmakeDriver?: CMakeDriver) {
     }
 
     output(line: string): void {
