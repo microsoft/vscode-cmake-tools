@@ -37,7 +37,6 @@ import { setContextValue } from './util';
 import { VariantManager } from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
-import paths from './paths';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cache-view';
 import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, expShowCMakeLists } from './extension';
@@ -2172,7 +2171,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         if (process.platform === 'win32') {
             executablePath = executablePath.replace(/\\/g, "/");
             
-            if (vscode.env.shell.indexOf("powershell") > 0) {
+            if (vscode.env.shell.indexOf("PowerShell") > 0) {
                 executablePath = `.${executablePath}`;
             }
         }
