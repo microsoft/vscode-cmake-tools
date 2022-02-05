@@ -12,7 +12,8 @@ import rollbar from '@cmt/rollbar';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
-import { descriptionForKit, Kit, SpecialKits, kitHostTargetArch } from '@cmt/kit';
+import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
+import { getHostTargetArchString } from '@cmt/installs/visual-studio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 
@@ -322,7 +323,7 @@ export class PresetsController {
                         if (kit.name === SpecialKits.ScanForKits) {
                             return `[${localize('scan.for.compilers.button', 'Scan for compilers')}]`;
                         } else if (kit.visualStudio && !kit.compilers) {
-                            const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+                            const hostTargetArch = getHostTargetArchString(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
                             return `${(kit.preferredGenerator?.name || 'Visual Studio')} ${hostTargetArch}`;
                         } else {
                             return kit.name;

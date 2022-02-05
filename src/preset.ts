@@ -7,8 +7,8 @@ import * as logging from '@cmt/logging';
 import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { effectiveKitEnvironment, Kit, targetArchFromGeneratorPlatform } from '@cmt/kit';
-import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
+import { effectiveKitEnvironment, Kit } from '@cmt/kit';
+import { compareVersions, vsInstallations, targetArchFromGeneratorPlatform} from '@cmt/installs/visual-studio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

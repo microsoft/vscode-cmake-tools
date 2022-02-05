@@ -3,8 +3,7 @@
  */ /** */
 
 import rollbar from '@cmt/rollbar';
-import * as iconv from 'iconv-lite';
-import * as codepages from '@cmt/code-pages';
+
 import * as util from '@cmt/util';
 import * as json5 from 'json5';
 import * as path from 'path';
@@ -13,7 +12,7 @@ import * as kitsController from '@cmt/kitsController';
 
 import CMakeTools from './cmake-tools';
 import * as expand from './expand';
-import { VSInstallation, vsInstallations } from './installs/visual-studio';
+import { VSInstallation, vsInstallations, getHostTargetArchString, varsForVSInstallation, generatorPlatformFromVSArch } from './installs/visual-studio';
 import * as logging from './logging';
 import paths from './paths';
 import { fs } from './pr';
@@ -572,244 +571,14 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
     // and also it may require a new kit selection.
     // VS toolsets paths on disk, vcvarsall.bat parameters and CMake arguments are all x64 now.
     // We can revise later whether to change to 'x64' in the VS kit name as well and how to mitigate it.
-    return `${vsDisplayName(inst)} - ${kitHostTargetArch(hostArch, targetArch, true)}`;
+    return `${vsDisplayName(inst)} - ${getHostTargetArchString(hostArch, targetArch, true)}`;
 }
 
-/**
- * Create the host-target arch specification of a VS install,
- * from the VS kit architecture (host) and generator platform (target).
- * @param hostArch The architecture of the host toolset
- * @param targetArch The architecture of the target
- * @param amd64Alias Whether amd64 is preferred over x64.
- */
-export function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
-    // There are cases when we don't want to use the 'x64' alias of the 'amd64' architecture,
-    // like for older VS installs, for the VS kit names (for compatibility reasons)
-    // or for arm/arm64 specific vcvars scripts.
-    if (amd64Alias) {
-        if (hostArch === "x64") {
-            hostArch = "amd64";
-        }
-
-        if (targetArch === "x64") {
-            targetArch = "amd64";
-        }
-    }
-
-    if (!targetArch) {
-        targetArch = hostArch;
-    }
-
-    // CMake preferred generator platform requires 'win32', while vcvars are still using 'x86'.
-    // This function is called only for VS generators, so it is safe to overwrite
-    // targetArch with the vcvars naming.
-    // In case of any future new mismatches, use the vsArchFromGeneratorPlatform table
-    // instead of hard coding for win32 and x86.
-    // Currently, there is no need of a similar overwrite operation on hostArch,
-    // because CMake host target does not have the same name mismatch with VS.
-    targetArch = targetArchFromGeneratorPlatform(targetArch);
-
-    return (hostArch === targetArch) ? hostArch : `${hostArch}_${targetArch}`;
-}
 
 /**
  * Possible msvc host architectures
  */
 export const MSVC_HOST_ARCHES: string[] = ['x86', 'x64'];
-
-/*
- * List of environment variables required for Visual C++ to run as expected for
- * a VS installation.
- * The diff of vcvarsall.bat output env and system env:
-    DevEnvDir=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\
-    Framework40Version=v4.0
-    FrameworkDir=C:\Windows\Microsoft.NET\Framework\
-    FrameworkDIR32=C:\Windows\Microsoft.NET\Framework\
-    FrameworkVersion=v4.0.30319
-    FrameworkVersion32=v4.0.30319
-    INCLUDE=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\INCLUDE;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\ucrt;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\shared;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\winrt;
-    LIB=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\ARM;C:\Program Files (x86)\Windows Kits\10\lib\10.0.14393.0\ucrt\ARM;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\lib\um\ARM;C:\Program Files (x86)\Windows Kits\10\lib\10.0.14393.0\um\ARM;
-    LIBPATH=C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\ARM;C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Windows Kits\10\References;\Microsoft.VCLibs\14.0\References\CommonConfiguration\neutral;
-    NETFXSDKDir=C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\
-    Path=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow;C:\Program Files (x86)\MSBuild\14.0\bin;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN\x86_ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools;C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\VCPackages;C:\Program Files (x86)\HTML Help Workshop;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Performance Tools;C:\Program Files (x86)\Windows Kits\10\bin\x86;C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft VS Code\bin;C:\Program Files\CMake\bin;C:\Program Files\Git\cmd;C:\Program Files\TortoiseGit\bin;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\
-    Platform=ARM
-    UCRTVersion=10.0.14393.0
-    UniversalCRTSdkDir=C:\Program Files (x86)\Windows Kits\10\
-    user_inputversion=10.0.14393.0
-    VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\
-    VisualStudioVersion=14.0
-    VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\
-    WindowsLibPath=C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Windows Kits\10\References
-    WindowsSdkDir=C:\Program Files (x86)\Windows Kits\10\
-    WindowsSDKLibVersion=10.0.14393.0\
-    WindowsSDKVersion=10.0.14393.0\
-    WindowsSDK_ExecutablePath_x64=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\x64\
-    WindowsSDK_ExecutablePath_x86=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\
- *
- */
-const MSVC_ENVIRONMENT_VARIABLES = [
-    /* These is the diff of vcvarsall.bat generated env and original system env */
-    'DevEnvDir',
-    'Framework40Version',
-    'FrameworkDir',
-    'FrameworkDIR32',
-    'FrameworkDIR64',
-    'FrameworkVersion',
-    'FrameworkVersion32',
-    'FrameworkVersion64',
-    'INCLUDE',
-    'LIB',
-    'LIBPATH',
-    'NETFXSDKDir',
-    'Path',
-    //'Platform', - disabled as it's currently unnecessary and causes some projects to fail to build
-    'UCRTVersion',
-    'UniversalCRTSdkDir',
-    'user_inputversion',
-    'VCIDEInstallDir',
-    'VCINSTALLDIR',
-    //'VCToolsInstallDir', - disabled temporarily as it breaks downlevel toolset selection
-    'VCToolsRedistDir',
-    //'VCToolsVersion', - disabled temporarily as it breaks downlevel toolset selection
-    'VisualStudioVersion',
-    'VSINSTALLDIR',
-    'WindowsLibPath',
-    'WindowsSdkBinPath',
-    'WindowsSdkDir',
-    'WindowsSDKLibVersion',
-    'WindowsSDKVersion',
-    'WindowsSDK_ExecutablePath_x64',
-    'WindowsSDK_ExecutablePath_x86',
-
-    /* These are special also need to be cached */
-    'CL',
-    '_CL_',
-    'LINK',
-    '_LINK_',
-    'TMP',
-    'UCRTCONTEXTROOT',
-    'VCTARGETSPATH'
-];
-
-/**
- * Get the environment variables corresponding to a VS dev batch file.
- * @param hostArch Host arch used to find the proper Windows SDK path
- * @param devbat Path to a VS environment batch file
- * @param args List of arguments to pass to the batch file
- */
-async function collectDevBatVars(hostArch: string, devbat: string, args: string[], major_version: number, common_dir: string): Promise<Environment | undefined> {
-    const fname = Math.random().toString() + '.bat';
-    const batfname = `vs-cmt-${fname}`;
-    const envfname = batfname + '.env';
-    const bat = [
-        `@echo off`,
-        `cd /d "%~dp0"`,
-        `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
-        `set "INCLUDE="`,
-        `call "${devbat}" ${args.join(' ')}`,
-        `setlocal enableextensions enabledelayedexpansion`,
-        `cd /d "%~dp0"` /* Switch back to original drive */
-    ];
-    for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
-        bat.push(`if DEFINED ${envvar} echo ${envvar} := %${envvar}% >> ${envfname}`);
-    }
-
-    // writeFile and unlink don't need quotes (they work just fine with an unquoted path with space)
-    // but they might fail sometimes if quotes are present, so remove for now any surrounding quotes
-    // that may have been defined by the user (the command prompt experience makes it very likely
-    // for the user to use quotes when defining an environment variable with a space containing path).
-    let tmpDir: string = paths.tmpDir;
-    if (!tmpDir) {
-        console.log(`TEMP dir is not set. ${devbat} will not run.`);
-        return;
-    }
-
-    tmpDir = tmpDir.trim();
-    if (tmpDir.startsWith('"') && tmpDir.endsWith('"')) {
-        tmpDir = tmpDir.substring(1, tmpDir.length - 1);
-    }
-
-    const batpath = path.join(tmpDir, batfname);
-    const envpath = path.join(tmpDir, envfname);
-
-    try {
-        await fs.unlink(envpath);
-    } catch (error) {}
-
-    const batContent = bat.join('\r\n');
-    await fs.writeFile(batpath, batContent);
-
-    const outputEncoding = await codepages.getWindowsCodepage();
-    const execOption: proc.ExecutionOptions = {
-        shell: false,
-        silent: true,
-        overrideLocale: false,
-        outputEncoding: outputEncoding
-    };
-    // Script file path will be quoted when passed as args
-    const res = await proc.execute('cmd.exe', ['/c', batpath], null, execOption).result;
-    await fs.unlink(batpath);
-    const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
-
-    let env = '';
-    try {
-        /* When the bat running failed, envpath would not exist */
-        const env_bin = await fs.readFile(envpath);
-        env = iconv.decode(env_bin, outputEncoding);
-        await fs.unlink(envpath);
-    } catch (error) {
-        log.error(error);
-    }
-
-    if (!env) {
-        env = '';
-    }
-
-    const vars = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Environment>((acc, line) => {
-        const mat = /(\w+) := ?(.*)/.exec(line);
-        if (mat) {
-            acc[mat[1]] = mat[2];
-        } else {
-            log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
-        }
-        return acc;
-    }, EnvironmentUtils.create());
-    const include_env = vars['INCLUDE'] ?? '';
-    if (include_env === '') {
-        log.error(localize('script.run.error.check',
-            'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}\nExecute output are:\n{4}\n',
-            devbat, args.join(' '), env, batContent, output));
-        return;
-    }
-
-    let WindowsSDKVersionParsed: util.Version = {
-        major: 0,
-        minor: 0,
-        patch: 0
-    };
-    const WindowsSDKVersion = vars['WindowsSDKVersion'] ?? '0.0.0';
-    try {
-        WindowsSDKVersionParsed = util.parseVersion(WindowsSDKVersion);
-    } catch (err) {
-        log.error(`Parse '${WindowsSDKVersion}' failed`);
-    }
-    if (util.compareVersion(WindowsSDKVersionParsed, { major: 10, minor: 0, patch: 14393 }) >= 0) {
-        const WindowsSdkDir = vars['WindowsSdkDir'] ?? '';
-        const existPath = vars['PATH'] ?? '';
-        const oldWinSdkBinPath = path.join(WindowsSdkDir, 'bin', hostArch);
-        const newWinSdkBinPath = path.join(WindowsSdkDir, 'bin', WindowsSDKVersion, hostArch);
-        const newWinSdkBinPathExist = await fs.exists(newWinSdkBinPath);
-        if (newWinSdkBinPathExist &&
-            existPath !== '' &&
-            existPath.toLowerCase().indexOf(newWinSdkBinPath.toLowerCase()) < 0) {
-            log.info(localize('windows.sdk.path.patch', 'Patch Windows SDK bin path from {0} to {1} for {2}',
-                oldWinSdkBinPath, newWinSdkBinPath, devbat));
-            vars['PATH'] = `${newWinSdkBinPath};${existPath}`;
-        }
-    }
-    log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify(vars)));
-    return vars;
-}
 
 /**
  * Gets the environment variables set by a shell script.
@@ -894,30 +663,6 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
 }
 
 /**
- * Platform arguments for VS Generators
- * Currently, there is a mismatch only between x86 and win32.
- * For example, VS kits x86 and amd64_x86 will generate -A win32
- */
-const generatorPlatformFromVSArch: { [key: string]: string } = {
-    x86: 'win32'
-};
-
-// The reverse of generatorPlatformFromVSArch
-const vsArchFromGeneratorPlatform: { [key: string]: string } = {
-    win32: 'x86'
-};
-
-/**
- * Turns 'win32' into 'x86' for target architecture.
- */
-export function targetArchFromGeneratorPlatform(generatorPlatform?: string) {
-    if (!generatorPlatform) {
-        return undefined;
-    }
-    return vsArchFromGeneratorPlatform[generatorPlatform] || generatorPlatform;
-}
-
-/**
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: { [key: string]: string } = {
@@ -931,67 +676,6 @@ const VsGenerators: { [key: string]: string } = {
     16: 'Visual Studio 16 2019',
     17: 'Visual Studio 17 2022'
 };
-
-async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Environment | null> {
-    log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
-    const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
-    const majorVersion = parseInt(inst.installationVersion);
-    let vcvarsScript: string = 'vcvarsall.bat';
-    if (targetArch === "arm" || targetArch === "arm64") {
-        // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
-        vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
-    }
-    let devBatFolder = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build');
-    if (majorVersion < 15) {
-        devBatFolder = path.join(inst.installationPath, 'VC');
-    }
-
-    const devbat = path.join(devBatFolder, vcvarsScript);
-    // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
-    // in the given VS installation.
-    if (!await fs.exists(devbat)) {
-        return null;
-    }
-
-    const variables = await collectDevBatVars(hostArch, devbat, [kitHostTargetArch(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
-    if (!variables) {
-        return null;
-    } else {
-        // This is a very *hacky* and sub-optimal solution, but it
-        // works for now. This *helps* CMake make the right decision
-        // when you have the release and pre-release edition of the same
-        // VS version installed. I don't really know why or what causes
-        // this issue, but this here seems to work. It basically just sets
-        // the VS{vs_version_number}COMNTOOLS environment variable to contain
-        // the path to the Common7 directory.
-        const vs_version = variables['VISUALSTUDIOVERSION'];
-        if (vs_version) {
-            variables[`VS${vs_version.replace('.', '')}COMNTOOLS`] = common_dir;
-        }
-
-        // For Ninja and Makefile generators, CMake searches for some compilers
-        // before it checks for cl.exe. We can force CMake to check cl.exe first by
-        // setting the CC and CXX environment variables when we want to do a
-        // configure.
-        variables['CC'] = 'cl.exe';
-        variables['CXX'] = 'cl.exe';
-
-        if (paths.ninjaPath) {
-            let envPATH = variables['PATH'];
-            if (undefined !== envPATH) {
-                const env_paths = envPATH.split(';');
-                const ninja_path = path.dirname(paths.ninjaPath!);
-                const ninja_base_path = env_paths.find(path_el => path_el === ninja_path);
-                if (undefined === ninja_base_path) {
-                    envPATH = envPATH.concat(';' + ninja_path);
-                    variables['PATH'] = envPATH;
-                }
-            }
-        }
-
-        return variables;
-    }
-}
 
 /**
  * Try to get a VSKit from a VS installation and architecture
@@ -1361,7 +1045,7 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
             const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
             return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
         } else if (shortVsName) {
-            const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+            const hostTargetArch = getHostTargetArchString(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
             if (kit.preferredGenerator) {
                 return localize('using.compilers.for.VS', 'Using compilers for {0} ({1} architecture)', kit.preferredGenerator?.name, hostTargetArch);
             } else {
@@ -1371,7 +1055,7 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
             // MSVC
             const vs_install = await getVSInstallForKit(kit);
             if (vs_install) {
-                const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+                const hostTargetArch = getHostTargetArchString(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
                 return localize('using.compilers.for.VS', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), hostTargetArch);
             }
             return '';
