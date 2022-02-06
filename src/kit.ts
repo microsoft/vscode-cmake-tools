@@ -1163,48 +1163,52 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Environment | null>
     return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
 }
 
+/**
+ * kit.environmentVariables have higher priority, we expand `Environment` with
+ * `environmentSetupScript` first, then expand and update `Environment` with`environmentVariables`
+ * @param kit The kit for evaluate `Environment`
+ * @param opts The expand options for evaluate `Environment`
+ * @returns `Environment`
+ */
 export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Environment> {
-    let host_env: Environment | undefined;
-    const kit_env = EnvironmentUtils.create(kit.environmentVariables);
-    if (opts) {
-        for (const env_var of Object.keys(kit_env)) {
-            kit_env[env_var] = await expand.expandString(kit_env[env_var], opts);
-        }
-    }
+    let host_env: Environment = process.env;
     if (kit.environmentSetupScript) {
         const shell_vars = await getShellScriptEnvironment(kit, opts);
         if (shell_vars) {
             host_env = shell_vars;
         }
     }
-    if (host_env === undefined) {
-        // get host_env from process if it was not set by shell script before
-        host_env = process.env;
+    let env = EnvironmentUtils.create(host_env);
+    const kit_env = EnvironmentUtils.create(kit.environmentVariables);
+    const expandOptions: expand.ExpansionOptions = {
+        vars: {} as expand.KitContextVars,
+        envOverride: host_env
+    };
+    for (const env_var of Object.keys(kit_env)) {
+        env[env_var] = await expand.expandString(kit_env[env_var], opts ?? expandOptions);
     }
-    if (kit.visualStudio && kit.visualStudioArchitecture) {
-        const vs_vars = await getVSKitEnvironment(kit);
-        if (vs_vars) {
-            return vs_vars;
+    if (process.platform === 'win32') {
+        if (kit.visualStudio && kit.visualStudioArchitecture) {
+            const vs_vars = await getVSKitEnvironment(kit);
+            env = EnvironmentUtils.merge([env, vs_vars]);
+        } else {
+            const path_list: string[] = [];
+            const cCompiler = kit.compilers?.C;
+            /* Force add the compiler executable dir to the PATH env */
+            if (cCompiler) {
+                path_list.push(path.dirname(cCompiler));
+            }
+            const cmt_mingw_path = env['CMT_MINGW_PATH'];
+            if (cmt_mingw_path) {
+                path_list.push(cmt_mingw_path);
+            }
+            if (env.hasOwnProperty('PATH')) {
+                path_list.unshift(env['PATH'] ?? '');
+                env['PATH'] = path_list.join(';');
+            }
         }
     }
-    const env = EnvironmentUtils.merge([host_env, kit_env]);
-    const isWin32 = process.platform === 'win32';
-    if (isWin32) {
-        const path_list: string[] = [];
-        const cCompiler = kit.compilers?.C;
-        /* Force add the compiler executable dir to the PATH env */
-        if (cCompiler) {
-            path_list.push(path.dirname(cCompiler));
-        }
-        const cmt_mingw_path = env['CMT_MINGW_PATH'];
-        if (cmt_mingw_path) {
-            path_list.push(cmt_mingw_path);
-        }
-        if (env.hasOwnProperty('PATH')) {
-            path_list.unshift(env['PATH'] ?? '');
-            env['PATH'] = path_list.join(';');
-        }
-    }
+    log.debug(localize('kit.env', 'The environment for kit {0}: {1}', `'${kit.name}'`, JSON.stringify(env, null, 2)));
     return env;
 }
 
