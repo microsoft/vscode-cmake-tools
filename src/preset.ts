@@ -8,7 +8,7 @@ import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { Kit } from '@cmt/kit';
-import { compareVersions, VSInstallation, vsInstallations, EnumerateMSVCToolsets, targetArchFromGeneratorPlatform, varsForVSInstallation } from '@cmt/installs/visual-studio';
+import { compareVersions, VSInstallation, vsInstallations, EnumerateMSVCToolsets, targetArchFromGeneratorPlatform, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visual-studio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -936,16 +936,11 @@ async function expandConfigurePresetHelper(folder: string,
                     const arch = getArchitecture(preset);
                     const toolset = getToolset(preset);
 
-                    // Get version info for all VS instances. Create a map so we don't need to
-                    // iterate through the array every time.
+                    // Get version info for all VS instances.
                     const vsInstalls = await vsInstallations();
-                    const vsInstallsMap = new Map<string, VSInstallation>();
-                    for (const vs of vsInstalls) {
-                        vsInstallsMap.set(vs.instanceId, vs);
-                    }
 
-                    let latestVsVersion: string = '';
-                    let latestVsIndex = -1;
+                    // The VS installation to grab developer environment from.
+                    let vsInstall: VSInstallation | undefined;
 
                     // VS generators starting with Visual Studio 15 2017 support CMAKE_GENERATOR_INSTANCE.
                     // If supported, we should respect this value when defined. If not defined, we should
@@ -955,28 +950,22 @@ async function expandConfigurePresetHelper(folder: string,
                     // vscode from the dev prompt of their desired instance.
                     // https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_INSTANCE.html
                     let useCMakeGeneratorInstance = false;
+                    let vsGeneratorVersion: number | undefined;
                     const matches = preset.generator?.match(/Visual Studio (?<version>\d+)/);
                     if (matches && matches.groups?.version) {
-                        const vsVersion = parseInt(matches.groups.version);
-                        useCMakeGeneratorInstance = !isNaN(vsVersion) && vsVersion >= 15;
+                        vsGeneratorVersion = parseInt(matches.groups.version);
+                        useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
 
                         const cmakeGeneratorInstance = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_GENERATOR_INSTANCE']);
                         if (cmakeGeneratorInstance) {
                             const cmakeGeneratorInstanceNormalized = path.normalize(cmakeGeneratorInstance);
-                            const vsInstall = vsInstalls.find((vs, index) => {
-                                if (vs.installationPath
-                                    && path.normalize(vs.installationPath) === cmakeGeneratorInstanceNormalized) {
-                                    latestVsVersion = vs.installationVersion;
-                                    latestVsIndex = index;
-                                    return true;
-                                }
-                            });
+                            vsInstall = vsInstalls.find((vs) => vs.installationPath
+                                    && path.normalize(vs.installationPath) === cmakeGeneratorInstanceNormalized);
 
                             if (!vsInstall) {
                                 log.warning(localize('specified.vs.not.found',
                                     "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE=\"{1}\" was not found,"
-                                    + " falling back on default instance lookup behavior."
-                                    + " If a compatible instance is found CMAKE_GENERATOR_INSTANCE will be overridden.",
+                                    + " falling back on default instance lookup behavior.",
                                     preset.name, cmakeGeneratorInstance));
                             }
                         }
@@ -984,51 +973,39 @@ async function expandConfigurePresetHelper(folder: string,
 
                     // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up matching an instance
                     // that supports the specified toolset.
-                    if (latestVsIndex < 0) {
-                        for (let i = 0; i < kits.length; i++) {
-                            const kit = kits[i];
-                            if (kit.visualStudio && !kit.compilers) {
-                                const vsInstall = vsInstallsMap.get(kit.visualStudio);
-                                if (vsInstall
-                                    && kit.preferredGenerator
-                                    && targetArchFromGeneratorPlatform(kit.preferredGenerator.platform) === arch
-                                    && (kit.visualStudioArchitecture === toolset.host || kit.preferredGenerator.toolset === ('host=' + toolset.host))) {
+                    if (!vsInstall) {
+                        // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
+                        vsInstalls.sort((a, b) => -compareVersions(a.installationVersion, b.installationVersion));
 
-                                    if (toolset.version && vsInstall.installationPath) {
-                                        const availableToolsets = await EnumerateMSVCToolsets(vsInstall.installationPath);
-                                        // forcing non-null due to false positive (toolset.version is checked in conditional)
-                                        if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
-                                            latestVsVersion = vsInstall.installationVersion;
-                                            latestVsIndex = i;
-                                            break;
-                                        }
+                        for (const vs of vsInstalls) {
+                            // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
+                            // toolset.host will be set by getToolset.
+                            if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
+                                // If a toolset version is specified then check to make sure this vs instance has it installed.
+                                if (toolset.version) {
+                                    const availableToolsets = await EnumerateMSVCToolsets(vs.installationPath);
+                                    // forcing non-null due to false positive (toolset.version is checked in conditional)
+                                    if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
+                                        vsInstall = vs;
+                                        break;
                                     }
-                                    if (!toolset.version && vsInstall && compareVersions(latestVsVersion, vsInstall.installationVersion) < 0) {
-                                        latestVsVersion = vsInstall.installationVersion;
-                                        latestVsIndex = i;
-                                    }
+                                } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
+                                    // If no toolset version specified then choose the latest VS instance for the given generator
+                                    vsInstall = vs;
+                                    break;
                                 }
                             }
                         }
                     }
 
-                    if (latestVsIndex < 0) {
+                    if (!vsInstall) {
                         log.error(localize('specified.cl.not.found',
                             "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
                             preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
                     } else {
-                        // Guaranteed not null by logic above. toolset.host gets default value set by getToolset.
-                        const vsInstall = vsInstallsMap.get(kits[latestVsIndex].visualStudio!)!;
                         log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at \"{2}\")", vsInstall.instanceId, vsInstall.installationVersion, vsInstall.installationPath));
                         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
                         compilerEnv = vsEnv ?? EnvironmentUtils.create();
-
-                        // Set CMAKE_GENERATOR_INSTANCE to the VS we used to source the dev environment, otherwise
-                        // CMake may choose a different instance. This is only applicable for VS generators from VS 2017 on (see logic for `useCMakeGeneratorInstance` above).
-                        // Note user can override this in a toolchain file.
-                        // if (useCMakeGeneratorInstance) {
-                        //     preset.cacheVariables['CMAKE_GENERATOR_INSTANCE'] = vsInstall.installationPath;
-                        // }
 
                         // if ninja isn't on path, try to look for it in a VS install
                         const ninjaLoc = await execute('where.exe', ['ninja'], null, {
@@ -1038,7 +1015,7 @@ async function expandConfigurePresetHelper(folder: string,
                             shell: true
                         }).result;
                         if (!ninjaLoc.stdout) {
-                            const vsCMakePaths = await paths.vsCMakePaths(kits[latestVsIndex].visualStudio);
+                            const vsCMakePaths = await paths.vsCMakePaths(vsInstall.instanceId);
                             if (vsCMakePaths.ninja) {
                                 log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
                                 compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
