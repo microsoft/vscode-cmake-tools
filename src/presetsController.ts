@@ -41,8 +41,6 @@ export class PresetsController {
     static async init(cmakeTools: CMakeTools, kitsController: KitsController): Promise<PresetsController> {
         const presetsController = new PresetsController(cmakeTools, kitsController);
 
-        preset.setCompilers(kitsController.availableKits);
-
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = cmakeTools.folder.uri.fsPath;
             const expansionOpts: ExpansionOptions = {
@@ -344,28 +342,22 @@ export class PresetsController {
                         // No selection was made
                         return false;
                     } else {
-                        if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                            await KitsController.scanForKits(this._cmakeTools);
-                            preset.setCompilers(this._kitsController.availableKits);
-                            return false;
-                        } else {
-                            log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
-                            newPreset = {
-                                name: '__placeholder__',
-                                displayName: chosen_kit.kit.name,
-                                description: chosen_kit.description,
-                                generator: chosen_kit.kit.preferredGenerator?.name,
-                                toolset: chosen_kit.kit.preferredGenerator?.toolset,
-                                architecture: chosen_kit.kit.preferredGenerator?.platform,
-                                binaryDir: '${sourceDir}/out/build/${presetName}',
-                                cacheVariables: {
-                                    CMAKE_BUILD_TYPE: 'Debug',
-                                    CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
-                                    CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C']!,
-                                    CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
-                                }
-                            };
-                        }
+                        log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
+                        newPreset = {
+                            name: '__placeholder__',
+                            displayName: chosen_kit.kit.name,
+                            description: chosen_kit.description,
+                            generator: chosen_kit.kit.preferredGenerator?.name,
+                            toolset: chosen_kit.kit.preferredGenerator?.toolset,
+                            architecture: chosen_kit.kit.preferredGenerator?.platform,
+                            binaryDir: '${sourceDir}/out/build/${presetName}',
+                            cacheVariables: {
+                                CMAKE_BUILD_TYPE: 'Debug',
+                                CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
+                                CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C']!,
+                                CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
+                            }
+                        };
                     }
                     break;
                 }
@@ -1016,7 +1008,7 @@ export class PresetsController {
         const indent = this.getIndentationSettings();
         try {
             await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));
-        } catch (e) {
+        } catch (e: any) {
             rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
             return;
         }

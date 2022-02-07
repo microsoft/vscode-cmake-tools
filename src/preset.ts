@@ -7,8 +7,7 @@ import * as logging from '@cmt/logging';
 import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { Kit } from '@cmt/kit';
-import { compareVersions, VSInstallation, vsInstallations, EnumerateMSVCToolsets, targetArchFromGeneratorPlatform, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visual-studio';
+import { compareVersions, VSInstallation, vsInstallations, EnumerateMSVCToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visual-studio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -437,15 +436,6 @@ export function getPresetByName<T extends Preset>(presets: T[], name: string): T
 
 function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof TestPreset) {
     return key !== 'name' && key !== 'hidden' && key !== 'inherits' && key !== 'description' && key !== 'displayName';
-}
-
-let kits: Kit[] = [];
-
-/**
- * Using kits as compilers
- */
-export function setCompilers(_kits: Kit[]) {
-    kits = _kits;
 }
 
 /**
@@ -949,15 +939,13 @@ async function expandConfigurePresetHelper(folder: string,
                     // which could cause configuration to fail. However the user can workaround this by launching
                     // vscode from the dev prompt of their desired instance.
                     // https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_INSTANCE.html
-                    let useCMakeGeneratorInstance = false;
                     let vsGeneratorVersion: number | undefined;
                     const matches = preset.generator?.match(/Visual Studio (?<version>\d+)/);
                     if (matches && matches.groups?.version) {
                         vsGeneratorVersion = parseInt(matches.groups.version);
-                        useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
-
+                        const useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
                         const cmakeGeneratorInstance = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_GENERATOR_INSTANCE']);
-                        if (cmakeGeneratorInstance) {
+                        if (useCMakeGeneratorInstance && cmakeGeneratorInstance) {
                             const cmakeGeneratorInstanceNormalized = path.normalize(cmakeGeneratorInstance);
                             vsInstall = vsInstalls.find((vs) => vs.installationPath
                                     && path.normalize(vs.installationPath) === cmakeGeneratorInstanceNormalized);

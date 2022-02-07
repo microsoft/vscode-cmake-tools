@@ -138,7 +138,6 @@ export function targetArchFromGeneratorPlatform(generatorPlatform?: string) {
     return vsArchFromGeneratorPlatform[generatorPlatform] || generatorPlatform;
 }
 
-
 /**
  * Create the host-target arch specification of a VS install,
  * from the VS kit architecture (host) and generator platform (target).
@@ -405,6 +404,37 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
 }
 
 /**
+ * Gets the full path to the vcvars*.bat script for the given VS installation and host/target architecture.
+ * If not found it means the toolset architecture is not supported for this installation.
+ * @param vsInstall The VS installation.
+ * @param hostArch The desired toolset host architecture.
+ * @param targetArch The desired toolset target architecture.
+ * @returns Path to vcvars*.bat script or null if not found.
+ */
+export async function getVcVarsBatScript(vsInstall: VSInstallation, hostArch: string, targetArch?: string): Promise<string | null> {
+    const majorVersion = parseInt(vsInstall.installationVersion);
+
+    let vcvarsScript: string = 'vcvarsall.bat';
+    if (targetArch === "arm" || targetArch === "arm64") {
+        // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
+        vcvarsScript = `vcvars${getHostTargetArchString(hostArch, targetArch, true)}.bat`;
+    }
+    let devBatFolder = path.join(vsInstall.installationPath, 'VC', 'Auxiliary', 'Build');
+    if (majorVersion < 15) {
+        devBatFolder = path.join(vsInstall.installationPath, 'VC');
+    }
+
+    const devbat = path.join(devBatFolder, vcvarsScript);
+    // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
+    // in the given VS installation.
+    if (!await fs.exists(devbat)) {
+        return null;
+    } else {
+        return devbat;
+    }
+}
+
+/**
  * Extracts environment variables from vcvarsall.bat.
  * @param inst The installation to extract variables from
  * @param hostArch The toolset host architecture
@@ -415,20 +445,8 @@ export async function varsForVSInstallation(inst: VSInstallation, hostArch: stri
     log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
     const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
     const majorVersion = parseInt(inst.installationVersion);
-    let vcvarsScript: string = 'vcvarsall.bat';
-    if (targetArch === "arm" || targetArch === "arm64") {
-        // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
-        vcvarsScript = `vcvars${getHostTargetArchString(hostArch, targetArch, true)}.bat`;
-    }
-    let devBatFolder = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build');
-    if (majorVersion < 15) {
-        devBatFolder = path.join(inst.installationPath, 'VC');
-    }
-
-    const devbat = path.join(devBatFolder, vcvarsScript);
-    // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
-    // in the given VS installation.
-    if (!await fs.exists(devbat)) {
+    const devbat = await getVcVarsBatScript(inst, hostArch, targetArch);
+    if (!devbat) {
         return null;
     }
 
