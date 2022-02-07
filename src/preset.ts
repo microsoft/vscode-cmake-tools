@@ -7,8 +7,8 @@ import * as logging from '@cmt/logging';
 import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { effectiveKitEnvironment, Kit } from '@cmt/kit';
-import { compareVersions, vsInstallations, targetArchFromGeneratorPlatform} from '@cmt/installs/visual-studio';
+import { Kit } from '@cmt/kit';
+import { compareVersions, VSInstallation, vsInstallations, EnumerateMSVCToolsets, targetArchFromGeneratorPlatform, varsForVSInstallation } from '@cmt/installs/visual-studio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -938,25 +938,32 @@ async function expandConfigurePresetHelper(folder: string,
 
                     // Get version info for all VS instances. Create a map so we don't need to
                     // iterate through the array every time.
-                    const vsVersions = new Map<string, string>();
+                    const vsInstalls = new Map<string, VSInstallation>();
                     for (const vs of await vsInstallations()) {
-                        vsVersions.set(vs.instanceId, vs.installationVersion);
+                        vsInstalls.set(vs.instanceId, vs);
                     }
                     let latestVsVersion: string = '';
                     let latestVsIndex = -1;
                     for (let i = 0; i < kits.length; i++) {
                         const kit = kits[i];
                         if (kit.visualStudio && !kit.compilers) {
-                            const version = vsVersions.get(kit.visualStudio);
-                            if (kit.preferredGenerator && targetArchFromGeneratorPlatform(kit.preferredGenerator.platform) === arch &&
-                                (kit.visualStudioArchitecture === toolset.host || kit.preferredGenerator.toolset === ('host=' + toolset.host))) {
-                                if (toolset.version && version?.startsWith(toolset.version)) {
-                                    latestVsVersion = version;
-                                    latestVsIndex = i;
-                                    break;
+                            const vsInstall = vsInstalls.get(kit.visualStudio);
+                            if (vsInstall
+                                && kit.preferredGenerator
+                                && targetArchFromGeneratorPlatform(kit.preferredGenerator.platform) === arch
+                                && (kit.visualStudioArchitecture === toolset.host || kit.preferredGenerator.toolset === ('host=' + toolset.host))) {
+
+                                if (toolset.version && vsInstall.installationPath) {
+                                    const availableToolsets = await EnumerateMSVCToolsets(vsInstall.installationPath);
+                                    // forcing non-null due to false positive (toolset.version is checked in conditional)
+                                    if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
+                                        latestVsVersion = vsInstall.installationVersion;
+                                        latestVsIndex = i;
+                                        break;
+                                    }
                                 }
-                                if (!toolset.version && version && compareVersions(latestVsVersion, version) < 0) {
-                                    latestVsVersion = version;
+                                if (!toolset.version && vsInstall && compareVersions(latestVsVersion, vsInstall.installationVersion) < 0) {
+                                    latestVsVersion = vsInstall.installationVersion;
                                     latestVsIndex = i;
                                 }
                             }
@@ -967,7 +974,11 @@ async function expandConfigurePresetHelper(folder: string,
                             "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
                             preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
                     } else {
-                        compilerEnv = await effectiveKitEnvironment(kits[latestVsIndex]);
+                        // Guaranteed not null by logic above. toolset.host gets default value set by getToolset.
+                        const vsInstall = vsInstalls.get(kits[latestVsIndex].visualStudio!);
+                        const vsEnv = await varsForVSInstallation(vsInstall!, toolset.host!, arch, toolset.version);
+                        compilerEnv = vsEnv ?? EnvironmentUtils.create();
+
                         // if ninja isn't on path, try to look for it in a VS install
                         const ninjaLoc = await execute('where.exe', ['ninja'], null, {
                             environment: EnvironmentUtils.create(preset.environment),

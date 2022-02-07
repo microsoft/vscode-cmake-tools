@@ -271,21 +271,21 @@ const MSVC_ENVIRONMENT_VARIABLES = [
     'VCTARGETSPATH'
 ];
 
-// for reference this is vcvarsall.bat -? (from 16.11.8)
-// Syntax:
-//     vcvarsall.bat [arch] [platform_type] [winsdk_version] [-vcvars_ver=vc_version] [-vcvars_spectre_libs=spectre_mode]
-// where :
-//     [arch]: x86 | amd64 | x86_amd64 | x86_arm | x86_arm64 | amd64_x86 | amd64_arm | amd64_arm64
-//     [platform_type]: {empty} | store | uwp
-//     [winsdk_version] : full Windows 10 SDK number (e.g. 10.0.10240.0) or "8.1" to use the Windows 8.1 SDK.
-//     [vc_version] : {none} for latest installed VC++ compiler toolset |
-//                    "14.0" for VC++ 2015 Compiler Toolset |
-//                    "14.xx" for the latest 14.xx.yyyyy toolset installed (e.g. "14.11") |
-//                    "14.xx.yyyyy" for a specific full version number (e.g. "14.11.25503")
-//     [spectre_mode] : {none} for libraries without spectre mitigations |
-//                      "spectre" for libraries with spectre mitigations
 /**
  * Get the environment variables corresponding to a VS dev batch file.
+ * For reference this is vcvarsall.bat -? (from 16.11.8)
+ * Syntax:
+ *     vcvarsall.bat [arch] [platform_type] [winsdk_version] [-vcvars_ver=vc_version] [-vcvars_spectre_libs=spectre_mode]
+ * where :
+ *     [arch]: x86 | amd64 | x86_amd64 | x86_arm | x86_arm64 | amd64_x86 | amd64_arm | amd64_arm64
+ *     [platform_type]: {empty} | store | uwp
+ *     [winsdk_version] : full Windows 10 SDK number (e.g. 10.0.10240.0) or "8.1" to use the Windows 8.1 SDK.
+ *     [vc_version] : {none} for latest installed VC++ compiler toolset |
+ *                    "14.0" for VC++ 2015 Compiler Toolset |
+ *                    "14.xx" for the latest 14.xx.yyyyy toolset installed (e.g. "14.11") |
+ *                    "14.xx.yyyyy" for a specific full version number (e.g. "14.11.25503")
+ *     [spectre_mode] : {none} for libraries without spectre mitigations |
+ *                      "spectre" for libraries with spectre mitigations
  * @param hostArch Host arch used to find the proper Windows SDK path
  * @param devbat Path to a VS environment batch file
  * @param args List of arguments to pass to the batch file
@@ -404,7 +404,14 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
     return vars;
 }
 
-export async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Environment | null> {
+/**
+ * Extracts environment variables from vcvarsall.bat.
+ * @param inst The installation to extract variables from
+ * @param hostArch The toolset host architecture
+ * @param targetArch The toolset target architecture. If unspecified this defaults to `hostArch`
+ * @param toolsetVersion The toolset version. If specified `inst` is assumed to have this toolset installed.
+ */
+export async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string, toolsetVersion?: string): Promise<Environment | null> {
     log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
     const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
     const majorVersion = parseInt(inst.installationVersion);
@@ -425,7 +432,11 @@ export async function varsForVSInstallation(inst: VSInstallation, hostArch: stri
         return null;
     }
 
-    const variables = await collectDevBatVars(hostArch, devbat, [getHostTargetArchString(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
+    const devBatArgs = [getHostTargetArchString(hostArch, targetArch, majorVersion < 15)];
+    if (toolsetVersion) {
+        devBatArgs.push(`-vcvars_ver=${toolsetVersion}`);
+    }
+    const variables = await collectDevBatVars(hostArch, devbat, devBatArgs, majorVersion, common_dir);
     if (!variables) {
         return null;
     } else {
