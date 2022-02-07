@@ -574,7 +574,6 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
     return `${vsDisplayName(inst)} - ${getHostTargetArchString(hostArch, targetArch, true)}`;
 }
 
-
 /**
  * Possible msvc host architectures
  */
