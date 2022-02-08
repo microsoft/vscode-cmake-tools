@@ -952,14 +952,13 @@ async function expandConfigurePresetHelper(folder: string,
 
                             if (!vsInstall) {
                                 log.warning(localize('specified.vs.not.found',
-                                    "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE=\"{1}\" was not found,"
-                                    + " falling back on default instance lookup behavior.",
+                                    "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE=\"{1}\" was not found, falling back on default instance lookup behavior.",
                                     preset.name, cmakeGeneratorInstance));
                             }
                         }
                     }
 
-                    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up matching an instance
+                    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
                     // that supports the specified toolset.
                     if (!vsInstall) {
                         // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
