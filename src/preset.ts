@@ -576,7 +576,8 @@ async function getExpansionOptions(folder: string,
     };
 
     const presetsFile = getPresetsFile(folder);
-    if (presetsFile && presetsFile.version >= 3) {
+    const userPresetsFile = getUserPresetsFile(folder);
+    if (presetsFile && presetsFile.version >= 3 || userPresetsFile && userPresetsFile.version >= 3) {
         expansionOpts.vars['hostSystemName'] = await util.getHostSystemNameMemo();
     }
 
