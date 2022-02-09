@@ -7,7 +7,7 @@ import * as logging from '@cmt/logging';
 import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { compareVersions, VSInstallation, vsInstallations, EnumerateMSVCToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visual-studio';
+import { compareVersions, VSInstallation, vsInstallations, enumerateMSVCToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visual-studio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -970,7 +970,7 @@ async function expandConfigurePresetHelper(folder: string,
                             if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
                                 // If a toolset version is specified then check to make sure this vs instance has it installed.
                                 if (toolset.version) {
-                                    const availableToolsets = await EnumerateMSVCToolsets(vs.installationPath);
+                                    const availableToolsets = await enumerateMSVCToolsets(vs.installationPath);
                                     // forcing non-null due to false positive (toolset.version is checked in conditional)
                                     if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
                                         vsInstall = vs;
