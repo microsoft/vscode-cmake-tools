@@ -342,22 +342,27 @@ export class PresetsController {
                         // No selection was made
                         return false;
                     } else {
-                        log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
-                        newPreset = {
-                            name: '__placeholder__',
-                            displayName: chosen_kit.kit.name,
-                            description: chosen_kit.description,
-                            generator: chosen_kit.kit.preferredGenerator?.name,
-                            toolset: chosen_kit.kit.preferredGenerator?.toolset,
-                            architecture: chosen_kit.kit.preferredGenerator?.platform,
-                            binaryDir: '${sourceDir}/out/build/${presetName}',
-                            cacheVariables: {
-                                CMAKE_BUILD_TYPE: 'Debug',
-                                CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
-                                CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C']!,
-                                CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
-                            }
-                        };
+                        if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
+                            await KitsController.scanForKits(this._cmakeTools);
+                            return false;
+                        } else {
+                            log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
+                            newPreset = {
+                                name: '__placeholder__',
+                                displayName: chosen_kit.kit.name,
+                                description: chosen_kit.description,
+                                generator: chosen_kit.kit.preferredGenerator?.name,
+                                toolset: chosen_kit.kit.preferredGenerator?.toolset,
+                                architecture: chosen_kit.kit.preferredGenerator?.platform,
+                                binaryDir: '${sourceDir}/out/build/${presetName}',
+                                cacheVariables: {
+                                    CMAKE_BUILD_TYPE: 'Debug',
+                                    CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
+                                    CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C']!,
+                                    CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
+                                }
+                            };
+                        }
                     }
                     break;
                 }
