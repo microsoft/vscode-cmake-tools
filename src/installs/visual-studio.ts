@@ -176,7 +176,7 @@ export function getHostTargetArchString(hostArch: string, targetArch?: string, a
 }
 
 // Gets the MSVC toolsets installed for a given VS install.
-export async function enumerateMSVCToolsets(vsInstallRoot: string): Promise<string[] | undefined> {
+export async function enumerateMsvcToolsets(vsInstallRoot: string): Promise<string[] | undefined> {
     const toolsetDir = path.join(vsInstallRoot, 'VC\\Tools\\MSVC');
     if (await fs.exists(toolsetDir)) {
         const dirContents = await fs.readdir(toolsetDir, { 'withFileTypes': true });
@@ -189,9 +189,9 @@ export async function enumerateMSVCToolsets(vsInstallRoot: string): Promise<stri
 }
 
 // Filters the given vsInstalls to those which have the given toolset.
-export function filterVSInstallationsByMSVCToolset(vsInstalls: VSInstallation[], toolsetVersion: string): VSInstallation[] {
+export function filterVSInstallationsByMsvcToolset(vsInstalls: VSInstallation[], toolsetVersion: string): VSInstallation[] {
     return vsInstalls.filter(async vs => {
-        const availableToolsets = await enumerateMSVCToolsets(vs.installationPath);
+        const availableToolsets = await enumerateMsvcToolsets(vs.installationPath);
         return availableToolsets?.find(t => t.startsWith(toolsetVersion));
     });
 }
