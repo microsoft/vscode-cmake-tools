@@ -4,6 +4,7 @@ import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 //import sinon = require('sinon');
 import * as fs from 'fs';
 import * as path from 'path';
+import { TerminalOptions } from 'vscode';
 
 suite('Debug/Launch interface', async () => {
     let cmt: CMakeTools;
@@ -184,28 +185,22 @@ suite('Debug/Launch interface', async () => {
         expect(terminal).to.be.not.null;
         expect(terminal!.name).to.eq('CMake/Launch');
 
-        let start = new Date();
-        // Needed to get launch target result
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        let elapsed = (new Date().getTime() - start.getTime()) / 1000;
-        console.log(`Waited ${elapsed} seconds for output file to appear`);
-
-        let exists = fs.existsSync(createdFileOnExecution);
-        console.log(`File: ${createdFileOnExecution} exists? ${exists}`);
-
-        if (!exists) {
-            start = new Date();
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            elapsed = (new Date().getTime() - start.getTime()) / 1000;
-            console.log(`Waited ${elapsed} more seconds for output file to appear`);
-
+        const start = new Date();
+        let exists = false;
+        for (let i = 0; i < 30; ++i) {
+            // Needed to get launch target result
+            await new Promise(resolve => setTimeout(resolve, 1000));
             exists = fs.existsSync(createdFileOnExecution);
-            console.log(`File: ${createdFileOnExecution} exists? ${exists}`);
+            const elapsed = (new Date().getTime() - start.getTime()) / 1000;
+            console.log(`File: ${createdFileOnExecution} exists:${exists}  elapsed:${elapsed} launchProgramPath:${launchProgramPath} name:${executablesTargets[0].name}`);
+            if (exists) {
+                break;
+            }
         }
+        console.log(`Target files:${JSON.stringify(fs.readdirSync(path.dirname(launchProgramPath!)))} cwd:${(terminal?.creationOptions as TerminalOptions).cwd}`);
+
         // Check that it is compiled as a new file
-        //expect(fs.existsSync(createdFileOnExecution)).to.be.true;
+        expect(exists).to.be.true;
     }).timeout(60000);
 
     test('Test launch same target multiple times when newTerminal run is enabled', async () => {
