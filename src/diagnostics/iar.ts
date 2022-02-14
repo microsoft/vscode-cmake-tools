@@ -1,10 +1,9 @@
 /**
  * Module for parsing IAR diagnostics
- */ /** */
+ */
 
-import * as vscode from 'vscode';
-
-import { oneLess, RawDiagnosticParser, FeedLineResult, RawDiagnostic } from './util';
+import { oneLess } from '@cmt/basic/util';
+import { FeedLineResult, RawDiagnostic, RawDiagnosticParser } from './rawDiagnosticParser';
 
 const CODE_REGEX = /^\"(?<file>.*)\",(?<line>\d+)\s+(?<severity>[A-Za-z ]+)\[(?<code>[A-Za-z]+[0-9]+)\]:(?<message_start>.*)$/;
 
@@ -63,7 +62,12 @@ export class Parser extends RawDiagnosticParser {
                     this.pending_diagnostic = {
                         full: full,
                         file: file,
-                        location: new vscode.Range(oneLess(lineno), this.pending_column ?? 0, oneLess(lineno), 999),
+                        location: {
+                            startLine: oneLess(lineno),
+                            startCharacter: this.pending_column ?? 0,
+                            endLine: oneLess(lineno),
+                            endCharacter: 999
+                        },
                         severity: this.translateSeverity(severity),
                         message: message_start ? message_start + ' ' : '', // Add space ready for the next line of the message. It'll be trimmed if there isn't an additional part to the message.
                         code: code,

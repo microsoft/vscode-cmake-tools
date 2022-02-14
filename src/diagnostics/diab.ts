@@ -1,10 +1,9 @@
 /**
  * Module for parsing Wind River Diab diagnostics
- */ /** */
+ */
 
-import * as vscode from 'vscode';
-
-import { oneLess, RawDiagnosticParser, FeedLineResult } from './util';
+import { oneLess } from '@cmt/basic/util';
+import { FeedLineResult, RawDiagnosticParser } from './rawDiagnosticParser';
 
 export const REGEX = /^\"(.*)\",\s+(?:line\s+(\d+):\s+)?(info|warning|(?:|fatal |catastrophic )error)\s+\((.*)\):\s+(.*)$/;
 
@@ -22,7 +21,12 @@ export class Parser extends RawDiagnosticParser {
             return {
                 full,
                 file,
-                location: new vscode.Range(oneLess(lineno), oneLess(column), oneLess(lineno), 999),
+                location: {
+                    startLine: oneLess(lineno),
+                    startCharacter: oneLess(column),
+                    endLine: oneLess(lineno),
+                    endCharacter: 999
+                },
                 severity,
                 code,
                 message,

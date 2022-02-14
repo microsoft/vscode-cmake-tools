@@ -1,10 +1,9 @@
 /**
  * Module for handling GCC diagnostics
- */ /** */
+ */
 
-import * as vscode from 'vscode';
-
-import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult } from './util';
+import { oneLess } from '@cmt/basic/util';
+import { FeedLineResult, RawDiagnostic, RawDiagnosticParser, RawRelated } from './rawDiagnosticParser';
 
 export const REGEX = /^(.*):(\d+):(\d+):\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/;
 
@@ -36,7 +35,12 @@ export class Parser extends RawDiagnosticParser {
                 const lineNo = oneLess(linestr);
                 this._pendingTemplateError.requiredFrom.push({
                     file,
-                    location: new vscode.Range(lineNo, parseInt(column), lineNo, 999),
+                    location: {
+                        startLine: lineNo,
+                        startCharacter: parseInt(column),
+                        endLine: lineNo,
+                        endCharacter: 999
+                    },
                     message
                 });
                 return FeedLineResult.Ok;
@@ -68,13 +72,23 @@ export class Parser extends RawDiagnosticParser {
                 if (severity === 'note' && this._prevDiag) {
                     this._prevDiag.related.push({
                         file,
-                        location: new vscode.Range(lineno, column, lineno, 999),
+                        location: {
+                            startLine: lineno,
+                            startCharacter: column,
+                            endLine: lineno,
+                            endCharacter: 999
+                        },
                         message
                     });
                     return FeedLineResult.Ok;
                 } else {
                     const related: RawRelated[] = [];
-                    const location = new vscode.Range(lineno, column, lineno, 999);
+                    const location = {
+                        startLine: lineno,
+                        startCharacter: column,
+                        endLine: lineno,
+                        endCharacter: 999
+                    };
                     if (this._pendingTemplateError) {
                         related.push({
                             location,

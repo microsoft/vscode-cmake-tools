@@ -1,10 +1,9 @@
 /**
  * Module for handling GNU linker diagnostics
- */ /** */
+ */
 
-import * as vscode from 'vscode';
-
-import { FeedLineResult, oneLess, RawDiagnosticParser } from './util';
+import { oneLess } from '@cmt/basic/util';
+import { FeedLineResult, RawDiagnosticParser } from './rawDiagnosticParser';
 
 export const REGEX = /^(.*):(\d+)\s?:\s+(.*[^\]])$/;
 
@@ -25,7 +24,12 @@ export class Parser extends RawDiagnosticParser {
             return {
                 full,
                 file,
-                location: new vscode.Range(lineno, 0, lineno, 999),
+                location: {
+                    startLine: lineno,
+                    startCharacter: 0,
+                    endLine: lineno,
+                    endCharacter: 999
+                },
                 severity: 'error',
                 message,
                 related: []

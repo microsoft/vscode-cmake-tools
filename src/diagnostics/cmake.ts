@@ -5,9 +5,10 @@
 import { Logger } from '@cmt/logging';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
+import { oneLess } from '@cmt/basic/util';
 import * as vscode from 'vscode';
 
-import { FileDiagnostic, oneLess } from './util';
+import { FileDiagnostic } from './util';
 
 /**
  * Class which consumes output from CMake.

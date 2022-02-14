@@ -1,10 +1,9 @@
 /**
  * Module for parsing GHS diagnostics
- */ /** */
+ */
 
-import * as vscode from 'vscode';
-
-import { oneLess, RawDiagnosticParser, FeedLineResult } from './util';
+import { oneLess } from '@cmt/basic/util';
+import { FeedLineResult, RawDiagnosticParser } from './rawDiagnosticParser';
 
 export const REGEX = /^\"(.*)\",\s+(?:(?:line\s+(\d+)\s+\(col\.\s+(\d+)\))|(?:At end of source)):\s+(?:fatal )?(remark|warning|error)\s+(.*)/;
 
@@ -21,7 +20,12 @@ export class Parser extends RawDiagnosticParser {
             return {
                 full,
                 file,
-                location: new vscode.Range(oneLess(lineno), oneLess(column), oneLess(lineno), 999),
+                location: {
+                    startLine: oneLess(lineno),
+                    startCharacter: oneLess(column),
+                    endLine: oneLess(lineno),
+                    endCharacter: 999
+                },
                 severity,
                 message,
                 related: []

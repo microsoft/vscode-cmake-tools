@@ -8,24 +8,13 @@ import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
-import * as gcc from './gcc';
-import * as ghs from './ghs';
-import * as diab from './diab';
-import * as gnu_ld from './gnu-ld';
-import * as mvsc from './msvc';
-import * as iar from './iar';
-import { FileDiagnostic, RawDiagnosticParser } from './util';
+import { FileDiagnostic } from './util';
 import { ConfigurationReader } from '@cmt/config';
+import { RawDiagnosticLocation } from './rawDiagnosticParser';
+import { Compilers } from './compilers';
 
-export class Compilers {
-    [compiler: string]: RawDiagnosticParser;
-
-    gcc = new gcc.Parser();
-    ghs = new ghs.Parser();
-    diab = new diab.Parser();
-    gnuLD = new gnu_ld.Parser();
-    msvc = new mvsc.Parser();
-    iar = new iar.Parser();
+function createRange(location: RawDiagnosticLocation): vscode.Range {
+    return new vscode.Range(location.startLine, location.startCharacter, location.endLine, location.endCharacter);
 }
 
 export class CompileOutputConsumer implements OutputConsumer {
@@ -83,7 +72,9 @@ export class CompileOutputConsumer implements OutputConsumer {
                 if (severity === undefined) {
                     return undefined;
                 }
-                const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity);
+                const diag = new vscode.Diagnostic(
+                    createRange(raw_diag.location),
+                    raw_diag.message, severity);
                 diag.source = source;
                 if (raw_diag.code) {
                     diag.code = raw_diag.code;
@@ -94,7 +85,7 @@ export class CompileOutputConsumer implements OutputConsumer {
                 diag.relatedInformation = [];
                 for (const rel of raw_diag.related) {
                     const relFilePath = vscode.Uri.file(util.resolvePath(rel.file, basePath));
-                    const related = new vscode.DiagnosticRelatedInformation(new vscode.Location(relFilePath, rel.location), rel.message);
+                    const related = new vscode.DiagnosticRelatedInformation(new vscode.Location(relFilePath, createRange(rel.location)), rel.message);
                     diag.relatedInformation.push(related);
                 }
                 diags_by_file.get(filepath)!.push(diag);
