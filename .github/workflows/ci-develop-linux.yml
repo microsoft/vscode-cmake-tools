@@ -31,11 +31,3 @@ jobs:
         with:
           # Command to execute using xvfb
           run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
-
-      - name: Upload test logs if tests failed
-        if: failure()
-        uses: actions/upload-artifact@v2.2.4
-        with:
-          name: TestLogs
-          path: ~/.local/share/**/log.txt
-          if-no-files-found: warn
