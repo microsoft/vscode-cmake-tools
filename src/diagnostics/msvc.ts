@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 
 import { oneLess, RawDiagnosticParser, FeedLineResult } from './util';
 
-export const REGEX = /^\s*(\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s*(\w{1,2}\d+)?\s*:\s*(.*)$/;
+export const REGEX = /^\s*(\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\)\s*:\s+((?:fatal )?error|warning|info)\s*(\w{1,2}\d+)?\s*:\s*(.*)$/;
 
 export class Parser extends RawDiagnosticParser {
     doHandleLine(line: string) {
