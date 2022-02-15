@@ -182,7 +182,8 @@ export async function enumerateMsvcToolsets(vsInstallRoot: string): Promise<stri
         const dirContents = await fs.readdir(toolsetDir, { 'withFileTypes': true });
         // Only the toolsets should be this directory (each in their own directories), but filter out anything else just in case.
         // Sort in descending order, so if searching with a 1- or 2-component version (e.g. 14.27) we'll choose the latest version first
-        return dirContents.filter(item => item.isDirectory()).map(dir => dir.name).sort().reverse();
+        return dirContents.filter(item => item.isDirectory()).map(dir => dir.name)
+            .sort((a, b) => util.compareVersions(a, b)).reverse();
     }
 
     return undefined;
