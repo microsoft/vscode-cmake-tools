@@ -23,14 +23,12 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
  */
 export namespace fs {
 
-    export function exists(fspath: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, _reject) => {
-            fs_.exists(fspath, res => resolve(res));
-        });
+    export async function exists(filePath: string): Promise<boolean> {
+        return (await tryStat(filePath))?.isFile() || false;
     }
 
-    export function existsSync(fspath: string): boolean {
-        return fs_.existsSync(fspath);
+    export function existsSync(filePath: string): boolean {
+        return fs_.existsSync(filePath);
     }
 
     export const readFile = promisify(fs_.readFile);

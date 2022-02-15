@@ -1415,8 +1415,13 @@ async function expandKitVariables(kit: Kit): Promise<Kit> {
 }
 
 export async function readKitsFile(filepath: string): Promise<Kit[]> {
-    if (!await fs.exists(filepath)) {
+    const fileStats = await fs.tryStat(filepath);
+    if (!fileStats) {
         log.debug(localize('not.reading.nonexistent.kit', 'Not reading non-existent kits file: {0}', filepath));
+        return [];
+    }
+    if (!fileStats.isFile()) {
+        log.debug(localize('not.reading.invalid.path', 'Not reading invalid kits file: {0}', filepath));
         return [];
     }
     log.debug(localize('reading.kits.file', 'Reading kits file {0}', filepath));
