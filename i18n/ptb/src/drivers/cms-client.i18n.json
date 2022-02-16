@@ -16,6 +16,6 @@
 	"cookie.not.known.message": "O cookie do servidor CMake {0} não corresponde a uma mensagem conhecida",
 	"cant.yet.handle.message": "Ainda não é possível processar as mensagens de {0}",
 	"sending.message.to.cmake-server": "Enviando mensagem para o servidor do CMake: {0}",
-	"configuring.using.generator": "Configurando usando o gerador do CMake {0}",
-	"with.platform.and.toolset": " com a plataforma {0} e o conjunto de ferramentas {1}"
+	"configuring.using.generator": "Configurando usando o gerador do CMake \"{0}\"",
+	"with.platform.and.toolset": " com a plataforma \"{0}\" e o conjunto de ferramentas {1}"
 }

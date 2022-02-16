@@ -7,5 +7,5 @@
 	"invoking.cmake.with.arguments": "CMake {0} wird mit den Argumenten {1} aufgerufen.",
 	"reload.cmake.cache": "CMake-Cache erneut laden: {0} geändert",
 	"reloading.cmake.cache": "Der CMake-Cache wird neu geladen.",
-	"creating.instance.of": "Es wird eine Instanz von {0} erstellt."
+	"creating.instance.of": "Es wird eine Instanz von \"{0}\" erstellt."
 }

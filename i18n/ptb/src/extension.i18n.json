@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Relendo os kits",
 	"dispose.cmake.tools": "Descartar Ferramentas CMake",
-	"configure.this.project": "Deseja configurar o projeto {0}?",
+	"configure.this.project": "Deseja configurar o projeto '{0}'?",
 	"yes.button": "Sim",
 	"not.now.button": "Agora não",
 	"always.configure.on.open": "Sempre configurar projetos ao abrir?",
