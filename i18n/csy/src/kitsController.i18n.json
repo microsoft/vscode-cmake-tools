@@ -10,7 +10,7 @@
 	"loading.kits": "Načítají se sady.",
 	"unsetting.kit": "Ruší se nastavení sady.",
 	"loading.kit": "Načítá se sada {0}.",
-	"invalid.only.kit": "Jediná neplatná sada. Očekávalo se nalezení elementu {0}.",
+	"invalid.only.kit": "Jen neplatná sada. Očekávalo se nalezení elementu {0}.",
 	"already.checking.kits": "Sady se už kontrolují. Zkuste to prosím znovu později.",
 	"start.selection.of.kits": "Začněte vybírat sady. Nalezené sady: {0}",
 	"opening.kit.selection": "Otevírá se element QuickPick výběru sady.",

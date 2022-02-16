@@ -16,7 +16,7 @@
 	"cache.entry.unknown": "캐시 항목 {0}에 알 수 없는 형식 {1}이(가) 사용됨",
 	"constructing.new.cache.entry": "지정된 줄에서 새 캐시 항목을 생성하는 중",
 	"nonexisting.advanced.entry": "존재하지 않는 캐시 항목 {0}이(가) 고급으로 표시됨",
-	"ignore.strings.for.nonexisting.entry": "존재하지 않는 캐시 항목 {0}에 대한 'STRINGS' 속성을 무시 중",
+	"ignore.strings.for.nonexisting.entry": "존재하지 않는 캐시 항목 {0}에 대해 {1} 속성을 무시합니다.",
 	"parsed.cache.entries": "{0}개 캐시 항목을 구문 분석함",
 	"cache.value.truncation.warning": "캐시 항목 {0}에 줄바꿈이 있습니다. 값이 {1}(으)로 잘림",
 	"get.cache.key": "캐시 키 {0}={1} 가져오기",
