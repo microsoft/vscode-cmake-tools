@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Повторное чтение наборов.",
 	"dispose.cmake.tools": "Удаление Средств CMake",
-	"configure.this.project": "Вы хотите настроить проект \"{0}\"?",
+	"configure.this.project": "Вы хотите настроить проект {0}?",
 	"yes.button": "Да",
 	"not.now.button": "Не сейчас",
 	"always.configure.on.open": "Всегда настраивать проекты при открытии?",
@@ -20,7 +20,7 @@
 	"configure.recommended": "Рекомендуется повторно настроить проект после обновления на новое определение наборов.",
 	"using.cache.to.configure.workspace.on.open": "Использование кэша для настройки рабочей области при открытии {0}",
 	"update.code.model.for.cpptools": "Обновление модели кода для cpptools",
-	"update.intellisense.disabled": "Поставщик конфигурации не обновляется, так как для \"{0}\" установлено значение \"{1}\"",
+	"update.intellisense.disabled": "Поставщик конфигурации не обновляется, так как для {0} установлено значение {1}",
 	"filed.to.open.cache.file.on.code.model.update": "Не удалось открыть файл кэша CMake при обновлении модели кода.",
 	"opening.text.editor.for": "Открытие текстового редактора для {0}.",
 	"no.kits.file.what.to.do": "Файл наборов отсутствует. Что вы хотели бы сделать?",

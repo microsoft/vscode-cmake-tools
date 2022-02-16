@@ -19,7 +19,7 @@
 	"select.a.kit.placeholder": "{0}용 키트 선택",
 	"user.cancelled.kit.selection": "사용자가 키트 선택을 취소함",
 	"user.selected.kit": "사용자가 {0} 키트를 선택함",
-	"kit.references.non-existent": "\"{0}\" 키트가 존재하지 않는 컴파일러 이진 파일 [{1}]을(를) 참조합니다. 원하는 작업을 선택하세요.",
+	"kit.references.non-existent": "{0} 키트가 존재하지 않는 컴파일러 이진 파일 [{1}]을(를) 참조합니다. 원하는 작업을 선택하세요.",
 	"remove.it.button": "제거",
 	"keep.it.button": "유지",
 	"pruning.kit": "키트를 삭제하는 중",
