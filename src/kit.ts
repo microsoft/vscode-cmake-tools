@@ -477,7 +477,13 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
     const kits = await scanDirectory(dir, async bin => {
         log.trace(localize('checking.file.for.compiler.features', 'Checking file for compiler features: {0}', bin));
         try {
-            return await kitIfCompiler(bin, pr);
+            const kit: Kit | null = await kitIfCompiler(bin, pr);
+            if (kit?.compilers) {
+                log.trace(`Kit found: ${kit.name}`);
+                log.trace(`        C: ${kit.compilers['C']}`);
+                log.trace(`      CXX: ${kit.compilers['CXX']}`);
+            }
+            return kit;
         } catch (e) {
             log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
             if (e.code === 'EACCES') {
