@@ -616,7 +616,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     let script = '';
     let run_command = '';
 
-    let environmentSetupScript = kit.environmentSetupScript;
+    let environmentSetupScript = kit.environmentSetupScript?.trim();
     if (opts) {
         environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
     }
