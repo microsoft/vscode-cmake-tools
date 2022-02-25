@@ -16,7 +16,7 @@
 	"cache.entry.unknown": "缓存条目 {0} 具有未知类型: {1}",
 	"constructing.new.cache.entry": "从给定行构造新的缓存条目",
 	"nonexisting.advanced.entry": "已将不存在的缓存条目 {0} 标记为高级",
-	"ignore.strings.for.nonexisting.entry": "正在忽略不存在的缓存条目 {0} 的 `STRINGS` 属性",
+	"ignore.strings.for.nonexisting.entry": "正在忽略不存在的缓存条目 {0} 的 {1} 属性",
 	"parsed.cache.entries": "已分析 {0} 个缓存条目",
 	"cache.value.truncation.warning": "在缓存条目 {0} 中找到了换行符。已将值截断为 {1}",
 	"get.cache.key": "获取缓存键 {0}={1}",

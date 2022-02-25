@@ -16,7 +16,7 @@
 	"cache.entry.unknown": "キャッシュ エントリ {0} の型が不明です: {1}",
 	"constructing.new.cache.entry": "指定された行から新しいキャッシュ エントリを構築しています",
 	"nonexisting.advanced.entry": "存在していないキャッシュエントリ {0} は Advanced としてマークされています",
-	"ignore.strings.for.nonexisting.entry": "存在していないキャッシュ エントリ {0} の 'STRINGS' プロパティを無視しています",
+	"ignore.strings.for.nonexisting.entry": "存在していないキャッシュ エントリ {0} の {1} プロパティを無視しています",
 	"parsed.cache.entries": "{0} 個のキャッシュ エントリを解析しました",
 	"cache.value.truncation.warning": "キャッシュ エントリ {0} に改行が見つかりました。値が {1} に切り捨てられました",
 	"get.cache.key": "キャッシュ キーの取得 {0}={1}",

@@ -10,7 +10,7 @@
 	"loading.kits": "Caricamento dei kit",
 	"unsetting.kit": "Annullamento dell'impostazione del kit",
 	"loading.kit": "Caricamento del kit {0}",
-	"invalid.only.kit": "Solo kit non valido. È previsto `{0}`",
+	"invalid.only.kit": "Solo kit non valido. È previsto {0}",
 	"already.checking.kits": "La verifica dei kit è già in corso. Riprovare più tardi.",
 	"start.selection.of.kits": "Avvia la selezione dei kit. Sono stati trovati {0} kit.",
 	"opening.kit.selection": "Apertura della selezione rapida per la selezione del kit",
