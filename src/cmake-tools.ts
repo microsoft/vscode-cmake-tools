@@ -1255,60 +1255,66 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
                 }
 
-                return this._doConfigure(type, progress, async consumer => {
-                    const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
-                    if (drv) {
-                        let old_prog = 0;
-                        const prog_sub = drv.onProgress(pr => {
-                            const new_prog = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
-                            const increment = new_prog - old_prog;
-                            if (increment >= 1) {
-                                old_prog += increment;
-                                progress.report({ increment });
-                            }
-                        });
-                        try {
-                            progress.report({ message: localize('configuring.project', 'Configuring project') });
-                            let retc: number;
-                            await setContextValue(IS_CONFIGURING_KEY, true);
-                            if (type === ConfigureType.Cache) {
-                                retc = await drv.configure(trigger, [], consumer, true);
-                            } else {
-                                switch (type) {
-                                    case ConfigureType.Normal:
-                                        retc = await drv.configure(trigger, extra_args, consumer);
-                                        break;
-                                    case ConfigureType.Clean:
-                                        retc = await drv.cleanConfigure(trigger, extra_args, consumer);
-                                        break;
-                                    case ConfigureType.ShowCommandOnly:
-                                        retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
-                                        break;
-                                    default:
-                                        rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
-                                        retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
-                                        break;
+                try {
+                    return this._doConfigure(type, progress, async consumer => {
+                        const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
+                        if (drv) {
+                            let old_prog = 0;
+                            const prog_sub = drv.onProgress(pr => {
+                                const new_prog = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                                const increment = new_prog - old_prog;
+                                if (increment >= 1) {
+                                    old_prog += increment;
+                                    progress.report({ increment });
                                 }
-                                await setContextValue(IS_CONFIGURING_KEY, false);
-                            }
-                            if (retc === 0) {
-                                await enableFullFeatureSet(true);
-                                await this._refreshCompileDatabase(drv.expansionOptions);
-                            }
+                            });
+                            try {
+                                progress.report({ message: localize('configuring.project', 'Configuring project') });
+                                let retc: number;
+                                await setContextValue(IS_CONFIGURING_KEY, true);
+                                if (type === ConfigureType.Cache) {
+                                    retc = await drv.configure(trigger, [], consumer, true);
+                                } else {
+                                    switch (type) {
+                                        case ConfigureType.Normal:
+                                            retc = await drv.configure(trigger, extra_args, consumer);
+                                            break;
+                                        case ConfigureType.Clean:
+                                            retc = await drv.cleanConfigure(trigger, extra_args, consumer);
+                                            break;
+                                        case ConfigureType.ShowCommandOnly:
+                                            retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
+                                            break;
+                                        default:
+                                            rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
+                                            retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
+                                            break;
+                                    }
+                                    await setContextValue(IS_CONFIGURING_KEY, false);
+                                }
+                                if (retc === 0) {
+                                    await enableFullFeatureSet(true);
+                                    await this._refreshCompileDatabase(drv.expansionOptions);
+                                }
 
-                            await this._ctestController.reloadTests(drv);
-                            this._onReconfiguredEmitter.fire();
-                            return retc;
-                        } finally {
-                            await setContextValue(IS_CONFIGURING_KEY, false);
-                            progress.report({ message: localize('finishing.configure', 'Finishing configure') });
-                            prog_sub.dispose();
+                                await this._ctestController.reloadTests(drv);
+                                this._onReconfiguredEmitter.fire();
+                                return retc;
+                            } finally {
+                                await setContextValue(IS_CONFIGURING_KEY, false);
+                                progress.report({ message: localize('finishing.configure', 'Finishing configure') });
+                                prog_sub.dispose();
+                            }
+                        } else {
+                            progress.report({ message: localize('configure.failed', 'Failed to configure project') });
+                            return -1;
                         }
-                    } else {
-                        progress.report({ message: localize('configure.failed', 'Failed to configure project') });
-                        return -1;
-                    }
-                });
+                    });
+                } catch (e: any) {
+                    const error = e as Error;
+                    progress.report({ message: error.message});
+                    return -1;
+                }
             }
         );
     }
