@@ -23,14 +23,13 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
  */
 export namespace fs {
 
-    export function exists(fspath: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, _reject) => {
-            fs_.exists(fspath, res => resolve(res));
-        });
+    export async function exists(filePath: string): Promise<boolean> {
+        const stat = await tryStat(filePath);
+        return stat !== null;
     }
 
-    export function existsSync(fspath: string): boolean {
-        return fs_.existsSync(fspath);
+    export function existsSync(filePath: string): boolean {
+        return fs_.existsSync(filePath);
     }
 
     export const readFile = promisify(fs_.readFile);
@@ -50,7 +49,7 @@ export namespace fs {
     export const walk = promisify(walk_);
 
     /**
-     * Try and stat() a file. If stat() fails for *any reason*, returns `null`.
+     * Try and stat() a file/folder. If stat() fails for *any reason*, returns `null`.
      * @param filePath The file to try and stat()
      */
     export async function tryStat(filePath: fs_.PathLike): Promise<fs_.Stats | null> {
