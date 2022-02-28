@@ -1,10 +1,30 @@
 # What's New?
 
 ## 1.10.0
+Improvements:
+- Don't specify number of jobs when building with Ninja. [#696](https://github.com/microsoft/vscode-cmake-tools/issues/696)
+- Support for the Ninja Multi-Config generator. [#1423](https://github.com/microsoft/vscode-cmake-tools/issues/1423)
+- Minimize build progress notification to the status bar. [#2308](https://github.com/microsoft/vscode-cmake-tools/issues/2308)
+- Allow editing Kits when presets are in use. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
+
 Bug Fixes:
-- ${buildKit} is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
+- CMakePrests.json toolset requires the VS version instead of the toolset version. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
+- CMakePresets should be able to specify a VC toolset by version number. [#2366](https://github.com/microsoft/vscode-cmake-tools/pull/2366)
+- CMake task provider does not configure the VS Build environment for Ninja builds. [#2258](https://github.com/microsoft/vscode-cmake-tools/pull/2258)
+- `${buildKit}` is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
 - Test the existence of a property instead of the value when expanding preset conditions. [#2329](https://github.com/microsoft/vscode-cmake-tools/issues/2329)
 - Include `hostSystemName` in variable expansion when only using User presets. [#2362](https://github.com/microsoft/vscode-cmake-tools/issues/2362)
+- Trim whitespace from `environmentSetupScript`. [#2391](https://github.com/microsoft/vscode-cmake-tools/issues/2391)
+- Incorrect `cmake.additionalKits` setting breaks CMake extension. [#2382](https://github.com/microsoft/vscode-cmake-tools/issues/2382)
+- VS2010 compile errors are not shown in Problems. [#2376](https://github.com/microsoft/vscode-cmake-tools/issues/2376)
+- Always rebuilds sources with autodetected clang and ninja on linux. [#2289](https://github.com/microsoft/vscode-cmake-tools/issues/2289)
+- Clean Reconfigure All Projects removes wrong files after switching kit. [#2326](https://github.com/microsoft/vscode-cmake-tools/issues/2326)
+- Update documentation. [#2334](https://github.com/microsoft/vscode-cmake-tools/pull/2334) [@atsju](https://github.com/atsju)
+- Ninja not able to build single-threaded. [#2222](https://github.com/microsoft/vscode-cmake-tools/issues/2222)
+- Fix various kit detection issues. [#2246](https://github.com/microsoft/vscode-cmake-tools/issues/2246) [#1759](https://github.com/microsoft/vscode-cmake-tools/issues/1759) [#1653](https://github.com/microsoft/vscode-cmake-tools/issues/1653) [#1410](https://github.com/microsoft/vscode-cmake-tools/issues/1410) [#1233](https://github.com/microsoft/vscode-cmake-tools/issues/1233) [@fourdim](https://github.com/fourdim)
+- Stop using `-H` to configure projects. [#2292](https://github.com/microsoft/vscode-cmake-tools/issues/2292)
+- `environmentSetupScript` capitalizes environment variable names. [#1592](https://github.com/microsoft/vscode-cmake-tools/issues/1592) [@lygstate](https://github.com/lygstate)
+- Debug Target failed when `debugConfig.environment` not present. [#2236](https://github.com/microsoft/vscode-cmake-tools/issues/2236) [@lygstate](https://github.com/lygstate)
 
 ## 1.9.2
 Bug fixes:
