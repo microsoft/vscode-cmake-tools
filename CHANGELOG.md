@@ -8,10 +8,10 @@ Improvements:
 - Allow editing Kits when presets are in use. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
 
 Bug Fixes:
-- CMakePrests.json toolset requires the VS version instead of the toolset version [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
-- CMakePresets should be able to specify a VC toolset by version number [#2366](https://github.com/microsoft/vscode-cmake-tools/pull/2366)
-- CMake task provider does not configure the VS Build environment for Ninja builds [#2258](https://github.com/microsoft/vscode-cmake-tools/pull/2258)
-- ${buildKit} is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
+- CMakePrests.json toolset requires the VS version instead of the toolset version. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
+- CMakePresets should be able to specify a VC toolset by version number. [#2366](https://github.com/microsoft/vscode-cmake-tools/pull/2366)
+- CMake task provider does not configure the VS Build environment for Ninja builds. [#2258](https://github.com/microsoft/vscode-cmake-tools/pull/2258)
+- `${buildKit}` is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
 - Test the existence of a property instead of the value when expanding preset conditions. [#2329](https://github.com/microsoft/vscode-cmake-tools/issues/2329)
 - Include `hostSystemName` in variable expansion when only using User presets. [#2362](https://github.com/microsoft/vscode-cmake-tools/issues/2362)
 - Trim whitespace from `environmentSetupScript`. [#2391](https://github.com/microsoft/vscode-cmake-tools/issues/2391)
