@@ -8,6 +8,10 @@ Bug Fixes:
 - ${buildKit} is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
 - Test the existence of a property instead of the value when expanding preset conditions. [#2329](https://github.com/microsoft/vscode-cmake-tools/issues/2329)
 - Include `hostSystemName` in variable expansion when only using User presets. [#2362](https://github.com/microsoft/vscode-cmake-tools/issues/2362)
+- Trim whitespace from `environmentSetupScript`. [#2391](https://github.com/microsoft/vscode-cmake-tools/issues/2391)
+- Incorrect `cmake.additionalKits` setting breaks CMake extension. [#2382](https://github.com/microsoft/vscode-cmake-tools/issues/2382)
+- [#](https://github.com/microsoft/vscode-cmake-tools/issues/)
+- [#](https://github.com/microsoft/vscode-cmake-tools/issues/)
 
 ## 1.9.2
 Bug fixes:
