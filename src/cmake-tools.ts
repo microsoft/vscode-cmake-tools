@@ -37,7 +37,6 @@ import { setContextValue } from './util';
 import { VariantManager } from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
-import paths from './paths';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cache-view';
 import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, expShowCMakeLists } from './extension';
@@ -2167,9 +2166,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
         };
 
+        let executablePath = shlex.quote(executable.path);
+
         if (process.platform === 'win32') {
-            // Use cmd.exe on Windows
-            termOptions.shellPath = paths.windows.ComSpec;
+            executablePath = executablePath.replace(/\\/g, "/");
+
+            if (vscode.env.shell.indexOf("PowerShell") > 0) {
+                executablePath = `.${executablePath}`;
+            }
         }
 
         if (!this._launchTerminal) {
@@ -2181,8 +2185,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             launchArgs = user_config.args.join(" ");
         }
 
-        const quoted = shlex.quote(executable.path);
-        this._launchTerminal.sendText(`${quoted} ${launchArgs}`);
+        this._launchTerminal.sendText(`${executablePath} ${launchArgs}`);
         this._launchTerminal.show(true);
         return this._launchTerminal;
     }
