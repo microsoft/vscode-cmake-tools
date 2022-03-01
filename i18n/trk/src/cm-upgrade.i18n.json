@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "Yeni CMake yükleyicisi indirilirken 200 olmayan yanıt",
 	"downloaded.to.path": "{0}, {1} konumuna indirildi",
-	"program.need.for.installer": "CMake Araçları'nın, CMake yükleyicisini çalıştırmak için `{0}` programına ihtiyacı var",
+	"program.need.for.installer": "CMake Araçları'nın, CMake yükleyicisini çalıştırmak için {0} programına ihtiyacı var",
 	"downloading.filename": "{0} indiriliyor",
 	"running.cmake.installer": "CMake Yükleyicisi çalıştırılıyor",
 	"failed.to.authorize": "CMake yüklemesini çalıştırma yetkisi verilemedi.",

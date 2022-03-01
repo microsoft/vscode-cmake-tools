@@ -12,7 +12,8 @@ import rollbar from '@cmt/rollbar';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
-import { descriptionForKit, Kit, SpecialKits, kitHostTargetArch } from '@cmt/kit';
+import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
+import { getHostTargetArchString } from '@cmt/installs/visual-studio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 
@@ -39,8 +40,6 @@ export class PresetsController {
 
     static async init(cmakeTools: CMakeTools, kitsController: KitsController): Promise<PresetsController> {
         const presetsController = new PresetsController(cmakeTools, kitsController);
-
-        preset.setCompilers(kitsController.availableKits);
 
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = cmakeTools.folder.uri.fsPath;
@@ -181,10 +180,7 @@ export class PresetsController {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetPresetsFile(file: string,
-        setPresetsFile: SetPresetsFileFunc,
-        setOriginalPresetsFile: SetPresetsFileFunc,
-        fileExistCallback: (fileExists: boolean) => void) {
+    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
@@ -205,14 +201,8 @@ export class PresetsController {
     // (need to clean or reload driver)
     async reapplyPresets() {
         // Reset all changes due to expansion since parents could change
-        await this.resetPresetsFile(this.presetsPath,
-            this._setPresetsFile,
-            this._setOriginalPresetsFile,
-            exists => this._presetsFileExists = exists);
-        await this.resetPresetsFile(this.userPresetsPath,
-            this._setUserPresetsFile,
-            this._setOriginalUserPresetsFile,
-            exists => this._userPresetsFileExists = exists);
+        await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists);
+        await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists);
 
         this._cmakeTools.minCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
 
@@ -322,7 +312,7 @@ export class PresetsController {
                         if (kit.name === SpecialKits.ScanForKits) {
                             return `[${localize('scan.for.compilers.button', 'Scan for compilers')}]`;
                         } else if (kit.visualStudio && !kit.compilers) {
-                            const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+                            const hostTargetArch = getHostTargetArchString(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
                             return `${(kit.preferredGenerator?.name || 'Visual Studio')} ${hostTargetArch}`;
                         } else {
                             return kit.name;
@@ -345,7 +335,6 @@ export class PresetsController {
                     } else {
                         if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
                             await KitsController.scanForKits(this._cmakeTools);
-                            preset.setCompilers(this._kitsController.availableKits);
                             return false;
                         } else {
                             log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
@@ -1015,7 +1004,7 @@ export class PresetsController {
         const indent = this.getIndentationSettings();
         try {
             await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));
-        } catch (e) {
+        } catch (e: any) {
             rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
             return;
         }

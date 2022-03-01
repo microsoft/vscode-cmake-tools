@@ -10,7 +10,7 @@
 	"loading.kits": "Carregando os kits",
 	"unsetting.kit": "Cancelando a definição do kit",
 	"loading.kit": "Carregando o kit {0}",
-	"invalid.only.kit": "Único kit inválido. Esperava-se encontrar `{0}`",
+	"invalid.only.kit": "Único kit inválido. Esperava-se encontrar {0}",
 	"already.checking.kits": "Já verificando os kits. Tente novamente mais tarde.",
 	"start.selection.of.kits": "Iniciar seleção de kits. {0} kits localizados.",
 	"opening.kit.selection": "Abrindo QuickPick de seleção do kit",

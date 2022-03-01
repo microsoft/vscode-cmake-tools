@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { CMakeDriver } from './drivers/driver';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
+import { Environment } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -85,7 +86,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     }
     private endOfLine: string = "\r\n";
 
-    constructor(private command: string, private defaultTargets: string[], private options?: { cwd?: string }, private cmakeDriver?: CMakeDriver) {
+    constructor(private command: string, private defaultTargets: string[], private options: { cwd?: string ; environment?: Environment } = {}, private cmakeDriver?: CMakeDriver) {
     }
 
     output(line: string): void {
@@ -121,6 +122,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             if (buildCommand) {
                 cmakePath = buildCommand.command;
                 args = buildCommand.args ? buildCommand.args : [];
+                this.options.environment = buildCommand.build_env;
             }
         }
 

@@ -568,9 +568,37 @@ export class KitsController {
             {} as { [kit: string]: Kit }
         );
 
+        const path = process.env["PATH"]?.split(process.platform === 'win32' ? ';' : ':');
+        const isBetterMatch = (newCompilers?: {[lang: string]: string}, existingCompilers?: {[lang: string]: string}) => {
+            // Try to keep the best match (e.g. compilers for C and CXX exist)
+            if (!existingCompilers) {
+                return true;
+            }
+            if (newCompilers) {
+                const newLangs = Object.keys(newCompilers);
+                const existingLangs = Object.keys(existingCompilers);
+                if (newLangs.length > existingLangs.length) {
+                    return true;
+                }
+                if (path && newLangs.length === existingLangs.length) {
+                    // Prioritize compiler paths listed higher in the PATH environment variable.
+                    for (const p of path) {
+                        const newScore = newLangs.reduce((acc, lang) => newCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                        const existingScore = existingLangs.reduce((acc, lang) => existingCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                        if (newScore > existingScore) {
+                            return true;
+                        } else if (existingScore > newScore) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return false;
+        };
+
         // Update the new kits we know about.
         const new_kits_by_name = discovered_kits.reduce(
-            (acc, kit) => ({ ...acc, [kit.name]: kit }),
+            (acc, kit) => isBetterMatch(kit.compilers, acc[kit.name]?.compilers) ? { ...acc, [kit.name]: kit } : acc,
             old_kits_by_name
         );
 
