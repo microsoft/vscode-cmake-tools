@@ -2139,6 +2139,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     private _launchTerminal?: vscode.Terminal;
+    private _lastTerminal?: string;
     // Watch for the user closing our terminal
     private readonly _termCloseSub = vscode.window.onDidCloseTerminal(term => {
         if (term === this._launchTerminal) {
@@ -2171,6 +2172,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             // Use cmd.exe on Windows
             termOptions.shellPath = paths.windows.ComSpec;
         }
+
+        if (this._lastTerminal !== vscode.env.shell) {
+            this._launchTerminal?.dispose();
+            this._launchTerminal = undefined;
+        }
+        this._lastTerminal = vscode.env.shell;
 
         if (!this._launchTerminal) {
             this._launchTerminal = vscode.window.createTerminal(termOptions);
