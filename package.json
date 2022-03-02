@@ -2050,6 +2050,7 @@
   },
   "dependencies": {
     "ajv": "^7.1.0",
+    "bomstrip": "^0.1.4",
     "chokidar": "^3.5.1",
     "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
@@ -2058,6 +2059,7 @@
     "minimist": "^1.2.5",
     "open": "^7.4.1",
     "rimraf": "^3.0.2",
+    "strip-bom-stream": "^5.0.0",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^5.0.0",
     "vscode-extension-telemetry": "^0.1.7",

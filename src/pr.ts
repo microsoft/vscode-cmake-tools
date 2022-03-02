@@ -12,6 +12,7 @@ import * as path from 'path';
 
 import * as rimraf from 'rimraf';
 import * as nls from 'vscode-nls';
+const stripBom = require("strip-bom");
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -32,7 +33,17 @@ export namespace fs {
         return fs_.existsSync(filePath);
     }
 
-    export const readFile = promisify(fs_.readFile);
+    export function readFile(filePath: string, encoding: string = "utf8"): Promise<any> {
+        return new Promise((resolve, reject) => {
+            fs_.readFile(filePath, encoding, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(stripBom(data));
+                }
+            });
+        });
+    }
 
     export const writeFile = promisify(fs_.writeFile);
 
