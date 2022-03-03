@@ -2137,7 +2137,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     private _launchTerminals = new Map<number, vscode.Terminal>();
     private _launchTerminalTargetName = '_CMAKE_TOOLS_LAUNCH_TERMINAL_TARGET_NAME';
-    private _lastTerminal?: string; // post-merge: figure out how this fits
+    private _launchTerminalPath = '_CMAKE_TOOLS_LAUNCH_TERMINAL_PATH';
     // Watch for the user closing our terminal
     private readonly _termCloseSub = vscode.window.onDidCloseTerminal(async term => {
         const processId = await term.processId;
@@ -2147,21 +2147,31 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     });
 
     private _createTerminal(options: vscode.TerminalOptions, executable: api.ExecutableTarget) {
-        if (!this.workspaceContext.config.launch_allowParallel) {
-            for (const [, term] of this._launchTerminals) {
-                const creationOptions = term.creationOptions! as vscode.TerminalOptions;
+        const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
+        if (launchBehavior !== "allowparallel") {
+            for (const [, terminal] of this._launchTerminals) {
+                const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
                 const executablePath = creationOptions.env![this._launchTerminalTargetName];
+                const terminalPath = creationOptions.env![this._launchTerminalPath];
                 if (executablePath === executable.name) {
-                    if (this.workspaceContext.config.launch_terminatePreviousInstance) {
-                        term.sendText('\u0003');
+                    if (launchBehavior === 'terminateprevious') {
+                        terminal.sendText('\u0003');
                     }
-                    return term;
+
+                    // User's settings for preferred terminal have changed since this instance launched
+                    if (terminalPath !== vscode.env.shell) {
+                        terminal.dispose();
+                        break;
+                    }
+
+                    return terminal;
                 }
             }
         }
 
         if (options && options.env) {
             options.env[this._launchTerminalTargetName] = executable.name;
+            options.env[this._launchTerminalPath] = vscode.env.shell;
         }
 
         return vscode.window.createTerminal(options);
@@ -2198,14 +2208,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             }
         }
 
-// post-merge: figure out how this fits
-//        if (this._lastTerminal !== vscode.env.shell) {
-//            void this._launchTerminal?.dispose();
-//            this._launchTerminal = undefined;
-//        }
-//        this._lastTerminal = vscode.env.shell;
-
-        const term = this._createTerminal(termOptions, executable);
+        const terminal = this._createTerminal(termOptions, executable);
 
         let launchArgs = '';
         if (user_config && user_config.args) {
@@ -2213,13 +2216,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
 
         const quoted = shlex.quote(executable.path);
-        term.sendText(`${quoted} ${launchArgs}`);
-        term.show(true);
+        terminal.sendText(`${quoted} ${launchArgs}`);
+        terminal.show(true);
 
-        const processId = await term.processId;
-        this._launchTerminals.set(processId!, term);
+        const processId = await terminal.processId;
+        this._launchTerminals.set(processId!, terminal);
 
-        return term;
+        return terminal;
     }
 
     /**

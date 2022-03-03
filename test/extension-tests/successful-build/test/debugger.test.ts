@@ -211,10 +211,7 @@ suite('Debug/Launch interface', async () => {
     test('Test launch same target multiple times when allowParallel run is enabled', async () => {
         testEnv.config.updatePartial({
             buildBeforeRun: false,
-            launch: {
-                allowParallel: true,
-                terminatePreviousInstance: false
-            }
+            launchBehavior: 'allowParallel'
         });
 
         const executablesTargets = await cmt.executableTargets;
@@ -245,10 +242,7 @@ suite('Debug/Launch interface', async () => {
     test('Test launch same target multiple times when allowParallel run is disabled', async () => {
         testEnv.config.updatePartial({
             buildBeforeRun: false,
-            launch: {
-                allowParallel: false,
-                terminatePreviousInstance: false
-            }
+            launchBehavior: 'waitForPrevious'
         });
 
         const executablesTargets = await cmt.executableTargets;

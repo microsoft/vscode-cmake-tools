@@ -1894,15 +1894,20 @@
           "description": "%cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description%",
           "scope": "resource"
         },
-        "cmake.launch.allowParallel": {
-          "type": "boolean",
-          "markdownDescription": "%cmake-tools.configuration.cmake.launch.allowParallel%",
-          "default": false
-        },
-        "cmake.launch.terminatePreviousInstance": {
-          "type": "boolean",
-          "markdownDescription": "%cmake-tools.configuration.cmake.launch.terminatePreviousInstance%",
-          "default": true
+        "cmake.launchBehavior": {
+          "type": "string",
+          "enum": [
+              "waitForPrevious",
+              "terminatePrevious",
+              "allowParallel"
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.launchBehavior.waitForPrevious.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.terminatePrevious.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.allowParallel.description%"
+          ],
+          "description": "%cmake-tools.configuration.cmake.launchBehavior.description%",
+          "default": "waitForPrevious"
         }
       }
     },
