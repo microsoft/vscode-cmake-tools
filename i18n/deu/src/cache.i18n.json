@@ -16,7 +16,7 @@
 	"cache.entry.unknown": "Der Cacheeintrag {0} weist einen unbekannten Typ auf: {1}",
 	"constructing.new.cache.entry": "Aus der angegebenen Zeile wird ein neuer Cacheeintrag erstellt.",
 	"nonexisting.advanced.entry": "Der nicht vorhandene Cacheeintrag {0} wurde als „erweitert“ gekennzeichnet.",
-	"ignore.strings.for.nonexisting.entry": "Die „Strings“-Eigenschaft für den nicht vorhandenen Cache-Eintrag {0} wird ignoriert.",
+	"ignore.strings.for.nonexisting.entry": "Die {1}-Eigenschaft für den nicht vorhandenen Cache-Eintrag {0} wird ignoriert.",
 	"parsed.cache.entries": "{0} Cacheeinträge analysiert",
 	"cache.value.truncation.warning": "Im Cacheeintrag {0} wurden Zeilenumbrüche gefunden. Der Wert wurde auf {1} abgeschnitten.",
 	"get.cache.key": "Cacheschlüssel abrufen: {0}={1}",

@@ -10,7 +10,7 @@
 	"loading.kits": "키트를 로드하는 중",
 	"unsetting.kit": "키트 설정을 해제하는 중",
 	"loading.kit": "{0} 키트를 로드하는 중",
-	"invalid.only.kit": "잘못된 키트. {0}을(를) 찾아야 함",
+	"invalid.only.kit": "유효하지 않은 전용 키트입니다. {0}을(를) 찾아야 합니다.",
 	"already.checking.kits": "이미 키트를 확인하고 있습니다. 나중에 다시 시도하세요.",
 	"start.selection.of.kits": "키트 선택을 시작합니다. {0}개 키트를 찾았습니다.",
 	"opening.kit.selection": "키트 선택 QuickPick을 여는 중",

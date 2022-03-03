@@ -712,7 +712,7 @@ class ExtensionManager implements vscode.Disposable {
                 let cache: CMakeCache;
                 try {
                     cache = await CMakeCache.fromPath(await cmt.cachePath);
-                } catch (e) {
+                } catch (e: any) {
                     rollbar.exception(localize('filed.to.open.cache.file.on.code.model.update', 'Failed to open CMake cache file on code model update'), e);
                     return;
                 }

@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "新しい CMake インストーラーのダウンロード時に 200 以外の応答がありました",
 	"downloaded.to.path": "{0} が {1} にダウンロードされました",
-	"program.need.for.installer": "CMake インストーラーを実行するには、CMake Tools に `{0}` プログラムが必要です",
+	"program.need.for.installer": "CMake インストーラーを実行するには、CMake Tools に {0} プログラムが必要です",
 	"downloading.filename": "{0} をダウンロードしています",
 	"running.cmake.installer": "CMake インストーラーを実行しています",
 	"failed.to.authorize": "CMake インストールの実行を承認できませんでした。",

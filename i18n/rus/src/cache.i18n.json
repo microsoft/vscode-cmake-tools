@@ -16,7 +16,7 @@
 	"cache.entry.unknown": "Запись кэша {0} имеет неизвестный тип: {1}",
 	"constructing.new.cache.entry": "Создание новой записи кэша на основе заданной строки.",
 	"nonexisting.advanced.entry": "Несуществующая запись кэша {0} помечена как расширенная",
-	"ignore.strings.for.nonexisting.entry": "Свойство \"STRINGS\" игнорируется для несуществующей записи кэша {0}",
+	"ignore.strings.for.nonexisting.entry": "Свойство {1} игнорируется для несуществующей записи кэша {0}",
 	"parsed.cache.entries": "Проанализированные записи кэша: {0}",
 	"cache.value.truncation.warning": "В записи кэша {0} найдены новые строки. Значение сокращено до {1}",
 	"get.cache.key": "Получить ключ кэша {0}={1}",

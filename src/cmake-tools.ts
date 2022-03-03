@@ -37,7 +37,6 @@ import { setContextValue } from './util';
 import { VariantManager } from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
-import paths from './paths';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cache-view';
 import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, expShowCMakeLists } from './extension';
@@ -2138,6 +2137,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     private _launchTerminals = new Map<number, vscode.Terminal>();
     private _launchTerminalTargetName = '_CMAKE_TOOLS_LAUNCH_TERMINAL_TARGET_NAME';
+    private _lastTerminal?: string; // post-merge: figure out how this fits
     // Watch for the user closing our terminal
     private readonly _termCloseSub = vscode.window.onDidCloseTerminal(async term => {
         const processId = await term.processId;
@@ -2188,10 +2188,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
         };
 
+        let executablePath = shlex.quote(executable.path);
+
         if (process.platform === 'win32') {
-            // Use cmd.exe on Windows
-            termOptions.shellPath = paths.windows.ComSpec;
+            executablePath = executablePath.replace(/\\/g, "/");
+
+            if (vscode.env.shell.indexOf("PowerShell") > 0) {
+                executablePath = `.${executablePath}`;
+            }
         }
+
+// post-merge: figure out how this fits
+//        if (this._lastTerminal !== vscode.env.shell) {
+//            void this._launchTerminal?.dispose();
+//            this._launchTerminal = undefined;
+//        }
+//        this._lastTerminal = vscode.env.shell;
 
         const term = this._createTerminal(termOptions, executable);
 
