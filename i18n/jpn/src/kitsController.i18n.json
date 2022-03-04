@@ -19,7 +19,7 @@
 	"select.a.kit.placeholder": "{0} のキットを選択してください",
 	"user.cancelled.kit.selection": "ユーザーがキットの選択をキャンセルしました",
 	"user.selected.kit": "ユーザーがキット {0} を選択しました",
-	"kit.references.non-existent": "キット {0} は、存在しないコンパイラ バイナリ [{1}] を参照しています。どうしますか?",
+	"kit.references.non-existent": "キット \"{0}\" は、存在しないコンパイラ バイナリ [{1}] を参照しています。どうしますか?",
 	"remove.it.button": "削除する",
 	"keep.it.button": "保持する",
 	"pruning.kit": "キットを取り除いています",
