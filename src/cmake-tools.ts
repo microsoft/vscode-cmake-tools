@@ -2148,13 +2148,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     private _createTerminal(options: vscode.TerminalOptions, executable: api.ExecutableTarget) {
         const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
-        if (launchBehavior !== "allowparallel") {
+        if (launchBehavior !== "newterminal") {
             for (const [, terminal] of this._launchTerminals) {
                 const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
                 const executablePath = creationOptions.env![this._launchTerminalTargetName];
                 const terminalPath = creationOptions.env![this._launchTerminalPath];
                 if (executablePath === executable.name) {
-                    if (launchBehavior === 'terminateprevious') {
+                    if (launchBehavior === 'breakandreuseterminal') {
                         terminal.sendText('\u0003');
                     }
 

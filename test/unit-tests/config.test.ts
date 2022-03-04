@@ -59,7 +59,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         },
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
-        launchBehavior: 'waitForPrevious'
+        launchBehavior: 'reuseTerminal'
     });
     ret.updatePartial(conf);
     return ret;

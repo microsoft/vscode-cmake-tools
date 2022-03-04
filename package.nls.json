@@ -136,8 +136,8 @@
     "cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json.",
     "cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json to configure drive CMake configure, build, and test. When using CMakePresets.json, kits, variants, and some settings in settings.json will be ignored.",
     "cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Allow the use of JSON extensions such as comments in CMakePresets.json. Please note that your CMakePresets.json file may be considered invalid by other IDEs or on the command line if you use non-standard JSON.",
-    "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens when you launch another instance of a target. If enabled, the previous instance will first be terminated before launching the new one. Otherwise, the new instance will wait until the previous one has finished.",
-    "cmake-tools.configuration.cmake.launchBehavior.waitForPrevious.description": "The target will not launch until the previously launched target has exited.",
-    "cmake-tools.configuration.cmake.launchBehavior.terminatePrevious.description": "The previously launch target will be terminated and the new target will launch.",
-    "cmake-tools.configuration.cmake.launchBehavior.allowParallel.description": "The target will launch irregardless of the state of previously launched targets."
+    "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
+    "cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "The launch terminal instance is reused and the target will launch as soon as the terminal is idle.",
+    "cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "The launch terminal instance is reused and a break command is sent to terminate any active foreground process before launching the target.",
+    "cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up."
 }

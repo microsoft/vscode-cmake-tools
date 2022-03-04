@@ -174,7 +174,7 @@ suite('Debug/Launch interface', async () => {
         const launchProgramPath = await cmt.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
 
-        // Remove file if not exists
+        // Remove file if exists
         const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
         if (fs.existsSync(createdFileOnExecution)) {
             fs.unlinkSync(createdFileOnExecution);
@@ -208,10 +208,10 @@ suite('Debug/Launch interface', async () => {
         //expect(fs.existsSync(createdFileOnExecution)).to.be.true;
     }).timeout(60000);
 
-    test('Test launch same target multiple times when allowParallel run is enabled', async () => {
+    test('Test launch same target multiple times when newTerminal run is enabled', async () => {
         testEnv.config.updatePartial({
             buildBeforeRun: false,
-            launchBehavior: 'allowParallel'
+            launchBehavior: 'newTerminal'
         });
 
         const executablesTargets = await cmt.executableTargets;
@@ -221,28 +221,28 @@ suite('Debug/Launch interface', async () => {
         const launchProgramPath = await cmt.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
 
-        // Remove file if not exists
+        // Remove file if exists
         const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
         if (fs.existsSync(createdFileOnExecution)) {
             fs.unlinkSync(createdFileOnExecution);
         }
 
         const term1 = await cmt.launchTarget();
-        expect(term1).of.be.not.null;
+        expect(term1).to.be.not.null;
         const term1Pid = await term1?.processId;
 
         const term2 = await cmt.launchTarget();
-        expect(term2).of.be.not.null;
+        expect(term2).to.be.not.null;
         expect(term2!.name).of.be.eq('CMake/Launch');
 
         const term2Pid = await term2?.processId;
-        expect(term1Pid).not.eq(term2Pid);
+        expect(term1Pid).to.not.eq(term2Pid);
     }).timeout(60000);
 
-    test('Test launch same target multiple times when allowParallel run is disabled', async () => {
+    test('Test launch same target multiple times when newTerminal run is disabled', async () => {
         testEnv.config.updatePartial({
             buildBeforeRun: false,
-            launchBehavior: 'waitForPrevious'
+            launchBehavior: 'reuseTerminal'
         });
 
         const executablesTargets = await cmt.executableTargets;
@@ -252,21 +252,21 @@ suite('Debug/Launch interface', async () => {
         const launchProgramPath = await cmt.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
 
-        // Remove file if not exists
+        // Remove file if exists
         const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
         if (fs.existsSync(createdFileOnExecution)) {
             fs.unlinkSync(createdFileOnExecution);
         }
 
         const term1 = await cmt.launchTarget();
-        expect(term1).of.be.not.null;
+        expect(term1).to.be.not.null;
         const term1Pid = await term1?.processId;
 
         const term2 = await cmt.launchTarget();
-        expect(term2).of.be.not.null;
+        expect(term2).to.be.not.null;
 
         const term2Pid = await term2?.processId;
-        expect(term1Pid).eq(term2Pid);
+        expect(term1Pid).to.eq(term2Pid);
     }).timeout(60000);
 });
 

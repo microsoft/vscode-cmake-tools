@@ -1897,17 +1897,17 @@
         "cmake.launchBehavior": {
           "type": "string",
           "enum": [
-              "waitForPrevious",
-              "terminatePrevious",
-              "allowParallel"
+              "reuseTerminal",
+              "breakAndReuseTerminal",
+              "newTerminal"
           ],
           "enumDescriptions": [
-            "%cmake-tools.configuration.cmake.launchBehavior.waitForPrevious.description%",
-            "%cmake-tools.configuration.cmake.launchBehavior.terminatePrevious.description%",
-            "%cmake-tools.configuration.cmake.launchBehavior.allowParallel.description%"
+            "%cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.newTerminal.description%"
           ],
           "description": "%cmake-tools.configuration.cmake.launchBehavior.description%",
-          "default": "waitForPrevious"
+          "default": "reuseTerminal"
         }
       }
     },
