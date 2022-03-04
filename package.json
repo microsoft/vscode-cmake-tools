@@ -2073,7 +2073,6 @@
     "minimist": "^1.2.5",
     "open": "^7.4.1",
     "rimraf": "^3.0.2",
-    "strip-bom": "^5.0.0",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^5.0.0",
     "vscode-extension-telemetry": "^0.1.7",

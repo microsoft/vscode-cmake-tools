@@ -12,7 +12,6 @@ import * as path from 'path';
 
 import * as rimraf from 'rimraf';
 import * as nls from 'vscode-nls';
-import stripBom from 'strip-bom';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -31,6 +30,13 @@ export namespace fs {
 
     export function existsSync(filePath: string): boolean {
         return fs_.existsSync(filePath);
+    }
+
+    function stripBom(str: string) {
+        if (str.charCodeAt(0) === 0xFEFF) {
+            return str.slice(1);
+        }
+        return str;
     }
 
     export function readFile(filePath: string, encoding: string = "utf8"): Promise<any> {
