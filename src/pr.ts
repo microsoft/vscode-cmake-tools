@@ -12,7 +12,7 @@ import * as path from 'path';
 
 import * as rimraf from 'rimraf';
 import * as nls from 'vscode-nls';
-const stripBom = require("strip-bom");
+import stripBom from 'strip-bom';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

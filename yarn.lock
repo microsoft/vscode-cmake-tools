@@ -2516,11 +2516,6 @@ fined@^1.0.1:
     object.pick "^1.2.0"
     parse-filepath "^1.0.1"
 
-first-chunk-stream@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/first-chunk-stream/-/first-chunk-stream-5.0.0.tgz#6089fd0add05b058ec0c122a21c0c1801d06d5ff"
-  integrity sha512-WdHo4ejd2cG2Dl+sLkW79SctU7mUQDfr4s1i26ffOZRs5mgv+BRttIM9gwcq0rDbemo0KlpVPaa3LBVLqPXzcQ==
-
 flagged-respawn@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/flagged-respawn/-/flagged-respawn-1.0.1.tgz#e7de6f1279ddd9ca9aac8a5971d618606b3aab41"
@@ -5477,21 +5472,6 @@ strip-ansi@^6.0.0:
   dependencies:
     ansi-regex "^5.0.0"
 
-strip-bom-buf@^3.0.0:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/strip-bom-buf/-/strip-bom-buf-3.0.1.tgz#3f50f447f4650eed6e3743664a3964d638bb716f"
-  integrity sha512-iJaWw2WroigLHzQysdc5WWeUc99p7ea7AEgB6JkY8CMyiO1yTVAA1gIlJJgORElUIR+lcZJkNl1OGChMhvc2Cw==
-  dependencies:
-    is-utf8 "^0.2.1"
-
-strip-bom-stream@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/strip-bom-stream/-/strip-bom-stream-5.0.0.tgz#7287b857964c8884d01cee17cb9f86b53e4379a0"
-  integrity sha512-Yo472mU+3smhzqeKlIxClre4s4pwtYZEvDNQvY/sJpnChdaxmKuwU28UVx/v1ORKNMxkmj1GBuvxJQyBk6wYMQ==
-  dependencies:
-    first-chunk-stream "^5.0.0"
-    strip-bom-buf "^3.0.0"
-
 strip-bom-string@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/strip-bom-string/-/strip-bom-string-1.0.0.tgz#e5211e9224369fbb81d633a2f00044dc8cedad92"
@@ -5508,6 +5488,11 @@ strip-bom@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/strip-bom/-/strip-bom-3.0.0.tgz#2334c18e9c759f7bdd56fdef7e9ae3d588e68ed3"
   integrity sha1-IzTBjpx1n3vdVv3vfprj1YjmjtM=
+
+strip-bom@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/strip-bom/-/strip-bom-5.0.0.tgz#88d2e135d154dca7a5e06b4a4ba9653b6bdc0dd2"
+  integrity sha512-p+byADHF7SzEcVnLvc/r3uognM1hUhObuHXxJcgLCfD194XAkaLbjq3Wzb0N5G2tgIjH0dgT708Z51QxMeu60A==
 
 strip-final-newline@^2.0.0:
   version "2.0.0"
