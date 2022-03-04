@@ -16,7 +16,7 @@ async function main() {
         // The driver tests change the default workspace folder.
         const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/unit-tests/test-project-without-cmakelists');
 
-        const launchArgs = ["--disable-extensions", testWorkspace];
+        const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
 
         const extensionTestsEnv: { [key: string]: string | undefined } = {
             "CMT_TESTING": "1",
