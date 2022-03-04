@@ -12,7 +12,7 @@ async function main() {
         // The path to the extension test runner script
         const extensionTestsPath = path.resolve(__dirname, './index');
         const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/smoke/badProject');
-        const launchArgs = ["--disable-extensions", testWorkspace];
+        const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
         await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
 
     } catch (err) {

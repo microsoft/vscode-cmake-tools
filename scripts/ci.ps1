@@ -81,7 +81,9 @@ Invoke-TestPreparation -CMakePath $cmake_binary
 # A bug in yarn causes the contents of the NOTICE file to be inlined into an environment variable
 # which causes msbuild to crash in some tests. Just remove it to avoid the problem.
 # https://github.com/yarnpkg/yarn/issues/7783
-Remove-Item NOTICE.txt
+if (Test-Path NOTICE.txt) {
+    Remove-Item NOTICE.txt
+}
 
 Invoke-ChronicCommand "yarn backendTests" $yarn run backendTests
 Invoke-ChronicCommand "yarn pretest" $yarn run pretest
