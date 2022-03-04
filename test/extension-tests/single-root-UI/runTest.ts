@@ -14,7 +14,7 @@ async function main() {
 
         const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/single-root-UI/project-folder');
 
-        const launchArgs = ["--disable-extensions", testWorkspace];
+        const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
 
         const extensionTestsEnv: { [key: string]: string | undefined } = {
             "CMT_TESTING": "1",

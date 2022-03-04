@@ -2215,8 +2215,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             launchArgs = user_config.args.join(" ");
         }
 
-        const quoted = shlex.quote(executable.path);
-        terminal.sendText(`${quoted} ${launchArgs}`);
+        terminal.sendText(`${executablePath} ${launchArgs}`);
         terminal.show(true);
 
         const processId = await terminal.processId;
