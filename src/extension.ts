@@ -704,7 +704,7 @@ class ExtensionManager implements vscode.Disposable {
                 return;
             }
             if (!this._cppToolsAPI) {
-                this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5);
+                this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5).catch(_err => undefined);
             }
 
             if (this._cppToolsAPI && (cmt.activeKit || cmt.configurePreset)) {
