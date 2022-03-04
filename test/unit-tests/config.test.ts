@@ -58,7 +58,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             visibility: "default"
         },
         useCMakePresets: 'never',
-        allowCommentsInPresetsFile: false
+        allowCommentsInPresetsFile: false,
+        launchBehavior: 'reuseTerminal'
     });
     ret.updatePartial(conf);
     return ret;

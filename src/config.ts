@@ -138,6 +138,7 @@ export interface ExtensionConfigurationSettings {
     statusbar: StatusBarConfig;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
+    launchBehavior: string;
 }
 
 type EmittersOf<T> = {
@@ -420,6 +421,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this._configData.statusbar;
     }
 
+    get launchBehavior(): string {
+        return this.configData.launchBehavior;
+    }
+
     private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         cmakePath: new vscode.EventEmitter<string>(),
@@ -469,7 +474,8 @@ export class ConfigurationReader implements vscode.Disposable {
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
         statusbar: new vscode.EventEmitter<StatusBarConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
-        allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>()
+        allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
+        launchBehavior: new vscode.EventEmitter<string>()
     };
 
     /**

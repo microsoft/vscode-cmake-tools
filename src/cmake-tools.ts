@@ -517,9 +517,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
         this._disposeEmitter.fire();
         this._termCloseSub.dispose();
-        if (this._launchTerminal) {
-            this._launchTerminal.dispose();
-        }
+        this._launchTerminals.forEach(term => term.dispose());
         for (const sub of [this._generatorSub, this._preferredGeneratorsSub, this._communicationModeSub, this._sourceDirSub]) {
             sub.dispose();
         }
@@ -2137,14 +2135,47 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return vscode.debug.activeDebugSession!;
     }
 
-    private _launchTerminal?: vscode.Terminal;
-    private _lastTerminal?: string;
+    private _launchTerminals = new Map<number, vscode.Terminal>();
+    private _launchTerminalTargetName = '_CMAKE_TOOLS_LAUNCH_TERMINAL_TARGET_NAME';
+    private _launchTerminalPath = '_CMAKE_TOOLS_LAUNCH_TERMINAL_PATH';
     // Watch for the user closing our terminal
-    private readonly _termCloseSub = vscode.window.onDidCloseTerminal(term => {
-        if (term === this._launchTerminal) {
-            this._launchTerminal = undefined;
+    private readonly _termCloseSub = vscode.window.onDidCloseTerminal(async term => {
+        const processId = await term.processId;
+        if (this._launchTerminals.has(processId!)) {
+            this._launchTerminals.delete(processId!);
         }
     });
+
+    private _createTerminal(options: vscode.TerminalOptions, executable: api.ExecutableTarget) {
+        const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
+        if (launchBehavior !== "newterminal") {
+            for (const [, terminal] of this._launchTerminals) {
+                const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
+                const executablePath = creationOptions.env![this._launchTerminalTargetName];
+                const terminalPath = creationOptions.env![this._launchTerminalPath];
+                if (executablePath === executable.name) {
+                    if (launchBehavior === 'breakandreuseterminal') {
+                        terminal.sendText('\u0003');
+                    }
+
+                    // User's settings for preferred terminal have changed since this instance launched
+                    if (terminalPath !== vscode.env.shell) {
+                        terminal.dispose();
+                        break;
+                    }
+
+                    return terminal;
+                }
+            }
+        }
+
+        if (options && options.env) {
+            options.env[this._launchTerminalTargetName] = executable.name;
+            options.env[this._launchTerminalPath] = vscode.env.shell;
+        }
+
+        return vscode.window.createTerminal(options);
+    }
 
     /**
      * Implementation of `cmake.launchTarget`
@@ -2177,24 +2208,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             }
         }
 
-        if (this._lastTerminal !== vscode.env.shell) {
-            void this._launchTerminal?.dispose();
-            this._launchTerminal = undefined;
-        }
-        this._lastTerminal = vscode.env.shell;
-
-        if (!this._launchTerminal) {
-            this._launchTerminal = vscode.window.createTerminal(termOptions);
-        }
+        const terminal = this._createTerminal(termOptions, executable);
 
         let launchArgs = '';
         if (user_config && user_config.args) {
             launchArgs = user_config.args.join(" ");
         }
 
-        this._launchTerminal.sendText(`${executablePath} ${launchArgs}`);
-        this._launchTerminal.show(true);
-        return this._launchTerminal;
+        const quoted = shlex.quote(executable.path);
+        terminal.sendText(`${quoted} ${launchArgs}`);
+        terminal.show(true);
+
+        const processId = await terminal.processId;
+        this._launchTerminals.set(processId!, terminal);
+
+        return terminal;
     }
 
     /**

@@ -7,6 +7,7 @@ Improvements:
 - Minimize build progress notification to the status bar. [#2308](https://github.com/microsoft/vscode-cmake-tools/issues/2308)
 - Allow editing Kits when presets are in use. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
 - Launch the target in the default terminal. [PR #2311](https://github.com/microsoft/vscode-cmake-tools/pull/2311) [@michallukowski](https://github.com/michallukowski)
+- Allow launching targets in parallel. [#2240](https://github.com/microsoft/vscode-cmake-tools/issues/2120) [@ColinDuquesnoy](https://github.com/ColinDuquesnoy)
 
 Bug Fixes:
 - CMakePrests.json toolset requires the VS version instead of the toolset version. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
