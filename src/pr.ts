@@ -32,7 +32,24 @@ export namespace fs {
         return fs_.existsSync(filePath);
     }
 
-    export const readFile = promisify(fs_.readFile);
+    function stripBom(str: string) {
+        if (str.charCodeAt(0) === 0xFEFF) {
+            return str.slice(1);
+        }
+        return str;
+    }
+
+    export function readFile(filePath: string, encoding: string = "utf8"): Promise<any> {
+        return new Promise((resolve, reject) => {
+            fs_.readFile(filePath, encoding, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(stripBom(data));
+                }
+            });
+        });
+    }
 
     export const writeFile = promisify(fs_.writeFile);
 
