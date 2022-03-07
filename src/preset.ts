@@ -34,6 +34,7 @@ export interface Preset {
     environment?: EnvironmentWithNull;
     vendor?: VendorType;
     condition?: Condition | boolean | null;
+    isUserPreset?: boolean;
 
     __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
     __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
@@ -145,6 +146,12 @@ export function evaluateCondition(condition: Condition): boolean {
 function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[], references: Set<string>): boolean | undefined {
     const evaluateParent = (parentName: string) => {
         const parent = getPresetByName(allPresets, parentName);
+        // If the child is not a user preset, the parent should not be a user preset.
+        // eslint-disable-next-line @typescript-eslint/tslint/config
+        if (parent && !preset.isUserPreset && parent.isUserPreset === true) {
+            log.error(localize('invalid.user.inherits', 'Preset {0} in CMakePresets.json can\'t inherit from preset {1} in CMakeUserPresets.json', preset.name, parentName));
+            return false;
+        }
         if (parent && !references.has(parent.name)) {
             parent.__inheritedPresetCondition = evaluatePresetCondition(parent, allPresets, references);
         }
@@ -370,6 +377,23 @@ export function setPresetsFile(folder: string, presets: PresetsFile | undefined)
 }
 
 export function setUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
+    if (presets) {
+        if (presets.configurePresets) {
+            for (const configPreset of presets.configurePresets) {
+                configPreset.isUserPreset = true;
+            }
+        }
+        if (presets.buildPresets) {
+            for (const buildPreset of presets.buildPresets) {
+                buildPreset.isUserPreset = true;
+            }
+        }
+        if (presets.testPresets) {
+            for (const testPreset of presets.testPresets) {
+                testPreset.isUserPreset = true;
+            }
+        }
+    }
     userPresetsFiles.set(folder, presets);
 }
 
