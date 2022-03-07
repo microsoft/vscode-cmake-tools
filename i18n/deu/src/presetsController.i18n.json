@@ -18,7 +18,7 @@
 	"start.selection.of.compilers": "Auswahl der Compiler starten. {0} Compiler gefunden.",
 	"opening.compiler.selection": "QuickPick zur Compilerauswahl wird geöffnet",
 	"scan.for.compilers.button": "Nach Compilern suchen",
-	"select.a.compiler.placeholder": "Kit für \"{0}\" auswählen",
+	"select.a.compiler.placeholder": "Kit für {0} auswählen",
 	"user.cancelled.compiler.selection": "Auswahl des Compilers vom Benutzer abgebrochenen",
 	"user.selected.compiler": "Compiler {0} vom Benutzer ausgewählt",
 	"select.one.or.more.config.preset.placeholder": "Wählen Sie mindestens eine Konfigurationsvoreinstellung aus",
@@ -73,11 +73,11 @@
 	"unloading.test.preset": "Testvoreinstellung wird entladen",
 	"loading.test.preset": "Testvoreinstellung {0} wird geladen",
 	"reading.presets.file": "Datei mit Lesevoreinstellungen {0}",
-	"failed.to.parse": "Fehler beim Analysieren von \"{0}\": {1}",
-	"invalid.file.error": "Ungültige Kit-Inhalte \"{0}\" ({1}):",
+	"failed.to.parse": "Fehler beim Analysieren von {0}: {1}",
+	"invalid.file.error": "Ungültige Kit-Inhalte {0} ({1}):",
 	"successfully.validated.presets": "Voreinstellungen wurden erfolgreich in {0} überprüft",
 	"use.kits.variants": "Verwenden von Kits und Varianten",
 	"edit.presets": "Suchen",
 	"presets.version.error": "CMakePresets Version 1 wird nicht unterstützt. Wie möchten Sie fortfahren?",
-	"failed.writing.to.file": "Fehler beim Schreiben in Datei \"{0}\"."
+	"failed.writing.to.file": "Fehler beim Schreiben in Datei {0}."
 }

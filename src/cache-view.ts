@@ -25,244 +25,244 @@ export interface IOption {
  * This object manages the webview rendering.
  */
 export class ConfigurationWebview {
-  private readonly cmakeCacheEditorText = localize("cmake.cache.editor", "CMake Cache Editor");
+    private readonly cmakeCacheEditorText = localize("cmake.cache.editor", "CMake Cache Editor");
 
-  // The dirty state of the whole webview.
-  private _dirty: boolean = false;
-  get dirty(): boolean {
-    return this._dirty;
-  }
-  set dirty(d: boolean) {
-    this._dirty = d;
-
-    if (this._panel.title) {
-      // The webview title should reflect the dirty state
-      this._panel.title = this.cmakeCacheEditorText;
-      if (d) {
-        this._panel.title += "*";
-      } else {
-        // If the global dirty state gets cleared, make sure all the entries
-        // of the cache table have their state dirty updated accordingly.
-        this._options.forEach(opt => { opt.dirty = false; });
-      }
+    // The dirty state of the whole webview.
+    private _dirty: boolean = false;
+    get dirty(): boolean {
+        return this._dirty;
     }
-  }
-  private readonly _panel: vscode.WebviewPanel;
-  private _options: IOption[] = [];
-  get panel() {
-      return this._panel;
-  }
+    set dirty(d: boolean) {
+        this._dirty = d;
 
-  constructor(protected cachePath: string,
-      protected save: () => void) {
-    this._panel = vscode.window.createWebviewPanel(
-      'cmakeConfiguration', // Identifies the type of the webview. Used internally
-      this.cmakeCacheEditorText, // Title of the panel displayed to the user
-      vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-      {
-        // this is needed for the html view to trigger events in the extension
-        enableScripts: true
-      }
-    );
-  }
-
-  // Save from the UI table into the CMake cache file if there are any unsaved edits.
-  async persistCacheEntries() {
-    if (this.dirty) {
-      telemetry.logEvent("editCMakeCache", {command: "saveCMakeCacheUI"});
-      await this.saveCmakeCache(this._options);
-      void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
-      // start configure
-      this.save();
-      this.dirty = false;
+        if (this._panel.title) {
+            // The webview title should reflect the dirty state
+            this._panel.title = this.cmakeCacheEditorText;
+            if (d) {
+                this._panel.title += "*";
+            } else {
+                // If the global dirty state gets cleared, make sure all the entries
+                // of the cache table have their state dirty updated accordingly.
+                this._options.forEach(opt => opt.dirty = false);
+            }
+        }
     }
-  }
+    private readonly _panel: vscode.WebviewPanel;
+    private _options: IOption[] = [];
+    get panel() {
+        return this._panel;
+    }
 
-  /**
-   * Called when the extension detects a cache change performed outside this webview.
-   * The webview is updated with the latest cache variables (this includes new or deleted entries),
-   * but for merge conflicts the user is asked which values to keep.
-   */
-  async refreshPanel() {
-    if (this.dirty) {
-      const newOptions = await this.getConfigurationOptions();
-      const mergedOptions: IOption[] = [];
-      let conflictsExist = false;
-      newOptions.forEach(option => {
-        const index = this._options.findIndex(opt => opt.key === option.key);
-        // Add to the final list of cache entries if it's a new, an unchanged value
-        // or a changed value of a cache variable that is not dirty in the webview.
-        if (index === -1 ||
-            this._options[index].value === option.value ||
-            !this._options[index].dirty) {
-          mergedOptions.push(option);
+    constructor(protected cachePath: string,
+        protected save: () => void) {
+        this._panel = vscode.window.createWebviewPanel(
+            'cmakeConfiguration', // Identifies the type of the webview. Used internally
+            this.cmakeCacheEditorText, // Title of the panel displayed to the user
+            vscode.ViewColumn.One, // Editor column to show the new webview panel in.
+            {
+                // this is needed for the html view to trigger events in the extension
+                enableScripts: true
+            }
+        );
+    }
+
+    // Save from the UI table into the CMake cache file if there are any unsaved edits.
+    async persistCacheEntries() {
+        if (this.dirty) {
+            telemetry.logEvent("editCMakeCache", { command: "saveCMakeCacheUI" });
+            await this.saveCmakeCache(this._options);
+            void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
+            // start configure
+            this.save();
+            this.dirty = false;
+        }
+    }
+
+    /**
+     * Called when the extension detects a cache change performed outside this webview.
+     * The webview is updated with the latest cache variables (this includes new or deleted entries),
+     * but for merge conflicts the user is asked which values to keep.
+     */
+    async refreshPanel() {
+        if (this.dirty) {
+            const newOptions = await this.getConfigurationOptions();
+            const mergedOptions: IOption[] = [];
+            let conflictsExist = false;
+            newOptions.forEach(option => {
+                const index = this._options.findIndex(opt => opt.key === option.key);
+                // Add to the final list of cache entries if it's a new, an unchanged value
+                // or a changed value of a cache variable that is not dirty in the webview.
+                if (index === -1 ||
+                    this._options[index].value === option.value ||
+                    !this._options[index].dirty) {
+                    mergedOptions.push(option);
+                } else {
+                    // Log the cache value mismatch in the Output Channel, until we display the conflicts
+                    // more friendly in the UI.
+                    conflictsExist = true;
+                    log.info(`Detected a cache merge conflict for entry "${option.key}": ` +
+                        `value in CMakeCache.txt="${option.value}", ` +
+                        `value in UI="${this._options[index].value}"`);
+
+                    // Include in the final list of cache entries the version from UI.
+                    // If later the user choses 'ignore' or 'fromUI', the UI value is good for both
+                    // and in case of 'fromCache' the read operation will be done from the cache
+                    // and will override the value displayed currently in the UI.
+                    // If we don't do this then any merge conflicting entries will disappear from the list
+                    // if in the middle and will be showed at the end (because we would need to add them
+                    // via a concat).
+                    mergedOptions.push(this._options[index]);
+                }
+            });
+
+            // Any variables present in the current webview but not in the latest CMake Cache file
+            // represent deleted cache entries. Remember them because in the 'ignore' case below
+            // we need to keep them.
+            const deletedOptions: IOption[] = [];
+            this._options.forEach(option => {
+                if (newOptions.findIndex(opt => opt.key === option.key) === -1) {
+                    deletedOptions.push(option);
+                }
+            });
+
+            let result;
+            // Don't reload the conflicting CMake cache entries. Keep but don't save the current edits.
+            // Include any new or non-conflicting CMake cache updates.
+            const ignore = localize('ignore', 'Ignore');
+            // Persist the currently unsaved edits.
+            const fromUI = localize('from.UI', 'From UI');
+            // Reload the CMake cache, losing the curent unsaved edits.
+            const fromCache = localize('from.cache', 'From Cache');
+            if (conflictsExist) {
+                result = await vscode.window.showWarningMessage(
+                    localize('merge.cache.edits', "The CMake cache has been modified outside this webview and there are conflicts with the current unsaved edits. Which values do you want to keep?"),
+                    ignore,
+                    fromCache,
+                    fromUI);
+                if (result === fromUI) {
+                    this._options = mergedOptions;
+                    await this.persistCacheEntries();
+                } else if (result === fromCache) {
+                    this._options = newOptions;
+                }
+            } else {
+                this._options = mergedOptions;
+            }
+
+            // The webview needs a re-render also for the "ignore" or "fromUI" cases
+            // to reflect all the unconflicting changes.
+            if (this._panel.visible) {
+                await this.renderWebview(this._panel, false);
+            }
+
+            // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
+            // between the webview and the file on disk.
+            if (result !== ignore) {
+                this.dirty = false;
+            }
         } else {
-          // Log the cache value mismatch in the Output Channel, until we display the conflicts
-          // more friendly in the UI.
-          conflictsExist = true;
-          log.info(`Detected a cache merge conflict for entry "${option.key}": ` +
-            `value in CMakeCache.txt="${option.value}", ` +
-            `value in UI="${this._options[index].value}"`);
-
-          // Include in the final list of cache entries the version from UI.
-          // If later the user choses 'ignore' or 'fromUI', the UI value is good for both
-          // and in case of 'fromCache' the read operation will be done from the cache
-          // and will override the value displayed currently in the UI.
-          // If we don't do this then any merge conflicting entries will disappear from the list
-          // if in the middle and will be showed at the end (because we would need to add them
-          // via a concat).
-          mergedOptions.push(this._options[index]);
+            this._options = await this.getConfigurationOptions();
         }
-      });
-
-      // Any variables present in the current webview but not in the latest CMake Cache file
-      // represent deleted cache entries. Remember them because in the 'ignore' case below
-      // we need to keep them.
-      const deletedOptions: IOption[] = [];
-      this._options.forEach(option => {
-        if (newOptions.findIndex(opt => opt.key === option.key) === -1) {
-          deletedOptions.push(option);
-        }
-      });
-
-      let result;
-      // Don't reload the conflicting CMake cache entries. Keep but don't save the current edits.
-      // Include any new or non-conflicting CMake cache updates.
-      const ignore = localize('ignore', 'Ignore');
-      // Persist the currently unsaved edits.
-      const fromUI = localize('from.UI', 'From UI');
-      // Reload the CMake cache, losing the curent unsaved edits.
-      const fromCache = localize('from.cache', 'From Cache');
-      if (conflictsExist) {
-        result = await vscode.window.showWarningMessage(
-          localize('merge.cache.edits', "The CMake cache has been modified outside this webview and there are conflicts with the current unsaved edits. Which values do you want to keep?"),
-          ignore,
-          fromCache,
-          fromUI);
-        if (result === fromUI) {
-          this._options = mergedOptions;
-          await this.persistCacheEntries();
-        } else if (result === fromCache) {
-          this._options = newOptions;
-        }
-      } else {
-        this._options = mergedOptions;
-      }
-
-      // The webview needs a re-render also for the "ignore" or "fromUI" cases
-      // to reflect all the unconflicting changes.
-      if (this._panel.visible) {
-        await this.renderWebview(this._panel, false);
-      }
-
-      // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
-      // between the webview and the file on disk.
-      if (result !== ignore) {
-        this.dirty = false;
-      }
-    } else {
-      this._options = await this.getConfigurationOptions();
-    }
-  }
-
-  /**
-   * Initializes the panel, registers events and renders initial content
-   */
-  async initPanel() {
-    await this.renderWebview(this._panel, true);
-
-    this._panel.onDidChangeViewState(async event => {
-      if (event.webviewPanel.visible) {
-        await this.renderWebview(event.webviewPanel, false);
-      }
-    });
-
-    this._panel.onDidDispose(async event => {
-      console.log(`disposing webview ${event} - ${this._panel}`);
-      if (this.dirty) {
-        const yes = localize('yes', 'Yes');
-        const no = localize('no', 'No');
-        const result = await vscode.window.showWarningMessage(
-          localize('unsaved.cache.edits', "Do you want to save the latest cache edits?"), yes, no);
-        if (result === yes) {
-          await this.persistCacheEntries();
-        }
-      }
-    });
-
-    // handles the following events:
-    //     - checkbox update (update entry in the internal array)
-    //     - editbox update (update entry in the internal array)
-    //     - save button (save the internal array into the cache file)
-    this._panel.webview.onDidReceiveMessage(async (option: IOption) => {
-      if (!option) {
-        await this.persistCacheEntries();
-      } else {
-        const index = this._options.findIndex(opt => opt.key === option.key);
-        if (this._options[index].value !== option.value) {
-          this.dirty = true;
-          this._options[index].dirty = true;
-          this._options[index].type = option.type;
-          this._options[index].value = option.value;
-        }
-      }
-    });
-  }
-
-  async saveCmakeCache(options: IOption[]) {
-    const cmakeCache = await CMakeCache.fromPath(this.cachePath);
-    await cmakeCache.saveAll(options);
-  }
-
-  /**
-   * reads local cmake cache path from build folder and returns array of IOption objects
-   */
-  async getConfigurationOptions(): Promise<IOption[]> {
-    return new Promise(async (resolve: (value: IOption[]) => void) => {
-      const options: IOption[] = [];
-
-      // get cmake cache
-      const cmakeCache = await CMakeCache.fromPath(this.cachePath);
-      for (const entry of cmakeCache.allEntries) {
-        // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
-        // Not useful to show these entries in the list.
-        if (entry.type !== api.CacheEntryType.Static) {
-          options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
-        }
-      }
-
-      resolve(options);
-    });
-  }
-
-  /**
-   *
-   * @param panel
-   */
-  async renderWebview(panel?: vscode.WebviewPanel, refresh: boolean = false) {
-    if (!panel) {
-        panel = this._panel;
     }
 
-    if (refresh) {
-      this._options = this._options.concat(await this.getConfigurationOptions());
+    /**
+     * Initializes the panel, registers events and renders initial content
+     */
+    async initPanel() {
+        await this.renderWebview(this._panel, true);
+
+        this._panel.onDidChangeViewState(async event => {
+            if (event.webviewPanel.visible) {
+                await this.renderWebview(event.webviewPanel, false);
+            }
+        });
+
+        this._panel.onDidDispose(async event => {
+            console.log(`disposing webview ${event} - ${this._panel}`);
+            if (this.dirty) {
+                const yes = localize('yes', 'Yes');
+                const no = localize('no', 'No');
+                const result = await vscode.window.showWarningMessage(
+                    localize('unsaved.cache.edits', "Do you want to save the latest cache edits?"), yes, no);
+                if (result === yes) {
+                    await this.persistCacheEntries();
+                }
+            }
+        });
+
+        // handles the following events:
+        //     - checkbox update (update entry in the internal array)
+        //     - editbox update (update entry in the internal array)
+        //     - save button (save the internal array into the cache file)
+        this._panel.webview.onDidReceiveMessage(async (option: IOption) => {
+            if (!option) {
+                await this.persistCacheEntries();
+            } else {
+                const index = this._options.findIndex(opt => opt.key === option.key);
+                if (this._options[index].value !== option.value) {
+                    this.dirty = true;
+                    this._options[index].dirty = true;
+                    this._options[index].type = option.type;
+                    this._options[index].value = option.value;
+                }
+            }
+        });
     }
 
-    panel.webview.html = this.getWebviewMarkup();
-  }
+    async saveCmakeCache(options: IOption[]) {
+        const cmakeCache = await CMakeCache.fromPath(this.cachePath);
+        await cmakeCache.saveAll(options);
+    }
 
-  /**
-   * Returns an HTML markup
-   * @param options CMake Cache Options
-   */
-  getWebviewMarkup() {
-    const key = '%TABLE_ROWS%';
-    const searchButtonText = localize("search", "Search");
-    const saveButtonText = localize("save", "Save");
-    const keyColumnText = localize ("key", "Key");
-    const valueColumnText = localize("value", "Value");
+    /**
+     * reads local cmake cache path from build folder and returns array of IOption objects
+     */
+    async getConfigurationOptions(): Promise<IOption[]> {
+        return new Promise(async (resolve: (value: IOption[]) => void) => {
+            const options: IOption[] = [];
 
-    let html = `
+            // get cmake cache
+            const cmakeCache = await CMakeCache.fromPath(this.cachePath);
+            for (const entry of cmakeCache.allEntries) {
+                // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
+                // Not useful to show these entries in the list.
+                if (entry.type !== api.CacheEntryType.Static) {
+                    options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
+                }
+            }
+
+            resolve(options);
+        });
+    }
+
+    /**
+     *
+     * @param panel
+     */
+    async renderWebview(panel?: vscode.WebviewPanel, refresh: boolean = false) {
+        if (!panel) {
+            panel = this._panel;
+        }
+
+        if (refresh) {
+            this._options = this._options.concat(await this.getConfigurationOptions());
+        }
+
+        panel.webview.html = this.getWebviewMarkup();
+    }
+
+    /**
+     * Returns an HTML markup
+     * @param options CMake Cache Options
+     */
+    getWebviewMarkup() {
+        const key = '%TABLE_ROWS%';
+        const searchButtonText = localize("search", "Search");
+        const saveButtonText = localize("save", "Save");
+        const keyColumnText = localize("key", "Key");
+        const valueColumnText = localize("value", "Value");
+
+        let html = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -497,45 +497,45 @@ export class ConfigurationWebview {
     </body>
     </html>`;
 
-    // compile a list of table rows that contain the key and value pairs
-    const tableRows = this._options.map(option => {
+        // compile a list of table rows that contain the key and value pairs
+        const tableRows = this._options.map(option => {
 
-      // HTML attributes may not contain literal double quotes or ambiguous ampersands
-      const escapeAttribute = (text: string) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-      // Escape HTML special characters that may not occur literally in any text
-      const escapeHtml = (text: string) =>
-        escapeAttribute(text)
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/'/g, "&#039;")
-          .replace(/ /g, "&nbsp;"); // we are usually dealing with single line entities - avoid unintential line breaks
+            // HTML attributes may not contain literal double quotes or ambiguous ampersands
+            const escapeAttribute = (text: string) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+            // Escape HTML special characters that may not occur literally in any text
+            const escapeHtml = (text: string) =>
+                escapeAttribute(text)
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/'/g, "&#039;")
+                    .replace(/ /g, "&nbsp;"); // we are usually dealing with single line entities - avoid unintential line breaks
 
-      const id = escapeAttribute(option.key);
-      let editControls = '';
+            const id = escapeAttribute(option.key);
+            let editControls = '';
 
-      if (option.type === "Bool") {
-        editControls = `<input class="cmake-input-bool" id="${id}" type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
+            if (option.type === "Bool") {
+                editControls = `<input class="cmake-input-bool" id="${id}" type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
           <label id="LABEL_${id}" for="${id}"/>`;
-      } else {
-        const hasChoices = option.choices.length > 0;
-        if (hasChoices) {
-          editControls = `<datalist id="CHOICES_${id}">
+            } else {
+                const hasChoices = option.choices.length > 0;
+                if (hasChoices) {
+                    editControls = `<datalist id="CHOICES_${id}">
             ${option.choices.map(ch => `<option value="${escapeAttribute(ch)}">`).join()}
           </datalist>`;
-        }
-        editControls += `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;"
+                }
+                editControls += `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;"
           type="text" ${hasChoices ? `list="CHOICES_${id}"` : ''}>`;
-      }
+            }
 
-      return `<tr class="content-tr">
+            return `<tr class="content-tr">
       <td></td>
       <td title="${escapeAttribute(option.helpString)}">${escapeHtml(option.key)}</td>
       <td>${editControls}</td>
     </tr>`;
-    });
+        });
 
-    html = html.replace(key, tableRows.join(""));
+        html = html.replace(key, tableRows.join(""));
 
-    return html;
-  }
+        return html;
+    }
 }

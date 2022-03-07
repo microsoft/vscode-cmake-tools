@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "native"
   ],
   "engines": {
-    "vscode": "^1.53.0"
+    "vscode": "^1.63.0"
   },
   "categories": [
     "Other"
@@ -164,7 +164,7 @@
       {
         "command": "cmake.editKits",
         "title": "%cmake-tools.command.cmake.editKits.title%",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -532,7 +532,9 @@
           },
           "command": {
             "type": "string",
-            "enum": [ "build" ],
+            "enum": [
+              "build"
+            ],
             "description": "CMake build command"
           },
           "options": {
@@ -1891,6 +1893,21 @@
           "default": false,
           "description": "%cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description%",
           "scope": "resource"
+        },
+        "cmake.launchBehavior": {
+          "type": "string",
+          "enum": [
+              "reuseTerminal",
+              "breakAndReuseTerminal",
+              "newTerminal"
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.newTerminal.description%"
+          ],
+          "description": "%cmake-tools.configuration.cmake.launchBehavior.description%",
+          "default": "reuseTerminal"
         }
       }
     },
@@ -1984,6 +2001,7 @@
     "extensionTestsSuccessfulBuild": "yarn run pretest && node ./out/test/extension-tests/successful-build/runTest.js",
     "extensionTestsSingleRoot": "yarn run pretest && node ./out/test/extension-tests/single-root-UI/runTest.js",
     "extensionTestsMultioot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
+    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/backend-unit-tests/**/*.test.ts",
     "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
   "husky": {
@@ -2004,7 +2022,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.53.0",
+    "@types/vscode": "1.56.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@typescript-eslint/eslint-plugin": "^4.22.1",
@@ -2035,12 +2053,13 @@
     "sinon": "~9.2.4",
     "ts-loader": "^8.0.17",
     "ts-node": "^9.1.1",
+    "tsconfig-paths": "^3.11.0",
     "tslint": "^5.20.1",
     "typedoc": "^0.20.36",
     "typescript": "^4.1.5",
     "vsce": "^1.95.0",
     "vscode-nls-dev": "^3.3.2",
-    "vscode-test": "^1.5.2",
+    "vscode-test": "^1.6.1",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0"
   },
@@ -2057,8 +2076,8 @@
     "tmp": "^0.2.1",
     "vscode-cpptools": "^5.0.0",
     "vscode-extension-telemetry": "^0.1.7",
-    "vscode-tas-client": "^0.1.22",
     "vscode-nls": "^5.0.0",
+    "vscode-tas-client": "^0.1.22",
     "which": "~2.0.2",
     "xml2js": "^0.4.23"
   },
