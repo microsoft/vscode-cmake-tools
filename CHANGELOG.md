@@ -27,6 +27,8 @@ Bug Fixes:
 - Stop using `-H` to configure projects. [#2292](https://github.com/microsoft/vscode-cmake-tools/issues/2292)
 - `environmentSetupScript` capitalizes environment variable names. [#1592](https://github.com/microsoft/vscode-cmake-tools/issues/1592) [@lygstate](https://github.com/lygstate)
 - Debug Target failed when `debugConfig.environment` not present. [#2236](https://github.com/microsoft/vscode-cmake-tools/issues/2236) [@lygstate](https://github.com/lygstate)
+- Refresh the launch terminal if the user default changes. [PR #2408](https://github.com/microsoft/vscode-cmake-tools/pull/2408)
+- Strip BOM from files when reading. [#2396](https://github.com/microsoft/vscode-cmake-tools/issues/2396)
 
 ## 1.9.2
 Bug fixes:

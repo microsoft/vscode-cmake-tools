@@ -991,7 +991,7 @@ async function expandConfigurePresetHelper(folder: string,
                             "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
                             preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
                     } else {
-                        log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at \"{2}\")", vsInstall.instanceId, vsInstall.installationVersion, vsInstall.installationPath));
+                        log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
                         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
                         compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
