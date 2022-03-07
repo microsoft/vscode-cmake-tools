@@ -643,7 +643,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     let env = '';
     try {
         /* When the script failed, envpath would not exist */
-        env = await fs.readFile(environment_path, { encoding: 'utf8' });
+        env = await fs.readFile(environment_path, 'utf8');
         await fs.unlink(environment_path);
     } catch (error) {
         log.error(error);

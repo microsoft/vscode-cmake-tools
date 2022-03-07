@@ -7,6 +7,7 @@ Improvements:
 - Minimize build progress notification to the status bar. [#2308](https://github.com/microsoft/vscode-cmake-tools/issues/2308)
 - Allow editing Kits when presets are in use. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
 - Launch the target in the default terminal. [PR #2311](https://github.com/microsoft/vscode-cmake-tools/pull/2311) [@michallukowski](https://github.com/michallukowski)
+- Allow launching targets in parallel. [#2240](https://github.com/microsoft/vscode-cmake-tools/issues/2120) [@ColinDuquesnoy](https://github.com/ColinDuquesnoy)
 
 Bug Fixes:
 - CMakePrests.json toolset requires the VS version instead of the toolset version. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
@@ -27,6 +28,8 @@ Bug Fixes:
 - `environmentSetupScript` capitalizes environment variable names. [#1592](https://github.com/microsoft/vscode-cmake-tools/issues/1592) [@lygstate](https://github.com/lygstate)
 - Debug Target failed when `debugConfig.environment` not present. [#2236](https://github.com/microsoft/vscode-cmake-tools/issues/2236) [@lygstate](https://github.com/lygstate)
 - Presets in CMakePresets.json should not inherit from presets in CMakeUserPresets.json. [#2232](https://github.com/microsoft/vscode-cmake-tools/issues/2232)
+- Refresh the launch terminal if the user default changes. [PR #2408](https://github.com/microsoft/vscode-cmake-tools/pull/2408)
+- Strip BOM from files when reading. [#2396](https://github.com/microsoft/vscode-cmake-tools/issues/2396)
 
 ## 1.9.2
 Bug fixes:

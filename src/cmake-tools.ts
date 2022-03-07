@@ -517,9 +517,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
         this._disposeEmitter.fire();
         this._termCloseSub.dispose();
-        if (this._launchTerminal) {
-            this._launchTerminal.dispose();
-        }
+        this._launchTerminals.forEach(term => term.dispose());
         for (const sub of [this._generatorSub, this._preferredGeneratorsSub, this._communicationModeSub, this._sourceDirSub]) {
             sub.dispose();
         }
@@ -1254,60 +1252,66 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
                 }
 
-                return this._doConfigure(type, progress, async consumer => {
-                    const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
-                    if (drv) {
-                        let old_prog = 0;
-                        const prog_sub = drv.onProgress(pr => {
-                            const new_prog = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
-                            const increment = new_prog - old_prog;
-                            if (increment >= 1) {
-                                old_prog += increment;
-                                progress.report({ increment });
-                            }
-                        });
-                        try {
-                            progress.report({ message: localize('configuring.project', 'Configuring project') });
-                            let retc: number;
-                            await setContextValue(IS_CONFIGURING_KEY, true);
-                            if (type === ConfigureType.Cache) {
-                                retc = await drv.configure(trigger, [], consumer, true);
-                            } else {
-                                switch (type) {
-                                    case ConfigureType.Normal:
-                                        retc = await drv.configure(trigger, extra_args, consumer);
-                                        break;
-                                    case ConfigureType.Clean:
-                                        retc = await drv.cleanConfigure(trigger, extra_args, consumer);
-                                        break;
-                                    case ConfigureType.ShowCommandOnly:
-                                        retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
-                                        break;
-                                    default:
-                                        rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
-                                        retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
-                                        break;
+                try {
+                    return this._doConfigure(type, progress, async consumer => {
+                        const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
+                        if (drv) {
+                            let old_prog = 0;
+                            const prog_sub = drv.onProgress(pr => {
+                                const new_prog = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                                const increment = new_prog - old_prog;
+                                if (increment >= 1) {
+                                    old_prog += increment;
+                                    progress.report({ increment });
                                 }
-                                await setContextValue(IS_CONFIGURING_KEY, false);
-                            }
-                            if (retc === 0) {
-                                await enableFullFeatureSet(true);
-                                await this._refreshCompileDatabase(drv.expansionOptions);
-                            }
+                            });
+                            try {
+                                progress.report({ message: localize('configuring.project', 'Configuring project') });
+                                let retc: number;
+                                await setContextValue(IS_CONFIGURING_KEY, true);
+                                if (type === ConfigureType.Cache) {
+                                    retc = await drv.configure(trigger, [], consumer, true);
+                                } else {
+                                    switch (type) {
+                                        case ConfigureType.Normal:
+                                            retc = await drv.configure(trigger, extra_args, consumer);
+                                            break;
+                                        case ConfigureType.Clean:
+                                            retc = await drv.cleanConfigure(trigger, extra_args, consumer);
+                                            break;
+                                        case ConfigureType.ShowCommandOnly:
+                                            retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
+                                            break;
+                                        default:
+                                            rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
+                                            retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
+                                            break;
+                                    }
+                                    await setContextValue(IS_CONFIGURING_KEY, false);
+                                }
+                                if (retc === 0) {
+                                    await enableFullFeatureSet(true);
+                                    await this._refreshCompileDatabase(drv.expansionOptions);
+                                }
 
-                            await this._ctestController.reloadTests(drv);
-                            this._onReconfiguredEmitter.fire();
-                            return retc;
-                        } finally {
-                            await setContextValue(IS_CONFIGURING_KEY, false);
-                            progress.report({ message: localize('finishing.configure', 'Finishing configure') });
-                            prog_sub.dispose();
+                                await this._ctestController.reloadTests(drv);
+                                this._onReconfiguredEmitter.fire();
+                                return retc;
+                            } finally {
+                                await setContextValue(IS_CONFIGURING_KEY, false);
+                                progress.report({ message: localize('finishing.configure', 'Finishing configure') });
+                                prog_sub.dispose();
+                            }
+                        } else {
+                            progress.report({ message: localize('configure.failed', 'Failed to configure project') });
+                            return -1;
                         }
-                    } else {
-                        progress.report({ message: localize('configure.failed', 'Failed to configure project') });
-                        return -1;
-                    }
-                });
+                    });
+                } catch (e: any) {
+                    const error = e as Error;
+                    progress.report({ message: error.message});
+                    return -1;
+                }
             }
         );
     }
@@ -2137,14 +2141,47 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return vscode.debug.activeDebugSession!;
     }
 
-    private _launchTerminal?: vscode.Terminal;
-    private _lastTerminal?: string;
+    private _launchTerminals = new Map<number, vscode.Terminal>();
+    private _launchTerminalTargetName = '_CMAKE_TOOLS_LAUNCH_TERMINAL_TARGET_NAME';
+    private _launchTerminalPath = '_CMAKE_TOOLS_LAUNCH_TERMINAL_PATH';
     // Watch for the user closing our terminal
-    private readonly _termCloseSub = vscode.window.onDidCloseTerminal(term => {
-        if (term === this._launchTerminal) {
-            this._launchTerminal = undefined;
+    private readonly _termCloseSub = vscode.window.onDidCloseTerminal(async term => {
+        const processId = await term.processId;
+        if (this._launchTerminals.has(processId!)) {
+            this._launchTerminals.delete(processId!);
         }
     });
+
+    private _createTerminal(options: vscode.TerminalOptions, executable: api.ExecutableTarget) {
+        const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
+        if (launchBehavior !== "newterminal") {
+            for (const [, terminal] of this._launchTerminals) {
+                const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
+                const executablePath = creationOptions.env![this._launchTerminalTargetName];
+                const terminalPath = creationOptions.env![this._launchTerminalPath];
+                if (executablePath === executable.name) {
+                    if (launchBehavior === 'breakandreuseterminal') {
+                        terminal.sendText('\u0003');
+                    }
+
+                    // User's settings for preferred terminal have changed since this instance launched
+                    if (terminalPath !== vscode.env.shell) {
+                        terminal.dispose();
+                        break;
+                    }
+
+                    return terminal;
+                }
+            }
+        }
+
+        if (options && options.env) {
+            options.env[this._launchTerminalTargetName] = executable.name;
+            options.env[this._launchTerminalPath] = vscode.env.shell;
+        }
+
+        return vscode.window.createTerminal(options);
+    }
 
     /**
      * Implementation of `cmake.launchTarget`
@@ -2177,24 +2214,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             }
         }
 
-        if (this._lastTerminal !== vscode.env.shell) {
-            void this._launchTerminal?.dispose();
-            this._launchTerminal = undefined;
-        }
-        this._lastTerminal = vscode.env.shell;
-
-        if (!this._launchTerminal) {
-            this._launchTerminal = vscode.window.createTerminal(termOptions);
-        }
+        const terminal = this._createTerminal(termOptions, executable);
 
         let launchArgs = '';
         if (user_config && user_config.args) {
             launchArgs = user_config.args.join(" ");
         }
 
-        this._launchTerminal.sendText(`${executablePath} ${launchArgs}`);
-        this._launchTerminal.show(true);
-        return this._launchTerminal;
+        terminal.sendText(`${executablePath} ${launchArgs}`);
+        terminal.show(true);
+
+        const processId = await terminal.processId;
+        this._launchTerminals.set(processId!, terminal);
+
+        return terminal;
     }
 
     /**
