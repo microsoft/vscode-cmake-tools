@@ -1,23 +1,5 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    # Run the named tests
-    [string[]]
-    $Test,
-    # Build the docs only
-    [switch]
-    $Docs,
-    # Target directory to copy documentation tree
-    [string]
-    $DocDestination,
-    # Skip running tests
-    [switch]
-    $NoTest,
-    # Only run the smoke tests
-    [switch]
-    $OnlySmoke,
-    # Only run the unit tests
-    [switch]
-    $OnlyUnit
 )
 $ErrorActionPreference = "Stop"
 
@@ -28,14 +10,8 @@ if ($PSVersionTable.PSVersion.Major -lt 6) {
 # The root directory of our repository:
 $REPO_DIR = Split-Path $PSScriptRoot -Parent
 
-$Package = Get-Content (Join-Path $REPO_DIR "package.json") | ConvertFrom-Json
-
-$CMakeToolsVersion = $Package.version
-
 # Import the utility modules
 Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
-
-$DOC_BUILD_DIR = Join-Path $REPO_DIR "build/docs"
 
 # Sanity check for yarn
 $yarn = Find-Program yarn
@@ -102,6 +78,14 @@ Invoke-ChronicCommand "yarn lint" $yarn run lint
 # Run tests
 Invoke-TestPreparation -CMakePath $cmake_binary
 
+# A bug in yarn causes the contents of the NOTICE file to be inlined into an environment variable
+# which causes msbuild to crash in some tests. Just remove it to avoid the problem.
+# https://github.com/yarnpkg/yarn/issues/7783
+if (Test-Path NOTICE.txt) {
+    Remove-Item NOTICE.txt
+}
+
+Invoke-ChronicCommand "yarn backendTests" $yarn run backendTests
 Invoke-ChronicCommand "yarn pretest" $yarn run pretest
 Invoke-ChronicCommand "yarn smokeTests" $yarn run smokeTests
 Invoke-ChronicCommand "yarn unitTests" $yarn run unitTests

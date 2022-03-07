@@ -13,9 +13,9 @@
 	"protocol.error.cmake": "CMake와 통신하는 동안 프로토콜 오류가 발생했습니다. 다음 입력이 표시되었습니다. {0}",
 	"received.message.from.make-server": "cmake-server에서 메시지를 받음: {0}",
 	"invalid.cookie": "잘못된 쿠키: {0}",
-	"cookie.not.known.message": "CMake 서버 쿠키 \"{0}\"이(가) 알려진 메시지와 일치하지 않음",
+	"cookie.not.known.message": "CMake 서버 쿠키 {0}이(가) 알려진 메시지와 일치하지 않음",
 	"cant.yet.handle.message": "아직 {0} 메시지를 처리할 수 없음",
 	"sending.message.to.cmake-server": "cmake-server에 메시지를 보내는 중: {0}",
-	"configuring.using.generator": "\"{0}\" CMake 생성기와",
-	"with.platform.and.toolset": " \"{0}\" 플랫폼 및 {1} 도구 집합을 사용하여 구성하는 중"
+	"configuring.using.generator": "{0} CMake 생성기와",
+	"with.platform.and.toolset": " {0} 플랫폼 및 {1} 도구 집합을 사용하여 구성하는 중"
 }

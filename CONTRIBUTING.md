@@ -16,8 +16,7 @@ The process is:
 
 ### Formatting
 
-Code is formatted using `clang-format`. We recommend you install the
-[Clang-Format extension](https://marketplace.visualstudio.com/items?itemName=xaver.clang-format).
+Code is formatted using the default TypeScript formatter in VS Code and uses 4 space indentation.
 
 ### Linting
 
@@ -30,4 +29,8 @@ To lint the source as you make changes, install the [eslint extension](https://m
 
 Follow the [Typescript Coding guidelines](https://github.com/Microsoft/TypeScript/wiki/Coding-guidelines).
 
-> `snake_case` was used historically for variables in this repo, but that style is phased out. All new variables should be `lowerCamelCase`.
+> `snake_case` was used historically for variables in this repo, but that style is phased out. All new variables should be `lowerCamelCase`. The existing variables will be migrated to the new naming soon (or you can help out with a pull request!)
+
+### Changelog
+
+Please update the CHANGELOG.md file as part of your pull request. Follow the style within that file and give yourself credit for the changes you make.

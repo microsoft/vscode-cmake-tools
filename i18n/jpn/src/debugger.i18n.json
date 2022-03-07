@@ -6,7 +6,7 @@
 {
 	"gdb.not.found": "既定の検索パスと {0} に GDB が見つかりません。",
 	"enable.pretty.printing": "gdb の再フォーマットを有効にする",
-	"invalid.miDebuggerPath.override": "'{1}' の '{0}' は、デバッガーへの絶対パスである必要があります (変数の展開は現在サポートされていません)。取得: '{2}'",
+	"invalid.miDebuggerPath.override": "{1} の {0} は、デバッガーへの絶対パスである必要があります (変数の展開は現在サポートされていません)。取得: {2}",
 	"no.compiler.found.in.cache": "キャッシュ ファイルにコンパイラが見つかりません。",
 	"unable.to.determine.debugger.for.compiler": "コンパイラに対応するデバッガーを自動的に決定できません: {0}"
 }

@@ -42,7 +42,7 @@
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",
-                "HasVs": "true"
+                "TEST_FILTER": ".*"
             },
             "preLaunchTask": "Pretest"
         },
@@ -66,27 +66,11 @@
                 "${workspaceFolder}/out/test/extension-tests/successful-build/test/*"
             ],
             "preLaunchTask": "Pretest",
-            "windows": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "true"
-                }
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
             },
-            "linux": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            },
-            "osx": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            }
         },
         {
             "name": "Launch Extension Tests (single-root-UI)",
@@ -108,27 +92,11 @@
                 "${workspaceFolder}/out/test/extension-tests/single-root-UI/test/*"
             ],
             "preLaunchTask": "Pretest",
-            "windows": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "true"
-                }
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
             },
-            "linux": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            },
-            "osx": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            }
         },
         {
             "name": "Launch Extension Tests (multi-root-UI)",
@@ -150,27 +118,11 @@
                 "${workspaceFolder}/out/test/extension-tests/multi-root-UI/test/*"
             ],
             "preLaunchTask": "Pretest",
-            "windows": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "true"
-                }
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
             },
-            "linux": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            },
-            "osx": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            }
         },
         {
             "type": "node",
@@ -185,9 +137,15 @@
                 "--colors",
                 "-r",
                 "ts-node/register",
+                "-r",
+                "tsconfig-paths/register",
                 "${workspaceFolder}/test/backend-unit-tests/**/*.test.ts"
             ],
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1"
+            }
         },
         {
             "name": "Launch Smoke Tests",
