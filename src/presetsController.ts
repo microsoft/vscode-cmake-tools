@@ -180,11 +180,7 @@ export class PresetsController {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetUserPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void) {
-        return this.resetPresetsFile(file, setPresetsFile, setOriginalPresetsFile, fileExistCallback, true);
-    }
-
-    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, userPreset: boolean = false) {
+    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
@@ -199,23 +195,6 @@ export class PresetsController {
         }
         presetsFile = await this.validatePresetsFile(presetsFile, file);
         setPresetsFile(this.folder.uri.fsPath, presetsFile);
-        if (presetsFile && userPreset) {
-            if (presetsFile.configurePresets) {
-                for (const configPreset of presetsFile.configurePresets) {
-                    configPreset.isUserPreset = true;
-                }
-            }
-            if (presetsFile.buildPresets) {
-                for (const buildPreset of presetsFile.buildPresets) {
-                    buildPreset.isUserPreset = true;
-                }
-            }
-            if (presetsFile.testPresets) {
-                for (const testPreset of presetsFile.testPresets) {
-                    testPreset.isUserPreset = true;
-                }
-            }
-        }
     }
 
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
@@ -223,7 +202,7 @@ export class PresetsController {
     async reapplyPresets() {
         // Reset all changes due to expansion since parents could change
         await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists);
-        await this.resetUserPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists);
+        await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists);
 
         this._cmakeTools.minCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
 
