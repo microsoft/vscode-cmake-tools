@@ -762,6 +762,7 @@ class ExtensionManager implements vscode.Disposable {
                         this._configProvider.markAsReady();
                     }
                 } else {
+                    cpptools.didChangeCustomBrowseConfiguration(this._configProvider);
                     cpptools.didChangeCustomConfiguration(this._configProvider);
                     this._configProvider.markAsReady();
                 }
