@@ -37,11 +37,10 @@ suite('Build using Presets', async () => {
     });
 
     teardown(async function (this: Mocha.Context) {
-        this.timeout(100000);
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
     });
 
     suiteTeardown(async () => {
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
         if (testEnv) {
             testEnv.teardown();
         }
