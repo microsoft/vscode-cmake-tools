@@ -13,12 +13,12 @@
 	"parsing.cmake.cache.string": "Analizando la cadena de caché de CMake.",
 	"failed.to.read.line.from.cmake.cache.file": "No se pudo leer una línea de un archivo caché de CMake {0}",
 	"read.line.in.cache": "Leer línea en caché con {0} = {1}, {2} = {3}, {4} = {5}",
-	"cache.entry.unknown": "La entrada de caché \"{0}\" tiene un tipo desconocido: \"{1}\"",
+	"cache.entry.unknown": "La entrada de caché {0} tiene un tipo desconocido: {1}",
 	"constructing.new.cache.entry": "Creando una entrada de caché a partir de la línea especificada",
-	"nonexisting.advanced.entry": "Entrada de caché no existente '{0}' marcada como avanzada",
+	"nonexisting.advanced.entry": "Entrada de caché no existente {0} marcada como avanzada",
 	"ignore.strings.for.nonexisting.entry": "Omitiendo la propiedad {1} para la entrada de caché que no existe {0}",
 	"parsed.cache.entries": "Se analizaron {0} entradas de caché.",
-	"cache.value.truncation.warning": "Nuevas líneas encontradas en la entrada de caché '{0}'. El valor se ha truncado en '{1}'",
+	"cache.value.truncation.warning": "Nuevas líneas encontradas en la entrada de caché {0}. El valor se ha truncado en {1}",
 	"get.cache.key": "Obtener la clave de caché {0} = {1}",
 	"get.cache.key.missing": "Obtener la clave de caché {0} = [[Falta]]"
 }

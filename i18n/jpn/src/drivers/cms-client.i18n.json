@@ -13,9 +13,9 @@
 	"protocol.error.cmake": "Cmake との通信でプロトコル エラーが発生しました。この入力を取得しました: {0}",
 	"received.message.from.make-server": "cmake-server からメッセージを受信しました: {0}",
 	"invalid.cookie": "無効な Cookie: {0}",
-	"cookie.not.known.message": "CMake サーバーの Cookie \"{0}\" は既知のメッセージに対応していません",
+	"cookie.not.known.message": "CMake サーバーの Cookie {0} は既知のメッセージに対応していません",
 	"cant.yet.handle.message": "まだ {0} メッセージを処理できていません",
 	"sending.message.to.cmake-server": "cmake-server にメッセージを送信しています: {0}",
-	"configuring.using.generator": "\"{0}\" CMake ジェネレーターを",
-	"with.platform.and.toolset": "プラットフォーム \"{0}\" とツールセット {1} で使用して構成しています"
+	"configuring.using.generator": "{0} CMake ジェネレーターを",
+	"with.platform.and.toolset": "プラットフォーム {0} とツールセット {1} で使用して構成しています"
 }

@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "正在重新讀取套件",
 	"dispose.cmake.tools": "處置 CMake 工具",
-	"configure.this.project": "是否設定專案 \"{0}\"?",
+	"configure.this.project": "是否設定專案 {0}?",
 	"yes.button": "是",
 	"not.now.button": "現在不要",
 	"always.configure.on.open": "永遠在開啟時設定專案嗎?",
