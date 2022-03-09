@@ -351,7 +351,7 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
         env = iconv.decode(env_bin, outputEncoding);
         await fs.unlink(envpath);
     } catch (error) {
-        log.error(error);
+        log.error(error as Error);
     }
 
     if (!env) {

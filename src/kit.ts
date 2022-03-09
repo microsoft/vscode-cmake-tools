@@ -442,7 +442,8 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
             console.log('Skipping scan of non-directory', dir);
             return [];
         }
-    } catch (e) {
+    } catch (ce) {
+        const e = ce as NodeJS.ErrnoException;
         log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
         if (e.code === 'ENOENT') {
             return [];
@@ -454,7 +455,8 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     let bins: string[];
     try {
         bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
-    } catch (e) {
+    } catch (ce) {
+        const e = ce as NodeJS.ErrnoException;
         if (e.code === 'EACCESS' || e.code === 'EPERM') {
             return [];
         }
@@ -483,7 +485,8 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
                 log.trace(`      CXX: ${kit.compilers['CXX']}`);
             }
             return kit;
-        } catch (e) {
+        } catch (ce) {
+            const e = ce as NodeJS.ErrnoException;
             log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
             if (e.code === 'EACCES') {
                 // The binary may not be executable by this user...
@@ -646,7 +649,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         env = await fs.readFile(environment_path, 'utf8');
         await fs.unlink(environment_path);
     } catch (error) {
-        log.error(error);
+        log.error(error as Error);
     }
     if (!env || env === '') {
         console.log(`Error running ${kit.environmentSetupScript} with:`, output);
