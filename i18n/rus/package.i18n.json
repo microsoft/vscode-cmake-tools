@@ -140,5 +140,9 @@
 	"cmake-tools.configuration.cmake.additionalKits.description": "Массив путей к файлам пользовательских наборов",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Включает exporting compile_commands.json.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Используйте CMakePresets.json для настройки конфигурации, сборки и тестирования CMake диска. При использовании CMakePresets.json наборы, варианты и некоторые параметры в settings.json будут пропущены.",
-	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Разрешить использование расширений JSON, таких как комментарии, в CMakePresets.json. Обратите внимание, что файл CMakePresets.json может считаться недействительным в других IDE или в командной строке, если вы используете нестандартный JSON."
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Разрешить использование расширений JSON, таких как комментарии, в CMakePresets.json. Обратите внимание, что файл CMakePresets.json может считаться недействительным в других IDE или в командной строке, если вы используете нестандартный JSON.",
+	"cmake-tools.configuration.cmake.launchBehavior.description": "Управляет тем, что происходит с терминалом запуска при запуске целевого объекта.",
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "Экземпляр терминала запуска используется повторно, а целевой объект запустится сразу после перехода терминала в режим простоя.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "Экземпляр терминала запуска используется повторно, и в терминал отправляется команда останова перед запуском целевого объекта, чтобы завершить все активные процессы переднего плана.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Создан новый экземпляр терминала, в котором запущен целевой объект. Существующие терминалы не очищаются автоматически."
 }

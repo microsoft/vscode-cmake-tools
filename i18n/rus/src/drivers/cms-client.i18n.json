@@ -13,9 +13,9 @@
 	"protocol.error.cmake": "Ошибка протокола при взаимодействии с CMake. Получены следующие входные данные: {0}",
 	"received.message.from.make-server": "Получено сообщение от команды cmake-server: {0}",
 	"invalid.cookie": "Недопустимый файл cookie: {0}",
-	"cookie.not.known.message": "Файл cookie сервера CMake {0} не соответствует известному сообщению.",
+	"cookie.not.known.message": "Файл cookie сервера CMake \"{0}\" не соответствует известному сообщению.",
 	"cant.yet.handle.message": "Еще не удалось обработать сообщения ({0}).",
 	"sending.message.to.cmake-server": "Отправка сообщения команде cmake-server: {0}",
-	"configuring.using.generator": "Настройка с использованием генератора CMake {0}",
-	"with.platform.and.toolset": " с платформой {0} и набором инструментов {1}"
+	"configuring.using.generator": "Настройка с использованием генератора CMake \"{0}\"",
+	"with.platform.and.toolset": " с платформой \"{0}\" и набором инструментов \"{1}\""
 }

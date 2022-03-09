@@ -140,5 +140,9 @@
 	"cmake-tools.configuration.cmake.additionalKits.description": "Matrice di percorsi dei file di kit personalizzati",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Consente l'esportazione di compile_commands.json.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Usare CMakePresets.json per configurare l’unità CMake di configurazione, compilazione e test. Quando si usa CMakePresets.json alcuni kit, varianti e impostazioni in settings.json verranno ignorati.",
-	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Consente l'uso di estensioni JSON come i commenti in CMakePresets.json. Si noti che il file CMakePresets.json potrebbe essere considerato non valido da altri IDE o dalla riga di comando se si usa JSON non standard."
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Consente l'uso di estensioni JSON come i commenti in CMakePresets.json. Si noti che il file CMakePresets.json potrebbe essere considerato non valido da altri IDE o dalla riga di comando se si usa JSON non standard.",
+	"cmake-tools.configuration.cmake.launchBehavior.description": "Controlla cosa accade al terminale di avvio quando si avvia una destinazione.",
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "L'istanza del terminale di avvio viene riutilizzata e la destinazione verrà avviata non appena il terminale è inattivo.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "L'istanza del terminale di avvio viene riutilizzata e viene inviato un comando di interruzione per terminare qualsiasi processo in primo piano attivo prima di avviare la destinazione.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Viene creata una nuova istanza del terminale in cui viene avviata la destinazione. I terminali esistenti non vengono puliti automaticamente."
 }

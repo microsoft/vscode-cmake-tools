@@ -140,5 +140,9 @@
 	"cmake-tools.configuration.cmake.additionalKits.description": "Tablica ścieżek do plików zestawów niestandardowych",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umożliwia eksportowanie pliku compile_commands.js.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Użyj pliku CMakePresets.json, aby ustawić konfigurację, kompilowanie i test dysku CMake. Przy korzystaniu z pliku CMakePresets.json zestawy, warianty i niektóre ustawienia w pliku settings.json zostaną pominięte.",
-	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Zezwalaj na używanie rozszerzeń JSON, takich jak komentarze w CMakePresets.json. Pamiętaj, że plik CMakePresets.json może być uznany za nieprawidłowy przez inne środowiska IDE lub w wierszu polecenia, jeśli używasz niestandardowego kodu JSON."
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Zezwalaj na używanie rozszerzeń JSON, takich jak komentarze w CMakePresets.json. Pamiętaj, że plik CMakePresets.json może być uznany za nieprawidłowy przez inne środowiska IDE lub w wierszu polecenia, jeśli używasz niestandardowego kodu JSON.",
+	"cmake-tools.configuration.cmake.launchBehavior.description": "Określa, co się dzieje z terminalem uruchamiania po uruchomieniu elementu docelowego.",
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "Wystąpienie terminalu uruchamiania zostanie ponownie uruchomione, a obiekt docelowy zostanie uruchomiony, gdy tylko terminal będzie bezczynny.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "Wystąpienie terminalu uruchamiania jest ponownie uruchamiane, a polecenie przerwania jest wysyłane w celu zakończenia wszelkich aktywnych procesów pierwszego planu przed uruchomieniem elementu docelowego.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone."
 }
