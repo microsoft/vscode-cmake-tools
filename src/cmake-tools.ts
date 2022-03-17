@@ -2207,14 +2207,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
 
         const user_config = this.workspaceContext.config.debugConfig;
-        /*const drv = await this.getCMakeDriverInstance();
-        const launchEnv = await this._getTargetLaunchEnvironment(drv, user_config.environment);
-        const termOptions: vscode.TerminalOptions = {
-            name: 'CMake/Launch',
-            env: launchEnv,
-            cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
-        };
-        const terminal = this._createTerminal(termOptions, executable);*/
         const terminal = await this.createTerminal(executable);
 
         let executablePath = shlex.quote(executable.path);
