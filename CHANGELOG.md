@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.11
+Bug Fixes:
+- Update terminal's environment variables when the kit is changed. [#2364](https://github.com/microsoft/vscode-cmake-tools/issues/2364)
+
 ## 1.10
 Improvements:
 - Don't specify number of jobs when building with Ninja. [#696](https://github.com/microsoft/vscode-cmake-tools/issues/696)
