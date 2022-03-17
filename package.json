@@ -34,6 +34,9 @@
   "activationEvents": [
     "onCommand:cmake.activeFolderName",
     "onCommand:cmake.activeFolderPath",
+    "onCommand:cmake.activeConfigurePresetName",
+    "onCommand:cmake.activeBuildPresetName",
+    "onCommand:cmake.activeTestPresetName",
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",

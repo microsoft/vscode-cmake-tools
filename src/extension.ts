@@ -1454,6 +1454,21 @@ class ExtensionManager implements vscode.Disposable {
         return false;
     }
 
+    activeConfigurePresetName(): string {
+        telemetry.logEvent("substitution", { command: "activeConfigurePresetName" });
+        return this._folders.activeFolder?.cmakeTools.configurePreset?.name || '';
+    }
+
+    activeBuildPresetName(): string {
+        telemetry.logEvent("substitution", { command: "activeBuildPresetName" });
+        return this._folders.activeFolder?.cmakeTools.buildPreset?.name || '';
+    }
+
+    activeTestPresetName(): string {
+        telemetry.logEvent("substitution", { command: "activeTestPresetName" });
+        return this._folders.activeFolder?.cmakeTools.testPreset?.name || '';
+    }
+
     /**
      * Opens CMakePresets.json at the root of the project. Creates one if it does not exist.
      */
@@ -1626,6 +1641,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     const funs: (keyof ExtensionManager)[] = [
         'activeFolderName',
         'activeFolderPath',
+        'activeConfigurePresetName',
+        'activeBuildPresetName',
+        'activeTestPresetName',
         "useCMakePresets",
         "openCMakePresets",
         'addConfigurePreset',

@@ -89,6 +89,9 @@ Supported commands for substitution:
 |`cmake.tasksBuildCommand`|The CMake command used to build your project based on the currently selected Kit + Variant + Target. Suitable for use within `tasks.json`.|
 |`cmake.activeFolderName`|The name of the active folder (e.g. in a multi-root workspace)|
 |`cmake.activeFolderPath`|The asolute path of the active folder (e.g. in a multi-root workspace)|
+|`cmake.activeConfigurePresetName`|The name of the selected configure preset.|
+|`cmake.activeBuildPresetName`|The name of the selected build preset.|
+|`cmake.activeTestPresetName`|The name of the selected test preset.|
 
 ## Next steps
 
