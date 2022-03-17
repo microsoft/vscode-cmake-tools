@@ -9,6 +9,7 @@ import { platform } from 'os';
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { Environment, EnvironmentUtils } from './environmentVariables';
+import { TargetPopulation } from 'vscode-tas-client';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -575,6 +576,14 @@ export function checkFileExists(filePath: string): Promise<boolean> {
     });
 }
 
+export function checkFileExistsSync(filePath: string): boolean {
+    try {
+        return fs.statSync(filePath).isFile();
+    } catch (e) {
+    }
+    return false;
+}
+
 export function checkDirectoryExists(filePath: string): Promise<boolean> {
     return new Promise((resolve, _reject) => {
         fs.stat(filePath, (_err, stats) => {
@@ -752,3 +761,18 @@ function memoize<T>(fn: () => T) {
 }
 
 export const getHostSystemNameMemo = memoize(getHostSystemName);
+
+export function getExtensionFilePath(extensionfile: string): string {
+    return path.resolve(thisExtensionPath(), extensionfile);
+}
+export function getCmakeToolsTargetPopulation(): TargetPopulation {
+    // If insiders.flag is present, consider this an insiders version.
+    // If release.flag is present, consider this a release version.
+    // Otherwise, consider this an internal build.
+    if (checkFileExistsSync(getExtensionFilePath("insiders.flag"))) {
+        return TargetPopulation.Insiders;
+    } else if (checkFileExistsSync(getExtensionFilePath("release.flag"))) {
+        return TargetPopulation.Public;
+    }
+    return TargetPopulation.Internal;
+}
