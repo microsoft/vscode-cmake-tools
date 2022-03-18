@@ -202,7 +202,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
                 configurePreset,
                 lightNormalizePath(this.folder.uri.fsPath || '.'),
-                this.sourceDir,
+                this.srcDir,
                 this.getPreferredGeneratorName(),
                 true);
             this.configurePreset.set(expandedConfigurePreset);
@@ -270,7 +270,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             const expandedBuildPreset = await preset.expandBuildPreset(this.folder.uri.fsPath,
                 buildPreset,
                 lightNormalizePath(this.folder.uri.fsPath || '.'),
-                this.sourceDir,
+                this.srcDir,
                 this.getPreferredGeneratorName(),
                 true,
                 this.ConfigurePreset?.name);
@@ -332,7 +332,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             const expandedTestPreset = await preset.expandTestPreset(this.folder.uri.fsPath,
                 testPreset,
                 lightNormalizePath(this.folder.uri.fsPath || '.'),
-                this.sourceDir,
+                this.srcDir,
                 this.getPreferredGeneratorName(),
                 true,
                 this.ConfigurePreset?.name);
@@ -468,7 +468,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     });
 
     private readonly sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () =>
-        this.sourceDir = await util.normalizeAndVerifySourceDir(
+        this.srcDir = await util.normalizeAndVerifySourceDir(
             await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
         )
     );
@@ -852,7 +852,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     private async init() {
         log.debug(localize('second.phase.init', 'Starting CMakeTools second-phase init'));
 
-        this.sourceDir = await util.normalizeAndVerifySourceDir(
+        this.srcDir = await util.normalizeAndVerifySourceDir(
             await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
         );
 
@@ -897,7 +897,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 await this.cacheEditorWebview.refreshPanel();
             }
 
-            const sourceDirectory = (this.sourceDir).toLowerCase();
+            const sourceDirectory = (this.srcDir).toLowerCase();
             let isCmakeListsFile: boolean = false;
             if (str.endsWith("cmakelists.txt")) {
                 const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
@@ -1378,7 +1378,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake Tools'));
         }
         log.showChannel();
-        const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
+        const consumer = new CMakeOutputConsumer(this.srcDir, cmakeLogger);
         const retc = await cb(consumer);
         populateCollection(collections.cmake, consumer.diagnostics);
         return retc;
@@ -2233,7 +2233,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             return -2;
         }
 
-        const mainListFile = path.join(this.sourceDir, 'CMakeLists.txt');
+        const mainListFile = path.join(this.srcDir, 'CMakeLists.txt');
 
         if (await fs.exists(mainListFile)) {
             void vscode.window.showErrorMessage(localize('cmakelists.already.configured', 'A CMakeLists.txt is already configured!'));
@@ -2284,8 +2284,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
         ].join('\n');
 
         if (type === 'Library') {
-            if (!(await fs.exists(path.join(this.sourceDir, projectName + '.cpp')))) {
-                await fs.writeFile(path.join(this.sourceDir, projectName + '.cpp'), [
+            if (!(await fs.exists(path.join(this.srcDir, projectName + '.cpp')))) {
+                await fs.writeFile(path.join(this.srcDir, projectName + '.cpp'), [
                     '#include <iostream>',
                     '',
                     'void say_hello(){',
@@ -2295,8 +2295,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 ].join('\n'));
             }
         } else {
-            if (!(await fs.exists(path.join(this.sourceDir, 'main.cpp')))) {
-                await fs.writeFile(path.join(this.sourceDir, 'main.cpp'), [
+            if (!(await fs.exists(path.join(this.srcDir, 'main.cpp')))) {
+                await fs.writeFile(path.join(this.srcDir, 'main.cpp'), [
                     '#include <iostream>',
                     '',
                     'int main(int, char**) {',
@@ -2326,7 +2326,12 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
     // Don't get this from the driver. Source dir is required to evaluate presets.
     // Presets contain generator info. Generator info is required for server api.
-    private sourceDir = '';
+    private srcDir = '';
+    get sourceDir() {
+        // Don't get this from the driver. Source dir is required to evaluate presets.
+        // Presets contain generator info. Generator info is required for server api.
+        return this.srcDir;
+    }
 
     get mainListFile() {
         const drv = this.getCMakeDriverInstance();
