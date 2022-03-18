@@ -206,8 +206,8 @@ export class PresetsController {
 
         this._cmakeTools.MinCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
 
-        if (this._cmakeTools.configurePreset) {
-            await this.setConfigurePreset(this._cmakeTools.configurePreset.name);
+        if (this._cmakeTools.ConfigurePreset) {
+            await this.setConfigurePreset(this._cmakeTools.ConfigurePreset.name);
         }
         // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
     }
@@ -642,7 +642,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.config.preset.selection', 'User cancelled configure preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.configurePreset?.name) {
+        } else if (chosenPreset === this._cmakeTools.ConfigurePreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addConfigurePreset();
@@ -677,13 +677,13 @@ export class PresetsController {
                 title: localize('reloading.build.test.preset', 'Reloading build and test presets')
             },
             async () => {
-                const configurePreset = this._cmakeTools.configurePreset?.name;
+                const configurePreset = this._cmakeTools.ConfigurePreset?.name;
                 const buildPreset = configurePreset ? this._cmakeTools.workspaceContext.state.getBuildPresetName(configurePreset) : undefined;
                 const testPreset = configurePreset ? this._cmakeTools.workspaceContext.state.getTestPresetName(configurePreset) : undefined;
                 if (buildPreset) {
                     await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                 }
-                if (!buildPreset || !this._cmakeTools.buildPreset) {
+                if (!buildPreset || !this._cmakeTools.BuildPreset) {
                     await this.guessBuildPreset();
                 }
 
@@ -699,7 +699,7 @@ export class PresetsController {
     }
 
     private async guessBuildPreset(): Promise<void> {
-        const selectedConfigurePreset = this._cmakeTools.configurePreset?.name;
+        const selectedConfigurePreset = this._cmakeTools.ConfigurePreset?.name;
         let currentBuildPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
@@ -708,7 +708,7 @@ export class PresetsController {
                 // Set active build preset as the first valid build preset matches the selected configure preset
                 if (buildPreset.configurePreset === selectedConfigurePreset) {
                     await this.setBuildPreset(buildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                    currentBuildPreset = this._cmakeTools.buildPreset?.name;
+                    currentBuildPreset = this._cmakeTools.BuildPreset?.name;
                 }
                 if (currentBuildPreset) {
                     break;
@@ -723,14 +723,14 @@ export class PresetsController {
     }
 
     private async checkConfigurePreset(): Promise<preset.ConfigurePreset | null> {
-        const selectedConfigurePreset = this._cmakeTools.configurePreset;
+        const selectedConfigurePreset = this._cmakeTools.ConfigurePreset;
         if (!selectedConfigurePreset) {
             const message_noConfigurePreset = localize('config.preset.required', 'A configure preset needs to be selected. How would you like to proceed?');
             const option_selectConfigurePreset = localize('select.config.preset', 'Select configure preset');
             const option_later = localize('later', 'later');
             const result = await vscode.window.showErrorMessage(message_noConfigurePreset, option_selectConfigurePreset, option_later);
             if (result === option_selectConfigurePreset && await vscode.commands.executeCommand('cmake.selectConfigurePreset')) {
-                return this._cmakeTools.configurePreset;
+                return this._cmakeTools.ConfigurePreset;
             }
         }
         return selectedConfigurePreset;
@@ -758,7 +758,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.buildPreset?.name) {
+        } else if (chosenPreset === this._cmakeTools.BuildPreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addBuildPreset();
@@ -781,7 +781,7 @@ export class PresetsController {
         if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
             preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
             const _preset = preset.getPresetByName(preset.allBuildPresets(this.folderFsPath), presetName);
-            if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
+            if (_preset?.configurePreset !== this._cmakeTools.ConfigurePreset?.name) {
                 log.error(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not match the selected configure preset', presetName));
                 await vscode.window.withProgress(
                     {
@@ -832,7 +832,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.testPreset?.name) {
+        } else if (chosenPreset === this._cmakeTools.TestPreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addTestPreset();
@@ -856,7 +856,7 @@ export class PresetsController {
             if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
                 preset.expandConfigurePresetForPresets(this.folderFsPath, 'test');
                 const _preset = preset.getPresetByName(preset.allTestPresets(this.folderFsPath), presetName);
-                if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
+                if (_preset?.configurePreset !== this._cmakeTools.ConfigurePreset?.name) {
                     log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not match the selected configure preset', presetName));
                     await vscode.window.withProgress(
                         {

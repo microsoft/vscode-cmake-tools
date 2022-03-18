@@ -38,7 +38,7 @@ suite('Debug/Launch interface', async () => {
         const executablesTargets = await cmt.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        expect(await cmt.buildTargetName()).to.be.eq(await cmt.allTargetName);
+        expect(await cmt.buildTargetName()).to.be.eq(await cmt.AllTargetName);
 
         await cmt.setDefaultTarget(executablesTargets[0].name);
         expect(await cmt.buildTargetName()).to.be.eq(executablesTargets[0].name);
