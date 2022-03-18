@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeTools, ConfigureTrigger } from '@cmt/cmake-tools';
+import { CMakeTools, ConfigureTrigger } from '@cmt/cmakeTools';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
 import { ExtensionConfigurationSettings } from '@cmt/config';

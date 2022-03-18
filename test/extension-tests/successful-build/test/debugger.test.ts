@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeTools } from '@cmt/cmake-tools';
+import { CMakeTools } from '@cmt/cmakeTools';
 import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 //import sinon = require('sinon');
 import * as fs from 'fs';
