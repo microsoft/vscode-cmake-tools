@@ -204,7 +204,7 @@ export class PresetsController {
         await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists);
         await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists);
 
-        this._cmakeTools.minCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
+        this._cmakeTools.MinCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
 
         if (this._cmakeTools.configurePreset) {
             await this.setConfigurePreset(this._cmakeTools.configurePreset.name);

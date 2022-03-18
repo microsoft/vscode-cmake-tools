@@ -359,7 +359,7 @@ class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        if (cmt.useCMakePresets) {
+        if (cmt.UseCMakePresets) {
             if (cmt.configurePreset) {
                 return true;
             }
@@ -369,18 +369,18 @@ class ExtensionManager implements vscode.Disposable {
             }
             return !!cmt.configurePreset;
         } else {
-            if (cmt.activeKit) {
+            if (cmt.ActiveKit) {
                 // We have an active kit. We're good.
                 return true;
             }
             // No kit? Ask the user what they want.
             const did_choose_kit = await this.selectKit(cmt.folder);
-            if (!did_choose_kit && !cmt.activeKit) {
+            if (!did_choose_kit && !cmt.ActiveKit) {
                 // The user did not choose a kit and kit isn't set in other way such as setKitByName
                 return false;
             }
             // Return whether we have an active kit defined.
-            return !!cmt.activeKit;
+            return !!cmt.ActiveKit;
         }
     }
 
@@ -399,7 +399,7 @@ class ExtensionManager implements vscode.Disposable {
             // No CMakeTools. Probably no workspace open.
             return false;
         }
-        if (cmt.useCMakePresets) {
+        if (cmt.UseCMakePresets) {
             if (cmt.buildPreset) {
                 return true;
             }
@@ -420,7 +420,7 @@ class ExtensionManager implements vscode.Disposable {
             // No CMakeTools. Probably no workspace open.
             return false;
         }
-        if (cmt.useCMakePresets) {
+        if (cmt.UseCMakePresets) {
             if (cmt.testPreset) {
                 return true;
             }
@@ -675,7 +675,7 @@ class ExtensionManager implements vscode.Disposable {
         const useCMakePresets = activeFolder?.useCMakePresets || false;
         this._statusBar.useCMakePresets(useCMakePresets);
         if (!useCMakePresets) {
-            this._statusBar.setActiveKitName(activeFolder?.cmakeTools.activeKit?.name || '');
+            this._statusBar.setActiveKitName(activeFolder?.cmakeTools.ActiveKit?.name || '');
         }
         this._projectOutlineProvider.setActiveFolder(ws);
         this._setupSubscriptions();
@@ -707,7 +707,7 @@ class ExtensionManager implements vscode.Disposable {
                 this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5).catch(_err => undefined);
             }
 
-            if (this._cppToolsAPI && (cmt.activeKit || cmt.configurePreset)) {
+            if (this._cppToolsAPI && (cmt.ActiveKit || cmt.configurePreset)) {
                 const cpptools = this._cppToolsAPI;
                 let cache: CMakeCache;
                 try {
@@ -724,7 +724,7 @@ class ExtensionManager implements vscode.Disposable {
                     drv.isMultiConfig = isMultiConfig;
                 }
                 const actualBuildType = await (async () => {
-                    if (cmt.useCMakePresets) {
+                    if (cmt.UseCMakePresets) {
                         if (isMultiConfig) {
                             return cmt.buildPreset?.configuration || null;
                         } else {
@@ -803,7 +803,7 @@ class ExtensionManager implements vscode.Disposable {
             this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.setCTestEnabled(e));
             this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.setTestResults(r));
             this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
-            this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
+            this._statusBar.setActiveKitName(cmt.ActiveKit ? cmt.ActiveKit.name : '');
             this._activeConfigurePresetSub = cmt.onActiveConfigurePresetChanged(FireNow, p => {
                 this._statusBar.setConfigurePresetName(p?.displayName || p?.name || '');
             });
@@ -885,7 +885,7 @@ class ExtensionManager implements vscode.Disposable {
             // Check each folder. If there is an active kit set and if it is of the old definition,
             // unset the kit
             for (const cmtFolder of this._folders) {
-                const activeKit = cmtFolder.cmakeTools.activeKit;
+                const activeKit = cmtFolder.cmakeTools.ActiveKit;
                 if (activeKit) {
                     const definition = activeKit.visualStudio;
                     if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
@@ -948,14 +948,14 @@ class ExtensionManager implements vscode.Disposable {
         const kitSelected = await cmtFolder.kitsController.selectKit();
 
         let kitSelectionType;
-        if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.activeKit) {
-            this._statusBar.setActiveKitName(this._folders.activeFolder.cmakeTools.activeKit.name);
+        if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.ActiveKit) {
+            this._statusBar.setActiveKitName(this._folders.activeFolder.cmakeTools.ActiveKit.name);
 
-            if (this._folders.activeFolder.cmakeTools.activeKit.name === "__unspec__") {
+            if (this._folders.activeFolder.cmakeTools.ActiveKit.name === "__unspec__") {
                 kitSelectionType = "unspecified";
             } else {
-                if (this._folders.activeFolder.cmakeTools.activeKit.visualStudio ||
-                    this._folders.activeFolder.cmakeTools.activeKit.visualStudioArchitecture) {
+                if (this._folders.activeFolder.cmakeTools.ActiveKit.visualStudio ||
+                    this._folders.activeFolder.cmakeTools.ActiveKit.visualStudioArchitecture) {
                     kitSelectionType = "vsInstall";
                 } else {
                     kitSelectionType = "compilerSet";
@@ -990,8 +990,8 @@ class ExtensionManager implements vscode.Disposable {
                 await cmtFolder.kitsController.setKitByName(kitName);
             }
         }
-        if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.activeKit) {
-            this._statusBar.setActiveKitName(this._folders.activeFolder.cmakeTools.activeKit.name);
+        if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.ActiveKit) {
+            this._statusBar.setActiveKitName(this._folders.activeFolder.cmakeTools.ActiveKit.name);
         }
     }
 
