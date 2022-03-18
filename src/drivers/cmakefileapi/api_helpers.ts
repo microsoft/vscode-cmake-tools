@@ -14,19 +14,23 @@ import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import rollbar from '@cmt/rollbar';
+import * as pLimit from 'p-limit';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cmakefileapi-parser');
 
+// Limits the concurrent async access to the file system to avoid errors such as "EMFILE: too many open files".
+const fsAccessLimiter = pLimit(50);
+
 export async function createQueryFileForApi(api_path: string): Promise<string> {
     const query_path = path.join(api_path, 'query', 'client-vscode');
     const query_file_path = path.join(query_path, 'query.json');
     const requests = { requests: [{ kind: 'cache', version: 2 }, { kind: 'codemodel', version: 2 }, { kind: 'toolchains', version: 1 }] };
     try {
-        await fs.mkdir_p(query_path);
-        await fs.writeFile(query_file_path, JSON.stringify(requests));
+        await fsAccessLimiter(() => fs.mkdir_p(query_path));
+        await fsAccessLimiter(() => fs.writeFile(query_file_path, JSON.stringify(requests)));
     } catch (e) {
         rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', query_file_path), e);
         throw e;
@@ -36,11 +40,11 @@ export async function createQueryFileForApi(api_path: string): Promise<string> {
 
 export async function loadIndexFile(reply_path: string): Promise<index_api.Index.IndexFile | null> {
     log.debug(`Read reply folder: ${reply_path}`);
-    if (!await fs.exists(reply_path)) {
+    if (!await fsAccessLimiter(() => fs.exists(reply_path))) {
         return null;
     }
 
-    const files = await fs.readdir(reply_path);
+    const files = await fsAccessLimiter(() => fs.readdir(reply_path));
     log.debug(`Found index files: ${JSON.stringify(files)}`);
 
     const index_files = files.filter(filename => filename.startsWith('index-')).sort();
@@ -48,13 +52,13 @@ export async function loadIndexFile(reply_path: string): Promise<index_api.Index
         throw Error('No index file found.');
     }
     const index_file_path = path.join(reply_path, index_files[index_files.length - 1]);
-    const file_content = await fs.readFile(index_file_path);
+    const file_content = await fsAccessLimiter(() => fs.readFile(index_file_path));
 
     return JSON.parse(file_content.toString()) as index_api.Index.IndexFile;
 }
 
 export async function loadCacheContent(filename: string): Promise<Map<string, api.CacheEntry>> {
-    const file_content = await fs.readFile(filename);
+    const file_content = await fsAccessLimiter(() => fs.readFile(filename));
     const cache_from_cmake = JSON.parse(file_content.toString()) as index_api.Cache.CacheContent;
 
     const expected_version = { major: 2, minor: 0 };
@@ -101,7 +105,7 @@ function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.C
 }
 
 export async function loadCodeModelContent(filename: string): Promise<index_api.CodeModelKind.Content> {
-    const file_content = await fs.readFile(filename);
+    const file_content = await fsAccessLimiter(() => fs.readFile(filename));
     const codemodel = JSON.parse(file_content.toString()) as index_api.CodeModelKind.Content;
     const expected_version = { major: 2, minor: 0 };
     const detected_version = codemodel.version;
@@ -120,7 +124,7 @@ export async function loadCodeModelContent(filename: string): Promise<index_api.
 }
 
 export async function loadTargetObject(filename: string): Promise<index_api.CodeModelKind.TargetObject> {
-    const file_content = await fs.readFile(filename);
+    const file_content = await fsAccessLimiter(() => fs.readFile(filename));
     return JSON.parse(file_content.toString()) as index_api.CodeModelKind.TargetObject;
 }
 
@@ -273,7 +277,7 @@ export async function loadExtCodeModelContent(reply_path: string, codeModel_file
 }
 
 export async function loadToolchains(filename: string): Promise<Map<string, CodeModelToolchain>> {
-    const file_content = await fs.readFile(filename);
+    const file_content = await fsAccessLimiter(() => fs.readFile(filename));
     const toolchains = JSON.parse(file_content.toString()) as index_api.Toolchains.Content;
 
     const expected_version = { major: 1, minor: 0 };
