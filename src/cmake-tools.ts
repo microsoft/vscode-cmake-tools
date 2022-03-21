@@ -1178,7 +1178,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                             `"${compdb_path}"`, `"${expanded_dest}"`, `"${pardir}"`, e.toString()));
                     }
                 }
-            } else {
+            } else if (this.workspaceContext.config.copyCompileCommands) {
                 log.debug(localize('cannot.copy.compile.commands', 'Cannot copy {1} because it does not exist at {0}', compdb_path, 'compile_commands.json'));
             }
         }
