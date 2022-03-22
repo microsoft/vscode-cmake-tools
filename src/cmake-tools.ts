@@ -982,10 +982,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return false;
     }
 
-    private isKitChanged: boolean = false;
+    private refreshLaunchEnvironment: boolean = false;
     async setKit(kit: Kit | null) {
         if (!this._activeKit || (kit && this._activeKit.name !== kit.name)) {
-            this.isKitChanged = true;
+            this.refreshLaunchEnvironment = true;
         }
         this._activeKit = kit;
         if (kit) {
@@ -2157,14 +2157,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     });
 
     private async createTerminal(executable: api.ExecutableTarget): Promise<vscode.Terminal> {
-        const user_config = this.workspaceContext.config.debugConfig;
-        const drv = await this.getCMakeDriverInstance();
-        const launchEnv = await this._getTargetLaunchEnvironment(drv, user_config.environment);
-        const options: vscode.TerminalOptions = {
-            name: 'CMake/Launch',
-            env: launchEnv,
-            cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
-        };
         const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
         if (launchBehavior !== "newterminal") {
             for (const [, terminal] of this._launchTerminals) {
@@ -2177,8 +2169,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     }
                     // Dispose the terminal if the User's settings for preferred terminal have changed since the current target is launched,
                     // or if the kit is changed, which means the environment variables are possibly updated.
-                    if (terminalPath !== vscode.env.shell || this.isKitChanged) {
-                        this.isKitChanged = false;
+                    if (terminalPath !== vscode.env.shell || this.refreshLaunchEnvironment) {
+                        this.refreshLaunchEnvironment = false;
                         terminal.dispose();
                         break;
                     }
@@ -2186,7 +2178,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 }
             }
         }
-
+        const user_config = this.workspaceContext.config.debugConfig;
+        const drv = await this.getCMakeDriverInstance();
+        const launchEnv = await this._getTargetLaunchEnvironment(drv, user_config.environment);
+        const options: vscode.TerminalOptions = {
+            name: 'CMake/Launch',
+            env: launchEnv,
+            cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
+        };
         if (options && options.env) {
             options.env[this._launchTerminalTargetName] = executable.name;
             options.env[this._launchTerminalPath] = vscode.env.shell;
