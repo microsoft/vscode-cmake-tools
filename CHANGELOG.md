@@ -4,7 +4,11 @@
 Bug Fixes:
 - Update terminal's environment variables when the kit is changed. [#2364](https://github.com/microsoft/vscode-cmake-tools/issues/2364)
 
-## 1.10
+## 1.10.5
+Bug Fixes:
+- fix "CMake: compile active file" command. [#2438](https://github.com/microsoft/vscode-cmake-tools/issues/2438)
+
+## 1.10.4
 Improvements:
 - Don't specify number of jobs when building with Ninja. [#696](https://github.com/microsoft/vscode-cmake-tools/issues/696)
 - Support for the Ninja Multi-Config generator. [#1423](https://github.com/microsoft/vscode-cmake-tools/issues/1423)

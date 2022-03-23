@@ -76,6 +76,24 @@ export function activate(extensionContext: vscode.ExtensionContext): void {
     }
 }
 
+export function sendOpenTelemetry(telemetryProperties: Properties): void {
+    const targetPopulation: TargetPopulation = util.getCmakeToolsTargetPopulation();
+    switch (targetPopulation) {
+        case TargetPopulation.Public:
+            telemetryProperties['targetPopulation'] = "Public";
+            break;
+        case TargetPopulation.Internal:
+            telemetryProperties['targetPopulation'] = "Internal";
+            break;
+        case TargetPopulation.Insiders:
+            telemetryProperties['targetPopulation'] = "Insiders";
+            break;
+        default:
+            break;
+    }
+    logEvent('open', telemetryProperties);
+}
+
 export function getExperimentationService(): Promise<IExperimentationService | undefined> | undefined {
     return initializationPromise;
 }

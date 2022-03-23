@@ -228,7 +228,7 @@ class ExtensionManager implements vscode.Disposable {
         if (isMultiRoot) {
             telemetryProperties['autoSelectActiveFolder'] = `${this._workspaceConfig.autoSelectActiveFolder}`;
         }
-        telemetry.logEvent('open', telemetryProperties);
+        telemetry.sendOpenTelemetry(telemetryProperties);
     }
 
     public getFolderContext(folder: vscode.WorkspaceFolder): StateManager {
