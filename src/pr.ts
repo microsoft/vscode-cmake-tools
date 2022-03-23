@@ -63,17 +63,17 @@ export namespace fs {
 
     export const writeFile = limitify(promisify(fs_.writeFile));
 
-    export const readdir = limitify(promisify(fs_.readdir));
+    export const readdir = promisify(fs_.readdir);
 
-    export const mkdir = limitify(promisify(fs_.mkdir));
+    export const mkdir = promisify(fs_.mkdir);
 
-    export const mkdtemp = limitify(promisify(fs_.mkdtemp));
+    export const mkdtemp = promisify(fs_.mkdtemp);
 
-    export const rename = limitify(promisify(fs_.rename));
+    export const rename = promisify(fs_.rename);
 
-    export const stat = limitify(promisify(fs_.stat));
+    export const stat = promisify(fs_.stat);
 
-    export const walk = limitify(promisify(walk_));
+    export const walk = promisify(walk_);
 
     /**
      * Try and stat() a file/folder. If stat() fails for *any reason*, returns `null`.
@@ -89,9 +89,9 @@ export namespace fs {
         }
     }
 
-    export const readlink = limitify(promisify(fs_.readlink));
+    export const readlink = promisify(fs_.readlink);
 
-    export const unlink = limitify(promisify(fs_.unlink));
+    export const unlink = promisify(fs_.unlink);
 
     export const appendFile = limitify(promisify(fs_.appendFile));
 
@@ -142,7 +142,7 @@ export namespace fs {
      * @param outPath The new path to the hard link
      */
     export function hardLinkFile(inPath: string, outPath: string): Promise<void> {
-        return fsAccessLimiter(() => new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             fs_.link(inPath, outPath, err => {
                 if (err) {
                     reject(err);
@@ -150,7 +150,7 @@ export namespace fs {
                     resolve();
                 }
             });
-        }));
+        });
     }
 
     /**
@@ -158,7 +158,7 @@ export namespace fs {
      * @param dirpath Directory to remove
      */
     export function rmdir(dirpath: string): Promise<void> {
-        return fsAccessLimiter(() => new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             rimraf(dirpath, err => {
                 if (err) {
                     reject(err);
@@ -166,6 +166,6 @@ export namespace fs {
                     resolve();
                 }
             });
-        }));
+        });
     }
 }
