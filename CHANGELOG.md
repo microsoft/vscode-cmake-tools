@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.11
+Improvements:
+- Fix build Error: EMFILE: too many open files. [#2288](https://github.com/microsoft/vscode-cmake-tools/issues/2288) [@FrogTheFrog](https://github.com/FrogTheFrog)
+
 ## 1.10.5
 Bug Fixes:
 - fix "CMake: compile active file" command. [#2438](https://github.com/microsoft/vscode-cmake-tools/issues/2438)
