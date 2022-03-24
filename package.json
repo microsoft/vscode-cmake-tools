@@ -537,6 +537,12 @@
             ],
             "description": "CMake build command"
           },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "options": {
             "type": "object",
             "description": "Additional command options",
