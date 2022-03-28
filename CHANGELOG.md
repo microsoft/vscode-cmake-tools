@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.11
+Bug Fixes:
+- `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
+
 ## 1.10.5
 Bug Fixes:
 - fix "CMake: compile active file" command. [#2438](https://github.com/microsoft/vscode-cmake-tools/issues/2438)

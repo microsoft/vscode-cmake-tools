@@ -1070,9 +1070,7 @@ class ExtensionManager implements vscode.Disposable {
         return fn(cmt);
     }
 
-    async mapCMakeToolsAll(fn: CMakeToolsMapFn,
-        precheck?: (cmt: CMakeTools) => Promise<boolean>,
-        cleanOutputChannel?: boolean): Promise<any> {
+    async mapCMakeToolsAll(fn: CMakeToolsMapFn, precheck?: (cmt: CMakeTools) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
         if (cleanOutputChannel) {
             this._cleanOutputChannel();
         }
@@ -1155,7 +1153,12 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     buildAll(name?: string | string[]) {
-        return this.mapCMakeToolsAll(cmt => cmt.build(util.isString(name) ? [name] : undefined), this._ensureActiveBuildPreset, true);
+        return this.mapCMakeToolsAll(cmt => {
+            const targets = util.isArrayOfString(name) ? name : util.isString(name) ? [name] : undefined;
+            return cmt.build(targets);
+        },
+        this._ensureActiveBuildPreset,
+        true);
     }
 
     setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) {
