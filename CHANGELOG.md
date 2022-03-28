@@ -34,6 +34,8 @@ Bug Fixes:
 - Presets in CMakePresets.json should not inherit from presets in CMakeUserPresets.json. [#2232](https://github.com/microsoft/vscode-cmake-tools/issues/2232)
 - Refresh the launch terminal if the user default changes. [PR #2408](https://github.com/microsoft/vscode-cmake-tools/pull/2408)
 - Strip BOM from files when reading. [#2396](https://github.com/microsoft/vscode-cmake-tools/issues/2396)
+- When using the configuration provider for the C++ extension, the browse configuration was not being updated after code model changes. [#2410](https://github.com/microsoft/vscode-cmake-tools/issues/2410)
+- fix "CMake: compile active file" command. [#2438](https://github.com/microsoft/vscode-cmake-tools/issues/2438)
 
 ## 1.9.2
 Bug fixes:
