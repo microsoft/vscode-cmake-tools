@@ -1,10 +1,10 @@
 # What's New?
 
-## 1.10.5
+## 1.11
 Bug Fixes:
-- fix "CMake: compile active file" command. [#2438](https://github.com/microsoft/vscode-cmake-tools/issues/2438)
+- `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
 
-## 1.10.4
+## 1.10
 Improvements:
 - Don't specify number of jobs when building with Ninja. [#696](https://github.com/microsoft/vscode-cmake-tools/issues/696)
 - Support for the Ninja Multi-Config generator. [#1423](https://github.com/microsoft/vscode-cmake-tools/issues/1423)
@@ -34,7 +34,6 @@ Bug Fixes:
 - Presets in CMakePresets.json should not inherit from presets in CMakeUserPresets.json. [#2232](https://github.com/microsoft/vscode-cmake-tools/issues/2232)
 - Refresh the launch terminal if the user default changes. [PR #2408](https://github.com/microsoft/vscode-cmake-tools/pull/2408)
 - Strip BOM from files when reading. [#2396](https://github.com/microsoft/vscode-cmake-tools/issues/2396)
-- When using the configuration provider for the C++ extension, the browse configuration was not being updated after code model changes. [#2410](https://github.com/microsoft/vscode-cmake-tools/issues/2410)
 
 ## 1.9.2
 Bug fixes:
