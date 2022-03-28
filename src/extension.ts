@@ -270,7 +270,7 @@ class ExtensionManager implements vscode.Disposable {
     /**
      * The map caching for each folder whether it is a CMake project or not.
      */
-    private readonly isCMakeFolderMap: Map<string, boolean> = new Map<string, boolean>();
+    private readonly isCMakeFolder: Map<string, boolean> = new Map<string, boolean>();
 
     /**
      * The status bar controller
@@ -479,7 +479,7 @@ class ExtensionManager implements vscode.Disposable {
     // (does have a valid CMakeLists.txt at the location pointed to by the "cmake.sourceDirectory" setting)
     // and also stores the answer in a map for later use.
     async folderIsCMakeProject(cmt: CMakeTools): Promise<boolean> {
-        if (this.isCMakeFolderMap.get(cmt.folderName)) {
+        if (this.isCMakeFolder.get(cmt.folderName)) {
             return true;
         }
 
@@ -512,7 +512,7 @@ class ExtensionManager implements vscode.Disposable {
         }
 
         const isCMake = await fs.exists(expandedSourceDirectory);
-        this.isCMakeFolderMap.set(cmt.folderName, isCMake);
+        this.isCMakeFolder.set(cmt.folderName, isCMake);
 
         return isCMake;
     }
@@ -555,7 +555,7 @@ class ExtensionManager implements vscode.Disposable {
                     persistMode: 'user' | 'workspace';
                 }
                 // Try to persist the user's selection to a `settings.json`
-                const persistProject = vscode.window.showInformationMessage<Choice2>(
+                const prompt = vscode.window.showInformationMessage<Choice2>(
                     persistMessage,
                     {},
                     { title: buttonMessages[0], persistMode: 'user' },
@@ -572,7 +572,7 @@ class ExtensionManager implements vscode.Disposable {
                         }
                         await config.update('cmake.configureOnOpen', chosen.doConfigure, configTarget);
                     });
-                rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, persistProject);
+                rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, prompt);
                 shouldConfigure = chosen.doConfigure;
             }
         }
