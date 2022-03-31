@@ -12,6 +12,7 @@ import { OutputConsumer } from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
 import { testArgs } from './preset';
+import { expandString } from './expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -381,8 +382,17 @@ export class CTestDriver implements vscode.Disposable {
             ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
         } else {
             const configuration = driver.currentBuildType;
-            ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration].concat(
-                this.ws.config.ctestDefaultArgs, this.ws.config.ctestArgs);
+            const opts = driver.expansionOptions;
+            const jobs = await expandString(this.ws.config.numCTestJobs, opts);
+            const defaultArgs = [];
+            for (const value of this.ws.config.ctestDefaultArgs) {
+                defaultArgs.push(await expandString(value, opts));
+            }
+            const args = [];
+            for (const value of this.ws.config.ctestArgs) {
+                args.push(await expandString(value, opts));
+            }
+            ctestArgs = [`-j${jobs}`, '-C', configuration].concat(defaultArgs, args);
         }
 
         const child = driver.executeCommand(
