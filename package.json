@@ -1897,9 +1897,9 @@
         "cmake.launchBehavior": {
           "type": "string",
           "enum": [
-              "reuseTerminal",
-              "breakAndReuseTerminal",
-              "newTerminal"
+            "reuseTerminal",
+            "breakAndReuseTerminal",
+            "newTerminal"
           ],
           "enumDescriptions": [
             "%cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description%",
@@ -2070,8 +2070,9 @@
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.0.0",
     "json5": "^2.2.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "open": "^7.4.1",
+    "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^5.0.0",
