@@ -1459,17 +1459,17 @@ class ExtensionManager implements vscode.Disposable {
 
     activeConfigurePresetName(): string {
         telemetry.logEvent("substitution", { command: "activeConfigurePresetName" });
-        return this._folders.activeFolder?.cmakeTools.configurePreset?.name || '';
+        return this.folders.activeFolder?.cmakeTools.configurePreset?.name || '';
     }
 
     activeBuildPresetName(): string {
         telemetry.logEvent("substitution", { command: "activeBuildPresetName" });
-        return this._folders.activeFolder?.cmakeTools.buildPreset?.name || '';
+        return this.folders.activeFolder?.cmakeTools.buildPreset?.name || '';
     }
 
     activeTestPresetName(): string {
         telemetry.logEvent("substitution", { command: "activeTestPresetName" });
-        return this._folders.activeFolder?.cmakeTools.testPreset?.name || '';
+        return this.folders.activeFolder?.cmakeTools.testPreset?.name || '';
     }
 
     /**
