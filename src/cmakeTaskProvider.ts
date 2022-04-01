@@ -25,6 +25,10 @@ enum CommandType {
     test = "test",
     config = "configure"
 }
+
+const localizeCommandType = (cmd: CommandType): string => (cmd === CommandType.build) ? localize("build", "build") :
+    (cmd === CommandType.install) ? localize("install", "install") : (cmd === CommandType.test) ? localize("test", "test") :
+        (cmd === CommandType.config) ? localize("configure", "configure") : "";
 export class CMakeTask extends vscode.Task {
     detail?: string;
 }
@@ -56,7 +60,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const result: CMakeTask[] = [];
         this.updateDefaultTargets();
         // Provide build task.
-        const taskName: string = CommandType.build;
+        const taskName: string = localizeCommandType(CommandType.build);
         const definition: CMakeTaskDefinition = {
             type: CMakeTaskProvider.CMakeScriptType,
             label: CMakeTaskProvider.CMakeSourceStr + ": " + taskName,
@@ -69,7 +73,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTargets, resolvedDefinition.targets, resolvedDefinition.options, this.cmakeDriver)
             ), []);
         task.group = vscode.TaskGroup.Build;
-        task.detail = localize('cmake.template.task', 'CMake template {0} task', CommandType.build);
+        task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
         result.push(task);
         return result;
     }

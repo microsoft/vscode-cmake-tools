@@ -533,7 +533,10 @@
           "command": {
             "type": "string",
             "enum": [
-              "build"
+              "build",
+              "install",
+              "test",
+              "configure"
             ],
             "description": "CMake build command"
           },
