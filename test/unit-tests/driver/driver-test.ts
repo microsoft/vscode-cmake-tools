@@ -8,7 +8,7 @@ import * as chaiString from 'chai-string';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
-import { CMakeServerApiDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerApiDriver';
+import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 
 chai.use(chaiString);
 
@@ -358,7 +358,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
 
             const expFileApi = driver instanceof CMakeFileApiDriver;
-            const expSrv = driver instanceof CMakeServerApiDriver;
+            const expSrv = driver instanceof CMakeServerDriver;
             expect(!expFileApi || !expSrv); // mutually exclusive
 
             // Configure with a different generator should overwrite the previous Ninja generator

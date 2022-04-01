@@ -26,7 +26,7 @@ import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 
-import { NoGeneratorError } from './cmakeServerApiDriver';
+import { NoGeneratorError } from './cmakeServerDriver';
 
 import * as nls from 'vscode-nls';
 

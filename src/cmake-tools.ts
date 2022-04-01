@@ -18,7 +18,7 @@ import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
-import { CMakeServerApiDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerApiDriver';
+import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
@@ -762,7 +762,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         preferredGenerators);
                     break;
                 case serverApi:
-                    drv = await CMakeServerApiDriver.create(cmake,
+                    drv = await CMakeServerDriver.create(cmake,
                         this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
