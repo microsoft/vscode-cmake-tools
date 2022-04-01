@@ -440,13 +440,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Event fired when the code model from CMake is updated
      */
-    get CodeModelContent() {
-        return this.codeModelContent.value;
+    get codeModelContent() {
+        return this._codeModelContent.value;
     }
     get onCodeModelChanged() {
-        return this.codeModelContent.changeEvent;
+        return this._codeModelContent.changeEvent;
     }
-    private readonly codeModelContent = new Property<codemodel_api.CodeModelContent | null>(null);
+    private readonly _codeModelContent = new Property<codemodel_api.CodeModelContent | null>(null);
     private codeModelDriverSub: vscode.Disposable | null = null;
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
@@ -1084,7 +1084,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 const drv = await this.cmakeDriver;
                 console.assert(drv !== null, 'Null driver immediately after creation?');
                 if (drv && !(drv instanceof LegacyCMakeDriver)) {
-                    this.codeModelDriverSub = drv.onCodeModelChanged(cm => this.codeModelContent.set(cm));
+                    this.codeModelDriverSub = drv.onCodeModelChanged(cm => this._codeModelContent.set(cm));
                 }
             }
 

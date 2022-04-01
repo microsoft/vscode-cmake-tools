@@ -692,7 +692,7 @@ class ExtensionManager implements vscode.Disposable {
         const cmt: CMakeTools = folder.cmakeTools;
         this._projectOutlineProvider.updateCodeModel(
             cmt.workspaceContext.folder,
-            cmt.CodeModelContent,
+            cmt.codeModelContent,
             {
                 defaultTarget: cmt.defaultBuildTarget || undefined,
                 launchTargetName: cmt.launchTargetName
@@ -739,8 +739,8 @@ class ExtensionManager implements vscode.Disposable {
                 const clCompilerPath = await findCLCompilerPath(configureEnv);
                 this._configProvider.cpptoolsVersion = cpptools.getVersion();
                 let codeModelContent;
-                if (cmt.CodeModelContent) {
-                    codeModelContent = cmt.CodeModelContent;
+                if (cmt.codeModelContent) {
+                    codeModelContent = cmt.codeModelContent;
                     this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmt.folder.uri.fsPath });
                 } else if (drv && drv.codeModelContent) {
                     codeModelContent = drv.codeModelContent;
