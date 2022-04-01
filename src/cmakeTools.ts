@@ -399,13 +399,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * The "launch target" (the target that will be run by debugging)
      */
-    get LaunchTargetName() {
-        return this.launchTargetName.value;
+    get launchTargetName() {
+        return this._launchTargetName.value;
     }
     get onLaunchTargetNameChanged() {
-        return this.launchTargetName.changeEvent;
+        return this._launchTargetName.changeEvent;
     }
-    private readonly launchTargetName = new Property<string | null>(null);
+    private readonly _launchTargetName = new Property<string | null>(null);
 
     /**
      * Whether CTest is enabled
@@ -861,7 +861,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         // Set the status bar message
         this.activeVariant.set(this.variantManager.activeVariantOptions.short);
         // Restore the debug target
-        this.launchTargetName.set(this.workspaceContext.state.launchTargetName || '');
+        this._launchTargetName.set(this.workspaceContext.state.launchTargetName || '');
 
         // Hook up event handlers
         // Listen for the variant to change
@@ -1836,7 +1836,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         } if (executableTargets.length === 1) {
             const target = executableTargets[0];
             await this.workspaceContext.state.setLaunchTargetName(target.name);
-            this.launchTargetName.set(target.name);
+            this._launchTargetName.set(target.name);
             return target.path;
         }
 
@@ -1855,7 +1855,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             return null;
         }
         await this.workspaceContext.state.setLaunchTargetName(chosen.label);
-        this.launchTargetName.set(chosen.label);
+        this._launchTargetName.set(chosen.label);
         return chosen.detail;
     }
 

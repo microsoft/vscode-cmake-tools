@@ -695,7 +695,7 @@ class ExtensionManager implements vscode.Disposable {
             cmt.CodeModelContent,
             {
                 defaultTarget: cmt.defaultBuildTarget || undefined,
-                launchTargetName: cmt.LaunchTargetName
+                launchTargetName: cmt.launchTargetName
             }
         );
         rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
@@ -750,7 +750,7 @@ class ExtensionManager implements vscode.Disposable {
                         codeModelContent,
                         {
                             defaultTarget: cmt.defaultBuildTarget || undefined,
-                            launchTargetName: cmt.LaunchTargetName
+                            launchTargetName: cmt.launchTargetName
                         }
                     );
                 }
