@@ -432,9 +432,6 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Whether the backend is busy running some task
      */
-    get IsBusy() {
-        return this.isBusy.value;
-    }
     get onIsBusyChanged() {
         return this.isBusy.changeEvent;
     }
