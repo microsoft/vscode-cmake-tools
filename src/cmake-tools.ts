@@ -17,16 +17,16 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
-import { BadHomeDirectoryError } from '@cmt/drivers/cms-client';
-import { CMakeServerClientDriver, NoGeneratorError } from '@cmt/drivers/cms-driver';
+import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
+import { CMakeServerApiDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerApiDriver';
 import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
-import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/driver';
+import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/cmakeDriver';
 import { expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
-import { LegacyCMakeDriver } from '@cmt/drivers/legacy-driver';
+import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable } from './proc';
@@ -35,7 +35,7 @@ import rollbar from './rollbar';
 import * as telemetry from './telemetry';
 import { setContextValue } from './util';
 import { VariantManager } from './variant';
-import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
+import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cache-view';
@@ -762,7 +762,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         preferredGenerators);
                     break;
                 case serverApi:
-                    drv = await CMakeServerClientDriver.create(cmake,
+                    drv = await CMakeServerApiDriver.create(cmake,
                         this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
@@ -774,7 +774,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         preferredGenerators);
                     break;
                 default:
-                    drv = await LegacyCMakeDriver.create(cmake,
+                    drv = await CMakeLegacyDriver.create(cmake,
                         this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
@@ -1092,7 +1092,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 }
                 const drv = await this._cmakeDriver;
                 console.assert(drv !== null, 'Null driver immediately after creation?');
-                if (drv && !(drv instanceof LegacyCMakeDriver)) {
+                if (drv && !(drv instanceof CMakeLegacyDriver)) {
                     this._codeModelDriverSub = drv.onCodeModelChanged(cm => this._codeModelContent.set(cm));
                 }
             }
@@ -2066,7 +2066,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             void vscode.window.showErrorMessage(localize('set.up.and.build.project.before.debugging', 'Set up and build your CMake project before debugging.'));
             return null;
         }
-        if (drv instanceof LegacyCMakeDriver) {
+        if (drv instanceof CMakeLegacyDriver) {
             void vscode.window
                 .showWarningMessage(localize('target.debugging.unsupported', 'Target debugging is no longer supported with the legacy driver'), {
                     title: localize('learn.more.button', 'Learn more'),

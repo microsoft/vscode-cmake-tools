@@ -1,7 +1,7 @@
 import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
 import { ConfigurationReader } from '@cmt/config';
-import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/driver';
+import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
+import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 
 import { makeCodeModelDriverTestsuite } from './driver-codemodel-tests';
