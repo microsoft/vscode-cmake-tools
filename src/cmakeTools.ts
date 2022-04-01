@@ -172,21 +172,21 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Currently selected configure preset
      */
-    get ConfigurePreset() {
-        return this.configurePreset.value;
+    get configurePreset() {
+        return this._configurePreset.value;
     }
     get onActiveConfigurePresetChanged() {
-        return this.configurePreset.changeEvent;
+        return this._configurePreset.changeEvent;
     }
-    private readonly configurePreset = new Property<preset.ConfigurePreset | null>(null);
+    private readonly _configurePreset = new Property<preset.ConfigurePreset | null>(null);
 
     private async resetPresets() {
         await this.workspaceContext.state.setConfigurePresetName(null);
-        if (this.ConfigurePreset) {
-            await this.workspaceContext.state.setBuildPresetName(this.ConfigurePreset.name, null);
-            await this.workspaceContext.state.setTestPresetName(this.ConfigurePreset.name, null);
+        if (this.configurePreset) {
+            await this.workspaceContext.state.setBuildPresetName(this.configurePreset.name, null);
+            await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
         }
-        this.configurePreset.set(null);
+        this._configurePreset.set(null);
         this.buildPreset.set(null);
         this.testPreset.set(null);
     }
@@ -195,7 +195,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
      */
     async setConfigurePreset(configurePreset: string | null) {
-        const previousGenerator = this.ConfigurePreset?.generator;
+        const previousGenerator = this.configurePreset?.generator;
 
         if (configurePreset) {
             log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
@@ -205,7 +205,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.srcDir,
                 this.getPreferredGeneratorName(),
                 true);
-            this.configurePreset.set(expandedConfigurePreset);
+            this._configurePreset.set(expandedConfigurePreset);
             if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
                 await this.shutDownCMakeDriver();
             }
@@ -273,7 +273,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.srcDir,
                 this.getPreferredGeneratorName(),
                 true,
-                this.ConfigurePreset?.name);
+                this.configurePreset?.name);
             this.buildPreset.set(expandedBuildPreset);
             if (!expandedBuildPreset) {
                 log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
@@ -306,8 +306,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
             }
         } else {
             this.buildPreset.set(null);
-            if (this.ConfigurePreset) {
-                await this.workspaceContext.state.setBuildPresetName(this.ConfigurePreset.name, null);
+            if (this.configurePreset) {
+                await this.workspaceContext.state.setBuildPresetName(this.configurePreset.name, null);
             }
         }
     }
@@ -335,7 +335,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.srcDir,
                 this.getPreferredGeneratorName(),
                 true,
-                this.ConfigurePreset?.name);
+                this.configurePreset?.name);
             this.testPreset.set(expandedTestPreset);
             if (!expandedTestPreset) {
                 log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
@@ -367,8 +367,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
             }
         } else {
             this.testPreset.set(null);
-            if (this.ConfigurePreset) {
-                await this.workspaceContext.state.setTestPresetName(this.ConfigurePreset.name, null);
+            if (this.configurePreset) {
+                await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
             }
         }
     }
@@ -748,7 +748,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     drv = await CMakeFileApiDriver.create(cmake, this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
-                        this.ConfigurePreset,
+                        this.configurePreset,
                         this.BuildPreset,
                         this.TestPreset,
                         workspace,
@@ -760,7 +760,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
-                        this.ConfigurePreset,
+                        this.configurePreset,
                         this.BuildPreset,
                         this.TestPreset,
                         workspace,
@@ -772,7 +772,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
-                        this.ConfigurePreset,
+                        this.configurePreset,
                         this.BuildPreset,
                         this.TestPreset,
                         workspace,
@@ -1001,7 +1001,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 
     async getCMakeExecutable() {
-        const overWriteCMakePathSetting = this.useCMakePresets ? this.ConfigurePreset?.cmakeExecutable : undefined;
+        const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
         let cmakePath = await this.workspaceContext.getCMakePath(overWriteCMakePathSetting);
         if (!cmakePath) {
             cmakePath = '';
@@ -1374,7 +1374,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     return -1;
                 }
             }
-        } else if (!this.ConfigurePreset) {
+        } else if (!this.configurePreset) {
             throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake Tools'));
         }
         log.showChannel();

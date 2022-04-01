@@ -360,14 +360,14 @@ class ExtensionManager implements vscode.Disposable {
         }
 
         if (cmt.UseCMakePresets) {
-            if (cmt.ConfigurePreset) {
+            if (cmt.configurePreset) {
                 return true;
             }
             const did_choose_preset = await this.selectConfigurePreset(cmt.folder);
-            if (!did_choose_preset && !cmt.ConfigurePreset) {
+            if (!did_choose_preset && !cmt.configurePreset) {
                 return false;
             }
-            return !!cmt.ConfigurePreset;
+            return !!cmt.configurePreset;
         } else {
             if (cmt.ActiveKit) {
                 // We have an active kit. We're good.
@@ -707,7 +707,7 @@ class ExtensionManager implements vscode.Disposable {
                 this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5).catch(_err => undefined);
             }
 
-            if (this._cppToolsAPI && (cmt.ActiveKit || cmt.ConfigurePreset)) {
+            if (this._cppToolsAPI && (cmt.ActiveKit || cmt.configurePreset)) {
                 const cpptools = this._cppToolsAPI;
                 let cache: CMakeCache;
                 try {
@@ -1529,7 +1529,7 @@ class ExtensionManager implements vscode.Disposable {
 
         const presetSelected = await cmtFolder.presetsController.selectConfigurePreset();
 
-        const configurePreset = this._folders.activeFolder?.cmakeTools.ConfigurePreset;
+        const configurePreset = this._folders.activeFolder?.cmakeTools.configurePreset;
         this._statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
         // Reset build and test presets since they might not be used with the selected configure preset
