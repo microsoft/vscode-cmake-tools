@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
-import * as cms from '@cmt/drivers/cms-client';
+import * as cms from '@cmt/drivers/cmakeServerClient';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/driver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
