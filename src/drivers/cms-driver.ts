@@ -86,7 +86,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     private async shutdownClient() {
         const cl = await this._cmsClient;
         if (cl) {
-            await cl.shutdown();
+            await cl.shutdownAsync();
         }
     }
 
@@ -108,7 +108,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
         this._cmsClient = (async () => {
             // Stop the server before we try to rip out any old files
             if (old_cl) {
-                await old_cl.shutdown();
+                await old_cl.shutdownAsync();
             }
             await this._cleanPriorConfiguration();
             return this._startNewClient();
@@ -285,7 +285,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
         this._cmakeInputFileSet = InputFileSet.createEmpty();
         const client = await this._cmsClient;
         if (client) {
-            await client.shutdown();
+            await client.shutdownAsync();
         }
         if (need_clean) {
             await this._cleanPriorConfiguration();
@@ -325,7 +325,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     private async _doRestartClient(): Promise<cms.CMakeServerClient> {
         const old_client = await this._cmsClient;
         if (old_client) {
-            await old_client.shutdown();
+            await old_client.shutdownAsync();
         }
         return this._startNewClient();
     }
@@ -365,7 +365,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     async onStop(): Promise<void> {
         const client = await this._cmsClient;
         if (client) {
-            await client.shutdown();
+            await client.shutdownAsync();
             this._cmsClient = Promise.resolve(null);
         }
     }
