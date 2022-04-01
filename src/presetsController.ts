@@ -832,7 +832,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.TestPreset?.name) {
+        } else if (chosenPreset === this._cmakeTools.testPreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addTestPreset();

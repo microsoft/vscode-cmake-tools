@@ -421,14 +421,14 @@ class ExtensionManager implements vscode.Disposable {
             return false;
         }
         if (cmt.UseCMakePresets) {
-            if (cmt.TestPreset) {
+            if (cmt.testPreset) {
                 return true;
             }
             const did_choose_preset = await this.selectTestPreset(cmt.folder);
-            if (!did_choose_preset && !cmt.TestPreset) {
+            if (!did_choose_preset && !cmt.testPreset) {
                 return false;
             }
-            return !!cmt.TestPreset;
+            return !!cmt.testPreset;
         }
         return true;
     };
@@ -1535,7 +1535,7 @@ class ExtensionManager implements vscode.Disposable {
         // Reset build and test presets since they might not be used with the selected configure preset
         const buildPreset = this._folders.activeFolder?.cmakeTools.buildPreset;
         this._statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-        const testPreset = this._folders.activeFolder?.cmakeTools.TestPreset;
+        const testPreset = this._folders.activeFolder?.cmakeTools.testPreset;
         this._statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
         return presetSelected;
@@ -1579,7 +1579,7 @@ class ExtensionManager implements vscode.Disposable {
 
         const presetSelected = await cmtFolder.presetsController.selectTestPreset();
 
-        const testPreset = this._folders.activeFolder?.cmakeTools.TestPreset;
+        const testPreset = this._folders.activeFolder?.cmakeTools.testPreset;
         this._statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
         return presetSelected;

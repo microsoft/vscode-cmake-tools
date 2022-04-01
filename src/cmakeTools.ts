@@ -188,7 +188,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
         this._configurePreset.set(null);
         this._buildPreset.set(null);
-        this.testPreset.set(null);
+        this._testPreset.set(null);
     }
 
     /**
@@ -315,13 +315,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Currently selected test preset
      */
-    get TestPreset() {
-        return this.testPreset.value;
+    get testPreset() {
+        return this._testPreset.value;
     }
     get onActiveTestPresetChanged() {
-        return this.testPreset.changeEvent;
+        return this._testPreset.changeEvent;
     }
-    private readonly testPreset = new Property<preset.TestPreset | null>(null);
+    private readonly _testPreset = new Property<preset.TestPreset | null>(null);
 
     /**
      * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
@@ -336,15 +336,15 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.getPreferredGeneratorName(),
                 true,
                 this.configurePreset?.name);
-            this.testPreset.set(expandedTestPreset);
+            this._testPreset.set(expandedTestPreset);
             if (!expandedTestPreset) {
                 log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
-                this.testPreset.set(null);
+                this._testPreset.set(null);
                 return;
             }
             if (!expandedTestPreset.configurePreset) {
                 log.error(localize('configurePreset.not.set.test.preset', '"configurePreset" is not set in test preset: {0}', testPreset));
-                this.testPreset.set(null);
+                this._testPreset.set(null);
                 return;
             }
             log.debug(localize('loading.new.test.preset', 'Loading new test preset into CMake driver'));
@@ -359,14 +359,14 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     void vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset {0}.', `"${error}"`));
                     this.statusMessage.set(localize('error.on.switch.test.preset', 'Error on switch of test preset ({0})', error.message));
                     this.cmakeDriver = Promise.resolve(null);
-                    this.testPreset.set(null);
+                    this._testPreset.set(null);
                 }
             } else {
                 // Remember the selected test preset for the next session.
                 await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
             }
         } else {
-            this.testPreset.set(null);
+            this._testPreset.set(null);
             if (this.configurePreset) {
                 await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
             }
@@ -750,7 +750,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
-                        this.TestPreset,
+                        this.testPreset,
                         workspace,
                         preConditionHandler,
                         preferredGenerators);
@@ -762,7 +762,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
-                        this.TestPreset,
+                        this.testPreset,
                         workspace,
                         preConditionHandler,
                         preferredGenerators);
@@ -774,7 +774,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
-                        this.TestPreset,
+                        this.testPreset,
                         workspace,
                         preConditionHandler,
                         preferredGenerators);
