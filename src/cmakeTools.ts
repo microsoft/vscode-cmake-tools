@@ -421,13 +421,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * The current CTest results
      */
-    get TestResults() {
-        return this.testResults.value;
+    get testResults() {
+        return this._testResults.value;
     }
     get onTestResultsChanged() {
-        return this.testResults.changeEvent;
+        return this._testResults.changeEvent;
     }
-    private readonly testResults = new Property<BasicTestResults | null>(null);
+    private readonly _testResults = new Property<BasicTestResults | null>(null);
 
     /**
      * Whether the backend is busy running some task
@@ -529,7 +529,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 await drv.asyncDispose();
             }
         }
-        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._cTestEnabled, this.testResults, this.isBusy, this.variantManager, this.cTestController]) {
+        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._cTestEnabled, this._testResults, this.isBusy, this.variantManager, this.cTestController]) {
             disp.dispose();
         }
     }
@@ -877,7 +877,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             });
         });
         this.cTestController.onTestingEnabledChanged(enabled => this._cTestEnabled.set(enabled));
-        this.cTestController.onResultsChanged(res => this.testResults.set(res));
+        this.cTestController.onResultsChanged(res => this._testResults.set(res));
 
         this.statusMessage.set(localize('ready.status', 'Ready'));
 
