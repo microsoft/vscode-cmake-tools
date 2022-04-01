@@ -359,7 +359,7 @@ class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        if (cmt.UseCMakePresets) {
+        if (cmt.useCMakePresets) {
             if (cmt.configurePreset) {
                 return true;
             }
@@ -399,7 +399,7 @@ class ExtensionManager implements vscode.Disposable {
             // No CMakeTools. Probably no workspace open.
             return false;
         }
-        if (cmt.UseCMakePresets) {
+        if (cmt.useCMakePresets) {
             if (cmt.buildPreset) {
                 return true;
             }
@@ -420,7 +420,7 @@ class ExtensionManager implements vscode.Disposable {
             // No CMakeTools. Probably no workspace open.
             return false;
         }
-        if (cmt.UseCMakePresets) {
+        if (cmt.useCMakePresets) {
             if (cmt.testPreset) {
                 return true;
             }
@@ -724,7 +724,7 @@ class ExtensionManager implements vscode.Disposable {
                     drv.isMultiConfig = isMultiConfig;
                 }
                 const actualBuildType = await (async () => {
-                    if (cmt.UseCMakePresets) {
+                    if (cmt.useCMakePresets) {
                         if (isMultiConfig) {
                             return cmt.buildPreset?.configuration || null;
                         } else {

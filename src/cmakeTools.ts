@@ -125,9 +125,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Whether we use presets
      */
-    private useCMakePresets = false; // The default value doesn't matter, value is set when folder is loaded
-    get UseCMakePresets(): boolean {
-        return this.useCMakePresets;
+    private _useCMakePresets = false; // The default value doesn't matter, value is set when folder is loaded
+    get useCMakePresets(): boolean {
+        return this._useCMakePresets;
     }
     async setUseCMakePresets(useCMakePresets: boolean) {
         if (this.targetName.value === this.initTargetName) {
@@ -140,9 +140,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
         if (!useCMakePresets && this.targetName.value === this.targetsInPresetName) {
             this.targetName.set('all');
         }
-        const oldValue = this.useCMakePresets;
+        const oldValue = this._useCMakePresets;
         if (oldValue !== useCMakePresets) {
-            this.useCMakePresets = useCMakePresets;
+            this._useCMakePresets = useCMakePresets;
             const drv = await this.cmakeDriver;
             if (drv) {
                 log.debug(localize('disposing.driver', 'Disposing CMake driver'));
@@ -164,10 +164,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Minimum cmake version supported. Currently only used for presets
      */
-    set MinCMakeVersion(version: Version | undefined) {
-        this.minCMakeVersion = version;
-    }
-    private minCMakeVersion?: Version;
+    public minCMakeVersion?: Version;
 
     /**
      * Currently selected configure preset
@@ -743,7 +740,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             switch (communicationMode) {
                 case fileApi:
                     drv = await CMakeFileApiDriver.create(cmake, this.workspaceContext.config,
-                        this.useCMakePresets,
+                        this._useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
@@ -755,7 +752,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 case serverApi:
                     drv = await CMakeServerClientDriver.create(cmake,
                         this.workspaceContext.config,
-                        this.useCMakePresets,
+                        this._useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
@@ -767,7 +764,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 default:
                     drv = await LegacyCMakeDriver.create(cmake,
                         this.workspaceContext.config,
-                        this.useCMakePresets,
+                        this._useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
@@ -781,7 +778,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
 
         await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
-        this.targetName.set(this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
+        this.targetName.set(this.defaultBuildTarget || (this._useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
         await this.cTestController.reloadTests(drv);
 
         // Update the task provider when a new driver is created
@@ -998,7 +995,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 
     async getCMakeExecutable() {
-        const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        const overWriteCMakePathSetting = this._useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
         let cmakePath = await this.workspaceContext.getCMakePath(overWriteCMakePathSetting);
         if (!cmakePath) {
             cmakePath = '';
@@ -1023,7 +1020,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
      */
     async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
         return this.driverStrand.execute(async () => {
-            if (!this.useCMakePresets && !this.activeKit) {
+            if (!this._useCMakePresets && !this.activeKit) {
                 log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kits defined'));
                 return null;
             }
@@ -1359,7 +1356,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
             return -1;
         }
-        if (!this.useCMakePresets) {
+        if (!this._useCMakePresets) {
             if (!this.activeKit) {
                 throw new Error(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake Tools'));
             }
@@ -1496,7 +1493,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         let newTargets = targets;
         let targetName: string;
         const defaultBuildTargets = await this.getDefaultBuildTargets();
-        if (this.useCMakePresets) {
+        if (this._useCMakePresets) {
             newTargets = (newTargets && newTargets.length > 0) ? newTargets : defaultBuildTargets;
             targetName = `${this.buildPreset?.displayName || this.buildPreset?.name || ''}${newTargets ? (': ' + newTargets.join(', ')) : ''}`;
             targetName = targetName || this.buildPreset?.displayName || this.buildPreset?.name || '';
@@ -1655,7 +1652,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             return '';
         }
 
-        if (this.useCMakePresets && this.buildPreset?.targets) {
+        if (this._useCMakePresets && this.buildPreset?.targets) {
             const targets = [this.targetsInPresetName];
             targets.push(...(util.isString(this.buildPreset.targets) ? [this.buildPreset.targets] : this.buildPreset.targets));
             const sel = await vscode.window.showQuickPick(targets, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
@@ -1767,10 +1764,10 @@ export class CMakeTools implements api.CMakeToolsAPI {
     public async getDefaultBuildTargets(): Promise<string[] | undefined> {
         const defaultTarget = this.defaultBuildTarget;
         let targets: string | string[] | undefined = defaultTarget || undefined;
-        if (this.useCMakePresets && (!defaultTarget || defaultTarget === this.targetsInPresetName)) {
+        if (this._useCMakePresets && (!defaultTarget || defaultTarget === this.targetsInPresetName)) {
             targets = this.buildPreset?.targets;
         }
-        if (!this.useCMakePresets && !defaultTarget) {
+        if (!this._useCMakePresets && !defaultTarget) {
             targets = await this.AllTargetName;
         }
         return util.isString(targets) ? [targets] : targets;
@@ -1794,7 +1791,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 
     updateDriverAndTargetsInTaskProvider(drv: CMakeDriver | null, targets?: string[]) {
-        if (drv && (this.useCMakePresets || targets)) {
+        if (drv && (this._useCMakePresets || targets)) {
             updateCMakeDriverInTaskProvider(drv);
             updateDefaultTargetsInTaskProvider(targets);
         }
@@ -1804,7 +1801,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * Implementation of `cmake.getBuildTargetName`
      */
     async buildTargetName(): Promise<string | null> {
-        if (this.useCMakePresets) {
+        if (this._useCMakePresets) {
             return this.defaultBuildTarget || this.targetsInPresetName;
         }
         return this.defaultBuildTarget || this.AllTargetName;
