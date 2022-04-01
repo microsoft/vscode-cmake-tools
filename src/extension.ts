@@ -400,14 +400,14 @@ class ExtensionManager implements vscode.Disposable {
             return false;
         }
         if (cmt.UseCMakePresets) {
-            if (cmt.BuildPreset) {
+            if (cmt.buildPreset) {
                 return true;
             }
             const did_choose_preset = await this.selectBuildPreset(cmt.folder);
-            if (!did_choose_preset && !cmt.BuildPreset) {
+            if (!did_choose_preset && !cmt.buildPreset) {
                 return false;
             }
-            return !!cmt.BuildPreset;
+            return !!cmt.buildPreset;
         }
         return true;
     };
@@ -726,7 +726,7 @@ class ExtensionManager implements vscode.Disposable {
                 const actualBuildType = await (async () => {
                     if (cmt.UseCMakePresets) {
                         if (isMultiConfig) {
-                            return cmt.BuildPreset?.configuration || null;
+                            return cmt.buildPreset?.configuration || null;
                         } else {
                             const buildType = cache.get('CMAKE_BUILD_TYPE');
                             return buildType ? buildType.as<string>() : null; // Single config generators set the build type during config, not build.
@@ -1533,7 +1533,7 @@ class ExtensionManager implements vscode.Disposable {
         this._statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
         // Reset build and test presets since they might not be used with the selected configure preset
-        const buildPreset = this._folders.activeFolder?.cmakeTools.BuildPreset;
+        const buildPreset = this._folders.activeFolder?.cmakeTools.buildPreset;
         this._statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
         const testPreset = this._folders.activeFolder?.cmakeTools.TestPreset;
         this._statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
@@ -1557,7 +1557,7 @@ class ExtensionManager implements vscode.Disposable {
 
         const presetSelected = await cmtFolder.presetsController.selectBuildPreset();
 
-        const buildPreset = this._folders.activeFolder?.cmakeTools.BuildPreset;
+        const buildPreset = this._folders.activeFolder?.cmakeTools.buildPreset;
         this._statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
 
         return presetSelected;

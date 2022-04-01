@@ -683,7 +683,7 @@ export class PresetsController {
                 if (buildPreset) {
                     await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                 }
-                if (!buildPreset || !this._cmakeTools.BuildPreset) {
+                if (!buildPreset || !this._cmakeTools.buildPreset) {
                     await this.guessBuildPreset();
                 }
 
@@ -708,7 +708,7 @@ export class PresetsController {
                 // Set active build preset as the first valid build preset matches the selected configure preset
                 if (buildPreset.configurePreset === selectedConfigurePreset) {
                     await this.setBuildPreset(buildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                    currentBuildPreset = this._cmakeTools.BuildPreset?.name;
+                    currentBuildPreset = this._cmakeTools.buildPreset?.name;
                 }
                 if (currentBuildPreset) {
                     break;
@@ -758,7 +758,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.BuildPreset?.name) {
+        } else if (chosenPreset === this._cmakeTools.buildPreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addBuildPreset();

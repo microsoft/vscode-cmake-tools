@@ -187,7 +187,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
         }
         this._configurePreset.set(null);
-        this.buildPreset.set(null);
+        this._buildPreset.set(null);
         this.testPreset.set(null);
     }
 
@@ -253,13 +253,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Currently selected build preset
      */
-    get BuildPreset() {
-        return this.buildPreset.value;
+    get buildPreset() {
+        return this._buildPreset.value;
     }
     get onActiveBuildPresetChanged() {
-        return this.buildPreset.changeEvent;
+        return this._buildPreset.changeEvent;
     }
-    private readonly buildPreset = new Property<preset.BuildPreset | null>(null);
+    private readonly _buildPreset = new Property<preset.BuildPreset | null>(null);
 
     /**
      * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
@@ -274,15 +274,15 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.getPreferredGeneratorName(),
                 true,
                 this.configurePreset?.name);
-            this.buildPreset.set(expandedBuildPreset);
+            this._buildPreset.set(expandedBuildPreset);
             if (!expandedBuildPreset) {
                 log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
-                this.buildPreset.set(null);
+                this._buildPreset.set(null);
                 return;
             }
             if (!expandedBuildPreset.configurePreset) {
                 log.error(localize('configurePreset.not.set.build.preset', '"configurePreset" is not set in build preset: {0}', buildPreset));
-                this.buildPreset.set(null);
+                this._buildPreset.set(null);
                 return;
             }
             log.debug(localize('loading.new.build.preset', 'Loading new build preset into CMake driver'));
@@ -298,14 +298,14 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     void vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset {0}.', `"${error}"`));
                     this.statusMessage.set(localize('error.on.switch.build.preset', 'Error on switch of build preset ({0})', error.message));
                     this.cmakeDriver = Promise.resolve(null);
-                    this.buildPreset.set(null);
+                    this._buildPreset.set(null);
                 }
             } else {
                 // Remember the selected build preset for the next session.
                 await this.workspaceContext.state.setBuildPresetName(expandedBuildPreset.configurePreset, buildPreset);
             }
         } else {
-            this.buildPreset.set(null);
+            this._buildPreset.set(null);
             if (this.configurePreset) {
                 await this.workspaceContext.state.setBuildPresetName(this.configurePreset.name, null);
             }
@@ -749,7 +749,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
-                        this.BuildPreset,
+                        this.buildPreset,
                         this.TestPreset,
                         workspace,
                         preConditionHandler,
@@ -761,7 +761,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
-                        this.BuildPreset,
+                        this.buildPreset,
                         this.TestPreset,
                         workspace,
                         preConditionHandler,
@@ -773,7 +773,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
-                        this.BuildPreset,
+                        this.buildPreset,
                         this.TestPreset,
                         workspace,
                         preConditionHandler,
@@ -1501,8 +1501,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
         const defaultBuildTargets = await this.getDefaultBuildTargets();
         if (this.useCMakePresets) {
             newTargets = (newTargets && newTargets.length > 0) ? newTargets : defaultBuildTargets;
-            targetName = `${this.BuildPreset?.displayName || this.BuildPreset?.name || ''}${newTargets ? (': ' + newTargets.join(', ')) : ''}`;
-            targetName = targetName || this.BuildPreset?.displayName || this.BuildPreset?.name || '';
+            targetName = `${this.buildPreset?.displayName || this.buildPreset?.name || ''}${newTargets ? (': ' + newTargets.join(', ')) : ''}`;
+            targetName = targetName || this.buildPreset?.displayName || this.buildPreset?.name || '';
         } else {
             newTargets = (newTargets && newTargets.length > 0) ? newTargets : defaultBuildTargets!;
             targetName = newTargets.join(', ');
@@ -1644,7 +1644,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
         let targets: string | string[] | undefined = target;
         if (target === this.targetsInPresetName) {
-            targets = this.BuildPreset?.targets;
+            targets = this.buildPreset?.targets;
         }
         return this.build(util.isString(targets) ? [targets] : targets);
     }
@@ -1658,9 +1658,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
             return '';
         }
 
-        if (this.useCMakePresets && this.BuildPreset?.targets) {
+        if (this.useCMakePresets && this.buildPreset?.targets) {
             const targets = [this.targetsInPresetName];
-            targets.push(...(util.isString(this.BuildPreset.targets) ? [this.BuildPreset.targets] : this.BuildPreset.targets));
+            targets.push(...(util.isString(this.buildPreset.targets) ? [this.buildPreset.targets] : this.buildPreset.targets));
             const sel = await vscode.window.showQuickPick(targets, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
             return sel || null;
         }
@@ -1771,7 +1771,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         const defaultTarget = this.defaultBuildTarget;
         let targets: string | string[] | undefined = defaultTarget || undefined;
         if (this.useCMakePresets && (!defaultTarget || defaultTarget === this.targetsInPresetName)) {
-            targets = this.BuildPreset?.targets;
+            targets = this.buildPreset?.targets;
         }
         if (!this.useCMakePresets && !defaultTarget) {
             targets = await this.AllTargetName;
