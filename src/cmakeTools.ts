@@ -373,9 +373,6 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * The current target to build.
      */
-    /*get targetName() {
-        return this.targetName.value;
-    }*/
     get onTargetNameChanged() {
         return this.targetName.changeEvent;
     }
@@ -1387,10 +1384,10 @@ export class CMakeTools implements api.CMakeToolsAPI {
      *
      * This is async because it depends on checking the active generator name
      */
-    get AllTargetName() {
-        return this.allTargetName();
+    get allTargetName() {
+        return this.allTargetNameAsync();
     }
-    private async allTargetName(): Promise<string> {
+    private async allTargetNameAsync(): Promise<string> {
         const drv = await this.getCMakeDriverInstance();
         if (drv) {
             return drv.allTargetName;
@@ -1768,7 +1765,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             targets = this.buildPreset?.targets;
         }
         if (!this._useCMakePresets && !defaultTarget) {
-            targets = await this.AllTargetName;
+            targets = await this.allTargetName;
         }
         return util.isString(targets) ? [targets] : targets;
     }
@@ -1804,7 +1801,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         if (this._useCMakePresets) {
             return this.defaultBuildTarget || this.targetsInPresetName;
         }
-        return this.defaultBuildTarget || this.AllTargetName;
+        return this.defaultBuildTarget || this.allTargetName;
     }
 
     /**
