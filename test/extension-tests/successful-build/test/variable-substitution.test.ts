@@ -109,7 +109,7 @@ suite('Variable Substitution', async () => {
         const cacheEntry = cache.get('buildKit') as api.CacheEntry;
         expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[buildKit] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('buildKit', '[buildKit] unexpected cache entry key name');
-        const kit = cmt.ActiveKit;
+        const kit = cmt.activeKit;
         expect(cacheEntry.as<string>()).to.eq(kit!.name, '[buildKit] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[buildKit] unexpected cache entry value type');
     }).timeout(100000);

@@ -64,7 +64,7 @@ export class KitsController {
 
         const opts: expand.ExpansionOptions = {
             vars: {
-                buildKit: cmakeTools.ActiveKit?.name || "",
+                buildKit: cmakeTools.activeKit?.name || "",
                 buildType: await cmakeTools.currentBuildType() || "",
                 buildKitVendor: "",
                 buildKitTriple: "",
@@ -179,7 +179,7 @@ export class KitsController {
 
         // If the current kit was selected from the set that is updated with this call to readKits,
         // load it again to ensure it is up to date.
-        const current = this.cmakeTools.ActiveKit;
+        const current = this.cmakeTools.activeKit;
         if (current) {
             const searchKits: Kit[] = (kitsReadMode === KitsReadMode.allAvailable) ? this.availableKits :
                 (kitsReadMode === KitsReadMode.userKits) ? KitsController.userKits : this.folderKits.concat(this.additionalKits);
