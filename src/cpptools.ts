@@ -22,7 +22,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | "gnu++23" | undefined;
 
 export interface DiagnosticsCpptools {
     isReady: boolean;
@@ -65,7 +65,9 @@ interface TargetDefaults {
 
 function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion {
     const is_gnu = can_use_gnu && std.startsWith('gnu');
-    if (std.endsWith('++2a') || std.endsWith('++2b') || std.endsWith('++20') || std.endsWith('++latest')) {
+    if (std.endsWith('++23') || std.endsWith('++2b') || std.endsWith('++latest')) {
+        return is_gnu ? 'gnu++23' : 'c++23';
+    } else if (std.endsWith('++20') || std.endsWith('++2a')) {
         return is_gnu ? 'gnu++20' : 'c++20';
     } else if (std.endsWith('++17') || std.endsWith('++1z')) {
         return is_gnu ? 'gnu++17' : 'c++17';
