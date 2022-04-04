@@ -18,15 +18,15 @@ import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
-import { CMakeServerClientDriver, NoGeneratorError } from '@cmt/drivers/cms-driver';
+import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
-import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/driver';
+import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/cmakeDriver';
 import { expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
-import { LegacyCMakeDriver } from '@cmt/drivers/legacy-driver';
+import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable } from './proc';
@@ -35,7 +35,7 @@ import rollbar from './rollbar';
 import * as telemetry from './telemetry';
 import { setContextValue } from './util';
 import { VariantManager } from './variant';
-import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
+import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cache-view';
@@ -762,7 +762,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         preferredGenerators);
                     break;
                 case serverApi:
-                    drv = await CMakeServerClientDriver.create(cmake,
+                    drv = await CMakeServerDriver.create(cmake,
                         this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
@@ -774,7 +774,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         preferredGenerators);
                     break;
                 default:
-                    drv = await LegacyCMakeDriver.create(cmake,
+                    drv = await CMakeLegacyDriver.create(cmake,
                         this.workspaceContext.config,
                         this.useCMakePresets,
                         this.activeKit,
@@ -982,7 +982,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return false;
     }
 
+    private refreshLaunchEnvironment: boolean = false;
     async setKit(kit: Kit | null) {
+        if (!this._activeKit || (kit && this._activeKit.name !== kit.name)) {
+            this.refreshLaunchEnvironment = true;
+        }
         this._activeKit = kit;
         if (kit) {
             log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
@@ -1092,7 +1096,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 }
                 const drv = await this._cmakeDriver;
                 console.assert(drv !== null, 'Null driver immediately after creation?');
-                if (drv && !(drv instanceof LegacyCMakeDriver)) {
+                if (drv && !(drv instanceof CMakeLegacyDriver)) {
                     this._codeModelDriverSub = drv.onCodeModelChanged(cm => this._codeModelContent.set(cm));
                 }
             }
@@ -2066,7 +2070,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             void vscode.window.showErrorMessage(localize('set.up.and.build.project.before.debugging', 'Set up and build your CMake project before debugging.'));
             return null;
         }
-        if (drv instanceof LegacyCMakeDriver) {
+        if (drv instanceof CMakeLegacyDriver) {
             void vscode.window
                 .showWarningMessage(localize('target.debugging.unsupported', 'Target debugging is no longer supported with the legacy driver'), {
                     title: localize('learn.more.button', 'Learn more'),
@@ -2155,7 +2159,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
     });
 
-    private _createTerminal(options: vscode.TerminalOptions, executable: api.ExecutableTarget) {
+    private async createTerminal(executable: api.ExecutableTarget): Promise<vscode.Terminal> {
         const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
         if (launchBehavior !== "newterminal") {
             for (const [, terminal] of this._launchTerminals) {
@@ -2166,23 +2170,30 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     if (launchBehavior === 'breakandreuseterminal') {
                         terminal.sendText('\u0003');
                     }
-
-                    // User's settings for preferred terminal have changed since this instance launched
-                    if (terminalPath !== vscode.env.shell) {
+                    // Dispose the terminal if the User's settings for preferred terminal have changed since the current target is launched,
+                    // or if the kit is changed, which means the environment variables are possibly updated.
+                    if (terminalPath !== vscode.env.shell || this.refreshLaunchEnvironment) {
                         terminal.dispose();
                         break;
                     }
-
                     return terminal;
                 }
             }
         }
-
+        const user_config = this.workspaceContext.config.debugConfig;
+        const drv = await this.getCMakeDriverInstance();
+        const launchEnv = await this._getTargetLaunchEnvironment(drv, user_config.environment);
+        const options: vscode.TerminalOptions = {
+            name: 'CMake/Launch',
+            env: launchEnv,
+            cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
+        };
         if (options && options.env) {
             options.env[this._launchTerminalTargetName] = executable.name;
             options.env[this._launchTerminalPath] = vscode.env.shell;
         }
 
+        this.refreshLaunchEnvironment = false;
         return vscode.window.createTerminal(options);
     }
 
@@ -2198,14 +2209,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
 
         const user_config = this.workspaceContext.config.debugConfig;
-
-        const drv = await this.getCMakeDriverInstance();
-        const launchEnv = await this._getTargetLaunchEnvironment(drv, user_config.environment);
-        const termOptions: vscode.TerminalOptions = {
-            name: 'CMake/Launch',
-            env: launchEnv,
-            cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
-        };
+        const terminal = await this.createTerminal(executable);
 
         let executablePath = shlex.quote(executable.path);
 
@@ -2216,8 +2220,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 executablePath = `.${executablePath}`;
             }
         }
-
-        const terminal = this._createTerminal(termOptions, executable);
 
         let launchArgs = '';
         if (user_config && user_config.args) {
