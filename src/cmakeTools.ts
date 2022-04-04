@@ -1224,13 +1224,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
         if (drv && drv.shouldUseCachedConfiguration(trigger)) {
-            const retc: number = await drv.configure(trigger, []);
-            if (retc === 0) {
+            const result: number = await drv.configure(trigger, []);
+            if (result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
             }
             await this.cTestController.reloadTests(drv);
             this.onReconfiguredEmitter.fire();
-            return retc;
+            return result;
         }
 
         return vscode.window.withProgress(
@@ -1248,51 +1248,51 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     return this.doConfigure(type, progress, async consumer => {
                         const isConfiguringKey = 'cmake:isConfiguring';
                         if (drv) {
-                            let oldProg = 0;
-                            const progSub = drv.onProgress(pr => {
-                                const newProg = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
-                                const increment = newProg - oldProg;
+                            let oldProgress = 0;
+                            const progressSub = drv.onProgress(pr => {
+                                const newProgress = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                                const increment = newProgress - oldProgress;
                                 if (increment >= 1) {
-                                    oldProg += increment;
+                                    oldProgress += increment;
                                     progress.report({ increment });
                                 }
                             });
                             try {
                                 progress.report({ message: localize('configuring.project', 'Configuring project') });
-                                let retc: number;
+                                let result: number;
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
-                                    retc = await drv.configure(trigger, [], consumer, true);
+                                    result = await drv.configure(trigger, [], consumer, true);
                                 } else {
                                     switch (type) {
                                         case ConfigureType.Normal:
-                                            retc = await drv.configure(trigger, extraArgs, consumer);
+                                            result = await drv.configure(trigger, extraArgs, consumer);
                                             break;
                                         case ConfigureType.Clean:
-                                            retc = await drv.cleanConfigure(trigger, extraArgs, consumer);
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
-                                            retc = await drv.configure(trigger, extraArgs, consumer, undefined, true);
+                                            result = await drv.configure(trigger, extraArgs, consumer, undefined, true);
                                             break;
                                         default:
                                             rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
-                                            retc = await this.configureInternal(trigger, extraArgs, ConfigureType.Normal);
+                                            result = await this.configureInternal(trigger, extraArgs, ConfigureType.Normal);
                                             break;
                                     }
                                     await setContextValue(isConfiguringKey, false);
                                 }
-                                if (retc === 0) {
+                                if (result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
                                 }
 
                                 await this.cTestController.reloadTests(drv);
                                 this.onReconfiguredEmitter.fire();
-                                return retc;
+                                return result;
                             } finally {
                                 await setContextValue(isConfiguringKey, false);
                                 progress.report({ message: localize('finishing.configure', 'Finishing configure') });
-                                progSub.dispose();
+                                progressSub.dispose();
                             }
                         } else {
                             progress.report({ message: localize('configure.failed', 'Failed to configure project') });
@@ -1377,9 +1377,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
         log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
-        const retc = await cb(consumer);
+        const result = await cb(consumer);
         populateCollection(collections.cmake, consumer.diagnostics);
-        return retc;
+        return result;
     }
 
     /**
@@ -1459,7 +1459,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         return drv ? this.tasksBuildCommandDrv(drv) : null;
     }
 
-    private mPromiseBuild: Promise<number> = Promise.resolve(0);
+    private activeBuild: Promise<number> = Promise.resolve(0);
 
     /**
      * Implementation of `cmake.build`
@@ -1484,11 +1484,11 @@ export class CMakeTools implements api.CMakeToolsAPI {
             return 0;
         }
 
-        const configRetc = await this.ensureConfigured();
-        if (configRetc === null) {
+        const configResult = await this.ensureConfigured();
+        if (configResult === null) {
             throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
-        } else if (configRetc !== 0) {
-            return configRetc;
+        } else if (configResult !== 0) {
+            return configResult;
         }
         drv = await this.getCMakeDriverInstance();
         if (!drv) {
@@ -1555,8 +1555,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * Implementation of `cmake.build`
      */
     async build(targets?: string[], showCommandOnly?: boolean): Promise<number> {
-        this.mPromiseBuild = this.runBuild(targets, showCommandOnly);
-        return this.mPromiseBuild;
+        this.activeBuild = this.runBuild(targets, showCommandOnly);
+        return this.activeBuild;
     }
 
     /**
@@ -1566,8 +1566,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * @param filePath The path to a file to try and compile
      */
     async tryCompileFile(filePath: string): Promise<vscode.Terminal | null> {
-        const configRetc = await this.ensureConfigured();
-        if (configRetc === null || configRetc !== 0) {
+        const configResult = await this.ensureConfigured();
+        if (configResult === null || configResult !== 0) {
             // Config failed?
             return null;
         }
@@ -1593,10 +1593,10 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
 
         if (!await fs.exists(drv.cachePath)) {
-            const doConf = !!(await vscode.window.showErrorMessage(
+            const doConfigure = !!(await vscode.window.showErrorMessage(
                 localize('project.not.yet.configured', 'This project has not yet been configured'),
                 localize('configure.now.button', 'Configure Now')));
-            if (doConf) {
+            if (doConfigure) {
                 if (await this.configureInternal() !== 0) {
                     return;
                 }
@@ -1695,9 +1695,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * Implementation of `cmake.cleanRebuild`
      */
     async cleanRebuild(): Promise<number> {
-        const cleanRes = await this.clean();
-        if (cleanRes !== 0) {
-            return cleanRes;
+        const cleanResult = await this.clean();
+        if (cleanResult !== 0) {
+            return cleanResult;
         }
         return this.build();
     }
@@ -1735,7 +1735,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
 
         return drv.stopCurrentProcess().then(async () => {
-            await this.mPromiseBuild;
+            await this.activeBuild;
             this.cmakeDriver = Promise.resolve(null);
             this.isBusy.set(false);
             return true;
@@ -2165,13 +2165,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 }
             }
         }
-        const user_config = this.workspaceContext.config.debugConfig;
+        const userConfig = this.workspaceContext.config.debugConfig;
         const drv = await this.getCMakeDriverInstance();
-        const launchEnv = await this.getTargetLaunchEnvironment(drv, user_config.environment);
+        const launchEnv = await this.getTargetLaunchEnvironment(drv, userConfig.environment);
         const options: vscode.TerminalOptions = {
             name: 'CMake/Launch',
             env: launchEnv,
-            cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
+            cwd: (userConfig && userConfig.cwd) || path.dirname(executable.path)
         };
         if (options && options.env) {
             options.env[this.launchTerminalTargetName] = executable.name;
