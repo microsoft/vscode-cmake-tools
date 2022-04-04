@@ -1223,8 +1223,24 @@
               "description": "%cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description%"
             },
             "externalConsole": {
-              "type": "boolean",
-              "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+                "type": "boolean",
+                "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+            },
+            "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+                  "integratedTerminal",
+                  "externalTerminal",
+                  "newExternalWindow"
+                ],
+                "enumDescriptions": [
+                  "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
+                ],
+                "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
             },
             "logging": {
               "type": "object",

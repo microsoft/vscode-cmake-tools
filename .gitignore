@@ -18,6 +18,7 @@ package-lock.json
 test.txt
 *.backup
 *.db*
+*.log
 *.vsix
 **/.vscode/CMakeTools
 **/nls.*.json
