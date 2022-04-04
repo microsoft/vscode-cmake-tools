@@ -1151,10 +1151,10 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
                     const expandedDest = await expandString(copyDest, opts);
-                    const pardir = path.dirname(expandedDest);
+                    const parentDir = path.dirname(expandedDest);
                     try {
                         log.debug(localize('copy.compile.commands', 'Copying {2} from {0} to {1}', compdbPath, expandedDest, 'compile_commands.json'));
-                        await fs.mkdir_p(pardir);
+                        await fs.mkdir_p(parentDir);
                         try {
                             await fs.copyFile(compdbPath, expandedDest);
                         } catch (e: any) {
@@ -1164,7 +1164,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     } catch (e: any) {
                         void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.1',
                             'Tried to copy {0} to {1}, but failed to create the parent directory {2}: {3}',
-                            `"${compdbPath}"`, `"${expandedDest}"`, `"${pardir}"`, e.toString()));
+                            `"${compdbPath}"`, `"${expandedDest}"`, `"${parentDir}"`, e.toString()));
                     }
                 }
             } else if (this.workspaceContext.config.copyCompileCommands) {
@@ -1705,10 +1705,10 @@ export class CMakeTools implements api.CMakeToolsAPI {
     private readonly cTestController = new CTestDriver(this.workspaceContext);
     async ctest(): Promise<number> {
 
-        const buildRetc = await this.build();
-        if (buildRetc !== 0) {
+        const buildResult = await this.build();
+        if (buildResult !== 0) {
             this.cTestController.markAllCurrentTestsAsNotRun();
-            return buildRetc;
+            return buildResult;
         }
 
         const drv = await this.getCMakeDriverInstance();
@@ -2012,8 +2012,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
         const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
         if (buildOnLaunch || isReconfigurationNeeded) {
-            const rcBuild = await this.build([chosen.name]);
-            if (rcBuild !== 0) {
+            const buildResult = await this.build([chosen.name]);
+            if (buildResult !== 0) {
                 log.debug(localize('build.failed', 'Build failed'));
                 return null;
             }
