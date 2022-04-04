@@ -2173,7 +2173,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     // Dispose the terminal if the User's settings for preferred terminal have changed since the current target is launched,
                     // or if the kit is changed, which means the environment variables are possibly updated.
                     if (terminalPath !== vscode.env.shell || this.refreshLaunchEnvironment) {
-                        this.refreshLaunchEnvironment = false;
                         terminal.dispose();
                         break;
                     }
@@ -2194,6 +2193,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             options.env[this._launchTerminalPath] = vscode.env.shell;
         }
 
+        this.refreshLaunchEnvironment = false;
         return vscode.window.createTerminal(options);
     }
 
