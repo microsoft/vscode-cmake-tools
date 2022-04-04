@@ -2193,7 +2193,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             return null;
         }
 
-        const user_config = this.workspaceContext.config.debugConfig;
+        const userConfig = this.workspaceContext.config.debugConfig;
         const terminal = await this.createTerminal(executable);
 
         let executablePath = shlex.quote(executable.path);
@@ -2207,8 +2207,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
 
         let launchArgs = '';
-        if (user_config && user_config.args) {
-            launchArgs = user_config.args.join(" ");
+        if (userConfig && userConfig.args) {
+            launchArgs = userConfig.args.join(" ");
         }
 
         terminal.sendText(`${executablePath} ${launchArgs}`);
