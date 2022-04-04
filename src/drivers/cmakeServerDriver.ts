@@ -1,6 +1,6 @@
 import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
 import { InputFileSet } from '@cmt/dirty';
-import { ConfigureTrigger } from '@cmt/cmake-tools';
+import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
