@@ -14,7 +14,7 @@ import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
-import { ProgressMessage } from '@cmt/drivers/cms-client';
+import { ProgressMessage } from '@cmt/drivers/cmakeServerClient';
 import * as expand from '@cmt/expand';
 import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment } from '@cmt/kit';
 import * as logging from '@cmt/logging';
