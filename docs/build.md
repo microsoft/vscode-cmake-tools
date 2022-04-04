@@ -35,7 +35,7 @@ You can also define a build task from the VS Code command pallette by running th
 
 ![Configure a build task](images/configure_task.png)
 
-By choosing the "CMake: build" task, the following task will be created in "./.vscode/tasks.json" file.
+By choosing the "CMake: build" task, the following task will be created in "${workspaceFolder}/.vscode/tasks.json" file.
 
 ```
 {
