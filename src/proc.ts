@@ -181,7 +181,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     if (timeoutId) {
                         clearTimeout(timeoutId);
                     }
-                    resolve({ retc: -1, stdout: "", stderr: err.message ?? '' })
+                    resolve({ retc: -1, stdout: "", stderr: err.message ?? '' });
                 });
                 child.stdout?.on('data', (data: Uint8Array) => {
                     rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
