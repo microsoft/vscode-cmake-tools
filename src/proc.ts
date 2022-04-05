@@ -86,6 +86,7 @@ export interface ExecutionOptions {
     outputEncoding?: string;
     useTask?: boolean;
     overrideLocale?: boolean;
+    timeout?: number;
 }
 
 export function buildCmdStr(command: string, args?: string[]): string {
@@ -106,10 +107,7 @@ export function buildCmdStr(command: string, args?: string[]): string {
  * @note Output from the command is accumulated into a single buffer: Commands
  * which produce a lot of output should be careful about memory constraints.
  */
-export function execute(command: string,
-    args?: string[],
-    outputConsumer?: OutputConsumer | null,
-    options?: ExecutionOptions): Subprocess {
+export function execute(command: string, args?: string[], outputConsumer?: OutputConsumer | null, options?: ExecutionOptions): Subprocess {
     const cmdstr = buildCmdStr(command, args);
     if (options && options.silent !== true) {
         log.info(// We do simple quoting of arguments with spaces.
@@ -174,11 +172,17 @@ export function execute(command: string,
 
         result = new Promise<ExecutionResult>(resolve => {
             if (child) {
-                child.on('error', err => resolve({ retc: -1, stdout: "", stderr: err.message ?? '' }));
                 let stdout_acc = '';
                 let line_acc = '';
                 let stderr_acc = '';
                 let stderr_line_acc = '';
+                let timeoutId: NodeJS.Timeout;
+                child.on('error', err => {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                    resolve({ retc: -1, stdout: "", stderr: err.message ?? '' })
+                });
                 child.stdout?.on('data', (data: Uint8Array) => {
                     rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
                         const str = iconv.decode(Buffer.from(data), encoding);
@@ -223,6 +227,9 @@ export function execute(command: string,
                 // the whole output of the command.
                 child.on('close', retc => {
                     try {
+                        if (timeoutId) {
+                            clearTimeout(timeoutId);
+                        }
                         rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
                             if (line_acc && outputConsumer) {
                                 outputConsumer.output(line_acc);
@@ -237,6 +244,13 @@ export function execute(command: string,
                         resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                     }
                 });
+                if (options?.timeout) {
+                    timeoutId = setTimeout(() => {
+                        log.warning(localize('process.timeout', 'The command timed out: {0}', `${command} ${args?.join(' ')}`));
+                        child?.kill();
+                        resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
+                    }, options.timeout);
+                }
             }
         });
     }
