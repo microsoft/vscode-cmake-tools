@@ -6,7 +6,7 @@ import * as nls from 'vscode-nls';
 import * as path from 'path';
 
 import * as util from '@cmt/util';
-import CMakeTools from '@cmt/cmake-tools';
+import CMakeTools from '@cmt/cmakeTools';
 import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';

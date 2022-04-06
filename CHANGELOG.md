@@ -8,6 +8,7 @@ Improvements:
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
+- Update terminal's environment variables when the kit is changed. [#2364](https://github.com/microsoft/vscode-cmake-tools/issues/2364)
 
 ## 1.10.5
 Bug Fixes:

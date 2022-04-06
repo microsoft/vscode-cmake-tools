@@ -12,7 +12,7 @@ import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmake-tools';
+import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmakeTools';
 import { ConfigurationReader, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { CMakeToolsFolderController, CMakeToolsFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/folders';
@@ -38,7 +38,7 @@ import { ProgressHandle, DummyDisposable, reportProgress } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { CMakeDriver, CMakePreconditionProblems } from './drivers/driver';
+import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

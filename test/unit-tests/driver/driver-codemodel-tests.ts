@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions */
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmake-executable';
 import { ConfigurationReader } from '@cmt/config';
-import { ConfigureTrigger } from '@cmt/cmake-tools';
+import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import * as chai from 'chai';
 import { expect } from 'chai';
@@ -12,8 +12,8 @@ import * as path from 'path';
 chai.use(chaiString);
 
 import { Kit, CMakeGenerator } from '@cmt/kit';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/driver';
-import { LegacyCMakeDriver } from '@cmt/drivers/legacy-driver';
+import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
@@ -82,7 +82,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
             let code_model: null | codemodel_api.CodeModelContent = null;
-            if (driver && !(driver instanceof LegacyCMakeDriver)) {
+            if (driver && !(driver instanceof CMakeLegacyDriver)) {
                 driver.onCodeModelChanged(cm => {
                     code_model = cm;
                 });
