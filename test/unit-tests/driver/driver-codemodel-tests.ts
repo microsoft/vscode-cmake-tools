@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions */
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmake-executable';
 import { ConfigurationReader } from '@cmt/config';
-import { ConfigureTrigger } from '@cmt/cmake-tools';
+import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import * as chai from 'chai';
 import { expect } from 'chai';
