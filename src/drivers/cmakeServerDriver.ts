@@ -1,15 +1,15 @@
 import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
 import { InputFileSet } from '@cmt/dirty';
-import { ConfigureTrigger } from '@cmt/cmake-tools';
+import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
-import * as cms from '@cmt/drivers/cms-client';
+import * as cms from '@cmt/drivers/cmakeServerClient';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/driver';
+import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
@@ -29,7 +29,7 @@ export class NoGeneratorError extends Error {
     message: string = localize('no.usable.generator.found', 'No usable generator found.');
 }
 
-export class CMakeServerClientDriver extends CMakeDriver {
+export class CMakeServerDriver extends CMakeDriver {
 
     get isCacheConfigSupported(): boolean {
         return false;
@@ -86,7 +86,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     private async shutdownClient() {
         const cl = await this._cmsClient;
         if (cl) {
-            await cl.shutdown();
+            await cl.shutdownAsync();
         }
     }
 
@@ -108,7 +108,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
         this._cmsClient = (async () => {
             // Stop the server before we try to rip out any old files
             if (old_cl) {
-                await old_cl.shutdown();
+                await old_cl.shutdownAsync();
             }
             await this._cleanPriorConfiguration();
             return this._startNewClient();
@@ -285,7 +285,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
         this._cmakeInputFileSet = InputFileSet.createEmpty();
         const client = await this._cmsClient;
         if (client) {
-            await client.shutdown();
+            await client.shutdownAsync();
         }
         if (need_clean) {
             await this._cleanPriorConfiguration();
@@ -325,7 +325,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     private async _doRestartClient(): Promise<cms.CMakeServerClient> {
         const old_client = await this._cmsClient;
         if (old_client) {
-            await old_client.shutdown();
+            await old_client.shutdownAsync();
         }
         return this._startNewClient();
     }
@@ -365,7 +365,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     async onStop(): Promise<void> {
         const client = await this._cmsClient;
         if (client) {
-            await client.shutdown();
+            await client.shutdownAsync();
             this._cmsClient = Promise.resolve(null);
         }
     }
@@ -411,8 +411,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
         testPreset: TestPreset | null,
         workspaceFolder: string | null,
         preconditionHandler: CMakePreconditionProblemSolver,
-        preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
-        return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler),
+        preferredGenerators: CMakeGenerator[]): Promise<CMakeServerDriver> {
+        return this.createDerived(new CMakeServerDriver(cmake, config, workspaceFolder, preconditionHandler),
             useCMakePresets,
             kit,
             configurePreset,

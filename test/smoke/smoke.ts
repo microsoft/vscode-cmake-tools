@@ -3,7 +3,7 @@ import { SmokeTestExtensionContext } from '@test/helpers/vscodefake/extensioncon
 
 import * as vscode from 'vscode';
 
-import { CMakeTools } from '@cmt/cmake-tools';
+import { CMakeTools } from '@cmt/cmakeTools';
 
 type Result<T> = Thenable<T> | T;
 

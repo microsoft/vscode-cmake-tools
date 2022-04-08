@@ -34,6 +34,9 @@
   "activationEvents": [
     "onCommand:cmake.activeFolderName",
     "onCommand:cmake.activeFolderPath",
+    "onCommand:cmake.activeConfigurePresetName",
+    "onCommand:cmake.activeBuildPresetName",
+    "onCommand:cmake.activeTestPresetName",
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
@@ -1229,8 +1232,24 @@
               "description": "%cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description%"
             },
             "externalConsole": {
-              "type": "boolean",
-              "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+                "type": "boolean",
+                "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+            },
+            "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+                  "integratedTerminal",
+                  "externalTerminal",
+                  "newExternalWindow"
+                ],
+                "enumDescriptions": [
+                  "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
+                ],
+                "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
             },
             "logging": {
               "type": "object",
@@ -2084,7 +2103,7 @@
     "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
-    "vscode-cpptools": "^5.0.0",
+    "vscode-cpptools": "^6.1.0",
     "vscode-extension-telemetry": "^0.1.7",
     "vscode-nls": "^5.0.0",
     "vscode-tas-client": "^0.1.22",
