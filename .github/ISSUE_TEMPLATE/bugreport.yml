@@ -5,7 +5,7 @@ body:
   attributes:
     value: |
       ## Is there an existing issue for this?
-    value: Please search our [existing issues](https://github.com/microsoft/vscode-cmake-tools/issues) to see if an issue already exists for the issue you'd like to report.
+      Please search our [existing issues](https://github.com/microsoft/vscode-cmake-tools/issues) to see if an issue already exists for the issue you'd like to report.
 - type: textarea
   attributes:
     label: Brief Issue Summary
