@@ -19,6 +19,7 @@ body:
     label: CMake Tools Diagnostics
     description: |
       For bugs, please run the `CMake: Log Diagnostics` command and paste the output here.
+    render: shell
   validations:
     required: false
 - type: textarea
@@ -26,6 +27,7 @@ body:
     label: Debug Log
     description: |
       For bugs, we would also appreciate it if you used the `"cmake.loggingLevel": "debug"` setting and paste the CMake/Build output from the OUTPUT window.
+    render: shell
   validations:
     required: false
 - type: textarea
