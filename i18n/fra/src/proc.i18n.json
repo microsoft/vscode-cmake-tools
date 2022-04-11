@@ -7,5 +7,6 @@
 	"executing.command": "Exécution de la commande : {0}",
 	"processing.data.event.stdout": "Traitement de l'événement \"data\" à partir de proc stdout",
 	"processing.data.event.stderr": "Traitement de l'événement \"data\" à partir de proc stderr",
-	"resolving.close.event": "Résolution du processus au moment de l'événement \"close\""
+	"resolving.close.event": "Résolution du processus au moment de l'événement \"close\"",
+	"process.timeout": "The command timed out: {0}"
 }
