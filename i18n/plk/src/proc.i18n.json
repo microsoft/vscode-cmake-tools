@@ -7,5 +7,6 @@
 	"executing.command": "Wykonywanie polecenia: {0}",
 	"processing.data.event.stdout": "Przetwarzanie zdarzenia „data” z danych wyjścia standardowego procedury (proc stdout)",
 	"processing.data.event.stderr": "Przetwarzanie zdarzenia „data” z danych standardowego wyjścia błędów procedury",
-	"resolving.close.event": "Rozpoznawanie procesu dla zdarzenia „close”"
+	"resolving.close.event": "Rozpoznawanie procesu dla zdarzenia „close”",
+	"process.timeout": "The command timed out: {0}"
 }
