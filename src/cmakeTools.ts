@@ -576,14 +576,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
                     let showCMakeLists: boolean = await showCMakeListsExperiment();
                     const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
-                    if (showCMakeLists) {
-                        telemetryProperties["showCMakeListsExperiment"] = "true";
-                        if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
-                            telemetryProperties["hasCmakeLists"] = "true";
-                        } else {
-                            showCMakeLists = false;
-                            telemetryProperties["hasCMakeLists"] = "false";
-                        }
+
+                    telemetryProperties["showCMakeListsExperiment"] = (showCMakeLists).toString();
+                    if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
+                        telemetryProperties["hasCmakeLists"] = "true";
+                    } else {
+                        showCMakeLists = false;
+                        telemetryProperties["hasCMakeLists"] = "false";
                     }
 
                     telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
