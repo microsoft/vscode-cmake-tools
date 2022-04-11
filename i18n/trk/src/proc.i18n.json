@@ -7,5 +7,6 @@
 	"executing.command": "{0} komutu yürütülüyor",
 	"processing.data.event.stdout": "proc stdout konumundaki \"veri\" olayı işleniyor",
 	"processing.data.event.stderr": "proc stderr konumundaki \"veri\" olayı işleniyor",
-	"resolving.close.event": "\"Kapatma\" olayında işlem çözülüyor"
+	"resolving.close.event": "\"Kapatma\" olayında işlem çözülüyor",
+	"process.timeout": "Komut zaman aşımına uğradı: {0}"
 }

@@ -7,5 +7,6 @@
 	"executing.command": "Выполнение команды: {0}",
 	"processing.data.event.stdout": "Обработка события \"data\" из стандартного потока вывода процесса.",
 	"processing.data.event.stderr": "Обработка события \"data\" из стандартного потока ошибок процесса.",
-	"resolving.close.event": "Разрешение процесса на событии \"close\"."
+	"resolving.close.event": "Разрешение процесса на событии \"close\".",
+	"process.timeout": "Истекло время ожидания команды: {0}"
 }

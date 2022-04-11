@@ -11,5 +11,5 @@
 	"build.all.target": "Un destino especial para compilar todos los destinos disponibles",
 	"install.all.target": "Un destino especial para instalar todos los destinos disponibles",
 	"utility.target": "Destino de la utilidad",
-	"cmakelists.save.trigger.reconfigure": "Se ha detectado una actualización de la configuración de \"cmake.sourceDirectory\"; intentando reconfigurar automáticamente..."
+	"cmakelists.save.trigger.reconfigure": "Se ha detectado una actualización de la configuración de “cmake.sourceDirectory”; intentando reconfigurar automáticamente..."
 }

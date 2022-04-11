@@ -11,5 +11,5 @@
 	"build.all.target": "用于生成所有可用目标的特殊目标",
 	"install.all.target": "用于安装所有可用目标的特殊目标",
 	"utility.target": "实用工具目标",
-	"cmakelists.save.trigger.reconfigure": "检测到 \"cmake.sourceDirectory\" 设置更新，正在尝试自动重新配置…"
+	"cmakelists.save.trigger.reconfigure": "检测到 \\\"cmake.sourceDirectory\\\" 设置更新，正在尝试自动重新配置…"
 }

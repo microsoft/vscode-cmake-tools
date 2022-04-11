@@ -7,5 +7,6 @@
 	"executing.command": "명령 실행 중: {0}",
 	"processing.data.event.stdout": "proc stdout에서 \"data\" 이벤트를 처리하는 중",
 	"processing.data.event.stderr": "proc stderr에서 \"data\" 이벤트를 처리하는 중",
-	"resolving.close.event": "\"close\" 이벤트에서 프로세스를 확인하는 중"
+	"resolving.close.event": "\"close\" 이벤트에서 프로세스를 확인하는 중",
+	"process.timeout": "명령 제한 시간 {0}이(가) 초과됨"
 }

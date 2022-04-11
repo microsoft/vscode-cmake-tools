@@ -7,5 +7,6 @@
 	"executing.command": "执行命令: {0}",
 	"processing.data.event.stdout": "正在处理 proc stdout 中的 \"data\" 事件",
 	"processing.data.event.stderr": "正在处理 proc stderr 中的 \"data\" 事件",
-	"resolving.close.event": "正在解析 \"close\" 事件上的进程"
+	"resolving.close.event": "正在解析 \"close\" 事件上的进程",
+	"process.timeout": "The command timed out: {0}"
 }

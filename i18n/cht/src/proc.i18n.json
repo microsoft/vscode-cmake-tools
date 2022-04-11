@@ -7,5 +7,6 @@
 	"executing.command": "正在執行命令: {0}",
 	"processing.data.event.stdout": "正在處理來自流程 stdout 的 \"data\" 事件",
 	"processing.data.event.stderr": "正在處理來自流程 stderr 的 \"data\" 事件",
-	"resolving.close.event": "正在解決 \"close\" 事件上的流程"
+	"resolving.close.event": "正在解決 \"close\" 事件上的流程",
+	"process.timeout": "命令已過時: {0}"
 }

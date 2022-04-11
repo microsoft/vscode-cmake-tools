@@ -7,5 +7,6 @@
 	"executing.command": "コマンドを実行しています: {0}",
 	"processing.data.event.stdout": "proc stdout から \"data\" イベントを処理しています",
 	"processing.data.event.stderr": "proc stderr から \"data\" イベントを処理しています",
-	"resolving.close.event": "\"close\" イベントのプロセスを解決しています"
+	"resolving.close.event": "\"close\" イベントのプロセスを解決しています",
+	"process.timeout": "The command timed out: {0}"
 }
