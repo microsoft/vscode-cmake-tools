@@ -12,7 +12,7 @@ import * as shlex from '@cmt/shlex';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as cpptools from 'vscode-cpptools';
+import * as cppTools from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 import { TargetTypeString } from './drivers/cmakeServerClient';
 
@@ -34,7 +34,7 @@ export interface DiagnosticsCpptools {
     librariesCount: number;
     targets: DiagnosticsTarget[];
     requests: string[];
-    responses: cpptools.SourceFileConfigurationItem[];
+    responses: cppTools.SourceFileConfigurationItem[];
     partialMatches: DiagnosticsPartialMatch[];
 }
 
@@ -151,10 +151,10 @@ function parseTargetArch(target: string): Architecture {
     return undefined;
 }
 
-export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], lang?: string): CompileFlagInformation {
-    const requireStandardTarget = (cptVersion < cpptools.Version.v5);
-    const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
-    const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
+export function parseCompileFlags(cptVersion: cppTools.Version, args: string[], lang?: string): CompileFlagInformation {
+    const requireStandardTarget = (cptVersion < cppTools.Version.v5);
+    const canUseGnuStd = (cptVersion >= cppTools.Version.v4);
+    const canUseCxx23 = (cptVersion >= cppTools.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
     let standard: StandardVersion;
@@ -241,12 +241,12 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
  * Determine the IntelliSenseMode based on hints from compiler path
  * and target architecture parsed from compiler flags.
  */
-export function getIntelliSenseMode(cptVersion: cpptools.Version, compilerPath: string, targetArch: Architecture) {
-    if (cptVersion >= cpptools.Version.v5 && targetArch === undefined) {
+export function getIntelliSenseMode(cptVersion: cppTools.Version, compilerPath: string, targetArch: Architecture) {
+    if (cptVersion >= cppTools.Version.v5 && targetArch === undefined) {
         // IntelliSenseMode is optional for CppTools v5+ and is determined by CppTools.
         return undefined;
     }
-    const canUseArm = (cptVersion >= cpptools.Version.v4);
+    const canUseArm = (cptVersion >= cppTools.Version.v4);
     const compilerName = path.basename(compilerPath || "").toLocaleLowerCase();
     if (compilerName === 'cl.exe') {
         const clArch = path.basename(path.dirname(compilerPath)).toLocaleLowerCase();
@@ -317,7 +317,7 @@ export function getIntelliSenseMode(cptVersion: cpptools.Version, compilerPath: 
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
  */
-export class CppConfigurationProvider implements cpptools.CustomConfigurationProvider {
+export class CppConfigurationProvider implements cppTools.CustomConfigurationProvider {
     /** Our name visible to cpptools */
     readonly name = 'CMake Tools';
     /** Our extension ID, visible to cpptools */
@@ -334,14 +334,14 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      */
     private lastUpdateSucceeded = true;
 
-    private workspaceBrowseConfiguration: cpptools.WorkspaceBrowseConfiguration = { browsePath: [] };
-    private readonly workspaceBrowseConfigurations = new Map<string, cpptools.WorkspaceBrowseConfiguration>();
+    private workspaceBrowseConfiguration: cppTools.WorkspaceBrowseConfiguration = { browsePath: [] };
+    private readonly workspaceBrowseConfigurations = new Map<string, cppTools.WorkspaceBrowseConfiguration>();
 
     /**
      * Get the SourceFileConfigurationItem from the index for the given URI
      * @param uri The configuration to get from the index
      */
-    private getConfiguration(uri: vscode.Uri): cpptools.SourceFileConfigurationItem | undefined {
+    private getConfiguration(uri: vscode.Uri): cppTools.SourceFileConfigurationItem | undefined {
         const normalizedPath = util.platformNormalizePath(uri.fsPath);
         const configurations = this.fileIndex.get(normalizedPath);
         if (this.activeTarget && configurations?.has(this.activeTarget)) {
@@ -361,7 +361,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     }
 
     private requests = new Set<string>();
-    private responses = new Map<string, cpptools.SourceFileConfigurationItem>();
+    private responses = new Map<string, cppTools.SourceFileConfigurationItem>();
 
     /**
      * Get the configurations for the given URIs. URIs for which we have no
@@ -398,7 +398,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         return true;
     }
 
-    async provideFolderBrowseConfiguration(uri: vscode.Uri): Promise<cpptools.WorkspaceBrowseConfiguration> {
+    async provideFolderBrowseConfiguration(uri: vscode.Uri): Promise<cppTools.WorkspaceBrowseConfiguration> {
         return this.workspaceBrowseConfigurations.get(util.platformNormalizePath(uri.fsPath)) ?? this.workspaceBrowseConfiguration;
     }
 
@@ -409,7 +409,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * Index of files to configurations, using the normalized path to the file
      * as the key to the <target,configuration>.
      */
-    private readonly fileIndex = new Map<string, Map<string, cpptools.SourceFileConfigurationItem>>();
+    private readonly fileIndex = new Map<string, Map<string, cppTools.SourceFileConfigurationItem>>();
 
     /**
      * If a source file configuration exists for the active target, we will prefer that one when asked.
@@ -424,7 +424,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group from the code model to create config data for
      * @param opts Index update options
      */
-    private buildConfigurationData(fileGroup: codeModelApi.CodeModelFileGroup, opts: codeModelApi.CodeModelParams, target: TargetDefaults, sysroot: string): cpptools.SourceFileConfiguration {
+    private buildConfigurationData(fileGroup: codeModelApi.CodeModelFileGroup, opts: codeModelApi.CodeModelParams, target: TargetDefaults, sysroot: string): cppTools.SourceFileConfiguration {
         // If the file didn't have a language, default to C++
         const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the
@@ -504,7 +504,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                     configuration
                 });
             } else {
-                const data = new Map<string, cpptools.SourceFileConfigurationItem>();
+                const data = new Map<string, cppTools.SourceFileConfigurationItem>();
                 data.set(target.name, {
                     uri: vscode.Uri.file(absolutePath).toString(),
                     configuration
@@ -521,19 +521,19 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     /**
      * Version of Cpptools API
      */
-    private _cpptoolsVersion: cpptools.Version = cpptools.Version.latest;
+    private _cpptoolsVersion: cppTools.Version = cppTools.Version.latest;
 
     /**
      * Gets the version of Cpptools API.
      */
-    get cpptoolsVersion(): cpptools.Version {
+    get cpptoolsVersion(): cppTools.Version {
         return this._cpptoolsVersion;
     }
     /**
      * Set the version of Cpptools API.
      * @param value of CppTools API version
      */
-    set cpptoolsVersion(value: cpptools.Version) {
+    set cpptoolsVersion(value: cppTools.Version) {
         this._cpptoolsVersion = value;
     }
 
