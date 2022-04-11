@@ -6,7 +6,7 @@
 {
 	"no.usable.generator.found": "Es wurde kein verwendbarer Generator gefunden.",
 	"cmake.configure.error": "Fehler bei der CMake-Konfiguration: {0}",
-	"unknown.cache.entry.type": "Unbekannter Cacheeintragstyp „{0}“.",
+	"unknown.cache.entry.type": "Unbekannter Cacheeintragstyp {0}.",
 	"found.no.matching.code.model": "Es wurde kein übereinstimmendes Codemodell für den aktuellen Buildtyp gefunden. Dies ist eigentlich nicht möglich.",
 	"build.all.target": "Ein spezielles Ziel zum Erstellen aller verfügbaren Ziele",
 	"install.all.target": "Ein spezielles Ziel zum Installieren aller verfügbaren Ziele",
