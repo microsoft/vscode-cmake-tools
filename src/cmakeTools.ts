@@ -39,7 +39,7 @@ import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cache-view';
-import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, expShowCMakeLists } from './extension';
+import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, showCMakeListsExperiment } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -574,11 +574,16 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     const changeSourceDirectory = localize('edit.setting', "Locate");
                     const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
 
-                    let showCMakeLists: boolean = await expShowCMakeLists();
+                    let showCMakeLists: boolean = await showCMakeListsExperiment();
                     const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
                     if (showCMakeLists) {
-                        showCMakeLists = existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0;
-                        telemetryProperties["ignoreExperiment"] = (!showCMakeLists).toString();
+                        telemetryProperties["showCMakeListsExperiment"] = "true";
+                        if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
+                            telemetryProperties["hasCmakeLists"] = "true";
+                        } else {
+                            showCMakeLists = false;
+                            telemetryProperties["hasCMakeLists"] = "false";
+                        }
                     }
 
                     telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
