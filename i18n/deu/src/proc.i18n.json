@@ -7,5 +7,6 @@
 	"executing.command": "Befehl wird ausgeführt: {0}",
 	"processing.data.event.stdout": "Das Ereignis \"data\" aus \"proc stdout\" wird verarbeitet.",
 	"processing.data.event.stderr": "Das Ereignis \"data\" aus \"proc stderr\" wird verarbeitet.",
-	"resolving.close.event": "Der Prozess wird beim Ereignis \"close\" aufgelöst."
+	"resolving.close.event": "Der Prozess wird beim Ereignis \"close\" aufgelöst.",
+	"process.timeout": "Timeout des Befehls: {0}"
 }
