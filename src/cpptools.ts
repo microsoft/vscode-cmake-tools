@@ -489,11 +489,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group
      * @param options Index update options
      */
-    private updateFileGroup(sourceDir: string,
-        fileGroup: codeModelApi.CodeModelFileGroup,
-        options: codeModelApi.CodeModelParams,
-        target: TargetDefaults,
-        sysroot: string) {
+    private updateFileGroup(sourceDir: string, fileGroup: codeModelApi.CodeModelFileGroup, options: codeModelApi.CodeModelParams, target: TargetDefaults, sysroot: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
