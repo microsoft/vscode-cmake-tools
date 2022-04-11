@@ -948,7 +948,7 @@ export class PresetsController {
             return undefined;
         }
         let schemaFile = 'schemas/CMakePresets-schema.json';
-        if (presetsFile.version === 3) {
+        if (presetsFile.version >= 3) {
             schemaFile = 'schemas/CMakePresets-v3-schema.json';
         }
         const validator = await loadSchema(schemaFile);
