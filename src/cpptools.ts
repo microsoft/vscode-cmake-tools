@@ -517,21 +517,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     /**
      * Version of Cpptools API
      */
-    private _cpptoolsVersion: cpptools.Version = cpptools.Version.latest;
-
-    /**
-     * Gets the version of Cpptools API.
-     */
-    get cpptoolsVersion(): cpptools.Version {
-        return this._cpptoolsVersion;
-    }
-    /**
-     * Set the version of Cpptools API.
-     * @param value of CppTools API version
-     */
-    set cpptoolsVersion(value: cpptools.Version) {
-        this._cpptoolsVersion = value;
-    }
+    public cpptoolsVersion: cpptools.Version = cpptools.Version.latest;
 
     private targets: DiagnosticsTarget[] = [];
 
