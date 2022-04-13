@@ -12,6 +12,7 @@ Bug Fixes:
 - Update terminal's environment variables when the kit is changed. [#2364](https://github.com/microsoft/vscode-cmake-tools/issues/2364)
 - Add timeouts for compiler scanning. [#1289](https://github.com/microsoft/vscode-cmake-tools/issues/1289)
 - Fix schema validation for presets version 4. [#2490](https://github.com/microsoft/vscode-cmake-tools/issues/2490)
+- Fix preferredGenerator "Watcom WMake" not working. [#2500](https://github.com/microsoft/vscode-cmake-tools/issues/2500)
 
 ## 1.10.5
 Bug Fixes:
