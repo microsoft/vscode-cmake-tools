@@ -809,7 +809,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
                     return gen;
                 }
-                if (this.cmakeGenerators.indexOf(gen.name)) {
+                if (this.cmakeGenerators.indexOf(gen.name) >= 0) {
                     return gen;
                 }
                 continue;
