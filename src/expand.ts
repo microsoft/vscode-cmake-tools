@@ -169,7 +169,14 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re3.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[varname]) || '';
+        const repl: string = fixPaths(env[varname]) || '';
+        // Avoid replacing an env variable by itself, e.g. PATH:env{PATH}.
+        const env_re4 = RegExp(`\\$env\\{(${varValueRegexp})\\}`, "g");
+        mat = env_re4.exec(repl);
+        const varnameRepl = mat ? mat[1] : undefined;
+        if (varnameRepl && varnameRepl === varname) {
+            break;
+        }
         subs.set(full, repl);
     }
 
