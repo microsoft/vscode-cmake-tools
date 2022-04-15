@@ -22,7 +22,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('cmakefileapi-parser');
 
 /**
- * Attempt to read from a file path. Log a message and throw if it's not readable.
+ * Attempt to read from a file path. Log a message if it's not readable.
  */
 async function tryReadFile(file: string): Promise<string | undefined> {
     const fileInfo = await fs.stat(file);
