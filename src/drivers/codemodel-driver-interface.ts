@@ -60,7 +60,7 @@ export interface CodeModelFileGroup {
     }[];
 
     /** Compiler flags */
-    compileFlags?: string;
+    compileCommandFragments?: string[];
 
     /** Defines */
     defines?: string[];

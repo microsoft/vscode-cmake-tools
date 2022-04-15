@@ -182,14 +182,14 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
 function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject,
     root_paths: index_api.CodeModelKind.PathInfo): CodeModelFileGroup[] {
     const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
-        const compileFlags = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
+        const compileCommandFragments = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment) : [];
 
         return {
             isGenerated: false,
             sources: [],
             language: group.language,
             includePath: group.includes ? group.includes : [],
-            compileFlags,
+            compileCommandFragments,
             defines: group.defines ? group.defines.map(define => define.define) : []
         };
     });

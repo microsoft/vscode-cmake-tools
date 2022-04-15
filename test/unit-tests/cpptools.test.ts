@@ -181,7 +181,7 @@ suite('CppTools tests', () => {
                             fileGroups: [{
                                 sources: [sourceFile],
                                 isGenerated: false,
-                                compileFlags: '-DFLAG1',
+                                compileCommandFragments: ['-DFLAG1'],
                                 language: 'CXX'
                             }]
                         },
@@ -191,7 +191,7 @@ suite('CppTools tests', () => {
                             fileGroups: [{
                                 sources: [sourceFile],
                                 isGenerated: false,
-                                compileFlags: '-DFLAG2',
+                                compileCommandFragments: ['-DFLAG2'],
                                 language: 'CXX'
                             }]
                         }
@@ -220,7 +220,7 @@ suite('CppTools tests', () => {
                             fileGroups: [{
                                 sources: [sourceFile2],
                                 isGenerated: false,
-                                compileFlags: '-DFLAG3',
+                                compileCommandFragments: ['-DFLAG3'],
                                 language: 'CXX'
                             }]
                         }]

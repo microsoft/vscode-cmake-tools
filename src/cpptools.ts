@@ -59,7 +59,7 @@ class MissingCompilerException extends Error {}
 interface TargetDefaults {
     name: string;
     includePath: string[];
-    compileFlags: string[];
+    compileCommandFragments: string[];
     defines: string[];
 }
 
@@ -446,7 +446,14 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
+        const compileCommandFragments = this.cpptoolsVersion >= cpptools.Version.v6 ? fileGroup.compileCommandFragments : target.compileCommandFragments;
+        const getAsFlags = (fragments?: string[]) => {
+            if (!fragments) {
+                return [];
+            }
+            return [...util.flatMap(fragments, fragment => shlex.split(fragment))];
+        };
+        const flags = this.cpptoolsVersion < cpptools.Version.v6 ? getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
         const { standard, extraDefinitions, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang);
         const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
         const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
@@ -467,7 +474,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             browsePath: newBrowsePath,
             standard,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: flags || undefined
+            compilerFragments: compileCommandFragments || undefined,
+            compilerArgs: compileCommandFragments ? undefined : flags || undefined
         };
 
         this.workspaceBrowseConfigurations.set(util.platformNormalizePath(opts.folder), this.workspaceBrowseConfiguration);
@@ -478,7 +486,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             includePath: normalizedIncludePath,
             intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch),
             compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: flags || undefined
+            compilerFragments: compileCommandFragments || undefined,
+            compilerArgs: compileCommandFragments ? undefined : flags || undefined
         };
     }
 
@@ -557,7 +566,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
                         const grps = target.fileGroups || [];
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-                        const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
+                        const compileCommandFragments = [...util.flatMap(grps, grp => grp.compileCommandFragments || [])];
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
                         const sysroot = target.sysroot ? shlex.quote(target.sysroot) : '';
                         this.targets.push({ name: target.name, type: target.type });
@@ -569,7 +578,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                                     opts,
                                     {
                                         name: target.name,
-                                        compileFlags,
+                                        compileCommandFragments,
                                         includePath,
                                         defines
                                     },

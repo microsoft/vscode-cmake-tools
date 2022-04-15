@@ -74,9 +74,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             }
         });
 
-        async function generateCodeModelForConfiguredDriver(args: string[] = [],
-            workspaceFolder: string = defaultWorkspaceFolder):
-            Promise<null | codemodel_api.CodeModelContent> {
+        async function generateCodeModelForConfiguredDriver(args: string[] = [], workspaceFolder: string = defaultWorkspaceFolder): Promise<null | codemodel_api.CodeModelContent> {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
@@ -181,7 +179,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // compile flags for file groups
             if (process.platform === 'win32') {
-                expect(compile_information!.compileFlags?.trim()).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
+                expect(compile_information!.compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
             }
         }).timeout(90000);
 
@@ -217,7 +215,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // compile flags for file groups
             if (process.platform === 'win32') {
-                expect(target!.fileGroups![0].compileFlags?.trim()).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
+                expect(target!.fileGroups![0].compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
             }
         }).timeout(90000);
 
