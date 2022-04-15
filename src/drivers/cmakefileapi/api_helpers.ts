@@ -14,11 +14,25 @@ import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import rollbar from '@cmt/rollbar';
+import { removeEmpty } from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cmakefileapi-parser');
+
+/**
+ * Attempt to read from a file path. Log a message and throw if it's not readable.
+ */
+async function tryReadFile(file: string): Promise<string | undefined> {
+    const fileInfo = await fs.stat(file);
+    if (fileInfo.isFile()) {
+        return fs.readFile(file);
+    } else {
+        log.debug(localize('path.not.a.file', 'Unable to read {0} because it is not a file. Code model information is incomplete or corrupt. You may need to delete the cache and reconfigure.', `"${file}"`));
+        return undefined;
+    }
+}
 
 export async function createQueryFileForApi(api_path: string): Promise<string> {
     const query_path = path.join(api_path, 'query', 'client-vscode');
@@ -48,15 +62,19 @@ export async function loadIndexFile(reply_path: string): Promise<index_api.Index
         throw Error('No index file found.');
     }
     const index_file_path = path.join(reply_path, index_files[index_files.length - 1]);
-    const file_content = await fs.readFile(index_file_path);
-
+    const file_content = await tryReadFile(index_file_path);
+    if (!file_content) {
+        return null;
+    }
     return JSON.parse(file_content.toString()) as index_api.Index.IndexFile;
 }
 
 export async function loadCacheContent(filename: string): Promise<Map<string, api.CacheEntry>> {
-    const file_content = await fs.readFile(filename);
+    const file_content = await tryReadFile(filename);
+    if (!file_content) {
+        return new Map();
+    }
     const cache_from_cmake = JSON.parse(file_content.toString()) as index_api.Cache.CacheContent;
-
     const expected_version = { major: 2, minor: 0 };
     const detected_version = cache_from_cmake.version;
     if (detected_version.major !== expected_version.major || detected_version.minor < expected_version.minor) {
@@ -100,8 +118,11 @@ function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.C
     }, new Map<string, api.CacheEntry>());
 }
 
-export async function loadCodeModelContent(filename: string): Promise<index_api.CodeModelKind.Content> {
-    const file_content = await fs.readFile(filename);
+export async function loadCodeModelContent(filename: string): Promise<index_api.CodeModelKind.Content | null> {
+    const file_content = await tryReadFile(filename);
+    if (!file_content) {
+        return null;
+    }
     const codemodel = JSON.parse(file_content.toString()) as index_api.CodeModelKind.Content;
     const expected_version = { major: 2, minor: 0 };
     const detected_version = codemodel.version;
@@ -119,13 +140,19 @@ export async function loadCodeModelContent(filename: string): Promise<index_api.
     return codemodel;
 }
 
-export async function loadTargetObject(filename: string): Promise<index_api.CodeModelKind.TargetObject> {
-    const file_content = await fs.readFile(filename);
+export async function loadTargetObject(filename: string): Promise<index_api.CodeModelKind.TargetObject | null> {
+    const file_content = await tryReadFile(filename);
+    if (!file_content) {
+        return null;
+    }
     return JSON.parse(file_content.toString()) as index_api.CodeModelKind.TargetObject;
 }
 
-async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_path: string): Promise<api.Target> {
+async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_path: string): Promise<api.Target | null> {
     const targetObject = await loadTargetObject(file_path);
+    if (!targetObject) {
+        return null;
+    }
 
     let executable_path;
     if (targetObject.artifacts) {
@@ -143,10 +170,7 @@ async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_
     } as api.RichTarget;
 }
 
-export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string,
-    builddir: string,
-    configuration: index_api.CodeModelKind.Configuration):
-    Promise<{ name: string; targets: api.Target[] }> {
+export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string, builddir: string, configuration: index_api.CodeModelKind.Configuration): Promise<{ name: string; targets: api.Target[] }> {
     const metaTargets = [];
     if (configuration.directories[0].hasInstallRule) {
         metaTargets.push({
@@ -156,14 +180,19 @@ export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string
             targetType: 'META'
         });
     }
-    const targetsList = Promise.all(configuration.targets.map(
-        t => convertTargetObjectFileToExtensionTarget(builddir, path.join(reply_path, t.jsonFile))));
+    const targetsList = await Promise.all(configuration.targets.map(t => convertTargetObjectFileToExtensionTarget(builddir, path.join(reply_path, t.jsonFile))));
 
-    return { name: configuration.name, targets: [...metaTargets, ...await targetsList] };
+    return {
+        name: configuration.name,
+        targets: [...metaTargets, ...removeEmpty(targetsList)]
+    };
 }
 
-export async function loadConfigurationTargetMap(reply_path: string, codeModel_filename: string) {
+export async function loadConfigurationTargetMap(reply_path: string, codeModel_filename: string): Promise<Map<string, api.Target[]>> {
     const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
+    if (!codeModelContent) {
+        return new Map();
+    }
     const build_dir = codeModelContent.paths.build;
     const targets = await Promise.all(codeModelContent.configurations.map(
         config_element => loadAllTargetsForBuildTypeConfiguration(reply_path, build_dir, config_element)));
@@ -179,8 +208,7 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
     return path.normalize(absolute_path);
 }
 
-function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject,
-    root_paths: index_api.CodeModelKind.PathInfo): CodeModelFileGroup[] {
+function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject, root_paths: index_api.CodeModelKind.PathInfo): CodeModelFileGroup[] {
     const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
         const compileFlags = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
 
@@ -212,8 +240,11 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
     return fileGroup;
 }
 
-async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
+async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo, jsonfile: string): Promise<CodeModelTarget | null> {
     const targetObject = await loadTargetObject(jsonfile);
+    if (!targetObject) {
+        return null;
+    }
 
     const fileGroups = convertToExtCodeModelFileGroup(targetObject, root_paths);
 
@@ -222,7 +253,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
     // each compileGroup has its separate sysroot.
     let sysroot;
     if (targetObject.compileGroups) {
-        const all_sysroots = targetObject.compileGroups.map(x => !!x.sysroot ? x.sysroot.path : undefined).filter(x => x !== undefined);
+        const all_sysroots = removeEmpty(targetObject.compileGroups.map(x => !!x.sysroot ? x.sysroot.path : undefined));
         sysroot = all_sysroots.length !== 0 ? all_sysroots[0] : undefined;
     }
 
@@ -239,10 +270,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
     } as CodeModelTarget;
 }
 
-export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,
-    reply_path: string,
-    projectIndex: number,
-    configuration: index_api.CodeModelKind.Configuration) {
+export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo, reply_path: string, projectIndex: number, configuration: index_api.CodeModelKind.Configuration) {
     const project = configuration.projects[projectIndex];
     const project_paths = {
         build: project.directoryIndexes
@@ -257,23 +285,26 @@ export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,
     return { name: project.name, targets, sourceDirectory: project_paths.source } as CodeModelProject;
 }
 
-export async function loadConfig(paths: index_api.CodeModelKind.PathInfo,
-    reply_path: string,
-    configuration: index_api.CodeModelKind.Configuration) {
-    const projects = await Promise.all(
-        (configuration.projects).map((_, index) => loadProject(paths, reply_path, index, configuration)));
+export async function loadConfig(paths: index_api.CodeModelKind.PathInfo, reply_path: string, configuration: index_api.CodeModelKind.Configuration) {
+    const projects = await Promise.all((configuration.projects).map((_, index) => loadProject(paths, reply_path, index, configuration)));
     return { name: configuration.name, projects } as CodeModelConfiguration;
 }
-export async function loadExtCodeModelContent(reply_path: string, codeModel_filename: string) {
-    const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
 
+export async function loadExtCodeModelContent(reply_path: string, codeModel_filename: string): Promise<CodeModelContent | null> {
+    const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
+    if (!codeModelContent) {
+        return null;
+    }
     const configurations = await Promise.all(codeModelContent.configurations.map(config_element => loadConfig(codeModelContent.paths, reply_path, config_element)));
 
     return { configurations } as CodeModelContent;
 }
 
 export async function loadToolchains(filename: string): Promise<Map<string, CodeModelToolchain>> {
-    const file_content = await fs.readFile(filename);
+    const file_content = await tryReadFile(filename);
+    if (!file_content) {
+        return new Map();
+    }
     const toolchains = JSON.parse(file_content.toString()) as index_api.Toolchains.Content;
 
     const expected_version = { major: 1, minor: 0 };

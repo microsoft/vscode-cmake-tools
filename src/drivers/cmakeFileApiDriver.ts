@@ -321,7 +321,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
                         'This version of CMake does not support the "toolchains" object kind. Compiler paths will be determined by reading CMakeCache.txt.'));
                 }
             } else {
-                this._codeModelContent.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
+                if (this._codeModelContent) {
+                    this._codeModelContent.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
+                }
             }
 
             this._codeModelChanged.fire(this._codeModelContent);

@@ -183,6 +183,10 @@ export function objectPairs<V>(obj: { [key: string]: V }): [string, V][] {
     return Object.getOwnPropertyNames(obj).map(key => ([key, obj[key]] as [string, V]));
 }
 
+export function removeEmpty<T>(x: (T | null | undefined)[]): T[] {
+    return x.filter(e => e) as T[];
+}
+
 /**
  * Map an iterable by some projection function
  * @param iter An iterable to map
