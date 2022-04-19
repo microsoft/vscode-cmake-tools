@@ -164,7 +164,7 @@ function searchForCompilerPathInCache(cache: CMakeCache): string | null {
 
 export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string, modeOverride?: MIModes, debuggerPathOverride?: string): Promise<VSCodeDebugConfiguration | null> {
     const entry = cache.get('CMAKE_LINKER');
-    if (entry !== null) {
+    if (entry !== null && !modeOverride) {
         const linker = entry.value as string;
         const is_msvc_linker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
         if (is_msvc_linker) {
