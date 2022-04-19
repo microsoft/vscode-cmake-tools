@@ -198,14 +198,14 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
     let mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
     if (modeOverride !== MIModes.gdb) {
-        if (mi_debugger_path.search(new RegExp('lldb-mi')) !== -1) {
+        const lldbMIReplaced = mi_debugger_path.search(new RegExp('lldb-mi')) !== -1;
+        if (lldbMIReplaced) {
             // 1a. lldb-mi in the compiler path
             if (await checkDebugger(mi_debugger_path)) {
                 return createLLDBDebugConfiguration(mi_debugger_path, target);
             }
-            modeOverride = MIModes.lldb;
         }
-        if (modeOverride === MIModes.lldb) {
+        if (modeOverride === MIModes.lldb || lldbMIReplaced) {
             // 1b. lldb-mi installed by CppTools
             const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
             const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
