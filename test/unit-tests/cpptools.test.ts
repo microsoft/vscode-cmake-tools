@@ -19,10 +19,21 @@ suite('CppTools tests', () => {
         const cpptoolsVersion3 = Version.v3;
         const cpptoolsVersion4 = Version.v4;
         const cpptoolsVersion5 = Version.v5;
+        const cpptoolsVersion6 = Version.v6;
+
+        // Verify CppTools API version 6
+        let info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
+        expect(info.standard).to.eql('c++23');
+        info = parseCompileFlags(cpptoolsVersion6, ['-std=c++2b']);
+        expect(info.standard).to.eql('c++23');
+        info = parseCompileFlags(cpptoolsVersion6, ['-std=gnu++23']);
+        expect(info.standard).to.eql('gnu++23');
 
         // Verify CppTools API version 5
-        let info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
+        info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
         expect(info.targetArch).to.eql(undefined);
+        info = parseCompileFlags(cpptoolsVersion5, ['-std=c++23']);
+        expect(info.standard).to.eql('c++20');
         info = parseCompileFlags(cpptoolsVersion5, ['-std=gnu++14']);
         expect(info.standard).to.eql('gnu++14');
         info = parseCompileFlags(cpptoolsVersion5, []);

@@ -32,6 +32,7 @@ export interface CppDebugConfiguration {
     symbolSearchPath?: string;
     additionalSOLibSearchPath?: string;
     externalConsole?: boolean;
+    console?: ConsoleTypes;
     logging?: DebuggerLogging;
     visualizerFile?: string;
     args?: string[];
@@ -60,6 +61,18 @@ export interface SetupCommand {
     text?: string;
     description?: string;
     ignoreFailures?: boolean;
+}
+
+export enum MIModes {
+    lldb = 'lldb',
+    gdb = 'gdb',
+}
+
+export enum ConsoleTypes {
+    internalConsole = 'internalConsole',
+    integratedTerminal = 'integratedTerminal',
+    externalTerminal = 'externalTerminal',
+    newExternalWindow = 'newExternalWindow'
 }
 
 async function createGDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<VSCodeDebugConfiguration> {
@@ -149,10 +162,6 @@ function searchForCompilerPathInCache(cache: CMakeCache): string | null {
     return null;
 }
 
-export enum MIModes {
-    lldb = 'lldb',
-    gdb = 'gdb',
-}
 export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string,
     modeOverride?: MIModes, debuggerPathOverride?: string):
     Promise<VSCodeDebugConfiguration | null> {

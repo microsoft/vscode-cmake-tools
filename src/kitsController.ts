@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import CMakeTools from '@cmt/cmake-tools';
+import CMakeTools from '@cmt/cmakeTools';
 import {
     Kit,
     descriptionForKit,

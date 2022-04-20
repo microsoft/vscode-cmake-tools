@@ -5,7 +5,7 @@ import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
 import * as api from './api';
-import { CMakeDriver } from '@cmt/drivers/driver';
+import { CMakeDriver } from '@cmt/drivers/cmakeDriver';
 import * as logging from './logging';
 import { fs } from './pr';
 import { OutputConsumer } from './proc';

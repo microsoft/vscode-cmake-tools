@@ -1,4 +1,4 @@
-import { CMakeTools } from '@cmt/cmake-tools';
+import { CMakeTools } from '@cmt/cmakeTools';
 import { Kit, scanForKits, kitsForWorkspaceDirectory } from '@cmt/kit';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';

@@ -1,5 +1,5 @@
 import * as api from '@cmt/api';
-import { ConfigureTrigger } from '@cmt/cmake-tools';
+import { ConfigureTrigger } from '@cmt/cmakeTools';
 import { ExecutableTarget } from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
@@ -14,7 +14,7 @@ import {
     loadToolchains
 } from '@cmt/drivers/cmakefileapi/api_helpers';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/driver';
+import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -26,7 +26,7 @@ import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 
-import { NoGeneratorError } from './cms-driver';
+import { NoGeneratorError } from './cmakeServerDriver';
 
 import * as nls from 'vscode-nls';
 

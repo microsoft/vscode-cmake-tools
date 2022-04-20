@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as vscode from 'vscode';
-import { CMakeDriver } from './drivers/driver';
+import { CMakeDriver } from './drivers/cmakeDriver';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment } from './environmentVariables';

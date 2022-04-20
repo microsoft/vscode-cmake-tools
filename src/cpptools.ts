@@ -14,7 +14,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
-import { TargetTypeString } from './drivers/cms-client';
+import { TargetTypeString } from './drivers/cmakeServerClient';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -22,7 +22,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | "gnu++23" | undefined;
 
 export interface DiagnosticsCpptools {
     isReady: boolean;
@@ -63,9 +63,15 @@ interface TargetDefaults {
     defines: string[];
 }
 
-function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion {
+function parseCppStandard(std: string, can_use_gnu: boolean, can_use_cxx23: boolean): StandardVersion {
     const is_gnu = can_use_gnu && std.startsWith('gnu');
-    if (std.endsWith('++2a') || std.endsWith('++2b') || std.endsWith('++20') || std.endsWith('++latest')) {
+    if (std.endsWith('++23') || std.endsWith('++2b') || std.endsWith('++latest')) {
+        if (can_use_cxx23) {
+            return is_gnu ? 'gnu++23' : 'c++23';
+        } else {
+            return is_gnu ? 'gnu++20' : 'c++20';
+        }
+    } else if (std.endsWith('++20') || std.endsWith('++2a')) {
         return is_gnu ? 'gnu++20' : 'c++20';
     } else if (std.endsWith('++17') || std.endsWith('++1z')) {
         return is_gnu ? 'gnu++17' : 'c++17';
@@ -148,6 +154,7 @@ function parseTargetArch(target: string): Architecture {
 export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?: string): CompileFlagInformation {
     const require_standard_target = (cptVersion < cpt.Version.v5);
     const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
+    const can_use_cxx23 = (cptVersion >= cpt.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
     let standard: StandardVersion;
@@ -196,7 +203,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
         } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
             const std = value.substring(5);
             if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
-                const s = parseCppStandard(std, can_use_gnu_std);
+                const s = parseCppStandard(std, can_use_gnu_std, can_use_cxx23);
                 if (!s) {
                     log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
                 } else {
@@ -210,7 +217,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
                     standard = s;
                 }
             } else if (lang === undefined) {
-                let s = parseCppStandard(std, can_use_gnu_std);
+                let s = parseCppStandard(std, can_use_gnu_std, can_use_cxx23);
                 if (!s) {
                     s = parseCStandard(std, can_use_gnu_std);
                 }

@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 
 import * as api from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/driver';
+import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -28,7 +28,7 @@ const log = logging.createLogger('legacy-driver');
 /**
  * The legacy driver.
  */
-export class LegacyCMakeDriver extends CMakeDriver {
+export class CMakeLegacyDriver extends CMakeDriver {
 
     get isCacheConfigSupported(): boolean {
         return false;
@@ -147,9 +147,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
         testPreset: TestPreset | null,
         workspaceFolder: string | null,
         preconditionHandler: CMakePreconditionProblemSolver,
-        preferredGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
+        preferredGenerators: CMakeGenerator[]): Promise<CMakeLegacyDriver> {
         log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
-        return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler),
+        return this.createDerived(new CMakeLegacyDriver(cmake, config, workspaceFolder, preconditionHandler),
             useCMakePresets,
             kit,
             configurePreset,
