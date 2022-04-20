@@ -258,7 +258,7 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     private showCMakeLists: Promise<boolean>;
-    public expShowCMakeLists(): Promise<boolean> {
+    public showCMakeListsExperiment(): Promise<boolean> {
         return this.showCMakeLists;
     }
 
@@ -1870,8 +1870,8 @@ export function updateDefaultTargetsInTaskProvider(defaultTargets?: string[]) {
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
 // for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace
 // in a quickPick.)
-export function expShowCMakeLists(): Promise<boolean> {
-    return extensionManager?.expShowCMakeLists() || Promise.resolve(false);
+export function showCMakeListsExperiment(): Promise<boolean> {
+    return extensionManager?.showCMakeListsExperiment() || Promise.resolve(false);
 }
 
 // this method is called when your extension is deactivated.

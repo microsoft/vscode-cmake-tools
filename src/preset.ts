@@ -559,10 +559,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(folder: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preset: ConfigurePreset | BuildPreset | TestPreset) {
+async function getExpansionOptions(folder: string, workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset) {
     const generator = 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined);
@@ -664,12 +661,7 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
     }
 }
 
-export async function expandConfigurePreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
         referencedConfigurePresets.set(folder, new Set());
@@ -842,11 +834,7 @@ function parseToolset(toolset: string): Toolset {
     return result;
 }
 
-async function expandConfigurePresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
         return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
@@ -863,11 +851,7 @@ async function expandConfigurePresetImpl(folder: string,
     return null;
 }
 
-async function expandConfigurePresetHelper(folder: string,
-    preset: ConfigurePreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    allowUserPreset: boolean = false) {
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1162,13 +1146,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
     return null;
 }
 
-export async function expandBuildPreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<BuildPreset | null> {
+export async function expandBuildPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     const refs = referencedBuildPresets.get(folder);
     if (!refs) {
         referencedBuildPresets.set(folder, new Set());
@@ -1221,13 +1199,7 @@ export async function expandBuildPreset(folder: string,
     return expandedPreset;
 }
 
-async function expandBuildPresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<BuildPreset | null> {
+async function expandBuildPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     let preset = getPresetByName(buildPresets(folder), name);
     if (preset) {
         return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
@@ -1255,12 +1227,7 @@ async function expandBuildPresetImpl(folder: string,
     return null;
 }
 
-async function expandBuildPresetHelper(folder: string,
-    preset: BuildPreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false) {
+async function expandBuildPresetHelper(folder: string, preset: BuildPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1329,13 +1296,7 @@ async function expandBuildPresetHelper(folder: string,
 // Map<fsPath, Set<referencedPresets>>
 const referencedTestPresets: Map<string, Set<string>> = new Map();
 
-export async function expandTestPreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<TestPreset | null> {
+export async function expandTestPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<TestPreset | null> {
     const refs = referencedTestPresets.get(folder);
     if (!refs) {
         referencedTestPresets.set(folder, new Set());
@@ -1421,13 +1382,7 @@ export async function expandTestPreset(folder: string,
     return expandedPreset;
 }
 
-async function expandTestPresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<TestPreset | null> {
+async function expandTestPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<TestPreset | null> {
     let preset = getPresetByName(testPresets(folder), name);
     if (preset) {
         return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
@@ -1455,12 +1410,7 @@ async function expandTestPresetImpl(folder: string,
     return null;
 }
 
-async function expandTestPresetHelper(folder: string,
-    preset: TestPreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false) {
+async function expandTestPresetHelper(folder: string, preset: TestPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName: string | undefined, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }

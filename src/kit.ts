@@ -157,7 +157,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     if (pr) {
         pr.report({ message: localize('getting.compiler.version', 'Getting {0} version for {1}', vendor, binPath) });
     }
-    const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
+    const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
     if (exec.retc !== 0) {
         log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns {1}): {2}', vendor, exec.retc, binPath));
         return null;
@@ -345,7 +345,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
                 // the MinGW path in case we want to use it later.
                 const ENV_PATH = `${binParentPath}`;
                 // Check for working mingw32-make
-                const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH } }).result;
+                const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH }, timeout: 30000 }).result;
                 if (execMake.retc !== 0) {
                     log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ("-v" returns non-zero): {0}', bin));
                 } else {
