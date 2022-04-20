@@ -26,9 +26,25 @@ enum CommandType {
     config = "configure"
 }
 
-const localizeCommandType = (cmd: CommandType): string => (cmd === CommandType.build) ? localize("build", "build") :
-    (cmd === CommandType.install) ? localize("install", "install") : (cmd === CommandType.test) ? localize("test", "test") :
-        (cmd === CommandType.config) ? localize("configure", "configure") : "";
+const localizeCommandType = (cmd: CommandType): string => {
+    switch (cmd) {
+        case CommandType.build: {
+            return localize("build", "build");
+        }
+        case CommandType.install: {
+            return localize("install", "install");
+        }
+        case CommandType.test: {
+            return localize("test", "test");
+        }
+        case CommandType.config: {
+            return localize("configure", "configure");
+        }
+        default: {
+            return "";
+        }
+    };
+};
 export class CMakeTask extends vscode.Task {
     detail?: string;
 }
