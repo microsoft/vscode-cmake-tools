@@ -28,7 +28,7 @@ import { ConfigureArguments, VariantOption } from '@cmt/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
-import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import * as codemodel from '@cmt/drivers/codeModelApi';
 import { DiagnosticsConfiguration } from '@cmt/folders';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 

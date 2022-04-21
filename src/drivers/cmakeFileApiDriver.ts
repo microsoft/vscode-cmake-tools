@@ -13,7 +13,7 @@ import {
     loadIndexFile,
     loadToolchains
 } from '@cmt/drivers/cmakefileapi/api_helpers';
-import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import * as codemodel from '@cmt/drivers/codeModelApi';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';

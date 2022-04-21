@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import * as codemodel_api from '@cmt/drivers/codeModelApi';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath, thisExtension } from '@cmt/util';
 

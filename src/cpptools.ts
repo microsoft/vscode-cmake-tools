@@ -5,7 +5,7 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import * as codeModelApi from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModelApi from '@cmt/drivers/codeModelApi';
 import { createLogger } from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';

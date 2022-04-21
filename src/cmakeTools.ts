@@ -16,7 +16,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
-import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import * as codemodel_api from '@cmt/drivers/codeModelApi';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
 import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 import { CTestDriver, BasicTestResults } from './ctest';

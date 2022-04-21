@@ -8,7 +8,7 @@ import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cmakeServerClient';
-import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import * as codemodel from '@cmt/drivers/codeModelApi';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';

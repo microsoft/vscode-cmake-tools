@@ -18,7 +18,7 @@ import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
-import { CodeModelContent } from './codemodel-driver-interface';
+import { CodeModelContent } from './codeModelApi';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

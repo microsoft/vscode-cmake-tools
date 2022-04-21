@@ -3,7 +3,7 @@ import { parseCompileFlags, getIntelliSenseMode, CppConfigurationProvider } from
 import { expect } from '@test/util';
 import { CMakeCache } from '@cmt/cache';
 import * as path from 'path';
-import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import * as codemodel_api from '@cmt/drivers/codeModelApi';
 import * as vscode from 'vscode';
 import { Version } from 'vscode-cpptools';
 import * as util from '@cmt/util';
