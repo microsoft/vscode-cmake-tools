@@ -170,32 +170,32 @@ export function getCodePageTable(): CodePageTable {
 /**
  * A promise for idempotent codepage aquisition. @see getWindowsCodepage
  */
-let _CODEPAGE: Promise<string> | undefined;
+let codePage: Promise<string> | undefined;
 
 /**
  * Return the currently active Windows codepage (done by calling chcp in a subprocess');
  */
 export function getWindowsCodepage() {
     // Check if we have been called before
-    if (_CODEPAGE === undefined) {
+    if (codePage === undefined) {
         // If not, set the promise
-        _CODEPAGE = _getWindowsCodePage();
+        codePage = getWindowsActiveCodePage();
     }
     // Return that promise
-    return _CODEPAGE;
+    return codePage;
 }
 
 /**
  * Do the actual call to `chcp` to get the currently active codepage
  */
-async function _getWindowsCodePage(): Promise<string> {
+async function getWindowsActiveCodePage(): Promise<string> {
     const proc = await import('@cmt/proc');
-    const chcp_res = await proc.execute('chcp', []).result;
-    if (chcp_res.retc !== 0) {
-        log.error(localize('failed.to.execute', 'Failed to execute {0}', "chcp"), chcp_res.stderr);
+    const chcpResult = await proc.execute('chcp', []).result;
+    if (chcpResult.retc !== 0) {
+        log.error(localize('failed.to.execute', 'Failed to execute {0}', "chcp"), chcpResult.stderr);
         return 'utf-8';
     }
-    const numStr = (chcp_res.stdout ?? '').replace(/[^0-9]/ig, '');
-    const cpNum = parseInt(numStr);
-    return getCodePageTable()[cpNum] || 'utf-8';
+    const numberString = (chcpResult.stdout ?? '').replace(/[^0-9]/ig, '');
+    const codePageNumber = parseInt(numberString);
+    return getCodePageTable()[codePageNumber] || 'utf-8';
 }
