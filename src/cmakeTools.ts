@@ -2,7 +2,7 @@
  * Root of the extension
  */
 import { CMakeCache } from '@cmt/cache';
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmake-executable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { CompilationDatabase } from '@cmt/compdb';
 import * as debuggerModule from '@cmt/debugger';
 import collections from '@cmt/diagnostics/collections';
