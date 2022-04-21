@@ -1,6 +1,6 @@
 import * as api from '@cmt/api';
 import * as cache from '@cmt/cache';
-import * as index_api from '@cmt/drivers/cmakefileapi/api';
+import * as index_api from '@cmt/drivers/cmakefileapi/cmakeFileApi';
 import {
     CodeModelConfiguration,
     CodeModelContent,

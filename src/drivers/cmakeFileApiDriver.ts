@@ -4,7 +4,7 @@ import { ExecutableTarget } from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
-import * as index_api from '@cmt/drivers/cmakefileapi/api';
+import * as index_api from '@cmt/drivers/cmakefileapi/cmakeFileApi';
 import {
     createQueryFileForApi,
     loadCacheContent,
