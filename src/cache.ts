@@ -8,7 +8,6 @@ import { fs } from './pr';
 import rollbar from './rollbar';
 import * as util from './util';
 import * as nls from 'vscode-nls';
-import { isBoolean, isString } from 'util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -20,29 +19,29 @@ const log = logging.createLogger('cache');
  * information.
  */
 export class Entry implements api.CacheEntry {
-    private readonly _type: api.CacheEntryType = api.CacheEntryType.Uninitialized;
-    private readonly _docs: string = '';
-    private readonly _key: string = '';
-    private readonly _value: any = null;
+    private readonly entryType: api.CacheEntryType = api.CacheEntryType.Uninitialized;
+    private readonly docString: string = '';
+    private readonly entryKey: string = '';
+    private readonly entryValue: any = null;
     advanced: boolean = false;
     choices: string[] = [];
 
     serializedKey: string = '';
 
     get type() {
-        return this._type;
+        return this.entryType;
     }
 
     get helpString() {
-        return this._docs;
+        return this.docString;
     }
 
     get key() {
-        return this._key;
+        return this.entryKey;
     }
 
     get value() {
-        return this._value;
+        return this.entryValue;
     }
 
     as<T>(): T {
@@ -55,19 +54,19 @@ export class Entry implements api.CacheEntry {
      * @param key The name of the entry
      * @param value The actual value of the entry. Always a string.
      * @param type The actual type of `value`
-     * @param docs The `DOC` string in the cache
+     * @param docString The `DOC` string in the cache
      * @param advanced Whether the entry is `ADVANCED`
      */
-    constructor(key: string, value: string, type: api.CacheEntryType, docs: string, advanced: boolean) {
-        this._key = key;
+    constructor(key: string, value: string, type: api.CacheEntryType, docString: string, advanced: boolean) {
+        this.entryKey = key;
         this.serializedKey = key; // may be overwritten later with quoted version of `key`
-        this._type = type;
+        this.entryType = type;
         if (type === api.CacheEntryType.Bool) {
-            this._value = util.isTruthy(value);
+            this.entryValue = util.isTruthy(value);
         } else {
-            this._value = value;
+            this.entryValue = value;
         }
-        this._docs = docs;
+        this.docString = docString;
         this.advanced = advanced;
     }
 }
@@ -103,33 +102,33 @@ export class CMakeCache {
 
     /** Get a list of all cache entries */
     get allEntries(): Entry[] {
-        return Array.from(this._entries.values());
+        return Array.from(this.cacheEntries.values());
     }
 
     /**
      * Create a new instance. This is **private**. You may only create an instance
      * via the `fromPath` static method.
-     * @param _path Path to the cache
-     * @param _exists Whether the file exists
-     * @param _entries Entries in the cache
+     * @param cachePath Path to the cache
+     * @param cacheFileExists Whether the file exists
+     * @param cacheEntries Entries in the cache
      */
-    private constructor(private readonly _path: string,
-        private readonly _exists: boolean,
-        private readonly _entries: Map<string, Entry>) {}
+    private constructor(private readonly cachePath: string,
+        private readonly cacheFileExists: boolean,
+        private readonly cacheEntries: Map<string, Entry>) {}
 
     /**
      * `true` if the file exists when this instance was created.
      * `false` otherwise.
      */
     get exists() {
-        return this._exists;
+        return this.cacheFileExists;
     }
 
     /**
      * The path to the cache file, which may not exist
      */
     get path() {
-        return this._path;
+        return this.cachePath;
     }
 
     /**
@@ -152,33 +151,33 @@ export class CMakeCache {
         const lines = content.split(/\r\n|\n|\r/).filter(line => !!line.length).filter(line => !/^\s*#/.test(line));
 
         const entries = new Map<string, Entry>();
-        let docs_acc = '';
+        let docStringAccumulator = '';
         const advancedNames: string[] = [];
         const choices: Map<string, string[]> = new Map();
         for (const line of lines) {
             if (line.startsWith('//')) {
-                docs_acc += /^\/\/(.*)/.exec(line)![1] + ' ';
+                docStringAccumulator += /^\/\/(.*)/.exec(line)![1] + ' ';
             } else {
                 const match = /^("(.*?)"|(.*?)):([^:]*?)=(.*)/.exec(line);
                 if (!match) {
                     rollbar.error(localize('failed.to.read.line.from.cmake.cache.file', 'Failed to read a line from a CMake cache file {0}', line));
                     continue;
                 }
-                const [, serializedName, quoted_name, unquoted_name, typename, valuestr] = match;
-                const name = quoted_name || unquoted_name;
-                if (!name || !typename) {
+                const [, serializedName, quotedName, unquotedName, typeName, valueString] = match;
+                const name = quotedName || unquotedName;
+                if (!name || !typeName) {
                     continue;
                 }
-                log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typename, 'valuestr', valuestr));
+                log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typeName, 'valuestr', valueString));
                 if (name.endsWith('-ADVANCED')) {
-                    if (valuestr === '1') {
+                    if (valueString === '1') {
                         const entryName = name.substr(0, name.lastIndexOf('-'));
                         advancedNames.push(entryName);
                     }
                 } else if (name.endsWith('-MODIFIED')) {
                     // ignore irrelevant entry property
                 } else if (name.endsWith('-STRINGS')) {
-                    choices.set(name.substr(0, name.lastIndexOf('-')), valuestr.split(';'));
+                    choices.set(name.substr(0, name.lastIndexOf('-')), valueString.split(';'));
                 } else {
                     const key = name;
                     const typemap = {
@@ -190,14 +189,14 @@ export class CMakeCache {
                         UNINITIALIZED: api.CacheEntryType.Uninitialized,
                         STATIC: api.CacheEntryType.Static
                     } as { [type: string]: api.CacheEntryType | undefined };
-                    const type = typemap[typename];
-                    const docs = docs_acc.trim();
-                    docs_acc = '';
+                    const type = typemap[typeName];
+                    const docString = docStringAccumulator.trim();
+                    docStringAccumulator = '';
                     if (type === undefined) {
-                        rollbar.error(localize('cache.entry.unknown', 'Cache entry {0} has unknown type: {1}', `"${name}"`, `"${typename}"`));
+                        rollbar.error(localize('cache.entry.unknown', 'Cache entry {0} has unknown type: {1}', `"${name}"`, `"${typeName}"`));
                     } else {
                         log.trace(localize('constructing.new.cache.entry', 'Constructing a new cache entry from the given line'));
-                        const entry = new Entry(key, valuestr, type, docs, false);
+                        const entry = new Entry(key, valueString, type, docString, false);
                         entry.serializedKey = serializedName;
                         entries.set(name, entry);
                     }
@@ -236,7 +235,7 @@ export class CMakeCache {
      */
     private replace(content: string, key: string, value: string): string {
 
-        const entry = this._entries.get(key);
+        const entry = this.cacheEntries.get(key);
         if (entry !== undefined) {
             // cmake variable name may contain characters with special meanings in regex
             const escapedKey = entry.serializedKey.replace(/[^A-Za-z0-9_]/g, '\\$&');
@@ -249,14 +248,14 @@ export class CMakeCache {
 
                 // FIXME: How can `value` be boolean desipte being marked as string in the signature?
 
-                if (isString(value)) {
+                if (typeof value === 'string') {
                     const newlineIndex = value.search(/[\r\n]/);
                     if (newlineIndex >= 0) {
                         value = value.substring(0, newlineIndex);
                         log.warning(localize('cache.value.truncation.warning', 'Newline(s) found in cache entry {0}. Value has been truncated to {1}', `"${key}"`, `"${value}"`));
                     }
                 }
-                const newValueLine = entry.serializedKey + type + (isBoolean(value) ? (value ? "TRUE" : "FALSE") : value);
+                const newValueLine = entry.serializedKey + type + ((typeof value === 'boolean') ? (value ? "TRUE" : "FALSE") : value);
                 return content.replace(line, newValueLine);
             }
         }
@@ -314,7 +313,7 @@ export class CMakeCache {
      * @returns The cache entry, or `null` if the cache entry is not present.
      */
     get(key: string): Entry | null {
-        const ret = this._entries.get(key) || null;
+        const ret = this.cacheEntries.get(key) || null;
         if (ret) {
             log.trace(localize('get.cache.key', 'Get cache key {0}={1}', key, ret.value));
         } else {
