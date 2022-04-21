@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import * as api from '@cmt/api';
 import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
-import * as codepages from '@cmt/code-pages';
+import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger } from "@cmt/cmakeTools";
 import { ArgsCompileCommand } from '@cmt/compdb';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';

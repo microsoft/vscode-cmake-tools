@@ -8,7 +8,7 @@ import { fs } from '@cmt/pr';
 import paths from '@cmt/paths';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import * as iconv from 'iconv-lite';
-import * as codepages from '@cmt/code-pages';
+import * as codepages from '@cmt/codePageTable';
 
 import * as logging from '../logging';
 import * as proc from '../proc';
