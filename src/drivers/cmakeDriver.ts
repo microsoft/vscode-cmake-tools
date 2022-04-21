@@ -9,7 +9,7 @@ import * as api from '@cmt/api';
 import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger } from "@cmt/cmakeTools";
-import { ArgsCompileCommand } from '@cmt/compdb';
+import { ArgsCompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';

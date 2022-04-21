@@ -3,7 +3,7 @@
  */
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmake-executable';
-import { CompilationDatabase } from '@cmt/compdb';
+import { CompilationDatabase } from '@cmt/compilationDatabase';
 import * as debuggerModule from '@cmt/debugger';
 import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
