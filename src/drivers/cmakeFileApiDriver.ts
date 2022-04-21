@@ -12,7 +12,7 @@ import {
     loadExtCodeModelContent,
     loadIndexFile,
     loadToolchains
-} from '@cmt/drivers/cmakefileapi/api_helpers';
+} from '@cmt/drivers/cmakefileapi/cmakeFileApiUtil';
 import * as codemodel from '@cmt/drivers/codeModelApi';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
