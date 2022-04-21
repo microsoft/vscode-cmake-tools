@@ -9,21 +9,18 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('compdb');
 
-interface BaseCompileCommand {
+export interface CompileCommand {
     directory: string;
     file: string;
     output?: string;
-}
-
-export interface ArgsCompileCommand extends BaseCompileCommand {
     command: string; // The command string includes both commands and arguments (if any).
     arguments?: string[];
 }
 
 export class CompilationDatabase {
-    private readonly _infoByFilePath: Map<string, ArgsCompileCommand>;
-    constructor(infos: ArgsCompileCommand[]) {
-        this._infoByFilePath = infos.reduce(
+    private readonly infoByFilePath: Map<string, CompileCommand>;
+    constructor(infos: CompileCommand[]) {
+        this.infoByFilePath = infos.reduce(
             (acc, cur) => acc.set(util.platformNormalizePath(cur.file), {
                 directory: cur.directory,
                 file: cur.file,
@@ -31,44 +28,44 @@ export class CompilationDatabase {
                 command: cur.command,
                 arguments: cur.arguments ? cur.arguments : [...shlex.split(cur.command)]
             }),
-            new Map<string, ArgsCompileCommand>()
+            new Map<string, CompileCommand>()
         );
     }
 
-    get(fspath: string) {
-        return this._infoByFilePath.get(util.platformNormalizePath(fspath));
+    get(fsPath: string) {
+        return this.infoByFilePath.get(util.platformNormalizePath(fsPath));
     }
 
-    public static async fromFilePaths(dbpaths: string[]): Promise<CompilationDatabase | null> {
-        const db: ArgsCompileCommand[] = [];
+    public static async fromFilePaths(databasePaths: string[]): Promise<CompilationDatabase | null> {
+        const database: CompileCommand[] = [];
 
-        for (const dbpath of dbpaths) {
-            if (!await fs.exists(dbpath)) {
+        for (const path of databasePaths) {
+            if (!await fs.exists(path)) {
                 continue;
             }
 
-            const data = await fs.readFile(dbpath);
+            const fileContent = await fs.readFile(path);
             try {
-                const content = JSON.parse(data.toString()) as ArgsCompileCommand[];
-                db.push(...content);
+                const content = JSON.parse(fileContent.toString()) as CompileCommand[];
+                database.push(...content);
             } catch (e) {
-                log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database {0}: {1}', `"${dbpath}"`, util.errorToString(e)));
+                log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database {0}: {1}', `"${path}"`, util.errorToString(e)));
                 return null;
             }
         }
 
-        if (db.length > 0) {
-            return new CompilationDatabase(db);
+        if (database.length > 0) {
+            return new CompilationDatabase(database);
         }
 
         return null;
     }
 
-    public static toJson(db: CompilationDatabase | null): string {
-        if (db === null) {
+    public static toJson(database: CompilationDatabase | null): string {
+        if (database === null) {
             return '[]';
         }
 
-        return JSON.stringify([...db._infoByFilePath.values()].map(({ file, command, directory }) => ({ file, command, directory })));
+        return JSON.stringify([...database.infoByFilePath.values()].map(({ file, command, directory }) => ({ file, command, directory })));
     }
 }
