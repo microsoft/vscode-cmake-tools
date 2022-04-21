@@ -28,34 +28,34 @@ export class ConfigurationWebview {
     private readonly cmakeCacheEditorText = localize("cmake.cache.editor", "CMake Cache Editor");
 
     // The dirty state of the whole webview.
-    private _dirty: boolean = false;
-    get dirty(): boolean {
-        return this._dirty;
+    private dirtyFlag: boolean = false;
+    get isDirty(): boolean {
+        return this.dirtyFlag;
     }
-    set dirty(d: boolean) {
-        this._dirty = d;
+    set isDirty(d: boolean) {
+        this.dirtyFlag = d;
 
-        if (this._panel.title) {
+        if (this.webviewPanel.title) {
             // The webview title should reflect the dirty state
-            this._panel.title = this.cmakeCacheEditorText;
+            this.webviewPanel.title = this.cmakeCacheEditorText;
             if (d) {
-                this._panel.title += "*";
+                this.webviewPanel.title += "*";
             } else {
                 // If the global dirty state gets cleared, make sure all the entries
                 // of the cache table have their state dirty updated accordingly.
-                this._options.forEach(opt => opt.dirty = false);
+                this.options.forEach(opt => opt.dirty = false);
             }
         }
     }
-    private readonly _panel: vscode.WebviewPanel;
-    private _options: IOption[] = [];
+    private readonly webviewPanel: vscode.WebviewPanel;
     get panel() {
-        return this._panel;
+        return this.webviewPanel;
     }
+    private options: IOption[] = [];
 
     constructor(protected cachePath: string,
         protected save: () => void) {
-        this._panel = vscode.window.createWebviewPanel(
+        this.webviewPanel = vscode.window.createWebviewPanel(
             'cmakeConfiguration', // Identifies the type of the webview. Used internally
             this.cmakeCacheEditorText, // Title of the panel displayed to the user
             vscode.ViewColumn.One, // Editor column to show the new webview panel in.
@@ -68,13 +68,13 @@ export class ConfigurationWebview {
 
     // Save from the UI table into the CMake cache file if there are any unsaved edits.
     async persistCacheEntries() {
-        if (this.dirty) {
+        if (this.isDirty) {
             telemetry.logEvent("editCMakeCache", { command: "saveCMakeCacheUI" });
-            await this.saveCmakeCache(this._options);
+            await this.saveCmakeCache(this.options);
             void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
             // start configure
             this.save();
-            this.dirty = false;
+            this.isDirty = false;
         }
     }
 
@@ -84,17 +84,17 @@ export class ConfigurationWebview {
      * but for merge conflicts the user is asked which values to keep.
      */
     async refreshPanel() {
-        if (this.dirty) {
+        if (this.isDirty) {
             const newOptions = await this.getConfigurationOptions();
             const mergedOptions: IOption[] = [];
             let conflictsExist = false;
             newOptions.forEach(option => {
-                const index = this._options.findIndex(opt => opt.key === option.key);
+                const index = this.options.findIndex(opt => opt.key === option.key);
                 // Add to the final list of cache entries if it's a new, an unchanged value
                 // or a changed value of a cache variable that is not dirty in the webview.
                 if (index === -1 ||
-                    this._options[index].value === option.value ||
-                    !this._options[index].dirty) {
+                    this.options[index].value === option.value ||
+                    !this.options[index].dirty) {
                     mergedOptions.push(option);
                 } else {
                     // Log the cache value mismatch in the Output Channel, until we display the conflicts
@@ -102,7 +102,7 @@ export class ConfigurationWebview {
                     conflictsExist = true;
                     log.info(`Detected a cache merge conflict for entry "${option.key}": ` +
                         `value in CMakeCache.txt="${option.value}", ` +
-                        `value in UI="${this._options[index].value}"`);
+                        `value in UI="${this.options[index].value}"`);
 
                     // Include in the final list of cache entries the version from UI.
                     // If later the user choses 'ignore' or 'fromUI', the UI value is good for both
@@ -111,7 +111,7 @@ export class ConfigurationWebview {
                     // If we don't do this then any merge conflicting entries will disappear from the list
                     // if in the middle and will be showed at the end (because we would need to add them
                     // via a concat).
-                    mergedOptions.push(this._options[index]);
+                    mergedOptions.push(this.options[index]);
                 }
             });
 
@@ -119,7 +119,7 @@ export class ConfigurationWebview {
             // represent deleted cache entries. Remember them because in the 'ignore' case below
             // we need to keep them.
             const deletedOptions: IOption[] = [];
-            this._options.forEach(option => {
+            this.options.forEach(option => {
                 if (newOptions.findIndex(opt => opt.key === option.key) === -1) {
                     deletedOptions.push(option);
                 }
@@ -140,28 +140,28 @@ export class ConfigurationWebview {
                     fromCache,
                     fromUI);
                 if (result === fromUI) {
-                    this._options = mergedOptions;
+                    this.options = mergedOptions;
                     await this.persistCacheEntries();
                 } else if (result === fromCache) {
-                    this._options = newOptions;
+                    this.options = newOptions;
                 }
             } else {
-                this._options = mergedOptions;
+                this.options = mergedOptions;
             }
 
             // The webview needs a re-render also for the "ignore" or "fromUI" cases
             // to reflect all the unconflicting changes.
-            if (this._panel.visible) {
-                await this.renderWebview(this._panel, false);
+            if (this.webviewPanel.visible) {
+                await this.renderWebview(this.webviewPanel, false);
             }
 
             // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
             // between the webview and the file on disk.
             if (result !== ignore) {
-                this.dirty = false;
+                this.isDirty = false;
             }
         } else {
-            this._options = await this.getConfigurationOptions();
+            this.options = await this.getConfigurationOptions();
         }
     }
 
@@ -169,17 +169,17 @@ export class ConfigurationWebview {
      * Initializes the panel, registers events and renders initial content
      */
     async initPanel() {
-        await this.renderWebview(this._panel, true);
+        await this.renderWebview(this.webviewPanel, true);
 
-        this._panel.onDidChangeViewState(async event => {
+        this.webviewPanel.onDidChangeViewState(async event => {
             if (event.webviewPanel.visible) {
                 await this.renderWebview(event.webviewPanel, false);
             }
         });
 
-        this._panel.onDidDispose(async event => {
-            console.log(`disposing webview ${event} - ${this._panel}`);
-            if (this.dirty) {
+        this.webviewPanel.onDidDispose(async event => {
+            console.log(`disposing webview ${event} - ${this.webviewPanel}`);
+            if (this.isDirty) {
                 const yes = localize('yes', 'Yes');
                 const no = localize('no', 'No');
                 const result = await vscode.window.showWarningMessage(
@@ -194,16 +194,16 @@ export class ConfigurationWebview {
         //     - checkbox update (update entry in the internal array)
         //     - editbox update (update entry in the internal array)
         //     - save button (save the internal array into the cache file)
-        this._panel.webview.onDidReceiveMessage(async (option: IOption) => {
+        this.webviewPanel.webview.onDidReceiveMessage(async (option: IOption) => {
             if (!option) {
                 await this.persistCacheEntries();
             } else {
-                const index = this._options.findIndex(opt => opt.key === option.key);
-                if (this._options[index].value !== option.value) {
-                    this.dirty = true;
-                    this._options[index].dirty = true;
-                    this._options[index].type = option.type;
-                    this._options[index].value = option.value;
+                const index = this.options.findIndex(opt => opt.key === option.key);
+                if (this.options[index].value !== option.value) {
+                    this.isDirty = true;
+                    this.options[index].dirty = true;
+                    this.options[index].type = option.type;
+                    this.options[index].value = option.value;
                 }
             }
         });
@@ -241,11 +241,11 @@ export class ConfigurationWebview {
      */
     async renderWebview(panel?: vscode.WebviewPanel, refresh: boolean = false) {
         if (!panel) {
-            panel = this._panel;
+            panel = this.webviewPanel;
         }
 
         if (refresh) {
-            this._options = this._options.concat(await this.getConfigurationOptions());
+            this.options = this.options.concat(await this.getConfigurationOptions());
         }
 
         panel.webview.html = this.getWebviewMarkup();
@@ -498,7 +498,7 @@ export class ConfigurationWebview {
     </html>`;
 
         // compile a list of table rows that contain the key and value pairs
-        const tableRows = this._options.map(option => {
+        const tableRows = this.options.map(option => {
 
             // HTML attributes may not contain literal double quotes or ambiguous ampersands
             const escapeAttribute = (text: string) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
