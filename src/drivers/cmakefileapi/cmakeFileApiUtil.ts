@@ -20,8 +20,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cmakefileapi-parser');
 
-export async function createQueryFileForApi(api_path: string): Promise<string> {
-    const queryPath = path.join(api_path, 'query', 'client-vscode');
+export async function createQueryFileForApi(apiPath: string): Promise<string> {
+    const queryPath = path.join(apiPath, 'query', 'client-vscode');
     const queryFilePath = path.join(queryPath, 'query.json');
     const requests = { requests: [{ kind: 'cache', version: 2 }, { kind: 'codemodel', version: 2 }, { kind: 'toolchains', version: 1 }] };
     try {
