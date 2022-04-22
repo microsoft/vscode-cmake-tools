@@ -8,5 +8,5 @@
 	"processing.data.event.stdout": "Zpracovává se událost data z ukazatele stdout procedury.",
 	"processing.data.event.stderr": "Zpracovává se událost data z ukazatele stderr procedury.",
 	"resolving.close.event": "Překládá se proces při události close.",
-	"process.timeout": "The command timed out: {0}"
+	"process.timeout": "Časový limit příkazu vypršel: {0}"
 }
