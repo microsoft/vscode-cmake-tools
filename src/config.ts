@@ -128,6 +128,7 @@ export interface ExtensionConfigurationSettings {
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
     cmakeCommunicationMode: CMakeCommunicationMode;
+    showSystemKits: boolean;
     ignoreKitEnv: boolean;
     buildTask: boolean;
     outputLogEncoding: string;
@@ -394,6 +395,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
     }
+    get showSystemKits(): boolean {
+        return this.configData.showSystemKits;
+    }
     get ignoreKitEnv(): boolean {
         return this.configData.ignoreKitEnv;
     }
@@ -465,6 +469,7 @@ export class ConfigurationReader implements vscode.Disposable {
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),
         cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
+        showSystemKits: new vscode.EventEmitter<boolean>(),
         ignoreKitEnv: new vscode.EventEmitter<boolean>(),
         buildTask: new vscode.EventEmitter<boolean>(),
         outputLogEncoding: new vscode.EventEmitter<string>(),
