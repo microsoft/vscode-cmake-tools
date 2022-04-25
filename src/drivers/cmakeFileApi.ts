@@ -242,7 +242,7 @@ function findPropertyValue(cacheElement: Cache.CMakeCacheEntry, name: string): s
 
 function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheContent): Map<string, api.CacheEntry> {
     return cmakeCacheContent.entries.reduce((acc, el) => {
-        const FileApiToExtensionCacheMap: { [key: string]: api.CacheEntryType | undefined } = {
+        const fileApiToExtensionCacheMap: { [key: string]: api.CacheEntryType | undefined } = {
             BOOL: api.CacheEntryType.Bool,
             STRING: api.CacheEntryType.String,
             PATH: api.CacheEntryType.Path,
@@ -251,7 +251,7 @@ function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheConte
             UNINITIALIZED: api.CacheEntryType.Uninitialized,
             STATIC: api.CacheEntryType.Static
         };
-        const type = FileApiToExtensionCacheMap[el.type];
+        const type = fileApiToExtensionCacheMap[el.type];
         if (type === undefined) {
             log.warning(localize('cache.entry.unknowntype', 'Unknown cache entry type: {0}.', el.type));
             return acc;
