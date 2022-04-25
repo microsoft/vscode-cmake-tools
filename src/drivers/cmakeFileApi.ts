@@ -1,6 +1,13 @@
+/**
+ * This module defines the cmake file API for typescript. This makes the use of
+ * the FileAPI simpler to use.
+ *
+ * For details see (cmake-file-api(7))[https://cmake.org/cmake/help/v3.15/manual/cmake-file-api.7.html].
+ * This file implements only the new required structures.
+ */
+
 import * as api from '@cmt/api';
 import * as cache from '@cmt/cache';
-import * as cmakeFileApi from '@cmt/drivers/cmakefileapi/cmakeFileApi';
 import {
     CodeModelConfiguration,
     CodeModelContent,
@@ -14,6 +21,162 @@ import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import rollbar from '@cmt/rollbar';
+export interface ApiVersion {
+    major: number;
+    minor: number;
+}
+
+export namespace Index {
+    export interface GeneratorInformation {
+        name: string;
+        platform?: string;
+    }
+
+    export interface CMake {
+        generator: GeneratorInformation;
+    }
+
+    export interface ObjectKind {
+        kind: string;
+        version: ApiVersion;
+        jsonFile: string;
+    }
+
+    export interface IndexFile {
+        cmake: CMake;
+        objects: ObjectKind[];
+    }
+}
+
+export namespace Cache {
+    export interface CacheContent {
+        version: ApiVersion;
+        entries: CMakeCacheEntry[];
+    }
+
+    export interface CacheEntryProperties {
+        name: string;
+        value: string;
+    }
+
+    export interface CMakeCacheEntry {
+        name: string;
+        properties: CacheEntryProperties[];
+        type: string;
+        value: string;
+    }
+}
+
+export namespace CodeModelKind {
+    export interface PathInfo {
+        build: string;
+        source: string;
+    }
+
+    export interface DirectoryMetadata {
+        source: string;
+        build: string;
+        hasInstallRule: boolean;
+    }
+
+    export interface ProjectMetadata {
+        name: string;
+        targetIndexes?: number[];
+        directoryIndexes: number[];
+    }
+
+    export interface Configuration {
+        name: string;
+        targets: Target[];
+        directories: DirectoryMetadata[];
+        projects: ProjectMetadata[];
+    }
+
+    export interface Content {
+        version: ApiVersion;
+        paths: PathInfo;
+        configurations: Configuration[];
+    }
+
+    export interface Target {
+        name: string;
+        type: string;
+        jsonFile: string;
+    }
+
+    export interface PreprocessorDefinitionMetadata {
+        define: string;
+    }
+
+    export interface IncludeMetadata {
+        path: string;
+    }
+
+    export interface SysRoot {
+        path: string;
+    }
+
+    export interface CompileCommandFragments {
+        fragment: string;
+    }
+
+    export interface CompileGroup {
+        language: string;
+        includes: IncludeMetadata[];
+        defines: PreprocessorDefinitionMetadata[];
+        compileCommandFragments: CompileCommandFragments[];
+        sourceIndexes: number[];
+        sysroot: SysRoot;
+    }
+
+    export interface ArtifactPath {
+        path: string;
+    }
+
+    export interface TargetSourcefile {
+        path: string;
+        compileGroupIndex?: number;
+        isGenerated?: boolean;
+    }
+
+    export interface TargetObject {
+        name: string;
+        type: string;
+        artifacts: ArtifactPath[];
+        nameOnDisk: string;
+        paths: PathInfo;
+        sources: TargetSourcefile[];
+        compileGroups?: CompileGroup[];
+    }
+}
+
+export namespace Toolchains {
+    export interface Content {
+        version: ApiVersion;
+        toolchains: Toolchain[];
+    }
+
+    export interface Toolchain {
+        language: string;
+        compiler: Compiler;
+        sourceFileExtensions?: string[];
+    }
+
+    export interface Compiler {
+        path?: string;
+        id?: string;
+        version?: string;
+        target?: string;
+        implicit: ImplicitCompilerInfo;
+    }
+
+    export interface ImplicitCompilerInfo {
+        includeDirectories?: string[];
+        linkDirectories?: string[];
+        linkFrameworkDirectories?: string[];
+        linkLibraries?: string[];
+    }
+}
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -34,7 +197,7 @@ export async function createQueryFileForApi(apiPath: string): Promise<string> {
     return queryFilePath;
 }
 
-export async function loadIndexFile(replyPath: string): Promise<cmakeFileApi.Index.IndexFile | null> {
+export async function loadIndexFile(replyPath: string): Promise<Index.IndexFile | null> {
     log.debug(`Read reply folder: ${replyPath}`);
     if (!await fs.exists(replyPath)) {
         return null;
@@ -50,12 +213,12 @@ export async function loadIndexFile(replyPath: string): Promise<cmakeFileApi.Ind
     const indexFilePath = path.join(replyPath, indexFiles[indexFiles.length - 1]);
     const fileContent = await fs.readFile(indexFilePath);
 
-    return JSON.parse(fileContent.toString()) as cmakeFileApi.Index.IndexFile;
+    return JSON.parse(fileContent.toString()) as Index.IndexFile;
 }
 
 export async function loadCacheContent(filename: string): Promise<Map<string, api.CacheEntry>> {
     const fileContent = await fs.readFile(filename);
-    const cmakeCacheContent = JSON.parse(fileContent.toString()) as cmakeFileApi.Cache.CacheContent;
+    const cmakeCacheContent = JSON.parse(fileContent.toString()) as Cache.CacheContent;
 
     const expectedVersion = { major: 2, minor: 0 };
     const detectedVersion = cmakeCacheContent.version;
@@ -72,12 +235,12 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
     return convertFileApiCacheToExtensionCache(cmakeCacheContent);
 }
 
-function findPropertyValue(cacheElement: cmakeFileApi.Cache.CMakeCacheEntry, name: string): string {
+function findPropertyValue(cacheElement: Cache.CMakeCacheEntry, name: string): string {
     const propertyElement = cacheElement.properties.find(prop => prop.name === name);
     return propertyElement ? propertyElement.value : '';
 }
 
-function convertFileApiCacheToExtensionCache(cmakeCacheContent: cmakeFileApi.Cache.CacheContent): Map<string, api.CacheEntry> {
+function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheContent): Map<string, api.CacheEntry> {
     return cmakeCacheContent.entries.reduce((acc, el) => {
         const FileApiToExtensionCacheMap: { [key: string]: api.CacheEntryType | undefined } = {
             BOOL: api.CacheEntryType.Bool,
@@ -100,9 +263,9 @@ function convertFileApiCacheToExtensionCache(cmakeCacheContent: cmakeFileApi.Cac
     }, new Map<string, api.CacheEntry>());
 }
 
-export async function loadCodeModelContent(filename: string): Promise<cmakeFileApi.CodeModelKind.Content> {
+export async function loadCodeModelContent(filename: string): Promise<CodeModelKind.Content> {
     const fileContent = await fs.readFile(filename);
-    const codemodel = JSON.parse(fileContent.toString()) as cmakeFileApi.CodeModelKind.Content;
+    const codemodel = JSON.parse(fileContent.toString()) as CodeModelKind.Content;
     const expectedVersion = { major: 2, minor: 0 };
     const detectedVersion = codemodel.version;
 
@@ -119,9 +282,9 @@ export async function loadCodeModelContent(filename: string): Promise<cmakeFileA
     return codemodel;
 }
 
-export async function loadTargetObject(filename: string): Promise<cmakeFileApi.CodeModelKind.TargetObject> {
+export async function loadTargetObject(filename: string): Promise<CodeModelKind.TargetObject> {
     const fileContent = await fs.readFile(filename);
-    return JSON.parse(fileContent.toString()) as cmakeFileApi.CodeModelKind.TargetObject;
+    return JSON.parse(fileContent.toString()) as CodeModelKind.TargetObject;
 }
 
 async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, filePath: string): Promise<api.Target> {
@@ -145,7 +308,7 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
 
 export async function loadAllTargetsForBuildTypeConfiguration(replyPath: string,
     buildDirectory: string,
-    configuration: cmakeFileApi.CodeModelKind.Configuration):
+    configuration: CodeModelKind.Configuration):
     Promise<{ name: string; targets: api.Target[] }> {
     const metaTargets = [];
     if (configuration.directories[0].hasInstallRule) {
@@ -179,8 +342,8 @@ function convertToAbsolutePath(inputPath: string, basePath: string) {
     return path.normalize(absolutePath);
 }
 
-function convertToExtCodeModelFileGroup(targetObject: cmakeFileApi.CodeModelKind.TargetObject,
-    rootPaths: cmakeFileApi.CodeModelKind.PathInfo): CodeModelFileGroup[] {
+function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject,
+    rootPaths: CodeModelKind.PathInfo): CodeModelFileGroup[] {
     const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
         const compileFlags = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
 
@@ -212,7 +375,7 @@ function convertToExtCodeModelFileGroup(targetObject: cmakeFileApi.CodeModelKind
     return fileGroup;
 }
 
-async function loadCodeModelTarget(rootPaths: cmakeFileApi.CodeModelKind.PathInfo, jsonFile: string) {
+async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: string) {
     const targetObject = await loadTargetObject(jsonFile);
 
     const fileGroups = convertToExtCodeModelFileGroup(targetObject, rootPaths);
@@ -239,10 +402,10 @@ async function loadCodeModelTarget(rootPaths: cmakeFileApi.CodeModelKind.PathInf
     } as CodeModelTarget;
 }
 
-export async function loadProject(rootPaths: cmakeFileApi.CodeModelKind.PathInfo,
+export async function loadProject(rootPaths: CodeModelKind.PathInfo,
     replyPath: string,
     projectIndex: number,
-    configuration: cmakeFileApi.CodeModelKind.Configuration) {
+    configuration: CodeModelKind.Configuration) {
     const project = configuration.projects[projectIndex];
     const projectPaths = {
         build: project.directoryIndexes
@@ -257,9 +420,9 @@ export async function loadProject(rootPaths: cmakeFileApi.CodeModelKind.PathInfo
     return { name: project.name, targets, sourceDirectory: projectPaths.source } as CodeModelProject;
 }
 
-export async function loadConfig(paths: cmakeFileApi.CodeModelKind.PathInfo,
+export async function loadConfig(paths: CodeModelKind.PathInfo,
     replyPath: string,
-    configuration: cmakeFileApi.CodeModelKind.Configuration) {
+    configuration: CodeModelKind.Configuration) {
     const projects = await Promise.all(
         (configuration.projects).map((_, index) => loadProject(paths, replyPath, index, configuration)));
     return { name: configuration.name, projects } as CodeModelConfiguration;
@@ -274,7 +437,7 @@ export async function loadExtCodeModelContent(replyPath: string, codeModelFileNa
 
 export async function loadToolchains(filename: string): Promise<Map<string, CodeModelToolchain>> {
     const fileContent = await fs.readFile(filename);
-    const toolchains = JSON.parse(fileContent.toString()) as cmakeFileApi.Toolchains.Content;
+    const toolchains = JSON.parse(fileContent.toString()) as Toolchains.Content;
 
     const expectedVersion = { major: 1, minor: 0 };
     const detectedVersion = toolchains.version;
