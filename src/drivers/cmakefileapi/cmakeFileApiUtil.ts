@@ -8,7 +8,7 @@ import {
     CodeModelProject,
     CodeModelTarget,
     CodeModelToolchain
-} from '@cmt/drivers/codeModelApi';
+} from '@cmt/drivers/codeModel';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as path from 'path';

@@ -13,7 +13,7 @@ import {
     loadIndexFile,
     loadToolchains
 } from '@cmt/drivers/cmakefileapi/cmakeFileApiUtil';
-import * as codemodel from '@cmt/drivers/codeModelApi';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -329,7 +329,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return indexFile !== null;
     }
 
-    private _codeModelContent: codemodel.CodeModelContent | null = null;
+    private _codeModelContent: codeModel.CodeModelContent | null = null;
     get codeModelContent() {
         return this._codeModelContent;
     }
@@ -370,7 +370,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             }));
     }
 
-    private readonly _codeModelChanged = new vscode.EventEmitter<null | codemodel.CodeModelContent>();
+    private readonly _codeModelChanged = new vscode.EventEmitter<null | codeModel.CodeModelContent>();
     get onCodeModelChanged() {
         return this._codeModelChanged.event;
     }
