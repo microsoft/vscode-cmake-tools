@@ -6,6 +6,6 @@
 {
 	"unhandled.exception": "Ausnahmefehler: {0}",
 	"invoking.async.function.rollbar": "Die asynchrone Funktion [{0}] wird mit Rollbar-Umschließung [{1}] aufgerufen.",
-	"invoking.function.rollbar": "Die Funktion [${0}] wird mit Rollbar-Umschließung [${1}] aufgerufen.",
+	"invoking.function.rollbar": "Aufruf von Funktion [${0}] wird mit Rollbar-Umschließung [${1}]",
 	"unhandled.promise.rejection": "Unbehandelte Promise-Ablehnung: {0}"
 }

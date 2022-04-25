@@ -2055,7 +2055,6 @@
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
-    "clang-format": "^1.5.0",
     "eslint": "^7.25.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jsdoc": "^33.1.0",
@@ -2106,13 +2105,15 @@
     "xml2js": "^0.4.23"
   },
   "resolutions": {
+    "ansi-regex": "^5.0.1",
     "chokidar": "^3.5.1",
     "glob-parent": "^5.1.2",
+    "hosted-git-info": "^3.0.8",
     "https-proxy-agent": "^5.0.0",
-    "postcss": "^8.2.10",
     "**/minimist": "^1.2.5",
-    "yargs-parser": "^20.2.4",
-    "hosted-git-info": "^3.0.8"
+    "nanoid": "^3.1.31",
+    "postcss": "^8.2.10",
+    "yargs-parser": "^20.2.4"
   },
   "extensionPack": [
     "twxs.cmake"
