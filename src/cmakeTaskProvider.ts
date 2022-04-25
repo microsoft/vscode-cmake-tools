@@ -76,20 +76,20 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const result: CMakeTask[] = [];
         this.updateDefaultTargets();
         // Provide build task.
-        const taskName: string = localizeCommandType(CommandType.build);
+        const commandType: string = localizeCommandType(CommandType.build);
         const definition: CMakeTaskDefinition = {
             type: CMakeTaskProvider.CMakeScriptType,
-            label: CMakeTaskProvider.CMakeSourceStr + ": " + taskName,
+            label: CMakeTaskProvider.CMakeSourceStr + ": " + commandType,
             command: CommandType.build,
             targets: this.defaultTargets
         };
-        const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr,
+        const task = new vscode.Task(definition, vscode.TaskScope.Workspace, commandType, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
                 new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTargets, resolvedDefinition.targets, resolvedDefinition.options, this.cmakeDriver)
             ), []);
         task.group = vscode.TaskGroup.Build;
-        task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
+        task.detail = localize('cmake.template.task', 'CMake template {0} task', commandType);
         result.push(task);
         return result;
     }
