@@ -205,7 +205,7 @@ export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], re
     return undefined;
 }
 
-type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
+export type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
 
 export type OsName = "Windows" | "Linux" | "macOS";
 
