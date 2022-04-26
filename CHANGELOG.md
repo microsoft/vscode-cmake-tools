@@ -6,6 +6,7 @@ Improvements:
 - Add commands to get preset names. [PR #2433](https://github.com/microsoft/vscode-cmake-tools/pull/2433)
 - Add IntelliSense support for `debugConfig.console`. [#2428](https://github.com/microsoft/vscode-cmake-tools/issues/2428)
 - Add c++23 support. [#2475](https://github.com/microsoft/vscode-cmake-tools/issues/2475) [@sweemer](https://github.com/sweemer)
+- Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
@@ -14,6 +15,9 @@ Bug Fixes:
 - Fix schema validation for presets version 4. [#2490](https://github.com/microsoft/vscode-cmake-tools/issues/2490)
 - Remove problematic environment variables from the debugger environment. [#2442](https://github.com/microsoft/vscode-cmake-tools/issues/2442)
 - Fix preferredGenerator "Watcom WMake" not working. [#2500](https://github.com/microsoft/vscode-cmake-tools/issues/2500)
+- Exclude environment variables from debugging if the values have newlines. [#2515](https://github.com/microsoft/vscode-cmake-tools/issues/2515)
+- Correctly configure the build environment when using VS 2015 and Ninja in CMakePresets.json. [#2516](https://github.com/microsoft/vscode-cmake-tools/issues/2516)
+- Select the correct VS toolset for Ninja generators with CMake Presets. [#2423](https://github.com/microsoft/vscode-cmake-tools/issues/2423)
 
 ## 1.10.5
 Bug Fixes:

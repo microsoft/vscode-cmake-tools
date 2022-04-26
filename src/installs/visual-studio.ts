@@ -176,14 +176,19 @@ export function getHostTargetArchString(hostArch: string, targetArch?: string, a
 }
 
 // Gets the MSVC toolsets installed for a given VS install.
-export async function enumerateMsvcToolsets(vsInstallRoot: string): Promise<string[] | undefined> {
-    const toolsetDir = path.join(vsInstallRoot, 'VC\\Tools\\MSVC');
-    if (await fs.exists(toolsetDir)) {
-        const dirContents = await fs.readdir(toolsetDir, { 'withFileTypes': true });
-        // Only the toolsets should be this directory (each in their own directories), but filter out anything else just in case.
-        // Sort in descending order, so if searching with a 1- or 2-component version (e.g. 14.27) we'll choose the latest version first
-        return dirContents.filter(item => item.isDirectory()).map(dir => dir.name)
-            .sort((a, b) => util.compareVersions(a, b)).reverse();
+export async function enumerateMsvcToolsets(vsInstallRoot: string, vsVersion: string): Promise<string[] | undefined> {
+    const version = parseInt(vsVersion);
+    if (version < 15) {
+        return [`${version}.0`];
+    } else {
+        const toolsetDir = path.join(vsInstallRoot, 'VC\\Tools\\MSVC');
+        if (await fs.exists(toolsetDir)) {
+            const dirContents = await fs.readdir(toolsetDir, { 'withFileTypes': true });
+            // Only the toolsets should be this directory (each in their own directories), but filter out anything else just in case.
+            // Sort in descending order, so if searching with a 1- or 2-component version (e.g. 14.27) we'll choose the latest version first
+            return dirContents.filter(item => item.isDirectory()).map(dir => dir.name)
+                .sort((a, b) => util.compareVersions(a, b)).reverse();
+        }
     }
 
     return undefined;
@@ -192,7 +197,7 @@ export async function enumerateMsvcToolsets(vsInstallRoot: string): Promise<stri
 // Filters the given vsInstalls to those which have the given toolset.
 export function filterVSInstallationsByMsvcToolset(vsInstalls: VSInstallation[], toolsetVersion: string): VSInstallation[] {
     return vsInstalls.filter(async vs => {
-        const availableToolsets = await enumerateMsvcToolsets(vs.installationPath);
+        const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
         return availableToolsets?.find(t => t.startsWith(toolsetVersion));
     });
 }
@@ -452,7 +457,7 @@ export async function varsForVSInstallation(inst: VSInstallation, hostArch: stri
     }
 
     const devBatArgs = [getHostTargetArchString(hostArch, targetArch, majorVersion < 15)];
-    if (toolsetVersion) {
+    if (toolsetVersion && majorVersion >= 15) {
         devBatArgs.push(`-vcvars_ver=${toolsetVersion}`);
     }
     const variables = await collectDevBatVars(hostArch, devbat, devBatArgs, majorVersion, common_dir);
