@@ -765,7 +765,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     return expandedPreset;
 }
 
-function getArchitecture(preset: ConfigurePreset) {
+export function getArchitecture(preset: ConfigurePreset) {
     if (util.isString(preset.architecture)) {
         return preset.architecture;
     } else if (preset.architecture && preset.architecture.value) {
@@ -775,7 +775,7 @@ function getArchitecture(preset: ConfigurePreset) {
     return 'x86';
 }
 
-function getToolset(preset: ConfigurePreset): Toolset {
+export function getToolset(preset: ConfigurePreset): Toolset {
     let result: Toolset | undefined;
     if (util.isString(preset.toolset)) {
         result = parseToolset(preset.toolset);
@@ -792,7 +792,7 @@ function getToolset(preset: ConfigurePreset): Toolset {
             log.warning(noToolsetArchWarning);
             result.host = 'x86';
         }
-        if (!result.version) {
+        if (!result.version && result.name !== latestToolsetName) {
             log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
         }
     } else {
@@ -802,6 +802,18 @@ function getToolset(preset: ConfigurePreset): Toolset {
     return result;
 }
 
+const toolsetToVersion: { [key: string]: string } = {
+    'v100': '10.0',
+    'v110': '11.0',
+    'v120': '12.0',
+    'v140': '14.0',
+    'v141': '14.16',
+    'v142': '14.29'
+    // don't include the latest version - the compiler version changes frequently and it will be picked by default anyway.
+    // NOTE: the latest toolset name (below) should be kept up to date.
+};
+const latestToolsetName = 'v143';
+
 // We don't support all of these options for Kit lookup right now, but might in the future.
 function parseToolset(toolset: string): Toolset {
     const toolsetOptions = toolset.split(',');
@@ -809,7 +821,12 @@ function parseToolset(toolset: string): Toolset {
     const result: Toolset = {};
     for (const option of toolsetOptions) {
         if (option.indexOf('=') < 0) {
-            result.name = option;
+            const version = toolsetToVersion[option];
+            if (version) {
+                result.version = version;
+            } else {
+                result.name = option;
+            }
         } else {
             const keyValue = option.split('=');
             switch (keyValue[0].toLowerCase()) {
@@ -979,7 +996,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
                             if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
                                 // If a toolset version is specified then check to make sure this vs instance has it installed.
                                 if (toolset.version) {
-                                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath);
+                                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
                                     // forcing non-null due to false positive (toolset.version is checked in conditional)
                                     if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
                                         vsInstall = vs;
