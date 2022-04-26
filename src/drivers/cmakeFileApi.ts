@@ -21,6 +21,7 @@ import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
 import rollbar from '@cmt/rollbar';
+
 export interface ApiVersion {
     major: number;
     minor: number;
