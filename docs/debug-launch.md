@@ -66,7 +66,7 @@ Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetP
                     "value": "Something something"
                 }
             ],
-            "externalConsole": true,
+            "console": "externalTerminal",
             "MIMode": "gdb",
             "setupCommands": [
                 {
