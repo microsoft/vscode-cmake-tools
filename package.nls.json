@@ -122,7 +122,7 @@
     "cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description": "Set CMAKE_BUILD_TYPE also on multi config generators",
     "cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "Skip over the configure process if cache is present.",
     "cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake",
-    "cmake-tools.configuration.cmake.showSystemKits.description": "List system kits in kit selection",
+    "cmake-tools.configuration.cmake.showSystemKits.description": "Include system kits in kit selection",
     "cmake-tools.configuration.cmake.ignoreKitEnv.description": "Do not use the kit environment variables when running CMake commands.",
     "cmake-tools.configuration.cmake.buildTask.description": "Build using tasks.json instead of internal process.",
     "cmake-tools.configuration.cmake.outputLogEncoding.description": "Encoding of the output from external commands (eg.cmake -- build).",
