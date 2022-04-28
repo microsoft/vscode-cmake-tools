@@ -384,7 +384,7 @@ export function makeDebuggerEnvironmentVars(env?: Environment): DebuggerEnvironm
     if (!env) {
         return [];
     }
-    const filter: RegExp = /\$\{.+?\}/; // Disallow env variables that have variable expansion values
+    const filter: RegExp = /\$\{.+?\}|\n/; // Disallow env variables that have variable expansion values or newlines
     const converted_env: DebuggerEnvironmentVariable[] = [];
     for (const [key, value] of Object.entries(env)) {
         if (value !== undefined && !value.match(filter)) {

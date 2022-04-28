@@ -2,7 +2,7 @@
  * Root of the extension
  */
 import { CMakeCache } from '@cmt/cache';
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmake-executable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { CompilationDatabase } from '@cmt/compdb';
 import * as debuggerModule from '@cmt/debugger';
 import collections from '@cmt/diagnostics/collections';
@@ -16,7 +16,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
-import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
 import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 import { CTestDriver, BasicTestResults } from './ctest';
@@ -440,7 +440,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     get onCodeModelChanged() {
         return this._codeModelContent.changeEvent;
     }
-    private readonly _codeModelContent = new Property<codemodel_api.CodeModelContent | null>(null);
+    private readonly _codeModelContent = new Property<codeModel.CodeModelContent | null>(null);
     private codeModelDriverSub: vscode.Disposable | null = null;
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
