@@ -1545,6 +1545,12 @@
           "description": "%cmake-tools.configuration.cmake.cmakeCommunicationMode%",
           "scope": "resource"
         },
+        "cmake.showSystemKits": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.showSystemKits.description%",
+          "scope": "resource"
+        },
         "cmake.ignoreKitEnv": {
           "type": "boolean",
           "default": false,

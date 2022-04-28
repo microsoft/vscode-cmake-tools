@@ -7,6 +7,7 @@ Improvements:
 - Add IntelliSense support for `debugConfig.console`. [#2428](https://github.com/microsoft/vscode-cmake-tools/issues/2428)
 - Add c++23 support. [#2475](https://github.com/microsoft/vscode-cmake-tools/issues/2475) [@sweemer](https://github.com/sweemer)
 - Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
+- Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)

@@ -119,7 +119,11 @@ export class KitsController {
 
     get availableKits() {
         console.assert(KitsController.length > 0, 'readKits should have been called at least once before.');
-        return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
+        if (this.cmakeTools.workspaceContext.config.showSystemKits) {
+            return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
+        } else {
+            return KitsController.specialKits.concat(this.folderKits);
+        }
     }
 
     get folder() {
