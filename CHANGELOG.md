@@ -2,12 +2,12 @@
 
 ## 1.11
 Improvements:
-- Add setting cmake.showSystemKits. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
 - Fix build Error: EMFILE: too many open files. [#2288](https://github.com/microsoft/vscode-cmake-tools/issues/2288) [@FrogTheFrog](https://github.com/FrogTheFrog)
 - Add commands to get preset names. [PR #2433](https://github.com/microsoft/vscode-cmake-tools/pull/2433)
 - Add IntelliSense support for `debugConfig.console`. [#2428](https://github.com/microsoft/vscode-cmake-tools/issues/2428)
 - Add c++23 support. [#2475](https://github.com/microsoft/vscode-cmake-tools/issues/2475) [@sweemer](https://github.com/sweemer)
 - Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
+- Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
