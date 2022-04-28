@@ -3,7 +3,7 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
-import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
+import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as vscode from 'vscode';
 
 import * as api from '@cmt/api';
@@ -18,7 +18,7 @@ import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
-import { CodeModelContent } from './codemodel-driver-interface';
+import { CodeModelContent } from './codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

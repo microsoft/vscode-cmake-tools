@@ -23,11 +23,11 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     // what causes 'path' to be undefined here.
     if (path && path.length !== 0) {
         try {
-            const version_ex = await proc.execute(path, ['--version']).result;
-            if (version_ex.retc === 0 && version_ex.stdout) {
-                console.assert(version_ex.stdout);
-                const version_re = /cmake.* version (.*?)\r?\n/;
-                cmake.version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
+            const execVersion = await proc.execute(path, ['--version']).result;
+            if (execVersion.retc === 0 && execVersion.stdout) {
+                console.assert(execVersion.stdout);
+                const regexVersion = /cmake.* version (.*?)\r?\n/;
+                cmake.version = util.parseVersion(regexVersion.exec(execVersion.stdout)![1]);
 
                 // We purposefully exclude versions <3.7.1, which have some major CMake
                 // server bugs
