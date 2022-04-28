@@ -1,4 +1,4 @@
-import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
+import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { InputFileSet } from '@cmt/dirty';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as path from 'path';
@@ -8,7 +8,7 @@ import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cmakeServerClient';
-import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
@@ -71,7 +71,7 @@ export class CMakeServerDriver extends CMakeDriver {
         this._codeModel = v;
     }
 
-    private readonly _codeModelChanged = new vscode.EventEmitter<null | codemodel.CodeModelContent>();
+    private readonly _codeModelChanged = new vscode.EventEmitter<null | codeModel.CodeModelContent>();
     get onCodeModelChanged() {
         return this._codeModelChanged.event;
     }
@@ -189,7 +189,7 @@ export class CMakeServerDriver extends CMakeDriver {
         // Toolchain information is not available with CMake server.
         this._codeModelChanged.fire({
             configurations: this.codeModel.configurations,
-            toolchains: new Map<string, codemodel.CodeModelToolchain>()
+            toolchains: new Map<string, codeModel.CodeModelToolchain>()
         });
     }
 
@@ -398,7 +398,7 @@ export class CMakeServerDriver extends CMakeDriver {
         });
     }
 
-    get codeModelContent(): codemodel.CodeModelContent | null {
+    get codeModelContent(): codeModel.CodeModelContent | null {
         return null;
     }
 

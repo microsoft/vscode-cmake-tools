@@ -4,7 +4,7 @@ This article is for developers who want to contribute to the CMake Tools open so
 
 ## Build the CMake Tools extension
 
-As with most VS Code extensions, you'll need [Node.JS](https://nodejs.org/en/) installed. We use [yarn](https://yarnpkg.com/getting-started/install) to compile the code.
+As with most VS Code extensions, you'll need [Node.JS](https://nodejs.org/en/) installed. We use yarn to compile the code (run `npm install -g yarn` to install it).
 
 The process is:
 

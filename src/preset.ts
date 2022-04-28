@@ -205,7 +205,7 @@ export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], re
     return undefined;
 }
 
-type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
+export type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
 
 export type OsName = "Windows" | "Linux" | "macOS";
 
@@ -559,10 +559,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(folder: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preset: ConfigurePreset | BuildPreset | TestPreset) {
+async function getExpansionOptions(folder: string, workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset) {
     const generator = 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined);
@@ -664,12 +661,7 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
     }
 }
 
-export async function expandConfigurePreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
         referencedConfigurePresets.set(folder, new Set());
@@ -773,7 +765,7 @@ export async function expandConfigurePreset(folder: string,
     return expandedPreset;
 }
 
-function getArchitecture(preset: ConfigurePreset) {
+export function getArchitecture(preset: ConfigurePreset) {
     if (util.isString(preset.architecture)) {
         return preset.architecture;
     } else if (preset.architecture && preset.architecture.value) {
@@ -783,7 +775,7 @@ function getArchitecture(preset: ConfigurePreset) {
     return 'x86';
 }
 
-function getToolset(preset: ConfigurePreset): Toolset {
+export function getToolset(preset: ConfigurePreset): Toolset {
     let result: Toolset | undefined;
     if (util.isString(preset.toolset)) {
         result = parseToolset(preset.toolset);
@@ -800,7 +792,7 @@ function getToolset(preset: ConfigurePreset): Toolset {
             log.warning(noToolsetArchWarning);
             result.host = 'x86';
         }
-        if (!result.version) {
+        if (!result.version && result.name !== latestToolsetName) {
             log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
         }
     } else {
@@ -810,6 +802,18 @@ function getToolset(preset: ConfigurePreset): Toolset {
     return result;
 }
 
+const toolsetToVersion: { [key: string]: string } = {
+    'v100': '10.0',
+    'v110': '11.0',
+    'v120': '12.0',
+    'v140': '14.0',
+    'v141': '14.16',
+    'v142': '14.29'
+    // don't include the latest version - the compiler version changes frequently and it will be picked by default anyway.
+    // NOTE: the latest toolset name (below) should be kept up to date.
+};
+const latestToolsetName = 'v143';
+
 // We don't support all of these options for Kit lookup right now, but might in the future.
 function parseToolset(toolset: string): Toolset {
     const toolsetOptions = toolset.split(',');
@@ -817,7 +821,12 @@ function parseToolset(toolset: string): Toolset {
     const result: Toolset = {};
     for (const option of toolsetOptions) {
         if (option.indexOf('=') < 0) {
-            result.name = option;
+            const version = toolsetToVersion[option];
+            if (version) {
+                result.version = version;
+            } else {
+                result.name = option;
+            }
         } else {
             const keyValue = option.split('=');
             switch (keyValue[0].toLowerCase()) {
@@ -842,11 +851,7 @@ function parseToolset(toolset: string): Toolset {
     return result;
 }
 
-async function expandConfigurePresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
         return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
@@ -863,11 +868,7 @@ async function expandConfigurePresetImpl(folder: string,
     return null;
 }
 
-async function expandConfigurePresetHelper(folder: string,
-    preset: ConfigurePreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    allowUserPreset: boolean = false) {
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -977,8 +978,8 @@ async function expandConfigurePresetHelper(folder: string,
 
                             if (!vsInstall) {
                                 log.warning(localize('specified.vs.not.found',
-                                    "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE=\"{1}\" was not found, falling back on default instance lookup behavior.",
-                                    preset.name, cmakeGeneratorInstance));
+                                    "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE={1} was not found, falling back on default instance lookup behavior.",
+                                    preset.name, `"${cmakeGeneratorInstance}"`));
                             }
                         }
                     }
@@ -995,7 +996,7 @@ async function expandConfigurePresetHelper(folder: string,
                             if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
                                 // If a toolset version is specified then check to make sure this vs instance has it installed.
                                 if (toolset.version) {
-                                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath);
+                                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
                                     // forcing non-null due to false positive (toolset.version is checked in conditional)
                                     if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
                                         vsInstall = vs;
@@ -1162,13 +1163,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
     return null;
 }
 
-export async function expandBuildPreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<BuildPreset | null> {
+export async function expandBuildPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     const refs = referencedBuildPresets.get(folder);
     if (!refs) {
         referencedBuildPresets.set(folder, new Set());
@@ -1221,13 +1216,7 @@ export async function expandBuildPreset(folder: string,
     return expandedPreset;
 }
 
-async function expandBuildPresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<BuildPreset | null> {
+async function expandBuildPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     let preset = getPresetByName(buildPresets(folder), name);
     if (preset) {
         return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
@@ -1255,12 +1244,7 @@ async function expandBuildPresetImpl(folder: string,
     return null;
 }
 
-async function expandBuildPresetHelper(folder: string,
-    preset: BuildPreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false) {
+async function expandBuildPresetHelper(folder: string, preset: BuildPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1329,13 +1313,7 @@ async function expandBuildPresetHelper(folder: string,
 // Map<fsPath, Set<referencedPresets>>
 const referencedTestPresets: Map<string, Set<string>> = new Map();
 
-export async function expandTestPreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<TestPreset | null> {
+export async function expandTestPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<TestPreset | null> {
     const refs = referencedTestPresets.get(folder);
     if (!refs) {
         referencedTestPresets.set(folder, new Set());
@@ -1421,13 +1399,7 @@ export async function expandTestPreset(folder: string,
     return expandedPreset;
 }
 
-async function expandTestPresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<TestPreset | null> {
+async function expandTestPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<TestPreset | null> {
     let preset = getPresetByName(testPresets(folder), name);
     if (preset) {
         return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
@@ -1455,12 +1427,7 @@ async function expandTestPresetImpl(folder: string,
     return null;
 }
 
-async function expandTestPresetHelper(folder: string,
-    preset: TestPreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false) {
+async function expandTestPresetHelper(folder: string, preset: TestPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName: string | undefined, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
