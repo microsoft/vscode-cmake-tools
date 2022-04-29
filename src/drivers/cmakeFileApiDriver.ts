@@ -2,18 +2,18 @@ import * as api from '@cmt/api';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
 import { ExecutableTarget } from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
+import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
-import * as index_api from '@cmt/drivers/cmakefileapi/api';
 import {
     createQueryFileForApi,
     loadCacheContent,
     loadConfigurationTargetMap,
     loadExtCodeModelContent,
     loadIndexFile,
-    loadToolchains
-} from '@cmt/drivers/cmakefileapi/api_helpers';
-import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+    loadToolchains,
+    Index
+} from '@cmt/drivers/cmakeFileApi';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -79,7 +79,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     // Information from cmake file api
     private _cache: Map<string, api.CacheEntry> = new Map<string, api.CacheEntry>();
-    private _generatorInformation: index_api.Index.GeneratorInformation | null = null;
+    private _generatorInformation: Index.GeneratorInformation | null = null;
     private _target_map: Map<string, api.Target[]> = new Map();
 
     async getGeneratorFromCache(cache_file_path: string): Promise<string> {
@@ -293,7 +293,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             this._generatorInformation = indexFile.cmake.generator;
 
             // load cache
-            const cache_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'cache');
+            const cache_obj = indexFile.objects.find((value: Index.ObjectKind) => value.kind === 'cache');
             if (!cache_obj) {
                 throw Error('No cache object found');
             }
@@ -301,7 +301,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             this._cache = await loadCacheContent(path.join(reply_path, cache_obj.jsonFile));
 
             // load targets
-            const codemodel_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'codemodel');
+            const codemodel_obj = indexFile.objects.find((value: Index.ObjectKind) => value.kind === 'codemodel');
             if (!codemodel_obj) {
                 throw Error('No code model object found');
             }
@@ -309,7 +309,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             this._codeModelContent = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
 
             // load toolchains
-            const toolchains_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'toolchains');
+            const toolchains_obj = indexFile.objects.find((value: Index.ObjectKind) => value.kind === 'toolchains');
 
             // The "toolchains" object kind wasn't introduced until CMake 3.20, so
             // it's not fatal if it's missing in the response.
@@ -329,7 +329,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return indexFile !== null;
     }
 
-    private _codeModelContent: codemodel.CodeModelContent | null = null;
+    private _codeModelContent: codeModel.CodeModelContent | null = null;
     get codeModelContent() {
         return this._codeModelContent;
     }
@@ -370,7 +370,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             }));
     }
 
-    private readonly _codeModelChanged = new vscode.EventEmitter<null | codemodel.CodeModelContent>();
+    private readonly _codeModelChanged = new vscode.EventEmitter<null | codeModel.CodeModelContent>();
     get onCodeModelChanged() {
         return this._codeModelChanged.event;
     }

@@ -1,4 +1,4 @@
-import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
+import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import * as cms_driver from '@cmt/drivers/cmakeServerDriver';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';

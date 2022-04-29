@@ -266,6 +266,7 @@ export class PresetsController {
             return false;
         } else {
             let newPreset: preset.ConfigurePreset | undefined;
+            let isMultiConfigGenerator: boolean = false;
             switch (chosenItem.name) {
                 case SpecialOptions.CreateFromCompilers: {
                     // Check that we have kits
@@ -284,19 +285,19 @@ export class PresetsController {
                         if (kit.toolchainFile || kit.name === SpecialKits.Unspecified) {
                             continue;
                         }
-                        let found = false;
+                        let duplicate = false;
                         if (kit.visualStudio && !kit.compilers) {
                             for (const filteredKit of filteredKits) {
                                 if (filteredKit.preferredGenerator?.name === kit.preferredGenerator?.name &&
                                     filteredKit.preferredGenerator?.platform === kit.preferredGenerator?.platform &&
                                     filteredKit.preferredGenerator?.toolset === kit.preferredGenerator?.toolset) {
                                     // Found same generator in the filtered list
-                                    found = true;
+                                    duplicate = true;
                                     break;
                                 }
                             }
                         }
-                        if (!found) {
+                        if (!duplicate) {
                             filteredKits.push(kit);
                         }
                     }
@@ -338,20 +339,25 @@ export class PresetsController {
                             return false;
                         } else {
                             log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
+                            const generator = chosen_kit.kit.preferredGenerator?.name;
+                            const cacheVariables: { [key: string]: preset.CacheVarType | undefined } = {
+                                CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
+                                CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C'] || chosen_kit.kit.visualStudio ? 'cl.exe' : undefined,
+                                CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX'] || chosen_kit.kit.visualStudio ? 'cl.exe' : undefined
+                            };
+                            isMultiConfigGenerator = util.isMultiConfGeneratorFast(generator || '');
+                            if (!isMultiConfigGenerator) {
+                                cacheVariables['CMAKE_BUILD_TYPE'] = 'Debug';
+                            }
                             newPreset = {
                                 name: '__placeholder__',
                                 displayName: chosen_kit.kit.name,
                                 description: chosen_kit.description,
-                                generator: chosen_kit.kit.preferredGenerator?.name,
+                                generator,
                                 toolset: chosen_kit.kit.preferredGenerator?.toolset,
                                 architecture: chosen_kit.kit.preferredGenerator?.platform,
                                 binaryDir: '${sourceDir}/out/build/${presetName}',
-                                cacheVariables: {
-                                    CMAKE_BUILD_TYPE: 'Debug',
-                                    CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
-                                    CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C']!,
-                                    CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
-                                }
+                                cacheVariables
                             };
                         }
                     }
@@ -406,6 +412,16 @@ export class PresetsController {
 
                 newPreset.name = name;
                 await this.addPresetAddUpdate(newPreset, 'configurePresets');
+
+                if (isMultiConfigGenerator) {
+                    const buildPreset: preset.BuildPreset = {
+                        name: `${newPreset.name}-debug`,
+                        displayName: `${newPreset.displayName} - Debug`,
+                        configurePreset: newPreset.name,
+                        configuration: 'Debug'
+                    };
+                    await this.addPresetAddUpdate(buildPreset, 'buildPresets');
+                }
             }
 
             return true;
