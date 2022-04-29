@@ -19,6 +19,7 @@ Bug Fixes:
 - Exclude environment variables from debugging if the values have newlines. [#2515](https://github.com/microsoft/vscode-cmake-tools/issues/2515)
 - Correctly configure the build environment when using VS 2015 and Ninja in CMakePresets.json. [#2516](https://github.com/microsoft/vscode-cmake-tools/issues/2516)
 - Select the correct VS toolset for Ninja generators with CMake Presets. [#2423](https://github.com/microsoft/vscode-cmake-tools/issues/2423)
+- Fix unhandled exception with CMakePresets.json. [#2117](https://github.com/microsoft/vscode-cmake-tools/issues/2117)
 
 ## 1.10.5
 Bug Fixes:
