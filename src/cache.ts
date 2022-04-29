@@ -97,7 +97,6 @@ export class CMakeCache {
      */
     private constructor(public readonly path: string, private readonly cacheEntries: Map<string, Entry>) {}
 
-
     /**
      * Reload the cache file and return a new instance. This will not modify this
      * instance.
