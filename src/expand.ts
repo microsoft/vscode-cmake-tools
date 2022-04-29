@@ -180,7 +180,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
         mat = env_re4.exec(repl);
         const varnameRepl = mat ? mat[1] : undefined;
         if (varnameRepl && varnameRepl === varname) {
-            circularReference = full;
+            circularReference = `\"${varname}\" : \"${tmpl}\"`;
             break;
         }
         subs.set(full, repl);
