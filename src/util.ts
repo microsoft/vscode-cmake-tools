@@ -184,6 +184,14 @@ export function objectPairs<V>(obj: { [key: string]: V }): [string, V][] {
 }
 
 /**
+ * Remote null and undefined entries from an array.
+ * @param x the input array
+ */
+export function removeEmpty<T>(x: (T | null | undefined)[]): T[] {
+    return x.filter(e => e) as T[];
+}
+
+/**
  * Map an iterable by some projection function
  * @param iter An iterable to map
  * @param proj The projection function
