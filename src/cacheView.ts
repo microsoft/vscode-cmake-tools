@@ -35,11 +35,11 @@ export class ConfigurationWebview {
     set isDirty(d: boolean) {
         this.dirtyFlag = d;
 
-        if (this.webviewPanel.title) {
+        if (this.panel.title) {
             // The webview title should reflect the dirty state
-            this.webviewPanel.title = this.cmakeCacheEditorText;
+            this.panel.title = this.cmakeCacheEditorText;
             if (d) {
-                this.webviewPanel.title += "*";
+                this.panel.title += "*";
             } else {
                 // If the global dirty state gets cleared, make sure all the entries
                 // of the cache table have their state dirty updated accordingly.
@@ -47,15 +47,12 @@ export class ConfigurationWebview {
             }
         }
     }
-    private readonly webviewPanel: vscode.WebviewPanel;
-    get panel() {
-        return this.webviewPanel;
-    }
+    public readonly panel: vscode.WebviewPanel;
+
     private options: IOption[] = [];
 
-    constructor(protected cachePath: string,
-        protected save: () => void) {
-        this.webviewPanel = vscode.window.createWebviewPanel(
+    constructor(protected cachePath: string, protected save: () => void) {
+        this.panel = vscode.window.createWebviewPanel(
             'cmakeConfiguration', // Identifies the type of the webview. Used internally
             this.cmakeCacheEditorText, // Title of the panel displayed to the user
             vscode.ViewColumn.One, // Editor column to show the new webview panel in.
@@ -151,8 +148,8 @@ export class ConfigurationWebview {
 
             // The webview needs a re-render also for the "ignore" or "fromUI" cases
             // to reflect all the unconflicting changes.
-            if (this.webviewPanel.visible) {
-                await this.renderWebview(this.webviewPanel, false);
+            if (this.panel.visible) {
+                await this.renderWebview(this.panel, false);
             }
 
             // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
@@ -169,16 +166,16 @@ export class ConfigurationWebview {
      * Initializes the panel, registers events and renders initial content
      */
     async initPanel() {
-        await this.renderWebview(this.webviewPanel, true);
+        await this.renderWebview(this.panel, true);
 
-        this.webviewPanel.onDidChangeViewState(async event => {
+        this.panel.onDidChangeViewState(async event => {
             if (event.webviewPanel.visible) {
                 await this.renderWebview(event.webviewPanel, false);
             }
         });
 
-        this.webviewPanel.onDidDispose(async event => {
-            console.log(`disposing webview ${event} - ${this.webviewPanel}`);
+        this.panel.onDidDispose(async event => {
+            console.log(`disposing webview ${event} - ${this.panel}`);
             if (this.isDirty) {
                 const yes = localize('yes', 'Yes');
                 const no = localize('no', 'No');
@@ -194,7 +191,7 @@ export class ConfigurationWebview {
         //     - checkbox update (update entry in the internal array)
         //     - editbox update (update entry in the internal array)
         //     - save button (save the internal array into the cache file)
-        this.webviewPanel.webview.onDidReceiveMessage(async (option: IOption) => {
+        this.panel.webview.onDidReceiveMessage(async (option: IOption) => {
             if (!option) {
                 await this.persistCacheEntries();
             } else {
@@ -241,7 +238,7 @@ export class ConfigurationWebview {
      */
     async renderWebview(panel?: vscode.WebviewPanel, refresh: boolean = false) {
         if (!panel) {
-            panel = this.webviewPanel;
+            panel = this.panel;
         }
 
         if (refresh) {

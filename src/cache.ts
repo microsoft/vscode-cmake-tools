@@ -19,30 +19,14 @@ const log = logging.createLogger('cache');
  * information.
  */
 export class Entry implements api.CacheEntry {
-    private readonly entryType: api.CacheEntryType = api.CacheEntryType.Uninitialized;
-    private readonly docString: string = '';
-    private readonly entryKey: string = '';
-    private readonly entryValue: any = null;
+    public readonly type: api.CacheEntryType = api.CacheEntryType.Uninitialized;
+    public readonly helpString: string = '';
+    public readonly key: string = '';
+    public readonly value: any = null;
     advanced: boolean = false;
     choices: string[] = [];
 
     serializedKey: string = '';
-
-    get type() {
-        return this.entryType;
-    }
-
-    get helpString() {
-        return this.docString;
-    }
-
-    get key() {
-        return this.entryKey;
-    }
-
-    get value() {
-        return this.entryValue;
-    }
 
     as<T>(): T {
         return this.value as T;
@@ -58,15 +42,15 @@ export class Entry implements api.CacheEntry {
      * @param advanced Whether the entry is `ADVANCED`
      */
     constructor(key: string, value: string, type: api.CacheEntryType, docString: string, advanced: boolean) {
-        this.entryKey = key;
+        this.key = key;
         this.serializedKey = key; // may be overwritten later with quoted version of `key`
-        this.entryType = type;
+        this.type = type;
         if (type === api.CacheEntryType.Bool) {
-            this.entryValue = util.isTruthy(value);
+            this.value = util.isTruthy(value);
         } else {
-            this.entryValue = value;
+            this.value = value;
         }
-        this.docString = docString;
+        this.helpString = docString;
         this.advanced = advanced;
     }
 }
@@ -93,10 +77,10 @@ export class CMakeCache {
             log.trace(localize('file.contents.read.successfully', 'File contents read successfully'));
             const entries = CMakeCache.parseCache(content.toString());
             log.trace(localize('parsed.entries.from', 'Parsed {0} entries from {1}', entries.size, path));
-            return new CMakeCache(path, exists, entries);
+            return new CMakeCache(path, entries);
         } else {
             log.debug(localize('cache.file.does.not.exist', 'Cache file does not exist: Returning empty cache data'));
-            return new CMakeCache(path, exists, new Map());
+            return new CMakeCache(path, new Map());
         }
     }
 
@@ -108,28 +92,11 @@ export class CMakeCache {
     /**
      * Create a new instance. This is **private**. You may only create an instance
      * via the `fromPath` static method.
-     * @param cachePath Path to the cache
-     * @param cacheFileExists Whether the file exists
+     * @param path Path to the cache file
      * @param cacheEntries Entries in the cache
      */
-    private constructor(private readonly cachePath: string,
-        private readonly cacheFileExists: boolean,
-        private readonly cacheEntries: Map<string, Entry>) {}
+    private constructor(public readonly path: string, private readonly cacheEntries: Map<string, Entry>) {}
 
-    /**
-     * `true` if the file exists when this instance was created.
-     * `false` otherwise.
-     */
-    get exists() {
-        return this.cacheFileExists;
-    }
-
-    /**
-     * The path to the cache file, which may not exist
-     */
-    get path() {
-        return this.cachePath;
-    }
 
     /**
      * Reload the cache file and return a new instance. This will not modify this
@@ -163,21 +130,21 @@ export class CMakeCache {
                     rollbar.error(localize('failed.to.read.line.from.cmake.cache.file', 'Failed to read a line from a CMake cache file {0}', line));
                     continue;
                 }
-                const [, serializedName, quotedName, unquotedName, typeName, valueString] = match;
+                const [, serializedName, quotedName, unquotedName, typeName, value] = match;
                 const name = quotedName || unquotedName;
                 if (!name || !typeName) {
                     continue;
                 }
-                log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typeName, 'valuestr', valueString));
+                log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typeName, 'valuestr', value));
                 if (name.endsWith('-ADVANCED')) {
-                    if (valueString === '1') {
+                    if (value === '1') {
                         const entryName = name.substr(0, name.lastIndexOf('-'));
                         advancedNames.push(entryName);
                     }
                 } else if (name.endsWith('-MODIFIED')) {
                     // ignore irrelevant entry property
                 } else if (name.endsWith('-STRINGS')) {
-                    choices.set(name.substr(0, name.lastIndexOf('-')), valueString.split(';'));
+                    choices.set(name.substr(0, name.lastIndexOf('-')), value.split(';'));
                 } else {
                     const key = name;
                     const typemap = {
@@ -196,7 +163,7 @@ export class CMakeCache {
                         rollbar.error(localize('cache.entry.unknown', 'Cache entry {0} has unknown type: {1}', `"${name}"`, `"${typeName}"`));
                     } else {
                         log.trace(localize('constructing.new.cache.entry', 'Constructing a new cache entry from the given line'));
-                        const entry = new Entry(key, valueString, type, docString, false);
+                        const entry = new Entry(key, value, type, docString, false);
                         entry.serializedKey = serializedName;
                         entries.set(name, entry);
                     }
