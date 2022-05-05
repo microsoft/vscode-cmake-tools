@@ -623,7 +623,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
                         let selectedFile: string | undefined;
                         if (!selection) {
-                            telemetryProperties["missingCMakeListsUserAction"] = "cancle";
+                            telemetryProperties["missingCMakeListsUserAction"] = "cancel";
                             break; // User canceled it.
                         } else if (selection.label === browse) {
                             const openOpts: vscode.OpenDialogOptions = {
