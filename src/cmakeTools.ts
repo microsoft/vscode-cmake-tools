@@ -623,6 +623,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
                         let selectedFile: string | undefined;
                         if (!selection) {
+                            telemetryProperties["missingCMakeListsUserAction"] = "cancel";
                             break; // User canceled it.
                         } else if (selection.label === browse) {
                             const openOpts: vscode.OpenDialogOptions = {
@@ -641,6 +642,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         if (selectedFile) {
                             const relPath = util.getRelativePath(selectedFile, this.folder.uri.fsPath);
                             void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", relPath);
+                            telemetryProperties["missingCMakeListsUserAction"] = "updateSourceDirectory";
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -657,6 +659,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
                                     return vscode.commands.executeCommand('cmake.configure');
                                 }
                             }
+                        } else {
+                            telemetryProperties["missingCMakeListsUserAction"] = "invalidSourceDirectoryPath";
                         }
                     } else if (result === ignoreCMakeListsMissing) {
                         // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
