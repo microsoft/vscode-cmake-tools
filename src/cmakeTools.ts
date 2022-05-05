@@ -623,6 +623,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
                         let selectedFile: string | undefined;
                         if (!selection) {
+                            telemetryProperties["missingCMakeListsUserAction"] = "cancle";
                             break; // User canceled it.
                         } else if (selection.label === browse) {
                             const openOpts: vscode.OpenDialogOptions = {
@@ -646,6 +647,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
                                 // another immediate configure, which will be blocked anyway).
                                 config.updatePartial({ sourceDirectory: relPath }, false);
+                                telemetryProperties["missingCMakeListsUserAction"] = "updateSourceDirectory";
 
                                 // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
                                 // we know that it exists and we don't need any other additional checks on its value,
