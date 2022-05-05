@@ -214,14 +214,14 @@ export class CMakeCache {
 
                 // FIXME: How can `value` be boolean desipte being marked as string in the signature?
 
-                if (typeof value === 'string') {
+                if (util.isString(value)) {
                     const newlineIndex = value.search(/[\r\n]/);
                     if (newlineIndex >= 0) {
                         value = value.substring(0, newlineIndex);
                         log.warning(localize('cache.value.truncation.warning', 'Newline(s) found in cache entry {0}. Value has been truncated to {1}', `"${key}"`, `"${value}"`));
                     }
                 }
-                const newValueLine = entry.serializedKey + type + ((typeof value === 'boolean') ? (value ? "TRUE" : "FALSE") : value);
+                const newValueLine = entry.serializedKey + type + (util.isBoolean(value) ? (value ? "TRUE" : "FALSE") : value);
                 return content.replace(line, newValueLine);
             }
         }
