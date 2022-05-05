@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Setler yeniden okunuyor",
 	"dispose.cmake.tools": "CMake Araçları'nı at",
-	"configure.this.project": "'{0}' projesini yapılandırmak istiyor musunuz?",
+	"configure.this.project": "{0} projesini yapılandırmak istiyor musunuz?",
 	"yes.button": "Evet",
 	"not.now.button": "Şimdi değil",
 	"always.configure.on.open": "Projeler her zaman açıldıktan sonra mı yapılandırılsın?",
@@ -20,7 +20,7 @@
 	"configure.recommended": "Yeni bir set tanımına yükselttikten sonra yeniden yapılandırmanız önerilir.",
 	"using.cache.to.configure.workspace.on.open": "Açık {0} üzerindeki çalışma alanını yapılandırmak için önbellek kullanılıyor",
 	"update.code.model.for.cpptools": "cpptools için kod modelini güncelleştir",
-	"update.intellisense.disabled": "C_Cpp.intelliSenseEngine 'Devre dışı' olarak ayarlandığından yapılandırma sağlayıcısı güncelleştirilemiyor",
+	"update.intellisense.disabled": "{0}, {1} olarak ayarlandığından yapılandırma sağlayıcısı güncelleştirilemedi",
 	"filed.to.open.cache.file.on.code.model.update": "Kod modeli güncelleştirmesinde CMake önbellek dosyası açılamadı",
 	"opening.text.editor.for": "{0} için metin düzenleyici açılıyor",
 	"no.kits.file.what.to.do": "Set dosyası yok. Ne yapmak istiyorsunuz?",

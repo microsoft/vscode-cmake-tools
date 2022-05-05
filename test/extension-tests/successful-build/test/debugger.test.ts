@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeTools } from '@cmt/cmake-tools';
+import { CMakeTools } from '@cmt/cmakeTools';
 import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 //import sinon = require('sinon');
 import * as fs from 'fs';
 import * as path from 'path';
 
-suite('[Debug/Launch interface]', async () => {
+suite('Debug/Launch interface', async () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 
@@ -168,27 +168,93 @@ suite('[Debug/Launch interface]', async () => {
         testEnv.config.updatePartial({ buildBeforeRun: false });
 
         const executablesTargets = await cmt.executableTargets;
-        expect(executablesTargets.length).to.be.not.eq(0);
+        expect(executablesTargets.length).to.not.eq(0);
         await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
         const launchProgramPath = await cmt.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
 
-        // Remove file if not exists
+        // Remove file if exists
         const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
         if (fs.existsSync(createdFileOnExecution)) {
             fs.unlinkSync(createdFileOnExecution);
         }
 
         const terminal = await cmt.launchTarget();
-        expect(terminal).of.be.not.null;
-        expect(terminal!.name).of.be.eq('CMake/Launch');
+        expect(terminal).to.be.not.null;
+        expect(terminal!.name).to.eq('CMake/Launch');
 
+        const start = new Date();
         // Needed to get launch target result
-        await new Promise(res => setTimeout(res, 3000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
+        const elapsed = (new Date().getTime() - start.getTime()) / 1000;
+        console.log(`Waited ${elapsed} seconds for output file to appear`);
+
+        const exists = fs.existsSync(createdFileOnExecution);
         // Check that it is compiled as a new file
-        expect(fs.existsSync(createdFileOnExecution)).to.be.true;
+        expect(exists).to.be.true;
+    }).timeout(60000);
+
+    test('Test launch same target multiple times when newTerminal run is enabled', async () => {
+        testEnv.config.updatePartial({
+            buildBeforeRun: false,
+            launchBehavior: 'newTerminal'
+        });
+
+        const executablesTargets = await cmt.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+        const launchProgramPath = await cmt.launchTargetPath();
+        expect(launchProgramPath).to.be.not.null;
+
+        // Remove file if exists
+        const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
+        if (fs.existsSync(createdFileOnExecution)) {
+            fs.unlinkSync(createdFileOnExecution);
+        }
+
+        const term1 = await cmt.launchTarget();
+        expect(term1).to.be.not.null;
+        const term1Pid = await term1?.processId;
+
+        const term2 = await cmt.launchTarget();
+        expect(term2).to.be.not.null;
+        expect(term2!.name).of.be.eq('CMake/Launch');
+
+        const term2Pid = await term2?.processId;
+        expect(term1Pid).to.not.eq(term2Pid);
+    }).timeout(60000);
+
+    test('Test launch same target multiple times when newTerminal run is disabled', async () => {
+        testEnv.config.updatePartial({
+            buildBeforeRun: false,
+            launchBehavior: 'reuseTerminal'
+        });
+
+        const executablesTargets = await cmt.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+        const launchProgramPath = await cmt.launchTargetPath();
+        expect(launchProgramPath).to.be.not.null;
+
+        // Remove file if exists
+        const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
+        if (fs.existsSync(createdFileOnExecution)) {
+            fs.unlinkSync(createdFileOnExecution);
+        }
+
+        const term1 = await cmt.launchTarget();
+        expect(term1).to.be.not.null;
+        const term1Pid = await term1?.processId;
+
+        const term2 = await cmt.launchTarget();
+        expect(term2).to.be.not.null;
+
+        const term2Pid = await term2?.processId;
+        expect(term1Pid).to.eq(term2Pid);
     }).timeout(60000);
 });
 

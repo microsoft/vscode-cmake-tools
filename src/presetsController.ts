@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import { CMakeTools } from '@cmt/cmake-tools';
+import { CMakeTools } from '@cmt/cmakeTools';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
@@ -12,7 +12,8 @@ import rollbar from '@cmt/rollbar';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
-import { descriptionForKit, Kit, SpecialKits, kitHostTargetArch } from '@cmt/kit';
+import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
+import { getHostTargetArchString } from '@cmt/installs/visual-studio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 
@@ -39,8 +40,6 @@ export class PresetsController {
 
     static async init(cmakeTools: CMakeTools, kitsController: KitsController): Promise<PresetsController> {
         const presetsController = new PresetsController(cmakeTools, kitsController);
-
-        preset.setCompilers(kitsController.availableKits);
 
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = cmakeTools.folder.uri.fsPath;
@@ -181,10 +180,7 @@ export class PresetsController {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetPresetsFile(file: string,
-        setPresetsFile: SetPresetsFileFunc,
-        setOriginalPresetsFile: SetPresetsFileFunc,
-        fileExistCallback: (fileExists: boolean) => void) {
+    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
@@ -205,14 +201,8 @@ export class PresetsController {
     // (need to clean or reload driver)
     async reapplyPresets() {
         // Reset all changes due to expansion since parents could change
-        await this.resetPresetsFile(this.presetsPath,
-            this._setPresetsFile,
-            this._setOriginalPresetsFile,
-            exists => this._presetsFileExists = exists);
-        await this.resetPresetsFile(this.userPresetsPath,
-            this._setUserPresetsFile,
-            this._setOriginalUserPresetsFile,
-            exists => this._userPresetsFileExists = exists);
+        await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists);
+        await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists);
 
         this._cmakeTools.minCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
 
@@ -276,6 +266,7 @@ export class PresetsController {
             return false;
         } else {
             let newPreset: preset.ConfigurePreset | undefined;
+            let isMultiConfigGenerator: boolean = false;
             switch (chosenItem.name) {
                 case SpecialOptions.CreateFromCompilers: {
                     // Check that we have kits
@@ -294,19 +285,19 @@ export class PresetsController {
                         if (kit.toolchainFile || kit.name === SpecialKits.Unspecified) {
                             continue;
                         }
-                        let found = false;
+                        let duplicate = false;
                         if (kit.visualStudio && !kit.compilers) {
                             for (const filteredKit of filteredKits) {
                                 if (filteredKit.preferredGenerator?.name === kit.preferredGenerator?.name &&
                                     filteredKit.preferredGenerator?.platform === kit.preferredGenerator?.platform &&
                                     filteredKit.preferredGenerator?.toolset === kit.preferredGenerator?.toolset) {
                                     // Found same generator in the filtered list
-                                    found = true;
+                                    duplicate = true;
                                     break;
                                 }
                             }
                         }
-                        if (!found) {
+                        if (!duplicate) {
                             filteredKits.push(kit);
                         }
                     }
@@ -322,7 +313,7 @@ export class PresetsController {
                         if (kit.name === SpecialKits.ScanForKits) {
                             return `[${localize('scan.for.compilers.button', 'Scan for compilers')}]`;
                         } else if (kit.visualStudio && !kit.compilers) {
-                            const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+                            const hostTargetArch = getHostTargetArchString(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
                             return `${(kit.preferredGenerator?.name || 'Visual Studio')} ${hostTargetArch}`;
                         } else {
                             return kit.name;
@@ -345,24 +336,28 @@ export class PresetsController {
                     } else {
                         if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
                             await KitsController.scanForKits(this._cmakeTools);
-                            preset.setCompilers(this._kitsController.availableKits);
                             return false;
                         } else {
                             log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
+                            const generator = chosen_kit.kit.preferredGenerator?.name;
+                            const cacheVariables: { [key: string]: preset.CacheVarType | undefined } = {
+                                CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
+                                CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C'] || chosen_kit.kit.visualStudio ? 'cl.exe' : undefined,
+                                CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX'] || chosen_kit.kit.visualStudio ? 'cl.exe' : undefined
+                            };
+                            isMultiConfigGenerator = util.isMultiConfGeneratorFast(generator || '');
+                            if (!isMultiConfigGenerator) {
+                                cacheVariables['CMAKE_BUILD_TYPE'] = 'Debug';
+                            }
                             newPreset = {
                                 name: '__placeholder__',
                                 displayName: chosen_kit.kit.name,
                                 description: chosen_kit.description,
-                                generator: chosen_kit.kit.preferredGenerator?.name,
+                                generator,
                                 toolset: chosen_kit.kit.preferredGenerator?.toolset,
                                 architecture: chosen_kit.kit.preferredGenerator?.platform,
                                 binaryDir: '${sourceDir}/out/build/${presetName}',
-                                cacheVariables: {
-                                    CMAKE_BUILD_TYPE: 'Debug',
-                                    CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
-                                    CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C']!,
-                                    CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
-                                }
+                                cacheVariables
                             };
                         }
                     }
@@ -417,6 +412,16 @@ export class PresetsController {
 
                 newPreset.name = name;
                 await this.addPresetAddUpdate(newPreset, 'configurePresets');
+
+                if (isMultiConfigGenerator) {
+                    const buildPreset: preset.BuildPreset = {
+                        name: `${newPreset.name}-debug`,
+                        displayName: `${newPreset.displayName} - Debug`,
+                        configurePreset: newPreset.name,
+                        configuration: 'Debug'
+                    };
+                    await this.addPresetAddUpdate(buildPreset, 'buildPresets');
+                }
             }
 
             return true;
@@ -959,7 +964,7 @@ export class PresetsController {
             return undefined;
         }
         let schemaFile = 'schemas/CMakePresets-schema.json';
-        if (presetsFile.version === 3) {
+        if (presetsFile.version >= 3) {
             schemaFile = 'schemas/CMakePresets-v3-schema.json';
         }
         const validator = await loadSchema(schemaFile);
@@ -1015,7 +1020,7 @@ export class PresetsController {
         const indent = this.getIndentationSettings();
         try {
             await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));
-        } catch (e) {
+        } catch (e: any) {
             rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
             return;
         }

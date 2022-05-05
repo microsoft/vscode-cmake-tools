@@ -85,7 +85,7 @@ CMake Tools is designed to work well with an external CMake process. If you choo
 
 ## Clean configure
 
-To get CMake Tools to do a clean configure, run **CMake: Delete cached built settings and reconfigure** from the command palette in VS Code.
+To get CMake Tools to do a clean configure, run **CMake: Delete Cache and Reconfigure** from the command palette in VS Code.
 
 A clean configure deletes the `CMakeCache.txt` file and `CMakeFiles` directory from the build directory. This resets all of CMake's default state.
 

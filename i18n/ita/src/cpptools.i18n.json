@@ -9,6 +9,6 @@
 	"unknown.control.gflag.c": "Flag di controllo standard C sconosciuto: {0}",
 	"unknown.control.gflag": "Flag di controllo standard sconosciuto: {0}",
 	"unknown language": "Linguaggio sconosciuto: {0}",
-	"build.type.out.of.sync": "The build configurations generated do not contain the active build configuration. Using '{0}' for CMAKE_BUILD_TYPE instead of '{1}' to ensure that IntelliSense configurations can be found",
+	"build.type.out.of.sync": "Le configurazioni della build generate non contengono la configurazione build attiva. Usare {0} per CMAKE_BUILD_TYPE invece di {1} per assicurarsi che siano disponibili configurazioni IntelliSense",
 	"path.not.found.in.cmake.cache": "Il percorso del compilatore per uno o più file di origine non è stato trovato nella cache di CMake. Se si usa un file di toolchain, è necessario specificare l'opzione CACHE quando si imposta il percorso del compilatore C e/o C++"
 }

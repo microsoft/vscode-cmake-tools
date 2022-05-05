@@ -1,6 +1,5 @@
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
-import { logFilePath } from '@cmt/logging';
 import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
@@ -10,17 +9,9 @@ import {
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmake-tools';
+import CMakeTools from '@cmt/cmakeTools';
 
-let workername: string = process.platform;
-
-if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {
-    workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
-}
-
-if (process.env.TRAVIS_OS_NAME) {
-    workername = process.env.TRAVIS_OS_NAME;
-}
+const workername: string = process.platform;
 
 suite('Build using Kits and Variants', async () => {
     let testEnv: DefaultEnvironment;
@@ -42,36 +33,23 @@ suite('Build using Kits and Variants', async () => {
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
-        await vscode.commands.executeCommand('cmake.scanForKits');
         await clearExistingKitConfigurationFile();
+        await vscode.commands.executeCommand('cmake.scanForKits');
     });
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
         const kit = await getFirstSystemKit(cmakeTools);
-        console.log("Using following kit in next test: ", kit.name);
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
         testEnv.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function (this: Mocha.Context) {
-        this.timeout(100000);
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
-        const logPath = logFilePath();
-        testEnv.clean();
-        if (await fs.exists(logPath)) {
-            if (this.currentTest?.state === "failed") {
-                const logContent = await fs.readFile(logPath);
-                logContent.toString().split('\n').forEach(line => {
-                    console.log(line);
-                });
-            }
-            await fs.writeFile(logPath, "");
-        }
     });
 
     suiteTeardown(async () => {
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
         if (testEnv) {
             testEnv.teardown();
         }
@@ -117,7 +95,7 @@ suite('Build using Kits and Variants', async () => {
         // Select compiler build node dependent
         const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
             linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
         };
         if (!(workername in os_compilers)) {
             this.skip();
@@ -143,7 +121,7 @@ suite('Build using Kits and Variants', async () => {
             // Select compiler build node dependent
             const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
                 linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-                win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+                win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
             };
             if (!(workername in os_compilers)) {
                 this.skip();

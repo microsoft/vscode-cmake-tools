@@ -7,5 +7,6 @@
 	"executing.command": "Ejecutando el comando: {0}",
 	"processing.data.event.stdout": "Procesando el evento \"data\" de proc stdout",
 	"processing.data.event.stderr": "Procesando el evento \"data\" de proc stderr",
-	"resolving.close.event": "Resolviendo el proceso en el evento \"close\""
+	"resolving.close.event": "Resolviendo el proceso en el evento \"close\"",
+	"process.timeout": "Se agotó el tiempo de espera del comando: {0}"
 }

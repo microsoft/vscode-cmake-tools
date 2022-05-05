@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "下载新的 CMake 安装程序时出现非 200 响应",
 	"downloaded.to.path": "已将 {0} 下载到 {1}",
-	"program.need.for.installer": "CMake 工具需要“{0}”程序才能运行 CMake 安装程序",
+	"program.need.for.installer": "CMake 工具需要{0}程序才能运行 CMake 安装程序",
 	"downloading.filename": "正在下载 {0}",
 	"running.cmake.installer": "正在运行 CMake 安装程序",
 	"failed.to.authorize": "无法授权运行 CMake 安装。",

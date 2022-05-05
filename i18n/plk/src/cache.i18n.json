@@ -13,12 +13,12 @@
 	"parsing.cmake.cache.string": "Analizowanie ciągu pamięci podręcznej narzędzia CMake",
 	"failed.to.read.line.from.cmake.cache.file": "Nie można odczytać wiersza z pliku pamięci podręcznej narzędzia CMake {0}",
 	"read.line.in.cache": "Odczytaj wiersz w pamięci podręcznej za pomocą wartości {0}={1}, {2}={3}, {4}={5}",
-	"cache.entry.unknown": "Pozycja pamięci podręcznej „{0}” jest nieznanego typu: „{1}”",
+	"cache.entry.unknown": "{0} wpisu pamięci podręcznej ma nieznany typ: {1}",
 	"constructing.new.cache.entry": "Tworzenie nowej pozycji pamięci podręcznej z danego wiersza",
-	"nonexisting.advanced.entry": "Nieistniejący wpis pamięci podręcznej „{0}” oznaczony jako zaawansowany",
-	"ignore.strings.for.nonexisting.entry": "Ignorowanie właściwości „STRINGS” dla nieistniejącego wpisu pamięci podręcznej „{0}”",
+	"nonexisting.advanced.entry": "Nieistniejący wpis pamięci podręcznej {0} oznaczony jako zaawansowany",
+	"ignore.strings.for.nonexisting.entry": "Ignorowanie właściwości {1} dla nieistniejącego wpisu pamięci podręcznej {0}",
 	"parsed.cache.entries": "Przeanalizowano pozycje pamięci podręcznej w liczbie {0}",
-	"cache.value.truncation.warning": "Znaleziono nowe wiersze we wpisie pamięci podręcznej „{0}”. Wartość została obcięta do elementu „{1}”",
+	"cache.value.truncation.warning": "Znaleziono nowe wiersze we wpisie pamięci podręcznej {0}. Wartość została obcięta do elementu {1}",
 	"get.cache.key": "Pobierz klucz pamięci podręcznej {0}={1}",
 	"get.cache.key.missing": "Pobierz klucz pamięci podręcznej {0}=[[Brak]]"
 }

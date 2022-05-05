@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "새 CMake 설치 관리자를 다운로드하는 동안 200 이외의 응답",
 	"downloaded.to.path": "{1}에 {0}을(를) 다운로드함",
-	"program.need.for.installer": "CMake 도구의 경우 CMake 설치 관리자를 실행하기 위한 '{0}' 프로그램이 필요함",
+	"program.need.for.installer": "CMake 도구의 경우 CMake 설치 관리자를 실행하기 위한 {0} 프로그램이 필요함",
 	"downloading.filename": "{0}을(를) 다운로드하는 중",
 	"running.cmake.installer": "CMake 설치 관리자를 실행하는 중",
 	"failed.to.authorize": "CMake 설치를 실행할 권한을 부여하지 못했습니다.",

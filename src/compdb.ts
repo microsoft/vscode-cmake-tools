@@ -52,7 +52,7 @@ export class CompilationDatabase {
                 const content = JSON.parse(data.toString()) as ArgsCompileCommand[];
                 db.push(...content);
             } catch (e) {
-                log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database "{0}": {1}', dbpath, util.errorToString(e)));
+                log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database {0}: {1}', `"${dbpath}"`, util.errorToString(e)));
                 return null;
             }
         }

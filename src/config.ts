@@ -11,9 +11,13 @@ import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { CppDebugConfiguration } from './debugger';
+import { Environment } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+export function defaultNumJobs (): number {
+    return os.cpus().length + 2;
+}
 
 const log = logging.createLogger('config');
 
@@ -22,10 +26,6 @@ export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'autom
 export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
 export type TouchBarButtonVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
-
-interface HardEnv {
-    [key: string]: string;
-}
 
 export interface AdvancedTouchBarConfig {
     configure?: TouchBarButtonVisibility;
@@ -106,7 +106,7 @@ export interface ExtensionConfigurationSettings {
     configureArgs: string[];
     buildArgs: string[];
     buildToolArgs: string[];
-    parallelJobs: number;
+    parallelJobs: number | undefined;
     ctestPath: string;
     ctest: { parallelJobs: number };
     parseBuildDiagnostics: boolean;
@@ -115,10 +115,10 @@ export interface ExtensionConfigurationSettings {
     defaultVariants: object;
     ctestArgs: string[];
     ctestDefaultArgs: string[];
-    environment: HardEnv;
-    configureEnvironment: HardEnv;
-    buildEnvironment: HardEnv;
-    testEnvironment: HardEnv;
+    environment: Environment;
+    configureEnvironment: Environment;
+    buildEnvironment: Environment;
+    testEnvironment: Environment;
     mingwSearchDirs: string[];
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
@@ -128,6 +128,7 @@ export interface ExtensionConfigurationSettings {
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
     cmakeCommunicationMode: CMakeCommunicationMode;
+    showSystemKits: boolean;
     ignoreKitEnv: boolean;
     buildTask: boolean;
     outputLogEncoding: string;
@@ -138,6 +139,7 @@ export interface ExtensionConfigurationSettings {
     statusbar: StatusBarConfig;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
+    launchBehavior: string;
 }
 
 type EmittersOf<T> = {
@@ -283,7 +285,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get buildToolArgs(): string[] {
         return this.configData.buildToolArgs;
     }
-    get parallelJobs(): number {
+    get parallelJobs(): number | undefined {
         return this.configData.parallelJobs;
     }
     get ctest_parallelJobs(): number | null {
@@ -354,26 +356,26 @@ export class ConfigurationReader implements vscode.Disposable {
     get cmakeCommunicationMode(): CMakeCommunicationMode {
         let communicationMode = this.configData.cmakeCommunicationMode;
         if (communicationMode === "automatic" && this.useCMakeServer) {
-            log.warning(localize(
-                'please.upgrade.configuration',
-                'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
+            log.warning(localize('please.upgrade.configuration', 'The setting {0} is replaced by {1}. Please upgrade your configuration.', '"useCMakeServer"', '"cmakeCommunicationMode"'));
             communicationMode = 'serverApi';
         }
         return communicationMode;
     }
 
-    get numJobs(): number {
-        const jobs = this.parallelJobs;
-        if (!!jobs) {
-            return jobs;
+    get numJobs(): number | undefined {
+        if (this.parallelJobs === undefined) {
+            return undefined;
+        } else if (this.parallelJobs === 0) {
+            return defaultNumJobs();
+        } else {
+            return this.parallelJobs;
         }
-        return os.cpus().length + 2;
     }
 
     get numCTestJobs(): number {
         const ctest_jobs = this.ctest_parallelJobs;
         if (!ctest_jobs) {
-            return this.numJobs;
+            return this.numJobs || defaultNumJobs();
         }
         return ctest_jobs;
     }
@@ -392,6 +394,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
+    }
+    get showSystemKits(): boolean {
+        return this.configData.showSystemKits;
     }
     get ignoreKitEnv(): boolean {
         return this.configData.ignoreKitEnv;
@@ -418,6 +423,10 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get statusbar() {
         return this._configData.statusbar;
+    }
+
+    get launchBehavior(): string {
+        return this.configData.launchBehavior;
     }
 
     private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
@@ -447,10 +456,10 @@ export class ConfigurationReader implements vscode.Disposable {
         defaultVariants: new vscode.EventEmitter<object>(),
         ctestArgs: new vscode.EventEmitter<string[]>(),
         ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
-        environment: new vscode.EventEmitter<HardEnv>(),
-        configureEnvironment: new vscode.EventEmitter<HardEnv>(),
-        buildEnvironment: new vscode.EventEmitter<HardEnv>(),
-        testEnvironment: new vscode.EventEmitter<HardEnv>(),
+        environment: new vscode.EventEmitter<Environment>(),
+        configureEnvironment: new vscode.EventEmitter<Environment>(),
+        buildEnvironment: new vscode.EventEmitter<Environment>(),
+        testEnvironment: new vscode.EventEmitter<Environment>(),
         mingwSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
@@ -460,6 +469,7 @@ export class ConfigurationReader implements vscode.Disposable {
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),
         cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
+        showSystemKits: new vscode.EventEmitter<boolean>(),
         ignoreKitEnv: new vscode.EventEmitter<boolean>(),
         buildTask: new vscode.EventEmitter<boolean>(),
         outputLogEncoding: new vscode.EventEmitter<string>(),
@@ -469,7 +479,8 @@ export class ConfigurationReader implements vscode.Disposable {
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
         statusbar: new vscode.EventEmitter<StatusBarConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
-        allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>()
+        allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
+        launchBehavior: new vscode.EventEmitter<string>()
     };
 
     /**

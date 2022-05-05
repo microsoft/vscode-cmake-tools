@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath, thisExtension } from '@cmt/util';
 
@@ -101,7 +101,7 @@ function collapseTreeInplace<T>(tree: PathedTree<T>): void {
  * Get the path to an icon for the given type of CMake target.
  * @param type The type of target
  */
-function iconForTargetType(type: codemodel_api.TargetTypeString): string {
+function iconForTargetType(type: codeModel.TargetTypeString): string {
     switch (type) {
         case 'EXECUTABLE':
             return 'binary-icon.svg';
@@ -116,7 +116,7 @@ function iconForTargetType(type: codemodel_api.TargetTypeString): string {
     }
 }
 
-function sortStringForType(type: codemodel_api.TargetTypeString): string {
+function sortStringForType(type: codeModel.TargetTypeString): string {
     switch (type) {
         case 'EXECUTABLE':
             return 'aaa';
@@ -153,8 +153,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
         const ret: BaseNode[] = [];
         const subdirs = [...this._subdirs.values()].sort((a, b) => a.pathPart.localeCompare(b.pathPart));
         ret.push(...subdirs);
-        const leaves =
-            [...this._leaves.values()].sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
+        const leaves = [...this._leaves.values()].sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
         ret.push(...leaves);
         return ret;
     }
@@ -249,7 +248,7 @@ export class SourceFileNode extends BaseNode {
 }
 
 export class TargetNode extends BaseNode {
-    constructor(readonly prefix: string, readonly projectName: string, cm: codemodel_api.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
+    constructor(readonly prefix: string, readonly projectName: string, cm: codeModel.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
         // id: {prefix}::target_name:artifact_name:target_path
         super(`${prefix}::${cm.name || ''}:${cm.fullName || ''}:${cm.sourceDirectory || ''}`);
         this.name = cm.name;
@@ -260,7 +259,7 @@ export class TargetNode extends BaseNode {
     readonly name: string;
     readonly sourceDir: string;
     private _fullName = '';
-    private _type: codemodel_api.TargetTypeString = 'UTILITY';
+    private _type: codeModel.TargetTypeString = 'UTILITY';
     private _isDefault = false;
     private _isLaunch = false;
     private _fsPath: string = '';
@@ -310,8 +309,7 @@ export class TargetNode extends BaseNode {
                 dark: path.join(thisExtension().extensionPath, "res/dark", icon)
             };
             item.id = this.id;
-            const canBuild
-                = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
+            const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
             const canRun = this._type === 'UTILITY';
             item.contextValue = [
                 `nodeType=target`,
@@ -328,7 +326,7 @@ export class TargetNode extends BaseNode {
         }
     }
 
-    update(cm: codemodel_api.CodeModelTarget, ctx: TreeUpdateContext) {
+    update(cm: codeModel.CodeModelTarget, ctx: TreeUpdateContext) {
         console.assert(this.name === cm.name);
         console.assert(this.sourceDir === (cm.sourceDirectory || ''));
 
@@ -423,12 +421,12 @@ class ProjectNode extends BaseNode {
         return item;
     }
 
-    update(pr: codemodel_api.CodeModelProject, ctx: TreeUpdateContext) {
+    update(pr: codeModel.CodeModelProject, ctx: TreeUpdateContext) {
         if (pr.name !== this.name) {
             rollbar.error(localize('update.project.with.mismatch', 'Update project with mismatching name property'), { newName: pr.name, oldName: this.name });
         }
 
-        const tree: PathedTree<codemodel_api.CodeModelTarget> = {
+        const tree: PathedTree<codeModel.CodeModelTarget> = {
             pathPart: '',
             children: [],
             items: []
@@ -492,11 +490,11 @@ export class WorkspaceFolderNode extends BaseNode {
         return item;
     }
 
-    private _codeModel: codemodel_api.CodeModelContent = { configurations: [], toolchains: new Map<string, codemodel_api.CodeModelToolchain>() };
+    private _codeModel: codeModel.CodeModelContent = { configurations: [], toolchains: new Map<string, codeModel.CodeModelToolchain>() };
     get codeModel() {
         return this._codeModel;
     }
-    updateCodeModel(model: codemodel_api.CodeModelContent | null, ctx: TreeUpdateContext) {
+    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
         if (!model || model.configurations.length < 1) {
             this._children = [];
             ctx.nodesToUpdate.push(this);
@@ -543,7 +541,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         this._changeEvent.fire(null);
     }
 
-    updateCodeModel(folder: vscode.WorkspaceFolder, model: codemodel_api.CodeModelContent | null, ctx: ExternalUpdateContext) {
+    updateCodeModel(folder: vscode.WorkspaceFolder, model: codeModel.CodeModelContent | null, ctx: ExternalUpdateContext) {
         let existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {
             rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that has not yet been loaded.'));

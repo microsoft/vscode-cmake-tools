@@ -1,20 +1,17 @@
 /* eslint-disable no-unused-expressions */
 import * as api from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools, ConfigureTrigger } from '@cmt/cmake-tools';
+import { CMakeTools, ConfigureTrigger } from '@cmt/cmakeTools';
 import { readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH } from '@cmt/kit';
 import { platformNormalizePath } from '@cmt/util';
 import { DefaultEnvironment, expect } from '@test/util';
 
-suite('[Toolchain Substitution]', async () => {
+suite('Toolchain Substitution', async () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
-        if (process.platform === 'win32') {
-            this.skip();
-        }
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
         cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);

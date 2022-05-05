@@ -1,8 +1,8 @@
 import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmake-tools';
+import CMakeTools from '@cmt/cmakeTools';
 
-suite('[Debug/Launch interface]', async () => {
+suite('Debug/Launch interface', async () => {
     let testEnv: DefaultEnvironment;
     let cmakeTools: CMakeTools;
 
@@ -16,7 +16,6 @@ suite('[Debug/Launch interface]', async () => {
         cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
         const kit = await getFirstSystemKit(cmakeTools);
-        console.log("Using following kit in next test: ", kit.name);
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
         testEnv.projectFolder.buildDirectory.clear();
         expect(await vscode.commands.executeCommand('cmake.buildAll')).to.be.eq(0);

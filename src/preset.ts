@@ -4,11 +4,11 @@ import * as path from 'path';
 
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
-import { EnvironmentVariables, execute } from '@cmt/proc';
+import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit, targetArchFromGeneratorPlatform } from '@cmt/kit';
-import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
+import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visual-studio';
+import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -31,9 +31,10 @@ export interface Preset {
     description?: string;
     hidden?: boolean;
     inherits?: string | string[];
-    environment?: { [key: string]: null | string };
+    environment?: EnvironmentWithNull;
     vendor?: VendorType;
     condition?: Condition | boolean | null;
+    isUserPreset?: boolean;
 
     __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
     __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
@@ -145,6 +146,12 @@ export function evaluateCondition(condition: Condition): boolean {
 function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[], references: Set<string>): boolean | undefined {
     const evaluateParent = (parentName: string) => {
         const parent = getPresetByName(allPresets, parentName);
+        // If the child is not a user preset, the parent should not be a user preset.
+        // eslint-disable-next-line @typescript-eslint/tslint/config
+        if (parent && !preset.isUserPreset && parent.isUserPreset === true) {
+            log.error(localize('invalid.user.inherits', 'Preset {0} in CMakePresets.json can\'t inherit from preset {1} in CMakeUserPresets.json', preset.name, parentName));
+            return false;
+        }
         if (parent && !references.has(parent.name)) {
             parent.__inheritedPresetCondition = evaluatePresetCondition(parent, allPresets, references);
         }
@@ -161,7 +168,7 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
         } else if (util.isArrayOfString(preset.inherits)) {
             return preset.inherits.every(parentName => evaluateParent(parentName));
         }
-        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits "{1}"', preset.name, preset.inherits));
+        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits {1}', preset.name, `"${preset.inherits}"`));
         return false;
     }
     return true;
@@ -182,9 +189,9 @@ export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], re
             return evaluateCondition(condition);
         } catch (e) {
             if (e instanceof MissingConditionPropertyError) {
-                log.error(localize('missing.condition.property', 'Preset {0}: Missing required property "{1}" on condition object', preset.name, e.propertyName));
+                log.error(localize('missing.condition.property', 'Preset {0}: Missing required property {1} on condition object', preset.name, `"${e.propertyName}"`));
             } else if (e instanceof InvalidConditionTypeError) {
-                log.error(localize('invalid.condition.type', 'Preset {0}: Invalid condition type "{1}"', preset.name, e.type));
+                log.error(localize('invalid.condition.type', 'Preset {0}: Invalid condition type {1}', preset.name, `"${e.type}"`));
             } else {
                 // unexpected error
                 throw e;
@@ -198,7 +205,7 @@ export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], re
     return undefined;
 }
 
-type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
+export type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
 
 export type OsName = "Windows" | "Linux" | "macOS";
 
@@ -370,6 +377,23 @@ export function setPresetsFile(folder: string, presets: PresetsFile | undefined)
 }
 
 export function setUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
+    if (presets) {
+        if (presets.configurePresets) {
+            for (const configPreset of presets.configurePresets) {
+                configPreset.isUserPreset = true;
+            }
+        }
+        if (presets.buildPresets) {
+            for (const buildPreset of presets.buildPresets) {
+                buildPreset.isUserPreset = true;
+            }
+        }
+        if (presets.testPresets) {
+            for (const testPreset of presets.testPresets) {
+                testPreset.isUserPreset = true;
+            }
+        }
+    }
     userPresetsFiles.set(folder, presets);
 }
 
@@ -438,22 +462,13 @@ function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof Te
     return key !== 'name' && key !== 'hidden' && key !== 'inherits' && key !== 'description' && key !== 'displayName';
 }
 
-let kits: Kit[] = [];
-
-/**
- * Using kits as compilers
- */
-export function setCompilers(_kits: Kit[]) {
-    kits = _kits;
-}
-
 /**
  * Shallow copy if a key in base doesn't exist in target
  */
 function merge<T extends Object>(target: T, base: T) {
     Object.keys(base).forEach(key => {
         const field = key as keyof T;
-        if (!target[field]) {
+        if (!target.hasOwnProperty(field)) {
             target[field] = base[field] as never;
         }
     });
@@ -544,10 +559,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(folder: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preset: ConfigurePreset | BuildPreset | TestPreset) {
+async function getExpansionOptions(folder: string, workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset) {
     const generator = 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined);
@@ -566,7 +578,7 @@ async function getExpansionOptions(folder: string,
             sourceDirName: path.basename(sourceDir),
             presetName: preset.name
         },
-        envOverride: preset.environment as EnvironmentVariables,
+        envOverride: preset.environment,
         recursive: true,
         // Don't support commands since expansion might be called on activation. If there is
         // an extension depending on us, and there is a command in this extension is invoked,
@@ -575,7 +587,8 @@ async function getExpansionOptions(folder: string,
     };
 
     const presetsFile = getPresetsFile(folder);
-    if (presetsFile && presetsFile.version >= 3) {
+    const userPresetsFile = getUserPresetsFile(folder);
+    if (presetsFile && presetsFile.version >= 3 || userPresetsFile && userPresetsFile.version >= 3) {
         expansionOpts.vars['hostSystemName'] = await util.getHostSystemNameMemo();
     }
 
@@ -648,12 +661,7 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
     }
 }
 
-export async function expandConfigurePreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
         referencedConfigurePresets.set(folder, new Set());
@@ -672,7 +680,7 @@ export async function expandConfigurePreset(folder: string,
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
-        expandedPreset.environment = {};
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
         for (const key in preset.environment) {
             if (preset.environment[key]) {
                 expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
@@ -680,7 +688,7 @@ export async function expandConfigurePreset(folder: string,
         }
     }
 
-    expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
+    expansionOpts.envOverride = expandedPreset.environment;
 
     const presetsFile = getPresetsFile(folder);
     if (presetsFile && presetsFile.version >= 3) {
@@ -688,23 +696,23 @@ export async function expandConfigurePreset(folder: string,
         if (!preset.binaryDir) {
             const defaultValue = '${sourceDir}/out/build/${presetName}';
 
-            log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value "{1}"', preset.name, defaultValue));
+            log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value {1}', preset.name, `"${defaultValue}"`));
             preset.binaryDir = defaultValue;
         }
         if (!preset.generator) {
             const defaultValue = preferredGeneratorName ?? 'Ninja';
 
-            log.debug(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value "{1}"', preset.name, defaultValue));
+            log.debug(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value {1}', preset.name, `"${defaultValue}"`));
             preset.generator = defaultValue;
         }
     } else {
         // toolchainFile and installDir added in presets v3
         if (preset.toolchainFile) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property "{1}" is unsupported in presets v2', preset.name, 'toolchainFile'));
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
             return null;
         }
         if (preset.installDir) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property "{1}" is unsupported in presets v2', preset.name, 'installDir'));
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
             return null;
         }
     }
@@ -757,7 +765,7 @@ export async function expandConfigurePreset(folder: string,
     return expandedPreset;
 }
 
-function getArchitecture(preset: ConfigurePreset) {
+export function getArchitecture(preset: ConfigurePreset) {
     if (util.isString(preset.architecture)) {
         return preset.architecture;
     } else if (preset.architecture && preset.architecture.value) {
@@ -767,7 +775,7 @@ function getArchitecture(preset: ConfigurePreset) {
     return 'x86';
 }
 
-function getToolset(preset: ConfigurePreset): Toolset {
+export function getToolset(preset: ConfigurePreset): Toolset {
     let result: Toolset | undefined;
     if (util.isString(preset.toolset)) {
         result = parseToolset(preset.toolset);
@@ -775,16 +783,16 @@ function getToolset(preset: ConfigurePreset): Toolset {
         result = parseToolset(preset.toolset.value);
     }
 
-    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using '{1}' by default", preset.name, 'host=x86');
+    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using {1} by default", preset.name, '"host=x86"');
     if (result) {
         if (result.name === 'x86' || result.name === 'x64') {
-            log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean '{2}'?", preset.name, result.name, `host=${result.name}`));
+            log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified {1}, did you mean {2}?", preset.name, `"${result.name}"`, `"host=${result.name}"`));
         }
         if (!result.host) {
             log.warning(noToolsetArchWarning);
             result.host = 'x86';
         }
-        if (!result.version) {
+        if (!result.version && result.name !== latestToolsetName) {
             log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
         }
     } else {
@@ -794,6 +802,18 @@ function getToolset(preset: ConfigurePreset): Toolset {
     return result;
 }
 
+const toolsetToVersion: { [key: string]: string } = {
+    'v100': '10.0',
+    'v110': '11.0',
+    'v120': '12.0',
+    'v140': '14.0',
+    'v141': '14.16',
+    'v142': '14.29'
+    // don't include the latest version - the compiler version changes frequently and it will be picked by default anyway.
+    // NOTE: the latest toolset name (below) should be kept up to date.
+};
+const latestToolsetName = 'v143';
+
 // We don't support all of these options for Kit lookup right now, but might in the future.
 function parseToolset(toolset: string): Toolset {
     const toolsetOptions = toolset.split(',');
@@ -801,7 +821,12 @@ function parseToolset(toolset: string): Toolset {
     const result: Toolset = {};
     for (const option of toolsetOptions) {
         if (option.indexOf('=') < 0) {
-            result.name = option;
+            const version = toolsetToVersion[option];
+            if (version) {
+                result.version = version;
+            } else {
+                result.name = option;
+            }
         } else {
             const keyValue = option.split('=');
             switch (keyValue[0].toLowerCase()) {
@@ -826,11 +851,7 @@ function parseToolset(toolset: string): Toolset {
     return result;
 }
 
-async function expandConfigurePresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
         return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
@@ -847,11 +868,7 @@ async function expandConfigurePresetImpl(folder: string,
     return null;
 }
 
-async function expandConfigurePresetHelper(folder: string,
-    preset: ConfigurePreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    allowUserPreset: boolean = false) {
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -868,14 +885,14 @@ async function expandConfigurePresetHelper(folder: string,
 
     // Init env and cacheVar to empty if not specified to avoid null checks later
     if (!preset.environment) {
-        preset.environment = {};
+        preset.environment = EnvironmentUtils.createPreserveNull();
     }
     if (!preset.cacheVariables) {
         preset.cacheVariables = {};
     }
 
     // Expand inherits
-    let inheritedEnv = {};
+    let inheritedEnv = EnvironmentUtils.createPreserveNull();
     if (preset.inherits) {
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
@@ -884,7 +901,7 @@ async function expandConfigurePresetHelper(folder: string,
             const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
             if (parent) {
                 // Inherit environment
-                inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 // Inherit cache vars
                 for (const name in parent.cacheVariables) {
                     if (preset.cacheVariables[name] === undefined) {
@@ -903,9 +920,9 @@ async function expandConfigurePresetHelper(folder: string,
         }
     }
 
-    inheritedEnv = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
+    inheritedEnv = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv]);
 
-    let compilerEnv: EnvironmentVariables = {};
+    let compilerEnv = EnvironmentUtils.createPreserveNull();
 
     // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
     // but they are not on PATH, then set the env automatically.
@@ -925,7 +942,7 @@ async function expandConfigurePresetHelper(folder: string,
             const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
             if (compilerName) {
                 const compilerLocation = await execute('where.exe', [compilerName], null, {
-                    environment: preset.environment as EnvironmentVariables,
+                    environment: EnvironmentUtils.create(preset.environment),
                     silent: true,
                     encoding: 'utf8',
                     shell: true
@@ -935,47 +952,83 @@ async function expandConfigurePresetHelper(folder: string,
                     const arch = getArchitecture(preset);
                     const toolset = getToolset(preset);
 
-                    // Get version info for all VS instances. Create a map so we don't need to
-                    // iterate through the array every time.
-                    const vsVersions = new Map<string, string>();
-                    for (const vs of await vsInstallations()) {
-                        vsVersions.set(vs.instanceId, vs.installationVersion);
+                    // Get version info for all VS instances.
+                    const vsInstalls = await vsInstallations();
+
+                    // The VS installation to grab developer environment from.
+                    let vsInstall: VSInstallation | undefined;
+
+                    // VS generators starting with Visual Studio 15 2017 support CMAKE_GENERATOR_INSTANCE.
+                    // If supported, we should respect this value when defined. If not defined, we should
+                    // set it to ensure CMake chooses the same VS instance as we use here.
+                    // Note that if the user sets this in a toolchain file we won't know about it,
+                    // which could cause configuration to fail. However the user can workaround this by launching
+                    // vscode from the dev prompt of their desired instance.
+                    // https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_INSTANCE.html
+                    let vsGeneratorVersion: number | undefined;
+                    const matches = preset.generator?.match(/Visual Studio (?<version>\d+)/);
+                    if (matches && matches.groups?.version) {
+                        vsGeneratorVersion = parseInt(matches.groups.version);
+                        const useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
+                        const cmakeGeneratorInstance = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_GENERATOR_INSTANCE']);
+                        if (useCMakeGeneratorInstance && cmakeGeneratorInstance) {
+                            const cmakeGeneratorInstanceNormalized = path.normalize(cmakeGeneratorInstance);
+                            vsInstall = vsInstalls.find((vs) => vs.installationPath
+                                    && path.normalize(vs.installationPath) === cmakeGeneratorInstanceNormalized);
+
+                            if (!vsInstall) {
+                                log.warning(localize('specified.vs.not.found',
+                                    "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE={1} was not found, falling back on default instance lookup behavior.",
+                                    preset.name, `"${cmakeGeneratorInstance}"`));
+                            }
+                        }
                     }
-                    let latestVsVersion: string = '';
-                    let latestVsIndex = -1;
-                    for (let i = 0; i < kits.length; i++) {
-                        const kit = kits[i];
-                        if (kit.visualStudio && !kit.compilers) {
-                            const version = vsVersions.get(kit.visualStudio);
-                            if (kit.preferredGenerator && targetArchFromGeneratorPlatform(kit.preferredGenerator.platform) === arch &&
-                                (kit.visualStudioArchitecture === toolset.host || kit.preferredGenerator.toolset === ('host=' + toolset.host))) {
-                                if (toolset.version && version?.startsWith(toolset.version)) {
-                                    latestVsVersion = version;
-                                    latestVsIndex = i;
+
+                    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
+                    // that supports the specified toolset.
+                    if (!vsInstall) {
+                        // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
+                        vsInstalls.sort((a, b) => -compareVersions(a.installationVersion, b.installationVersion));
+
+                        for (const vs of vsInstalls) {
+                            // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
+                            // toolset.host will be set by getToolset.
+                            if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
+                                // If a toolset version is specified then check to make sure this vs instance has it installed.
+                                if (toolset.version) {
+                                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
+                                    // forcing non-null due to false positive (toolset.version is checked in conditional)
+                                    if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
+                                        vsInstall = vs;
+                                        break;
+                                    }
+                                } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
+                                    // If no toolset version specified then choose the latest VS instance for the given generator
+                                    vsInstall = vs;
                                     break;
-                                }
-                                if (!toolset.version && version && compareVersions(latestVsVersion, version) < 0) {
-                                    latestVsVersion = version;
-                                    latestVsIndex = i;
                                 }
                             }
                         }
                     }
-                    if (latestVsIndex < 0) {
+
+                    if (!vsInstall) {
                         log.error(localize('specified.cl.not.found',
-                            "Configure preset {0}: Compiler '{1}' with toolset '{2}' and architecture '{3}' was not found, you may need to run 'CMake: Scan for Compilers' if it exists on your computer.",
-                            preset.name, `${compilerName}.exe`, toolset.version ? `${toolset.version},${toolset.host}` : toolset.host, arch));
+                            "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
+                            preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
                     } else {
-                        compilerEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
+                        log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
+                        const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
+                        compilerEnv = vsEnv ?? EnvironmentUtils.create();
+
                         // if ninja isn't on path, try to look for it in a VS install
                         const ninjaLoc = await execute('where.exe', ['ninja'], null, {
-                            environment: preset.environment as EnvironmentVariables,
+                            environment: EnvironmentUtils.create(preset.environment),
                             silent: true,
                             encoding: 'utf8',
                             shell: true
                         }).result;
                         if (!ninjaLoc.stdout) {
-                            const vsCMakePaths = await paths.vsCMakePaths(kits[latestVsIndex].visualStudio);
+                            const vsCMakePaths = await paths.vsCMakePaths(vsInstall.instanceId);
                             if (vsCMakePaths.ninja) {
                                 log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
                                 compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
@@ -987,8 +1040,8 @@ async function expandConfigurePresetHelper(folder: string,
         }
     }
 
-    compilerEnv = util.mergeEnvironment(inheritedEnv as EnvironmentVariables, compilerEnv as EnvironmentVariables);
-    preset.environment = util.mergeEnvironment(compilerEnv as EnvironmentVariables, preset.environment as EnvironmentVariables);
+    compilerEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, compilerEnv]);
+    preset.environment = EnvironmentUtils.mergePreserveNull([compilerEnv, preset.environment]);
 
     preset.__expanded = true;
     return preset;
@@ -1110,13 +1163,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
     return null;
 }
 
-export async function expandBuildPreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<BuildPreset | null> {
+export async function expandBuildPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     const refs = referencedBuildPresets.get(folder);
     if (!refs) {
         referencedBuildPresets.set(folder, new Set());
@@ -1135,7 +1182,7 @@ export async function expandBuildPreset(folder: string,
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
-        expandedPreset.environment = {};
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
         for (const key in preset.environment) {
             if (preset.environment[key]) {
                 expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
@@ -1143,7 +1190,7 @@ export async function expandBuildPreset(folder: string,
         }
     }
 
-    expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
+    expansionOpts.envOverride = expandedPreset.environment;
 
     // Expand other fields
     if (preset.targets) {
@@ -1169,13 +1216,7 @@ export async function expandBuildPreset(folder: string,
     return expandedPreset;
 }
 
-async function expandBuildPresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<BuildPreset | null> {
+async function expandBuildPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     let preset = getPresetByName(buildPresets(folder), name);
     if (preset) {
         return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
@@ -1203,12 +1244,7 @@ async function expandBuildPresetImpl(folder: string,
     return null;
 }
 
-async function expandBuildPresetHelper(folder: string,
-    preset: BuildPreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false) {
+async function expandBuildPresetHelper(folder: string, preset: BuildPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1227,9 +1263,9 @@ async function expandBuildPresetHelper(folder: string,
 
     // Init env to empty if not specified to avoid null checks later
     if (!preset.environment) {
-        preset.environment = {};
+        preset.environment = EnvironmentUtils.createPreserveNull();
     }
-    let inheritedEnv = {};
+    let inheritedEnv = EnvironmentUtils.createPreserveNull();
 
     // Expand inherits
     if (preset.inherits) {
@@ -1240,7 +1276,7 @@ async function expandBuildPresetHelper(folder: string,
             const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
             if (parent) {
                 // Inherit environment
-                inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 // Inherit other fields
                 let key: keyof BuildPreset;
                 for (key in parent) {
@@ -1261,14 +1297,14 @@ async function expandBuildPresetHelper(folder: string,
             preset.__generator = configurePreset.generator;
 
             if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
-                inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, configurePreset.environment]);
             }
         } else {
             return null;
         }
     }
 
-    preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
+    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv, preset.environment]);
 
     preset.__expanded = true;
     return preset;
@@ -1277,13 +1313,7 @@ async function expandBuildPresetHelper(folder: string,
 // Map<fsPath, Set<referencedPresets>>
 const referencedTestPresets: Map<string, Set<string>> = new Map();
 
-export async function expandTestPreset(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<TestPreset | null> {
+export async function expandTestPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<TestPreset | null> {
     const refs = referencedTestPresets.get(folder);
     if (!refs) {
         referencedTestPresets.set(folder, new Set());
@@ -1301,7 +1331,7 @@ export async function expandTestPreset(folder: string,
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
-        expandedPreset.environment = {};
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
         for (const key in preset.environment) {
             if (preset.environment[key]) {
                 expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
@@ -1309,7 +1339,7 @@ export async function expandTestPreset(folder: string,
         }
     }
 
-    expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
+    expansionOpts.envOverride = expandedPreset.environment;
 
     // Expand other fields
     if (preset.overwriteConfigurationFile) {
@@ -1369,13 +1399,7 @@ export async function expandTestPreset(folder: string,
     return expandedPreset;
 }
 
-async function expandTestPresetImpl(folder: string,
-    name: string,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false,
-    configurePreset?: string): Promise<TestPreset | null> {
+async function expandTestPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<TestPreset | null> {
     let preset = getPresetByName(testPresets(folder), name);
     if (preset) {
         return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
@@ -1403,12 +1427,7 @@ async function expandTestPresetImpl(folder: string,
     return null;
 }
 
-async function expandTestPresetHelper(folder: string,
-    preset: TestPreset,
-    workspaceFolder: string,
-    sourceDir: string,
-    preferredGeneratorName: string | undefined,
-    allowUserPreset: boolean = false) {
+async function expandTestPresetHelper(folder: string, preset: TestPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName: string | undefined, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1425,9 +1444,9 @@ async function expandTestPresetHelper(folder: string,
 
     // Init env to empty if not specified to avoid null checks later
     if (!preset.environment) {
-        preset.environment = {};
+        preset.environment = EnvironmentUtils.createPreserveNull();
     }
-    let inheritedEnv = {};
+    let inheritedEnv = EnvironmentUtils.createPreserveNull();
 
     // Expand inherits
     if (preset.inherits) {
@@ -1438,7 +1457,7 @@ async function expandTestPresetHelper(folder: string,
             const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
             if (parent) {
                 // Inherit environment
-                inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 // Inherit other fields
                 let key: keyof TestPreset;
                 for (key in parent) {
@@ -1459,14 +1478,14 @@ async function expandTestPresetHelper(folder: string,
             preset.__generator = configurePreset.generator;
 
             if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
-                inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, configurePreset.environment]);
             }
         } else {
             return null;
         }
     }
 
-    preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
+    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv, preset.environment]);
 
     preset.__expanded = true;
     return preset;

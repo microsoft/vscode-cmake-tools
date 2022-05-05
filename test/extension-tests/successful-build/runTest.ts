@@ -14,9 +14,13 @@ async function main() {
 
         const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/successful-build/project-folder');
 
-        const launchArgs = ["--disable-extensions", testWorkspace];
+        const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
 
-        const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1" };
+        const extensionTestsEnv: { [key: string]: string | undefined } = {
+            "CMT_TESTING": "1",
+            "CMT_QUIET_CONSOLE": "1",
+            "TEST_FILTER": process.env.TEST_FILTER ?? ".*"
+        };
 
         // Download VS Code, unzip it and run the integration test
         await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });

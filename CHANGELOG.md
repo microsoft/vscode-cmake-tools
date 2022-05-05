@@ -1,5 +1,62 @@
 # What's New?
 
+## 1.11
+Improvements:
+- Fix build Error: EMFILE: too many open files. [#2288](https://github.com/microsoft/vscode-cmake-tools/issues/2288) [@FrogTheFrog](https://github.com/FrogTheFrog)
+- Add commands to get preset names. [PR #2433](https://github.com/microsoft/vscode-cmake-tools/pull/2433)
+- Add IntelliSense support for `debugConfig.console`. [#2428](https://github.com/microsoft/vscode-cmake-tools/issues/2428)
+- Add c++23 support. [#2475](https://github.com/microsoft/vscode-cmake-tools/issues/2475) [@sweemer](https://github.com/sweemer)
+- Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
+- Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
+
+Bug Fixes:
+- `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
+- Update terminal's environment variables when the kit is changed. [#2364](https://github.com/microsoft/vscode-cmake-tools/issues/2364)
+- Add timeouts for compiler scanning. [#1289](https://github.com/microsoft/vscode-cmake-tools/issues/1289)
+- Fix schema validation for presets version 4. [#2490](https://github.com/microsoft/vscode-cmake-tools/issues/2490)
+- Remove problematic environment variables from the debugger environment. [#2442](https://github.com/microsoft/vscode-cmake-tools/issues/2442)
+- Fix preferredGenerator "Watcom WMake" not working. [#2500](https://github.com/microsoft/vscode-cmake-tools/issues/2500)
+- Exclude environment variables from debugging if the values have newlines. [#2515](https://github.com/microsoft/vscode-cmake-tools/issues/2515)
+- Correctly configure the build environment when using VS 2015 and Ninja in CMakePresets.json. [#2516](https://github.com/microsoft/vscode-cmake-tools/issues/2516)
+- Select the correct VS toolset for Ninja generators with CMake Presets. [#2423](https://github.com/microsoft/vscode-cmake-tools/issues/2423)
+- Fix unhandled exception with CMakePresets.json. [#2117](https://github.com/microsoft/vscode-cmake-tools/issues/2117)
+
+## 1.10.5
+Bug Fixes:
+- fix "CMake: compile active file" command. [#2438](https://github.com/microsoft/vscode-cmake-tools/issues/2438)
+
+## 1.10.4
+Improvements:
+- Don't specify number of jobs when building with Ninja. [#696](https://github.com/microsoft/vscode-cmake-tools/issues/696)
+- Support for the Ninja Multi-Config generator. [#1423](https://github.com/microsoft/vscode-cmake-tools/issues/1423)
+- Minimize build progress notification to the status bar. [#2308](https://github.com/microsoft/vscode-cmake-tools/issues/2308)
+- Allow editing Kits when presets are in use. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
+- Launch the target in the default terminal. [PR #2311](https://github.com/microsoft/vscode-cmake-tools/pull/2311) [@michallukowski](https://github.com/michallukowski)
+- Allow launching targets in parallel. [#2240](https://github.com/microsoft/vscode-cmake-tools/issues/2120) [@ColinDuquesnoy](https://github.com/ColinDuquesnoy)
+
+Bug Fixes:
+- CMakePrests.json toolset requires the VS version instead of the toolset version. [#1965](https://github.com/microsoft/vscode-cmake-tools/issues/1965)
+- CMakePresets should be able to specify a VC toolset by version number. [#2366](https://github.com/microsoft/vscode-cmake-tools/pull/2366)
+- CMake task provider does not configure the VS Build environment for Ninja builds. [#2258](https://github.com/microsoft/vscode-cmake-tools/pull/2258)
+- `${buildKit}` is not updated after a Kit switch. [#2335](https://github.com/microsoft/vscode-cmake-tools/issues/2335)
+- Test the existence of a property instead of the value when expanding preset conditions. [#2329](https://github.com/microsoft/vscode-cmake-tools/issues/2329)
+- Include `hostSystemName` in variable expansion when only using User presets. [#2362](https://github.com/microsoft/vscode-cmake-tools/issues/2362)
+- Trim whitespace from `environmentSetupScript`. [#2391](https://github.com/microsoft/vscode-cmake-tools/issues/2391)
+- Incorrect `cmake.additionalKits` setting breaks CMake extension. [#2382](https://github.com/microsoft/vscode-cmake-tools/issues/2382)
+- VS2010 compile errors are not shown in Problems. [#2376](https://github.com/microsoft/vscode-cmake-tools/issues/2376)
+- Always rebuilds sources with autodetected clang and ninja on linux. [#2289](https://github.com/microsoft/vscode-cmake-tools/issues/2289)
+- Clean Reconfigure All Projects removes wrong files after switching kit. [#2326](https://github.com/microsoft/vscode-cmake-tools/issues/2326)
+- Update documentation. [#2334](https://github.com/microsoft/vscode-cmake-tools/pull/2334) [@atsju](https://github.com/atsju)
+- Ninja not able to build single-threaded. [#2222](https://github.com/microsoft/vscode-cmake-tools/issues/2222)
+- Fix various kit detection issues. [#2246](https://github.com/microsoft/vscode-cmake-tools/issues/2246) [#1759](https://github.com/microsoft/vscode-cmake-tools/issues/1759) [#1653](https://github.com/microsoft/vscode-cmake-tools/issues/1653) [#1410](https://github.com/microsoft/vscode-cmake-tools/issues/1410) [#1233](https://github.com/microsoft/vscode-cmake-tools/issues/1233) [@fourdim](https://github.com/fourdim)
+- Stop using `-H` to configure projects. [#2292](https://github.com/microsoft/vscode-cmake-tools/issues/2292)
+- `environmentSetupScript` capitalizes environment variable names. [#1592](https://github.com/microsoft/vscode-cmake-tools/issues/1592) [@lygstate](https://github.com/lygstate)
+- Debug Target failed when `debugConfig.environment` not present. [#2236](https://github.com/microsoft/vscode-cmake-tools/issues/2236) [@lygstate](https://github.com/lygstate)
+- Presets in CMakePresets.json should not inherit from presets in CMakeUserPresets.json. [#2232](https://github.com/microsoft/vscode-cmake-tools/issues/2232)
+- Refresh the launch terminal if the user default changes. [PR #2408](https://github.com/microsoft/vscode-cmake-tools/pull/2408)
+- Strip BOM from files when reading. [#2396](https://github.com/microsoft/vscode-cmake-tools/issues/2396)
+- When using the configuration provider for the C++ extension, the browse configuration was not being updated after code model changes. [#2410](https://github.com/microsoft/vscode-cmake-tools/issues/2410)
+
 ## 1.9.2
 Bug fixes:
 - Fix infinite recursion into symlinks. [#2257](https://github.com/microsoft/vscode-cmake-tools/issues/2257)

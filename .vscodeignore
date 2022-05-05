@@ -1,3 +1,4 @@
+.devcontainer/
 .github/
 .vscode/
 build/
@@ -9,15 +10,15 @@ out/
 scripts/
 src/
 test/
-types/
 vscode-extensions-localization-export/
 vscode-translations-import/
 **/*.map
 *.yml
-.clang-format
-.gitignore
+.editorconfig
+.eslintignore
+.eslintrc.js
 .gitattributes
-CHANGELOG.pre-0.11.0.md
+.gitignore
 gulpfile.js
 tsconfig.json
 test.tsconfig.json

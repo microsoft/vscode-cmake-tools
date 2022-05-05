@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Rilettura dei kit",
 	"dispose.cmake.tools": "Eliminazione di CMake Tools",
-	"configure.this.project": "Configurare il progetto '{0}'?",
+	"configure.this.project": "Configurare il progetto {0}?",
 	"yes.button": "Sì",
 	"not.now.button": "Non ora",
 	"always.configure.on.open": "Configurare sempre i progetti all'apertura?",
@@ -20,7 +20,7 @@
 	"configure.recommended": "È consigliabile riconfigurare dopo l'aggiornamento a una nuova definizione dei kit.",
 	"using.cache.to.configure.workspace.on.open": "Utilizzo della cache per configurare l'area di lavoro all'apertura di {0}",
 	"update.code.model.for.cpptools": "Aggiorna il modello di codice per cpptools",
-	"update.intellisense.disabled": "Il provider di configurazione non verrà aggiornato perché C_Cpp.intelliSenseEngine è impostato su 'Disabilitato'",
+	"update.intellisense.disabled": "Il provider di configurazione non verrà aggiornato perché {0} è impostato su {1}",
 	"filed.to.open.cache.file.on.code.model.update": "Non è stato possibile aprire il file di cache di CMake durante l'aggiornamento del modello di codice",
 	"opening.text.editor.for": "Apertura dell'editor di testo per {0}",
 	"no.kits.file.what.to.do": "Non sono presenti file dei kit. Specificare l'operazione da eseguire.",

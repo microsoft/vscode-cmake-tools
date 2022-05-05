@@ -1,7 +1,7 @@
 import { DefaultEnvironment, expect } from '@test/util';
 import * as vscode from 'vscode';
 
-suite('[Debug/Launch interface using Presets]', async () => {
+suite('Debug/Launch interface using Presets', async () => {
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {

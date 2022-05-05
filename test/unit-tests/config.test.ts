@@ -44,6 +44,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         skipConfigureIfCachePresent: null,
         useCMakeServer: true,
         cmakeCommunicationMode: 'automatic',
+        showSystemKits: true,
         ignoreKitEnv: false,
         additionalKits: [],
         buildTask: false,
@@ -58,13 +59,14 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             visibility: "default"
         },
         useCMakePresets: 'never',
-        allowCommentsInPresetsFile: false
+        allowCommentsInPresetsFile: false,
+        launchBehavior: 'reuseTerminal'
     });
     ret.updatePartial(conf);
     return ret;
 }
 
-suite('[Configuration]', () => {
+suite('Configuration', () => {
     test('Create a read from a configuration', () => {
         const conf = createConfig({ parallelJobs: 13 });
         expect(conf.parallelJobs).to.eq(13);

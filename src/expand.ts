@@ -6,9 +6,9 @@
 import * as vscode from 'vscode';
 
 import { createLogger } from './logging';
-import { EnvironmentVariables } from './proc';
-import { mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths, errorToString } from './util';
+import { replaceAll, fixPaths, errorToString } from './util';
 import * as nls from 'vscode-nls';
+import { EnvironmentWithNull, EnvironmentUtils } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -73,7 +73,7 @@ export interface ExpansionOptions {
      * variables for the running process. Only environment variables in this key
      * will be expanded.
      */
-    envOverride?: EnvironmentVariables;
+    envOverride?: EnvironmentWithNull;
     /**
      * Variables for `${variant:var}`-style expansions.
      */
@@ -95,14 +95,15 @@ export interface ExpansionOptions {
  * @param opts Options for the expansion process
  * @returns A string with the variable references replaced
  */
-export async function expandString(tmpl: string, opts: ExpansionOptions) {
-    if (!tmpl) {
+export async function expandString<T>(tmpl: string | T, opts: ExpansionOptions): Promise<string | T> {
+    if (typeof tmpl !== 'string') {
         return tmpl;
     }
 
     const MAX_RECURSION = 10;
     let result = tmpl;
     let didReplacement = false;
+    let circularReference: string | undefined;
 
     let i = 0;
     do {
@@ -110,10 +111,13 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
         const expansion = await expandStringHelper(result, opts);
         result = expansion.result;
         didReplacement = expansion.didReplacement;
+        circularReference = expansion.circularReference;
         i++;
-    } while (i < MAX_RECURSION && opts.recursive && didReplacement);
+    } while (i < MAX_RECURSION && opts.recursive && didReplacement && !circularReference);
 
-    if (i === MAX_RECURSION) {
+    if (circularReference) {
+        log.warning(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
+    } else if (i === MAX_RECURSION) {
         log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
     }
 
@@ -121,9 +125,10 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
 }
 
 async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
-    const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
-    const env = mergeEnvironment(envPreNormalize);
+    const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
+    const env = EnvironmentUtils.create(envPreNormalize);
     const repls = opts.vars;
+    let circularReference: string | undefined;
 
     // We accumulate a list of substitutions that we need to make, preventing
     // recursively expanding or looping forever on bad replacements
@@ -153,7 +158,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+        const repl = fixPaths(env[varname]) || '';
         subs.set(full, repl);
     }
 
@@ -161,7 +166,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re2.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+        const repl = fixPaths(env[varname]) || '';
         subs.set(full, repl);
     }
 
@@ -169,7 +174,15 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re3.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+        const repl: string = fixPaths(env[varname]) || '';
+        // Avoid replacing an env variable by itself, e.g. PATH:env{PATH}.
+        const env_re4 = RegExp(`\\$env\\{(${varValueRegexp})\\}`, "g");
+        mat = env_re4.exec(repl);
+        const varnameRepl = mat ? mat[1] : undefined;
+        if (varnameRepl && varnameRepl === varname) {
+            circularReference = `\"${varname}\" : \"${tmpl}\"`;
+            break;
+        }
         subs.set(full, repl);
     }
 
@@ -177,7 +190,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = penv_re.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(process.env[normalizeEnvironmentVarname(varname)] || '') || '';
+        const repl = fixPaths(process.env[varname]) || '';
         subs.set(full, repl);
     }
 
@@ -233,5 +246,5 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
             didReplacement = true;
         }
     });
-    return { result: final_str, didReplacement };
+    return { result: final_str, didReplacement, circularReference };
 }

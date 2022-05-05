@@ -194,7 +194,7 @@ export class CMakeCache {
                     const docs = docs_acc.trim();
                     docs_acc = '';
                     if (type === undefined) {
-                        rollbar.error(localize('cache.entry.unknown', 'Cache entry \'{0}\' has unknown type: \'{1}\'', name, typename));
+                        rollbar.error(localize('cache.entry.unknown', 'Cache entry {0} has unknown type: {1}', `"${name}"`, `"${typename}"`));
                     } else {
                         log.trace(localize('constructing.new.cache.entry', 'Constructing a new cache entry from the given line'));
                         const entry = new Entry(key, valuestr, type, docs, false);
@@ -211,7 +211,7 @@ export class CMakeCache {
             if (entry) {
                 entry.advanced = true;
             } else {
-                log.warning(localize('nonexisting.advanced.entry', 'Nonexisting cache entry \'{0}\' marked as advanced', name));
+                log.warning(localize('nonexisting.advanced.entry', 'Nonexisting cache entry {0} marked as advanced', `"${name}"`));
             }
         });
         // update `choices`
@@ -220,7 +220,7 @@ export class CMakeCache {
             if (entry) {
                 entry.choices = list;
             } else {
-                log.warning(localize('ignore.strings.for.nonexisting.entry', 'Ignoring `STRINGS` property for nonexisting cache entry \'{0}\'', name));
+                log.warning(localize('ignore.strings.for.nonexisting.entry', 'Ignoring {1} property for nonexisting cache entry {0}', `"${name}"`, '"STRINGS"'));
             }
         });
 
@@ -253,7 +253,7 @@ export class CMakeCache {
                     const newlineIndex = value.search(/[\r\n]/);
                     if (newlineIndex >= 0) {
                         value = value.substring(0, newlineIndex);
-                        log.warning(localize('cache.value.truncation.warning', 'Newline(s) found in cache entry \'{0}\'. Value has been truncated to \'{1}\'', key, value));
+                        log.warning(localize('cache.value.truncation.warning', 'Newline(s) found in cache entry {0}. Value has been truncated to {1}', `"${key}"`, `"${value}"`));
                     }
                 }
                 const newValueLine = entry.serializedKey + type + (isBoolean(value) ? (value ? "TRUE" : "FALSE") : value);

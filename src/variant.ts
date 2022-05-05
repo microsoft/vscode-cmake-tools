@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import { ConfigurationReader } from '@cmt/config';
 import * as logging from './logging';
 import { fs } from './pr';
-import { EnvironmentVariables } from './proc';
+import { Environment, EnvironmentUtils } from './environmentVariables';
 import rollbar from './rollbar';
 import { loadSchema } from './schema';
 import { StateManager } from './state';
@@ -55,7 +55,7 @@ export interface VarFileOption {
     /**
      * Environment variables to set for the option
      */
-    env?: EnvironmentVariables;
+    env?: Environment;
 }
 
 /**
@@ -187,7 +187,7 @@ export class VariantManager implements vscode.Disposable {
     /**
      * Watches for changes to the variants file on the filesystem
      */
-    private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true });
+    private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true, followSymlinks: false });
 
     private customVariantsFileExists: boolean = false;
 
@@ -295,12 +295,12 @@ export class VariantManager implements vscode.Disposable {
             const unknown_choice: VariantOption = { short: 'Unknown', key: '__unknown__' };
             const found_setting = vars.settings.find(s => s.name === setting_key);
             if (!found_setting) {
-                error = localize('missing.setting.in.variant', 'Missing setting "{0}" in variant definition.', setting_key);
+                error = localize('missing.setting.in.variant', 'Missing setting {0} in variant definition.', `"${setting_key}"`);
                 return unknown_choice;
             }
             const found_choice = found_setting.choices.find(o => o.key === opt_key);
             if (!found_choice) {
-                error = localize('missing.variant.choice', 'Missing variant choice "{0}" on "{1}" in variant definition.', opt_key, setting_key);
+                error = localize('missing.variant.choice', 'Missing variant choice {0} on {1} in variant definition.', `"${opt_key}"`, `"${setting_key}"`);
                 return unknown_choice;
             }
             return found_choice;
@@ -323,7 +323,7 @@ export class VariantManager implements vscode.Disposable {
             settings: { ...acc.settings, ...el.settings },
             short: [acc.short, el.short].join(' ').trim(),
             long: [acc.long, el.long].join(', '),
-            env: util.mergeEnvironment(acc.env || {}, el.env || {})
+            env: EnvironmentUtils.merge([acc.env, el.env])
         }),
         init);
     }
@@ -381,7 +381,7 @@ export class VariantManager implements vscode.Disposable {
                 }
             }
             return false;
-        } else if (process.env['CMT_TESTING'] === '1') {
+        } else if (util.isTestMode()) {
             await this.publishActiveKeywordSettings(this.activeKeywordSetting ?? items[0].keywordSettings);
             return true;
         } else {

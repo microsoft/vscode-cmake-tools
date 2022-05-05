@@ -1,4 +1,4 @@
-import { CMakeTools } from '@cmt/cmake-tools';
+import { CMakeTools } from '@cmt/cmakeTools';
 import { expect } from 'chai';
 
 import { smokeSuite, smokeTestDefaultKit } from '@test/smoke/smoke';

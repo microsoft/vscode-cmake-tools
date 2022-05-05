@@ -6,8 +6,10 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { platform } from 'os';
 
-import { EnvironmentVariables, DebuggerEnvironmentVariable, execute } from '@cmt/proc';
+import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
+import { Environment, EnvironmentUtils } from './environmentVariables';
+import { TargetPopulation } from 'vscode-tas-client';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -37,7 +39,10 @@ export function replaceAll(str: string, needle: string, what: string) {
  * @param str The input string
  * @returns The modified string with fixed paths
  */
-export function fixPaths(str: string) {
+export function fixPaths(str: string | undefined) {
+    if (str === undefined) {
+        return undefined;
+    }
     const fix_paths = /[A-Z]:(\\((?![<>:\"\/\\|\?\*]).)+)*\\?(?!\\)/gi;
     let pathmatch: RegExpMatchArray | null = null;
     let newstr = str;
@@ -176,6 +181,14 @@ export function isTruthy(value: (boolean | string | null | undefined | number)) 
  */
 export function objectPairs<V>(obj: { [key: string]: V }): [string, V][] {
     return Object.getOwnPropertyNames(obj).map(key => ([key, obj[key]] as [string, V]));
+}
+
+/**
+ * Remote null and undefined entries from an array.
+ * @param x the input array
+ */
+export function removeEmpty<T>(x: (T | null | undefined)[]): T[] {
+    return x.filter(e => e) as T[];
 }
 
 /**
@@ -367,34 +380,31 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
     }
 }
 
-export function makeDebuggerEnvironmentVars(env: EnvironmentVariables): DebuggerEnvironmentVariable[] {
-    const converted_env: DebuggerEnvironmentVariable[] = Object.entries(env).map(
-        ([key, value]) => ({
-            name: key,
-            value
-        })
-    );
+export function makeDebuggerEnvironmentVars(env?: Environment): DebuggerEnvironmentVariable[] {
+    if (!env) {
+        return [];
+    }
+    const filter: RegExp = /\$\{.+?\}|\n/; // Disallow env variables that have variable expansion values or newlines
+    const converted_env: DebuggerEnvironmentVariable[] = [];
+    for (const [key, value] of Object.entries(env)) {
+        if (value !== undefined && !value.match(filter)) {
+            converted_env.push({
+                name: key,
+                value
+            });
+        }
+    }
     return converted_env;
 }
 
-export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
-    return env.reduce((acc, vars) => {
-        if (process.platform === 'win32') {
-            // Env vars on windows are case insensitive, so we take the ones from
-            // active env and overwrite the ones in our current process env
-            const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>((acc2, key: string) => {
-                acc2[normalizeEnvironmentVarname(key)] = vars[key];
-                return acc2;
-            }, {});
-            return { ...acc, ...norm_vars };
-        } else {
-            return { ...acc, ...vars };
-        }
-    }, {});
-}
-
-export function normalizeEnvironmentVarname(varname: string) {
-    return process.platform === 'win32' ? varname.toUpperCase() : varname;
+export function fromDebuggerEnvironmentVars(debug_env?: DebuggerEnvironmentVariable[]): Environment {
+    const env = EnvironmentUtils.create();
+    if (debug_env) {
+        debug_env.forEach(envVar => {
+            env[envVar.name] = envVar.value;
+        });
+    }
+    return env;
 }
 
 export function parseCompileDefinition(str: string): [string, string | null] {
@@ -575,6 +585,14 @@ export function checkFileExists(filePath: string): Promise<boolean> {
     });
 }
 
+export function checkFileExistsSync(filePath: string): boolean {
+    try {
+        return fs.statSync(filePath).isFile();
+    } catch (e) {
+    }
+    return false;
+}
+
 export function checkDirectoryExists(filePath: string): Promise<boolean> {
     return new Promise((resolve, _reject) => {
         fs.stat(filePath, (_err, stats) => {
@@ -637,6 +655,9 @@ export function isBoolean(x: any): x is boolean {
 }
 
 export function makeHashString(str: string): string {
+    if (process.platform === 'win32') {
+        str = normalizePath(str, {normCase: 'always'});
+    }
     const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
     hash.update(str);
@@ -673,6 +694,13 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
 
 export function isCodespaces(): boolean {
     return !!process.env["CODESPACES"];
+}
+
+/**
+ * Returns true if the extension is currently running tests.
+ */
+export function isTestMode(): boolean {
+    return process.env['CMT_TESTING'] === '1';
 }
 
 export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
@@ -742,3 +770,18 @@ function memoize<T>(fn: () => T) {
 }
 
 export const getHostSystemNameMemo = memoize(getHostSystemName);
+
+export function getExtensionFilePath(extensionfile: string): string {
+    return path.resolve(thisExtensionPath(), extensionfile);
+}
+export function getCmakeToolsTargetPopulation(): TargetPopulation {
+    // If insiders.flag is present, consider this an insiders version.
+    // If release.flag is present, consider this a release version.
+    // Otherwise, consider this an internal build.
+    if (checkFileExistsSync(getExtensionFilePath("insiders.flag"))) {
+        return TargetPopulation.Insiders;
+    } else if (checkFileExistsSync(getExtensionFilePath("release.flag"))) {
+        return TargetPopulation.Public;
+    }
+    return TargetPopulation.Internal;
+}

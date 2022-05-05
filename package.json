@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.9.2",
+  "version": "1.10.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "native"
   ],
   "engines": {
-    "vscode": "^1.53.0"
+    "vscode": "^1.63.0"
   },
   "categories": [
     "Other"
@@ -34,6 +34,9 @@
   "activationEvents": [
     "onCommand:cmake.activeFolderName",
     "onCommand:cmake.activeFolderPath",
+    "onCommand:cmake.activeConfigurePresetName",
+    "onCommand:cmake.activeBuildPresetName",
+    "onCommand:cmake.activeTestPresetName",
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
@@ -164,7 +167,7 @@
       {
         "command": "cmake.editKits",
         "title": "%cmake-tools.command.cmake.editKits.title%",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -536,6 +539,12 @@
               "build"
             ],
             "description": "CMake build command"
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "options": {
             "type": "object",
@@ -1220,8 +1229,24 @@
               "description": "%cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description%"
             },
             "externalConsole": {
-              "type": "boolean",
-              "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+                "type": "boolean",
+                "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+            },
+            "console": {
+                "type": "string",
+                "enum": [
+                  "internalConsole",
+                  "integratedTerminal",
+                  "externalTerminal",
+                  "newExternalWindow"
+                ],
+                "enumDescriptions": [
+                  "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
+                  "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
+                ],
+                "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
             },
             "logging": {
               "type": "object",
@@ -1518,6 +1543,12 @@
             "automatic"
           ],
           "description": "%cmake-tools.configuration.cmake.cmakeCommunicationMode%",
+          "scope": "resource"
+        },
+        "cmake.showSystemKits": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.showSystemKits.description%",
           "scope": "resource"
         },
         "cmake.ignoreKitEnv": {
@@ -1893,6 +1924,21 @@
           "default": false,
           "description": "%cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description%",
           "scope": "resource"
+        },
+        "cmake.launchBehavior": {
+          "type": "string",
+          "enum": [
+            "reuseTerminal",
+            "breakAndReuseTerminal",
+            "newTerminal"
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description%",
+            "%cmake-tools.configuration.cmake.launchBehavior.newTerminal.description%"
+          ],
+          "description": "%cmake-tools.configuration.cmake.launchBehavior.description%",
+          "default": "reuseTerminal"
         }
       }
     },
@@ -1986,8 +2032,7 @@
     "extensionTestsSuccessfulBuild": "yarn run pretest && node ./out/test/extension-tests/successful-build/runTest.js",
     "extensionTestsSingleRoot": "yarn run pretest && node ./out/test/extension-tests/single-root-UI/runTest.js",
     "extensionTestsMultioot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
-    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/backend-unit-tests/**/*.test.ts",
-    "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
+    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/backend-unit-tests/**/*.test.ts"
   },
   "husky": {
     "hooks": {
@@ -2007,7 +2052,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.53.0",
+    "@types/vscode": "1.56.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@typescript-eslint/eslint-plugin": "^4.22.1",
@@ -2016,7 +2061,6 @@
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
-    "clang-format": "^1.5.0",
     "eslint": "^7.25.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jsdoc": "^33.1.0",
@@ -2040,11 +2084,10 @@
     "ts-node": "^9.1.1",
     "tsconfig-paths": "^3.11.0",
     "tslint": "^5.20.1",
-    "typedoc": "^0.20.36",
     "typescript": "^4.1.5",
-    "vsce": "^1.95.0",
+    "vsce": "^2.7.0",
     "vscode-nls-dev": "^3.3.2",
-    "vscode-test": "^1.5.2",
+    "vscode-test": "^1.6.1",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0"
   },
@@ -2055,11 +2098,12 @@
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.0.0",
     "json5": "^2.2.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "open": "^7.4.1",
+    "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
-    "vscode-cpptools": "^5.0.0",
+    "vscode-cpptools": "^6.1.0",
     "vscode-extension-telemetry": "^0.1.7",
     "vscode-nls": "^5.0.0",
     "vscode-tas-client": "^0.1.22",
@@ -2067,13 +2111,15 @@
     "xml2js": "^0.4.23"
   },
   "resolutions": {
+    "ansi-regex": "^5.0.1",
     "chokidar": "^3.5.1",
     "glob-parent": "^5.1.2",
+    "hosted-git-info": "^3.0.8",
     "https-proxy-agent": "^5.0.0",
-    "postcss": "^8.2.10",
     "**/minimist": "^1.2.5",
-    "yargs-parser": "^20.2.4",
-    "hosted-git-info": "^3.0.8"
+    "nanoid": "^3.1.31",
+    "postcss": "^8.2.10",
+    "yargs-parser": "^20.2.4"
   },
   "extensionPack": [
     "josetr.cmake-language-support-vscode"

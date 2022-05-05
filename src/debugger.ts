@@ -32,6 +32,7 @@ export interface CppDebugConfiguration {
     symbolSearchPath?: string;
     additionalSOLibSearchPath?: string;
     externalConsole?: boolean;
+    console?: ConsoleTypes;
     logging?: DebuggerLogging;
     visualizerFile?: string;
     args?: string[];
@@ -60,6 +61,18 @@ export interface SetupCommand {
     text?: string;
     description?: string;
     ignoreFailures?: boolean;
+}
+
+export enum MIModes {
+    lldb = 'lldb',
+    gdb = 'gdb',
+}
+
+export enum ConsoleTypes {
+    internalConsole = 'internalConsole',
+    integratedTerminal = 'integratedTerminal',
+    externalTerminal = 'externalTerminal',
+    newExternalWindow = 'newExternalWindow'
 }
 
 async function createGDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<VSCodeDebugConfiguration> {
@@ -149,15 +162,9 @@ function searchForCompilerPathInCache(cache: CMakeCache): string | null {
     return null;
 }
 
-export enum MIModes {
-    lldb = 'lldb',
-    gdb = 'gdb',
-}
-export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string,
-    modeOverride?: MIModes, debuggerPathOverride?: string):
-    Promise<VSCodeDebugConfiguration | null> {
+export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string, modeOverride?: MIModes, debuggerPathOverride?: string): Promise<VSCodeDebugConfiguration | null> {
     const entry = cache.get('CMAKE_LINKER');
-    if (entry !== null) {
+    if (entry !== null && !modeOverride && !debuggerPathOverride) {
         const linker = entry.value as string;
         const is_msvc_linker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
         if (is_msvc_linker) {
@@ -173,8 +180,8 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
             return description.createConfig(debuggerPathOverride, target);
         }
         log.warning(localize('invalid.miDebuggerPath.override',
-            "'{0}' in '{1}' must be an absolute path to a debugger (variable expansion is not currently supported). Got: '{2}'",
-            "miDebuggerPath", "cmake.debugConfig", debuggerPathOverride));
+            '{0} in {1} must be an absolute path to a debugger (variable expansion is not currently supported). Got: {2}',
+            '"miDebuggerPath"', '"cmake.debugConfig"', `"${debuggerPathOverride}"`));
     }
 
     const compiler_path = searchForCompilerPathInCache(cache);
@@ -190,29 +197,33 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     // 1. LLDB-MI
     const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
     let mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
-    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb-mi')) !== -1)) {
-        const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
-        const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
-        // 1a. lldb-mi in the compiler path
-        if (await checkDebugger(mi_debugger_path)) {
-            return createLLDBDebugConfiguration(mi_debugger_path, target);
+    if (modeOverride !== MIModes.gdb) {
+        const lldbMIReplaced = mi_debugger_path.search(new RegExp('lldb-mi')) !== -1;
+        if (lldbMIReplaced) {
+            // 1a. lldb-mi in the compiler path
+            if (await checkDebugger(mi_debugger_path)) {
+                return createLLDBDebugConfiguration(mi_debugger_path, target);
+            }
         }
-
-        // 1b. lldb-mi installed by CppTools
-        if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
-            return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
+        if (modeOverride === MIModes.lldb || lldbMIReplaced) {
+            // 1b. lldb-mi installed by CppTools
+            const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
+            const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
+            if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
+                return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
+            }
         }
     }
 
     // 2. gdb in the compiler path
     mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-    if (modeOverride !== "lldb" && (mi_debugger_path.search(new RegExp('gdb')) !== -1) && await checkDebugger(mi_debugger_path)) {
+    if (modeOverride !== MIModes.lldb && (mi_debugger_path.search(new RegExp('gdb')) !== -1) && await checkDebugger(mi_debugger_path)) {
         return createGDBDebugConfiguration(mi_debugger_path, target);
     }
 
     // 3. lldb in the compiler path
     mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb')) !== -1) && await checkDebugger(mi_debugger_path)) {
+    if (modeOverride !== MIModes.gdb && (mi_debugger_path.search(new RegExp('lldb')) !== -1) && await checkDebugger(mi_debugger_path)) {
         return createLLDBDebugConfiguration(mi_debugger_path, target);
     }
 

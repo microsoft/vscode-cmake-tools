@@ -4,9 +4,9 @@ import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirst
 import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmake-tools';
+import CMakeTools from '@cmt/cmakeTools';
 
-suite('[Environment Variables in Variants]', async () => {
+suite('Environment Variables in Variants', async () => {
     let testEnv: DefaultEnvironment;
     let cmakeTools: CMakeTools;
 
@@ -25,7 +25,6 @@ suite('[Environment Variables in Variants]', async () => {
         await clearExistingKitConfigurationFile();
 
         const kit = await getFirstSystemKit(cmakeTools);
-        console.log("Using following kit in next test: ", kit.name);
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
 
         testEnv.projectFolder.buildDirectory.clear();

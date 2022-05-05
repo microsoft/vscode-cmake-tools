@@ -9,6 +9,6 @@
 	"unknown.control.gflag.c": "未知的 C 標準控制旗標: {0}",
 	"unknown.control.gflag": "未知的標準控制旗標: {0}",
 	"unknown language": "未知的語言: {0}",
-	"build.type.out.of.sync": "產生的組建設定未包含使用中的組建設定。在 CMAKE_BUILD_TYPE 使用 '{0}' 而非 '{1}'，以確保可以找到 IntelliSense 設定",
+	"build.type.out.of.sync": "產生的組建設定未包含使用中的組建設定。在 CMAKE_BUILD_TYPE 使用 {0} 而非 {1}，以確保可以找到 IntelliSense 設定",
 	"path.not.found.in.cmake.cache": "在 CMake 快取中找不到一或多個來源檔案的編譯器路徑。如果您目前使用工具鏈檔案，這可能意味著您必須在設定 C 和 (或) C++ 編譯器路徑時指定 CACHE 選項"
 }

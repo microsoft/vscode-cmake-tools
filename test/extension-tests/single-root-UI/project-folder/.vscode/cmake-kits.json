@@ -1,63 +1,56 @@
 [
-{
-  "name": "Test Toolchain",
-  "toolchainFile": "${workspaceFolder}\\test-toolchain.cmake"
-},
-{
-  "name": "Generator switch test GCC Mingw - Win",
-  "compilers": {
-    "CXX": "C:\\MinGW\\bin\\g++.exe",
-    "C": "C:\\MinGW\\bin\\gcc.exe"
-  },
-  "preferredGenerator": {
-    "name": "MinGW Makefiles"
-  },
-  "environmentVariables": {
-    "PATH": "${env:PATH};C:\\MinGW\\bin"
-  }
-},
-{
-  "name": "Generator switch test GCC Ninja - Win",
-  "compilers": {
-    "CXX": "C:\\MinGW\\bin\\g++.exe",
-    "C": "C:\\MinGW\\bin\\gcc.exe"
-  },
-  "preferredGenerator": {
-    "name": "Ninja"
-  }
-} ,
-{
-  "name": "Generator switch test GCC no generator - Win",
-  "compilers": {
-    "CXX": "C:\\MinGW\\bin\\g++.exe",
-    "C": "C:\\MinGW\\bin\\gcc.exe"
-  }
-} ,
-  {
-  "name": "Generator switch test GCC Make",
-  "compilers": {
-    "CXX": "g++",
-    "C": "gcc"
-  },
-  "preferredGenerator": {
-    "name": "Unix Makefiles"
-  }
-},
-{
-  "name": "Generator switch test GCC Ninja",
-  "compilers": {
-    "CXX": "g++",
-    "C": "gcc"
-  },
-  "preferredGenerator": {
-    "name": "Ninja"
-  }
-},
-{
-  "name": "Generator switch test GCC no generator",
-  "compilers": {
-    "CXX": "g++",
-    "C": "gcc"
-  }
-}
+    {
+        "name": "Test Toolchain",
+        "toolchainFile": "${workspaceFolder}\\test-toolchain.cmake"
+    },
+    {
+        "name": "Generator switch test GCC Make",
+        "compilers": {
+            "CXX": "g++",
+            "C": "gcc"
+        },
+        "preferredGenerator": {
+            "name": "Unix Makefiles"
+        }
+    },
+    {
+        "name": "Generator switch test GCC Ninja",
+        "compilers": {
+            "CXX": "g++",
+            "C": "gcc"
+        },
+        "preferredGenerator": {
+            "name": "Ninja"
+        }
+    },
+    {
+        "name": "Generator switch test GCC no generator",
+        "compilers": {
+            "CXX": "g++",
+            "C": "gcc"
+        }
+    },
+    {
+        "name": "Generator switch test VS 2019",
+        "visualStudio": "VisualStudio.16.0",
+        "visualStudioArchitecture": "x86",
+        "preferredGenerator": {
+            "name": "Visual Studio 16 2019",
+            "platform": "win32",
+            "toolset": "host=x86"
+        }
+    },
+    {
+        "name": "Generator switch test VS 2019 Ninja",
+        "visualStudio": "VisualStudio.16.0",
+        "visualStudioArchitecture": "x86",
+        "preferredGenerator": {
+            "name": "Ninja"
+        }
+    },
+    {
+        "name": "Generator switch test VS 2019 no generator",
+        "visualStudio": "VisualStudio.16.0",
+        "visualStudioArchitecture": "x86"
+    }
 ]

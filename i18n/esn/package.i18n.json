@@ -89,6 +89,11 @@
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Rutas de acceso de búsqueda de símbolos del depurador de Visual Studio.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Rutas de acceso para GDB o LLDB para buscar archivos .so.",
 	"cmake-tools.configuration.cmake.debugConfig.externalConsole.description": "Inicia una consola externa para el programa.",
+	"cmake-tools.configuration.cmake.debugConfig.console.description": "Indica dónde se debe iniciar el destino de depuración. Si no se define, el valor predeterminado es “internalConsole”.",
+	"cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description": "Salida a la Consola de depuración de VS Code. No se admite la lectura de entrada de la consola (ejemplo: “std::cin” o “scanf”).",
+	"cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description": "Terminal integrado de VS Code.",
+	"cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description": "Las aplicaciones de consola se iniciarán en una ventana de terminal de tipo externo. La ventana se volverá a usar en los escenarios de reinicio y no desaparecerá automáticamente cuando se cierre la aplicación.",
+	"cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description": "Las aplicaciones de consola se iniciarán en su propia ventana de consola externa, que terminará cuando la aplicación se detenga. Las aplicaciones que no sean de consola se ejecutarán sin un terminal y se omitirá stdout/stderr.",
 	"cmake-tools.configuration.cmake.debugConfig.logging.description": "Indica los tipos de mensajes que deben registrarse en la consola.",
 	"cmake-tools.configuration.cmake.debugConfig.visualizerFile.description": "Archivo .natvis que se va a usar al depurar.",
 	"cmake-tools.configuration.cmake.debugConfig.args.description": "Argumentos que se pasan a la línea de comandos del programa.",
@@ -140,5 +145,9 @@
 	"cmake-tools.configuration.cmake.additionalKits.description": "Matriz de rutas de acceso a los archivos de kit personalizados",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita la exportación de compile_commands.json.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json para configurar, compilar y probar la unidad CMake. Cuando use CMakePresets.json, los kits, las variantes y algunos valores de configuración de settings.json se omitirán.",
-	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Permitir el uso de extensiones JSON como comentarios en CMakePresets.json. Tenga en cuenta que el archivo CMakePresets.json puede considerarse no válido por otros IDE o en la línea de comandos si usa JSON no estándar."
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Permitir el uso de extensiones JSON como comentarios en CMakePresets.json. Tenga en cuenta que el archivo CMakePresets.json puede considerarse no válido por otros IDE o en la línea de comandos si usa JSON no estándar.",
+	"cmake-tools.configuration.cmake.launchBehavior.description": "Controla lo que sucede con el terminal de inicio al iniciar un destino.",
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "La instancia del terminal de inicio se reutiliza y el destino se iniciará en cuanto el terminal esté inactivo.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "La instancia de terminal de inicio se reutiliza y se envía un comando break para finalizar cualquier proceso en primer plano activo antes de iniciar el destino.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente."
 }

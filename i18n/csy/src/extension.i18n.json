@@ -20,7 +20,7 @@
 	"configure.recommended": "Po upgradu na novou definici sad se doporučuje změnit konfiguraci.",
 	"using.cache.to.configure.workspace.on.open": "Konfigurace pracovního prostoru při otevření {0} pomocí mezipaměti",
 	"update.code.model.for.cpptools": "Aktualizovat model kódu pro cpptools",
-	"update.intellisense.disabled": "Zprostředkovatel konfigurace se neaktualizuje, protože C_Cpp.intelliSenseEngine je nastavený na Zakázáno.",
+	"update.intellisense.disabled": "Zprostředkovatel konfigurace se neaktualizuje, protože {0} je nastavený na {1}",
 	"filed.to.open.cache.file.on.code.model.update": "Nepovedlo se otevřít soubor mezipaměti CMake při aktualizaci kódu modelu.",
 	"opening.text.editor.for": "Spouští se textový editor pro {0}.",
 	"no.kits.file.what.to.do": "Není k dispozici žádný soubor sad. Co byste chtěli udělat?",

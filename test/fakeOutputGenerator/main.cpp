@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 {
 #ifdef _WIN32
     char buffer[MAX_PATH];
-    DWORD length = GetModuleFileName( NULL, buffer, MAX_PATH);
+    DWORD length = GetModuleFileName(NULL, buffer, MAX_PATH);
     std::string filePath(buffer);
 #else
     std::string filePath = argv[0];

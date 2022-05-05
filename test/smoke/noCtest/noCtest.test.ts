@@ -1,4 +1,4 @@
-import { ConfigureTrigger } from '@cmt/cmake-tools';
+import { ConfigureTrigger } from '@cmt/cmakeTools';
 import { expect } from 'chai';
 import * as path from 'path';
 

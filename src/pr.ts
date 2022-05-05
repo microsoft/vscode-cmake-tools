@@ -12,9 +12,19 @@ import * as path from 'path';
 
 import * as rimraf from 'rimraf';
 import * as nls from 'vscode-nls';
+import * as pLimit from 'p-limit';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
+// Limits the concurrent async access to the file system to avoid errors such as "EMFILE: too many open files".
+const fsAccessLimiter = pLimit(50);
+
+// Wraps fsAccessLimiter around the PromiseLike function while preserving the original type.
+function limitify<T extends (...args: any[]) => any>(fn: T): T {
+    const wrapper = (...args: Parameters<T>) => fsAccessLimiter(fn, ...args) as ReturnType<T>;
+    return wrapper as T;
+}
 
 /**
  * Wrappers for the `fs` module.
@@ -23,19 +33,35 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
  */
 export namespace fs {
 
-    export function exists(fspath: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, _reject) => {
-            fs_.exists(fspath, res => resolve(res));
-        });
+    export async function exists(filePath: string): Promise<boolean> {
+        const stat = await tryStat(filePath);
+        return stat !== null;
     }
 
-    export function existsSync(fspath: string): boolean {
-        return fs_.existsSync(fspath);
+    export function existsSync(filePath: string): boolean {
+        return fs_.existsSync(filePath);
     }
 
-    export const readFile = promisify(fs_.readFile);
+    function stripBom(str: string) {
+        if (str.charCodeAt(0) === 0xFEFF) {
+            return str.slice(1);
+        }
+        return str;
+    }
 
-    export const writeFile = promisify(fs_.writeFile);
+    export function readFile(filePath: string, encoding: string = "utf8"): Promise<any> {
+        return fsAccessLimiter(() => new Promise((resolve, reject) => {
+            fs_.readFile(filePath, encoding, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(stripBom(data));
+                }
+            });
+        }));
+    }
+
+    export const writeFile = limitify(promisify(fs_.writeFile));
 
     export const readdir = promisify(fs_.readdir);
 
@@ -50,7 +76,7 @@ export namespace fs {
     export const walk = promisify(walk_);
 
     /**
-     * Try and stat() a file. If stat() fails for *any reason*, returns `null`.
+     * Try and stat() a file/folder. If stat() fails for *any reason*, returns `null`.
      * @param filePath The file to try and stat()
      */
     export async function tryStat(filePath: fs_.PathLike): Promise<fs_.Stats | null> {
@@ -67,7 +93,7 @@ export namespace fs {
 
     export const unlink = promisify(fs_.unlink);
 
-    export const appendFile = promisify(fs_.appendFile);
+    export const appendFile = limitify(promisify(fs_.appendFile));
 
     /**
      * Creates a directory and all parent directories recursively. If the file
@@ -98,7 +124,7 @@ export namespace fs {
      * @param outpath The output file
      */
     export function copyFile(inpath: string, outpath: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+        return fsAccessLimiter(() => new Promise<void>((resolve, reject) => {
             const reader = fs_.createReadStream(inpath);
             reader.on('error', e => reject(e));
             reader.on('open', _fd => {
@@ -107,7 +133,7 @@ export namespace fs {
                 writer.on('open', _fd2 => reader.pipe(writer));
                 writer.on('close', () => resolve());
             });
-        });
+        }));
     }
 
     /**

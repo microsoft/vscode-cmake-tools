@@ -1,5 +1,0 @@
-name: $(Date:yyyyMMdd).$(Rev:r)
-pr:
-- 'main'
-jobs:
-- template: jobs/build.windows.yml

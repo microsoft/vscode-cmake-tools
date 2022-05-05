@@ -9,6 +9,6 @@
 	"unknown.control.gflag.c": "Bilinmeyen C standart denetim bayrağı: {0}",
 	"unknown.control.gflag": "Bilinmeyen standart denetim bayrağı: {0}",
 	"unknown language": "Bilinmeyen dil: {0}",
-	"build.type.out.of.sync": "Oluşturulan derleme yapılandırmaları etkin derleme yapılandırmasını içermiyor. IntelliSense yapılandırmalarının bulunabildiğinden emin olmak için CMAKE_BUILD_TYPE için '{1}' yerine '{0}' kullanılıyor",
+	"build.type.out.of.sync": "Oluşturulan derleme yapılandırmaları etkin derleme yapılandırmasını içermiyor. IntelliSense yapılandırmalarının bulunabildiğinden emin olmak için CMAKE_BUILD_TYPE için {1} yerine {0} kullanılıyor",
 	"path.not.found.in.cmake.cache": "Bir veya daha fazla kaynak dosya için derleyicinin yolu CMake önbelleğinde bulunamadı. Bir araç zinciri dosyası kullanıyorsanız, bu büyük olasılıkla C ve/veya C++ derleyici yolunuzu ayarlarken CACHE seçeneğini belirtmeniz gerektiği anlamına gelir"
 }

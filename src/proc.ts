@@ -14,6 +14,7 @@ import * as util from './util';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { ExecutionResult } from './api';
+import { Environment, EnvironmentUtils } from './environmentVariables';
 export { ExecutionResult } from './api';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -71,14 +72,13 @@ export interface Subprocess {
 export interface BuildCommand {
     command: string;
     args?: string[];
-    build_env?: { [key: string]: string };
+    build_env?: Environment;
 }
 
-export interface EnvironmentVariables { [key: string]: string }
 export interface DebuggerEnvironmentVariable { name: string; value: string }
 
 export interface ExecutionOptions {
-    environment?: EnvironmentVariables;
+    environment?: Environment;
     shell?: boolean;
     silent?: boolean;
     cwd?: string;
@@ -86,6 +86,7 @@ export interface ExecutionOptions {
     outputEncoding?: string;
     useTask?: boolean;
     overrideLocale?: boolean;
+    timeout?: number;
 }
 
 export function buildCmdStr(command: string, args?: string[]): string {
@@ -106,10 +107,7 @@ export function buildCmdStr(command: string, args?: string[]): string {
  * @note Output from the command is accumulated into a single buffer: Commands
  * which produce a lot of output should be careful about memory constraints.
  */
-export function execute(command: string,
-    args?: string[],
-    outputConsumer?: OutputConsumer | null,
-    options?: ExecutionOptions): Subprocess {
+export function execute(command: string, args?: string[], outputConsumer?: OutputConsumer | null, options?: ExecutionOptions): Subprocess {
     const cmdstr = buildCmdStr(command, args);
     if (options && options.silent !== true) {
         log.info(// We do simple quoting of arguments with spaces.
@@ -120,14 +118,14 @@ export function execute(command: string,
     if (!options) {
         options = {};
     }
-    const localeOverride: EnvironmentVariables = {
+    const localeOverride = EnvironmentUtils.create({
         LANG: "C",
         LC_ALL: "C"
-    };
-    const final_env = util.mergeEnvironment(
-        process.env as EnvironmentVariables,
-        options.environment || {},
-        options.overrideLocale ? localeOverride : {});
+    });
+    const final_env = EnvironmentUtils.merge([
+        process.env,
+        options.environment,
+        options.overrideLocale ? localeOverride : {}]);
 
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
@@ -174,11 +172,17 @@ export function execute(command: string,
 
         result = new Promise<ExecutionResult>(resolve => {
             if (child) {
-                child.on('error', err => resolve({ retc: -1, stdout: "", stderr: err.message ?? '' }));
                 let stdout_acc = '';
                 let line_acc = '';
                 let stderr_acc = '';
                 let stderr_line_acc = '';
+                let timeoutId: NodeJS.Timeout;
+                child.on('error', err => {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                    resolve({ retc: -1, stdout: "", stderr: err.message ?? '' });
+                });
                 child.stdout?.on('data', (data: Uint8Array) => {
                     rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
                         const str = iconv.decode(Buffer.from(data), encoding);
@@ -187,6 +191,8 @@ export function execute(command: string,
                             line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.output(line_acc);
+                            } else if (util.isTestMode()) {
+                                log.info(line_acc);
                             }
                             line_acc = '';
                             // Erase the first line from the list
@@ -205,6 +211,8 @@ export function execute(command: string,
                             stderr_line_acc += lines[0];
                             if (outputConsumer) {
                                 outputConsumer.error(stderr_line_acc);
+                            } else if (util.isTestMode() && stderr_line_acc) {
+                                log.info(stderr_line_acc);
                             }
                             stderr_line_acc = '';
                             // Erase the first line from the list
@@ -219,6 +227,9 @@ export function execute(command: string,
                 // the whole output of the command.
                 child.on('close', retc => {
                     try {
+                        if (timeoutId) {
+                            clearTimeout(timeoutId);
+                        }
                         rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
                             if (line_acc && outputConsumer) {
                                 outputConsumer.output(line_acc);
@@ -233,6 +244,13 @@ export function execute(command: string,
                         resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                     }
                 });
+                if (options?.timeout) {
+                    timeoutId = setTimeout(() => {
+                        log.warning(localize('process.timeout', 'The command timed out: {0}', `${command} ${args?.join(' ')}`));
+                        child?.kill();
+                        resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
+                    }, options.timeout);
+                }
             }
         });
     }

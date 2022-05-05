@@ -6,7 +6,7 @@
 {
 	"non.200.response.when.downloading": "При скачивании новой программы установки CMake получен ответ, отличный от 200.",
 	"downloaded.to.path": "{0} скачан в {1}",
-	"program.need.for.installer": "Для запуска программы установки CMake Средствам CMake необходима программа \"{0}\".",
+	"program.need.for.installer": "Для запуска программы установки CMake Средствам CMake необходима программа {0}.",
 	"downloading.filename": "Загрузка {0}",
 	"running.cmake.installer": "Программа установки CMake запущена.",
 	"failed.to.authorize": "Не удалось пройти авторизацию для запуска установки CMake.",

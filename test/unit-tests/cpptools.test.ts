@@ -3,7 +3,7 @@ import { parseCompileFlags, getIntelliSenseMode, CppConfigurationProvider } from
 import { expect } from '@test/util';
 import { CMakeCache } from '@cmt/cache';
 import * as path from 'path';
-import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModel from '@cmt/drivers/codeModel';
 import * as vscode from 'vscode';
 import { Version } from 'vscode-cpptools';
 import * as util from '@cmt/util';
@@ -19,10 +19,21 @@ suite('CppTools tests', () => {
         const cpptoolsVersion3 = Version.v3;
         const cpptoolsVersion4 = Version.v4;
         const cpptoolsVersion5 = Version.v5;
+        const cpptoolsVersion6 = Version.v6;
+
+        // Verify CppTools API version 6
+        let info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
+        expect(info.standard).to.eql('c++23');
+        info = parseCompileFlags(cpptoolsVersion6, ['-std=c++2b']);
+        expect(info.standard).to.eql('c++23');
+        info = parseCompileFlags(cpptoolsVersion6, ['-std=gnu++23']);
+        expect(info.standard).to.eql('gnu++23');
 
         // Verify CppTools API version 5
-        let info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
+        info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
         expect(info.targetArch).to.eql(undefined);
+        info = parseCompileFlags(cpptoolsVersion5, ['-std=c++23']);
+        expect(info.standard).to.eql('c++20');
         info = parseCompileFlags(cpptoolsVersion5, ['-std=gnu++14']);
         expect(info.standard).to.eql('gnu++14');
         info = parseCompileFlags(cpptoolsVersion5, []);
@@ -157,7 +168,7 @@ suite('CppTools tests', () => {
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
         const sourceFile = path.join(here, 'main.cpp');
         const uri = vscode.Uri.file(sourceFile);
-        const codeModelContent: codemodel_api.CodeModelContent = {
+        const codeModelContent: codeModel.CodeModelContent = {
             configurations: [{
                 name: "Release",
                 projects: [{
@@ -187,7 +198,7 @@ suite('CppTools tests', () => {
                     ]
                 }]
             }],
-            toolchains: new Map<string, codemodel_api.CodeModelToolchain>()
+            toolchains: new Map<string, codeModel.CodeModelToolchain>()
         };
 
         provider.updateConfigurationData({ cache, codeModelContent, activeTarget: 'target1', activeBuildTypeVariant: 'Release', folder: here });
@@ -196,7 +207,7 @@ suite('CppTools tests', () => {
         const smokeFolder = path.join(here, '../smoke');
         const sourceFile2 = path.join(smokeFolder, 'main.cpp');
         const uri2 = vscode.Uri.file(sourceFile2);
-        const codeModelContent2: codemodel_api.CodeModelContent = {
+        const codeModelContent2: codeModel.CodeModelContent = {
             configurations: [{
                 name: 'Release',
                 projects: [{
@@ -215,7 +226,7 @@ suite('CppTools tests', () => {
                         }]
                 }]
             }],
-            toolchains: new Map<string, codemodel_api.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
+            toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
         };
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModelContent2, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });

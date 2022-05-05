@@ -1,0 +1,20 @@
+{
+  "name": "vscode-cmake-tools-github-triage-actions",
+  "version": "1.0.0",
+  "description": "GitHub Actions used by CMake Tools for triaging issues",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint -c .eslintrc --fix --ext .ts .",
+    "watch": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "@actions/github": "^2.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.1.0",
+    "typescript": "^3.8.3"
+  }
+}

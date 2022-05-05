@@ -404,6 +404,15 @@ suite('Diagnostics', async () => {
         expect(build_consumer.compilers.msvc.diagnostics[0].location.start.character).to.eq(0);
     });
 
+    test('Parse MSVC single proc error (older compiler)', () => {
+        const lines = [`E:\\CI-Cor-Ready\\study\\reproc\\reproc\\src\\strv.c(13) : error C2143: syntax error : missing ';' before 'type'`];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.msvc.diagnostics).to.have.length(1);
+        expect(build_consumer.compilers.msvc.diagnostics[0].file).to.eq('E:\\CI-Cor-Ready\\study\\reproc\\reproc\\src\\strv.c');
+        expect(build_consumer.compilers.msvc.diagnostics[0].location.start.line).to.eq(12);
+        expect(build_consumer.compilers.msvc.diagnostics[0].location.start.character).to.eq(0);
+    });
+
     test('Parse MSVC multi proc error', () => {
         const lines = [`12>C:\\foo\\bar\\include\\bar.hpp(67): error C2429: language feature 'init-statements in if/switch' requires compiler flag '/std:c++latest'`];
         feedLines(build_consumer, [], lines);

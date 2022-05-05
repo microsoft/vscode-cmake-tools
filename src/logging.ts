@@ -259,6 +259,11 @@ export class Logger {
             SingletonLogger.instance().showChannel(!should_focus);
         }
     }
+
+    static logTestName(suite?: string, test?: string) {
+        SingletonLogger.instance().info('-----------------------------------------------------------------------');
+        SingletonLogger.instance().info(`Beginning test: ${suite ?? 'unknown suite'} - ${test ?? 'unknown test'}`);
+    }
 }
 
 export function createLogger(tag: string) {

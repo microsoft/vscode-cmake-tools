@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import CMakeTools from '@cmt/cmake-tools';
+import CMakeTools from '@cmt/cmakeTools';
 import {
     Kit,
     descriptionForKit,
@@ -100,7 +100,7 @@ export class KitsController {
         }
 
         const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeTools.folder)].concat(await KitsController.expandAdditionalKitFiles(cmakeTools));
-        const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true });
+        const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
         const kitsController = new KitsController(cmakeTools, kitsWatcher);
         chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
             kitsController.readKits(KitsReadMode.folderKits)));
@@ -119,7 +119,11 @@ export class KitsController {
 
     get availableKits() {
         console.assert(KitsController.length > 0, 'readKits should have been called at least once before.');
-        return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
+        if (this.cmakeTools.workspaceContext.config.showSystemKits) {
+            return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
+        } else {
+            return KitsController.specialKits.concat(this.folderKits);
+        }
     }
 
     get folder() {
@@ -238,7 +242,7 @@ export class KitsController {
         }
         if (!avail.find(kit => kit.name === SpecialKits.Unspecified)) {
             // We should _always_ have the 'UnspecifiedKit'.
-            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
+            rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find {0}', '"SpecialKits.Unspecified"'));
             return false;
         }
 
@@ -386,8 +390,8 @@ export class KitsController {
                 }
                 const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
                     localize('kit.references.non-existent',
-                        'The kit "{0}" references a non-existent compiler binary [{1}]. What would you like to do?',
-                        kit.name, missing.path),
+                        'The kit {0} references a non-existent compiler binary [{1}]. What would you like to do?',
+                        `"${kit.name}"`, missing.path),
                     {},
                     {
                         action: 'remove',
@@ -568,9 +572,37 @@ export class KitsController {
             {} as { [kit: string]: Kit }
         );
 
+        const path = process.env["PATH"]?.split(process.platform === 'win32' ? ';' : ':');
+        const isBetterMatch = (newCompilers?: {[lang: string]: string}, existingCompilers?: {[lang: string]: string}) => {
+            // Try to keep the best match (e.g. compilers for C and CXX exist)
+            if (!existingCompilers) {
+                return true;
+            }
+            if (newCompilers) {
+                const newLangs = Object.keys(newCompilers);
+                const existingLangs = Object.keys(existingCompilers);
+                if (newLangs.length > existingLangs.length) {
+                    return true;
+                }
+                if (path && newLangs.length === existingLangs.length) {
+                    // Prioritize compiler paths listed higher in the PATH environment variable.
+                    for (const p of path) {
+                        const newScore = newLangs.reduce((acc, lang) => newCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                        const existingScore = existingLangs.reduce((acc, lang) => existingCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                        if (newScore > existingScore) {
+                            return true;
+                        } else if (existingScore > newScore) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return false;
+        };
+
         // Update the new kits we know about.
         const new_kits_by_name = discovered_kits.reduce(
-            (acc, kit) => ({ ...acc, [kit.name]: kit }),
+            (acc, kit) => isBetterMatch(kit.compilers, acc[kit.name]?.compilers) ? { ...acc, [kit.name]: kit } : acc,
             old_kits_by_name
         );
 
