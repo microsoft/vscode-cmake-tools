@@ -617,14 +617,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         });
 
                         if (showCMakeLists) {
-                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "dismissed" : (selection.label === browse) ? "browse" : "pick";
+                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-exp" : (selection.label === browse) ? "browse" : "pick";
                         } else {
-                            telemetryProperties["missingCMakeListsUserAction"] = "changeSourceDirectory";
+                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-ctl" : "changeSourceDirectory";
                         }
 
                         let selectedFile: string | undefined;
                         if (!selection) {
-                            telemetryProperties["missingCMakeListsUserAction"] = "cancel";
                             break; // User canceled it.
                         } else if (selection.label === browse) {
                             const openOpts: vscode.OpenDialogOptions = {
@@ -643,7 +642,6 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         if (selectedFile) {
                             const relPath = util.getRelativePath(selectedFile, this.folder.uri.fsPath);
                             void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", relPath);
-                            telemetryProperties["missingCMakeListsUserAction"] = "updateSourceDirectory";
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -661,7 +659,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                                 }
                             }
                         } else {
-                            telemetryProperties["missingCMakeListsUserAction"] = "invalidSourceDirectoryPath";
+                            telemetryProperties["missingCMakeListsUserAction"] = showCMakeLists ? "cancel-browse-exp" : "cancel-browse-ctl";
                         }
                     } else if (result === ignoreCMakeListsMissing) {
                         // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
@@ -674,7 +672,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         await this.workspaceContext.state.setIgnoreCMakeListsMissing(true);
                     } else {
                         // "invalid" normally shouldn't happen since the popup can be closed by either dismissing it or clicking any of the three buttons.
-                        telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "dismissed" : "invalid";
+                        telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "cancel-dismiss" : "invalid";
                     }
                 }
 
