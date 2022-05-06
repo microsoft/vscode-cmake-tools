@@ -7,9 +7,9 @@ import * as vscode from 'vscode';
 
 import * as api from '@cmt/api';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
-import * as codepages from '@cmt/code-pages';
+import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger } from "@cmt/cmakeTools";
-import { ArgsCompileCommand } from '@cmt/compdb';
+import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
@@ -364,7 +364,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Launch the given compilation command in an embedded terminal.
      * @param cmd The compilation command from a compilation database to run
      */
-    async runCompileCommand(cmd: ArgsCompileCommand): Promise<vscode.Terminal> {
+    async runCompileCommand(cmd: CompileCommand): Promise<vscode.Terminal> {
         const env = await this.getCMakeBuildCommandEnvironment();
         const key = `${cmd.directory}${JSON.stringify(env)}`;
         let existing = this._compileTerms.get(key);
