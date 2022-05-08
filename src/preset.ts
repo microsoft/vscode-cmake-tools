@@ -591,6 +591,9 @@ async function getExpansionOptions(folder: string, workspaceFolder: string, sour
     if (presetsFile && presetsFile.version >= 3 || userPresetsFile && userPresetsFile.version >= 3) {
         expansionOpts.vars['hostSystemName'] = await util.getHostSystemNameMemo();
     }
+    if (presetsFile && presetsFile.version >= 4 || userPresetsFile && userPresetsFile.version >= 4) {
+        expansionOpts.vars['fileDir'] = folder;
+    }
 
     return expansionOpts;
 }

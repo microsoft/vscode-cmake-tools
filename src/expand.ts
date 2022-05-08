@@ -52,6 +52,7 @@ export interface PresetContextVars extends RequiredExpansionContextVars {
     sourceParentDir: string;
     sourceDirName: string;
     presetName: string;
+    fileDir: string;
 }
 
 export interface MinimalPresetContextVars extends RequiredExpansionContextVars {
