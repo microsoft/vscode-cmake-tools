@@ -959,13 +959,16 @@ export class PresetsController {
         if (!presetsFile) {
             return undefined;
         }
+        let schemaFile;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
             return undefined;
-        }
-        let schemaFile = 'schemas/CMakePresets-schema.json';
-        if (presetsFile.version >= 3) {
+        } else if (presetsFile.version == 2) {
+            schemaFile = 'schemas/CMakePresets-schema.json';
+        } else if (presetsFile.version == 3) {
             schemaFile = 'schemas/CMakePresets-v3-schema.json';
+        } else {
+            schemaFile = 'schemas/CMakePresets-v4-schema.json';
         }
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);
