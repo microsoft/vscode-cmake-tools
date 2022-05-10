@@ -568,10 +568,12 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 break;
             case CMakePreconditionProblems.MissingCMakeListsFile:
                 telemetryEvent = "partialActivation";
-                telemetryProperties["ignoreCMakeListsMissing"] = this.workspaceContext.state.ignoreCMakeListsMissing.toString();
 
-                if (!this.workspaceContext.state.ignoreCMakeListsMissing &&
-                    !this.workspaceContext.config.ignoreCMakeListsMissing) {
+                const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing ||
+                  !this.workspaceContext.config.ignoreCMakeListsMissing;
+                telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
+
+                if (!ignoreCMakeListsMissing) {
                     const quickStart = localize('quickstart.cmake.project', "Create");
                     const changeSourceDirectory = localize('edit.setting', "Locate");
                     const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
