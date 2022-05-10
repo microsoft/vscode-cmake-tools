@@ -569,8 +569,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             case CMakePreconditionProblems.MissingCMakeListsFile:
                 telemetryEvent = "partialActivation";
 
-                const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing ||
-                  this.workspaceContext.config.ignoreCMakeListsMissing;
+                const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing || this.workspaceContext.config.ignoreCMakeListsMissing;
                 telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
 
                 if (!ignoreCMakeListsMissing) {
