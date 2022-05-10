@@ -103,6 +103,7 @@ export async function expandString<T>(tmpl: string | T, opts: ExpansionOptions):
     const MAX_RECURSION = 10;
     let result = tmpl;
     let didReplacement = false;
+    let circularReference: string | undefined;
 
     let i = 0;
     do {
@@ -110,10 +111,13 @@ export async function expandString<T>(tmpl: string | T, opts: ExpansionOptions):
         const expansion = await expandStringHelper(result, opts);
         result = expansion.result;
         didReplacement = expansion.didReplacement;
+        circularReference = expansion.circularReference;
         i++;
-    } while (i < MAX_RECURSION && opts.recursive && didReplacement);
+    } while (i < MAX_RECURSION && opts.recursive && didReplacement && !circularReference);
 
-    if (i === MAX_RECURSION) {
+    if (circularReference) {
+        log.warning(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
+    } else if (i === MAX_RECURSION) {
         log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
     }
 
@@ -124,6 +128,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
     const env = EnvironmentUtils.create(envPreNormalize);
     const repls = opts.vars;
+    let circularReference: string | undefined;
 
     // We accumulate a list of substitutions that we need to make, preventing
     // recursively expanding or looping forever on bad replacements
@@ -169,7 +174,15 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re3.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[varname]) || '';
+        const repl: string = fixPaths(env[varname]) || '';
+        // Avoid replacing an env variable by itself, e.g. PATH:env{PATH}.
+        const env_re4 = RegExp(`\\$env\\{(${varValueRegexp})\\}`, "g");
+        mat = env_re4.exec(repl);
+        const varnameRepl = mat ? mat[1] : undefined;
+        if (varnameRepl && varnameRepl === varname) {
+            circularReference = `\"${varname}\" : \"${tmpl}\"`;
+            break;
+        }
         subs.set(full, repl);
     }
 
@@ -233,5 +246,5 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
             didReplacement = true;
         }
     });
-    return { result: final_str, didReplacement };
+    return { result: final_str, didReplacement, circularReference };
 }

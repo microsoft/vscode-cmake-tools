@@ -3,7 +3,8 @@
  */
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
-import { CompilationDatabase } from '@cmt/compdb';
+import { CompilationDatabase } from '@cmt/compilationDatabase';
+
 import * as debuggerModule from '@cmt/debugger';
 import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
@@ -38,7 +39,7 @@ import { VariantManager } from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
-import { ConfigurationWebview } from './cache-view';
+import { ConfigurationWebview } from './cacheView';
 import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, showCMakeListsExperiment } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
@@ -616,9 +617,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         });
 
                         if (showCMakeLists) {
-                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "dismissed" : (selection.label === browse) ? "browse" : "pick";
+                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-exp" : (selection.label === browse) ? "browse" : "pick";
                         } else {
-                            telemetryProperties["missingCMakeListsUserAction"] = "changeSourceDirectory";
+                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-ctl" : "changeSourceDirectory";
                         }
 
                         let selectedFile: string | undefined;
@@ -657,6 +658,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
                                     return vscode.commands.executeCommand('cmake.configure');
                                 }
                             }
+                        } else {
+                            telemetryProperties["missingCMakeListsUserAction"] = showCMakeLists ? "cancel-browse-exp" : "cancel-browse-ctl";
                         }
                     } else if (result === ignoreCMakeListsMissing) {
                         // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
@@ -669,7 +672,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         await this.workspaceContext.state.setIgnoreCMakeListsMissing(true);
                     } else {
                         // "invalid" normally shouldn't happen since the popup can be closed by either dismissing it or clicking any of the three buttons.
-                        telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "dismissed" : "invalid";
+                        telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "cancel-dismiss" : "invalid";
                     }
                 }
 
