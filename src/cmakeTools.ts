@@ -576,7 +576,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 if (!ignoreCMakeListsMissing) {
                     const quickStart = localize('quickstart.cmake.project', "Create");
                     const changeSourceDirectory = localize('edit.setting', "Locate");
-                    const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
+                    const ignoreActivation = localize('ignore.activation', "Don't show again");
 
                     let showCMakeLists: boolean = await showCMakeListsExperiment();
                     const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
@@ -593,7 +593,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
                     const result = showCMakeLists ? changeSourceDirectory : await vscode.window.showErrorMessage(
                         localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder {0}. How would you like to proceed?', `"${this.folderName}"`),
-                        quickStart, changeSourceDirectory, ignoreCMakeListsMissing);
+                        quickStart, changeSourceDirectory, ignoreActivation);
 
                     if (result === quickStart) {
                         // Return here, since the updateFolderFullFeature set below (after the "switch")
@@ -664,7 +664,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         } else {
                             telemetryProperties["missingCMakeListsUserAction"] = showCMakeLists ? "cancel-browse-exp" : "cancel-browse-ctl";
                         }
-                    } else if (result === ignoreCMakeListsMissing) {
+                    } else if (result === ignoreActivation) {
                         // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
                         // (hide commands and status bar) and record this choice so that this popup doesn't trigger next time.
                         // The switch back to full functionality can be done later by changes to the cmake.sourceDirectory setting
