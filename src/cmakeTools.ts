@@ -570,7 +570,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 telemetryEvent = "partialActivation";
                 telemetryProperties["ignoreCMakeListsMissing"] = this.workspaceContext.state.ignoreCMakeListsMissing.toString();
 
-                if (!this.workspaceContext.state.ignoreCMakeListsMissing) {
+                if (!this.workspaceContext.state.ignoreCMakeListsMissing &&
+                    !this.workspaceContext.config.ignoreCMakeListsMissing) {
                     const quickStart = localize('quickstart.cmake.project', "Create");
                     const changeSourceDirectory = localize('edit.setting', "Locate");
                     const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
