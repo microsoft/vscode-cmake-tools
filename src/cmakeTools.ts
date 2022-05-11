@@ -1797,8 +1797,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
         await this.setDefaultBuildTarget(target);
         const drv = await this.cmakeDriver;
-        const targets = await this.getDefaultBuildTargets();
-        this.updateDriverAndTargetsInTaskProvider(drv, targets);
+        this.updateDriverAndTargetsInTaskProvider(drv, [target]);
     }
 
     updateDriverAndTargetsInTaskProvider(drv: CMakeDriver | null, targets?: string[]) {

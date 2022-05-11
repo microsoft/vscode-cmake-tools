@@ -10,20 +10,31 @@ import { Environment } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+let allTargetName: string = "all";
+const endOfLine: string = "\r\n";
+const dot: string = ".";
 
 interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
     label: string;
-    command: string; // Command is either "build", "install", or "test".
+    command: string; // Command is either "build", "configure", "install", or "test".
     options?: { cwd?: string };
-    targets?: string[];
+    targets?: string[]; // only in "build" command
 }
 
 enum CommandType {
     build = "build",
+    config = "configure",
     install = "install",
-    test = "test",
-    config = "configure"
+    test = "test"
+}
+
+// Check if the task target set is a subset of the the default target.
+export function isSubsetTarget(defaultTargets: any, givenTargets: any) {
+    return Array.isArray(defaultTargets) &&
+        Array.isArray(givenTargets) &&
+        // Check if defaultTargets is "all" targets.
+        (defaultTargets.includes(allTargetName) || defaultTargets.every((val, index) => val === givenTargets[index]));
 }
 
 const localizeCommandType = (cmd: CommandType): string => {
@@ -52,32 +63,28 @@ export class CMakeTask extends vscode.Task {
 export class CMakeTaskProvider implements vscode.TaskProvider {
     static CMakeScriptType: string = 'cmake';
     static CMakeSourceStr: string = "CMake";
-    static allTargetName: string = "all";
     private cmakeDriver?: CMakeDriver;
-    private defaultTargets: string[] = [CMakeTaskProvider.allTargetName];
+    private defaultTargets: string[] = [allTargetName];
 
     constructor() {
     }
 
     public updateCMakeDriver(cmakeDriver: CMakeDriver) {
         this.cmakeDriver = cmakeDriver;
-        if (CMakeTaskProvider.allTargetName === "all") {
-            CMakeTaskProvider.allTargetName = this.cmakeDriver.allTargetName;
-        }
+        allTargetName = this.cmakeDriver.allTargetName;
     }
 
     public updateDefaultTargets(defaultTargets?: string[]) {
         this.defaultTargets = (defaultTargets && defaultTargets.length > 0) ? defaultTargets :
-            this.cmakeDriver ? [this.cmakeDriver.allTargetName] : [CMakeTaskProvider.allTargetName];
+            this.cmakeDriver ? [this.cmakeDriver.allTargetName] : [allTargetName];
     }
 
     public async provideTasks(): Promise<CMakeTask[]> {
-        // Create a CMake build task
         const result: CMakeTask[] = [];
-        this.updateDefaultTargets();
-        // Provide build task.
         result.push(await this.provideTask(CommandType.build));
         result.push(await this.provideTask(CommandType.config));
+        result.push(await this.provideTask(CommandType.install));
+        result.push(await this.provideTask(CommandType.test));
         return result;
     }
 
@@ -87,7 +94,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             type: CMakeTaskProvider.CMakeScriptType,
             label: CMakeTaskProvider.CMakeSourceStr + ": " + taskName,
             command: commandType,
-            targets: this.defaultTargets
+            targets: (commandType === CommandType.build) ? this.defaultTargets : undefined
         };
         const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
@@ -123,64 +130,103 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     public get onDidClose(): vscode.Event<number> {
         return this.closeEmitter.event;
     }
-    private endOfLine: string = "\r\n";
 
     constructor(private command: string, private defaultTargets: string[], private definedTargets?: string[], private options: { cwd?: string ; environment?: Environment } = {}, private cmakeDriver?: CMakeDriver) {
     }
 
     output(line: string): void {
-        this.writeEmitter.fire(line + this.endOfLine);
+        this.writeEmitter.fire(line + endOfLine);
     }
 
     error(error: string): void {
-        this.writeEmitter.fire(error + this.endOfLine);
+        this.writeEmitter.fire(error + endOfLine);
     }
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
+        if (this.command !== CommandType.build && this.command !== CommandType.config && this.command !== CommandType.install && this.command !== CommandType.test) {
+            this.writeEmitter.fire(localize("command.not.recognized", '{0} is not a recognized command.', `"${this.command}"`) + endOfLine);
+            this.closeEmitter.fire(-1);
+            return;
+        }
         // At this point we can start using the terminal.
-        this.writeEmitter.fire(localize("starting.build", "Starting build...") + this.endOfLine);
-        await this.doBuild();
+        switch (this.command) {
+            case CommandType.build:
+                await this.runBuildTask();
+                break;
+            case CommandType.config:
+                await this.runConfigTask();
+                break;
+            case CommandType.install:
+                await this.runInstallTask();
+                break;
+            case CommandType.test:
+                await this.runTestTask();
+                break;
+        }
+
     }
 
     close(): void {
         // The terminal has been closed. Shutdown the build.
     }
 
-    private async doBuild(): Promise<any> {
-        if (this.command !== CommandType.build) {
-            this.writeEmitter.fire(localize("not.a.build.command", '{0} is not a recognized build command.', `"${this.command}"`) + this.endOfLine);
-            this.closeEmitter.fire(-1);
-            return;
-        }
-        let buildCommand: proc.BuildCommand | null;
+    private async runBuildTask(): Promise<any> {
+        let command: proc.BuildCommand | null;
         let cmakePath: string = "CMake.EXE";
         let args: string[] = [];
 
         if (this.cmakeDriver) {
-            buildCommand = await this.cmakeDriver.getCMakeBuildCommand(this.definedTargets ? this.definedTargets : this.defaultTargets);
-            if (buildCommand) {
-                cmakePath = buildCommand.command;
-                args = buildCommand.args ? buildCommand.args : [];
-                this.options.environment = buildCommand.build_env;
+            if (await this.cmakeDriver.checkNeedsReconfigure() || !isSubsetTarget(this.defaultTargets, this.definedTargets)) {
+                const result: number | undefined =  await vscode.commands.executeCommand('cmake.configure');
+                if (result !== 0) {
+                    this.writeEmitter.fire(localize("configure.finished.with.error", "Configure finished with error(s)") + dot + endOfLine);
+                    this.closeEmitter.fire(result ? result : -1);
+                    return;
+                }
             }
+            command = await this.cmakeDriver.getCMakeBuildCommand(this.definedTargets ? this.definedTargets : this.defaultTargets);
+            if (command) {
+                cmakePath = command.command;
+                args = command.args ? command.args : [];
+                this.options.environment = command.build_env;
+            }
+        } else {
+            this.closeEmitter.fire(-1);
         }
-
-        this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + this.endOfLine);
+        this.writeEmitter.fire(localize("build.started", "Build Started...") + endOfLine);
+        this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
         try {
             const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
-            const dot: string = ".";
             if (result.retc) {
-                this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s)") + dot + this.endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s)") + dot + endOfLine);
             } else if (result.stderr && !result.stdout) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + this.endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + endOfLine);
             } else if (result.stdout && result.stdout.includes("warning")) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + this.endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + endOfLine);
             } else {
-                this.writeEmitter.fire(localize("build.finished.successfully", "Build finished successfully.") + this.endOfLine);
+                this.writeEmitter.fire(localize("build.finished.successfully", "Build finished successfully.") + endOfLine);
             }
             this.closeEmitter.fire(0);
         } catch {
             this.closeEmitter.fire(-1);
         }
+    }
+
+    private async runConfigTask(): Promise<any> {
+        this.writeEmitter.fire(localize("config.started", "Config Started...") + endOfLine);
+        const result: number | undefined =  await vscode.commands.executeCommand('cmake.configure');
+        this.closeEmitter.fire(result ? result : -1);
+    }
+
+    private async runInstallTask(): Promise<any> {
+        this.writeEmitter.fire(localize("install.started", "Install Started...") + endOfLine);
+        const result: number | undefined =  await vscode.commands.executeCommand('cmake.install');
+        this.closeEmitter.fire(result ? result : -1);
+    }
+
+    private async runTestTask(): Promise<any> {
+        this.writeEmitter.fire(localize("Test.started", "Test Started...") + endOfLine);
+        const result: number | undefined =  await vscode.commands.executeCommand('cmake.ctest');
+        this.closeEmitter.fire(result ? result : -1);
     }
 }
