@@ -29,14 +29,6 @@ enum CommandType {
     test = "test"
 }
 
-// Check if the task target set is a subset of the the default target.
-export function isSubsetTarget(defaultTargets: any, givenTargets: any) {
-    return Array.isArray(defaultTargets) &&
-        Array.isArray(givenTargets) &&
-        // Check if defaultTargets is "all" targets.
-        (defaultTargets.includes(allTargetName) || defaultTargets.every((val, index) => val === givenTargets[index]));
-}
-
 const localizeCommandType = (cmd: CommandType): string => {
     switch (cmd) {
         case CommandType.build: {
@@ -176,7 +168,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         let args: string[] = [];
 
         if (this.cmakeDriver) {
-            if (await this.cmakeDriver.checkNeedsReconfigure() || !isSubsetTarget(this.defaultTargets, this.definedTargets)) {
+            if (await this.cmakeDriver.checkNeedsReconfigure()) {
                 const result: number | undefined =  await vscode.commands.executeCommand('cmake.configure');
                 if (result !== 0) {
                     this.writeEmitter.fire(localize("configure.finished.with.error", "Configure finished with error(s)") + dot + endOfLine);
