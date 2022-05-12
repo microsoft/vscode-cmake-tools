@@ -9,6 +9,7 @@ Improvements:
 - Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
 - Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
 - Add setting `cmake.ignoreCMakeListsMissing`. [PR #2537](https://github.com/microsoft/vscode-cmake-tools/pull/2537) [@ilg-ul](https://github.com/ilg-ul)
+- Add setting `cmake.skipSelectKit`. [PR #2541](https://github.com/microsoft/vscode-cmake-tools/pull/2541) [@ilg-ul](https://github.com/ilg-ul)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
