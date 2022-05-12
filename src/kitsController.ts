@@ -274,6 +274,11 @@ export class KitsController {
             return false;
         }
 
+        if (this.cmakeTools.workspaceContext.config.skipSelectKit) {
+            log.debug(localize('skip.select.kit', 'Skip selection of a kit'));
+            return false;
+        }
+
         const avail = this.availableKits;
         log.debug(localize('start.selection.of.kits', 'Start selection of kits. Found {0} kits.', avail.length));
 

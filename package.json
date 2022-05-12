@@ -1945,6 +1945,12 @@
           "default": false,
           "description": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
           "scope": "resource"
+        },
+        "cmake.skipSelectKit": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.skipSelectKit.description%",
+          "scope": "resource"
         }
       }
     },
