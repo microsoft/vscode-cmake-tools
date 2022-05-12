@@ -135,11 +135,6 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     }
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
-        if (this.command !== CommandType.build && this.command !== CommandType.config && this.command !== CommandType.install && this.command !== CommandType.test) {
-            this.writeEmitter.fire(localize("command.not.recognized", '{0} is not a recognized command.', `"${this.command}"`) + endOfLine);
-            this.closeEmitter.fire(-1);
-            return;
-        }
         // At this point we can start using the terminal.
         switch (this.command) {
             case CommandType.build:
@@ -154,8 +149,11 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             case CommandType.test:
                 await this.runTestTask();
                 break;
+            default:
+                this.writeEmitter.fire(localize("command.not.recognized", '{0} is not a recognized command.', `"${this.command}"`) + endOfLine);
+                this.closeEmitter.fire(-1);
+                return;
         }
-
     }
 
     close(): void {
