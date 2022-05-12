@@ -7,12 +7,14 @@ import { CMakeDriver } from './drivers/cmakeDriver';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment } from './environmentVariables';
+import * as logging from './logging';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+const log = logging.createLogger('TaskProvider');
+
 let allTargetName: string = "all";
 const endOfLine: string = "\r\n";
-const dot: string = ".";
 
 interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
@@ -169,7 +171,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             if (await this.cmakeDriver.checkNeedsReconfigure()) {
                 const result: number | undefined =  await vscode.commands.executeCommand('cmake.configure');
                 if (result !== 0) {
-                    this.writeEmitter.fire(localize("configure.finished.with.error", "Configure finished with error(s)") + dot + endOfLine);
+                    this.writeEmitter.fire(localize("configure.finished.with.error", "Configure finished with error(s).") + endOfLine);
                     this.closeEmitter.fire(result ? result : -1);
                     return;
                 }
@@ -181,18 +183,21 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
                 this.options.environment = command.build_env;
             }
         } else {
+            log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
+            this.writeEmitter.fire(localize("configure.failed", "Configure failed.") + endOfLine);
             this.closeEmitter.fire(-1);
+            return;
         }
         this.writeEmitter.fire(localize("build.started", "Build Started...") + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
         try {
             const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
             if (result.retc) {
-                this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s)") + dot + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s).") + endOfLine);
             } else if (result.stderr && !result.stdout) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s).") + endOfLine);
             } else if (result.stdout && result.stdout.includes("warning")) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s).") + endOfLine);
             } else {
                 this.writeEmitter.fire(localize("build.finished.successfully", "Build finished successfully.") + endOfLine);
             }
