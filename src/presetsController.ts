@@ -194,6 +194,9 @@ export class PresetsController {
             setOriginalPresetsFile(this.folder.uri.fsPath, undefined);
         }
         presetsFile = await this.validatePresetsFile(presetsFile, file);
+        // Private fields must be set after validation, otherwise validation would fail.
+        this.populatePrivatePresetsFields(presetsFile, file);
+        await this.mergeIncludeFiles(presetsFile, presetsFile, file);
         setPresetsFile(this.folder.uri.fsPath, presetsFile);
     }
 
@@ -953,6 +956,74 @@ export class PresetsController {
             return undefined;
         }
         return presetsFile;
+    }
+
+    private populatePrivatePresetsFields(presetsFile: preset.PresetsFile | undefined, file: string) {
+        if (!presetsFile) {
+            return;
+        }
+
+        presetsFile.__path = file;
+        const setFile = (presets: preset.Preset[] | undefined) => {
+            if (presets) {
+                for (const preset of presets) {
+                    preset.__file = presetsFile;
+                }
+            }
+        };
+        setFile(presetsFile.configurePresets);
+        setFile(presetsFile.buildPresets);
+        setFile(presetsFile.testPresets);
+    }
+
+    private async mergeIncludeFiles(rootPresetsFile: preset.PresetsFile | undefined, presetsFile: preset.PresetsFile | undefined, file: string, mergedFiles: Set<string> = new Set()): Promise<void> {
+        if (!rootPresetsFile || !presetsFile || !presetsFile.include) {
+            return;
+        }
+        
+        // Merge the includes in reverse order so that the final presets order is correct
+        for (let i = presetsFile.include.length - 1; i >= 0; i--) {
+            const fullIncludePath = path.normalize(path.resolve(path.dirname(file), presetsFile.include[i]));
+
+            // Do not include files more than once
+            if (mergedFiles.has(fullIncludePath)) {
+                continue;
+            } 
+            mergedFiles.add(fullIncludePath);
+            
+            const includeFileBuffer = await this.readPresetsFile(fullIncludePath);
+            if (!includeFileBuffer) {
+                log.error(localize('included.presets.file.not.found', 'Included presets file {0} cannot be found', fullIncludePath));
+                continue;
+            }
+
+            let includeFile = await this.parsePresetsFile(includeFileBuffer, fullIncludePath);
+            includeFile = await this.validatePresetsFile(includeFile, fullIncludePath);
+            if (!includeFile) {
+                continue;
+            }
+
+            // Private fields must be set after validation, otherwise validation would fail.
+            this.populatePrivatePresetsFields(includeFile, fullIncludePath);
+
+            if (includeFile.cmakeMinimumRequired) {
+                if (!rootPresetsFile.cmakeMinimumRequired || util.versionLess(rootPresetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
+                    rootPresetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
+                }                 
+            }
+            if (includeFile.configurePresets) {
+                rootPresetsFile.configurePresets = includeFile.configurePresets.concat(rootPresetsFile.configurePresets || [])
+            }
+            if (includeFile.buildPresets) {
+                rootPresetsFile.buildPresets = includeFile.buildPresets.concat(rootPresetsFile.buildPresets || []);
+            }
+            if (includeFile.testPresets) {
+                rootPresetsFile.testPresets = includeFile.testPresets.concat(rootPresetsFile.testPresets || []);
+            }
+            
+            // Recursively merge included files
+            await this.mergeIncludeFiles(rootPresetsFile, includeFile, fullIncludePath, mergedFiles);
+        }
     }
 
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {
