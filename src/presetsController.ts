@@ -980,7 +980,7 @@ export class PresetsController {
         if (!rootPresetsFile || !presetsFile || !presetsFile.include) {
             return;
         }
-        
+
         // Merge the includes in reverse order so that the final presets order is correct
         for (let i = presetsFile.include.length - 1; i >= 0; i--) {
             const fullIncludePath = path.normalize(path.resolve(path.dirname(file), presetsFile.include[i]));
@@ -988,9 +988,9 @@ export class PresetsController {
             // Do not include files more than once
             if (mergedFiles.has(fullIncludePath)) {
                 continue;
-            } 
+            }
             mergedFiles.add(fullIncludePath);
-            
+
             const includeFileBuffer = await this.readPresetsFile(fullIncludePath);
             if (!includeFileBuffer) {
                 log.error(localize('included.presets.file.not.found', 'Included presets file {0} cannot be found', fullIncludePath));
@@ -1009,10 +1009,10 @@ export class PresetsController {
             if (includeFile.cmakeMinimumRequired) {
                 if (!rootPresetsFile.cmakeMinimumRequired || util.versionLess(rootPresetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
                     rootPresetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
-                }                 
+                }
             }
             if (includeFile.configurePresets) {
-                rootPresetsFile.configurePresets = includeFile.configurePresets.concat(rootPresetsFile.configurePresets || [])
+                rootPresetsFile.configurePresets = includeFile.configurePresets.concat(rootPresetsFile.configurePresets || []);
             }
             if (includeFile.buildPresets) {
                 rootPresetsFile.buildPresets = includeFile.buildPresets.concat(rootPresetsFile.buildPresets || []);
@@ -1020,7 +1020,7 @@ export class PresetsController {
             if (includeFile.testPresets) {
                 rootPresetsFile.testPresets = includeFile.testPresets.concat(rootPresetsFile.testPresets || []);
             }
-            
+
             // Recursively merge included files
             await this.mergeIncludeFiles(rootPresetsFile, includeFile, fullIncludePath, mergedFiles);
         }
@@ -1034,9 +1034,9 @@ export class PresetsController {
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
             return undefined;
-        } else if (presetsFile.version == 2) {
+        } else if (presetsFile.version === 2) {
             schemaFile = 'schemas/CMakePresets-schema.json';
-        } else if (presetsFile.version == 3) {
+        } else if (presetsFile.version === 3) {
             schemaFile = 'schemas/CMakePresets-v3-schema.json';
         } else {
             schemaFile = 'schemas/CMakePresets-v4-schema.json';
