@@ -7,6 +7,7 @@ import { ConfigurationReader } from '@cmt/config';
 import {
     createQueryFileForApi,
     loadCacheContent,
+    loadCMakeFiles,
     loadConfigurationTargetMap,
     loadExtCodeModelContent,
     loadIndexFile,
@@ -79,6 +80,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     // Information from cmake file api
     private _cache: Map<string, api.CacheEntry> = new Map<string, api.CacheEntry>();
+    private _cmakeFiles: string[] | null = null;
     private _generatorInformation: Index.GeneratorInformation | null = null;
     private _target_map: Map<string, api.Target[]> = new Map();
 
@@ -326,6 +328,14 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 }
             }
 
+            // load cmake files
+            const cmakefiles_obj = indexFile.objects.find((value: Index.ObjectKind) => value.kind === 'cmakeFiles');
+            if (!cmakefiles_obj) {
+                throw Error('No cmake files object found');
+            }
+
+            this._cmakeFiles = await loadCMakeFiles(path.join(reply_path, cmakefiles_obj.jsonFile));
+
             this._codeModelChanged.fire(this._codeModelContent);
         }
         return indexFile !== null;
@@ -370,6 +380,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 name: t.name,
                 path: (t as api.RichTarget).filepath
             }));
+    }
+
+    get cmakeFiles(): string[] {
+        return this._cmakeFiles || [];
     }
 
     private readonly _codeModelChanged = new vscode.EventEmitter<null | codeModel.CodeModelContent>();

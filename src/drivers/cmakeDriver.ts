@@ -125,6 +125,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     abstract get uniqueTargets(): api.Target[];
 
     /**
+     * List of all files (CMakeLists.txt and included .cmake files) used by CMake
+     * during configuration
+     */
+    abstract get cmakeFiles(): string[];
+
+    /**
      * Do any necessary disposal for the driver. For the CMake Server driver,
      * this entails shutting down the server process and closing the open pipes.
      *

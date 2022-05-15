@@ -254,6 +254,10 @@ export class CMakeServerDriver extends CMakeDriver {
         return this.targets.reduce(targetReducer, []);
     }
 
+    get cmakeFiles(): string[] {
+        return this._cmakeInputFileSet.inputFiles.map(file => file.filePath);
+    }
+
     get generatorName(): string | null {
         return this._globalSettings ? this._globalSettings.generator : null;
     }

@@ -896,14 +896,23 @@ export class CMakeTools implements api.CMakeToolsAPI {
             }
 
             const sourceDirectory = (this.sourceDir).toLowerCase();
-            let isCmakeListsFile: boolean = false;
+            
+            let isCmakeFile: boolean;
+            if (drv && drv.cmakeFiles.length > 0) {
+                // If CMake file information is available from the driver, use it
+                isCmakeFile = drv.cmakeFiles.some(f => lightNormalizePath(str) === lightNormalizePath(path.resolve(this.sourceDir, f).toLowerCase()));
+            } else {
+                // Otherwise, fallback to a simple check (does not cover CMake include files)
+                isCmakeFile = false;
             if (str.endsWith("cmakelists.txt")) {
                 const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
                 // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
-                isCmakeListsFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
+                    isCmakeFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
                     (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
             }
-            if (isCmakeListsFile) {
+            }
+
+            if (isCmakeFile) {
                 // CMakeLists.txt change event: its creation or deletion are relevant,
                 // so update full/partial feature set view for this folder.
                 await updateFullFeatureSetForFolder(this.folder);
