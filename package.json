@@ -1229,24 +1229,24 @@
               "description": "%cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description%"
             },
             "externalConsole": {
-                "type": "boolean",
-                "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+              "type": "boolean",
+              "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
             },
             "console": {
-                "type": "string",
-                "enum": [
-                  "internalConsole",
-                  "integratedTerminal",
-                  "externalTerminal",
-                  "newExternalWindow"
-                ],
-                "enumDescriptions": [
-                  "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
-                ],
-                "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
+              "type": "string",
+              "enum": [
+                "internalConsole",
+                "integratedTerminal",
+                "externalTerminal",
+                "newExternalWindow"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
+              ],
+              "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
             },
             "logging": {
               "type": "object",
@@ -2052,7 +2052,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.56.0",
+    "@types/vscode": "1.63.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@typescript-eslint/eslint-plugin": "^4.22.1",
