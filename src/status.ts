@@ -16,14 +16,23 @@ function hasCPPTools(): boolean {
 abstract class Button {
     readonly settingsName: string | null = null;
     protected readonly button: vscode.StatusBarItem;
+    private _name: string | null = null;
     private _forceHidden: boolean = false;
     private _hidden: boolean = false;
     private _text: string = '';
     private _tooltip: string | null = null;
     private _icon: string | null = null;
 
-    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        this.button = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, this.priority);
+    constructor(protected readonly id: string, protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        this.button = vscode.window.createStatusBarItem(this.id, vscode.StatusBarAlignment.Left, this.priority);
+    }
+
+    get name(): string | null {
+        return this._name;
+    }
+    set name(v: string | null) {
+        this._name = v;
+        this.update();
     }
 
     /**
@@ -83,6 +92,7 @@ abstract class Button {
             this.button.hide();
             return;
         }
+        this.button.name = this.name || undefined;
         this.button.text = text;
         this.button.tooltip = this._getTooltip() || undefined;
         this.button.show();
@@ -187,7 +197,8 @@ class WorkspaceButton extends Button {
 
     settingsName = 'workspace';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('workspace', config, priority);
+        this.name = localize('cmake.active.folder', 'CMake: Active folder');
         this.command = 'cmake.selectActiveFolder';
         this.icon = 'folder-active';
         this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active folder');
@@ -223,7 +234,8 @@ class CMakeStatus extends Button {
 
     settingsName = 'status';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('status', config, priority);
+        this.name = localize('cmake.status', 'CMake: Status');
         this.hidden = true;
         this.command = 'cmake.setVariant';
         this.icon = 'info';
@@ -254,7 +266,8 @@ class KitSelection extends Button {
 
     settingsName = 'kit';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('kit', config, priority);
+        this.name = localize('cmake.active.kit', 'CMake: Active kit');
         this.hidden = true;
         this.command = 'cmake.selectKit';
         this.icon = 'tools';
@@ -298,7 +311,8 @@ class KitSelection extends Button {
 class BuildTargetSelectionButton extends Button {
     settingsName = 'buildTarget';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('buildTarget', config, priority);
+        this.name = localize('cmake.active.build.target', 'CMake: Active build target');
         this.hidden = false;
         this.command = 'cmake.setDefaultTarget';
         this.tooltip = localize('set.active.target.tooltip', 'Set the default build target');
@@ -311,7 +325,8 @@ class BuildTargetSelectionButton extends Button {
 class LaunchTargetSelectionButton extends Button {
     settingsName = 'launchTarget';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('launchTarget', config, priority);
+        this.name = localize('cmake.active.launch.target', 'CMake: Active launch target');
         this.command = 'cmake.selectLaunchTarget';
         this.tooltip = localize('select.target.tooltip', 'Select the target to launch');
     }
@@ -324,7 +339,8 @@ class LaunchTargetSelectionButton extends Button {
 class DebugButton extends Button {
     settingsName = 'debug';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('debug', config, priority);
+        this.name = localize('cmake.launch.debugger', 'CMake: Launch debugger');
         this.command = 'cmake.debugTarget';
         this.icon = 'bug';
         this.tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
@@ -352,7 +368,8 @@ class DebugButton extends Button {
 class LaunchButton extends Button {
     settingsName = 'launch';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('launch', config, priority);
+        this.name = localize('cmake.launch.target', 'CMake: Launch target');
         this.command = 'cmake.launchTarget';
         this.icon = 'play';
         this.tooltip = localize('launch.tooltip', 'Launch the selected target in the terminal window');
@@ -376,7 +393,8 @@ class LaunchButton extends Button {
 class CTestButton extends Button {
     settingsName = 'ctest';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('ctest', config, priority);
+        this.name = localize('cmake.run.ctest', 'CMake: Run CTest');
         this.command = 'cmake.ctest';
         this.tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
     }
@@ -455,7 +473,8 @@ class BuildButton extends Button {
 
     settingsName = 'build';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('build', config, priority);
+        this.name = localize('cmake.build', 'CMake: Build');
         this.command = 'cmake.build';
         this.tooltip = localize('build.tooltip', 'Build the selected target');
     }
@@ -503,7 +522,8 @@ export class ConfigurePresetSelection extends Button {
 
     settingsName = 'configurePreset';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('configurePreset', config, priority);
+        this.name = localize('cmake.active.configure.preset', 'CMake: Active configure preset');
         this.hidden = false;
         this.command = 'cmake.selectConfigurePreset';
         this.icon = 'tools';
@@ -546,7 +566,8 @@ export class BuildPresetSelection extends Button {
 
     settingsName = 'buildPreset';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('buildPreset', config, priority);
+        this.name = localize('cmake.active.build.preset', 'CMake: Active build preset');
         this.hidden = false;
         this.command = 'cmake.selectBuildPreset';
         this.icon = 'tools';
@@ -589,7 +610,8 @@ export class TestPresetSelection extends Button {
 
     settingsName = 'testPreset';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-        super(config, priority);
+        super('testPreset', config, priority);
+        this.name = localize('cmake.active.test.preset', 'CMake: Active test preset');
         this.hidden = false;
         this.command = 'cmake.selectTestPreset';
         this.icon = 'tools';
