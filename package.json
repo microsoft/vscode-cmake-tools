@@ -536,7 +536,10 @@
           "command": {
             "type": "string",
             "enum": [
-              "build"
+              "build",
+              "configure",
+              "install",
+              "test"
             ],
             "description": "CMake build command"
           },
@@ -1939,6 +1942,12 @@
           ],
           "description": "%cmake-tools.configuration.cmake.launchBehavior.description%",
           "default": "reuseTerminal"
+        },
+        "cmake.ignoreCMakeListsMissing": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
+          "scope": "resource"
         }
       }
     },
