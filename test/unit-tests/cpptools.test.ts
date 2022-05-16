@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { parseCompileFlags, getIntelliSenseMode, CppConfigurationProvider } from '@cmt/cpptool';
+import { parseCompileFlags, getIntelliSenseMode, CppConfigurationProvider } from '@cmt/cppTools';
 import { expect } from '@test/util';
 import { CMakeCache } from '@cmt/cache';
 import * as path from 'path';

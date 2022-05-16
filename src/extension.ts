@@ -14,7 +14,7 @@ import * as nls from 'vscode-nls';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmakeTools';
 import { ConfigurationReader, TouchBarConfig } from '@cmt/extensionConfigs';
-import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptool';
+import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cppTools';
 import { CMakeToolsFolderController, CMakeToolsFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/folders';
 import {
     Kit,
