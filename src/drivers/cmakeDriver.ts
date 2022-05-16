@@ -10,7 +10,7 @@ import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger } from "@cmt/cmakeTools";
 import { CompileCommand } from '@cmt/compilationDatabase';
-import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
+import { ConfigurationReader, defaultNumJobs } from '@cmt/extensionConfigs';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';

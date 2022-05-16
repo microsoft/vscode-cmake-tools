@@ -41,7 +41,7 @@ import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cacheView';
 import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, showCMakeListsExperiment } from './extension';
-import { ConfigurationReader } from './config';
+import { ConfigurationReader } from './extensionConfigs';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';

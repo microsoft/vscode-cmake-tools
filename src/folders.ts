@@ -11,7 +11,7 @@ import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
 import { PresetsController } from '@cmt/presetsController';
-import { CMakeCommunicationMode, UseCMakePresets } from './config';
+import { CMakeCommunicationMode, UseCMakePresets } from './extensionConfigs';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

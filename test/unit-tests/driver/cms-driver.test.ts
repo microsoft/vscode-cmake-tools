@@ -1,5 +1,5 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
-import { ConfigurationReader } from '@cmt/config';
+import { ConfigurationReader } from '@cmt/extensionConfigs';
 import * as cms_driver from '@cmt/drivers/cmakeServerDriver';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';

@@ -169,7 +169,7 @@ class Paths {
     }
 
     async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
-        const ctest_path = await this.expandStringPath(wsc.config.raw_ctestPath, wsc);
+        const ctest_path = await this.expandStringPath(wsc.config.rawCTestPath, wsc);
         if (!ctest_path || ctest_path === 'auto') {
             const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
             if (cmake === null) {
@@ -200,7 +200,7 @@ class Paths {
 
         let raw = overWriteCMakePathSetting;
         if (!raw) {
-            raw = await this.expandStringPath(wsc.config.raw_cmakePath, wsc);
+            raw = await this.expandStringPath(wsc.config.rawCMakePath, wsc);
         }
 
         if (raw === 'auto' || raw === 'cmake') {

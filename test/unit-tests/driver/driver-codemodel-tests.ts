@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
-import { ConfigurationReader } from '@cmt/config';
+import { ConfigurationReader } from '@cmt/extensionConfigs';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as codeModel from '@cmt/drivers/codeModel';
 import * as chai from 'chai';

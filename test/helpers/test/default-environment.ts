@@ -1,4 +1,4 @@
-import { ConfigurationReader } from '@cmt/config';
+import { ConfigurationReader } from '@cmt/extensionConfigs';
 import { StateManager } from '@cmt/state';
 import { DirectoryContext } from '@cmt/workspace';
 import * as sinon from 'sinon';

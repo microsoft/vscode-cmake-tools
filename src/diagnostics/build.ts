@@ -15,7 +15,7 @@ import * as gnu_ld from './gnu-ld';
 import * as mvsc from './msvc';
 import * as iar from './iar';
 import { FileDiagnostic, RawDiagnosticParser } from './util';
-import { ConfigurationReader } from '@cmt/config';
+import { ConfigurationReader } from '@cmt/extensionConfigs';
 
 export class Compilers {
     [compiler: string]: RawDiagnosticParser;

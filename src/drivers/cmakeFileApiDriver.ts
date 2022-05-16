@@ -3,7 +3,7 @@ import { ConfigureTrigger } from '@cmt/cmakeTools';
 import { ExecutableTarget } from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
-import { ConfigurationReader } from '@cmt/config';
+import { ConfigurationReader } from '@cmt/extensionConfigs';
 import {
     createQueryFileForApi,
     loadCacheContent,
