@@ -139,7 +139,7 @@ type DebuggerGenerators = {
     };
 };
 
-const DEBUG_GEN: DebuggerGenerators = {
+const debuggerGenerators: DebuggerGenerators = {
     gdb: {
         miMode: 'gdb',
         createConfig: createGDBDebugConfiguration
@@ -166,14 +166,14 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     const entry = cache.get('CMAKE_LINKER');
     if (entry !== null && !modeOverride && !debuggerPathOverride) {
         const linker = entry.value as string;
-        const is_msvc_linker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
-        if (is_msvc_linker) {
+        const isMSVCLinker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
+        if (isMSVCLinker) {
             return createMSVCDebugConfiguration(target);
         }
     }
 
-    const debugger_name = modeOverride || (platform === 'darwin' ? 'lldb' : 'gdb');
-    const description = DEBUG_GEN[debugger_name];
+    const debuggerName = modeOverride || (platform === 'darwin' ? 'lldb' : 'gdb');
+    const description = debuggerGenerators[debuggerName];
 
     if (debuggerPathOverride) {
         if (path.isAbsolute(debuggerPathOverride) && await fs.exists(debuggerPathOverride)) {
@@ -184,31 +184,31 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
             '"miDebuggerPath"', '"cmake.debugConfig"', `"${debuggerPathOverride}"`));
     }
 
-    const compiler_path = searchForCompilerPathInCache(cache);
-    if (compiler_path === null) {
+    const compilerPath = searchForCompilerPathInCache(cache);
+    if (compilerPath === null) {
         throw Error(localize('no.compiler.found.in.cache', 'No compiler found in cache file.'));  // MSVC should be already found by CMAKE_LINKER
     }
 
-    if (compiler_path.endsWith('cl.exe')) {
+    if (compilerPath.endsWith('cl.exe')) {
         return createMSVCDebugConfiguration(target);
     }
 
     // Look for a debugger, in the following order:
     // 1. LLDB-MI
-    const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
-    let mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
+    const clangCompilerRegex = /(clang[\+]{0,2})+(?!-cl)/gi;
+    let miDebuggerPath = compilerPath.replace(clangCompilerRegex, 'lldb-mi');
     if (modeOverride !== MIModes.gdb) {
-        const lldbMIReplaced = mi_debugger_path.search(new RegExp('lldb-mi')) !== -1;
+        const lldbMIReplaced = miDebuggerPath.search(new RegExp('lldb-mi')) !== -1;
         if (lldbMIReplaced) {
             // 1a. lldb-mi in the compiler path
-            if (await checkDebugger(mi_debugger_path)) {
-                return createLLDBDebugConfiguration(mi_debugger_path, target);
+            if (await checkDebugger(miDebuggerPath)) {
+                return createLLDBDebugConfiguration(miDebuggerPath, target);
             }
         }
         if (modeOverride === MIModes.lldb || lldbMIReplaced) {
             // 1b. lldb-mi installed by CppTools
-            const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
-            const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
+            const cppToolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
+            const cpptoolsDebuggerPath = cppToolsExtension ? path.join(cppToolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
             if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
                 return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
             }
@@ -216,31 +216,31 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     }
 
     // 2. gdb in the compiler path
-    mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-    if (modeOverride !== MIModes.lldb && (mi_debugger_path.search(new RegExp('gdb')) !== -1) && await checkDebugger(mi_debugger_path)) {
-        return createGDBDebugConfiguration(mi_debugger_path, target);
+    miDebuggerPath = compilerPath.replace(clangCompilerRegex, 'gdb');
+    if (modeOverride !== MIModes.lldb && (miDebuggerPath.search(new RegExp('gdb')) !== -1) && await checkDebugger(miDebuggerPath)) {
+        return createGDBDebugConfiguration(miDebuggerPath, target);
     }
 
     // 3. lldb in the compiler path
-    mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-    if (modeOverride !== MIModes.gdb && (mi_debugger_path.search(new RegExp('lldb')) !== -1) && await checkDebugger(mi_debugger_path)) {
-        return createLLDBDebugConfiguration(mi_debugger_path, target);
+    miDebuggerPath = compilerPath.replace(clangCompilerRegex, 'lldb');
+    if (modeOverride !== MIModes.gdb && (miDebuggerPath.search(new RegExp('lldb')) !== -1) && await checkDebugger(miDebuggerPath)) {
+        return createLLDBDebugConfiguration(miDebuggerPath, target);
     }
 
-    const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
-    let gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.miMode);
-    if (path.isAbsolute(gdb_debugger_path) && !await fs.exists(gdb_debugger_path)) {
-        gdb_debugger_path = path.join(path.dirname(compiler_path), description.miMode);
+    const gccCompilerRegex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
+    let gdbDebuggerPath = compilerPath.replace(gccCompilerRegex, description.miMode);
+    if (path.isAbsolute(gdbDebuggerPath) && !await fs.exists(gdbDebuggerPath)) {
+        gdbDebuggerPath = path.join(path.dirname(compilerPath), description.miMode);
         if (process.platform === 'win32') {
-            gdb_debugger_path = gdb_debugger_path + '.exe';
+            gdbDebuggerPath = gdbDebuggerPath + '.exe';
         }
     }
-    if (gdb_debugger_path.search(new RegExp(description.miMode)) !== -1) {
-        return description.createConfig(gdb_debugger_path, target);
+    if (gdbDebuggerPath.search(new RegExp(description.miMode)) !== -1) {
+        return description.createConfig(gdbDebuggerPath, target);
     }
 
     log.warning(localize('unable.to.determine.debugger.for.compiler',
-        'Unable to automatically determine debugger corresponding to compiler: {0}', compiler_path));
+        'Unable to automatically determine debugger corresponding to compiler: {0}', compilerPath));
     return null;
 }
 
