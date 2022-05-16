@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as which from 'which';
 import * as vscode from 'vscode';
 
-import { vsInstallations } from './installs/visual-studio';
+import { vsInstallations } from './installs/visualStudio';
 import { expandString } from './expand';
 import { fs } from './pr';
 import * as util from '@cmt/util';
