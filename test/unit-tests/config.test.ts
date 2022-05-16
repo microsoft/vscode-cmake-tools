@@ -44,6 +44,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         skipConfigureIfCachePresent: null,
         useCMakeServer: true,
         cmakeCommunicationMode: 'automatic',
+        showSystemKits: true,
         ignoreKitEnv: false,
         additionalKits: [],
         buildTask: false,
@@ -59,7 +60,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         },
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
-        launchBehavior: 'reuseTerminal'
+        launchBehavior: 'reuseTerminal',
+        ignoreCMakeListsMissing: false
     });
     ret.updatePartial(conf);
     return ret;

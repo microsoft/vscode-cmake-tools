@@ -6,6 +6,10 @@ Improvements:
 - Add commands to get preset names. [PR #2433](https://github.com/microsoft/vscode-cmake-tools/pull/2433)
 - Add IntelliSense support for `debugConfig.console`. [#2428](https://github.com/microsoft/vscode-cmake-tools/issues/2428)
 - Add c++23 support. [#2475](https://github.com/microsoft/vscode-cmake-tools/issues/2475) [@sweemer](https://github.com/sweemer)
+- Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
+- Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
+- Add support for "configure", "install" and "test" task. [#2452](https://github.com/microsoft/vscode-cmake-tools/issues/2452)
+- Add setting `cmake.ignoreCMakeListsMissing`. [PR #2537](https://github.com/microsoft/vscode-cmake-tools/pull/2537) [@ilg-ul](https://github.com/ilg-ul)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
@@ -14,6 +18,11 @@ Bug Fixes:
 - Fix schema validation for presets version 4. [#2490](https://github.com/microsoft/vscode-cmake-tools/issues/2490)
 - Remove problematic environment variables from the debugger environment. [#2442](https://github.com/microsoft/vscode-cmake-tools/issues/2442)
 - Fix preferredGenerator "Watcom WMake" not working. [#2500](https://github.com/microsoft/vscode-cmake-tools/issues/2500)
+- When `debugConfig` has specific modes or debugger paths set, the linker check heuristic should be skipped. [#2509](https://github.com/microsoft/vscode-cmake-tools/issues/2509)
+- Exclude environment variables from debugging if the values have newlines. [#2515](https://github.com/microsoft/vscode-cmake-tools/issues/2515)
+- Correctly configure the build environment when using VS 2015 and Ninja in CMakePresets.json. [#2516](https://github.com/microsoft/vscode-cmake-tools/issues/2516)
+- Select the correct VS toolset for Ninja generators with CMake Presets. [#2423](https://github.com/microsoft/vscode-cmake-tools/issues/2423)
+- Fix unhandled exception with CMakePresets.json. [#2117](https://github.com/microsoft/vscode-cmake-tools/issues/2117)
 
 ## 1.10.5
 Bug Fixes:

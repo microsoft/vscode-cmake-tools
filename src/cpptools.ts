@@ -5,7 +5,7 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import * as codeModelApi from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { createLogger } from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -424,12 +424,12 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group from the code model to create config data for
      * @param opts Index update options
      */
-    private buildConfigurationData(fileGroup: codeModelApi.CodeModelFileGroup, opts: codeModelApi.CodeModelParams, target: TargetDefaults, sysroot: string): cpptools.SourceFileConfiguration {
+    private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string): cpptools.SourceFileConfiguration {
         // If the file didn't have a language, default to C++
         const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the
         // group's language compiler, then the C++ compiler, then the C compiler.
-        const compilerToolchains: codeModelApi.CodeModelToolchain | undefined = opts.codeModelContent.toolchains?.get(lang ?? "")
+        const compilerToolchains: codeModel.CodeModelToolchain | undefined = opts.codeModelContent.toolchains?.get(lang ?? "")
             || opts.codeModelContent.toolchains?.get('CXX')
             || opts.codeModelContent.toolchains?.get('C');
         // If none of those work, fall back to the same order, but in the cache.
@@ -498,7 +498,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group
      * @param options Index update options
      */
-    private updateFileGroup(sourceDir: string, fileGroup: codeModelApi.CodeModelFileGroup, options: codeModelApi.CodeModelParams, target: TargetDefaults, sysroot: string) {
+    private updateFileGroup(sourceDir: string, fileGroup: codeModel.CodeModelFileGroup, options: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
@@ -534,7 +534,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * Update the file index and code model
      * @param opts Update parameters
      */
-    updateConfigurationData(opts: codeModelApi.CodeModelParams) {
+    updateConfigurationData(opts: codeModel.CodeModelParams) {
         // Reset the counters for diagnostics
         this.requests.clear();
         this.responses.clear();

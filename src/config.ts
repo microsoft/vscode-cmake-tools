@@ -128,6 +128,7 @@ export interface ExtensionConfigurationSettings {
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
     cmakeCommunicationMode: CMakeCommunicationMode;
+    showSystemKits: boolean;
     ignoreKitEnv: boolean;
     buildTask: boolean;
     outputLogEncoding: string;
@@ -139,6 +140,7 @@ export interface ExtensionConfigurationSettings {
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
     launchBehavior: string;
+    ignoreCMakeListsMissing: boolean;
 }
 
 type EmittersOf<T> = {
@@ -352,6 +354,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.allowCommentsInPresetsFile;
     }
 
+    get ignoreCMakeListsMissing(): boolean {
+        return this.configData.ignoreCMakeListsMissing;
+    }
+
     get cmakeCommunicationMode(): CMakeCommunicationMode {
         let communicationMode = this.configData.cmakeCommunicationMode;
         if (communicationMode === "automatic" && this.useCMakeServer) {
@@ -393,6 +399,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
+    }
+    get showSystemKits(): boolean {
+        return this.configData.showSystemKits;
     }
     get ignoreKitEnv(): boolean {
         return this.configData.ignoreKitEnv;
@@ -465,6 +474,7 @@ export class ConfigurationReader implements vscode.Disposable {
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),
         cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
+        showSystemKits: new vscode.EventEmitter<boolean>(),
         ignoreKitEnv: new vscode.EventEmitter<boolean>(),
         buildTask: new vscode.EventEmitter<boolean>(),
         outputLogEncoding: new vscode.EventEmitter<string>(),
@@ -475,6 +485,7 @@ export class ConfigurationReader implements vscode.Disposable {
         statusbar: new vscode.EventEmitter<StatusBarConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
+        ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>()
     };
 

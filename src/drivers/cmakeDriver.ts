@@ -6,10 +6,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from '@cmt/api';
-import { CMakeExecutable } from '@cmt/cmake/cmake-executable';
-import * as codepages from '@cmt/code-pages';
+import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger } from "@cmt/cmakeTools";
-import { ArgsCompileCommand } from '@cmt/compdb';
+import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
@@ -28,7 +28,7 @@ import { ConfigureArguments, VariantOption } from '@cmt/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
-import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/folders';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 
@@ -105,14 +105,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * This event is fired after update of the code model, like after cmake configuration.
      */
-    abstract onCodeModelChanged: vscode.Event<codemodel.CodeModelContent | null>;
+    abstract onCodeModelChanged: vscode.Event<codeModel.CodeModelContent | null>;
 
     /**
      * List of targets known to CMake
      */
     abstract get targets(): api.Target[];
 
-    abstract get codeModelContent(): codemodel.CodeModelContent | null;
+    abstract get codeModelContent(): codeModel.CodeModelContent | null;
 
     /**
      * List of executable targets known to CMake
@@ -364,7 +364,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Launch the given compilation command in an embedded terminal.
      * @param cmd The compilation command from a compilation database to run
      */
-    async runCompileCommand(cmd: ArgsCompileCommand): Promise<vscode.Terminal> {
+    async runCompileCommand(cmd: CompileCommand): Promise<vscode.Terminal> {
         const env = await this.getCMakeBuildCommandEnvironment();
         const key = `${cmd.directory}${JSON.stringify(env)}`;
         let existing = this._compileTerms.get(key);

@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmake-executable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
-import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import * as codeModel from '@cmt/drivers/codeModel';
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiString from 'chai-string';
@@ -74,12 +74,14 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             }
         });
 
-        async function generateCodeModelForConfiguredDriver(args: string[] = [], workspaceFolder: string = defaultWorkspaceFolder): Promise<null | codemodel_api.CodeModelContent> {
+        async function generateCodeModelForConfiguredDriver(args: string[] = [],
+            workspaceFolder: string = defaultWorkspaceFolder):
+            Promise<null | codeModel.CodeModelContent> {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
             driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
-            let code_model: null | codemodel_api.CodeModelContent = null;
+            let code_model: null | codeModel.CodeModelContent = null;
             if (driver && !(driver instanceof CMakeLegacyDriver)) {
                 driver.onCodeModelChanged(cm => {
                     code_model = cm;

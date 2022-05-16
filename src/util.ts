@@ -184,6 +184,14 @@ export function objectPairs<V>(obj: { [key: string]: V }): [string, V][] {
 }
 
 /**
+ * Remote null and undefined entries from an array.
+ * @param x the input array
+ */
+export function removeEmpty<T>(x: (T | null | undefined)[]): T[] {
+    return x.filter(e => e) as T[];
+}
+
+/**
  * Map an iterable by some projection function
  * @param iter An iterable to map
  * @param proj The projection function
@@ -376,7 +384,7 @@ export function makeDebuggerEnvironmentVars(env?: Environment): DebuggerEnvironm
     if (!env) {
         return [];
     }
-    const filter: RegExp = /\$\{.+?\}/; // Disallow env variables that have variable expansion values
+    const filter: RegExp = /\$\{.+?\}|\n/; // Disallow env variables that have variable expansion values or newlines
     const converted_env: DebuggerEnvironmentVariable[] = [];
     for (const [key, value] of Object.entries(env)) {
         if (value !== undefined && !value.match(filter)) {
@@ -766,6 +774,7 @@ export const getHostSystemNameMemo = memoize(getHostSystemName);
 export function getExtensionFilePath(extensionfile: string): string {
     return path.resolve(thisExtensionPath(), extensionfile);
 }
+
 export function getCmakeToolsTargetPopulation(): TargetPopulation {
     // If insiders.flag is present, consider this an insiders version.
     // If release.flag is present, consider this a release version.
