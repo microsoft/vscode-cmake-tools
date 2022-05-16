@@ -904,12 +904,12 @@ export class CMakeTools implements api.CMakeToolsAPI {
             } else {
                 // Otherwise, fallback to a simple check (does not cover CMake include files)
                 isCmakeFile = false;
-            if (str.endsWith("cmakelists.txt")) {
-                const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
-                // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
+                if (str.endsWith("cmakelists.txt")) {
+                    const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+                    // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
                     isCmakeFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
-                    (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
-            }
+                        (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
+                }
             }
 
             if (isCmakeFile) {
