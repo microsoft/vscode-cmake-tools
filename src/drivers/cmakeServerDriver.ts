@@ -299,7 +299,7 @@ export class CMakeServerDriver extends CMakeDriver {
     }
 
     doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
-        this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
+        this._clientChangeInProgress = this._setKitAndRestart(false, cb);
         return this._clientChangeInProgress;
     }
 
