@@ -9,9 +9,15 @@
 	"test": "тест",
 	"configure": "настроить",
 	"cmake.template.task": "Задача шаблона CMake {0}",
-	"starting.build": "Запуск сборки…",
-	"not.a.build.command": "{0} не является распознаваемой командой сборки.",
-	"build.finished.with.error": "Сборка завершена с ошибками",
-	"build.finished.with.warnings": "Сборка завершена с предупреждениями.",
-	"build.finished.successfully": "Сборка завершена."
+	"command.not.recognized": "{0} is not a recognized command.",
+	"configure.finished.with.error": "Configure finished with error(s).",
+	"cmake.driver.not.found": "CMake driver not found.",
+	"configure.failed": "Configure failed.",
+	"build.started": "Build Started...",
+	"build.finished.with.error": "Build finished with error(s).",
+	"build.finished.with.warnings": "Build finished with warning(s).",
+	"build.finished.successfully": "Сборка завершена.",
+	"config.started": "Config Started...",
+	"install.started": "Install Started...",
+	"Test.started": "Test Started..."
 }

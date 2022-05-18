@@ -9,9 +9,15 @@
 	"test": "test",
 	"configure": "konfigurovat",
 	"cmake.template.task": "Úloha {0} šablony CMake",
-	"starting.build": "Spouští se sestavování...",
-	"not.a.build.command": "{0} není rozpoznaný příkaz sestavení.",
-	"build.finished.with.error": "Sestavování se dokončilo s chybami.",
-	"build.finished.with.warnings": "Sestavování se dokončilo s upozorněními.",
-	"build.finished.successfully": "Sestavování se úspěšně dokončilo."
+	"command.not.recognized": "{0} is not a recognized command.",
+	"configure.finished.with.error": "Configure finished with error(s).",
+	"cmake.driver.not.found": "CMake driver not found.",
+	"configure.failed": "Configure failed.",
+	"build.started": "Build Started...",
+	"build.finished.with.error": "Build finished with error(s).",
+	"build.finished.with.warnings": "Build finished with warning(s).",
+	"build.finished.successfully": "Sestavování se úspěšně dokončilo.",
+	"config.started": "Config Started...",
+	"install.started": "Install Started...",
+	"Test.started": "Test Started..."
 }

@@ -9,9 +9,15 @@
 	"test": "testuj",
 	"configure": "konfiguruj",
 	"cmake.template.task": "Zadanie {0} szablonu narzędzia CMake",
-	"starting.build": "Trwa uruchamianie kompilacji...",
-	"not.a.build.command": "{0} nie jest rozpoznawanym poleceniem kompilacji.",
-	"build.finished.with.error": "Kompilacja została zakończona z błędami",
-	"build.finished.with.warnings": "Kompilacja została zakończona z ostrzeżeniami",
-	"build.finished.successfully": "Kompilacja została zakończona pomyślnie."
+	"command.not.recognized": "{0} is not a recognized command.",
+	"configure.finished.with.error": "Configure finished with error(s).",
+	"cmake.driver.not.found": "CMake driver not found.",
+	"configure.failed": "Configure failed.",
+	"build.started": "Build Started...",
+	"build.finished.with.error": "Build finished with error(s).",
+	"build.finished.with.warnings": "Build finished with warning(s).",
+	"build.finished.successfully": "Kompilacja została zakończona pomyślnie.",
+	"config.started": "Config Started...",
+	"install.started": "Install Started...",
+	"Test.started": "Test Started..."
 }
