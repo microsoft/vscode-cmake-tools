@@ -704,7 +704,11 @@ class ExtensionManager implements vscode.Disposable {
                 return;
             }
             if (!this.cppToolsAPI) {
-                this.cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5).catch(_err => undefined);
+                try {
+                    this.cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v6);
+                } catch (err) {
+                    log.debug(localize('failed.to.get.cpptools.api.v6', 'Failed to get cppTools API v6'));
+                }
             }
 
             if (this.cppToolsAPI && (cmt.activeKit || cmt.configurePreset)) {
@@ -754,10 +758,12 @@ class ExtensionManager implements vscode.Disposable {
                         }
                     );
                 }
+                // Inform cpptools that custom CppConfigurationProvider will be able to service the current workspace.
                 this.ensureCppToolsProviderRegistered();
                 if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this.folders.size) {
                     ++this.cpptoolsNumFoldersReady;
                     if (this.cpptoolsNumFoldersReady === this.folders.size) {
+                        // Notify cpptools that the provider is ready to provide IntelliSense configurations.
                         cpptools.notifyReady(this.configProvider);
                         this.configProvider.markAsReady();
                     }

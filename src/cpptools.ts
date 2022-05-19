@@ -63,15 +63,10 @@ interface TargetDefaults {
     defines: string[];
 }
 
-function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean): StandardVersion {
+function parseCppStandard(std: string, canUseGnu: boolean): StandardVersion {
+    // No need to parse language standard for CppTools API v6 and above
     const isGnu = canUseGnu && std.startsWith('gnu');
-    if (std.endsWith('++23') || std.endsWith('++2b') || std.endsWith('++latest')) {
-        if (canUseCxx23) {
-            return isGnu ? 'gnu++23' : 'c++23';
-        } else {
-            return isGnu ? 'gnu++20' : 'c++20';
-        }
-    } else if (std.endsWith('++20') || std.endsWith('++2a')) {
+    if (std.endsWith('++20') || std.endsWith('++2a')) {
         return isGnu ? 'gnu++20' : 'c++20';
     } else if (std.endsWith('++17') || std.endsWith('++1z')) {
         return isGnu ? 'gnu++17' : 'c++17';
@@ -154,10 +149,11 @@ function parseTargetArch(target: string): Architecture {
 export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], lang?: string): CompileFlagInformation {
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
-    const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
+    // No need to send language standard for CppTools API v6 and above.
+    const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
-    let standard: StandardVersion;
+    let standard: StandardVersion | undefined;
     let targetArch: Architecture;
     while (1) {
         const { done, value } = iter.next();
@@ -201,37 +197,39 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
             const def = value.substring(2);
             extraDefinitions.push(def);
         } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
-            const std = value.substring(5);
-            if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
-                const s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
-                if (!s) {
-                    log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
+            if (extractStdFlag) {
+                const std = value.substring(5);
+                if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
+                    const s = parseCppStandard(std, canUseGnuStd);
+                    if (!s) {
+                        log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
+                    } else {
+                        standard = s;
+                    }
+                } else if (lang === 'C' || lang === 'OBJC') {
+                    const s = parseCStandard(std, canUseGnuStd);
+                    if (!s) {
+                        log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
+                    } else {
+                        standard = s;
+                    }
+                } else if (lang === undefined) {
+                    let s = parseCppStandard(std, canUseGnuStd);
+                    if (!s) {
+                        s = parseCStandard(std, canUseGnuStd);
+                    }
+                    if (!s) {
+                        log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
+                    } else {
+                        standard = s;
+                    }
                 } else {
-                    standard = s;
+                    log.warning(localize('unknown language', 'Unknown language: {0}', lang));
                 }
-            } else if (lang === 'C' || lang === 'OBJC') {
-                const s = parseCStandard(std, canUseGnuStd);
-                if (!s) {
-                    log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
-                } else {
-                    standard = s;
-                }
-            } else if (lang === undefined) {
-                let s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
-                if (!s) {
-                    s = parseCStandard(std, canUseGnuStd);
-                }
-                if (!s) {
-                    log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
-                } else {
-                    standard = s;
-                }
-            } else {
-                log.warning(localize('unknown language', 'Unknown language: {0}', lang));
             }
         }
     }
-    if (!standard && requireStandardTarget) {
+    if (!standard && requireStandardTarget && extractStdFlag) {
         standard = (lang === 'C') ? 'c11' : 'c++17';
     }
     return { extraDefinitions, standard, targetArch };
@@ -425,6 +423,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param opts Index update options
      */
     private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string): cpptools.SourceFileConfiguration {
+        // For CppTools V6 and above, build the compilerFragments data, otherwise build compilerArgs data
+        const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6
         // If the file didn't have a language, default to C++
         const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the
@@ -446,14 +446,14 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        const compileCommandFragments = this.cpptoolsVersion >= cpptools.Version.v6 ? fileGroup.compileCommandFragments : target.compileCommandFragments;
+        const compileCommandFragments = useFragments ? fileGroup.compileCommandFragments : target.compileCommandFragments;
         const getAsFlags = (fragments?: string[]) => {
             if (!fragments) {
                 return [];
             }
             return [...util.flatMap(fragments, fragment => shlex.split(fragment))];
         };
-        const flags = this.cpptoolsVersion < cpptools.Version.v6 ? getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
+        const flags = !useFragments ? getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
         const { standard, extraDefinitions, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang);
         const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
         const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
@@ -472,22 +472,25 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
 
         this.workspaceBrowseConfiguration = {
             browsePath: newBrowsePath,
-            standard,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerFragments: compileCommandFragments || undefined,
-            compilerArgs: compileCommandFragments ? undefined : flags || undefined
+            compilerArgs: !useFragments? flags : undefined,
+            compilerFragments: useFragments? compileCommandFragments : undefined,
+            standard
+            // windowsSdkVersion
         };
 
         this.workspaceBrowseConfigurations.set(util.platformNormalizePath(opts.folder), this.workspaceBrowseConfiguration);
 
         return {
-            defines,
-            standard,
             includePath: normalizedIncludePath,
+            defines,
             intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch),
+            standard, // from v6+ undefined
+            // forcedInclude,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerFragments: compileCommandFragments || undefined,
-            compilerArgs: compileCommandFragments ? undefined : flags || undefined
+            compilerArgs: !useFragments? flags : undefined,
+            compilerFragments: useFragments? compileCommandFragments : undefined,
+            // windowsSdkVersion
         };
     }
 
