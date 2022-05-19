@@ -424,7 +424,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group from the code model to create config data for
      * @param opts Index update options
      */
-    private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string): cpptools.SourceFileConfiguration {
+    private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string | undefined): cpptools.SourceFileConfiguration {
         // For CppTools V6 and above, build the compilerFragments data, otherwise build compilerArgs data
         const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6
         // If the file didn't have a language, default to C++
@@ -487,7 +487,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             browsePath: newBrowsePath,
             compilerPath: normalizedCompilerPath || undefined,
             // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
-            compilerArgs: !useFragments ? flags : sysroot ? [('--sysroot='+sysroot)] : undefined,  
+            compilerArgs: !useFragments ? flags : sysroot ? [('--sysroot=' + sysroot)] : undefined,  
             compilerFragments: useFragments? compileCommandFragments : undefined,
             standard
             // windowsSdkVersion
@@ -515,7 +515,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group
      * @param options Index update options
      */
-    private updateFileGroup(sourceDir: string, fileGroup: codeModel.CodeModelFileGroup, options: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string) {
+    private updateFileGroup(sourceDir: string, fileGroup: codeModel.CodeModelFileGroup, options: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string | undefined) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
