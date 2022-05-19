@@ -22,7 +22,9 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | "gnu++23" | undefined;
+// StandardVersion and IntelliSenseMode don't need to be updated after this, as CppTools V6 and above don't need to receive these two properties from CmakeTools.
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20"  | undefined;
+type IntelliSenseMode= "linux-clang-x86" | "linux-clang-x64" | "linux-clang-arm" | "linux-clang-arm64" | "linux-gcc-x86" | "linux-gcc-x64" | "linux-gcc-arm" | "linux-gcc-arm64" | "macos-clang-x86" | "macos-clang-x64" | "macos-clang-arm" | "macos-clang-arm64" | "macos-gcc-x86" | "macos-gcc-x64" | "macos-gcc-arm" | "macos-gcc-arm64" | "windows-clang-x86" | "windows-clang-x64" | "windows-clang-arm" | "windows-clang-arm64" | "windows-gcc-x86" | "windows-gcc-x64" | "windows-gcc-arm" | "windows-gcc-arm64" | "windows-msvc-x86" | "windows-msvc-x64" | "windows-msvc-arm" | "windows-msvc-arm64" | "msvc-x86" | "msvc-x64" | "msvc-arm" | "msvc-arm64" | "gcc-x86" | "gcc-x64" | "gcc-arm" | "gcc-arm64" | "clang-x86" | "clang-x64" | "clang-arm" | "clang-arm64" | undefined;
 
 export interface DiagnosticsCpptools {
     isReady: boolean;
@@ -58,9 +60,9 @@ class MissingCompilerException extends Error {}
 
 interface TargetDefaults {
     name: string;
-    includePath: string[];
+    includePath?: string[];
     compileCommandFragments: string[];
-    defines: string[];
+    defines?: string[];
 }
 
 function parseCppStandard(std: string, canUseGnu: boolean): StandardVersion {
@@ -149,11 +151,11 @@ function parseTargetArch(target: string): Architecture {
 export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], lang?: string): CompileFlagInformation {
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
-    // No need to send language standard for CppTools API v6 and above.
+    
     const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
-    let standard: StandardVersion | undefined;
+    let standard: StandardVersion;
     let targetArch: Architecture;
     while (1) {
         const { done, value } = iter.next();
@@ -446,17 +448,27 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        const compileCommandFragments = useFragments ? fileGroup.compileCommandFragments : target.compileCommandFragments;
+        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : undefined;
         const getAsFlags = (fragments?: string[]) => {
             if (!fragments) {
                 return [];
             }
             return [...util.flatMap(fragments, fragment => shlex.split(fragment))];
         };
-        const flags = !useFragments ? getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
-        const { standard, extraDefinitions, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang);
-        const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
-        const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
+        let flags: string[] = [];
+        let extraDefinitions: string[] = [];
+        let standard: StandardVersion = undefined;
+        let targetArch: Architecture = undefined;
+        let intelliSenseMode: IntelliSenseMode = undefined;
+        let defines = (fileGroup.defines || target.defines || []);
+        if (!useFragments) {
+            // Send the intelliSenseMode and standard only for CppTools API v5 and below.
+            flags = getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments);
+            ({extraDefinitions, standard, targetArch} = parseCompileFlags(this.cpptoolsVersion, flags, lang));
+            defines = defines.concat(extraDefinitions);
+            intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch)
+        }
+        const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath || [];
         const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
 
         const newBrowsePath = this.workspaceBrowseConfiguration.browsePath;
@@ -467,13 +479,15 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
 
         if (sysroot) {
-            flags.push('--sysroot=' + sysroot);
+            // Send sysroot with quoting for CppTools API V5 and below.
+            flags.push('--sysroot=' + shlex.quote(sysroot));            
         }
 
         this.workspaceBrowseConfiguration = {
             browsePath: newBrowsePath,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: !useFragments? flags : undefined,
+            // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
+            compilerArgs: !useFragments ? flags : sysroot ? [('--sysroot='+sysroot)] : undefined,  
             compilerFragments: useFragments? compileCommandFragments : undefined,
             standard
             // windowsSdkVersion
@@ -484,8 +498,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         return {
             includePath: normalizedIncludePath,
             defines,
-            intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch),
-            standard, // from v6+ undefined
+            intelliSenseMode,
+            standard,
             // forcedInclude,
             compilerPath: normalizedCompilerPath || undefined,
             compilerArgs: !useFragments? flags : undefined,
@@ -571,7 +585,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
                         const compileCommandFragments = [...util.flatMap(grps, grp => grp.compileCommandFragments || [])];
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-                        const sysroot = target.sysroot ? shlex.quote(target.sysroot) : '';
+                        const sysroot = target.sysroot;
                         this.targets.push({ name: target.name, type: target.type });
                         for (const grp of target.fileGroups || []) {
                             try {

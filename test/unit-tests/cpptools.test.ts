@@ -23,11 +23,11 @@ suite('CppTools tests', () => {
 
         // Verify CppTools API version 6
         let info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
         info = parseCompileFlags(cpptoolsVersion6, ['-std=c++2b']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
         info = parseCompileFlags(cpptoolsVersion6, ['-std=gnu++23']);
-        expect(info.standard).to.eql('gnu++23');
+        expect(info.standard).to.eql(undefined);
 
         // Verify CppTools API version 5
         info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);

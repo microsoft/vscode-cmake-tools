@@ -705,9 +705,9 @@ class ExtensionManager implements vscode.Disposable {
             }
             if (!this.cppToolsAPI) {
                 try {
-                    this.cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v6);
+                    this.cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.latest);
                 } catch (err) {
-                    log.debug(localize('failed.to.get.cpptools.api.v6', 'Failed to get cppTools API v6'));
+                    log.debug(localize('failed.to.get.cpptools.api', 'Failed to get cppTools API'));
                 }
             }
 
