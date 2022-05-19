@@ -433,9 +433,7 @@ class ProjectNode extends BaseNode {
         };
 
         for (const target of pr.targets) {
-            const srcdir = target.sourceDirectory || '';
-            const relpath = path.relative(pr.sourceDirectory, srcdir);
-            addToTree(tree, relpath, target);
+            addToTree(tree, target.folder || '', target);
         }
         collapseTreeInplace(tree);
 

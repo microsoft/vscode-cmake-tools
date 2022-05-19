@@ -10,6 +10,7 @@ Improvements:
 - Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
 - Add support for "configure", "install" and "test" task. [#2452](https://github.com/microsoft/vscode-cmake-tools/issues/2452)
 - Add setting `cmake.ignoreCMakeListsMissing`. [PR #2537](https://github.com/microsoft/vscode-cmake-tools/pull/2537) [@ilg-ul](https://github.com/ilg-ul)
+- Change project outline to use targets `FOLDER` property. [#491](https://github.com/microsoft/vscode-cmake-tools/issues/491) [@NekkoDroid](https://github.com/NekkoDroid)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)

@@ -41,6 +41,11 @@ export interface CodeModelTarget {
      * Represents the CMAKE_SYSROOT variable
      */
     sysroot?: string;
+
+    /**
+     * Represents the CMAKE_FOLDER variable
+     */
+    folder?: string;
 }
 
 /**
