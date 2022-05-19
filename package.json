@@ -1948,6 +1948,12 @@
           "default": false,
           "description": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
           "scope": "resource"
+        },
+        "cmake.useFilesystemStructure": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.useFilesystemStructure.description%",
+          "scope": "resource"
         }
       }
     },

@@ -61,7 +61,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
         launchBehavior: 'reuseTerminal',
-        ignoreCMakeListsMissing: false
+        ignoreCMakeListsMissing: false,
+        useFilesystemStructure: false
     });
     ret.updatePartial(conf);
     return ret;

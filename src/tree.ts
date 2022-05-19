@@ -421,7 +421,7 @@ class ProjectNode extends BaseNode {
         return item;
     }
 
-    update(pr: codeModel.CodeModelProject, ctx: TreeUpdateContext) {
+    update(pr: codeModel.CodeModelProject, ctx: TreeUpdateContext, useFilesystemStructure: boolean) {
         if (pr.name !== this.name) {
             rollbar.error(localize('update.project.with.mismatch', 'Update project with mismatching name property'), { newName: pr.name, oldName: this.name });
         }
@@ -433,7 +433,14 @@ class ProjectNode extends BaseNode {
         };
 
         for (const target of pr.targets) {
-            addToTree(tree, target.folder || '', target);
+            let relpath = target.folder || '';
+
+            if (useFilesystemStructure) {
+                const srcdir = target.sourceDirectory || '';
+                relpath = path.relative(pr.sourceDirectory, srcdir);
+            }
+
+            addToTree(tree, relpath, target);
         }
         collapseTreeInplace(tree);
 
@@ -492,7 +499,7 @@ export class WorkspaceFolderNode extends BaseNode {
     get codeModel() {
         return this._codeModel;
     }
-    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
+    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext, useFilesystemStructure: boolean) {
         if (!model || model.configurations.length < 1) {
             this._children = [];
             ctx.nodesToUpdate.push(this);
@@ -503,7 +510,7 @@ export class WorkspaceFolderNode extends BaseNode {
         const new_children: BaseNode[] = [];
         for (const pr of config.projects) {
             const item = new ProjectNode(pr.name, ctx.folder, pr.sourceDirectory);
-            item.update(pr, ctx);
+            item.update(pr, ctx, useFilesystemStructure);
             new_children.push(item);
         }
         this._children = new_children;
@@ -539,7 +546,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         this._changeEvent.fire(null);
     }
 
-    updateCodeModel(folder: vscode.WorkspaceFolder, model: codeModel.CodeModelContent | null, ctx: ExternalUpdateContext) {
+    updateCodeModel(folder: vscode.WorkspaceFolder, model: codeModel.CodeModelContent | null, ctx: ExternalUpdateContext, useFilesystemStructure: boolean) {
         let existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {
             rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that has not yet been loaded.'));
@@ -549,7 +556,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         }
 
         const updates: BaseNode[] = [];
-        existing.updateCodeModel(model, { ...ctx, nodesToUpdate: updates, folder });
+        existing.updateCodeModel(model, { ...ctx, nodesToUpdate: updates, folder }, useFilesystemStructure);
 
         this._changeEvent.fire(null);
     }

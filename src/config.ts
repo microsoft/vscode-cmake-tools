@@ -141,6 +141,7 @@ export interface ExtensionConfigurationSettings {
     allowCommentsInPresetsFile: boolean;
     launchBehavior: string;
     ignoreCMakeListsMissing: boolean;
+    useFilesystemStructure: boolean;
 }
 
 type EmittersOf<T> = {
@@ -358,6 +359,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.ignoreCMakeListsMissing;
     }
 
+    get useFilesystemStructure(): boolean {
+        return this.configData.useFilesystemStructure;
+    }
+
     get cmakeCommunicationMode(): CMakeCommunicationMode {
         let communicationMode = this.configData.cmakeCommunicationMode;
         if (communicationMode === "automatic" && this.useCMakeServer) {
@@ -486,6 +491,7 @@ export class ConfigurationReader implements vscode.Disposable {
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
+        useFilesystemStructure: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>()
     };
 

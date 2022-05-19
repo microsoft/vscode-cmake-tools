@@ -696,7 +696,8 @@ class ExtensionManager implements vscode.Disposable {
             {
                 defaultTarget: cmt.defaultBuildTarget || undefined,
                 launchTargetName: cmt.launchTargetName
-            }
+            },
+            this.workspaceConfig.useFilesystemStructure
         );
         rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
             if (vscode.workspace.getConfiguration('C_Cpp', folder.folder).get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
@@ -751,7 +752,8 @@ class ExtensionManager implements vscode.Disposable {
                         {
                             defaultTarget: cmt.defaultBuildTarget || undefined,
                             launchTargetName: cmt.launchTargetName
-                        }
+                        },
+                        this.workspaceConfig.useFilesystemStructure
                     );
                 }
                 this.ensureCppToolsProviderRegistered();
