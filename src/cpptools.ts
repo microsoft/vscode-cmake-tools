@@ -22,8 +22,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-// StandardVersion and IntelliSenseMode don't need to be updated after this, as CppTools V6 and above don't need to receive these two properties from CmakeTools.
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20"  | undefined;
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20"  | "gnu++23" | undefined;
 type IntelliSenseMode= "linux-clang-x86" | "linux-clang-x64" | "linux-clang-arm" | "linux-clang-arm64" | "linux-gcc-x86" | "linux-gcc-x64" | "linux-gcc-arm" | "linux-gcc-arm64" | "macos-clang-x86" | "macos-clang-x64" | "macos-clang-arm" | "macos-clang-arm64" | "macos-gcc-x86" | "macos-gcc-x64" | "macos-gcc-arm" | "macos-gcc-arm64" | "windows-clang-x86" | "windows-clang-x64" | "windows-clang-arm" | "windows-clang-arm64" | "windows-gcc-x86" | "windows-gcc-x64" | "windows-gcc-arm" | "windows-gcc-arm64" | "windows-msvc-x86" | "windows-msvc-x64" | "windows-msvc-arm" | "windows-msvc-arm64" | "msvc-x86" | "msvc-x64" | "msvc-arm" | "msvc-arm64" | "gcc-x86" | "gcc-x64" | "gcc-arm" | "gcc-arm64" | "clang-x86" | "clang-x64" | "clang-arm" | "clang-arm64" | undefined;
 
 export interface DiagnosticsCpptools {
@@ -65,10 +64,16 @@ interface TargetDefaults {
     defines?: string[];
 }
 
-function parseCppStandard(std: string, canUseGnu: boolean): StandardVersion {
+function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean): StandardVersion {
     // No need to parse language standard for CppTools API v6 and above
     const isGnu = canUseGnu && std.startsWith('gnu');
-    if (std.endsWith('++20') || std.endsWith('++2a')) {
+    if (std.endsWith('++23') || std.endsWith('++2b') || std.endsWith('++latest')) {
+        if (canUseCxx23) {
+            return isGnu ? 'gnu++23' : 'c++23';
+        } else {
+            return isGnu ? 'gnu++20' : 'c++20';
+        }
+    } else if (std.endsWith('++20') || std.endsWith('++2a')) {
         return isGnu ? 'gnu++20' : 'c++20';
     } else if (std.endsWith('++17') || std.endsWith('++1z')) {
         return isGnu ? 'gnu++17' : 'c++17';
@@ -151,6 +156,7 @@ function parseTargetArch(target: string): Architecture {
 export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], lang?: string): CompileFlagInformation {
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
+    const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
     
     const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
@@ -202,7 +208,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
             if (extractStdFlag) {
                 const std = value.substring(5);
                 if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
-                    const s = parseCppStandard(std, canUseGnuStd);
+                    const s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
                     if (!s) {
                         log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
                     } else {
@@ -216,7 +222,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
                         standard = s;
                     }
                 } else if (lang === undefined) {
-                    let s = parseCppStandard(std, canUseGnuStd);
+                    let s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
                     if (!s) {
                         s = parseCStandard(std, canUseGnuStd);
                     }
