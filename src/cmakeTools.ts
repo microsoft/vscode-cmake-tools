@@ -898,7 +898,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             }
 
             const sourceDirectory = (this.sourceDir).toLowerCase();
-            
+
             let isCmakeFile: boolean;
             if (drv && drv.cmakeFiles.length > 0) {
                 // If CMake file information is available from the driver, use it
