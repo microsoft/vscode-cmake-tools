@@ -432,7 +432,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      */
     private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string | undefined): cpptools.SourceFileConfiguration {
         // For CppTools V6 and above, build the compilerFragments data, otherwise build compilerArgs data
-        const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6
+        const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6;
         // If the file didn't have a language, default to C++
         const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the
@@ -463,16 +463,16 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         };
         let flags: string[] = [];
         let extraDefinitions: string[] = [];
-        let standard: StandardVersion = undefined;
-        let targetArch: Architecture = undefined;
-        let intelliSenseMode: IntelliSenseMode = undefined;
+        let standard: StandardVersion;
+        let targetArch: Architecture;
+        let intelliSenseMode: IntelliSenseMode;
         let defines = (fileGroup.defines || target.defines || []);
         if (!useFragments) {
             // Send the intelliSenseMode and standard only for CppTools API v5 and below.
             flags = getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments);
             ({ extraDefinitions, standard, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang));
             defines = defines.concat(extraDefinitions);
-            intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch)
+            intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch);
         }
         const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath || [];
         const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
@@ -509,7 +509,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             // forcedInclude,
             compilerPath: normalizedCompilerPath || undefined,
             compilerArgs: !useFragments ? flags : undefined,
-            compilerFragments: useFragments ? compileCommandFragments : undefined,
+            compilerFragments: useFragments ? compileCommandFragments : undefined
             // windowsSdkVersion
         };
     }
