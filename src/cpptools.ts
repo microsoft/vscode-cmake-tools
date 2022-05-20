@@ -22,8 +22,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20"  | "gnu++23" | undefined;
-type IntelliSenseMode= "linux-clang-x86" | "linux-clang-x64" | "linux-clang-arm" | "linux-clang-arm64" | "linux-gcc-x86" | "linux-gcc-x64" | "linux-gcc-arm" | "linux-gcc-arm64" | "macos-clang-x86" | "macos-clang-x64" | "macos-clang-arm" | "macos-clang-arm64" | "macos-gcc-x86" | "macos-gcc-x64" | "macos-gcc-arm" | "macos-gcc-arm64" | "windows-clang-x86" | "windows-clang-x64" | "windows-clang-arm" | "windows-clang-arm64" | "windows-gcc-x86" | "windows-gcc-x64" | "windows-gcc-arm" | "windows-gcc-arm64" | "windows-msvc-x86" | "windows-msvc-x64" | "windows-msvc-arm" | "windows-msvc-arm64" | "msvc-x86" | "msvc-x64" | "msvc-arm" | "msvc-arm64" | "gcc-x86" | "gcc-x64" | "gcc-arm" | "gcc-arm64" | "clang-x86" | "clang-x64" | "clang-arm" | "clang-arm64" | undefined;
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | "gnu++23" | undefined;
+type IntelliSenseMode = "linux-clang-x86" | "linux-clang-x64" | "linux-clang-arm" | "linux-clang-arm64" | "linux-gcc-x86" | "linux-gcc-x64" | "linux-gcc-arm" | "linux-gcc-arm64" | "macos-clang-x86" | "macos-clang-x64" | "macos-clang-arm" | "macos-clang-arm64" | "macos-gcc-x86" | "macos-gcc-x64" | "macos-gcc-arm" | "macos-gcc-arm64" | "windows-clang-x86" | "windows-clang-x64" | "windows-clang-arm" | "windows-clang-arm64" | "windows-gcc-x86" | "windows-gcc-x64" | "windows-gcc-arm" | "windows-gcc-arm64" | "windows-msvc-x86" | "windows-msvc-x64" | "windows-msvc-arm" | "windows-msvc-arm64" | "msvc-x86" | "msvc-x64" | "msvc-arm" | "msvc-arm64" | "gcc-x86" | "gcc-x64" | "gcc-arm" | "gcc-arm64" | "clang-x86" | "clang-x64" | "clang-arm" | "clang-arm64" | undefined;
 
 export interface DiagnosticsCpptools {
     isReady: boolean;
@@ -157,7 +157,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
     const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
-    
+
     const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
@@ -470,7 +470,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         if (!useFragments) {
             // Send the intelliSenseMode and standard only for CppTools API v5 and below.
             flags = getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments);
-            ({extraDefinitions, standard, targetArch} = parseCompileFlags(this.cpptoolsVersion, flags, lang));
+            ({ extraDefinitions, standard, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang));
             defines = defines.concat(extraDefinitions);
             intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch)
         }
@@ -486,15 +486,15 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
 
         if (sysroot) {
             // Send sysroot with quoting for CppTools API V5 and below.
-            flags.push('--sysroot=' + shlex.quote(sysroot));            
+            flags.push('--sysroot=' + shlex.quote(sysroot));
         }
 
         this.workspaceBrowseConfiguration = {
             browsePath: newBrowsePath,
             compilerPath: normalizedCompilerPath || undefined,
             // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
-            compilerArgs: !useFragments ? flags : sysroot ? [('--sysroot=' + sysroot)] : undefined,  
-            compilerFragments: useFragments? compileCommandFragments : undefined,
+            compilerArgs: !useFragments ? flags : sysroot ? [('--sysroot=' + sysroot)] : undefined,
+            compilerFragments: useFragments ? compileCommandFragments : undefined,
             standard
             // windowsSdkVersion
         };
@@ -508,8 +508,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             standard,
             // forcedInclude,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: !useFragments? flags : undefined,
-            compilerFragments: useFragments? compileCommandFragments : undefined,
+            compilerArgs: !useFragments ? flags : undefined,
+            compilerFragments: useFragments ? compileCommandFragments : undefined,
             // windowsSdkVersion
         };
     }
