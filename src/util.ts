@@ -774,6 +774,7 @@ export const getHostSystemNameMemo = memoize(getHostSystemName);
 export function getExtensionFilePath(extensionfile: string): string {
     return path.resolve(thisExtensionPath(), extensionfile);
 }
+
 export function getCmakeToolsTargetPopulation(): TargetPopulation {
     // If insiders.flag is present, consider this an insiders version.
     // If release.flag is present, consider this a release version.

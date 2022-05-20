@@ -406,7 +406,8 @@ export function minCMakeVersion(folder: string) {
     if (!min2) {
         return min1;
     }
-    return util.versionLess(min1, min2) ? min1 : min2;
+    // The combined minimum version is the higher version of the two
+    return util.versionLess(min1, min2) ? min2 : min1;
 }
 
 export function configurePresets(folder: string) {
