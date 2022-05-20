@@ -30,7 +30,7 @@ enum CommandType {
     install = "install",
     test = "test",
     clean = "clean",
-    cleanRebuild = "clean rebuild"
+    cleanRebuild = "cleanRebuild"
 }
 
 const localizeCommandType = (cmd: CommandType): string => {
@@ -51,7 +51,7 @@ const localizeCommandType = (cmd: CommandType): string => {
             return localize("clean", "clean");
         }
         case CommandType.cleanRebuild: {
-            return localize("clean rebuild", "clean rebuild");
+            return localize("clean.rebuild", "clean rebuild");
         }
         default: {
             return "";

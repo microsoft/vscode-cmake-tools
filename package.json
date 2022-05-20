@@ -541,7 +541,7 @@
               "install",
               "test",
               "clean",
-              "clean rebuild"
+              "cleanRebuild"
             ],
             "description": "CMake build command"
           },
