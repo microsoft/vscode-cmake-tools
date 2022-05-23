@@ -163,6 +163,7 @@ suite('CppTools tests', () => {
         expect(mode).to.eql('clang-x86');
     });
 
+    // Validate codeModel using cppTools API V6
     test('Validate code model', async () => {
         const provider = new CppConfigurationProvider();
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
@@ -181,7 +182,8 @@ suite('CppTools tests', () => {
                             fileGroups: [{
                                 sources: [sourceFile],
                                 isGenerated: false,
-                                compileCommandFragments: ['-DFLAG1'],
+                                defines: ['DEFINE1'],
+                                compileCommandFragments: ['-DFRAGMENT1'],
                                 language: 'CXX'
                             }]
                         },
@@ -191,7 +193,8 @@ suite('CppTools tests', () => {
                             fileGroups: [{
                                 sources: [sourceFile],
                                 isGenerated: false,
-                                compileCommandFragments: ['-DFLAG2'],
+                                defines: ['DEFINE2'],
+                                compileCommandFragments: ['-DFRAGMENT2'],
                                 language: 'CXX'
                             }]
                         }
@@ -220,7 +223,8 @@ suite('CppTools tests', () => {
                             fileGroups: [{
                                 sources: [sourceFile2],
                                 isGenerated: false,
-                                compileCommandFragments: ['-DFLAG3'],
+                                defines: ['DEFINE3'],
+                                compileCommandFragments: ['-DFRAGMENT3'],
                                 language: 'CXX'
                             }]
                         }]
@@ -236,19 +240,22 @@ suite('CppTools tests', () => {
 
         configurations = await provider.provideConfigurations([uri]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.contain('FLAG1');
+        expect(configurations[0].configuration.defines).to.eq('DEFINE3');
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT3');
+        expect(configurations[0].configuration.compilerArgs).to.eq(undefined);
 
         provider.updateConfigurationData({ cache, codeModelContent, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
         configurations = await provider.provideConfigurations([uri]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.contain('FLAG2');
+        expect(configurations[0].configuration.defines).to.eq('DEFINE2');
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT2');
         expect(configurations[0].configuration.compilerPath).to.eq('clang++');
 
         provider.updateConfigurationData({ cache, codeModelContent, activeTarget: 'all', activeBuildTypeVariant: 'Release', folder: here });
         configurations = await provider.provideConfigurations([uri]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines.some(def => def === 'FLAG1' || def === 'FLAG2')).to.be.true;
-        expect(configurations[0].configuration.defines).to.not.have.all.members(['FLAG1', 'FLAG2']);
+        expect(configurations[0].configuration.defines.some(def => def === 'DEFINE1' || def === 'DEFINE2')).to.be.true;
+        expect(configurations[0].configuration.defines).to.not.have.all.members(['DEFINE1', 'DEFINE2']);
 
         // Verify the per-folder browsePath.
         const canProvideBrowseConfigPerFolder: boolean = await provider.canProvideBrowseConfigurationsPerFolder();
@@ -260,7 +267,7 @@ suite('CppTools tests', () => {
         // Verify the browsePath with a different folder.
         const configurations2 = await provider.provideConfigurations([uri2]);
         expect(configurations2.length).to.eq(1);
-        expect(configurations2[0].configuration.defines).to.contain('FLAG3');
+        expect(configurations2[0].configuration.defines).to.contain('DEFINE3');
         const browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
         expect(browseConfig2.browsePath.length).to.eq(1);
         expect(browseConfig2.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));

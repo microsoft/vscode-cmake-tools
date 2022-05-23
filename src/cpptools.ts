@@ -485,15 +485,19 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
 
         if (sysroot) {
-            // Send sysroot with quoting for CppTools API V5 and below.
-            flags.push('--sysroot=' + shlex.quote(sysroot));
+            if (!useFragments) {
+                // Send sysroot with quoting for CppTools API V5 and below.
+                flags.push('--sysroot=' + shlex.quote(sysroot));
+            } else {
+                // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
+                flags.push(('--sysroot=' + sysroot));
+            }
         }
 
         this.workspaceBrowseConfiguration = {
             browsePath: newBrowsePath,
             compilerPath: normalizedCompilerPath || undefined,
-            // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
-            compilerArgs: !useFragments ? flags : sysroot ? [('--sysroot=' + sysroot)] : undefined,
+            compilerArgs: flags,
             compilerFragments: useFragments ? compileCommandFragments : undefined,
             standard
             // windowsSdkVersion
@@ -521,7 +525,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group
      * @param options Index update options
      */
-    private updateFileGroup(sourceDir: string, fileGroup: codeModel.CodeModelFileGroup, options: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string | undefined) {
+    private updateFileGroup(sourceDir: string, fileGroup: codeModel.CodeModelFileGroup, options: codeModel.CodeModelParams, target: TargetDefaults, sysroot?: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
