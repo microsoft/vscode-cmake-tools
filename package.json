@@ -539,7 +539,9 @@
               "build",
               "configure",
               "install",
-              "test"
+              "test",
+              "clean",
+              "cleanRebuild"
             ],
             "description": "CMake build command"
           },

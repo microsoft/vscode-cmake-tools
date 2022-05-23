@@ -8,8 +8,9 @@ Improvements:
 - Add c++23 support. [#2475](https://github.com/microsoft/vscode-cmake-tools/issues/2475) [@sweemer](https://github.com/sweemer)
 - Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
 - Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
-- Add support for "configure", "install" and "test" task. [#2452](https://github.com/microsoft/vscode-cmake-tools/issues/2452)
+- Add support for "Configure", "Install" and "Test" tasks. [#2452](https://github.com/microsoft/vscode-cmake-tools/issues/2452)
 - Add setting `cmake.ignoreCMakeListsMissing`. [PR #2537](https://github.com/microsoft/vscode-cmake-tools/pull/2537) [@ilg-ul](https://github.com/ilg-ul)
+- Add support for "Clean" and "Clean Rebuild" tasks. [#2555](https://github.com/microsoft/vscode-cmake-tools/issues/2555)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)

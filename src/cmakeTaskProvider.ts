@@ -28,7 +28,9 @@ enum CommandType {
     build = "build",
     config = "configure",
     install = "install",
-    test = "test"
+    test = "test",
+    clean = "clean",
+    cleanRebuild = "cleanRebuild"
 }
 
 const localizeCommandType = (cmd: CommandType): string => {
@@ -44,6 +46,12 @@ const localizeCommandType = (cmd: CommandType): string => {
         }
         case CommandType.config: {
             return localize("configure", "configure");
+        }
+        case CommandType.clean: {
+            return localize("clean", "clean");
+        }
+        case CommandType.cleanRebuild: {
+            return localize("clean.rebuild", "clean rebuild");
         }
         default: {
             return "";
@@ -79,6 +87,8 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         result.push(await this.provideTask(CommandType.config));
         result.push(await this.provideTask(CommandType.install));
         result.push(await this.provideTask(CommandType.test));
+        result.push(await this.provideTask(CommandType.clean));
+        result.push(await this.provideTask(CommandType.cleanRebuild));
         return result;
     }
 
@@ -151,6 +161,12 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             case CommandType.test:
                 await this.runTestTask();
                 break;
+            case CommandType.clean:
+                await this.runCleanTask();
+                break;
+            case CommandType.cleanRebuild:
+                await this.runCleanRebuildTask();
+                break;
             default:
                 this.writeEmitter.fire(localize("command.not.recognized", '{0} is not a recognized command.', `"${this.command}"`) + endOfLine);
                 this.closeEmitter.fire(-1);
@@ -220,8 +236,20 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     }
 
     private async runTestTask(): Promise<any> {
-        this.writeEmitter.fire(localize("Test.started", "Test Started...") + endOfLine);
+        this.writeEmitter.fire(localize("test.started", "Test Started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.ctest');
+        this.closeEmitter.fire(result ? result : -1);
+    }
+
+    private async runCleanTask(): Promise<any> {
+        this.writeEmitter.fire(localize("clean.started", "Clean Started...") + endOfLine);
+        const result: number | undefined =  await vscode.commands.executeCommand('cmake.clean');
+        this.closeEmitter.fire(result ? result : -1);
+    }
+
+    private async runCleanRebuildTask(): Promise<any> {
+        this.writeEmitter.fire(localize("clean.rebuild.started", "Clean Rebuild Started...") + endOfLine);
+        const result: number | undefined =  await vscode.commands.executeCommand('cmake.cleanRebuild');
         this.closeEmitter.fire(result ? result : -1);
     }
 }
