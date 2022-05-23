@@ -240,8 +240,8 @@ suite('CppTools tests', () => {
 
         configurations = await provider.provideConfigurations([uri]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.eq('DEFINE1');
-        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT1');
+        expect(configurations[0].configuration.defines).to.eq('DEFINE3');
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT3');
         expect(configurations[0].configuration.compilerArgs).to.eq(undefined);
 
         provider.updateConfigurationData({ cache, codeModelContent, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
