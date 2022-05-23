@@ -62,7 +62,6 @@ export class CompileOutputConsumer implements OutputConsumer {
                 case 'remark':
                     return vscode.DiagnosticSeverity.Information;
             }
-            // tslint:disable-next-line
             console.warn('Unknown diagnostic severity level: ' + p);
             return undefined;
         };

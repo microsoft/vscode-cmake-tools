@@ -147,7 +147,6 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
     const evaluateParent = (parentName: string) => {
         const parent = getPresetByName(allPresets, parentName);
         // If the child is not a user preset, the parent should not be a user preset.
-        // eslint-disable-next-line @typescript-eslint/tslint/config
         if (parent && !preset.isUserPreset && parent.isUserPreset === true) {
             log.error(localize('invalid.user.inherits', 'Preset {0} in CMakePresets.json can\'t inherit from preset {1} in CMakeUserPresets.json', preset.name, parentName));
             return false;

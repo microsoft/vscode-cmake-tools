@@ -23,6 +23,5 @@ gulpfile.js
 tsconfig.json
 test.tsconfig.json
 translations_auto_pr.js
-tslint.json
 webpack.config.js
 yarn.lock
