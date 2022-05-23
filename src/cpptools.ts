@@ -65,7 +65,6 @@ interface TargetDefaults {
 }
 
 function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean): StandardVersion {
-    // No need to parse language standard for CppTools API v6 and above
     const isGnu = canUseGnu && std.startsWith('gnu');
     if (std.endsWith('++23') || std.endsWith('++2b') || std.endsWith('++latest')) {
         if (canUseCxx23) {
@@ -161,6 +160,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
     const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
+    // No need to parse language standard for CppTools API v6 and above
     let standard: StandardVersion;
     let targetArch: Architecture;
     while (1) {
