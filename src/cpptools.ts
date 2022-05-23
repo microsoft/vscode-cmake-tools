@@ -156,11 +156,10 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
     const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
-
+    // No need to parse language standard for CppTools API v6 and above
     const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
-    // No need to parse language standard for CppTools API v6 and above
     let standard: StandardVersion;
     let targetArch: Architecture;
     while (1) {
@@ -430,7 +429,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group from the code model to create config data for
      * @param opts Index update options
      */
-    private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string | undefined): cpptools.SourceFileConfiguration {
+    private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot?: string): cpptools.SourceFileConfiguration {
         // For CppTools V6 and above, build the compilerFragments data, otherwise build compilerArgs data
         const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6;
         // If the file didn't have a language, default to C++
@@ -512,7 +511,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             standard,
             // forcedInclude,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: !useFragments ? flags : undefined,
+            compilerArgs: flags,
             compilerFragments: useFragments ? compileCommandFragments : undefined
             // windowsSdkVersion
         };
