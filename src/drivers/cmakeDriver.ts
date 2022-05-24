@@ -1023,28 +1023,29 @@ export abstract class CMakeDriver implements vscode.Disposable {
             captureGroup: 1
         },
         // clang -v: clang version 10.0.0-4ubuntu1
+        // or        clang version 5.0.0 (tags/RELEASE_500/final)
         {
             name: "clang",
             versionSwitch: "-v",
-            versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+            versionOutputRegexp: "(Apple LLVM|clang) version ([^\\s-]+)",
             captureGroup: 2
         },
         {
             name: "clang-cl",
             versionSwitch: "-v",
-            versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+            versionOutputRegexp: "(Apple LLVM|clang) version ([^\\s-]+)",
             captureGroup: 2
         },
         {
             name: "clang++",
             versionSwitch: "-v",
-            versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+            versionOutputRegexp: "(Apple LLVM|clang) version ([^\\s-]+)",
             captureGroup: 2
         },
         {
             name: "armclang",
             versionSwitch: "-v",
-            versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+            versionOutputRegexp: "(Apple LLVM|clang) version ([^\\s-]+)",
             captureGroup: 2
         },
         {
