@@ -371,8 +371,8 @@ suite('CppTools tests', () => {
         // Verify the browsePath with a different folder.
         const configurations2 = await provider.provideConfigurations([uri3]);
         expect(configurations2.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.be.empty;
-        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT3');
+        expect(configurations2[0].configuration.defines).to.be.empty;
+        expect(configurations2[0].configuration.compilerFragments).to.contain('-DFRAGMENT3');
         const browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
         expect(browseConfig2.browsePath.length).to.eq(1);
         expect(browseConfig2.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
