@@ -561,6 +561,15 @@ export class CMakeServerClient {
         log.debug(localize('started.new.cmake.server.instance', 'Started new CMake Server instance with PID {0}', child.pid));
         child.stdout.on('data', data => this.params.onOtherOutput(data.toLocaleString()));
         child.stderr.on('data', data => this.params.onOtherOutput(data.toLocaleString()));
+        child.on('close', (retc: number, signal: string) => {
+            if (retc !== 0) {
+                log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));
+                log.error(localize('cmake-server.exited.with.status', 'cmake-server exited with status {0} ({1})', retc, signal));
+                params.onCrash(retc, signal).catch(e => {
+                    log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onCrash'), e);
+                });
+            }
+        });
         setTimeout(() => {
             const endPromise = new Promise<void>((resolve, reject) => {
                 const pipe = this.pipe = net.createConnection(pipeFile);
@@ -586,15 +595,6 @@ export class CMakeServerClient {
                 child.on('exit', () => resolve());
             });
             this.endPromise = Promise.all([endPromise, exitPromise]).then(() => {});
-            child.on('close', (retc: number, signal: string) => {
-                if (retc !== 0) {
-                    log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));
-                    log.error(localize('cmake-server.exited.with.status', 'cmake-server exited with status {0} ({1})', retc, signal));
-                    params.onCrash(retc, signal).catch(e => {
-                        log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onCrash'), e);
-                    });
-                }
-            });
         }, 1000);
     }
 
