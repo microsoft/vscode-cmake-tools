@@ -125,8 +125,8 @@ class RollbarController {
         try {
             log.trace(localize('invoking.function.rollbar', 'Invoking function [${0}] with Rollbar wrapping [${1}]', func.name, what));
             return func();
-        } catch (e: any) {
-            this.exception(localize('unhandled.exception', 'Unhandled exception: {0}', what), e, additional);
+        } catch (e) {
+            this.exception(localize('unhandled.exception', 'Unhandled exception: {0}', what), e as Error, additional);
             throw e;
         }
     }
