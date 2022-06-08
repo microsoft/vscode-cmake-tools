@@ -10,7 +10,6 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
-import { CodeModelFileGroup } from './codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -221,14 +220,14 @@ export interface CodeModelParams {}
 
 export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel' }
 
-/*export interface CodeModelFileGroup {
+export interface ServerCodeModelFileGroup {
     language?: string;
-    compileFlags?: string; // compileCommandFragments in CodeModelFileGroup
+    compileFlags?: string; // In CodeModelFileGroup compileCommandFragments is used instead.
     includePath?: { path: string; isSystem?: boolean }[];
     defines?: string[];
     sources: string[];
     isGenerated: boolean;
-}*/
+}
 
 export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
 
@@ -237,24 +236,24 @@ export interface ServerCodeModelTarget {
     type: TargetTypeString;
     fullName?: string;
     sourceDirectory?: string;
-    buildDirectory?: string; // not in CodeModelTarget
+    buildDirectory?: string; // Doesn't exist in general CodeModelTarget.
     artifacts?: string[];
-    linkerLanguage?: string; // not in CodeModelTarget
-    linkLibraries?: string[]; // not in CodeModelTarget
-    linkFlags?: string[]; // not in CodeModelTarget
-    linkLanguageFlags?: string[]; // not in CodeModelTarget
-    frameworkPath?: string; // not in CodeModelTarget
-    linkPath?: string; // not in CodeModelTarget
+    linkerLanguage?: string; // Doesn't exist in general CodeModelTarget.
+    linkLibraries?: string[]; // Doesn't exist in general CodeModelTarget.
+    linkFlags?: string[]; // Doesn't exist in general CodeModelTarget.
+    linkLanguageFlags?: string[]; // Doesn't exist in general CodeModelTarget.
+    frameworkPath?: string; // Doesn't exist in general CodeModelTarget.
+    linkPath?: string; // Doesn't exist in general CodeModelTarget.
     sysroot?: string;
-    fileGroups?: CodeModelFileGroup[];
+    fileGroups?: ServerCodeModelFileGroup[];
 }
 
 export interface ServerCodeModelProject {
     name: string;
     targets: ServerCodeModelTarget[];
     sourceDirectory: string;
-    buildDirectory: string; // not in CodeModelProject
-    hasInstallRule?: boolean; // not in CodeModelProject
+    buildDirectory: string; // Doesn't exist in general CodeModelProject.
+    hasInstallRule?: boolean;
 }
 
 export interface ServerCodeModelConfiguration {
@@ -265,7 +264,7 @@ export interface ServerCodeModelConfiguration {
 
 export interface ServerCodeModelContent {
     configurations: ServerCodeModelConfiguration[];
-    // no toolchains as in CodeModelProject
+    // Doesn't include toolchains as in general CodeModelContent.
 }
 
 export interface CodeModelReply extends ReplyMessage, ServerCodeModelContent { inReplyTo: 'codemodel' }

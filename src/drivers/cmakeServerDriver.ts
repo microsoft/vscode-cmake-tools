@@ -3,7 +3,7 @@ import { InputFileSet } from '@cmt/dirty';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
+import * as shlex from '@cmt/shlex';
 import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
@@ -18,6 +18,8 @@ import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
 import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { ServerCodeModelContent } from '@cmt/drivers/cmakeServerClient';
+import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -62,15 +64,52 @@ export class CMakeServerDriver extends CMakeDriver {
     private _prevConfigureEnv = 'null';
 
     // TODO: Refactor to make this assertion unecessary
-    private _codeModel!: null | cms.ServerCodeModelContent;
-    get codeModel(): null | cms.ServerCodeModelContent {
-        return this._codeModel;
-    }
-    set codeModel(v: null | cms.ServerCodeModelContent) {
-        this._codeModel = v;
+    private codeModel!: CodeModelContent | null;
+    private convertServerCodeModel(serverCodeModel: null | ServerCodeModelContent): CodeModelContent | null {
+        if (serverCodeModel) {
+            let codeModel!: CodeModelContent;
+            for (const config of serverCodeModel.configurations) {
+                let newConfig!: CodeModelConfiguration;
+                newConfig.name = config.name;
+                for (const project of config.projects) {
+                    let newProject!: CodeModelProject;
+                    newProject.name = project.name;
+                    newProject.sourceDirectory = project.sourceDirectory;
+                    newProject.hasInstallRule = project.hasInstallRule;
+                    for (const target of project.targets) {
+                        let newTarget!: CodeModelTarget;
+                        newTarget.name = target.name;
+                        newTarget.type = target.type;
+                        newTarget.sourceDirectory = target.sourceDirectory;
+                        newTarget.fullName = target.fullName;
+                        newTarget.artifacts = target.artifacts;
+                        newTarget.sysroot = target.sysroot;
+                        if (target.fileGroups) {
+                            newTarget.fileGroups = [];
+                            for (const group of target.fileGroups) {
+                                let newGroup!: CodeModelFileGroup;
+                                newGroup.sources = group.sources;
+                                newGroup.language = group.language;
+                                newGroup.includePath = group.includePath;
+                                newGroup.defines = group.defines;
+                                newGroup.isGenerated = group.isGenerated;
+                                newGroup.compileCommandFragments = group.compileFlags ? [...shlex.split(group.compileFlags)] : [];
+                                newTarget.fileGroups?.push(newGroup);
+                            }
+                        }
+                        newProject.targets.push(newTarget);
+                    }
+                    newConfig.projects.push(newProject);
+                }
+                codeModel.configurations.push(newConfig);
+            }
+            codeModel.toolchains = undefined;
+            return codeModel;
+        }
+        return null;
     }
 
-    private readonly _codeModelChanged = new vscode.EventEmitter<null | cms.ServerCodeModelContent>();
+    private readonly _codeModelChanged = new vscode.EventEmitter<null | CodeModelContent>();
     get onCodeModelChanged() {
         return this._codeModelChanged.event;
     }
@@ -183,14 +222,12 @@ export class CMakeServerDriver extends CMakeDriver {
                 new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
             return acc;
         }, new Map<string, cache.Entry>());
-        this.codeModel = await client.codemodel();
+        this.codeModel = this.convertServerCodeModel(await client.codemodel());
 
         // Toolchain information is not available with CMake server.
         // convert it into real codemodel, this is not the correct type
         // two different interface
-        this._codeModelChanged.fire({
-            configurations: this.codeModel.configurations
-        });
+        this._codeModelChanged.fire(this.codeModel);
     }
 
     async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
@@ -210,10 +247,10 @@ export class CMakeServerDriver extends CMakeDriver {
     }
 
     get targets(): RichTarget[] {
-        if (!this._codeModel) {
+        if (!this.codeModel) {
             return [];
         }
-        const build_config = this._codeModel.configurations.find(conf => conf.name === this.currentBuildType);
+        const build_config = this.codeModel.configurations.find(conf => conf.name === this.currentBuildType);
         if (!build_config) {
             log.error(localize('found.no.matching.code.model', 'Found no matching code model for the current build type. This shouldn\'t be possible'));
             return [];

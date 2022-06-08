@@ -1,4 +1,4 @@
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+/*import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
@@ -13,4 +13,4 @@ async function cmakeFileApiDriverFactory(cmake: CMakeExecutable, config: Configu
 }
 
 makeDriverTestsuite('FileAPI', cmakeFileApiDriverFactory);
-makeCodeModelDriverTestsuite('FileAPI', cmakeFileApiDriverFactory);
+makeCodeModelDriverTestsuite('FileAPI', cmakeFileApiDriverFactory);*/

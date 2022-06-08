@@ -2,7 +2,6 @@
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
-import { ServerCodeModelContent, ServerCodeModelTarget } from '@cmt/drivers/cmakeServerClient';
 import { CodeModelContent , CodeModelTarget } from '@cmt/drivers/codeModel';
 import * as chai from 'chai';
 import { expect } from 'chai';
@@ -77,12 +76,12 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
         async function generateCodeModelForConfiguredDriver(args: string[] = [],
             workspaceFolder: string = defaultWorkspaceFolder):
-            Promise<null | CodeModelContent | ServerCodeModelContent> {
+            Promise<null | CodeModelContent> {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
             driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
-            let code_model: null | CodeModelContent | ServerCodeModelContent = null;
+            let code_model: null | CodeModelContent = null;
             if (driver && !(driver instanceof CMakeLegacyDriver)) {
                 driver.onCodeModelChanged(cm => {
                     code_model = cm;
@@ -131,7 +130,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             const codemodel_data = await generateCodeModelForConfiguredDriver();
             expect(codemodel_data).to.be.not.null;
 
-            const target: CodeModelTarget | ServerCodeModelTarget | undefined = codemodel_data!.configurations[0].projects[0].targets.find((t: CodeModelTarget | ServerCodeModelTarget) => {
+            const target: CodeModelTarget | undefined = codemodel_data!.configurations[0].projects[0].targets.find((t: CodeModelTarget) => {
                 if (t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess') {
                     return t;
                 }
@@ -187,11 +186,6 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             // compile flags or fragments for file groups
             if (process.platform === 'win32') {
                 if (compile_information) {
-                    /*if (driverName === "Server") {
-                        expect(compile_information.compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
-                    } else if (driverName === "FileAPI") {
-                        expect(compile_information.compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
-                    }*/
                     expect(compile_information.compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
                 }
             }
@@ -229,13 +223,6 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // compile flags or fragments for file groups
             if (process.platform === 'win32') {
-                /*if (target!.fileGroups![0]) {
-                    if (driverName === "Server") {
-                        expect(target!.fileGroups![0].compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
-                    } else if (driverName === "FileAPI") {
-                        expect(target!.fileGroups![0].compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
-                    }
-                }*/
                 expect(target!.fileGroups![0].compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
             }
 

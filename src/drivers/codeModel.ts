@@ -1,5 +1,4 @@
 import { CMakeCache } from "@cmt/cache";
-import { ServerCodeModelContent } from '@cmt/drivers/cmakeServerClient';
 
 export type TargetTypeString = 'STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY';
 
@@ -10,7 +9,7 @@ export interface CodeModelTarget {
      *
      * (Source CMake Documentation cmake-file-api(7))
      */
-    readonly name: string;
+    name: string;
 
     /**
      * A string specifying the type of the target.
@@ -82,6 +81,9 @@ export interface CodeModelProject {
 
     /** Location of the Project */
     sourceDirectory: string;
+
+    hasInstallRule?: boolean; // Exists in ServerCodeModelProject.
+
 }
 
 /**
@@ -105,7 +107,7 @@ export interface CodeModelContent {
     /** List of configurations provided by the selected generator */
     configurations: CodeModelConfiguration[];
 
-    toolchains: Map<string, CodeModelToolchain>;
+    toolchains?: Map<string, CodeModelToolchain>;
 }
 
 /**
@@ -115,7 +117,7 @@ export interface CodeModelParams {
     /**
      * The CMake codemodel content. This is the important one.
      */
-    codeModelContent: CodeModelContent | ServerCodeModelContent;
+    codeModelContent: CodeModelContent;
     /**
      * The contents of the CMakeCache.txt, which also provides supplementary
      * configuration information.
