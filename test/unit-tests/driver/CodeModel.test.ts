@@ -2,7 +2,8 @@
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
-import * as codeModel from '@cmt/drivers/codeModel';
+import { ServerCodeModelContent, ServerCodeModelTarget } from '@cmt/drivers/cmakeServerClient';
+import { CodeModelContent , CodeModelTarget } from '@cmt/drivers/codeModel';
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiString from 'chai-string';
@@ -76,12 +77,12 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
         async function generateCodeModelForConfiguredDriver(args: string[] = [],
             workspaceFolder: string = defaultWorkspaceFolder):
-            Promise<null | codeModel.CodeModelContent> {
+            Promise<null | CodeModelContent | ServerCodeModelContent> {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
             driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
-            let code_model: null | codeModel.CodeModelContent = null;
+            let code_model: null | CodeModelContent | ServerCodeModelContent = null;
             if (driver && !(driver instanceof CMakeLegacyDriver)) {
                 driver.onCodeModelChanged(cm => {
                     code_model = cm;
@@ -130,7 +131,11 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             const codemodel_data = await generateCodeModelForConfiguredDriver();
             expect(codemodel_data).to.be.not.null;
 
-            const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess');
+            const target: CodeModelTarget | ServerCodeModelTarget | undefined = codemodel_data!.configurations[0].projects[0].targets.find((t: CodeModelTarget | ServerCodeModelTarget) => {
+                if (t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess') {
+                    return t;
+                }
+            });
             expect(target).to.be.not.undefined;
 
             // Test target name used for node label
@@ -146,7 +151,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // Test main source file used in by tree view
             expect(target!.fileGroups).to.be.not.undefined;
-            const compile_information = target!.fileGroups!.find(t => !!t.language);
+            const compile_information = target!.fileGroups!.find((t: any) => !!t.language);
 
             expect(compile_information).to.be.not.undefined;
             expect(compile_information!.sources).to.include('main.cpp');
@@ -156,7 +161,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             const codemodel_data = await generateCodeModelForConfiguredDriver();
             expect(codemodel_data).to.be.not.null;
 
-            const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'STATIC_LIBRARY');
+            const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'STATIC_LIBRARY');
             expect(target).to.be.not.undefined;
 
             // Test target name used for node label
@@ -171,7 +176,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 .to.eq(path.normalize(path.join(root, 'test_project', 'static_lib_dummy')).toLowerCase());
 
             // Language
-            const compile_information = target!.fileGroups!.find(t => !!t.language);
+            const compile_information = target!.fileGroups!.find((t: any) => !!t.language);
             expect(compile_information).to.be.not.undefined;
             expect(compile_information!.language).to.eq('CXX');
 
@@ -179,9 +184,16 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             expect(compile_information!.sources).to.include('info.cpp');
             expect(compile_information!.sources).to.include('test2.cpp');
 
-            // compile flags for file groups
+            // compile flags or fragments for file groups
             if (process.platform === 'win32') {
-                expect(compile_information!.compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
+                if (compile_information) {
+                    /*if (driverName === "Server") {
+                        expect(compile_information.compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
+                    } else if (driverName === "FileAPI") {
+                        expect(compile_information.compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
+                    }*/
+                    expect(compile_information.compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
+                }
             }
         }).timeout(90000);
 
@@ -189,7 +201,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             const codemodel_data = await generateCodeModelForConfiguredDriver();
             expect(codemodel_data).to.be.not.null;
 
-            const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'SHARED_LIBRARY');
+            const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'SHARED_LIBRARY');
             expect(target).to.be.not.undefined;
 
             // Test target name used for node label
@@ -215,17 +227,25 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             // Language
             expect(target!.fileGroups![0].language).to.eq('C');
 
-            // compile flags for file groups
+            // compile flags or fragments for file groups
             if (process.platform === 'win32') {
+                /*if (target!.fileGroups![0]) {
+                    if (driverName === "Server") {
+                        expect(target!.fileGroups![0].compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
+                    } else if (driverName === "FileAPI") {
+                        expect(target!.fileGroups![0].compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
+                    }
+                }*/
                 expect(target!.fileGroups![0].compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
             }
+
         }).timeout(90000);
 
         test('Test cache access', async () => {
             const codemodel_data = await generateCodeModelForConfiguredDriver();
             expect(codemodel_data).to.be.not.null;
 
-            const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'UTILITY'
+            const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'UTILITY'
                 && t.name === 'runTestTarget');
             expect(target).to.be.not.undefined;
 
@@ -244,7 +264,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
             expect(codemodel_data).to.be.not.null;
 
-            const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE');
+            const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'EXECUTABLE');
             expect(target).to.be.not.undefined;
             expect(target!.sysroot).to.be.eq('/tmp');
         }).timeout(90000);
@@ -255,7 +275,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             expect(codemodel_data).to.be.not.null;
 
             for (const [target_name, target_subdir, sourcefile_name] of [['root_target', '', '../main.cpp'], ['subdir_target', 'subdir', '../../main.cpp']] as const) {
-                const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE'
+                const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'EXECUTABLE'
                     && t.name === target_name);
                 expect(target).to.be.not.undefined;
 
@@ -269,10 +289,10 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
                 // Assert correct path to source file
                 expect(target!.fileGroups).to.be.not.undefined;
-                const compile_information = target!.fileGroups!.find(t => !!t.language);
+                const compile_information = target!.fileGroups!.find((t: any) => !!t.language);
                 expect(compile_information).to.be.not.undefined;
                 const sources: string[] = [];
-                compile_information!.sources.forEach(source => {
+                compile_information!.sources.forEach((source: any) => {
                     sources.push(path.normalize(source).toLowerCase());
                 });
                 expect(sources).to.include(path.normalize(sourcefile_name).toLowerCase());

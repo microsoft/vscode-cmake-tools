@@ -28,6 +28,7 @@ import { ConfigureArguments, VariantOption } from '@cmt/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
+import * as cms from '@cmt/drivers/cmakeServerClient';
 import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/folders';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
@@ -105,14 +106,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * This event is fired after update of the code model, like after cmake configuration.
      */
-    abstract onCodeModelChanged: vscode.Event<codeModel.CodeModelContent | null>;
+    abstract onCodeModelChanged: vscode.Event<codeModel.CodeModelContent | cms.ServerCodeModelContent | null>;
 
     /**
      * List of targets known to CMake
      */
     abstract get targets(): api.Target[];
 
-    abstract get codeModelContent(): codeModel.CodeModelContent | null;
+    abstract get codeModelContent(): codeModel.CodeModelContent | cms.ServerCodeModelContent | null;
 
     /**
      * List of executable targets known to CMake

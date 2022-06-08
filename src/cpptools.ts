@@ -5,7 +5,7 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import * as codeModel from '@cmt/drivers/codeModel';
+import { CodeModelFileGroup, CodeModelParams, CodeModelToolchain } from '@cmt/drivers/codeModel';
 import { createLogger } from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -203,36 +203,34 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
         } else if (value.startsWith('-D') || value.startsWith('/D')) {
             const def = value.substring(2);
             extraDefinitions.push(def);
-        } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
-            if (extractStdFlag) {
-                const std = value.substring(5);
-                if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
-                    const s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
-                    if (!s) {
-                        log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
-                    } else {
-                        standard = s;
-                    }
-                } else if (lang === 'C' || lang === 'OBJC') {
-                    const s = parseCStandard(std, canUseGnuStd);
-                    if (!s) {
-                        log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
-                    } else {
-                        standard = s;
-                    }
-                } else if (lang === undefined) {
-                    let s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
-                    if (!s) {
-                        s = parseCStandard(std, canUseGnuStd);
-                    }
-                    if (!s) {
-                        log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
-                    } else {
-                        standard = s;
-                    }
+        } else if (extractStdFlag && (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:'))) {
+            const std = value.substring(5);
+            if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
+                const s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
+                if (!s) {
+                    log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
                 } else {
-                    log.warning(localize('unknown language', 'Unknown language: {0}', lang));
+                    standard = s;
                 }
+            } else if (lang === 'C' || lang === 'OBJC') {
+                const s = parseCStandard(std, canUseGnuStd);
+                if (!s) {
+                    log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
+                } else {
+                    standard = s;
+                }
+            } else if (lang === undefined) {
+                let s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
+                if (!s) {
+                    s = parseCStandard(std, canUseGnuStd);
+                }
+                if (!s) {
+                    log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
+                } else {
+                    standard = s;
+                }
+            } else {
+                log.warning(localize('unknown language', 'Unknown language: {0}', lang));
             }
         }
     }
@@ -429,16 +427,19 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group from the code model to create config data for
      * @param opts Index update options
      */
-    private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot?: string): cpptools.SourceFileConfiguration {
+    private buildConfigurationData(fileGroup: CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot?: string): cpptools.SourceFileConfiguration {
         // For CppTools V6 and above, build the compilerFragments data, otherwise build compilerArgs data
         const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6;
         // If the file didn't have a language, default to C++
         const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the
         // group's language compiler, then the C++ compiler, then the C compiler.
-        const compilerToolchains: codeModel.CodeModelToolchain | undefined = opts.codeModelContent.toolchains?.get(lang ?? "")
+        let compilerToolchains: CodeModelToolchain | undefined;
+        if ("toolchains" in opts.codeModelContent) {
+            compilerToolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
             || opts.codeModelContent.toolchains?.get('CXX')
             || opts.codeModelContent.toolchains?.get('C');
+        }
         // If none of those work, fall back to the same order, but in the cache.
         const compilerCache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
             || opts.cache.get('CMAKE_CXX_COMPILER')
@@ -524,7 +525,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group
      * @param options Index update options
      */
-    private updateFileGroup(sourceDir: string, fileGroup: codeModel.CodeModelFileGroup, options: codeModel.CodeModelParams, target: TargetDefaults, sysroot?: string) {
+    private updateFileGroup(sourceDir: string, fileGroup: CodeModelFileGroup, options: CodeModelParams, target: TargetDefaults, sysroot?: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
@@ -560,7 +561,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * Update the file index and code model
      * @param opts Update parameters
      */
-    updateConfigurationData(opts: codeModel.CodeModelParams) {
+    updateConfigurationData(opts: CodeModelParams) {
         // Reset the counters for diagnostics
         this.requests.clear();
         this.responses.clear();

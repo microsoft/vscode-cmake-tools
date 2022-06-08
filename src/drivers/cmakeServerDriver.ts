@@ -8,7 +8,6 @@ import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cmakeServerClient';
-import * as codeModel from '@cmt/drivers/codeModel';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
@@ -63,15 +62,15 @@ export class CMakeServerDriver extends CMakeDriver {
     private _prevConfigureEnv = 'null';
 
     // TODO: Refactor to make this assertion unecessary
-    private _codeModel!: null | cms.CodeModelContent;
-    get codeModel(): null | cms.CodeModelContent {
+    private _codeModel!: null | cms.ServerCodeModelContent;
+    get codeModel(): null | cms.ServerCodeModelContent {
         return this._codeModel;
     }
-    set codeModel(v: null | cms.CodeModelContent) {
+    set codeModel(v: null | cms.ServerCodeModelContent) {
         this._codeModel = v;
     }
 
-    private readonly _codeModelChanged = new vscode.EventEmitter<null | codeModel.CodeModelContent>();
+    private readonly _codeModelChanged = new vscode.EventEmitter<null | cms.ServerCodeModelContent>();
     get onCodeModelChanged() {
         return this._codeModelChanged.event;
     }
@@ -187,9 +186,10 @@ export class CMakeServerDriver extends CMakeDriver {
         this.codeModel = await client.codemodel();
 
         // Toolchain information is not available with CMake server.
+        // convert it into real codemodel, this is not the correct type
+        // two different interface
         this._codeModelChanged.fire({
-            configurations: this.codeModel.configurations,
-            toolchains: new Map<string, codeModel.CodeModelToolchain>()
+            configurations: this.codeModel.configurations
         });
     }
 
@@ -398,7 +398,7 @@ export class CMakeServerDriver extends CMakeDriver {
         });
     }
 
-    get codeModelContent(): codeModel.CodeModelContent | null {
+    get codeModelContent(): cms.ServerCodeModelContent | null {
         return null;
     }
 

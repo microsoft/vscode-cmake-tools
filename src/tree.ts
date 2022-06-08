@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-
+import { ServerCodeModelContent } from '@cmt/drivers/cmakeServerClient';
 import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath, thisExtension } from '@cmt/util';
@@ -490,11 +490,11 @@ export class WorkspaceFolderNode extends BaseNode {
         return item;
     }
 
-    private _codeModel: codeModel.CodeModelContent = { configurations: [], toolchains: new Map<string, codeModel.CodeModelToolchain>() };
+    private _codeModel: codeModel.CodeModelContent | ServerCodeModelContent = { configurations: [], toolchains: new Map<string, codeModel.CodeModelToolchain>() };
     get codeModel() {
         return this._codeModel;
     }
-    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
+    updateCodeModel(model: codeModel.CodeModelContent | ServerCodeModelContent | null, ctx: TreeUpdateContext) {
         if (!model || model.configurations.length < 1) {
             this._children = [];
             ctx.nodesToUpdate.push(this);
@@ -541,7 +541,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         this._changeEvent.fire(null);
     }
 
-    updateCodeModel(folder: vscode.WorkspaceFolder, model: codeModel.CodeModelContent | null, ctx: ExternalUpdateContext) {
+    updateCodeModel(folder: vscode.WorkspaceFolder, model: codeModel.CodeModelContent | ServerCodeModelContent | null, ctx: ExternalUpdateContext) {
         let existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {
             rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that has not yet been loaded.'));

@@ -1,4 +1,5 @@
 import { CMakeCache } from "@cmt/cache";
+import { ServerCodeModelContent } from '@cmt/drivers/cmakeServerClient';
 
 export type TargetTypeString = 'STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY';
 
@@ -114,7 +115,7 @@ export interface CodeModelParams {
     /**
      * The CMake codemodel content. This is the important one.
      */
-    codeModelContent: CodeModelContent;
+    codeModelContent: CodeModelContent | ServerCodeModelContent;
     /**
      * The contents of the CMakeCache.txt, which also provides supplementary
      * configuration information.

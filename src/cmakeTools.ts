@@ -17,7 +17,8 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
-import * as codeModel from '@cmt/drivers/codeModel';
+import { ServerCodeModelContent } from '@cmt/drivers/cmakeServerClient';
+import { CodeModelContent } from '@cmt/drivers/codeModel';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
 import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 import { CTestDriver, BasicTestResults } from './ctest';
@@ -441,7 +442,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     get onCodeModelChanged() {
         return this._codeModelContent.changeEvent;
     }
-    private readonly _codeModelContent = new Property<codeModel.CodeModelContent | null>(null);
+    private readonly _codeModelContent = new Property<CodeModelContent | ServerCodeModelContent | null>(null);
     private codeModelDriverSub: vscode.Disposable | null = null;
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {

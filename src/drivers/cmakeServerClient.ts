@@ -10,6 +10,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
+import { CodeModelFileGroup } from './codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -220,51 +221,54 @@ export interface CodeModelParams {}
 
 export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel' }
 
-export interface CodeModelFileGroup {
+/*export interface CodeModelFileGroup {
     language?: string;
-    compileFlags?: string;
+    compileFlags?: string; // compileCommandFragments in CodeModelFileGroup
     includePath?: { path: string; isSystem?: boolean }[];
     defines?: string[];
     sources: string[];
     isGenerated: boolean;
-}
+}*/
 
 export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
 
-export interface CodeModelTarget {
+export interface ServerCodeModelTarget {
     name: string;
     type: TargetTypeString;
     fullName?: string;
     sourceDirectory?: string;
-    buildDirectory?: string;
+    buildDirectory?: string; // not in CodeModelTarget
     artifacts?: string[];
-    linkerLanguage?: string;
-    linkLibraries?: string[];
-    linkFlags?: string[];
-    linkLanguageFlags?: string[];
-    frameworkPath?: string;
-    linkPath?: string;
+    linkerLanguage?: string; // not in CodeModelTarget
+    linkLibraries?: string[]; // not in CodeModelTarget
+    linkFlags?: string[]; // not in CodeModelTarget
+    linkLanguageFlags?: string[]; // not in CodeModelTarget
+    frameworkPath?: string; // not in CodeModelTarget
+    linkPath?: string; // not in CodeModelTarget
     sysroot?: string;
     fileGroups?: CodeModelFileGroup[];
 }
 
-export interface CodeModelProject {
+export interface ServerCodeModelProject {
     name: string;
+    targets: ServerCodeModelTarget[];
     sourceDirectory: string;
-    buildDirectory: string;
-    targets: CodeModelTarget[];
-    hasInstallRule?: boolean;
+    buildDirectory: string; // not in CodeModelProject
+    hasInstallRule?: boolean; // not in CodeModelProject
 }
 
-export interface CodeModelConfiguration {
+export interface ServerCodeModelConfiguration {
     /** Name of the active configuration in a multi-configuration generator.*/
     name: string;
-    projects: CodeModelProject[];
+    projects: ServerCodeModelProject[];
 }
 
-export interface CodeModelContent { configurations: CodeModelConfiguration[] }
+export interface ServerCodeModelContent {
+    configurations: ServerCodeModelConfiguration[];
+    // no toolchains as in CodeModelProject
+}
 
-export interface CodeModelReply extends ReplyMessage, CodeModelContent { inReplyTo: 'codemodel' }
+export interface CodeModelReply extends ReplyMessage, ServerCodeModelContent { inReplyTo: 'codemodel' }
 
 /**
  * cmakeInputs will respond with a list of file paths that can alter a
@@ -484,7 +488,7 @@ export class CMakeServerClient {
     private sendRequest(type: 'setGlobalSettings', params: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent>;
     private sendRequest(type: 'configure', params: ConfigureParams): Promise<ConfigureContent>;
     private sendRequest(type: 'compute', params?: ComputeParams): Promise<ComputeContent>;
-    private sendRequest(type: 'codemodel', params?: CodeModelParams): Promise<CodeModelContent>;
+    private sendRequest(type: 'codemodel', params?: CodeModelParams): Promise<ServerCodeModelContent>;
     private sendRequest(type: 'cmakeInputs', params?: CMakeInputsParams): Promise<CMakeInputsContent>;
     private sendRequest(type: 'cache', params?: CacheParams): Promise<CacheContent>;
     private sendRequest(type: string, params: any = {}): Promise<any> {
@@ -529,7 +533,7 @@ export class CMakeServerClient {
         return this.sendRequest('compute', params);
     }
 
-    codemodel(params?: CodeModelParams): Promise<CodeModelContent> {
+    codemodel(params?: CodeModelParams): Promise<ServerCodeModelContent> {
         return this.sendRequest('codemodel', params);
     }
 
