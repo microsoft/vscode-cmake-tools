@@ -94,7 +94,7 @@ export class CMakeServerDriver extends CMakeDriver {
                                 newGroup.defines = group.defines;
                                 newGroup.isGenerated = group.isGenerated;
                                 newGroup.compileCommandFragments = group.compileFlags ? [...shlex.split(group.compileFlags)] : [];
-                                newTarget.fileGroups?.push(newGroup);
+                                newTarget.fileGroups.push(newGroup);
                             }
                         }
                         newProject.targets.push(newTarget);
