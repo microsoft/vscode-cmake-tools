@@ -67,33 +67,37 @@ export class CMakeServerDriver extends CMakeDriver {
     private codeModel!: CodeModelContent | null;
     private convertServerCodeModel(serverCodeModel: null | ServerCodeModelContent): CodeModelContent | null {
         if (serverCodeModel) {
-            let codeModel!: CodeModelContent;
+            const codeModel: CodeModelContent = { configurations: [], toolchains: undefined};
             for (const config of serverCodeModel.configurations) {
-                let newConfig!: CodeModelConfiguration;
-                newConfig.name = config.name;
+                const newConfig: CodeModelConfiguration = { name: config.name, projects: [] };
                 for (const project of config.projects) {
-                    let newProject!: CodeModelProject;
-                    newProject.name = project.name;
-                    newProject.sourceDirectory = project.sourceDirectory;
-                    newProject.hasInstallRule = project.hasInstallRule;
+                    const newProject: CodeModelProject = {
+                        name: project.name,
+                        sourceDirectory: project.sourceDirectory,
+                        hasInstallRule: project.hasInstallRule,
+                        targets: []
+                    };
                     for (const target of project.targets) {
-                        let newTarget!: CodeModelTarget;
-                        newTarget.name = target.name;
-                        newTarget.type = target.type;
-                        newTarget.sourceDirectory = target.sourceDirectory;
-                        newTarget.fullName = target.fullName;
-                        newTarget.artifacts = target.artifacts;
-                        newTarget.sysroot = target.sysroot;
+                        const newTarget: CodeModelTarget = {
+                            name: target.name,
+                            type: target.type,
+                            sourceDirectory: target.sourceDirectory,
+                            fullName: target.fullName,
+                            artifacts: target.artifacts,
+                            sysroot: target.sysroot,
+                            fileGroups: []
+                        };
                         if (target.fileGroups) {
                             newTarget.fileGroups = [];
                             for (const group of target.fileGroups) {
-                                let newGroup!: CodeModelFileGroup;
-                                newGroup.sources = group.sources;
-                                newGroup.language = group.language;
-                                newGroup.includePath = group.includePath;
-                                newGroup.defines = group.defines;
-                                newGroup.isGenerated = group.isGenerated;
-                                newGroup.compileCommandFragments = group.compileFlags ? [...shlex.split(group.compileFlags)] : [];
+                                const newGroup: CodeModelFileGroup = {
+                                    sources: group.sources,
+                                    language: group.language,
+                                    includePath: group.includePath,
+                                    defines: group.defines,
+                                    isGenerated: group.isGenerated,
+                                    compileCommandFragments: group.compileFlags ? [...shlex.split(group.compileFlags)] : []
+                                };
                                 newTarget.fileGroups.push(newGroup);
                             }
                         }
@@ -103,7 +107,6 @@ export class CMakeServerDriver extends CMakeDriver {
                 }
                 codeModel.configurations.push(newConfig);
             }
-            codeModel.toolchains = undefined;
             return codeModel;
         }
         return null;
