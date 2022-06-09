@@ -86,6 +86,7 @@ export class CMakeServerDriver extends CMakeDriver {
                             sysroot: target.sysroot,
                             fileGroups: []
                         };
+                        const linkLanguageFlags: string[] | undefined = target.linkLanguageFlags;
                         if (target.fileGroups) {
                             newTarget.fileGroups = [];
                             for (const group of target.fileGroups) {
@@ -95,7 +96,7 @@ export class CMakeServerDriver extends CMakeDriver {
                                     includePath: group.includePath,
                                     defines: group.defines,
                                     isGenerated: group.isGenerated,
-                                    compileCommandFragments: group.compileFlags ? [...shlex.split(group.compileFlags)] : []
+                                    compileCommandFragments: group.compileFlags ? [...shlex.split(group.compileFlags)] : (linkLanguageFlags ? linkLanguageFlags : [])
                                 };
                                 newTarget.fileGroups.push(newGroup);
                             }
