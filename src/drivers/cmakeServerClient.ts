@@ -241,7 +241,7 @@ export interface ServerCodeModelTarget {
     linkerLanguage?: string; // Doesn't exist in general CodeModelTarget.
     linkLibraries?: string[]; // Doesn't exist in general CodeModelTarget.
     linkFlags?: string[]; // Doesn't exist in general CodeModelTarget.
-    linkLanguageFlags?: string[]; // Doesn't exist in general CodeModelTarget.
+    linkLanguageFlags?: string; // Doesn't exist in general CodeModelTarget.
     frameworkPath?: string; // Doesn't exist in general CodeModelTarget.
     linkPath?: string; // Doesn't exist in general CodeModelTarget.
     sysroot?: string;
