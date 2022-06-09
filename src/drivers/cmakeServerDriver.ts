@@ -63,11 +63,10 @@ export class CMakeServerDriver extends CMakeDriver {
      */
     private _prevConfigureEnv = 'null';
 
-    // TODO: Refactor to make this assertion unecessary
-    private codeModel!: CodeModelContent | null;
+    private codeModel: CodeModelContent | null = null;
     private convertServerCodeModel(serverCodeModel: null | ServerCodeModelContent): CodeModelContent | null {
         if (serverCodeModel) {
-            const codeModel: CodeModelContent = { configurations: [], toolchains: undefined};
+            const codeModel: CodeModelContent = { configurations: [] };
             for (const config of serverCodeModel.configurations) {
                 const newConfig: CodeModelConfiguration = { name: config.name, projects: [] };
                 for (const project of config.projects) {
