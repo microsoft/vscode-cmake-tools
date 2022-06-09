@@ -3,7 +3,6 @@ import { InputFileSet } from '@cmt/dirty';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as shlex from '@cmt/shlex';
 import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
