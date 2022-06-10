@@ -6,10 +6,10 @@
 {
 	"error.starting.cmake-server": "Erro ao iniciar o servidor do CMake",
 	"started.new.cmake.server.instance": "Iniciada nova instância do Servidor do CMake com PID {0}",
-	"pipe.error.from.cmake-server": "Erro de pipe do servidor do CMake",
 	"connection.terminated.unexpectedly": "A conexão com o servidor do CMake foi encerrada inesperadamente",
 	"cmake-server.exited.with.status": "cmake-server foi encerrado com o status {0} ({1})",
 	"unhandled.error.in": "Erro sem tratamento no {0}",
+	"pipe.error.from.cmake-server": "Erro de pipe do servidor do CMake",
 	"protocol.error.cmake": "Erro de protocolo ao se comunicar com CMake. Esta entrada foi obtida: {0}",
 	"received.message.from.make-server": "Mensagem recebida do servidor do CMake: {0}",
 	"invalid.cookie": "Cookie inválido: {0}",
