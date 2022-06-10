@@ -130,11 +130,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             const codemodel_data = await generateCodeModelForConfiguredDriver();
             expect(codemodel_data).to.be.not.null;
 
-            const target: CodeModelTarget | undefined = codemodel_data!.configurations[0].projects[0].targets.find((t: CodeModelTarget) => {
-                if (t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess') {
-                    return t;
-                }
-            });
+            const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess');
             expect(target).to.be.not.undefined;
 
             // Test target name used for node label
@@ -185,9 +181,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // compile flags or fragments for file groups
             if (process.platform === 'win32') {
-                if (compile_information) {
-                    expect(compile_information.compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
-                }
+                expect(compile_information!.compileCommandFragments?.map(string => string.trim()).join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
             }
         }).timeout(90000);
 
@@ -223,7 +217,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // compile flags or fragments for file groups
             if (process.platform === 'win32') {
-                expect(target!.fileGroups![0].compileCommandFragments?.join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
+                expect(target!.fileGroups![0].compileCommandFragments?.map(string => string.trim()).join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
             }
 
         }).timeout(90000);

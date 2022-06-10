@@ -17,7 +17,6 @@ import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
 import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
-import { ServerCodeModelContent } from '@cmt/drivers/cmakeServerClient';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -63,7 +62,7 @@ export class CMakeServerDriver extends CMakeDriver {
     private _prevConfigureEnv = 'null';
 
     private codeModel: CodeModelContent | null = null;
-    private convertServerCodeModel(serverCodeModel: null | ServerCodeModelContent): CodeModelContent | null {
+    private convertServerCodeModel(serverCodeModel: null | cms.ServerCodeModelContent): CodeModelContent | null {
         if (serverCodeModel) {
             const codeModel: CodeModelContent = { configurations: [] };
             for (const config of serverCodeModel.configurations) {
@@ -224,11 +223,8 @@ export class CMakeServerDriver extends CMakeDriver {
                 new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
             return acc;
         }, new Map<string, cache.Entry>());
+        // Convert ServerCodeModel to general CodeModel.
         this.codeModel = this.convertServerCodeModel(await client.codemodel());
-
-        // Toolchain information is not available with CMake server.
-        // convert it into real codemodel, this is not the correct type
-        // two different interface
         this._codeModelChanged.fire(this.codeModel);
     }
 

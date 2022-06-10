@@ -209,7 +209,7 @@ suite('CppTools tests', () => {
         const smokeFolder = path.join(here, '../smoke');
         const sourceFile3 = path.join(smokeFolder, 'main.cpp');
         const uri3 = vscode.Uri.file(sourceFile3);
-        const codeModelTar3: codeModel.CodeModelContent = {
+        const codeModel3: codeModel.CodeModelContent = {
             configurations: [{
                 name: 'Release',
                 projects: [{
@@ -231,7 +231,7 @@ suite('CppTools tests', () => {
             toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
         };
 
-        provider.updateConfigurationData({ cache, codeModelContent: codeModelTar3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
         let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile3)]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');
@@ -315,7 +315,7 @@ suite('CppTools tests', () => {
         const smokeFolder = path.join(here, '../smoke');
         const sourceFile3 = path.join(smokeFolder, 'main.cpp');
         const uri3 = vscode.Uri.file(sourceFile3);
-        const codeModelTar3: codeModel.CodeModelContent = {
+        const codeModel3: codeModel.CodeModelContent = {
             configurations: [{
                 name: 'Release',
                 projects: [{
@@ -337,7 +337,7 @@ suite('CppTools tests', () => {
             toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
         };
 
-        provider.updateConfigurationData({ cache, codeModelContent: codeModelTar3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
         let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile3)]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');

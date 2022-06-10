@@ -9,7 +9,7 @@ export interface CodeModelTarget {
      *
      * (Source CMake Documentation cmake-file-api(7))
      */
-    name: string;
+    readonly name: string;
 
     /**
      * A string specifying the type of the target.
