@@ -181,7 +181,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // compile flags or fragments for file groups
             if (process.platform === 'win32') {
-                expect(compile_information!.compileCommandFragments?.map(string => string.trim()).join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
+                expect(compile_information!.compileCommandFragments?.map(str => str.trim()).join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1');
             }
         }).timeout(90000);
 
@@ -217,7 +217,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
             // compile flags or fragments for file groups
             if (process.platform === 'win32') {
-                expect(target!.fileGroups![0].compileCommandFragments?.map(string => string.trim()).join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
+                expect(target!.fileGroups![0].compileCommandFragments?.map(str => str.trim()).join(' ')).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1');
             }
 
         }).timeout(90000);
