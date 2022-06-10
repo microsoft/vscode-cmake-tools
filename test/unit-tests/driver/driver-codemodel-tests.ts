@@ -2,7 +2,7 @@
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
-import { CodeModelContent , CodeModelTarget } from '@cmt/drivers/codeModel';
+import { CodeModelContent } from '@cmt/drivers/codeModel';
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiString from 'chai-string';
