@@ -60,7 +60,7 @@ export interface CodeModelFileGroup {
     }[];
 
     /** Compiler flags */
-    compileFlags?: string;
+    compileCommandFragments?: string[];
 
     /** Defines */
     defines?: string[];
@@ -81,6 +81,9 @@ export interface CodeModelProject {
 
     /** Location of the Project */
     sourceDirectory: string;
+
+    hasInstallRule?: boolean; // Exists in ServerCodeModelProject.
+
 }
 
 /**
@@ -104,7 +107,7 @@ export interface CodeModelContent {
     /** List of configurations provided by the selected generator */
     configurations: CodeModelConfiguration[];
 
-    toolchains: Map<string, CodeModelToolchain>;
+    toolchains?: Map<string, CodeModelToolchain>;
 }
 
 /**

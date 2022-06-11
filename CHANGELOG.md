@@ -24,6 +24,8 @@ Bug Fixes:
 - Correctly configure the build environment when using VS 2015 and Ninja in CMakePresets.json. [#2516](https://github.com/microsoft/vscode-cmake-tools/issues/2516)
 - Select the correct VS toolset for Ninja generators with CMake Presets. [#2423](https://github.com/microsoft/vscode-cmake-tools/issues/2423)
 - Fix unhandled exception with CMakePresets.json. [#2117](https://github.com/microsoft/vscode-cmake-tools/issues/2117)
+- Fix issues with compiler argument quoting when configuring IntelliSense. [#2563](https://github.com/microsoft/vscode-cmake-tools/pull/2563)
+- Add support for cpptools API V6. [2508](https://github.com/microsoft/vscode-cmake-tools/issues/2508)
 
 ## 1.10.5
 Bug Fixes:
