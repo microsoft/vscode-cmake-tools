@@ -2133,6 +2133,6 @@
     "yargs-parser": "^20.2.4"
   },
   "extensionPack": [
-    "twxs.cmake"
+    "josetr.cmake-language-support-vscode"
   ]
 }
