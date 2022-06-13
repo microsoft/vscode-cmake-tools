@@ -6,10 +6,10 @@
 {
 	"error.starting.cmake-server": "Error al iniciar cmake-server",
 	"started.new.cmake.server.instance": "Se ha iniciado una nueva instancia del servidor de CMake con el PID {0}.",
-	"pipe.error.from.cmake-server": "Error de canalización de cmake-server",
 	"connection.terminated.unexpectedly": "La conexión con cmake-server se terminó de forma inesperada.",
 	"cmake-server.exited.with.status": "El elemento cmake-server se cerró con el estado {0} ({1})",
 	"unhandled.error.in": "Error no controlado en {0}",
+	"pipe.error.from.cmake-server": "Error de canalización de cmake-server",
 	"protocol.error.cmake": "Error de protocolo al comunicarse con CMake. Se obtuvo esta entrada: {0}",
 	"received.message.from.make-server": "Se recibió un mensaje de cmake-server: {0}",
 	"invalid.cookie": "Cookie no válida: {0}",

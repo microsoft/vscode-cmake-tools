@@ -17,7 +17,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
-import * as codeModel from '@cmt/drivers/codeModel';
+import { CodeModelContent } from '@cmt/drivers/codeModel';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
 import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 import { CTestDriver, BasicTestResults } from './ctest';
@@ -441,7 +441,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     get onCodeModelChanged() {
         return this._codeModelContent.changeEvent;
     }
-    private readonly _codeModelContent = new Property<codeModel.CodeModelContent | null>(null);
+    private readonly _codeModelContent = new Property<CodeModelContent | null>(null);
     private codeModelDriverSub: vscode.Disposable | null = null;
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
@@ -568,12 +568,14 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 break;
             case CMakePreconditionProblems.MissingCMakeListsFile:
                 telemetryEvent = "partialActivation";
-                telemetryProperties["ignoreCMakeListsMissing"] = this.workspaceContext.state.ignoreCMakeListsMissing.toString();
 
-                if (!this.workspaceContext.state.ignoreCMakeListsMissing) {
+                const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing || this.workspaceContext.config.ignoreCMakeListsMissing;
+                telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
+
+                if (!ignoreCMakeListsMissing) {
                     const quickStart = localize('quickstart.cmake.project', "Create");
                     const changeSourceDirectory = localize('edit.setting', "Locate");
-                    const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
+                    const ignoreActivation = localize('ignore.activation', "Don't show again");
 
                     let showCMakeLists: boolean = await showCMakeListsExperiment();
                     const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
@@ -590,7 +592,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
                     const result = showCMakeLists ? changeSourceDirectory : await vscode.window.showErrorMessage(
                         localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder {0}. How would you like to proceed?', `"${this.folderName}"`),
-                        quickStart, changeSourceDirectory, ignoreCMakeListsMissing);
+                        quickStart, changeSourceDirectory, ignoreActivation);
 
                     if (result === quickStart) {
                         // Return here, since the updateFolderFullFeature set below (after the "switch")
@@ -617,14 +619,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         });
 
                         if (showCMakeLists) {
-                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "dismissed" : (selection.label === browse) ? "browse" : "pick";
+                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-exp" : (selection.label === browse) ? "browse" : "pick";
                         } else {
-                            telemetryProperties["missingCMakeListsUserAction"] = "changeSourceDirectory";
+                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-ctl" : "changeSourceDirectory";
                         }
 
                         let selectedFile: string | undefined;
                         if (!selection) {
-                            telemetryProperties["missingCMakeListsUserAction"] = "cancel";
                             break; // User canceled it.
                         } else if (selection.label === browse) {
                             const openOpts: vscode.OpenDialogOptions = {
@@ -643,7 +644,6 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         if (selectedFile) {
                             const relPath = util.getRelativePath(selectedFile, this.folder.uri.fsPath);
                             void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", relPath);
-                            telemetryProperties["missingCMakeListsUserAction"] = "updateSourceDirectory";
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -661,9 +661,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
                                 }
                             }
                         } else {
-                            telemetryProperties["missingCMakeListsUserAction"] = "invalidSourceDirectoryPath";
+                            telemetryProperties["missingCMakeListsUserAction"] = showCMakeLists ? "cancel-browse-exp" : "cancel-browse-ctl";
                         }
-                    } else if (result === ignoreCMakeListsMissing) {
+                    } else if (result === ignoreActivation) {
                         // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
                         // (hide commands and status bar) and record this choice so that this popup doesn't trigger next time.
                         // The switch back to full functionality can be done later by changes to the cmake.sourceDirectory setting
@@ -674,7 +674,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         await this.workspaceContext.state.setIgnoreCMakeListsMissing(true);
                     } else {
                         // "invalid" normally shouldn't happen since the popup can be closed by either dismissing it or clicking any of the three buttons.
-                        telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "dismissed" : "invalid";
+                        telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "cancel-dismiss" : "invalid";
                     }
                 }
 
