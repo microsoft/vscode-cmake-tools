@@ -1615,15 +1615,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
 
     // Load a new extension manager
     const ext = extensionManager = await ExtensionManager.create(context);
-    // Inform the users that the language support extension has been modified.
-    const isOldLanguageSupportInformed = extensionManager?.extensionContext.globalState.get('oldLanguageSupportInformed', false);
-    if (!isOldLanguageSupportInformed) {
-        const oldLanguageSupport = vscode.extensions.getExtension('twxs.cmake');
-        if (oldLanguageSupport) {
-            await vscode.window.showInformationMessage(localize('uninstall.old.language.support', 'The CMake language support extension for Vs Code has been replaced. Please uninstall any other CMake language support extension, and install the new one from CMake Extension Pack.'));
-            await extensionManager?.extensionContext.globalState.update('oldLanguageSupportInformed', true);
-        }
-    }
 
     // A register function that helps us bind the commands to the extension
     function register<K extends keyof ExtensionManager>(name: K) {
@@ -1803,6 +1794,15 @@ export async function activate(context: vscode.ExtensionContext) {
     const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
+    }
+    // Inform the users that the language support extension has been modified.
+    const isOldLanguageSupportInformed = context.globalState.get('oldLanguageSupportInformed', false);
+    if (!isOldLanguageSupportInformed) {
+        const oldLanguageSupport = vscode.extensions.getExtension('twxs.cmake');
+        if (oldLanguageSupport) {
+            await context.globalState.update('oldLanguageSupportInformed', true);
+            void vscode.window.showInformationMessage(localize('uninstall.old.language.support', 'CMake Tools now bundles a new language support extension for CMakeLists.txt files and recommends that you uninstall the previous CMake language support extension by twxs.'));
+        }
     }
 
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
