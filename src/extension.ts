@@ -1795,15 +1795,6 @@ export async function activate(context: vscode.ExtensionContext) {
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
-    // Inform the users that the language support extension has been modified.
-    const isOldLanguageSupportInformed = context.globalState.get('oldLanguageSupportInformed', false);
-    if (!isOldLanguageSupportInformed) {
-        const oldLanguageSupport = vscode.extensions.getExtension('twxs.cmake');
-        if (oldLanguageSupport) {
-            await context.globalState.update('oldLanguageSupportInformed', true);
-            void vscode.window.showInformationMessage(localize('uninstall.old.language.support', 'CMake Tools now bundles a new language support extension for CMakeLists.txt files and recommends that you uninstall the previous CMake language support extension by twxs.'));
-        }
-    }
 
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
     await enableFullFeatureSet(false);
