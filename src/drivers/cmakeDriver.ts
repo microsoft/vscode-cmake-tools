@@ -788,8 +788,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         } else if (genName === 'MSYS Makefiles') {
             return process.platform === 'win32' && this.testHaveCommand('make');
         } else {
-            throw Error ("not a common generator");
-            
+            throw Error("not a common generator");
         }
     };
 
@@ -801,7 +800,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const platform = process.platform;
 
         for (const gen of preferredGenerators) {
-            if (this.isCommonGenerator(gen.name)){
+            if (this.isCommonGenerator(gen.name)) {
                 if (await this.commonGeneratorExists(gen.name)) {
                     return gen;
                 }
