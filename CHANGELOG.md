@@ -3,6 +3,9 @@
 ## 1.11.26
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
 
+Bug Fixes:
+- Ninja is used as a default generator. [#2598](https://github.com/microsoft/vscode-cmake-tools/issues/2598) 
+
 ## 1.11.25
 Improvements:
 - Fix build Error: EMFILE: too many open files. [#2288](https://github.com/microsoft/vscode-cmake-tools/issues/2288) [@FrogTheFrog](https://github.com/FrogTheFrog)
