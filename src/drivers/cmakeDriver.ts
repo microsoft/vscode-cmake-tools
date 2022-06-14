@@ -776,35 +776,34 @@ export abstract class CMakeDriver implements vscode.Disposable {
             genName === 'Unix Makefiles' || genName === 'MSYS Makefiles';
     }
 
-    async commonGeneratorExists(genName: string): Promise<boolean> {
-        if (genName === 'Ninja' || genName === 'Ninja Multi-Config') {
-            return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
-        } else if (genName === 'MinGW Makefiles') {
-            return process.platform === 'win32' && this.testHaveCommand('mingw32-make');
-        } else if (genName === 'NMake Makefiles') {
-            return process.platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
-        } else if (genName === 'Unix Makefiles') {
-            return this.testHaveCommand('make');
-        } else if (genName === 'MSYS Makefiles') {
-            return process.platform === 'win32' && this.testHaveCommand('make');
-        } else {
-            throw Error("not a common generator");
-        }
-    };
-
     /**
      * Picks the best generator to use on the current system
      */
-    async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator | null> {
+     async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator | null> {
         log.debug(localize('trying.to.detect.generator', 'Trying to detect generator supported by system'));
         const platform = process.platform;
 
         for (const gen of preferredGenerators) {
-            if (this.isCommonGenerator(gen.name)) {
-                if (await this.commonGeneratorExists(gen.name)) {
-                    return gen;
+            const gen_name = gen.name;
+            const generator_present = await (async (): Promise<boolean> => {
+                if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
+                    return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
                 }
-            } else {
+                if (gen_name === 'MinGW Makefiles') {
+                    return platform === 'win32' && this.testHaveCommand('mingw32-make');
+                }
+                if (gen_name === 'NMake Makefiles') {
+                    return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
+                }
+                if (gen_name === 'Unix Makefiles') {
+                    return this.testHaveCommand('make');
+                }
+                if (gen_name === 'MSYS Makefiles') {
+                    return platform === 'win32' && this.testHaveCommand('make');
+                }
+                return false;
+            })();
+            if (!generator_present) {
                 const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
                 if (platform === 'win32' && vsMatch) {
                     return {
@@ -812,12 +811,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
                         platform: gen.platform || vsMatch[2],
                         toolset: gen.toolset
                     };
-                } else if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
-                    return gen;
-                } else if (this.cmakeGenerators.indexOf(gen.name) >= 0) {
-                    // If it is not a common generator that we can find, but it is a known cmake generator (cmakeGenerators), return it.
+                }
+                if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
                     return gen;
                 }
+                // If it is not a common generator that we can find, but it is a known cmake generator (cmakeGenerators), return it.
+                if (this.cmakeGenerators.indexOf(gen.name) >= 0 && !this.isCommonGenerator(gen.name)) {
+                    return gen;
+                }
+                continue;
+            } else {
+                return gen;
             }
         }
         return null;
