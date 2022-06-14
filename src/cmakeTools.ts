@@ -569,6 +569,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
             case CMakePreconditionProblems.MissingCMakeListsFile:
                 telemetryEvent = "partialActivation";
 
+                telemetry.logEvent('missingCMakeListsFile');  // Fire this event in case the notification is dismissed with the `ESC` key.
+
                 const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing || this.workspaceContext.config.ignoreCMakeListsMissing;
                 telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
 
