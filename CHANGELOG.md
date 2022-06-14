@@ -1,7 +1,7 @@
 # What's New?
 
 ## 1.11.26
-- Revert back to the previous CMake language server extension dependency. 
+- Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
 
 ## 1.11.25
 Improvements:
