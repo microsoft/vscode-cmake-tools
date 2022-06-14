@@ -779,7 +779,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * Picks the best generator to use on the current system
      */
-     async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator | null> {
+    async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator | null> {
         log.debug(localize('trying.to.detect.generator', 'Trying to detect generator supported by system'));
         const platform = process.platform;
 
