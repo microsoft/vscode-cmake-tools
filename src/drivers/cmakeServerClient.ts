@@ -220,9 +220,9 @@ export interface CodeModelParams {}
 
 export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel' }
 
-export interface CodeModelFileGroup {
+export interface ServerCodeModelFileGroup {
     language?: string;
-    compileFlags?: string;
+    compileFlags?: string; // In CodeModelFileGroup compileCommandFragments is used instead.
     includePath?: { path: string; isSystem?: boolean }[];
     defines?: string[];
     sources: string[];
@@ -231,40 +231,43 @@ export interface CodeModelFileGroup {
 
 export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
 
-export interface CodeModelTarget {
+export interface ServerCodeModelTarget {
     name: string;
     type: TargetTypeString;
     fullName?: string;
     sourceDirectory?: string;
-    buildDirectory?: string;
+    buildDirectory?: string; // Doesn't exist in general CodeModelTarget.
     artifacts?: string[];
-    linkerLanguage?: string;
-    linkLibraries?: string[];
-    linkFlags?: string[];
-    linkLanguageFlags?: string[];
-    frameworkPath?: string;
-    linkPath?: string;
+    linkerLanguage?: string; // Doesn't exist in general CodeModelTarget.
+    linkLibraries?: string[]; // Doesn't exist in general CodeModelTarget.
+    linkFlags?: string[]; // Doesn't exist in general CodeModelTarget.
+    linkLanguageFlags?: string; // Doesn't exist in general CodeModelTarget.
+    frameworkPath?: string; // Doesn't exist in general CodeModelTarget.
+    linkPath?: string; // Doesn't exist in general CodeModelTarget.
     sysroot?: string;
-    fileGroups?: CodeModelFileGroup[];
+    fileGroups?: ServerCodeModelFileGroup[];
 }
 
-export interface CodeModelProject {
+export interface ServerCodeModelProject {
     name: string;
+    targets: ServerCodeModelTarget[];
     sourceDirectory: string;
-    buildDirectory: string;
-    targets: CodeModelTarget[];
+    buildDirectory: string; // Doesn't exist in general CodeModelProject.
     hasInstallRule?: boolean;
 }
 
-export interface CodeModelConfiguration {
+export interface ServerCodeModelConfiguration {
     /** Name of the active configuration in a multi-configuration generator.*/
     name: string;
-    projects: CodeModelProject[];
+    projects: ServerCodeModelProject[];
 }
 
-export interface CodeModelContent { configurations: CodeModelConfiguration[] }
+export interface ServerCodeModelContent {
+    configurations: ServerCodeModelConfiguration[];
+    // Doesn't include toolchains as in general CodeModelContent.
+}
 
-export interface CodeModelReply extends ReplyMessage, CodeModelContent { inReplyTo: 'codemodel' }
+export interface CodeModelReply extends ReplyMessage, ServerCodeModelContent { inReplyTo: 'codemodel' }
 
 /**
  * cmakeInputs will respond with a list of file paths that can alter a
@@ -484,7 +487,7 @@ export class CMakeServerClient {
     private sendRequest(type: 'setGlobalSettings', params: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent>;
     private sendRequest(type: 'configure', params: ConfigureParams): Promise<ConfigureContent>;
     private sendRequest(type: 'compute', params?: ComputeParams): Promise<ComputeContent>;
-    private sendRequest(type: 'codemodel', params?: CodeModelParams): Promise<CodeModelContent>;
+    private sendRequest(type: 'codemodel', params?: CodeModelParams): Promise<ServerCodeModelContent>;
     private sendRequest(type: 'cmakeInputs', params?: CMakeInputsParams): Promise<CMakeInputsContent>;
     private sendRequest(type: 'cache', params?: CacheParams): Promise<CacheContent>;
     private sendRequest(type: string, params: any = {}): Promise<any> {
@@ -529,7 +532,7 @@ export class CMakeServerClient {
         return this.sendRequest('compute', params);
     }
 
-    codemodel(params?: CodeModelParams): Promise<CodeModelContent> {
+    codemodel(params?: CodeModelParams): Promise<ServerCodeModelContent> {
         return this.sendRequest('codemodel', params);
     }
 
@@ -561,6 +564,15 @@ export class CMakeServerClient {
         log.debug(localize('started.new.cmake.server.instance', 'Started new CMake Server instance with PID {0}', child.pid));
         child.stdout.on('data', data => this.params.onOtherOutput(data.toLocaleString()));
         child.stderr.on('data', data => this.params.onOtherOutput(data.toLocaleString()));
+        child.on('close', (retc: number, signal: string) => {
+            if (retc !== 0) {
+                log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));
+                log.error(localize('cmake-server.exited.with.status', 'cmake-server exited with status {0} ({1})', retc, signal));
+                params.onCrash(retc, signal).catch(e => {
+                    log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onCrash'), e);
+                });
+            }
+        });
         setTimeout(() => {
             const endPromise = new Promise<void>((resolve, reject) => {
                 const pipe = this.pipe = net.createConnection(pipeFile);
@@ -586,15 +598,6 @@ export class CMakeServerClient {
                 child.on('exit', () => resolve());
             });
             this.endPromise = Promise.all([endPromise, exitPromise]).then(() => {});
-            child.on('close', (retc: number, signal: string) => {
-                if (retc !== 0) {
-                    log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));
-                    log.error(localize('cmake-server.exited.with.status', 'cmake-server exited with status {0} ({1})', retc, signal));
-                    params.onCrash(retc, signal).catch(e => {
-                        log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onCrash'), e);
-                    });
-                }
-            });
         }, 1000);
     }
 

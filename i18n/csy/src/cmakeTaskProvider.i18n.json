@@ -8,10 +8,20 @@
 	"install": "nainstalovat",
 	"test": "test",
 	"configure": "konfigurovat",
+	"clean": "vyčistit",
+	"clean.rebuild": "vyčistit a znovu sestavit",
 	"cmake.template.task": "Úloha {0} šablony CMake",
-	"starting.build": "Spouští se sestavování...",
-	"not.a.build.command": "{0} není rozpoznaný příkaz sestavení.",
+	"command.not.recognized": "{0} není rozpoznaný příkaz.",
+	"configure.finished.with.error": "Konfigurace byla dokončena s chybami.",
+	"cmake.driver.not.found": "Ovladač CMake se nenašel.",
+	"configure.failed": "Konfigurace se nezdařila.",
+	"build.started": "Sestavování zahájeno...",
 	"build.finished.with.error": "Sestavování se dokončilo s chybami.",
 	"build.finished.with.warnings": "Sestavování se dokončilo s upozorněními.",
-	"build.finished.successfully": "Sestavování se úspěšně dokončilo."
+	"build.finished.successfully": "Sestavování se úspěšně dokončilo.",
+	"config.started": "Konfigurace se spustila...",
+	"install.started": "Instalace se zahájila...",
+	"test.started": "Test byl spuštěn...",
+	"clean.started": "Zahájilo se čištění...",
+	"clean.rebuild.started": "Zahájilo se čištění a opětovné sestavení..."
 }

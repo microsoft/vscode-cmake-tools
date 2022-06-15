@@ -6,10 +6,10 @@
 {
 	"error.starting.cmake-server": "启动 cmake-server 时出错",
 	"started.new.cmake.server.instance": "已使用 PID {0} 启动新的 CMake Server 实例",
-	"pipe.error.from.cmake-server": "cmake-server 中的管道错误",
 	"connection.terminated.unexpectedly": "与 cmake-server 的连接意外终止",
 	"cmake-server.exited.with.status": "cmake-server 已退出，状态为 {0} ({1})",
 	"unhandled.error.in": "{0} 中未处理的错误",
+	"pipe.error.from.cmake-server": "cmake-server 中的管道错误",
 	"protocol.error.cmake": "与 CMake 通信时出现协议错误! 已获取此输入: {0}",
 	"received.message.from.make-server": "已收到来自 cmake-server 的消息: {0}",
 	"invalid.cookie": "cookie 无效: {0}",
