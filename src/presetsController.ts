@@ -941,7 +941,7 @@ export class PresetsController {
         }
 
         presetsFile.__path = file;
-        const setFile = (presets: preset.Preset[] | undefined) => {
+        const setFile = (presets?: preset.Preset[]) => {
             if (presets) {
                 for (const preset of presets) {
                     preset.__file = presetsFile;
@@ -1085,13 +1085,10 @@ export class PresetsController {
             this._presetsWatcher.close().then(() => {}, () => {});
         }
 
-        const presetsChanged = async () => {
-            await this.reapplyPresets();
-        };
         this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
-            .on('add', presetsChanged)
-            .on('change', presetsChanged)
-            .on('unlink', presetsChanged);
+            .on('add', this.reapplyPresets)
+            .on('change', this.reapplyPresets)
+            .on('unlink', this.reapplyPresets);
     };
 
     dispose() {

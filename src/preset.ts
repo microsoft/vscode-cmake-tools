@@ -18,10 +18,10 @@ const log = logging.createLogger('preset');
 export interface PresetsFile {
     version: number;
     cmakeMinimumRequired?: util.Version;
-    include?: string[] | undefined;
-    configurePresets?: ConfigurePreset[] | undefined;
-    buildPresets?: BuildPreset[] | undefined;
-    testPresets?: TestPreset[] | undefined;
+    include?: string[];
+    configurePresets?: ConfigurePreset[];
+    buildPresets?: BuildPreset[];
+    testPresets?: TestPreset[];
 
     __path?: string; // Private field holding the path to the file.
 }
