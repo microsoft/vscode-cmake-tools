@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { CMakeDriver } from './drivers/cmakeDriver';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
-import { Environment } from './environmentVariables';
+import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -20,8 +20,9 @@ interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
     label: string;
     command: string; // Command is either "build", "configure", "install", or "test".
-    options?: { cwd?: string };
+    options?: { cwd?: string ; environment?: Environment };
     targets?: string[]; // only in "build" command
+    args?: string[];
 }
 
 enum CommandType {
@@ -103,7 +104,8 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
-                new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTargets, resolvedDefinition.targets, resolvedDefinition.options, this.cmakeDriver)
+                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.options, resolvedDefinition.args,
+                    this.defaultTargets, this.cmakeDriver)
             ), []);
         task.group = commandType === CommandType.build ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
@@ -117,8 +119,9 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
             const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTargets, resolvedDefinition.targets, resolvedDefinition.options, this.cmakeDriver)
-                ), []); // TODO: add problem matcher
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.options, resolvedDefinition.args,
+                        this.defaultTargets, this.cmakeDriver)
+                ), []);
             return resolvedTask;
         }
         return undefined;
@@ -135,7 +138,9 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private defaultTargets: string[], private definedTargets?: string[], private options: { cwd?: string ; environment?: Environment } = {}, private cmakeDriver?: CMakeDriver) {
+    constructor(private command: string, private definedTargets?: string[],
+        private options?: { cwd?: string ; environment?: Environment }, private taskArgs?: string[],
+        private defaultTargets?: string[], private cmakeDriver?: CMakeDriver) {
     }
 
     output(line: string): void {
@@ -181,7 +186,6 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     private async runBuildTask(): Promise<any> {
         let command: proc.BuildCommand | null;
         let cmakePath: string = "CMake.EXE";
-        let args: string[] = [];
 
         if (this.cmakeDriver) {
             if (await this.cmakeDriver.checkNeedsReconfigure()) {
@@ -192,11 +196,15 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
                     return;
                 }
             }
-            command = await this.cmakeDriver.getCMakeBuildCommand(this.definedTargets ? this.definedTargets : this.defaultTargets);
+            command = await this.cmakeDriver.getCMakeBuildCommand(this.definedTargets ? this.definedTargets : this.defaultTargets, this.taskArgs);
             if (command) {
                 cmakePath = command.command;
-                args = command.args ? command.args : [];
-                this.options.environment = command.build_env;
+                this.taskArgs = command.args;
+                if (!this.options) {
+                    this.options = {};
+                }
+                // While merging, override the build_env with new values.
+                this.options.environment = EnvironmentUtils.merge([ command.build_env, this.options.environment], {preserveNull: true});
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
@@ -204,10 +212,10 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             this.closeEmitter.fire(-1);
             return;
         }
-        this.writeEmitter.fire(localize("build.started", "Build Started...") + endOfLine);
-        this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
+        this.writeEmitter.fire(localize("build.started", "Build task started...") + endOfLine);
+        this.writeEmitter.fire(proc.buildCmdStr(cmakePath, this.taskArgs) + endOfLine);
         try {
-            const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
+            const result: proc.ExecutionResult = await proc.execute(cmakePath, this.taskArgs, this, this.options).result;
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s).") + endOfLine);
             } else if (result.stderr && !result.stdout) {
@@ -224,31 +232,31 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     }
 
     private async runConfigTask(): Promise<any> {
-        this.writeEmitter.fire(localize("config.started", "Config Started...") + endOfLine);
+        this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.configure');
         this.closeEmitter.fire(result ? result : -1);
     }
 
     private async runInstallTask(): Promise<any> {
-        this.writeEmitter.fire(localize("install.started", "Install Started...") + endOfLine);
+        this.writeEmitter.fire(localize("install.started", "Install task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.install');
         this.closeEmitter.fire(result ? result : -1);
     }
 
     private async runTestTask(): Promise<any> {
-        this.writeEmitter.fire(localize("test.started", "Test Started...") + endOfLine);
+        this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.ctest');
         this.closeEmitter.fire(result ? result : -1);
     }
 
     private async runCleanTask(): Promise<any> {
-        this.writeEmitter.fire(localize("clean.started", "Clean Started...") + endOfLine);
+        this.writeEmitter.fire(localize("clean.started", "Clean task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.clean');
         this.closeEmitter.fire(result ? result : -1);
     }
 
     private async runCleanRebuildTask(): Promise<any> {
-        this.writeEmitter.fire(localize("clean.rebuild.started", "Clean Rebuild Started...") + endOfLine);
+        this.writeEmitter.fire(localize("clean.rebuild.started", "Clean-Rebuild task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.cleanRebuild');
         this.closeEmitter.fire(result ? result : -1);
     }

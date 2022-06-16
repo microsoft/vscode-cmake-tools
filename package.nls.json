@@ -146,5 +146,12 @@
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
     "cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "The launch terminal instance is reused and the target will launch as soon as the terminal is idle.",
     "cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "The launch terminal instance is reused and a break command is sent to terminate any active foreground process before launching the target.",
-    "cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up."
+    "cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
+    "cmake-tools.taskDefinitions.properties.label.description": "The name of the task",
+    "cmake-tools.taskDefinitions.properties.command.description": "CMake command",
+    "cmake-tools.taskDefinitions.properties.targets.description": "CMake build targets",
+    "cmake-tools.taskDefinitions.properties.options.cwd.description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used.",
+    "cmake-tools.taskDefinitions.properties.options.environment.name.description": "Name of environment variable.",
+    "cmake-tools.taskDefinitions.properties.options.environment.value.description": "Value for the environment variable.",
+    "cmake-tools.taskDefinitions.properties.details.description": "Additional details of the task"
 }

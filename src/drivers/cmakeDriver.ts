@@ -1600,7 +1600,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return targetnames;
     }
 
-    async getCMakeBuildCommand(targets?: string[]): Promise<proc.BuildCommand | null> {
+    async getCMakeBuildCommand(targets?: string[], customeArgs?: string[]): Promise<proc.BuildCommand | null> {
         if (this.useCMakePresets) {
             if (!this._buildPreset) {
                 log.debug(localize('no.build.preset', 'No build preset selected'));
@@ -1627,31 +1627,31 @@ export abstract class CMakeDriver implements vscode.Disposable {
             targets = this.correctAllTargetName(targets);
 
             const buildArgs: string[] = this.config.buildArgs.slice(0);
-            const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
+            const buildToolArgs: string[] = this.config.buildToolArgs.length !== 0 ? ['--'].concat(this.config.buildToolArgs) : [];
 
             const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
             const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number|undefined>('parallelJobs');
-            let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
-            // for Ninja generator, don't '-j' argument if user didn't define number of jobs
-            // let numJobs: number | undefined = this.config.numJobs;
-            if (numJobs === undefined && gen && !/Ninja/.test(gen)) {
-                numJobs = defaultNumJobs();
-            }
-            // for msbuild generators, only add '-j' argument if parallelJobs > 1
-            if (numJobs && ((gen && !/Visual Studio/.test(gen)) || numJobs > 1)) {
-                // Prefer using CMake's build options to set parallelism over tool-specific switches.
-                // The feature is not available until version 3.14.
-                if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
-                    buildArgs.push('-j');
-                    if (numJobs) {
-                        buildArgs.push(numJobs.toString());
-                    }
-                } else {
-                    if (gen) {
-                        if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
-                            buildToolArgs.push('-j', numJobs.toString());
-                        } else if (/Visual Studio/.test(gen) && targets !== ['clean']) {
-                            buildToolArgs.push('/maxcpucount:' + numJobs.toString());
+            if (!customeArgs || !customeArgs.includes('-j')) {
+                let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
+                // for Ninja generator, don't add '-j' argument if user didn't define number of jobs
+                if (numJobs === undefined && gen && !/Ninja/.test(gen)) {
+                    numJobs = defaultNumJobs();
+                }
+                // for msbuild generators, only add '-j' argument if parallelJobs > 1
+                if (numJobs && ((gen && !/Visual Studio/.test(gen)) || numJobs > 1)) {
+                    // Prefer using CMake's build options to set parallelism over tool-specific switches.
+                    // The feature is not available until version 3.14.
+                    if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
+                        if (numJobs) {
+                            buildArgs.push('-j', numJobs.toString());
+                        }
+                    } else {
+                        if (gen) {
+                            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
+                                buildToolArgs.push('-j', numJobs.toString());
+                            } else if (/Visual Studio/.test(gen) && targets !== ['clean']) {
+                                buildToolArgs.push('/maxcpucount:' + numJobs.toString());
+                            }
                         }
                     }
                 }
@@ -1661,8 +1661,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
             ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
             const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
 
-            const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', ...targets]
-                .concat(buildArgs, buildToolArgs);
+            let args: string[] = [];
+            if (customeArgs && !customeArgs[0].startsWith("--")) {
+                args = args.concat(['--build', customeArgs[0]]);
+                customeArgs.shift();
+            } else {
+                args = args.concat(['--build', this.binaryDir]);
+            }
+            args = (customeArgs && !customeArgs.includes("--config")) ? args.concat(['--config', this.currentBuildType]) : args;
+            args = (customeArgs && !customeArgs.includes("--target")) ? args.concat(['--target', ...targets]) : args;
+            args = args.concat(customeArgs || [], buildArgs, buildToolArgs);
             const opts = this.expansionOptions;
             const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...opts, envOverride: build_env }));
             const expanded_args = await Promise.all(expanded_args_promises) as string[];

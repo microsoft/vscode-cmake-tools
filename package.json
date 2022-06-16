@@ -531,7 +531,7 @@
         "properties": {
           "label": {
             "type": "string",
-            "description": "The name of the task"
+            "description": "%cmake-tools.taskDefinitions.properties.label.description%"
           },
           "command": {
             "type": "string",
@@ -543,9 +543,16 @@
               "clean",
               "cleanRebuild"
             ],
-            "description": "CMake build command"
+            "description": "%cmake-tools.taskDefinitions.properties.command.description%"
           },
           "targets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "%cmake-tools.taskDefinitions.properties.targets.description%"
+          },
+          "args": {
             "type": "array",
             "items": {
               "type": "string"
@@ -557,13 +564,29 @@
             "properties": {
               "cwd": {
                 "type": "string",
-                "description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used."
+                "description": "%cmake-tools.taskDefinitions.properties.options.cwd.description%"
+              },
+              "environment": {
+                "type": "object",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "%cmake-tools.taskDefinitions.properties.options.environment.name.description%"
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "%cmake-tools.taskDefinitions.properties.options.environment.value.description%"
+                    }
+                  }
+                }
               }
             }
           },
           "detail": {
             "type": "string",
-            "description": "Additional details of the task"
+            "description": "%cmake-tools.taskDefinitions.properties.details.description%"
           }
         }
       }
