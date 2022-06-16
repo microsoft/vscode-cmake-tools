@@ -89,6 +89,7 @@ export class PresetsController {
             presetsController._sourceDir = await expandSourceDir(value);
 
             if (presetsController._sourceDir !== oldSourceDir) {
+                await presetsController.reapplyPresets();
                 await presetsController.watchPresetsChange();
             }
         });
