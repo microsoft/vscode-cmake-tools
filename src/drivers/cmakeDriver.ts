@@ -776,6 +776,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
+    isCommonGenerator(genName: string): boolean {
+        return genName === 'Ninja' || genName === 'Ninja Multi-Config' ||
+            genName === 'MinGW Makefiles' || genName === 'NMake Makefiles' ||
+            genName === 'Unix Makefiles' || genName === 'MSYS Makefiles';
+    }
+
     /**
      * Picks the best generator to use on the current system
      */
@@ -815,7 +821,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
                     return gen;
                 }
-                if (this.cmakeGenerators.indexOf(gen.name) >= 0) {
+                // If it is not a common generator that we can find, but it is a known cmake generator (cmakeGenerators), return it.
+                if (this.cmakeGenerators.indexOf(gen.name) >= 0 && !this.isCommonGenerator(gen.name)) {
                     return gen;
                 }
                 continue;
