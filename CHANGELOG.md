@@ -1,6 +1,9 @@
 # What's New?
 
 ## 1.12
+Improvements:
+- Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
+
 Bug Fixes:
 - Set the working directory for the file api driver. [#2569](https://github.com/microsoft/vscode-cmake-tools/issues/2569)
 
