@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.10.0",
+  "version": "1.12.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -2015,11 +2015,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v4-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v4-schema.json"
       }
     ]
   },
@@ -2042,7 +2042,7 @@
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
     "extensionTestsSuccessfulBuild": "yarn run pretest && node ./out/test/extension-tests/successful-build/runTest.js",
     "extensionTestsSingleRoot": "yarn run pretest && node ./out/test/extension-tests/single-root-UI/runTest.js",
-    "extensionTestsMultioot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
+    "extensionTestsMultiRoot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
     "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/backend-unit-tests/**/*.test.ts"
   },
   "husky": {
@@ -2069,6 +2069,7 @@
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.25.0",
     "@typescript-eslint/parser": "^5.25.0",
+    "@vscode/test-electron": "^2.1.4",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
@@ -2098,7 +2099,6 @@
     "typescript": "^4.1.5",
     "vsce": "^2.7.0",
     "vscode-nls-dev": "^3.3.2",
-    "vscode-test": "^1.6.1",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0"
   },

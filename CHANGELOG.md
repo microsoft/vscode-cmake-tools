@@ -3,9 +3,11 @@
 ## 1.12
 Improvements:
 - Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
+- Support for presets version 4. [#2492](https://github.com/microsoft/vscode-cmake-tools/issues/2492) [@chausner](https://github.com/chausner)
 
 Bug Fixes:
 - Set the working directory for the file api driver. [#2569](https://github.com/microsoft/vscode-cmake-tools/issues/2569)
+- CMakeUserPresets.json version not detected without CMakePresets.json. [#2469](https://github.com/microsoft/vscode-cmake-tools/issues/2469) [@chausner](https://github.com/chausner)
 
 ## 1.11.26
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
@@ -39,6 +41,7 @@ Bug Fixes:
 - Select the correct VS toolset for Ninja generators with CMake Presets. [#2423](https://github.com/microsoft/vscode-cmake-tools/issues/2423)
 - Fix unhandled exception with CMakePresets.json. [#2117](https://github.com/microsoft/vscode-cmake-tools/issues/2117)
 - Fix issues with compiler argument quoting when configuring IntelliSense. [#2563](https://github.com/microsoft/vscode-cmake-tools/pull/2563)
+- Fix clang version detection regexes. [PR #2549](https://github.com/microsoft/vscode-cmake-tools/pull/2549) [@chausner](https://github.com/chausner)
 
 ## 1.10.5
 Bug Fixes:

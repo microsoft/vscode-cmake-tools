@@ -703,7 +703,7 @@ class ExtensionManager implements vscode.Disposable {
                 log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because {0} is set to {1}', '"C_Cpp.intelliSenseEngine"', '"Disabled"'));
                 return;
             }
-            if (!this.cppToolsAPI) {
+            if (!this.cppToolsAPI && !util.isTestMode()) {
                 try {
                     this.cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.latest);
                 } catch (err) {
