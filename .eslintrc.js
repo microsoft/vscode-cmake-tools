@@ -1,3 +1,5 @@
+require("newrelic");
+
 module.exports = {
     "env": {
         "browser": true,

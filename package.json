@@ -1234,24 +1234,24 @@
               "description": "%cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description%"
             },
             "externalConsole": {
-                "type": "boolean",
-                "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+              "type": "boolean",
+              "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
             },
             "console": {
-                "type": "string",
-                "enum": [
-                  "internalConsole",
-                  "integratedTerminal",
-                  "externalTerminal",
-                  "newExternalWindow"
-                ],
-                "enumDescriptions": [
-                  "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
-                ],
-                "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
+              "type": "string",
+              "enum": [
+                "internalConsole",
+                "integratedTerminal",
+                "externalTerminal",
+                "newExternalWindow"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
+              ],
+              "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
             },
             "logging": {
               "type": "object",
@@ -2110,6 +2110,7 @@
     "js-yaml": "^4.0.0",
     "json5": "^2.2.0",
     "minimist": "^1.2.6",
+    "newrelic": "^8.14.1",
     "open": "^7.4.1",
     "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
