@@ -2180,7 +2180,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         const drv = await this.getCMakeDriverInstance();
         const launchEnv = await this.getTargetLaunchEnvironment(drv, userConfig.environment);
         const options: vscode.TerminalOptions = {
-            name: 'CMake/Launch',
+            name: `CMake/Launch - ${executable.name}`,
             env: launchEnv,
             cwd: (userConfig && userConfig.cwd) || path.dirname(executable.path)
         };
