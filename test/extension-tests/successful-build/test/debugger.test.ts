@@ -182,7 +182,8 @@ suite('Debug/Launch interface', async () => {
 
         const terminal = await cmt.launchTarget();
         expect(terminal).to.be.not.null;
-        expect(terminal!.name).to.eq('CMake/Launch');
+        expect(terminal!.name).to.startWith('CMake/Launch');
+        expect(terminal!.name).to.endWith(executablesTargets[0].name);
 
         const start = new Date();
         // Needed to get launch target result
@@ -221,7 +222,8 @@ suite('Debug/Launch interface', async () => {
 
         const term2 = await cmt.launchTarget();
         expect(term2).to.be.not.null;
-        expect(term2!.name).of.be.eq('CMake/Launch');
+        expect(term2!.name).to.startWith('CMake/Launch');
+        expect(term2!.name).to.endWith(executablesTargets[0].name);
 
         const term2Pid = await term2?.processId;
         expect(term1Pid).to.not.eq(term2Pid);
