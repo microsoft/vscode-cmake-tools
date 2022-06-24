@@ -1086,10 +1086,13 @@ export class PresetsController {
             this._presetsWatcher.close().then(() => {}, () => {});
         }
 
+        const handler = async () => {
+            await this.reapplyPresets();
+        };
         this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
-            .on('add', this.reapplyPresets)
-            .on('change', this.reapplyPresets)
-            .on('unlink', this.reapplyPresets);
+            .on('add', handler)
+            .on('change', handler)
+            .on('unlink', handler);
     };
 
     dispose() {
