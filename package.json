@@ -1950,6 +1950,12 @@
           "default": false,
           "description": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
           "scope": "resource"
+        },
+        "cmake.skipLoadingCompileCommands": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.skipLoadingCompileCommands.description%",
+          "scope": "resource"
         }
       }
     },
