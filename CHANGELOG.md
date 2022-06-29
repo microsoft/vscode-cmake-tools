@@ -7,6 +7,7 @@ Improvements:
 Bug Fixes:
 - Set the working directory for the file api driver. [#2569](https://github.com/microsoft/vscode-cmake-tools/issues/2569)
 - CMakeUserPresets.json version not detected without CMakePresets.json. [#2469](https://github.com/microsoft/vscode-cmake-tools/issues/2469) [@chausner](https://github.com/chausner)
+- Clear output chanel after auto-reconfigure. [#2628](https://github.com/microsoft/vscode-cmake-tools/issues/2628)
 
 ## 1.11.26
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
