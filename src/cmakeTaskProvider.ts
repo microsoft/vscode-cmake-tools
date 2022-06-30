@@ -8,7 +8,8 @@ import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
-
+import { getActiveFolderCMakeTools } from './extension';
+import CMakeTools from './cmakeTools';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('TaskProvider');
@@ -95,11 +96,16 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public async provideTask(commandType: CommandType): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
+        let args: string[] | undefined;
+        if (commandType === CommandType.build) {
+            const cmakeTools: CMakeTools | undefined = getActiveFolderCMakeTools();
+            args = await cmakeTools?.getCMakeBuildArgs();
+        }
         const definition: CMakeTaskDefinition = {
             type: CMakeTaskProvider.CMakeScriptType,
             label: CMakeTaskProvider.CMakeSourceStr + ": " + taskName,
             command: commandType,
-            targets: (commandType === CommandType.build) ? this.defaultTargets : undefined
+            args: args
         };
         const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
@@ -196,6 +202,12 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
                     return;
                 }
             }
+            /*if (await this.needsReconfigure()) {
+                const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
+                if (rc !== 0) {
+                    return null;
+                }
+            }*/
             command = await this.cmakeDriver.getCMakeBuildCommand(this.definedTargets ? this.definedTargets : this.defaultTargets, this.taskArgs);
             if (command) {
                 cmakePath = command.command;
