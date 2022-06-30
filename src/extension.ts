@@ -243,6 +243,10 @@ class ExtensionManager implements vscode.Disposable {
         return this.folders.get(folder);
     }
 
+    public getActiveFolderCMakeTools(): CMakeTools | undefined {
+        return this.folders.activeFolder?.cmakeTools;
+    }
+
     public isActiveFolder(cmt: CMakeToolsFolder): boolean {
         return this.folders.activeFolder === cmt;
     }
@@ -1871,6 +1875,10 @@ export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
 // update default target in taskProvider
 export function updateDefaultTargetsInTaskProvider(defaultTargets?: string[]) {
     cmakeTaskProvider.updateDefaultTargets(defaultTargets);
+}
+
+export function getActiveFolderCMakeTools(): CMakeTools | undefined {
+    return extensionManager?.getActiveFolderCMakeTools();
 }
 
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup

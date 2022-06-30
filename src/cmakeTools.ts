@@ -30,7 +30,7 @@ import { CMakeGenerator, Kit } from './kit';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
 import { fs } from './pr';
-import { buildCmdStr, DebuggerEnvironmentVariable } from './proc';
+import { buildCmdStr, BuildCommand, DebuggerEnvironmentVariable } from './proc';
 import { Property } from './prop';
 import rollbar from './rollbar';
 import * as telemetry from './telemetry';
@@ -790,7 +790,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         await this.cTestController.reloadTests(drv);
 
         // Update the task provider when a new driver is created
-        updateCMakeDriverInTaskProvider(drv);
+        this.updateDriverAndTargetsInTaskProvider(drv);
 
         // All set up. Fulfill the driver promise.
         return drv;
@@ -1472,6 +1472,15 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
     private activeBuild: Promise<number> = Promise.resolve(0);
 
+    public async getCMakeBuildArgs(): Promise<string[] | undefined> {
+        const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
+        if (!driver) {
+            return undefined;
+        }
+        const buildCommand: BuildCommand | null =  await driver.getCMakeBuildCommand(await this.getDefaultBuildTargets());
+        return buildCommand?.args;
+    }
+
     /**
      * Implementation of `cmake.build`
      */
@@ -1806,9 +1815,11 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 
     updateDriverAndTargetsInTaskProvider(drv: CMakeDriver | null, targets?: string[]) {
-        if (drv && (this.useCMakePresets || targets)) {
+        if (drv) {
             updateCMakeDriverInTaskProvider(drv);
-            updateDefaultTargetsInTaskProvider(targets);
+            if (targets) {
+                updateDefaultTargetsInTaskProvider(targets);
+            }
         }
     }
 

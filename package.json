@@ -556,7 +556,12 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "%cmake-tools.taskDefinitions.properties.args.description%"
+          },
+          "preset": {
+            "type": "string",
+            "description": "%cmake-tools.taskDefinitions.properties.preset.description%"
           },
           "options": {
             "type": "object",

@@ -1600,11 +1600,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return targetnames;
     }
 
-    async getCMakeBuildCommand(targets?: string[], customeArgs?: string[]): Promise<proc.BuildCommand | null> {
+    async getCMakeBuildArgs(targets?: string[]): Promise<string[]> {
         if (this.useCMakePresets) {
             if (!this._buildPreset) {
-                log.debug(localize('no.build.preset', 'No build preset selected'));
-                return null;
+                return [];
             }
 
             if (targets && targets.length > 0) {
@@ -1617,10 +1616,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
 
-            return { command: this.cmake.path, args, build_env: EnvironmentUtils.create(this._buildPreset.environment) };
-        } else {
+            return args;
+        }  else {
             if (!targets || targets.length === 0) {
-                return null;
+                return [];
             }
 
             const gen = this.generatorName;
@@ -1631,27 +1630,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
             const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number|undefined>('parallelJobs');
-            if (!customeArgs || !customeArgs.includes('-j')) {
-                let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
-                // for Ninja generator, don't add '-j' argument if user didn't define number of jobs
-                if (numJobs === undefined && gen && !/Ninja/.test(gen)) {
-                    numJobs = defaultNumJobs();
-                }
-                // for msbuild generators, only add '-j' argument if parallelJobs > 1
-                if (numJobs && ((gen && !/Visual Studio/.test(gen)) || numJobs > 1)) {
-                    // Prefer using CMake's build options to set parallelism over tool-specific switches.
-                    // The feature is not available until version 3.14.
-                    if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
-                        if (numJobs) {
-                            buildArgs.push('-j', numJobs.toString());
-                        }
-                    } else {
-                        if (gen) {
-                            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
-                                buildToolArgs.push('-j', numJobs.toString());
-                            } else if (/Visual Studio/.test(gen) && targets !== ['clean']) {
-                                buildToolArgs.push('/maxcpucount:' + numJobs.toString());
-                            }
+            let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
+            // for Ninja generator, don't add '-j' argument if user didn't define number of jobs
+            if (numJobs === undefined && gen && !/Ninja/.test(gen)) {
+                numJobs = defaultNumJobs();
+            }
+            // for msbuild generators, only add '-j' argument if parallelJobs > 1
+            if (numJobs && ((gen && !/Visual Studio/.test(gen)) || numJobs > 1)) {
+                // Prefer using CMake's build options to set parallelism over tool-specific switches.
+                // The feature is not available until version 3.14.
+                if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
+                    if (numJobs) {
+                        buildArgs.push('-j', numJobs.toString());
+                    }
+                } else {
+                    if (gen) {
+                        if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
+                            buildToolArgs.push('-j', numJobs.toString());
+                        } else if (/Visual Studio/.test(gen) && targets !== ['clean']) {
+                            buildToolArgs.push('/maxcpucount:' + numJobs.toString());
                         }
                     }
                 }
@@ -1662,22 +1659,34 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
 
             let args: string[] = [];
-            if (customeArgs && !customeArgs[0].startsWith("--")) {
-                args = args.concat(['--build', customeArgs[0]]);
-                customeArgs.shift();
-            } else {
-                args = args.concat(['--build', this.binaryDir]);
-            }
-            args = (customeArgs && !customeArgs.includes("--config")) ? args.concat(['--config', this.currentBuildType]) : args;
-            args = (customeArgs && !customeArgs.includes("--target")) ? args.concat(['--target', ...targets]) : args;
-            args = args.concat(customeArgs || [], buildArgs, buildToolArgs);
+            args = args.concat(['--config', this.currentBuildType, '--target', ...targets],
+                buildArgs, buildToolArgs);
             const opts = this.expansionOptions;
             const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...opts, envOverride: build_env }));
             const expanded_args = await Promise.all(expanded_args_promises) as string[];
 
             log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(expanded_args)));
 
-            return { command: this.cmake.path, args: expanded_args, build_env };
+            return expanded_args;
+        }
+    }
+
+    async getCMakeBuildCommand(targets?: string[], customeArgs?: string[]): Promise<proc.BuildCommand | null> {
+        const args = customeArgs ? customeArgs : await this.getCMakeBuildArgs(targets);
+        if (this.useCMakePresets) {
+            if (!this._buildPreset) {
+                log.debug(localize('no.build.preset', 'No build preset selected'));
+                return null;
+            }
+            return { command: this.cmake.path, args, build_env: EnvironmentUtils.create(this._buildPreset?.environment) };
+        } else {
+            const ninja_env = EnvironmentUtils.create();
+            ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
+            const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
+            if (!customeArgs) {
+                args.unshift('--build', this.binaryDir);
+            }
+            return { command: this.cmake.path, args: args, build_env };
         }
     }
 
