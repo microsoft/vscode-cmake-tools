@@ -449,21 +449,21 @@ export class CMakeTools implements api.CMakeToolsAPI {
         return this.shutDownCMakeDriver();
     });
 
-    private readonly generatorSub = this.workspaceContext.config.onChange('generator', () => {
+    private readonly generatorSub = this.workspaceContext.config.onChange('generator', async () => {
         log.info(localize('generator.changed.restart.driver', "Restarting the CMake driver after a generator change."));
-        return this.reloadCMakeDriver();
+        await this.reloadCMakeDriver();
     });
 
-    private readonly preferredGeneratorsSub = this.workspaceContext.config.onChange('preferredGenerators', () => {
+    private readonly preferredGeneratorsSub = this.workspaceContext.config.onChange('preferredGenerators', async () => {
         log.info(localize('preferredGenerator.changed.restart.driver', "Restarting the CMake driver after a preferredGenerators change."));
-        return this.reloadCMakeDriver();
+        await this.reloadCMakeDriver();
     });
 
-    private readonly sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () =>
+    private readonly sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () => {
         this._sourceDir = await util.normalizeAndVerifySourceDir(
             await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
-        )
-    );
+        );
+    });
 
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
@@ -515,11 +515,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
      */
     async asyncDispose() {
         collections.reset();
-        if (this.cmakeDriver) {
-            const drv = await this.cmakeDriver;
-            if (drv) {
-                await drv.asyncDispose();
-            }
+        const drv = await this.cmakeDriver;
+        if (drv) {
+            await drv.asyncDispose();
         }
         for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this._testResults, this.isBusy, this.variantManager, this.cTestController]) {
             disp.dispose();
@@ -1631,8 +1629,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 return 1;
             }
 
-            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
-                await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, () => {
+                void this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
             });
             await this.cacheEditorWebview.initPanel();
 
