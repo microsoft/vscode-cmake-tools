@@ -9,7 +9,7 @@ import { smokeSuite, smokeTestDefaultKit } from '@test/smoke/smoke';
  * as the cmake executable
  */
 
-suite('Smoke test: No ctest in bin dir', async () => {
+suite('Smoke test: No ctest in bin dir', () => {
     test('Successful configure', async () => {
         smokeSuite('Smoke test: No ctest in bin dir', suite => {
             suite.smokeTest('Successful configure', async ctx => ctx.withCMakeTools({

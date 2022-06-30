@@ -15,7 +15,7 @@ function getTestResourceFilePath(filename: string): string {
     return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
-suite('Cache test', async () => {
+suite('Cache test', () => {
     test('Read CMake Cache', async () => {
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
         const generator = cache.get('CMAKE_GENERATOR') as api.CacheEntry;

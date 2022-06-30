@@ -744,10 +744,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
         const sub_prs: Promise<Kit | null>[] = [];
         MSVC_HOST_ARCHES.forEach(hostArch => {
             targetArches.forEach(targetArch => {
-                const kit: Promise<Kit | null> = tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr);
-                if (kit) {
-                    sub_prs.push(kit);
-                }
+                sub_prs.push(tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr));
             });
         });
 

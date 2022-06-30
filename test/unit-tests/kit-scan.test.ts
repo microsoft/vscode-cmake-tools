@@ -26,7 +26,7 @@ function getPathWithoutCompilers() {
     }
 }
 
-suite('Kits scan test', async () => {
+suite('Kits scan test', () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 
@@ -196,7 +196,7 @@ suite('Kits scan test', async () => {
         expect(kits.length).to.eq(0);
     });
 
-    suite('Scan directory', async () => {
+    suite('Scan directory', () => {
         let path_with_compilername = '';
         setup(async () => {
             path_with_compilername = path.join(fakebin, 'gcc-4.3.2');
@@ -221,7 +221,7 @@ suite('Kits scan test', async () => {
         });
     });
 
-    suite('Rescan kits', async () => {
+    suite('Rescan kits', () => {
         test('check empty kit list if no compilers in path', async () => {
             const partial_path = getPathWithoutCompilers();
             const kits = await kit.scanDirForCompilerKits(partial_path);

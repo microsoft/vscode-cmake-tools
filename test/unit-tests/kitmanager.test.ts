@@ -14,7 +14,7 @@ function getTestResourceFilePath(filename: string): string {
 // for safety, ensure we reset the state of the process.env after every test since we're manipulating it in this suite.
 const env = EnvironmentUtils.create(process.env);
 
-suite('Kits test', async () => {
+suite('Kits test', () => {
     teardown(() => {
         process.env = env;
     });

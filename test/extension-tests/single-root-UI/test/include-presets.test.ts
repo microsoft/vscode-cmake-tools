@@ -7,7 +7,7 @@ import {
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-suite('Preset include functionality', async () => {
+suite('Preset include functionality', () => {
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
 

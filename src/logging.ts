@@ -119,7 +119,7 @@ export function logFilePath(): string {
 }
 
 async function _openLogFile() {
-    if (!_LOGGER) {
+    if (_LOGGER !== undefined) {
         _LOGGER = (async () => {
             const fpath = logFilePath();
             await fs.mkdir_p(path.dirname(fpath));

@@ -7,7 +7,7 @@ chai.use(chaiAsPromised);
 import { expect } from 'chai';
 import { cleanStack, cleanString } from '../../src/rollbar';
 
-suite('Stack trace cleaning test', async () => {
+suite('Stack trace cleaning test', () => {
     if (os.platform() === 'win32') {
         test('Check PII removal - Windows', async () => {
             expect(cleanStack('at failingFunction (c:\\path\\to\\main.js)')).to.eq('at failingFunction (main.js)');
