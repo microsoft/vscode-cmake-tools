@@ -21,6 +21,7 @@
 	"using.cache.to.configure.workspace.on.open": "Açık {0} üzerindeki çalışma alanını yapılandırmak için önbellek kullanılıyor",
 	"update.code.model.for.cpptools": "cpptools için kod modelini güncelleştir",
 	"update.intellisense.disabled": "{0}, {1} olarak ayarlandığından yapılandırma sağlayıcısı güncelleştirilemedi",
+	"failed.to.get.cpptools.api": "cppTools API'si alınamadı",
 	"filed.to.open.cache.file.on.code.model.update": "Kod modeli güncelleştirmesinde CMake önbellek dosyası açılamadı",
 	"opening.text.editor.for": "{0} için metin düzenleyici açılıyor",
 	"no.kits.file.what.to.do": "Set dosyası yok. Ne yapmak istiyorsunuz?",
