@@ -23,7 +23,7 @@
 	"no.cl.toolset.version": "Predefinição de configuração {0}: nenhuma versão do conjunto de ferramentas especificada para o cl.exe. Usando a última versão por padrão",
 	"unknown.toolset.option": "A opção de conjunto de ferramentas não reconhecida será ignorada: {0}",
 	"config.preset.not.found": "Não foi possível encontrar a predefinição de configuração com o nome {0}",
-	"specified.vs.not.found": "Configurar predefinição {0}: a instância do Visual Studio especificada por CMAKE_GENERATOR_INSTANCE={1} não foi encontrada, retornando ao comportamento de pesquisa de instância padrão.",
+	"specified.vs.not.found": "Configurar predefinição {0}: a instância do Visual Studio especificada por CMAKE_GENERATOR_INSTANCE= não{1} foi encontrada, retornando ao comportamento de pesquisa de instância padrão.",
 	"specified.cl.not.found": "Configurar predefinição {0}: O compilador {1} com conjunto de ferramentas {2} e a arquitetura {3} não foi encontrado, você pode precisar executar o comando 'CMake: Scan for Compilers' se este conjunto de ferramentas existir no seu computador.",
 	"using.vs.instance": "Usando o ambiente de desenvolvedor do Visual Studio (instância {0}, versão {1}, instalada em {2})",
 	"ninja.not.set": "Ninja não está definido no PATH. Tentando usar {0}",
