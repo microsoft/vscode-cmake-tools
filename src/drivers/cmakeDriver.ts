@@ -112,6 +112,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     abstract get targets(): api.Target[];
 
+    public get targetsName(): string[] {
+        return this.targets.map(target => target.name);
+    }
+
     abstract get codeModelContent(): codeModel.CodeModelContent | null;
 
     /**
@@ -1604,6 +1608,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
         }
         return targetnames;
+    }
+
+    getCMakeCommand(): string {
+        return this.cmake.path;
     }
 
     async getCMakeBuildCommand(targets?: string[]): Promise<proc.BuildCommand | null> {

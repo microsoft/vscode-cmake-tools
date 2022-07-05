@@ -243,6 +243,10 @@ class ExtensionManager implements vscode.Disposable {
         return this.folders.get(folder);
     }
 
+    public getCMakeToolsForActiveFolder(): CMakeTools | undefined {
+        return this.folders.activeFolder?.cmakeTools;
+    }
+
     public isActiveFolder(cmt: CMakeToolsFolder): boolean {
         return this.folders.activeFolder === cmt;
     }
@@ -1820,6 +1824,10 @@ export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     extensionManager?.showStatusBar(fullFeatureSet);
 }
 
+export function getCMakeToolsForActiveFolder(): CMakeTools | undefined {
+    return extensionManager?.getCMakeToolsForActiveFolder();
+}
+
 export function isActiveFolder(folder: vscode.WorkspaceFolder): boolean | undefined {
     const cmtFolder = extensionManager?.getCMTFolder(folder);
     return cmtFolder && extensionManager?.isActiveFolder(cmtFolder);
@@ -1863,7 +1871,7 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
     await enableFullFeatureSet(true);
 }
 
-// update CMakeDriver in taskProvider
+/*// update CMakeDriver in taskProvider
 export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
     cmakeTaskProvider.updateCMakeDriver(cmakeDriver);
 }
@@ -1871,7 +1879,7 @@ export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
 // update default target in taskProvider
 export function updateDefaultTargetsInTaskProvider(defaultTargets?: string[]) {
     cmakeTaskProvider.updateDefaultTargets(defaultTargets);
-}
+}*/
 
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
 // for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace

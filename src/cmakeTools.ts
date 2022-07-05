@@ -40,7 +40,7 @@ import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
 import { ConfigurationWebview } from './cacheView';
-import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetsInTaskProvider, showCMakeListsExperiment } from './extension';
+import { updateFullFeatureSetForFolder, enableFullFeatureSet, isActiveFolder, showCMakeListsExperiment } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -289,7 +289,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setBuildPreset(expandedBuildPreset);
-                    this.updateDriverAndTargetsInTaskProvider(drv);
+                    //this.updateDriverAndTargetsInTaskProvider(drv);
                     await this.workspaceContext.state.setBuildPresetName(expandedBuildPreset.configurePreset, buildPreset);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
@@ -790,7 +790,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         await this.cTestController.reloadTests(drv);
 
         // Update the task provider when a new driver is created
-        updateCMakeDriverInTaskProvider(drv);
+        //updateCMakeDriverInTaskProvider(drv);
 
         // All set up. Fulfill the driver promise.
         return drv;
@@ -1526,7 +1526,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             targetName = newTargets.join(', ');
         }
 
-        this.updateDriverAndTargetsInTaskProvider(drv, newTargets);
+        //this.updateDriverAndTargetsInTaskProvider(drv, newTargets);
         const consumer = new CMakeBuildConsumer(buildLogger, drv.config);
         const isBuildingKey = 'cmake:isBuilding';
         try {
@@ -1809,17 +1809,17 @@ export class CMakeTools implements api.CMakeToolsAPI {
             return;
         }
         await this.setDefaultBuildTarget(target);
-        const drv = await this.cmakeDriver;
+        /*const drv = await this.cmakeDriver;
         const targets = await this.getDefaultBuildTargets();
-        this.updateDriverAndTargetsInTaskProvider(drv, targets);
+        this.updateDriverAndTargetsInTaskProvider(drv, targets);*/
     }
 
-    updateDriverAndTargetsInTaskProvider(drv: CMakeDriver | null, targets?: string[]) {
+    /*updateDriverAndTargetsInTaskProvider(drv: CMakeDriver | null, targets?: string[]) {
         if (drv && (this.useCMakePresets || targets)) {
             updateCMakeDriverInTaskProvider(drv);
             updateDefaultTargetsInTaskProvider(targets);
         }
-    }
+    }*/
 
     /**
      * Implementation of `cmake.getBuildTargetName`
