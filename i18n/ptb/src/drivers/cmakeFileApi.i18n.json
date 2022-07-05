@@ -7,6 +7,7 @@
 	"path.not.a.file": "Não é possível ler {0} porque ele não é um arquivo. As informações do modelo de código estão incompletas ou corrompidas. Talvez seja necessário excluir o cache e reconfigurar.",
 	"failed.writing.to.file": "Erro ao gravar no arquivo {0}",
 	"cache.object.version": "A versão do objeto de cache ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta.",
+	"cmake.files.object.version": "CMake Files object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}).",
 	"cache.entry.unknowntype": "Tipo de entrada de cache desconhecido: {0}.",
 	"code.model.version": "A versão do modelo de código ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta.",
 	"toolchains.object.version": "A versão do objeto toolchains ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta."

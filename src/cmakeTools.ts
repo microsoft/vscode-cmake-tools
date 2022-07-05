@@ -923,6 +923,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 if (drv && !drv.configOrBuildInProgress()) {
                     if (drv.config.configureOnEdit) {
                         log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
+                        if (this.workspaceContext.config.clearOutputBeforeBuild) {
+                            log.clearOutputChannel();
+                        }
                         await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
                     }
                 } else {

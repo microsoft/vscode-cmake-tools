@@ -74,6 +74,7 @@
 	"loading.test.preset": "Chargement de la présélection de test {0}",
 	"reading.presets.file": "Lecture des fichiers de présélections {0}",
 	"failed.to.parse": "Échec de l'analyse de {0} : {1}",
+	"included.presets.file.not.found": "Le fichier de présélections inclus {0} est introuvable.",
 	"invalid.file.error": "Contenu du kit non valide {0} ({1}) :",
 	"successfully.validated.presets": "Les kits de présélections validés dans {0}",
 	"use.kits.variants": "Utiliser des kits et des variantes",
