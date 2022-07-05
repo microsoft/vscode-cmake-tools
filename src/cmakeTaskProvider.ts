@@ -74,25 +74,6 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     constructor() {
     }
 
-    /*public async updateCMakeTools() {
-        this.cmakeTools = getCMakeToolsForActiveFolder();
-    }
-
-    public async updateCMakeDriver(cmakeDriver?: CMakeDriver) {
-        if (cmakeDriver) {
-            this.cmakeDriver = cmakeDriver;
-        } else {
-            const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
-            this.cmakeDriver = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-        }
-        allTargetName = this.cmakeDriver?.allTargetName || allTargetName;
-    }
-
-    public updateDefaultTargets(defaultTargets?: string[]) {
-        this.defaultTargets = (defaultTargets && defaultTargets.length > 0) ? defaultTargets :
-            this.cmakeDriver ? [this.cmakeDriver.allTargetName] : [allTargetName];
-    }*/
-
     public async provideTasks(): Promise<CMakeTask[]> {
         const result: CMakeTask[] = [];
         result.push(await this.provideTask(CommandType.build));
@@ -106,8 +87,6 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public async provideTask(commandType: CommandType): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
-        //await this.updateCMakeDriver();
-        //this.updateDefaultTargets();
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
         const cmakeDriver:  CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         let targets: string[] | undefined;

@@ -1871,16 +1871,6 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
     await enableFullFeatureSet(true);
 }
 
-/*// update CMakeDriver in taskProvider
-export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
-    cmakeTaskProvider.updateCMakeDriver(cmakeDriver);
-}
-
-// update default target in taskProvider
-export function updateDefaultTargetsInTaskProvider(defaultTargets?: string[]) {
-    cmakeTaskProvider.updateDefaultTargets(defaultTargets);
-}*/
-
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
 // for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace
 // in a quickPick.)
