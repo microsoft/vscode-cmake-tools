@@ -7,6 +7,7 @@
 	"path.not.a.file": "ファイルではないため、{0} を読み取ることができません。コード モデル情報が不完全であるか壊れています。キャッシュを削除して再構成しなければならない可能性があります。",
 	"failed.writing.to.file": "ファイル {0} への書き込みが失敗しました",
 	"cache.object.version": "cmake-file-api のキャッシュ オブジェクト バージョン ({0}.{1}) が予期されていません。({2}.{3}) が必要です。IntelliSense の構成が正しくない可能性があります。",
+	"cmake.files.object.version": "CMake Files object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}).",
 	"cache.entry.unknowntype": "不明なキャッシュ エントリの種類: {0}。",
 	"code.model.version": "cmake-file-api のコード モデル バージョン ({1}.{0}) は予期されていません。({2}.{3}) が必要です。IntelliSense の構成が正しくない可能性があります。",
 	"toolchains.object.version": "cmake-file-api のツールチェーン オブジェクト バージョン ({0}.{1}) が予期されていません。({2}.{3}) が必要です。IntelliSense の構成が正しくない可能性があります。"
