@@ -328,13 +328,13 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 }
             }
 
-            // load cmake files
+            // load cmake files if available
             const cmakefiles_obj = indexFile.objects.find((value: Index.ObjectKind) => value.kind === 'cmakeFiles');
-            if (!cmakefiles_obj) {
-                throw Error('No cmake files object found');
+            if (cmakefiles_obj) {
+                this._cmakeFiles = await loadCMakeFiles(path.join(reply_path, cmakefiles_obj.jsonFile));
+            } else {
+                this._cmakeFiles = [];
             }
-
-            this._cmakeFiles = await loadCMakeFiles(path.join(reply_path, cmakefiles_obj.jsonFile));
 
             this._codeModelChanged.fire(this._codeModelContent);
         }
