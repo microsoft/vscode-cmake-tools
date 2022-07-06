@@ -1045,7 +1045,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
         return this.driverStrand.execute(async () => {
             if (!this.useCMakePresets && !this.activeKit) {
-                log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kits defined'));
+                log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kit selected'));
                 return null;
             }
 
@@ -1254,6 +1254,11 @@ export class CMakeTools implements api.CMakeToolsAPI {
             await this.cTestController.reloadTests(drv);
             this.onReconfiguredEmitter.fire();
             return result;
+        }
+
+        if (trigger === ConfigureTrigger.configureWithCache) {
+            log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));
+            return -1;
         }
 
         return vscode.window.withProgress(

@@ -117,7 +117,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         if (cacheExists && this.generator?.name === await this.getGeneratorFromCache(this.cachePath)) {
             await this.loadGeneratorInformationFromCache(this.cachePath);
             const code_model_exist = await this.updateCodeModel();
-            if (!code_model_exist) {
+            if (!code_model_exist && this.config.configureOnOpen === true) {
                 await this.doConfigure([], undefined);
             }
         } else {
