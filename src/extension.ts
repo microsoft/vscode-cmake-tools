@@ -472,7 +472,7 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     async configureExtensionInternal(trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
-        if (!await this.ensureActiveConfigurePresetOrKit(cmt)) {
+        if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(cmt)) {
             return;
         }
 
@@ -602,7 +602,7 @@ class ExtensionManager implements vscode.Disposable {
                 if (result === configureButtonMessage) {
                     await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
                 } else {
-                    log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
+                    log.debug(localize('using.cache.to.configure.workspace.on.open', 'Attempting to use cache to configure workspace {0}', ws.uri.toString()));
                     await this.configureExtensionInternal(ConfigureTrigger.configureWithCache, cmt);
                 }
             }
