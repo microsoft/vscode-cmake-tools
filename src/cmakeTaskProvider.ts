@@ -76,24 +76,30 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public async provideTasks(): Promise<CMakeTask[]> {
         const result: CMakeTask[] = [];
-        result.push(await this.provideTask(CommandType.build));
-        result.push(await this.provideTask(CommandType.config));
-        result.push(await this.provideTask(CommandType.install));
-        result.push(await this.provideTask(CommandType.test));
-        result.push(await this.provideTask(CommandType.clean));
-        result.push(await this.provideTask(CommandType.cleanRebuild));
+        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeDriver:  CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
+        result.push(await this.provideTask(CommandType.build, cmakeDriver, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.config, cmakeDriver, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.install, cmakeDriver, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.test, cmakeDriver, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.clean, cmakeDriver, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.cleanRebuild, cmakeDriver, cmakeTools?.useCMakePresets));
         return result;
     }
 
-    public async provideTask(commandType: CommandType): Promise<CMakeTask> {
+    public async provideTask(commandType: CommandType, cmakeDriver?: CMakeDriver, useCMakePresets?: boolean): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
-        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
-        const cmakeDriver:  CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         let targets: string[] | undefined;
         let preset: string | undefined;
         const options: { cwd?: string ; environment?: Environment } = {};
-        if (!cmakeTools?.useCMakePresets) {
-            targets = (commandType === CommandType.build) ? cmakeDriver?.targetsName : cmakeDriver?.allTargetName ? [cmakeDriver?.allTargetName] : undefined ;
+        if (!useCMakePresets) {
+            if (commandType === CommandType.build) {
+                if (cmakeDriver?.targetsName) {
+                    targets = cmakeDriver?.targetsName;
+                } else if (cmakeDriver?.allTargetName) {
+                    targets = [cmakeDriver?.allTargetName];
+                }
+            }
         } else {
             switch (commandType) {
                 case CommandType.config:
@@ -136,7 +142,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                     new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, resolvedDefinition.options)
-                ), []); // TODO: add problem matcher
+                ), []);
             return resolvedTask;
         }
         return undefined;
@@ -205,14 +211,6 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
 
         if (cmakeDriver) {
-            if (await cmakeDriver.checkNeedsReconfigure()) {
-                const result: number | undefined =  await vscode.commands.executeCommand('cmake.configure');
-                if (result !== 0) {
-                    this.writeEmitter.fire(localize("configure.finished.with.error", "Configure finished with error(s).") + endOfLine);
-                    this.closeEmitter.fire(result ? result : -1);
-                    return;
-                }
-            }
             if (!this.options) {
                 this.options = {};
             }
