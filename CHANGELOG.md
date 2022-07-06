@@ -1,6 +1,23 @@
 # What's New?
 
-## 1.11
+## 1.12
+Improvements:
+- Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
+- Support for presets version 4. [#2492](https://github.com/microsoft/vscode-cmake-tools/issues/2492) [@chausner](https://github.com/chausner)
+- Add target name to terminal window name for launch. [#2613](https://github.com/microsoft/vscode-cmake-tools/issues/2613)
+
+Bug Fixes:
+- Set the working directory for the file api driver. [#2569](https://github.com/microsoft/vscode-cmake-tools/issues/2569)
+- CMakeUserPresets.json version not detected without CMakePresets.json. [#2469](https://github.com/microsoft/vscode-cmake-tools/issues/2469) [@chausner](https://github.com/chausner)
+- Clear output channel after auto-reconfigure. [#2628](https://github.com/microsoft/vscode-cmake-tools/issues/2628)
+
+## 1.11.26
+- Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
+
+Bug Fixes:
+- Ninja is used as a default generator. [#2598](https://github.com/microsoft/vscode-cmake-tools/issues/2598) 
+
+## 1.11.25
 Improvements:
 - Fix build Error: EMFILE: too many open files. [#2288](https://github.com/microsoft/vscode-cmake-tools/issues/2288) [@FrogTheFrog](https://github.com/FrogTheFrog)
 - Add commands to get preset names. [PR #2433](https://github.com/microsoft/vscode-cmake-tools/pull/2433)
@@ -8,8 +25,10 @@ Improvements:
 - Add c++23 support. [#2475](https://github.com/microsoft/vscode-cmake-tools/issues/2475) [@sweemer](https://github.com/sweemer)
 - Add support for multiple targets in the CMake task provider. [#2122](https://github.com/microsoft/vscode-cmake-tools/issues/2122)
 - Add setting `cmake.showSystemKits`. [PR #2520](https://github.com/microsoft/vscode-cmake-tools/pull/2520) [@bharatvaj](https://github.com/bharatvaj)
-- Add support for "configure", "install" and "test" task. [#2452](https://github.com/microsoft/vscode-cmake-tools/issues/2452)
+- Add support for "Configure", "Install" and "Test" tasks. [#2452](https://github.com/microsoft/vscode-cmake-tools/issues/2452)
 - Add setting `cmake.ignoreCMakeListsMissing`. [PR #2537](https://github.com/microsoft/vscode-cmake-tools/pull/2537) [@ilg-ul](https://github.com/ilg-ul)
+- Add support for "Clean" and "Clean Rebuild" tasks. [#2555](https://github.com/microsoft/vscode-cmake-tools/issues/2555)
+- The extension for CMake language support is replaced. [PR #2267](https://github.com/microsoft/vscode-cmake-tools/pull/2267) [@josetr](https://github.com/josetr)
 
 Bug Fixes:
 - `Clean All Projects` menu item builds rather than cleans. [#2460](https://github.com/microsoft/vscode-cmake-tools/issues/2460)
@@ -23,6 +42,8 @@ Bug Fixes:
 - Correctly configure the build environment when using VS 2015 and Ninja in CMakePresets.json. [#2516](https://github.com/microsoft/vscode-cmake-tools/issues/2516)
 - Select the correct VS toolset for Ninja generators with CMake Presets. [#2423](https://github.com/microsoft/vscode-cmake-tools/issues/2423)
 - Fix unhandled exception with CMakePresets.json. [#2117](https://github.com/microsoft/vscode-cmake-tools/issues/2117)
+- Fix issues with compiler argument quoting when configuring IntelliSense. [#2563](https://github.com/microsoft/vscode-cmake-tools/pull/2563)
+- Fix clang version detection regexes. [PR #2549](https://github.com/microsoft/vscode-cmake-tools/pull/2549) [@chausner](https://github.com/chausner)
 
 ## 1.10.5
 Bug Fixes:

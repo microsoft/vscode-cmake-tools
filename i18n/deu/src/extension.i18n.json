@@ -21,6 +21,7 @@
 	"using.cache.to.configure.workspace.on.open": "Verwenden von Cache zum Konfigurieren des Arbeitsbereichs bei geöffneten {0}",
 	"update.code.model.for.cpptools": "Codemodell für cpptools aktualisieren",
 	"update.intellisense.disabled": "Der Konfigurationsanbieter wird nicht aktualisiert. Grund: {0} ist festgelegt auf {1}",
+	"failed.to.get.cpptools.api": "Fehler beim Abrufen der cppTools-API",
 	"filed.to.open.cache.file.on.code.model.update": "Fehler beim Öffnen der CMake-Cachedatei für das Codemodellupdate.",
 	"opening.text.editor.for": "Text-Editor wird geöffnet für {0}",
 	"no.kits.file.what.to.do": "Es ist keine Kitdatei vorhanden. Wie möchten Sie vorgehen?",

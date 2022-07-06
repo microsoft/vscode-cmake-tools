@@ -18,9 +18,12 @@ const log = logging.createLogger('preset');
 export interface PresetsFile {
     version: number;
     cmakeMinimumRequired?: util.Version;
-    configurePresets?: ConfigurePreset[] | undefined;
-    buildPresets?: BuildPreset[] | undefined;
-    testPresets?: TestPreset[] | undefined;
+    include?: string[];
+    configurePresets?: ConfigurePreset[];
+    buildPresets?: BuildPreset[];
+    testPresets?: TestPreset[];
+
+    __path?: string; // Private field holding the path to the file.
 }
 
 export type VendorType = { [key: string]: any };
@@ -38,6 +41,7 @@ export interface Preset {
 
     __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
     __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
+    __file?: PresetsFile; // Private field to indicate the file where this preset was defined.
 }
 
 export interface ValueStrategy {
@@ -406,7 +410,8 @@ export function minCMakeVersion(folder: string) {
     if (!min2) {
         return min1;
     }
-    return util.versionLess(min1, min2) ? min1 : min2;
+    // The combined minimum version is the higher version of the two
+    return util.versionLess(min1, min2) ? min2 : min1;
 }
 
 export function configurePresets(folder: string) {
@@ -559,7 +564,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(folder: string, workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset) {
+async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset) {
     const generator = 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined);
@@ -586,10 +591,11 @@ async function getExpansionOptions(folder: string, workspaceFolder: string, sour
         doNotSupportCommands: true
     };
 
-    const presetsFile = getPresetsFile(folder);
-    const userPresetsFile = getUserPresetsFile(folder);
-    if (presetsFile && presetsFile.version >= 3 || userPresetsFile && userPresetsFile.version >= 3) {
+    if (preset.__file && preset.__file.version >= 3) {
         expansionOpts.vars['hostSystemName'] = await util.getHostSystemNameMemo();
+    }
+    if (preset.__file && preset.__file.version >= 4) {
+        expansionOpts.vars['fileDir'] = path.dirname(preset.__file!.__path!);
     }
 
     return expansionOpts;
@@ -642,19 +648,19 @@ async function expandCondition(condition: boolean | Condition | null | undefined
 
 export async function expandConditionsForPresets(folder: string, sourceDir: string) {
     for (const preset of configurePresets(folder)) {
-        const opts = await getExpansionOptions(folder, '${workspaceFolder}', sourceDir, preset);
+        const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, preset);
         if (preset.condition) {
             preset.condition = await expandCondition(preset.condition, opts);
         }
     }
     for (const preset of buildPresets(folder)) {
-        const opts = await getExpansionOptions(folder, '${workspaceFolder}', sourceDir, preset);
+        const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, preset);
         if (preset.condition) {
             preset.condition = await expandCondition(preset.condition, opts);
         }
     }
     for (const preset of testPresets(folder)) {
-        const opts = await getExpansionOptions(folder, '${workspaceFolder}', sourceDir, preset);
+        const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, preset);
         if (preset.condition) {
             preset.condition = await expandCondition(preset.condition, opts);
         }
@@ -676,7 +682,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     // Expand strings under the context of current preset
     const expandedPreset: ConfigurePreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(folder, workspaceFolder, sourceDir, preset);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
@@ -690,8 +696,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     expansionOpts.envOverride = expandedPreset.environment;
 
-    const presetsFile = getPresetsFile(folder);
-    if (presetsFile && presetsFile.version >= 3) {
+    if (preset.__file && preset.__file.version >= 3) {
         // For presets v3+ binaryDir and generator are optional, but cmake-tools needs a value. Default to something reasonable.
         if (!preset.binaryDir) {
             const defaultValue = '${sourceDir}/out/build/${presetName}';
@@ -1178,7 +1183,7 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
 
     // Expand strings under the context of current preset
     const expandedPreset: BuildPreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(folder, workspaceFolder, sourceDir, preset);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
@@ -1327,7 +1332,7 @@ export async function expandTestPreset(folder: string, name: string, workspaceFo
     }
 
     const expandedPreset: TestPreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(folder, workspaceFolder, sourceDir, preset);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {

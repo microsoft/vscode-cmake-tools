@@ -180,6 +180,26 @@ export namespace Toolchains {
     }
 }
 
+export namespace CMakeFiles {
+    export interface Content {
+        version: ApiVersion;
+        paths: PathInfo[];
+        inputs: InputFileInfo[];
+    }
+
+    export interface PathInfo {
+        build: string;
+        source: string;
+    }
+
+    export interface InputFileInfo {
+        path: string;
+        isGenerated?: boolean;
+        isExternal?: boolean;
+        isCMake?: boolean;
+    }
+}
+
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
@@ -201,7 +221,14 @@ async function tryReadFile(file: string): Promise<string | undefined> {
 export async function createQueryFileForApi(apiPath: string): Promise<string> {
     const queryPath = path.join(apiPath, 'query', 'client-vscode');
     const queryFilePath = path.join(queryPath, 'query.json');
-    const requests = { requests: [{ kind: 'cache', version: 2 }, { kind: 'codemodel', version: 2 }, { kind: 'toolchains', version: 1 }] };
+    const requests = {
+        requests: [
+            { kind: 'cache', version: 2 },
+            { kind: 'codemodel', version: 2 },
+            { kind: 'toolchains', version: 1 },
+            { kind: 'cmakeFiles', version: 1 }
+        ]
+    };
     try {
         await fs.mkdir_p(queryPath);
         await fs.writeFile(queryFilePath, JSON.stringify(requests));
@@ -253,6 +280,29 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
     }
 
     return convertFileApiCacheToExtensionCache(cmakeCacheContent);
+}
+
+export async function loadCMakeFiles(filename: string): Promise<string[]> {
+    const fileContent = await tryReadFile(filename);
+    if (!fileContent) {
+        return [];
+    }
+    const cmakeFilesContent = JSON.parse(fileContent.toString()) as CMakeFiles.Content;
+
+    const expectedVersion = { major: 1, minor: 0 };
+    const detectedVersion = cmakeFilesContent.version;
+    if (detectedVersion.major !== expectedVersion.major || detectedVersion.minor < expectedVersion.minor) {
+        log.warning(localize(
+            'cmake.files.object.version',
+            'CMake Files object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}).',
+            detectedVersion.major,
+            detectedVersion.minor,
+            expectedVersion.major,
+            expectedVersion.minor));
+        return [];
+    }
+
+    return cmakeFilesContent.inputs.map(input => input.path);
 }
 
 function findPropertyValue(cacheElement: Cache.CMakeCacheEntry, name: string): string {
@@ -375,14 +425,14 @@ function convertToAbsolutePath(inputPath: string, basePath: string) {
 
 function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject, rootPaths: CodeModelKind.PathInfo): CodeModelFileGroup[] {
     const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
-        const compileFlags = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
+        const compileCommandFragments = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment) : [];
 
         return {
             isGenerated: false,
             sources: [],
             language: group.language,
             includePath: group.includes ? group.includes : [],
-            compileFlags,
+            compileCommandFragments,
             defines: group.defines ? group.defines.map(define => define.define) : []
         };
     });

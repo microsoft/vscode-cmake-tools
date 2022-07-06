@@ -142,7 +142,7 @@ export class KitsController {
                 await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
                 await fs.rename(OLD_USER_KITS_FILEPATH, USER_KITS_FILEPATH);
             }
-        } catch (e) {
+        } catch (e: any) {
             rollbar.exception(localize('failed.to.migrate.kits.file', 'Failed to migrate prior user-local kits file.'),
                 e,
                 { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
@@ -471,7 +471,7 @@ export class KitsController {
             await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
             // Write the file
             await fs.writeFile(USER_KITS_FILEPATH, JSON.stringify(sorted_kits, null, 2));
-        } catch (e) {
+        } catch (e: any) {
             // Failed to write the file. What to do...
             interface FailOptions extends vscode.MessageItem {
                 do: 'retry' | 'cancel';

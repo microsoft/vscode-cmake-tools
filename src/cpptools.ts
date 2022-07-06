@@ -5,7 +5,7 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import * as codeModel from '@cmt/drivers/codeModel';
+import { CodeModelFileGroup, CodeModelParams, CodeModelToolchain } from '@cmt/drivers/codeModel';
 import { createLogger } from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -23,6 +23,7 @@ const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
 type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | "gnu++23" | undefined;
+type IntelliSenseMode = "linux-clang-x86" | "linux-clang-x64" | "linux-clang-arm" | "linux-clang-arm64" | "linux-gcc-x86" | "linux-gcc-x64" | "linux-gcc-arm" | "linux-gcc-arm64" | "macos-clang-x86" | "macos-clang-x64" | "macos-clang-arm" | "macos-clang-arm64" | "macos-gcc-x86" | "macos-gcc-x64" | "macos-gcc-arm" | "macos-gcc-arm64" | "windows-clang-x86" | "windows-clang-x64" | "windows-clang-arm" | "windows-clang-arm64" | "windows-gcc-x86" | "windows-gcc-x64" | "windows-gcc-arm" | "windows-gcc-arm64" | "windows-msvc-x86" | "windows-msvc-x64" | "windows-msvc-arm" | "windows-msvc-arm64" | "msvc-x86" | "msvc-x64" | "msvc-arm" | "msvc-arm64" | "gcc-x86" | "gcc-x64" | "gcc-arm" | "gcc-arm64" | "clang-x86" | "clang-x64" | "clang-arm" | "clang-arm64" | undefined;
 
 export interface DiagnosticsCpptools {
     isReady: boolean;
@@ -58,9 +59,9 @@ class MissingCompilerException extends Error {}
 
 interface TargetDefaults {
     name: string;
-    includePath: string[];
-    compileFlags: string[];
-    defines: string[];
+    includePath?: string[];
+    compileCommandFragments: string[];
+    defines?: string[];
 }
 
 function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean): StandardVersion {
@@ -155,6 +156,8 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
     const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
+    // No need to parse language standard for CppTools API v6 and above
+    const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
     const extraDefinitions: string[] = [];
     let standard: StandardVersion;
@@ -200,7 +203,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
         } else if (value.startsWith('-D') || value.startsWith('/D')) {
             const def = value.substring(2);
             extraDefinitions.push(def);
-        } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
+        } else if (extractStdFlag && (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:'))) {
             const std = value.substring(5);
             if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
                 const s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
@@ -231,7 +234,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
             }
         }
     }
-    if (!standard && requireStandardTarget) {
+    if (!standard && requireStandardTarget && extractStdFlag) {
         standard = (lang === 'C') ? 'c11' : 'c++17';
     }
     return { extraDefinitions, standard, targetArch };
@@ -424,14 +427,19 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group from the code model to create config data for
      * @param opts Index update options
      */
-    private buildConfigurationData(fileGroup: codeModel.CodeModelFileGroup, opts: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string): cpptools.SourceFileConfiguration {
+    private buildConfigurationData(fileGroup: CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot?: string): cpptools.SourceFileConfiguration {
+        // For CppTools V6 and above, build the compilerFragments data, otherwise build compilerArgs data
+        const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6;
         // If the file didn't have a language, default to C++
         const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the
         // group's language compiler, then the C++ compiler, then the C compiler.
-        const compilerToolchains: codeModel.CodeModelToolchain | undefined = opts.codeModelContent.toolchains?.get(lang ?? "")
+        let compilerToolchains: CodeModelToolchain | undefined;
+        if ("toolchains" in opts.codeModelContent) {
+            compilerToolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
             || opts.codeModelContent.toolchains?.get('CXX')
             || opts.codeModelContent.toolchains?.get('C');
+        }
         // If none of those work, fall back to the same order, but in the cache.
         const compilerCache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
             || opts.cache.get('CMAKE_CXX_COMPILER')
@@ -446,10 +454,27 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
-        const { standard, extraDefinitions, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang);
-        const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
-        const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
+        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : undefined;
+        const getAsFlags = (fragments?: string[]) => {
+            if (!fragments) {
+                return [];
+            }
+            return [...util.flatMap(fragments, fragment => shlex.split(fragment))];
+        };
+        let flags: string[] = [];
+        let extraDefinitions: string[] = [];
+        let standard: StandardVersion;
+        let targetArch: Architecture;
+        let intelliSenseMode: IntelliSenseMode;
+        let defines = (fileGroup.defines || target.defines || []);
+        if (!useFragments) {
+            // Send the intelliSenseMode and standard only for CppTools API v5 and below.
+            flags = getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments);
+            ({ extraDefinitions, standard, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang));
+            defines = defines.concat(extraDefinitions);
+            intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch);
+        }
+        const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath || [];
         const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
 
         const newBrowsePath = this.workspaceBrowseConfiguration.browsePath;
@@ -460,25 +485,36 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
 
         if (sysroot) {
-            flags.push('--sysroot=' + sysroot);
+            if (!useFragments) {
+                // Send sysroot with quoting for CppTools API V5 and below.
+                flags.push('--sysroot=' + shlex.quote(sysroot));
+            } else {
+                // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
+                flags.push(('--sysroot=' + sysroot));
+            }
         }
 
         this.workspaceBrowseConfiguration = {
             browsePath: newBrowsePath,
-            standard,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: flags || undefined
+            compilerArgs: flags,
+            compilerFragments: useFragments ? compileCommandFragments : undefined,
+            standard
+            // windowsSdkVersion
         };
 
         this.workspaceBrowseConfigurations.set(util.platformNormalizePath(opts.folder), this.workspaceBrowseConfiguration);
 
         return {
-            defines,
-            standard,
             includePath: normalizedIncludePath,
-            intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch),
+            defines,
+            intelliSenseMode,
+            standard,
+            // forcedInclude,
             compilerPath: normalizedCompilerPath || undefined,
-            compilerArgs: flags || undefined
+            compilerArgs: flags,
+            compilerFragments: useFragments ? compileCommandFragments : undefined
+            // windowsSdkVersion
         };
     }
 
@@ -489,7 +525,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * @param fileGroup The file group
      * @param options Index update options
      */
-    private updateFileGroup(sourceDir: string, fileGroup: codeModel.CodeModelFileGroup, options: codeModel.CodeModelParams, target: TargetDefaults, sysroot: string) {
+    private updateFileGroup(sourceDir: string, fileGroup: CodeModelFileGroup, options: CodeModelParams, target: TargetDefaults, sysroot?: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
@@ -525,7 +561,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * Update the file index and code model
      * @param opts Update parameters
      */
-    updateConfigurationData(opts: codeModel.CodeModelParams) {
+    updateConfigurationData(opts: CodeModelParams) {
         // Reset the counters for diagnostics
         this.requests.clear();
         this.responses.clear();
@@ -557,9 +593,9 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
                         const grps = target.fileGroups || [];
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-                        const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
+                        const compileCommandFragments = [...util.flatMap(grps, grp => grp.compileCommandFragments || [])];
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-                        const sysroot = target.sysroot ? shlex.quote(target.sysroot) : '';
+                        const sysroot = target.sysroot;
                         this.targets.push({ name: target.name, type: target.type });
                         for (const grp of target.fileGroups || []) {
                             try {
@@ -569,7 +605,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                                     opts,
                                     {
                                         name: target.name,
-                                        compileFlags,
+                                        compileCommandFragments,
                                         includePath,
                                         defines
                                     },

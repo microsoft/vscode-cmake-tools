@@ -74,6 +74,7 @@
 	"loading.test.preset": "Testvoreinstellung {0} wird geladen",
 	"reading.presets.file": "Datei mit Lesevoreinstellungen {0}",
 	"failed.to.parse": "Fehler beim Analysieren von {0}: {1}",
+	"included.presets.file.not.found": "Enthaltene Voreinstellungsdatei {0} kann nicht gefunden werden",
 	"invalid.file.error": "Ungültige Kitinhalte {0} ({1}):",
 	"successfully.validated.presets": "Voreinstellungen wurden erfolgreich in {0} überprüft",
 	"use.kits.variants": "Verwenden von Kits und Varianten",

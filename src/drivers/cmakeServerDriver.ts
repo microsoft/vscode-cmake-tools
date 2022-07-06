@@ -3,12 +3,10 @@ import { InputFileSet } from '@cmt/dirty';
 import { ConfigureTrigger } from '@cmt/cmakeTools';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
 import * as api from '@cmt/api';
 import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cmakeServerClient';
-import * as codeModel from '@cmt/drivers/codeModel';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
@@ -19,6 +17,7 @@ import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
 import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -62,16 +61,56 @@ export class CMakeServerDriver extends CMakeDriver {
      */
     private _prevConfigureEnv = 'null';
 
-    // TODO: Refactor to make this assertion unecessary
-    private _codeModel!: null | cms.CodeModelContent;
-    get codeModel(): null | cms.CodeModelContent {
-        return this._codeModel;
-    }
-    set codeModel(v: null | cms.CodeModelContent) {
-        this._codeModel = v;
+    private codeModel: CodeModelContent | null = null;
+    private convertServerCodeModel(serverCodeModel: null | cms.ServerCodeModelContent): CodeModelContent | null {
+        if (serverCodeModel) {
+            const codeModel: CodeModelContent = { configurations: [] };
+            for (const config of serverCodeModel.configurations) {
+                const newConfig: CodeModelConfiguration = { name: config.name, projects: [] };
+                for (const project of config.projects) {
+                    const newProject: CodeModelProject = {
+                        name: project.name,
+                        sourceDirectory: project.sourceDirectory,
+                        hasInstallRule: project.hasInstallRule,
+                        targets: []
+                    };
+                    for (const target of project.targets) {
+                        const newTarget: CodeModelTarget = {
+                            name: target.name,
+                            type: target.type,
+                            sourceDirectory: target.sourceDirectory,
+                            fullName: target.fullName,
+                            artifacts: target.artifacts,
+                            sysroot: target.sysroot,
+                            fileGroups: []
+                        };
+                        const linkLanguageFlags: string | undefined = target.linkLanguageFlags;
+                        if (target.fileGroups) {
+                            newTarget.fileGroups = [];
+                            for (const group of target.fileGroups) {
+                                const newGroup: CodeModelFileGroup = {
+                                    sources: group.sources,
+                                    language: group.language,
+                                    includePath: group.includePath,
+                                    defines: group.defines,
+                                    isGenerated: group.isGenerated,
+                                    compileCommandFragments: group.compileFlags ? [group.compileFlags] : (linkLanguageFlags ? [linkLanguageFlags] : [])
+                                };
+                                newTarget.fileGroups.push(newGroup);
+                            }
+                        }
+                        newProject.targets.push(newTarget);
+                    }
+                    newConfig.projects.push(newProject);
+                }
+                codeModel.configurations.push(newConfig);
+            }
+            return codeModel;
+        }
+        return null;
     }
 
-    private readonly _codeModelChanged = new vscode.EventEmitter<null | codeModel.CodeModelContent>();
+    private readonly _codeModelChanged = new vscode.EventEmitter<null | CodeModelContent>();
     get onCodeModelChanged() {
         return this._codeModelChanged.event;
     }
@@ -184,13 +223,9 @@ export class CMakeServerDriver extends CMakeDriver {
                 new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
             return acc;
         }, new Map<string, cache.Entry>());
-        this.codeModel = await client.codemodel();
-
-        // Toolchain information is not available with CMake server.
-        this._codeModelChanged.fire({
-            configurations: this.codeModel.configurations,
-            toolchains: new Map<string, codeModel.CodeModelToolchain>()
-        });
+        // Convert ServerCodeModel to general CodeModel.
+        this.codeModel = this.convertServerCodeModel(await client.codemodel());
+        this._codeModelChanged.fire(this.codeModel);
     }
 
     async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
@@ -210,10 +245,10 @@ export class CMakeServerDriver extends CMakeDriver {
     }
 
     get targets(): RichTarget[] {
-        if (!this._codeModel) {
+        if (!this.codeModel) {
             return [];
         }
-        const build_config = this._codeModel.configurations.find(conf => conf.name === this.currentBuildType);
+        const build_config = this.codeModel.configurations.find(conf => conf.name === this.currentBuildType);
         if (!build_config) {
             log.error(localize('found.no.matching.code.model', 'Found no matching code model for the current build type. This shouldn\'t be possible'));
             return [];
@@ -252,6 +287,10 @@ export class CMakeServerDriver extends CMakeDriver {
 
     get uniqueTargets(): api.Target[] {
         return this.targets.reduce(targetReducer, []);
+    }
+
+    get cmakeFiles(): string[] {
+        return this._cmakeInputFileSet.inputFiles.map(file => file.filePath);
     }
 
     get generatorName(): string | null {
@@ -398,7 +437,7 @@ export class CMakeServerDriver extends CMakeDriver {
         });
     }
 
-    get codeModelContent(): codeModel.CodeModelContent | null {
+    get codeModelContent(): cms.ServerCodeModelContent | null {
         return null;
     }
 

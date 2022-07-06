@@ -6,10 +6,10 @@
 {
 	"error.starting.cmake-server": "Błąd podczas uruchamiania programu cmake-server",
 	"started.new.cmake.server.instance": "Uruchomiono nowe wystąpienie serwera narzędzia CMake z identyfikatorem PID {0}",
-	"pipe.error.from.cmake-server": "Błąd potoku z programu cmake-server",
 	"connection.terminated.unexpectedly": "Połączenie z programem cmake-server zostało nieoczekiwanie przerwane",
 	"cmake-server.exited.with.status": "Program cmake-server zakończył pracę ze stanem {0} ({1})",
 	"unhandled.error.in": "Nieobsłużony błąd w elemencie {0}",
+	"pipe.error.from.cmake-server": "Błąd potoku z programu cmake-server",
 	"protocol.error.cmake": "Błąd protokołu podczas komunikacji z narzędziem CMake! Uzyskano następujące dane wejściowe: {0}",
 	"received.message.from.make-server": "Odebrano komunikat z programu cmake-server: {0}",
 	"invalid.cookie": "Nieprawidłowy plik cookie: {0}",

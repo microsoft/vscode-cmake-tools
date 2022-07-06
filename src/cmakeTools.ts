@@ -17,7 +17,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
-import * as codeModel from '@cmt/drivers/codeModel';
+import { CodeModelContent } from '@cmt/drivers/codeModel';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
 import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
 import { CTestDriver, BasicTestResults } from './ctest';
@@ -441,7 +441,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     get onCodeModelChanged() {
         return this._codeModelContent.changeEvent;
     }
-    private readonly _codeModelContent = new Property<codeModel.CodeModelContent | null>(null);
+    private readonly _codeModelContent = new Property<CodeModelContent | null>(null);
     private codeModelDriverSub: vscode.Disposable | null = null;
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
@@ -568,6 +568,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 break;
             case CMakePreconditionProblems.MissingCMakeListsFile:
                 telemetryEvent = "partialActivation";
+
+                telemetry.logEvent('missingCMakeListsFile');  // Fire this event in case the notification is dismissed with the `ESC` key.
 
                 const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing || this.workspaceContext.config.ignoreCMakeListsMissing;
                 telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
@@ -898,20 +900,32 @@ export class CMakeTools implements api.CMakeToolsAPI {
             }
 
             const sourceDirectory = (this.sourceDir).toLowerCase();
-            let isCmakeListsFile: boolean = false;
-            if (str.endsWith("cmakelists.txt")) {
-                const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
-                // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
-                isCmakeListsFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
-                    (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
+
+            let isCmakeFile: boolean;
+            if (drv && drv.cmakeFiles.length > 0) {
+                // If CMake file information is available from the driver, use it
+                isCmakeFile = drv.cmakeFiles.some(f => lightNormalizePath(str) === lightNormalizePath(path.resolve(this.sourceDir, f).toLowerCase()));
+            } else {
+                // Otherwise, fallback to a simple check (does not cover CMake include files)
+                isCmakeFile = false;
+                if (str.endsWith("cmakelists.txt")) {
+                    const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+                    // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
+                    isCmakeFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
+                        (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
+                }
             }
-            if (isCmakeListsFile) {
+
+            if (isCmakeFile) {
                 // CMakeLists.txt change event: its creation or deletion are relevant,
                 // so update full/partial feature set view for this folder.
                 await updateFullFeatureSetForFolder(this.folder);
                 if (drv && !drv.configOrBuildInProgress()) {
                     if (drv.config.configureOnEdit) {
                         log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
+                        if (this.workspaceContext.config.clearOutputBeforeBuild) {
+                            log.clearOutputChannel();
+                        }
                         await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
                     }
                 } else {
@@ -1031,7 +1045,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
         return this.driverStrand.execute(async () => {
             if (!this.useCMakePresets && !this.activeKit) {
-                log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kits defined'));
+                log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kit selected'));
                 return null;
             }
 
@@ -1240,6 +1254,11 @@ export class CMakeTools implements api.CMakeToolsAPI {
             await this.cTestController.reloadTests(drv);
             this.onReconfiguredEmitter.fire();
             return result;
+        }
+
+        if (trigger === ConfigureTrigger.configureWithCache) {
+            log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));
+            return -1;
         }
 
         return vscode.window.withProgress(
@@ -2178,7 +2197,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         const drv = await this.getCMakeDriverInstance();
         const launchEnv = await this.getTargetLaunchEnvironment(drv, userConfig.environment);
         const options: vscode.TerminalOptions = {
-            name: 'CMake/Launch',
+            name: `CMake/Launch - ${executable.name}`,
             env: launchEnv,
             cwd: (userConfig && userConfig.cwd) || path.dirname(executable.path)
         };

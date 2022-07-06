@@ -23,11 +23,11 @@ suite('CppTools tests', () => {
 
         // Verify CppTools API version 6
         let info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
         info = parseCompileFlags(cpptoolsVersion6, ['-std=c++2b']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
         info = parseCompileFlags(cpptoolsVersion6, ['-std=gnu++23']);
-        expect(info.standard).to.eql('gnu++23');
+        expect(info.standard).to.eql(undefined);
 
         // Verify CppTools API version 5
         info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
@@ -163,25 +163,27 @@ suite('CppTools tests', () => {
         expect(mode).to.eql('clang-x86');
     });
 
-    test('Validate code model', async () => {
+    // Validate codeModel using cppTools API V5
+    test('Validate code model V5', async () => {
         const provider = new CppConfigurationProvider();
+        provider.cpptoolsVersion = Version.v5;
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
-        const sourceFile = path.join(here, 'main.cpp');
-        const uri = vscode.Uri.file(sourceFile);
-        const codeModelContent: codeModel.CodeModelContent = {
+        const sourceFile1 = path.join(here, 'main.cpp');
+        const uri1 = vscode.Uri.file(sourceFile1);
+        const codeModel1: codeModel.CodeModelContent = {
             configurations: [{
                 name: "Release",
                 projects: [{
-                    name: 'cpptools-test',
+                    name: 'cpptools-test-1',
                     sourceDirectory: here,
                     targets: [
                         {
                             name: 'target1',
                             type: 'EXECUTABLE',
                             fileGroups: [{
-                                sources: [sourceFile],
+                                sources: [sourceFile1],
                                 isGenerated: false,
-                                compileFlags: '-DFLAG1',
+                                compileCommandFragments: ['-DFLAG1'],
                                 language: 'CXX'
                             }]
                         },
@@ -189,9 +191,9 @@ suite('CppTools tests', () => {
                             name: 'target2',
                             type: 'EXECUTABLE',
                             fileGroups: [{
-                                sources: [sourceFile],
+                                sources: [sourceFile1],
                                 isGenerated: false,
-                                compileFlags: '-DFLAG2',
+                                compileCommandFragments: ['-DFLAG2'],
                                 language: 'CXX'
                             }]
                         }
@@ -201,26 +203,26 @@ suite('CppTools tests', () => {
             toolchains: new Map<string, codeModel.CodeModelToolchain>()
         };
 
-        provider.updateConfigurationData({ cache, codeModelContent, activeTarget: 'target1', activeBuildTypeVariant: 'Release', folder: here });
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'target1', activeBuildTypeVariant: 'Release', folder: here });
 
         // Update configuration with a 2nd workspace folder.
         const smokeFolder = path.join(here, '../smoke');
-        const sourceFile2 = path.join(smokeFolder, 'main.cpp');
-        const uri2 = vscode.Uri.file(sourceFile2);
-        const codeModelContent2: codeModel.CodeModelContent = {
+        const sourceFile3 = path.join(smokeFolder, 'main.cpp');
+        const uri3 = vscode.Uri.file(sourceFile3);
+        const codeModel3: codeModel.CodeModelContent = {
             configurations: [{
                 name: 'Release',
                 projects: [{
-                    name: 'cpptools-test2',
+                    name: 'cpptools-test-3',
                     sourceDirectory: smokeFolder,
                     targets: [
                         {
                             name: 'target3',
                             type: 'EXECUTABLE',
                             fileGroups: [{
-                                sources: [sourceFile2],
+                                sources: [sourceFile3],
                                 isGenerated: false,
-                                compileFlags: '-DFLAG3',
+                                compileCommandFragments: ['-DFLAG3'],
                                 language: 'CXX'
                             }]
                         }]
@@ -229,23 +231,23 @@ suite('CppTools tests', () => {
             toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
         };
 
-        provider.updateConfigurationData({ cache, codeModelContent: codeModelContent2, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
-        let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile2)]);
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
+        let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile3)]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');
 
-        configurations = await provider.provideConfigurations([uri]);
+        configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.defines).to.contain('FLAG1');
 
-        provider.updateConfigurationData({ cache, codeModelContent, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
-        configurations = await provider.provideConfigurations([uri]);
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
+        configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.defines).to.contain('FLAG2');
         expect(configurations[0].configuration.compilerPath).to.eq('clang++');
 
-        provider.updateConfigurationData({ cache, codeModelContent, activeTarget: 'all', activeBuildTypeVariant: 'Release', folder: here });
-        configurations = await provider.provideConfigurations([uri]);
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'all', activeBuildTypeVariant: 'Release', folder: here });
+        configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.defines.some(def => def === 'FLAG1' || def === 'FLAG2')).to.be.true;
         expect(configurations[0].configuration.defines).to.not.have.all.members(['FLAG1', 'FLAG2']);
@@ -258,9 +260,119 @@ suite('CppTools tests', () => {
         expect(browseConfig.browsePath[0]).to.eq(util.platformNormalizePath(here));
 
         // Verify the browsePath with a different folder.
-        const configurations2 = await provider.provideConfigurations([uri2]);
+        const configurations2 = await provider.provideConfigurations([uri3]);
         expect(configurations2.length).to.eq(1);
         expect(configurations2[0].configuration.defines).to.contain('FLAG3');
+        const browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
+        expect(browseConfig2.browsePath.length).to.eq(1);
+        expect(browseConfig2.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
+    });
+
+    // Validate codeModel using cppTools API V6
+    test('Validate code model latest', async () => {
+        const provider = new CppConfigurationProvider();
+        const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
+        const sourceFile1 = path.join(here, 'main.cpp');
+        const uri1 = vscode.Uri.file(sourceFile1);
+        const codeModel1: codeModel.CodeModelContent = {
+            configurations: [{
+                name: "Release",
+                projects: [{
+                    name: 'cpptools-test',
+                    sourceDirectory: here,
+                    targets: [
+                        {
+                            name: 'target1',
+                            type: 'EXECUTABLE',
+                            fileGroups: [{
+                                sources: [sourceFile1],
+                                isGenerated: false,
+                                defines: ['DEFINE1'],
+                                compileCommandFragments: ['-DFRAGMENT1'],
+                                language: 'CXX'
+                            }]
+                        },
+                        {
+                            name: 'target2',
+                            type: 'EXECUTABLE',
+                            fileGroups: [{
+                                sources: [sourceFile1],
+                                isGenerated: false,
+                                defines: ['DEFINE2'],
+                                compileCommandFragments: ['-DFRAGMENT2'],
+                                language: 'CXX'
+                            }]
+                        }
+                    ]
+                }]
+            }],
+            toolchains: new Map<string, codeModel.CodeModelToolchain>()
+        };
+
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'target1', activeBuildTypeVariant: 'Release', folder: here });
+
+        // Update configuration with a 2nd workspace folder.
+        const smokeFolder = path.join(here, '../smoke');
+        const sourceFile3 = path.join(smokeFolder, 'main.cpp');
+        const uri3 = vscode.Uri.file(sourceFile3);
+        const codeModel3: codeModel.CodeModelContent = {
+            configurations: [{
+                name: 'Release',
+                projects: [{
+                    name: 'cpptools-test2',
+                    sourceDirectory: smokeFolder,
+                    targets: [
+                        {
+                            name: 'target3',
+                            type: 'EXECUTABLE',
+                            fileGroups: [{
+                                sources: [sourceFile3],
+                                isGenerated: false,
+                                compileCommandFragments: ['-DFRAGMENT3'],
+                                language: 'CXX'
+                            }]
+                        }]
+                }]
+            }],
+            toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
+        };
+
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
+        let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile3)]);
+        expect(configurations.length).to.eq(1);
+        expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');
+
+        configurations = await provider.provideConfigurations([uri1]);
+        expect(configurations.length).to.eq(1);
+        expect(configurations[0].configuration.defines).to.contain('DEFINE1');
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT1');
+        expect(configurations[0].configuration.compilerArgs).to.be.empty;
+
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
+        configurations = await provider.provideConfigurations([uri1]);
+        expect(configurations.length).to.eq(1);
+        expect(configurations[0].configuration.defines).to.contain('DEFINE2');
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT2');
+        expect(configurations[0].configuration.compilerPath).to.eq('clang++');
+
+        provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'all', activeBuildTypeVariant: 'Release', folder: here });
+        configurations = await provider.provideConfigurations([uri1]);
+        expect(configurations.length).to.eq(1);
+        expect(configurations[0].configuration.defines.some(def => def === 'DEFINE1' || def === 'DEFINE2')).to.be.true;
+        expect(configurations[0].configuration.defines).to.not.have.all.members(['DEFINE1', 'DEFINE2']);
+
+        // Verify the per-folder browsePath.
+        const canProvideBrowseConfigPerFolder: boolean = await provider.canProvideBrowseConfigurationsPerFolder();
+        expect(canProvideBrowseConfigPerFolder).to.eq(true);
+        const browseConfig = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(here));
+        expect(browseConfig.browsePath.length).to.eq(1);
+        expect(browseConfig.browsePath[0]).to.eq(util.platformNormalizePath(here));
+
+        // Verify the browsePath with a different folder.
+        const configurations2 = await provider.provideConfigurations([uri3]);
+        expect(configurations2.length).to.eq(1);
+        expect(configurations2[0].configuration.defines).to.be.empty;
+        expect(configurations2[0].configuration.compilerFragments).to.contain('-DFRAGMENT3');
         const browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
         expect(browseConfig2.browsePath.length).to.eq(1);
         expect(browseConfig2.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
