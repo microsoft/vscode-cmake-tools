@@ -744,10 +744,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
         const sub_prs: Promise<Kit | null>[] = [];
         MSVC_HOST_ARCHES.forEach(hostArch => {
             targetArches.forEach(targetArch => {
-                const kit: Promise<Kit | null> = tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr);
-                if (kit) {
-                    sub_prs.push(kit);
-                }
+                sub_prs.push(tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr));
             });
         });
 
@@ -796,14 +793,13 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         }
 
         const clangKits: Kit[] = [];
-        vsInstalls.forEach(vs => {
+        for (const vs of vsInstalls) {
             const install_name = vsDisplayName(vs);
             const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
 
             const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
             const clangKitName = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
-            if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
-                util.checkFileExists(util.lightNormalizePath(binPath))) {
+            if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath))) {
                 clangKits.push({
                     name: clangKitName,
                     visualStudio: kitVSName(vs),
@@ -814,7 +810,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                     }
                 });
             }
-        });
+        }
         return clangKits;
     });
     return ([] as Kit[]).concat(...kits);

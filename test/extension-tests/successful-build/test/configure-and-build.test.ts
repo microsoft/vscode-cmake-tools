@@ -15,7 +15,7 @@ import * as path from 'path';
 
 const workername: string = process.platform;
 
-suite('Build', async () => {
+suite('Build', () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;

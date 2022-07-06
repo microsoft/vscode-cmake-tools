@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmakeTools';
 
-suite('Environment Variables in Variants', async () => {
+suite('Environment Variables in Variants', () => {
     let testEnv: DefaultEnvironment;
     let cmakeTools: CMakeTools;
 
