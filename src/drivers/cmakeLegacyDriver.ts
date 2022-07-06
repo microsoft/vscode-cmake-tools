@@ -167,6 +167,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
     get uniqueTargets() {
         return [];
     }
+    get cmakeFiles() {
+        return [];
+    }
 
     /**
      * Watcher for the CMake cache file on disk.

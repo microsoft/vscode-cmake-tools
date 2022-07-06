@@ -74,6 +74,7 @@
 	"loading.test.preset": "正在加载测试预设 {0}",
 	"reading.presets.file": "正在读取预设文件 {0}",
 	"failed.to.parse": "无法分析 {0}: {1}",
+	"included.presets.file.not.found": "找不到包含的预设文件 {0}",
 	"invalid.file.error": "无效的工具包内容 {0} ({1}):",
 	"successfully.validated.presets": "已在 {0} 中成功验证预设值",
 	"use.kits.variants": "使用工具包和变量",

@@ -74,6 +74,7 @@
 	"loading.test.preset": "Carregando a predefinição de teste {0}",
 	"reading.presets.file": "Lendo arquivo de predefinições {0}",
 	"failed.to.parse": "Falha ao analisar {0}: {1}",
+	"included.presets.file.not.found": "O arquivo incluído de predefinições {0} não pode ser encontrado",
 	"invalid.file.error": "Conteúdo do kit {0} ({1}) inválido:",
 	"successfully.validated.presets": "Predefinições validadas com êxito no {0}",
 	"use.kits.variants": "Usar kits e variantes",
