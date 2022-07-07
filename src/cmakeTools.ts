@@ -259,10 +259,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
     private readonly _buildPreset = new Property<preset.BuildPreset | null>(null);
 
-    /**
-     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
-     */
-    async setBuildPreset(buildPreset: string | null) {
+    async expandBuildPresetbyName(buildPreset: string | null): Promise<preset.BuildPreset | undefined> {
         if (buildPreset) {
             log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
             const expandedBuildPreset = await preset.expandBuildPreset(this.folder.uri.fsPath,
@@ -272,12 +269,25 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.getPreferredGeneratorName(),
                 true,
                 this.configurePreset?.name);
-            this._buildPreset.set(expandedBuildPreset);
             if (!expandedBuildPreset) {
                 log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
+                return undefined;
+            }
+            return expandedBuildPreset;
+        }
+    }
+
+    /**
+     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+     */
+    async setBuildPreset(buildPreset: string | null) {
+        if (buildPreset) {
+            const expandedBuildPreset = await this.expandBuildPresetbyName(buildPreset);
+            if (!expandedBuildPreset) {
                 this._buildPreset.set(null);
                 return;
             }
+            this._buildPreset.set(expandedBuildPreset);
             if (!expandedBuildPreset.configurePreset) {
                 log.error(localize('configurePreset.not.set.build.preset', '"configurePreset" is not set in build preset: {0}', buildPreset));
                 this._buildPreset.set(null);

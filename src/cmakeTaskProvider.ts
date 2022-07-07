@@ -10,12 +10,12 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
 import CMakeTools from './cmakeTools';
+import * as preset from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('TaskProvider');
 
-//let allTargetName: string = "all";
 const endOfLine: string = "\r\n";
 
 interface CMakeTaskDefinition extends vscode.TaskDefinition {
@@ -68,8 +68,6 @@ export class CMakeTask extends vscode.Task {
 export class CMakeTaskProvider implements vscode.TaskProvider {
     static CMakeScriptType: string = 'cmake';
     static CMakeSourceStr: string = "CMake";
-    //private cmakeTools?: CMakeTools;
-    //private defaultTargets?: string[];
 
     constructor() {
     }
@@ -77,30 +75,28 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     public async provideTasks(): Promise<CMakeTask[]> {
         const result: CMakeTask[] = [];
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
-        const cmakeDriver:  CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-        result.push(await this.provideTask(CommandType.build, cmakeDriver, cmakeTools?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.config, cmakeDriver, cmakeTools?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.install, cmakeDriver, cmakeTools?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.test, cmakeDriver, cmakeTools?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.clean, cmakeDriver, cmakeTools?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.cleanRebuild, cmakeDriver, cmakeTools?.useCMakePresets));
+        const targets: string[] | undefined = await cmakeTools?.getDefaultBuildTargets() || ["all"];
+        result.push(await this.provideTask(CommandType.config, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.build, cmakeTools?.useCMakePresets, targets));
+        result.push(await this.provideTask(CommandType.install, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.test, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.clean, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.cleanRebuild, cmakeTools?.useCMakePresets));
         return result;
     }
 
-    public async provideTask(commandType: CommandType, cmakeDriver?: CMakeDriver, useCMakePresets?: boolean): Promise<CMakeTask> {
+    public async provideTask(commandType: CommandType, useCMakePresets?: boolean, targets?: string[]): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
-        let targets: string[] | undefined;
+        let buildTargets: string[] | undefined;
         let preset: string | undefined;
         const options: { cwd?: string ; environment?: Environment } = {};
-        if (!useCMakePresets) {
-            if (commandType === CommandType.build) {
-                if (cmakeDriver?.targetsName) {
-                    targets = cmakeDriver?.targetsName;
-                } else if (cmakeDriver?.allTargetName) {
-                    targets = [cmakeDriver?.allTargetName];
-                }
-            }
-        } else {
+        if (commandType === CommandType.build) {
+            buildTargets = targets;
+            options.cwd = "${command:cmake.buildDirectory}";
+        } else if (commandType === CommandType.config) {
+            options.cwd = "${workspaceFolder}/";
+        }
+        if (useCMakePresets) {
             switch (commandType) {
                 case CommandType.config:
                     preset = "${command:cmake.activeConfigurePresetName}";
@@ -114,13 +110,13 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 default:
                     preset = undefined;
             }
-            options.cwd = "${workspaceFolder}";
         }
+
         const definition: CMakeTaskDefinition = {
             type: CMakeTaskProvider.CMakeScriptType,
             label: CMakeTaskProvider.CMakeSourceStr + ": " + taskName,
             command: commandType,
-            targets: targets,
+            targets: buildTargets,
             preset: preset,
             options: options
         };
@@ -159,8 +155,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private definedTargets?: string[], private preset?: string,
-        private options?: { cwd?: string ; environment?: Environment }) {
+    constructor(private command: string, private targets: string[], private preset?: string, private options?: { cwd?: string ; environment?: Environment }) {
     }
 
     output(line: string): void {
@@ -204,7 +199,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     }
 
     private async runBuildTask(): Promise<any> {
-        let command: proc.BuildCommand | null;
+        let fullCommand: proc.BuildCommand | null;
         let cmakePath: string = "CMake.EXE";
         let args: string[] = [];
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
@@ -214,16 +209,22 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             if (!this.options) {
                 this.options = {};
             }
-            if (this.preset && this.preset.length !== 0) {
-                cmakePath = cmakeDriver.getCMakeCommand();
-                args = [ "--build", "--preset", this.preset];
+            if (this.preset) {
+                const buildPreset: preset.BuildPreset | undefined = await cmakeTools?.expandBuildPresetbyName(this.preset);
+                if (buildPreset) {
+                    fullCommand = await cmakeDriver.generateBuildCommandFromPreset(buildPreset, this.targets);
+                    if (fullCommand) {
+                        cmakePath = fullCommand.command;
+                        args = fullCommand.args || [];
+                        this.options.environment = EnvironmentUtils.merge([ fullCommand.build_env, this.options.environment], {preserveNull: true});
+                    }
+                }
             } else {
-                command = await cmakeDriver.getCMakeBuildCommand(this.definedTargets ? this.definedTargets : [cmakeDriver.allTargetName]);
-                if (command) {
-                    cmakePath = command.command;
-                    args = command.args ? command.args : [];
-                    // While merging, override the build_env with new values.
-                    this.options.environment = EnvironmentUtils.merge([ command.build_env, this.options.environment], {preserveNull: true});
+                fullCommand = await cmakeDriver.generateBuildCommandFromSettings(this.targets);
+                if (fullCommand) {
+                    cmakePath = fullCommand.command;
+                    args = fullCommand.args ? fullCommand.args : [];
+                    this.options.environment = EnvironmentUtils.merge([ fullCommand.build_env, this.options.environment]);
                 }
             }
         } else {
