@@ -19,7 +19,7 @@ export async function clearExistingKitConfigurationFile() {
     await fs.writeFile(path.join(paths.dataDir, 'cmake-kits.json'), '[]');
 }
 
-export async function getExtension() {
+export function getExtension() {
     const cmt = vscode.extensions.getExtension<CMakeTools>('ms-vscode.cmake-tools');
     if (!cmt) {
         throw new Error('Extension doesn\'t exist');
@@ -27,11 +27,11 @@ export async function getExtension() {
     return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
 }
 
-let AVAIL_KITS: Promise<Kit[]> | null = null;
+let AVAIL_KITS: Kit[] | null = null;
 
 export async function getSystemKits(cmakeTools?: CMakeTools): Promise<Kit[]> {
     if (AVAIL_KITS === null) {
-        AVAIL_KITS = scanForKits(cmakeTools, { ignorePath: process.platform === 'win32' });
+        AVAIL_KITS = await scanForKits(cmakeTools, { ignorePath: process.platform === 'win32' });
     }
     return AVAIL_KITS;
 }
@@ -64,7 +64,7 @@ export async function getMatchingProjectKit(re: RegExp, dir: string): Promise<Ki
 function getMatchingKit(kits: Kit[], re: RegExp): Kit {
     const kit = kits.find(k => re.test(k.name));
     if (!kit) {
-        throw new Error(`Unable to find a Kit matching the expression: ${re}`);
+        throw new Error(`Unable to find a Kit matching the expression: ${re}\nAvailable Kits:\n${JSON.stringify(kits, null, 2)}`);
     }
     return kit;
 }

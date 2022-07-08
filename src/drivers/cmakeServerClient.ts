@@ -562,8 +562,12 @@ export class CMakeServerClient {
             cwd: params.binaryDir
         });
         log.debug(localize('started.new.cmake.server.instance', 'Started new CMake Server instance with PID {0}', child.pid));
-        child.stdout.on('data', data => this.params.onOtherOutput(data.toLocaleString()));
-        child.stderr.on('data', data => this.params.onOtherOutput(data.toLocaleString()));
+        child.stdout.on('data', data => {
+            void this.params.onOtherOutput(data.toLocaleString());
+        });
+        child.stderr.on('data', data => {
+            void this.params.onOtherOutput(data.toLocaleString());
+        });
         child.on('close', (retc: number, signal: string) => {
             if (retc !== 0) {
                 log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));

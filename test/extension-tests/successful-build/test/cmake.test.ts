@@ -1,7 +1,7 @@
 import { CMakeTools } from '@cmt/cmakeTools';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 
-suite('cmake', async () => {
+suite('cmake', () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 

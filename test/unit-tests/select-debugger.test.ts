@@ -19,7 +19,7 @@ function getTestResourceFilePath(filename: string): string {
     return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
-suite('Select debugger', async () => {
+suite('Select debugger', () => {
     const sandbox: sinon.SinonSandbox = sinon.createSandbox();
 
     teardown(() => {

@@ -2,7 +2,7 @@ import * as  util from 'util';
 import { expect } from 'chai';
 import { EnvironmentUtils } from '@cmt/environmentVariables';
 
-suite('[Environment]', async () => {
+suite('[Environment]', () => {
     test('Environment variable to `preserve/non-preserve null` `win/non-win`', () => {
         const envA = {
             A: 'x',

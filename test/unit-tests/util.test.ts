@@ -1,7 +1,7 @@
 import { splitPath } from '@cmt/util';
 import { expect } from '@test/util';
 
-suite('Utils test', async () => {
+suite('Utils test', () => {
     test('Split path into elements', () => {
         const elems = splitPath('foo/bar/baz');
         expect(elems).to.eql(['foo', 'bar', 'baz']);

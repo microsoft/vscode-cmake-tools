@@ -2,7 +2,7 @@ import { scanForKits } from '@cmt/kit';
 import { fs } from '@cmt/pr';
 import { expect } from '@test/util';
 
-suite('MinGW Tests', async () => {
+suite('MinGW Tests', () => {
 
     // TODO: this test needs some work
 
