@@ -27,6 +27,8 @@ jobs:
 
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@v3.18.2
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
       - name: Build fake compilers
         uses: ashutoshvarma/action-cmake-build@v1
