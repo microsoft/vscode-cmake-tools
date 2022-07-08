@@ -6,7 +6,7 @@ import { readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_F
 import { platformNormalizePath } from '@cmt/util';
 import { DefaultEnvironment, expect } from '@test/util';
 
-suite('Toolchain Substitution', async () => {
+suite('Toolchain Substitution', () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 

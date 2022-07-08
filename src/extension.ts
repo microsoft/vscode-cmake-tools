@@ -1098,10 +1098,7 @@ class ExtensionManager implements vscode.Disposable {
         return 0;
     }
 
-    mapCMakeToolsFolder(fn: CMakeToolsMapFn,
-        folder?: vscode.WorkspaceFolder,
-        precheck?: (cmt: CMakeTools) => Promise<boolean>,
-        cleanOutputChannel?: boolean): Promise<any> {
+    mapCMakeToolsFolder(fn: CMakeToolsMapFn, folder?: vscode.WorkspaceFolder, precheck?: (cmt: CMakeTools) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
         if (cleanOutputChannel) {
             this.cleanOutputChannel();
         }
