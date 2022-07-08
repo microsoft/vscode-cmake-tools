@@ -1202,6 +1202,29 @@ export abstract class CMakeDriver implements vscode.Disposable {
             true : false;
     }
 
+    public generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): string[] {
+        // Cache flags will construct the command line for cmake.
+        const init_cache_flags = this.generateInitCacheFlags();
+        return init_cache_flags.concat(preset.configureArgs(configPreset));
+    }
+
+    public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
+        // Cache flags will construct the command line for cmake.
+        const init_cache_flags = this.generateInitCacheFlags();
+        const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
+        const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
+        const final_flags = common_flags.concat(define_flags, init_cache_flags);
+
+        // Get expanded configure environment
+        const expanded_configure_env = await this.getConfigureEnvironment();
+
+        // Expand all flags
+        const opts = this.expansionOptions;
+        const expanded_flags_promises = final_flags.map(
+            async (value: string) => expand.expandString(value, { ...opts, envOverride: expanded_configure_env }));
+        return Promise.all(expanded_flags_promises);
+    }
+
     async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
@@ -1236,9 +1259,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 return -2;
             }
 
-            // Cache flags will construct the command line for cmake.
-            const init_cache_flags = this.generateInitCacheFlags();
-
             let expanded_flags: string[];
             if (this.useCMakePresets) {
                 if (!this._configurePreset) {
@@ -1246,20 +1266,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     return -3;
                 }
                 // For now, fields in presets are expanded when the preset is selected
-                expanded_flags = init_cache_flags.concat(preset.configureArgs(this._configurePreset));
+                expanded_flags = this.generateConfigArgsFromPreset(this._configurePreset);
             } else {
-                const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
-                const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
-                const final_flags = common_flags.concat(define_flags, init_cache_flags);
-
-                // Get expanded configure environment
-                const expanded_configure_env = await this.getConfigureEnvironment();
-
-                // Expand all flags
-                const opts = this.expansionOptions;
-                const expanded_flags_promises = final_flags.map(
-                    async (value: string) => expand.expandString(value, { ...opts, envOverride: expanded_configure_env }));
-                expanded_flags = await Promise.all(expanded_flags_promises);
+                expanded_flags = await this.generateConfigArgsFromSettings(extra_args, withoutCmakeSettings);
             }
             if (!shouldUseCachedConfiguration) {
                 log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));

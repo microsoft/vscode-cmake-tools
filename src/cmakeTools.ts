@@ -189,12 +189,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         this._testPreset.set(null);
     }
 
-    /**
-     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
-     */
-    async setConfigurePreset(configurePreset: string | null) {
-        const previousGenerator = this.configurePreset?.generator;
-
+    async expandConfigPresetbyName(configurePreset: string | null): Promise<preset.BuildPreset | undefined> {
         if (configurePreset) {
             log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
             const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
@@ -203,27 +198,37 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.sourceDir,
                 this.getPreferredGeneratorName(),
                 true);
-            this._configurePreset.set(expandedConfigurePreset);
-            if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
-                await this.shutDownCMakeDriver();
-            }
-
             if (!expandedConfigurePreset) {
                 log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
-                await this.resetPresets();
-                return;
+                return undefined;
             }
             if (!expandedConfigurePreset.binaryDir) {
                 log.error(localize('binaryDir.not.set.config.preset', '"binaryDir" is not set in configure preset: {0}', configurePreset));
-                // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
-                await this.resetPresets();
-                return;
+                return undefined;
             }
             if (!expandedConfigurePreset.generator) {
                 log.error(localize('generator.not.set.config.preset', '"generator" is not set in configure preset: {0}', configurePreset));
-                // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
+                return undefined;
+            }
+            return expandedConfigurePreset;
+        }
+    }
+
+    /**
+     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+     */
+    async setConfigurePreset(configurePreset: string | null) {
+        const previousGenerator = this.configurePreset?.generator;
+
+        if (configurePreset) {
+            const expandedConfigurePreset: preset.ConfigurePreset | undefined = await this.expandConfigPresetbyName(configurePreset);
+            if (!expandedConfigurePreset) {
                 await this.resetPresets();
                 return;
+            }
+            this._configurePreset.set(expandedConfigurePreset);
+            if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
+                await this.shutDownCMakeDriver();
             }
             log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
             const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one

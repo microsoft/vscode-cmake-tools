@@ -92,9 +92,6 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const options: { cwd?: string ; environment?: Environment } = {};
         if (commandType === CommandType.build) {
             buildTargets = targets;
-            options.cwd = "${command:cmake.buildDirectory}";
-        } else if (commandType === CommandType.config) {
-            options.cwd = "${workspaceFolder}/";
         }
         if (useCMakePresets) {
             switch (commandType) {
@@ -255,15 +252,19 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
         let result: number | undefined | null;
+        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
+        const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.EXE";
+        let args: string[] = [];
         if (this.preset) {
-            const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
-            const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-            const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.EXE";
-            const args: string[] = [ "--preset", this.preset];
+            const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
+            args = (cmakeDriver && configPreset) ? cmakeDriver.generateConfigArgsFromPreset(configPreset) : [];
             const execResult = await proc.execute(cmakePath, args, this, this.options).result;
             result = execResult?.retc;
         } else {
-            result =  await vscode.commands.executeCommand('cmake.configure');
+            args = cmakeDriver ? await cmakeDriver.generateConfigArgsFromSettings() : [];
+            const execResult = await proc.execute(cmakePath, args, this, this.options).result;
+            result = execResult?.retc;
         }
         this.closeEmitter.fire((result === undefined || result === null) ? -1 : result);
     }
