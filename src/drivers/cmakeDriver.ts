@@ -515,13 +515,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         log.info(localize('switching.to.kit', 'Switching to kit: {0}', kit.name));
 
         const oldBinaryDir = this.binaryDir;
-        const needsCleanIfSameBuildDir = kitChangeNeedsClean(kit, this._kit);
+        const needsCleanIfKitChange = kitChangeNeedsClean(kit, this._kit);
         await this.doSetKit(async () => {
             await this._setKit(kit, preferredGenerators);
             await this._refreshExpansions();
             const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, this.expansionOptions));
-            if (needsCleanIfSameBuildDir && newBinaryDir !== oldBinaryDir) {
-                this._cleanPriorConfiguration();
+            const needsCleanIfBuildDirectoryChange = (newBinaryDir !== oldBinaryDir);
+            if (needsCleanIfKitChange || needsCleanIfBuildDirectoryChange) {
+                await this._cleanPriorConfiguration();
             }
         });
     }
