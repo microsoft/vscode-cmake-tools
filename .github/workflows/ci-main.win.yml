@@ -31,7 +31,8 @@ jobs:
       - name: Build fake compilers
         uses: urkle/action-cmake-build@v1.0.0
         with:
-          configure-options: -S ${{ runner.workspace }}/test/fakeOutputGenerator -DCMAKE_INSTALL_PREFIX:STRING=${{ runner.workspace }}/test/fakebin
+          source-dir: ${{ runner.workspace }}/test/fakeOutputGenerator
+          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ runner.workspace }}/test/fakebin
           install-build: true
 
       - name: Delete NOTICE.txt
