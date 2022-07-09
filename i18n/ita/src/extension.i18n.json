@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Configurazione dell'area di lavoro all'apertura di {0}",
 	"configure.now.button": "Configura ora",
 	"configure.recommended": "È consigliabile riconfigurare dopo l'aggiornamento a una nuova definizione dei kit.",
-	"using.cache.to.configure.workspace.on.open": "Utilizzo della cache per configurare l'area di lavoro all'apertura di {0}",
+	"using.cache.to.configure.workspace.on.open": "Tentativo di usare la cache per configurare l'area di lavoro {0}",
 	"update.code.model.for.cpptools": "Aggiorna il modello di codice per cpptools",
 	"update.intellisense.disabled": "Il provider di configurazione non verrà aggiornato perché {0} è impostato su {1}",
 	"failed.to.get.cpptools.api": "Non è stato possibile ottenere l'API cppTools",

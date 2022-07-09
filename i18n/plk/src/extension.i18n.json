@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Konfigurowanie obszaru roboczego przy otwieraniu elementu {0}",
 	"configure.now.button": "Skonfiguruj teraz",
 	"configure.recommended": "Zaleca się przeprowadzenie ponownej konfiguracji po uaktualnieniu do nowej definicji zestawów.",
-	"using.cache.to.configure.workspace.on.open": "Używanie pamięci podręcznej do konfigurowania obszaru roboczego przy otwieraniu {0}",
+	"using.cache.to.configure.workspace.on.open": "Próba użycia pamięci podręcznej do skonfigurowania obszaru roboczego {0}",
 	"update.code.model.for.cpptools": "Aktualizuj model kodu dla narzędzi cpptools",
 	"update.intellisense.disabled": "Dostawca konfiguracji nie jest aktualizowany, ponieważ ustawiono {0} do {1}",
 	"failed.to.get.cpptools.api": "Nie można pobrać interfejsu API cppTools",

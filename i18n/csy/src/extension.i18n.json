@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Konfiguruje se pracovní prostor při otvírání elementu {0}.",
 	"configure.now.button": "Nakonfigurovat",
 	"configure.recommended": "Po upgradu na novou definici sad se doporučuje změnit konfiguraci.",
-	"using.cache.to.configure.workspace.on.open": "Konfigurace pracovního prostoru při otevření {0} pomocí mezipaměti",
+	"using.cache.to.configure.workspace.on.open": "Probíhá pokus o použití mezipaměti ke konfiguraci {0} pracovního prostoru.",
 	"update.code.model.for.cpptools": "Aktualizovat model kódu pro cpptools",
 	"update.intellisense.disabled": "Zprostředkovatel konfigurace se neaktualizuje, protože {0} je nastavený na {1}",
 	"failed.to.get.cpptools.api": "Nepovedlo se získat API cppTools.",
