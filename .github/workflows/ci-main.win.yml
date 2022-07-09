@@ -31,12 +31,12 @@ jobs:
       - name: Build fake compilers
         uses: urkle/action-cmake-build@v1.0.0
         with:
-          source-dir: ${{ runner.workspace }}/vscode-cmake-tools/test/fakeOutputGenerator
-          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ runner.workspace }}/vscode-cmake-tools/test/fakebin
+          source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
+          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
           install-build: true
 
       - name: Delete NOTICE.txt
-        run: del ${{ runner.workspace }}/vscode-cmake-tools/NOTICE.txt
+        run: del ${{ github.workspace }}/NOTICE.txt
 
       - name: Run backend tests
         run: yarn backendTests
