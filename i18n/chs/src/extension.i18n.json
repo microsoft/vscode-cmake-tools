@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "正在打开的 {0} 上配置工作区",
 	"configure.now.button": "立即配置",
 	"configure.recommended": "建议在升级到新的工具包定义后重新配置。",
-	"using.cache.to.configure.workspace.on.open": "使用缓存在打开的 {0} 上时配置工作区",
+	"using.cache.to.configure.workspace.on.open": "正在尝试使用缓存配置工作区 {0}",
 	"update.code.model.for.cpptools": "更新 cpptools 的代码模型",
 	"update.intellisense.disabled": "未更新配置提供程序，因为 {0} 设置为 {1}",
 	"failed.to.get.cpptools.api": "未能获取 cppTools API",

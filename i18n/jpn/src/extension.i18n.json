@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "開いている {0} 上でワークスペースを構成しています",
 	"configure.now.button": "今すぐ構成",
 	"configure.recommended": "新しいキット定義にアップグレードした後に、再構成することをお勧めします。",
-	"using.cache.to.configure.workspace.on.open": "キャッシュを使って、オープンな {0} でワークスペースを構成します",
+	"using.cache.to.configure.workspace.on.open": "キャッシュを使用してワークスペース {0} を構成しようとしています",
 	"update.code.model.for.cpptools": "cpptools のコード モデルの更新",
 	"update.intellisense.disabled": "{0} が {1} に設定されているため、構成プロバイダーを更新しません",
 	"failed.to.get.cpptools.api": "cppTools API を取得できませんでした",
