@@ -335,10 +335,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
     private readonly _testPreset = new Property<preset.TestPreset | null>(null);
 
-    /**
-     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
-     */
-    async setTestPreset(testPreset: string | null) {
+    async expandTestPresetbyName(testPreset: string | null): Promise<preset.TestPreset | undefined> {
         if (testPreset) {
             log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
             const expandedTestPreset = await preset.expandTestPreset(this.folder.uri.fsPath,
@@ -348,24 +345,39 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 this.getPreferredGeneratorName(),
                 true,
                 this.configurePreset?.name);
-            this._testPreset.set(expandedTestPreset);
             if (!expandedTestPreset) {
                 log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
-                this._testPreset.set(null);
-                return;
+                return undefined;
             }
             if (!expandedTestPreset.configurePreset) {
                 log.error(localize('configurePreset.not.set.test.preset', '"configurePreset" is not set in test preset: {0}', testPreset));
+                return undefined;
+            }
+            return expandedTestPreset;
+        }
+    }
+
+    /**
+     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+     */
+    async setTestPreset(testPreset: string | null) {
+        if (testPreset) {
+            log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
+            const expandedTestPreset = await this.expandTestPresetbyName(testPreset);
+            if (!expandedTestPreset) {
                 this._testPreset.set(null);
                 return;
             }
+            this._testPreset.set(expandedTestPreset);
             log.debug(localize('loading.new.test.preset', 'Loading new test preset into CMake driver'));
             const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
             if (drv) {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setTestPreset(expandedTestPreset);
-                    await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
+                    if (expandedTestPreset.configurePreset) {
+                        await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
+                    }
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
                     void vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset {0}.', `"${error}"`));
@@ -374,8 +386,10 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     this._testPreset.set(null);
                 }
             } else {
-                // Remember the selected test preset for the next session.
-                await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
+                if (expandedTestPreset.configurePreset) {
+                    // Remember the selected test preset for the next session.
+                    await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
+                }
             }
         } else {
             this._testPreset.set(null);

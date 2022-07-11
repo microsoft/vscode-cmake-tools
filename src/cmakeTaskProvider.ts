@@ -197,7 +197,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runBuildTask(): Promise<any> {
         let fullCommand: proc.BuildCommand | null;
-        let cmakePath: string = "CMake.EXE";
+        let cmakePath: string = "CMake.exe";
         let args: string[] = [];
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
@@ -254,7 +254,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         let result: number | undefined | null;
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-        const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.EXE";
+        const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.exe";
         let args: string[] = [];
         if (this.preset) {
             const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
@@ -278,15 +278,19 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
         let result: number | undefined | null;
+        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
+        const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.exe";
+        let args: string[] = [];
         if (this.preset) {
-            const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
-            const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-            const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.EXE";
-            const args: string[] = [ "--preset", this.preset];
+            const testPreset: preset.TestPreset | undefined = await cmakeTools?.expandTestPresetbyName(this.preset);
+            args = (cmakeDriver && testPreset) ? cmakeDriver.generateTestArgsFromPreset(testPreset) : [];
             const execResult = await proc.execute(cmakePath, args, this, this.options).result;
             result = execResult?.retc;
         } else {
-            result =  await vscode.commands.executeCommand('cmake.ctest');
+            args = cmakeDriver ? await cmakeDriver.generateTestArgsFromSettings() : [];
+            const execResult = await proc.execute(cmakePath, args, this, this.options).result;
+            result = execResult?.retc;
         }
         this.closeEmitter.fire((result === undefined || result === null) ? -1 : result);
     }

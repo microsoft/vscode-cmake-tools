@@ -361,6 +361,8 @@ export class CTestDriver implements vscode.Disposable {
 
     private readonly _resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
     readonly onResultsChanged = this._resultsChangedEmitter.event;
+    
+    generateTestArgsFromPreset
 
     async runCTest(driver: CMakeDriver): Promise<number> {
         log.showChannel();
