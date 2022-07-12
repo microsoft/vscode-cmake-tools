@@ -1753,6 +1753,11 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 
     private readonly cTestController = new CTestDriver(this.workspaceContext);
+
+    public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset) {
+        return this.cTestController.runCTest(driver, true, testPreset);
+    }
+
     async ctest(): Promise<number> {
 
         const buildResult = await this.build();
@@ -1765,7 +1770,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         if (!drv) {
             throw new Error(localize('driver.died.after.build.succeeded', 'CMake driver died immediately after build succeeded.'));
         }
-        return this.cTestController.runCTest(drv);
+        return await this.cTestController.runCTest(drv) || -1;
     }
 
     /**

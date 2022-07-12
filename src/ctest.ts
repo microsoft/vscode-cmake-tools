@@ -11,7 +11,7 @@ import { fs } from './pr';
 import { OutputConsumer } from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
-import { testArgs } from './preset';
+import { testArgs, TestPreset } from './preset';
 import { expandString } from './expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -361,12 +361,12 @@ export class CTestDriver implements vscode.Disposable {
 
     private readonly _resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
     readonly onResultsChanged = this._resultsChangedEmitter.event;
-    
-    generateTestArgsFromPreset
 
-    async runCTest(driver: CMakeDriver): Promise<number> {
-        log.showChannel();
-        this._decorationManager.clearFailingTestDecorations();
+    public async runCTest(driver: CMakeDriver, customized: boolean = false, testPreset?: TestPreset): Promise<number|null> {
+        if (!customized) {
+            log.showChannel();
+            this._decorationManager.clearFailingTestDecorations();
+        }
 
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
         if (ctestpath === null) {
@@ -375,7 +375,9 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         let ctestArgs: string[];
-        if (driver.useCMakePresets) {
+        if (customized && testPreset) {
+            ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
+        } else if (!customized && driver.useCMakePresets) {
             if (!driver.testPreset) {
                 log.error(localize('test.preset.not.set', 'Test preset is not set'));
                 return -3;
@@ -404,11 +406,13 @@ export class CTestDriver implements vscode.Disposable {
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
         await this.reloadTests(driver);
-        if (res.retc === null) {
-            log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
-            return -1;
-        } else {
-            log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
+        if (!customized) {
+            if (res.retc === null) {
+                log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
+                return -1;
+            } else {
+                log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
+            }
         }
         return res.retc;
     }
@@ -491,3 +495,4 @@ export class CTestDriver implements vscode.Disposable {
         this.testResults = currentTestResults;
     }
 }
+

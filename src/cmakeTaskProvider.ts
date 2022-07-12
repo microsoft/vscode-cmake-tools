@@ -11,6 +11,7 @@ import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
 import CMakeTools from './cmakeTools';
 import * as preset from '@cmt/preset';
+import * as ctest from '@cmt/ctest';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -277,20 +278,17 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
-        let result: number | undefined | null;
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-        const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.exe";
-        let args: string[] = [];
+        let testPreset: preset.TestPreset | undefined;
         if (this.preset) {
-            const testPreset: preset.TestPreset | undefined = await cmakeTools?.expandTestPresetbyName(this.preset);
-            args = (cmakeDriver && testPreset) ? cmakeDriver.generateTestArgsFromPreset(testPreset) : [];
-            const execResult = await proc.execute(cmakePath, args, this, this.options).result;
-            result = execResult?.retc;
+            testPreset = await cmakeTools?.expandTestPresetbyName(this.preset);
+        }
+        const result: number | null | undefined = cmakeDriver ? await cmakeTools?.runCTestCustomized(cmakeDriver, testPreset) : undefined;
+        if (result === null) {
+            this.writeEmitter.fire(localize('ctest.run.terminated', 'CTest run was terminated'));
         } else {
-            args = cmakeDriver ? await cmakeDriver.generateTestArgsFromSettings() : [];
-            const execResult = await proc.execute(cmakePath, args, this, this.options).result;
-            result = execResult?.retc;
+            this.writeEmitter.fire(localize('ctest.finished.with.code', 'CTest finished with return code {0}', result));
         }
         this.closeEmitter.fire((result === undefined || result === null) ? -1 : result);
     }
