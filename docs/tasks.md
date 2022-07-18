@@ -78,10 +78,54 @@ You can chain a configure task to your build task by adding this to your task's 
         ]
 ```
 
+# Install with CMake Tools tasks
+Similarly, You can create an install task from the VS Code command pallette by running the **Tasks: Configure task** command.
+
+By selecting "CMake: install" template, this task will be generated in tasks.json file:
+
+```json
+    {
+        "type": "cmake",
+        "label": "CMake: install",
+        "command": "install",
+        "problemMatcher": [],
+        "detail": "CMake template install task"
+    }
+```
+
+# Test with CMake Tools tasks
+Similarly, You can create a test task from the VS Code command pallette by running the **Tasks: Configure task** command.
+
+By selecting "CMake: test" template, if you are not using presets, this task will be generated in tasks.json file: 
+
+```json
+    {
+        "type": "cmake",
+        "label": "CMake: test",
+        "command": "test",
+        "detail": "CMake template test task"
+    }
+```
+Note: When running this task, the test settings defined in settings.json will be used.
+
+However, if you are using presets, this task will be generated in tasks.json file:
+
+```json
+    {
+        "type": "cmake",
+        "label": "CMake: test",
+        "command": "test",
+        "preset": "${command:cmake.activeTestPresetName}",
+        "detail": "CMake template test task"
+    }
+```
+
+Note: When running this task, the test settings defined in CMakeUserPresets.json/CMakePresets.json will be used.
+
 # Clean/Clean-rebuild with CMake Tools tasks
 Similarly, you can create a Clean/Clean-rebuild task from the VS Code command pallette by running the **Tasks: Configure task** command.
 
-By selecting "CMake: clean"/"CMake: clean rebuild" template, if you are not using presets, this task will be generated in tasks.json file:
+By selecting "CMake: clean"/"CMake: clean rebuild" template, these task will be generated in tasks.json file:
 
 ```json
 		{
