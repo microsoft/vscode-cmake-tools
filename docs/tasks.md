@@ -32,7 +32,7 @@ However, if you are using presets, this task will be generated in tasks.json fil
         "detail": "CMake template configure task"
     }
 ```
-
+You can modify "preset" option with your chosen configure preset name.
 Note: When running this task, the configure settings defined in CMakeUserPresets.json/CMakePresets.json will be used.
 
 
