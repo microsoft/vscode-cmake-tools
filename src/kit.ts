@@ -418,7 +418,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             }
         }
         return {
-            name: clang_cl_res ? version.detectedName.replace(/^Clang/, 'Clang\-cl') : version.detectedName,
+            name: clang_cl_res ? version.detectedName.replace(/^Clang/, 'Clang-cl') : version.detectedName,
             compilers: clangCompilers
         };
     } else {
@@ -798,35 +798,46 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         for (const vs of vsInstalls) {
             const install_name = vsDisplayName(vs);
             const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
-
             const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
-            const useClangVersion: boolean = versionLess(version.version, '14.0.0');
-            const clangKitName: string = (isClangCL ? `Clang-cl` : `Clang`) + (useClangVersion ? ` ${version.version}` : "") + ` ${clang_cli} for ${install_name} - ${vs_arch} (MSVC ${vs.installationVersion})`;
+            const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
             const clangCXX = isClangCL ? binPath : binPath.replace(/^clang/, 'clang++');
-            const installationVersion = /^(\d+)+./.exec(vs.installationVersion);
-            let generatorName: string | undefined;
-            if (installationVersion) {
-                generatorName = VsGenerators[installationVersion[1]];
-            }
-            if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`)) {
-                if (generatorName) {
+            const clangExists = async () => (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && util.checkFileExists(util.lightNormalizePath(binPath)));
+            if (!isClangCL) {
+                if (await clangExists()) {
                     clangKits.push({
                         name: clangKitName,
                         visualStudio: kitVSName(vs),
                         visualStudioArchitecture: vs_arch,
-                        preferredGenerator: {
-                            name: generatorName,
-                            platform: vs_arch,
-                            toolset: `host=${vs_arch}`
-                        },
                         compilers: {
                             C: binPath,
                             CXX: clangCXX
                         }
                     });
                 }
+            } else {
+                const installationVersion = /^(\d+)+./.exec(vs.installationVersion);
+                const generatorName: string | undefined = installationVersion ? VsGenerators[installationVersion[1]] : undefined;
+                if (generatorName) {
+                    if (await clangExists()) {
+                        clangKits.push({
+                            name: clangKitName,
+                            visualStudio: kitVSName(vs),
+                            visualStudioArchitecture: vs_arch,
+                            preferredGenerator: {
+                                name: generatorName,
+                                platform: vs_arch,
+                                toolset: `host=${vs_arch}`
+                            },
+                            compilers: {
+                                C: binPath,
+                                CXX: clangCXX
+                            }
+                        });
+                    }
+                }
             }
         }
+
         return clangKits;
     });
     return ([] as Kit[]).concat(...kits);
