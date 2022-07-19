@@ -803,18 +803,31 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
             const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
 
             const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
-            const clangKitName = (isClangCL ? `Clang-cl` : `Clang`) + ` ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
+            const useClangVersion: boolean = versionLess(version.version, '14.0.0');
+            const clangKitName: string = (isClangCL ? `Clang-cl` : `Clang`) + (useClangVersion ? ` ${version.version}` : "") + ` ${clang_cli} for ${install_name} - ${vs_arch} (MSVC ${vs.installationVersion})`;
             const clangCXX = isClangCL ? binPath : binPath.replace(/^clang/, 'clang++');
+            const installationVersion = /^(\d+)+./.exec(vs.installationVersion);
+            let generatorName: string | undefined;
+            if (installationVersion) {
+                generatorName = VsGenerators[installationVersion[1]];
+            }
             if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`)) {
-                clangKits.push({
-                    name: clangKitName,
-                    visualStudio: kitVSName(vs),
-                    visualStudioArchitecture: vs_arch,
-                    compilers: {
-                        C: binPath,
-                        CXX: clangCXX
-                    }
-                });
+                if (generatorName) {
+                    clangKits.push({
+                        name: clangKitName,
+                        visualStudio: kitVSName(vs),
+                        visualStudioArchitecture: vs_arch,
+                        preferredGenerator: {
+                            name: generatorName,
+                            platform: vs_arch,
+                            toolset: `host=${vs_arch}`
+                        },
+                        compilers: {
+                            C: binPath,
+                            CXX: clangCXX
+                        }
+                    });
+                }
             }
         });
         return clangKits;
