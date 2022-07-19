@@ -50,11 +50,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
         return this._needsReconfigure;
     }
 
-    async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    async doSetKit(cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
-        if (need_clean) {
-            await this._cleanPriorConfiguration();
-        }
         await cb();
     }
 
@@ -165,6 +162,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
         return [];
     }
     get uniqueTargets() {
+        return [];
+    }
+    get cmakeFiles() {
         return [];
     }
 

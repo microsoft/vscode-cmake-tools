@@ -449,21 +449,21 @@ export class CMakeTools implements api.CMakeToolsAPI {
         return this.shutDownCMakeDriver();
     });
 
-    private readonly generatorSub = this.workspaceContext.config.onChange('generator', () => {
+    private readonly generatorSub = this.workspaceContext.config.onChange('generator', async () => {
         log.info(localize('generator.changed.restart.driver', "Restarting the CMake driver after a generator change."));
-        return this.reloadCMakeDriver();
+        await this.reloadCMakeDriver();
     });
 
-    private readonly preferredGeneratorsSub = this.workspaceContext.config.onChange('preferredGenerators', () => {
+    private readonly preferredGeneratorsSub = this.workspaceContext.config.onChange('preferredGenerators', async () => {
         log.info(localize('preferredGenerator.changed.restart.driver', "Restarting the CMake driver after a preferredGenerators change."));
-        return this.reloadCMakeDriver();
+        await this.reloadCMakeDriver();
     });
 
-    private readonly sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () =>
+    private readonly sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () => {
         this._sourceDir = await util.normalizeAndVerifySourceDir(
             await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
-        )
-    );
+        );
+    });
 
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
@@ -515,11 +515,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
      */
     async asyncDispose() {
         collections.reset();
-        if (this.cmakeDriver) {
-            const drv = await this.cmakeDriver;
-            if (drv) {
-                await drv.asyncDispose();
-            }
+        const drv = await this.cmakeDriver;
+        if (drv) {
+            await drv.asyncDispose();
         }
         for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this._testResults, this.isBusy, this.variantManager, this.cTestController]) {
             disp.dispose();
@@ -900,20 +898,32 @@ export class CMakeTools implements api.CMakeToolsAPI {
             }
 
             const sourceDirectory = (this.sourceDir).toLowerCase();
-            let isCmakeListsFile: boolean = false;
-            if (str.endsWith("cmakelists.txt")) {
-                const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
-                // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
-                isCmakeListsFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
-                    (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
+
+            let isCmakeFile: boolean;
+            if (drv && drv.cmakeFiles.length > 0) {
+                // If CMake file information is available from the driver, use it
+                isCmakeFile = drv.cmakeFiles.some(f => lightNormalizePath(str) === lightNormalizePath(path.resolve(this.sourceDir, f).toLowerCase()));
+            } else {
+                // Otherwise, fallback to a simple check (does not cover CMake include files)
+                isCmakeFile = false;
+                if (str.endsWith("cmakelists.txt")) {
+                    const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+                    // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
+                    isCmakeFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
+                        (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
+                }
             }
-            if (isCmakeListsFile) {
+
+            if (isCmakeFile) {
                 // CMakeLists.txt change event: its creation or deletion are relevant,
                 // so update full/partial feature set view for this folder.
                 await updateFullFeatureSetForFolder(this.folder);
                 if (drv && !drv.configOrBuildInProgress()) {
                     if (drv.config.configureOnEdit) {
                         log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
+                        if (this.workspaceContext.config.clearOutputBeforeBuild) {
+                            log.clearOutputChannel();
+                        }
                         await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
                     }
                 } else {
@@ -1033,7 +1043,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
         return this.driverStrand.execute(async () => {
             if (!this.useCMakePresets && !this.activeKit) {
-                log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kits defined'));
+                log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kit selected'));
                 return null;
             }
 
@@ -1242,6 +1252,11 @@ export class CMakeTools implements api.CMakeToolsAPI {
             await this.cTestController.reloadTests(drv);
             this.onReconfiguredEmitter.fire();
             return result;
+        }
+
+        if (trigger === ConfigureTrigger.configureWithCache) {
+            log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));
+            return -1;
         }
 
         return vscode.window.withProgress(
@@ -1631,8 +1646,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 return 1;
             }
 
-            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
-                await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, () => {
+                void this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
             });
             await this.cacheEditorWebview.initPanel();
 

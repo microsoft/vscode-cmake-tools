@@ -494,9 +494,7 @@ export class ConfigurationReader implements vscode.Disposable {
      * @param setting The name of the setting to watch
      * @param cb A callback when the setting changes
      */
-    onChange<K extends keyof ExtensionConfigurationSettings>(setting: K,
-        cb: (value: ExtensionConfigurationSettings[K]) => void):
-        vscode.Disposable {
+    onChange<K extends keyof ExtensionConfigurationSettings>(setting: K, cb: (value: ExtensionConfigurationSettings[K]) => any): vscode.Disposable {
         // Can't use vscode.EventEmitter<ExtensionConfigurationSettings[K]> here, potentially because K and keyof ExtensionConfigurationSettings
         // may not be the same...
         const emitter: vscode.EventEmitter<any> = this._emitters[setting];

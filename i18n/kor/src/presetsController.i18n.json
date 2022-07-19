@@ -74,6 +74,7 @@
 	"loading.test.preset": "테스트 사전 설정 {0} 로드 중",
 	"reading.presets.file": "사전 설정 파일 {0} 읽기",
 	"failed.to.parse": "{0}을(를) 구문 분석하지 못함: {1}",
+	"included.presets.file.not.found": "포함된 사전 설정 파일 {0}을(를) 찾을 수 없습니다.",
 	"invalid.file.error": "잘못된 키트 콘텐츠 {0}({1}):",
 	"successfully.validated.presets": "{0}에서 사전 설정의 유효성을 검사했습니다.",
 	"use.kits.variants": "키트 및 변형 사용",

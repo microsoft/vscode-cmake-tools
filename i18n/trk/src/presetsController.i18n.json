@@ -74,6 +74,7 @@
 	"loading.test.preset": "Test ön ayarı {0} yükleniyor",
 	"reading.presets.file": "Ön ayar dosyaları {0} okunuyor",
 	"failed.to.parse": "{0} ayrıştırılamadı: {1}",
+	"included.presets.file.not.found": "Eklenen ön ayarlar dosyası ({0}) bulunamıyor",
 	"invalid.file.error": "Geçersiz kit içeriği {0} ({1}):",
 	"successfully.validated.presets": "{0} içinde ön ayarlar başarıyla doğrulandı",
 	"use.kits.variants": "Setleri ve çeşitleri kullanın",

@@ -2,12 +2,15 @@
 
 ## 1.12
 Improvements:
+- Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
 - Support for presets version 4. [#2492](https://github.com/microsoft/vscode-cmake-tools/issues/2492) [@chausner](https://github.com/chausner)
 - Add target name to terminal window name for launch. [#2613](https://github.com/microsoft/vscode-cmake-tools/issues/2613)
 
 Bug Fixes:
 - Set the working directory for the file api driver. [#2569](https://github.com/microsoft/vscode-cmake-tools/issues/2569)
 - CMakeUserPresets.json version not detected without CMakePresets.json. [#2469](https://github.com/microsoft/vscode-cmake-tools/issues/2469) [@chausner](https://github.com/chausner)
+- Clear output channel after auto-reconfigure. [#2628](https://github.com/microsoft/vscode-cmake-tools/issues/2628)
+- Don't delete CMakeCache.txt when switching kits if the buildDirectory also changes. [#2546](https://github.com/microsoft/vscode-cmake-tools/issues/2546) [@david-fong](https://github.com/david-fong)
 
 ## 1.11.26
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
