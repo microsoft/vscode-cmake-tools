@@ -761,9 +761,9 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
 
 async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools?: CMakeTools): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
-        const isClangGNUCLI = (path.basename(binPath, '.exe') === 'clang');
-        const isClangCL = (path.basename(binPath, '.exe') === 'clang-cl');
-        if (!isClangGNUCLI && !isClangCL) {
+        const isClangGnuCli = (path.basename(binPath, '.exe') === 'clang');
+        const isClangMsvcCli = (path.basename(binPath, '.exe') === 'clang-cl');
+        if (!isClangGnuCli && !isClangMsvcCli) {
             return null;
         }
 
@@ -775,7 +775,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         let clang_cli = '(MSVC CLI)';
 
         // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
-        if (isClangGNUCLI) {
+        if (isClangGnuCli) {
             if (undefined === cmakeTools) {
                 log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: cmakeTools is undefined"));
                 return null;
@@ -800,9 +800,9 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
             const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
             const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
             const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
-            const clangCXX = isClangCL ? binPath : binPath.replace(/^clang/, 'clang++');
+            const clangCXX = isClangMsvcCli ? binPath : binPath.replace(/^clang/, 'clang++');
             const clangExists = async () => (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && util.checkFileExists(util.lightNormalizePath(binPath)));
-            if (!isClangCL) {
+            if (isClangGnuCli) {
                 if (await clangExists()) {
                     clangKits.push({
                         name: clangKitName,
