@@ -19,53 +19,53 @@ jobs:
         with:
           node-version: 16
 
-        - name: Build the extension
-          uses: GabrielBB/xvfb-action@v1.6
-          with:
-            run: yarn compile-production
+      - name: Build the extension
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn compile-production
 
-        - name: Lint
-          run: yarn lint
+      - name: Lint
+        run: yarn lint
 
-        - name: Install CMake/Ninja
-          uses: lukka/get-cmake@v3.18.3
+      - name: Install CMake/Ninja
+        uses: lukka/get-cmake@v3.18.3
 
-        - name: Build fake compilers for tests
-          uses: urkle/action-cmake-build@v1.0.0
-          with:
-            source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
-            configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
-            install-build: true
+      - name: Build fake compilers for tests
+        uses: urkle/action-cmake-build@v1.0.0
+        with:
+          source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
+          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
+          install-build: true
 
-        - name: Delete NOTICE.txt
-          run: rm ${{ github.workspace }}/NOTICE.txt
+      - name: Delete NOTICE.txt
+        run: rm ${{ github.workspace }}/NOTICE.txt
 
-        - name: Run backend tests
-          uses: GabrielBB/xvfb-action@v1.6
-          with:
-            run: yarn backendTests
+      - name: Run backend tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn backendTests
 
-        - name: Run smoke tests
-          uses: GabrielBB/xvfb-action@v1.6
-          with:
-            run: yarn smokeTests
+      - name: Run smoke tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn smokeTests
 
-        #- name: Run unit tests
-        #  uses: GabrielBB/xvfb-action@v1.6
-        #  with:
-        #   run: yarn unitTests
+      #- name: Run unit tests
+      #  uses: GabrielBB/xvfb-action@v1.6
+      #  with:
+      #   run: yarn unitTests
 
-        - name: Run successful-build test
-          uses: GabrielBB/xvfb-action@v1.6
-          with:
-            run: yarn extensionTestsSuccessfulBuild
+      - name: Run successful-build test
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn extensionTestsSuccessfulBuild
 
-        - name: Run single root test
-          uses: GabrielBB/xvfb-action@v1.6
-          with:
-            run: yarn extensionTestsSingleRoot
+      - name: Run single root test
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn extensionTestsSingleRoot
 
-        - name: Run multi root test
-          uses: GabrielBB/xvfb-action@v1.6
-          with:
-            run: yarn extensionTestsMultiRoot
+      - name: Run multi root test
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn extensionTestsMultiRoot
