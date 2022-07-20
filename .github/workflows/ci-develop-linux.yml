@@ -50,10 +50,10 @@ jobs:
         with:
           run: yarn smokeTests
 
-      #- name: Run unit tests
-      #  uses: GabrielBB/xvfb-action@v1.6
-      #  with:
-      #   run: yarn unitTests
+      - name: Run unit tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+         run: yarn unitTests
 
       - name: Run successful-build test
         uses: GabrielBB/xvfb-action@v1.6
