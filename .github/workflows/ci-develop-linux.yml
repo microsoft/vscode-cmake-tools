@@ -20,9 +20,7 @@ jobs:
           node-version: 16
 
       - name: Build the extension
-        uses: GabrielBB/xvfb-action@v1.6
-        with:
-          run: yarn compile-production
+        run: yarn compile-production
 
       - name: Lint
         run: yarn lint
