@@ -14,20 +14,48 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Install dependent packages
-        run: |
-          sudo apt update
-          sudo apt install powershell gdb xvfb
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v2
+      - name: Setup Yarn environment
+        uses: DerYeger/yarn-setup-action@v1.0.1
         with:
-          node-version: '14'
-          # Set this option if you want the action to check for the latest available version that satisfies the version spec
-          check-latest: true
+          node-version: 16
 
       - name: Build the extension and run tests
         uses: GabrielBB/xvfb-action@v1.4
         with:
-          # Command to execute using xvfb
-          run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
+
+          - name: Build the extension
+            run: yarn compile-production
+
+          - name: Lint
+            run: yarn lint
+
+          - name: Install CMake/Ninja
+            uses: lukka/get-cmake@v3.18.3
+
+          - name: Build fake compilers for tests
+            uses: urkle/action-cmake-build@v1.0.0
+            with:
+              source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
+              configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
+              install-build: true
+
+          - name: Delete NOTICE.txt
+            run: rm ${{ github.workspace }}/NOTICE.txt
+
+          - name: Run backend tests
+            run: yarn backendTests
+
+          - name: Run smoke tests
+            run: yarn smokeTests
+
+          #- name: Run unit tests
+          #  run: yarn unitTests
+
+          - name: Run successful-build test
+            run: yarn extensionTestsSuccessfulBuild
+
+          - name: Run single root test
+            run: yarn extensionTestsSingleRoot
+
+          - name: Run multi root test
+            run: yarn extensionTestsMultiRoot
