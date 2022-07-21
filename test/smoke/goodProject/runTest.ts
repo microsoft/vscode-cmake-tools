@@ -13,7 +13,7 @@ async function main() {
         const extensionTestsPath = path.resolve(__dirname, './index');
         const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/smoke/goodProject');
         const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
-        await runTests({ version: '1.68.1', launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
+        await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
 
     } catch (err) {
         console.error(err);

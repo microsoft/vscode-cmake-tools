@@ -22,7 +22,7 @@ async function main() {
         };
 
         // Download VS Code, unzip it and run the integration test
-        await runTests({ version: '1.68.1', launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
+        await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
     } catch (err) {
         console.error(err);
         console.error('Failed to run tests');
