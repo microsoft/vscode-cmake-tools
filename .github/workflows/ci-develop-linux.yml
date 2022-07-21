@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       - name: Setup Yarn environment
@@ -42,7 +41,9 @@ jobs:
         run: yarn backendTests
 
       - name: Run smoke tests
-        run: yarn smokeTests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn smokeTests
 
       - name: Run unit tests
         uses: GabrielBB/xvfb-action@v1.6
