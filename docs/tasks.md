@@ -125,19 +125,19 @@ Note: When running this task, the test settings defined in CMakeUserPresets.json
 # Clean/Clean-rebuild with CMake Tools tasks
 Similarly, you can create a Clean/Clean-rebuild task from the VS Code command pallette by running the **Tasks: Configure task** command.
 
-By selecting "CMake: clean"/"CMake: clean rebuild" template, these task will be generated in tasks.json file:
+By selecting "CMake: clean" or "CMake: clean rebuild" template, these task will be generated in tasks.json file:
 
 ```json
-		{
-			"type": "cmake",
-			"label": "CMake: clean",
-			"command": "clean",
-			"detail": "CMake template clean task"
-		},
-		{
-			"type": "cmake",
-			"label": "CMake: clean rebuild",
-			"command": "cleanRebuild",
-			"detail": "CMake template clean rebuild task"
-		}
+    {
+        "type": "cmake",
+        "label": "CMake: clean",
+        "command": "clean",
+        "detail": "CMake template clean task"
+    },
+    {
+        "type": "cmake",
+        "label": "CMake: clean rebuild",
+        "command": "cleanRebuild",
+        "detail": "CMake template clean rebuild task"
+    }
 ```
