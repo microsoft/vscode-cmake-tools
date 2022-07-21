@@ -25,9 +25,7 @@ jobs:
         run: yarn lint
 
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@v3.18.2
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+        uses: lukka/get-cmake@v3.19.0
 
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0
