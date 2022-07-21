@@ -39,19 +39,15 @@ jobs:
         run: rm ${{ github.workspace }}/NOTICE.txt
 
       - name: Run backend tests
-        uses: GabrielBB/xvfb-action@v1.6
-        with:
-          run: yarn backendTests
+        run: yarn backendTests
 
       - name: Run smoke tests
-        uses: GabrielBB/xvfb-action@v1.6
-        with:
-          run: yarn smokeTests
+        run: yarn smokeTests
 
       - name: Run unit tests
         uses: GabrielBB/xvfb-action@v1.6
         with:
-         run: yarn unitTests
+          run: yarn unitTests
 
       - name: Run successful-build test
         uses: GabrielBB/xvfb-action@v1.6
