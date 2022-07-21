@@ -13,6 +13,8 @@ Bug Fixes:
 - Don't delete CMakeCache.txt when switching kits if the buildDirectory also changes. [#2546](https://github.com/microsoft/vscode-cmake-tools/issues/2546) [@david-fong](https://github.com/david-fong)
 - Add "description" properties to the cmake.revealLog setting. [#2578](https://github.com/microsoft/vscode-cmake-tools/issues/2578)
 
+- Detect clang-cl.exe compilers that are not bundled with Visual Studio. [#2622](https://github.com/microsoft/vscode-cmake-tools/issues/2622)
+
 ## 1.11.26
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
 
