@@ -800,7 +800,6 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
             const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
             const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
             const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
-            const clangCXX = isClangMsvcCli ? binPath : binPath.replace(/^clang/, 'clang++');
             const clangExists = async () => {
                 const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
                 return exists;
@@ -813,7 +812,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                         visualStudioArchitecture: vs_arch,
                         compilers: {
                             C: binPath,
-                            CXX: clangCXX
+                            CXX: binPath
                         }
                     });
                 }
@@ -833,7 +832,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                             },
                             compilers: {
                                 C: binPath,
-                                CXX: clangCXX
+                                CXX: binPath
                             }
                         });
                     }
