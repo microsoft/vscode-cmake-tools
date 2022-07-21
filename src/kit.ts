@@ -809,7 +809,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                     clangKits.push({
                         name: clangKitName,
                         visualStudio: kitVSName(vs),
-                        visualStudioArchitecture: generatorPlatformFromVSArch[vs_arch] as string || vs_arch,
+                        visualStudioArchitecture: vs_arch,
                         compilers: {
                             C: binPath,
                             CXX: binPath
