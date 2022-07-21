@@ -27,9 +27,7 @@ jobs:
 
       # The cmake server mode has been removed since CMake 3.20
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@v3.18.2
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+        uses: lukka/get-cmake@v3.18.3
 
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0
