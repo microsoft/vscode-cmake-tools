@@ -1906,7 +1906,13 @@
             "focus",
             "always",
             "never"
-          ]
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.revealLog.focus.description%",
+            "%cmake-tools.configuration.cmake.revealLog.always.description%",
+            "%cmake-tools.configuration.cmake.revealLog.never.description%"
+          ],
+          "description":"%cmake-tools.configuration.cmake.revealLog.description%"
         },
         "cmake.exportCompileCommandsFile": {
           "type": "boolean",
