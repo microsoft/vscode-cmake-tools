@@ -801,7 +801,10 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
             const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
             const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
             const clangCXX = isClangMsvcCli ? binPath : binPath.replace(/^clang/, 'clang++');
-            const clangExists = async () => (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && util.checkFileExists(util.lightNormalizePath(binPath)));
+            const clangExists = async () => {
+                const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
+                return exists;
+            };
             if (isClangGnuCli) {
                 if (await clangExists()) {
                     clangKits.push({
