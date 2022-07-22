@@ -514,14 +514,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         log.info(localize('switching.to.kit', 'Switching to kit: {0}', kit.name));
 
-        const opts = this.expansionOptions;
-        opts.vars.buildKit = kit.name;
-        const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
-
-        const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
-        await this.doSetKit(needs_clean, async () => {
+        const oldBinaryDir = this.binaryDir;
+        const needsCleanIfKitChange = kitChangeNeedsClean(kit, this._kit);
+        await this.doSetKit(async () => {
             await this._setKit(kit, preferredGenerators);
             await this._refreshExpansions();
+            const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, this.expansionOptions));
+            if (needsCleanIfKitChange && (newBinaryDir === oldBinaryDir)) {
+                await this._cleanPriorConfiguration();
+            }
         });
     }
 
@@ -559,7 +560,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected abstract doSetBuildPreset(cb: () => Promise<void>): Promise<void>;
     protected abstract doSetTestPreset(cb: () => Promise<void>): Promise<void>;
 
-    protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
+    protected abstract doSetKit(cb: () => Promise<void>): Promise<void>;
 
     protected get generator(): CMakeGenerator | null {
         return this._generator;

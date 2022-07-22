@@ -7,7 +7,7 @@
 	"path.not.a.file": "{0} kann nicht gelesen werden, da es sich nicht um eine Datei handelt. Die Codemodellinformationen sind unvollständig oder beschädigt. Möglicherweise müssen Sie den Cache löschen und neu konfigurieren.",
 	"failed.writing.to.file": "Fehler beim Schreiben in Datei {0}",
 	"cache.object.version": "Unerwartete Cacheobjektversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch.",
-	"cmake.files.object.version": "CMake Files object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}).",
+	"cmake.files.object.version": "Unerwartete CMake Files-Objektversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}).",
 	"cache.entry.unknowntype": "Unbekannter Cacheeintragstyp: {0}.",
 	"code.model.version": "Unerwartete Codemodellversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch.",
 	"toolchains.object.version": "Unerwartete Objektversion für “toolchains” ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch."

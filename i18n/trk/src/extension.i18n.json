@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Açık {0} konumunda çalışma alanı yapılandırılıyor",
 	"configure.now.button": "Şimdi Yapılandır",
 	"configure.recommended": "Yeni bir set tanımına yükselttikten sonra yeniden yapılandırmanız önerilir.",
-	"using.cache.to.configure.workspace.on.open": "Açık {0} üzerindeki çalışma alanını yapılandırmak için önbellek kullanılıyor",
+	"using.cache.to.configure.workspace.on.open": "{0} çalışma alanını yapılandırmak için önbellek kullanılmaya çalışılıyor",
 	"update.code.model.for.cpptools": "cpptools için kod modelini güncelleştir",
 	"update.intellisense.disabled": "{0}, {1} olarak ayarlandığından yapılandırma sağlayıcısı güncelleştirilemedi",
 	"failed.to.get.cpptools.api": "cppTools API'si alınamadı",

@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "正在於開啟的 {0} 上設定工作區",
 	"configure.now.button": "立即設定",
 	"configure.recommended": "建議您在升級為新套件定義後重新設定。",
-	"using.cache.to.configure.workspace.on.open": "使用快取在開放式 {0} 上設定工作區",
+	"using.cache.to.configure.workspace.on.open": "正在嘗試使用快取來設定工作區 {0}",
 	"update.code.model.for.cpptools": "更新 cpptools 的程式碼模型",
 	"update.intellisense.disabled": "未更新設定提供者，因為 {0} 設定為 {1}",
 	"failed.to.get.cpptools.api": "無法取得 cppTools API",

@@ -284,8 +284,10 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     // Check by filename what the compiler might be. This is just heuristic.
     const gcc_regex = /^((\w+-)*)gcc(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
     const clang_regex = /^clang(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
+    const clang_cl_regex = /^clang\-cl(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
     const gcc_res = gcc_regex.exec(fname);
     const clang_res = clang_regex.exec(fname);
+    const clang_cl_res = clang_cl_regex.exec(fname);
     if (gcc_res) {
         const version = await getCompilerVersion('GCC', bin, pr);
         if (version === null) {
@@ -368,7 +370,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         }
         return gccKit;
 
-    } else if (clang_res) {
+    } else if (clang_res || clang_cl_res) {
         const version = await getCompilerVersion('Clang', bin, pr);
         if (version === null) {
             return null;
@@ -383,7 +385,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         }
 
         const clangCompilers: { [lang: string]: string } = {};
-        const clangxx_fname = fname.replace(/^clang/, 'clang++');
+        const clangxx_fname = clang_cl_res ? fname : fname.replace(/^clang/, 'clang++');
         const clangxx_bin1 = path.join(path.dirname(bin), clangxx_fname);
         log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
         if (await fs.exists(clangxx_bin1)) {
@@ -392,9 +394,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             // Names like clang++-13
             clangCompilers.CXX = clangxx_bin1;
         } else {
-            const fname2 = fname.replace(/clang(-\d+(\.\d+(\.\d+)?)?)/, 'clang');
+            const fname2 = clang_cl_res ? fname.replace(/clang\-cl(-\d+(\.\d+(\.\d+)?)?)/, 'clang-cl') : fname.replace(/clang(-\d+(\.\d+(\.\d+)?)?)/, 'clang');
             const bin2 = path.join(path.dirname(bin), fname2);
-            const clangxx_fname2 = fname2.replace(/clang/, 'clang++');
+            const clangxx_fname2 = clang_cl_res ? fname : fname2.replace(/clang/, 'clang++');
             const clangxx_bin2 = path.join(path.dirname(bin), clangxx_fname2);
             // Ensure the version is match
             const version2 = await fs.exists(bin2) ? await getCompilerVersion('Clang', bin2, pr) : null;
@@ -416,7 +418,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             }
         }
         return {
-            name: version.detectedName,
+            name: clang_cl_res ? version.detectedName.replace(/^Clang/, 'Clang-cl') : version.detectedName,
             compilers: clangCompilers
         };
     } else {
@@ -759,9 +761,9 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
 
 async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools?: CMakeTools): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
-        const isClangGNUCLI = (path.basename(binPath, '.exe') === 'clang');
-        const isClangCL = (path.basename(binPath, '.exe') === 'clang-cl');
-        if (!isClangGNUCLI && !isClangCL) {
+        const isClangGnuCli = (path.basename(binPath, '.exe') === 'clang');
+        const isClangMsvcCli = (path.basename(binPath, '.exe') === 'clang-cl');
+        if (!isClangGnuCli && !isClangMsvcCli) {
             return null;
         }
 
@@ -773,7 +775,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         let clang_cli = '(MSVC CLI)';
 
         // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
-        if (isClangGNUCLI) {
+        if (isClangGnuCli) {
             if (undefined === cmakeTools) {
                 log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: cmakeTools is undefined"));
                 return null;
@@ -796,21 +798,48 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         for (const vs of vsInstalls) {
             const install_name = vsDisplayName(vs);
             const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
-
             const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
-            const clangKitName = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
-            if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath))) {
-                clangKits.push({
-                    name: clangKitName,
-                    visualStudio: kitVSName(vs),
-                    visualStudioArchitecture: vs_arch,
-                    compilers: {
-                        C: binPath,
-                        CXX: binPath
+            const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
+            const clangExists = async () => {
+                const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
+                return exists;
+            };
+            if (isClangGnuCli) {
+                if (await clangExists()) {
+                    clangKits.push({
+                        name: clangKitName,
+                        visualStudio: kitVSName(vs),
+                        visualStudioArchitecture: vs_arch,
+                        compilers: {
+                            C: binPath,
+                            CXX: binPath
+                        }
+                    });
+                }
+            } else {
+                const installationVersion = /^(\d+)+./.exec(vs.installationVersion);
+                const generatorName: string | undefined = installationVersion ? VsGenerators[installationVersion[1]] : undefined;
+                if (generatorName) {
+                    if (await clangExists()) {
+                        clangKits.push({
+                            name: clangKitName,
+                            visualStudio: kitVSName(vs),
+                            visualStudioArchitecture: vs_arch,
+                            preferredGenerator: {
+                                name: generatorName,
+                                platform: generatorPlatformFromVSArch[vs_arch] as string || vs_arch,
+                                toolset: `host=${vs_arch}`
+                            },
+                            compilers: {
+                                C: binPath,
+                                CXX: binPath
+                            }
+                        });
                     }
-                });
+                }
             }
         }
+
         return clangKits;
     });
     return ([] as Kit[]).concat(...kits);
