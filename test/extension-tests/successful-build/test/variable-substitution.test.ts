@@ -6,7 +6,7 @@ import { objectPairs, platformNormalizePath, makeHashString } from '@cmt/util';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as path from 'path';
 
-suite('Variable and Variant Substitution', () => {
+suite('Variable Substitution', () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 
