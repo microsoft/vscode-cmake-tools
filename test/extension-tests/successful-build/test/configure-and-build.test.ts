@@ -9,9 +9,11 @@ import {
     expect,
     getFirstSystemKit,
     getMatchingProjectKit,
-    getMatchingSystemKit
+    getMatchingSystemKit,
+    getSystemKits
 } from '@test/util';
 import * as path from 'path';
+import { scanForKits } from '@cmt/kit';
 
 const workername: string = process.platform;
 
@@ -133,6 +135,9 @@ suite('Build', () => {
             expect(result1['compiler']).to.eql(compiler[1].compiler);
         } catch (notFoundError: any) {
             expect(notFoundError).startWith("Unable to find a Kit matching the expression:");
+            console.log(notFoundError);
+            const availableKits = await scanForKits(cmt, { ignorePath: process.platform === 'win32' });
+            console.log(JSON.stringify(availableKits, null, 2));
         }
 
     }).timeout(100000);
