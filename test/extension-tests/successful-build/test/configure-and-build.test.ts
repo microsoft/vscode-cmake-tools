@@ -12,7 +12,6 @@ import {
     getMatchingSystemKit
 } from '@test/util';
 import * as path from 'path';
-import * as proc from '@cmt/proc';
 
 const workername: string = process.platform;
 
@@ -125,27 +124,11 @@ suite('Build', () => {
         await cmt.build();
 
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        try {
-            // Sometimes the Clang kit is not found on windows machines, which makes this test fail.
-            const matchingKit = await getMatchingSystemKit(cmt, compiler[1].kitLabel);
-            await cmt.setKit(matchingKit);
-            await cmt.build();
-            const result1 = await testEnv.result.getResultAsJson();
-            expect(result1['compiler']).to.eql(compiler[1].compiler);
-        } catch (notFoundError: any) {
-            console.log('Clang kit not found');
-            let binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang.exe";
-            let exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-            console.log(exec.retc);
-            console.log(exec.stdout);
-            console.log(exec.stderr);
-            binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang-cl.exe";
-            exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-            console.log(exec.retc);
-            console.log(exec.stdout);
-            console.log(exec.stderr);
-        }
+        await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
 
+        await cmt.build();
+        const result1 = await testEnv.result.getResultAsJson();
+        expect(result1['compiler']).to.eql(compiler[1].compiler);
     }).timeout(100000);
 
     test('Test kit switch after missing preferred generator #512', async function (this: Mocha.Context) {
@@ -217,16 +200,11 @@ suite('Build', () => {
             await cmt.build();
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-            try {
-                await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
-                await cmt.build();
+            await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
+            await cmt.build();
 
-                const result1 = await testEnv.result.getResultAsJson();
-                expect(result1['compiler']).to.eql(compiler[1].compiler);
-            } catch (notFoundError: any) {
-                console.log('Clang kit not found');
-                console.log(notFoundError);
-            }
+            const result1 = await testEnv.result.getResultAsJson();
+            expect(result1['compiler']).to.eql(compiler[1].compiler);
         })
         .timeout(100000);
 
