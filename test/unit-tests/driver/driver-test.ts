@@ -87,11 +87,9 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             const allTargetName = driver.allTargetName;
-            if (process.platform === 'win32') {
-                expect(allTargetName).to.eq('ALL_BUILD');
-            } else {
-                expect(allTargetName).to.eq('all');
-            }
+
+            expect(allTargetName).to.eq('all');
+
         }).timeout(60000 * 2);
 
         test('Check binary dir', async () => {
