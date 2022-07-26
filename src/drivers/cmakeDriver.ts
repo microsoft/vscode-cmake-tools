@@ -1198,9 +1198,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     public shouldUseCachedConfiguration(trigger: ConfigureTrigger): boolean {
-        return ((this.isCacheConfigSupported && !this.isConfiguredAtLeastOnce &&
-            trigger === ConfigureTrigger.configureWithCache && !this.config.configureOnOpen) ||
-            (trigger === ConfigureTrigger.runTests && this.isCacheConfigSupported && !this.isConfiguredAtLeastOnce)) ?
+        return (this.isCacheConfigSupported && !this.isConfiguredAtLeastOnce &&
+            trigger === ConfigureTrigger.configureWithCache && !this.config.configureOnOpen) ?
             true : false;
     }
 
