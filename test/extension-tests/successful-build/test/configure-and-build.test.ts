@@ -12,6 +12,7 @@ import {
     getMatchingSystemKit
 } from '@test/util';
 import * as path from 'path';
+import * as proc from '@cmt/proc';
 
 const workername: string = process.platform;
 
@@ -132,7 +133,11 @@ suite('Build', () => {
             const result1 = await testEnv.result.getResultAsJson();
             expect(result1['compiler']).to.eql(compiler[1].compiler);
         } catch (notFoundError: any) {
-            console.log(notFoundError);
+            const binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang.exe";
+            const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
+            console.log(exec.retc);
+            console.log(exec.stdout);
+            console.log(exec.stderr);
         }
 
     }).timeout(100000);
