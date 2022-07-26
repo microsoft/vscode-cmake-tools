@@ -9,8 +9,7 @@ import {
     expect,
     getFirstSystemKit,
     getMatchingProjectKit,
-    getMatchingSystemKit,
-    getSystemKits
+    getMatchingSystemKit
 } from '@test/util';
 import * as path from 'path';
 import { scanForKits } from '@cmt/kit';
