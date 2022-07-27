@@ -141,7 +141,7 @@ suite('Build', () => {
 
         const result1 = await testEnv.result.getResultAsJson();
         expect(result1['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(100000);
+    }).timeout(120000 * 2); // Compiler detection can run a little slow
 
     test('Test kit switch after missing preferred generator #512', async function (this: Mocha.Context) {
         // Select compiler build node dependent
@@ -230,7 +230,7 @@ suite('Build', () => {
             const result1 = await testEnv.result.getResultAsJson();
             expect(result1['compiler']).to.eql(compiler[1].compiler);
         })
-        .timeout(100000);
+        .timeout(120000 * 2); // Compiler detection can run a little slow
 
     test('Test kit switch between different preferred generators and same compiler',
         async function (this: Mocha.Context) {
