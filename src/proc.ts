@@ -169,7 +169,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         }
 
         const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
-
+        let isCompleted: boolean = false;
         result = new Promise<ExecutionResult>(resolve => {
             if (child) {
                 let stdout_acc = '';
@@ -226,6 +226,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 // Don't stop until the child stream is closed, otherwise we might not read
                 // the whole output of the command.
                 child.on('close', retc => {
+                    isCompleted = true;
                     try {
                         if (timeoutId) {
                             clearTimeout(timeoutId);
@@ -246,9 +247,13 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 });
                 if (options?.timeout) {
                     timeoutId = setTimeout(() => {
-                        log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
-                        child?.kill();
-                        resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
+                        if (!isCompleted) {
+                            log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
+                            child?.kill();
+                            resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
+                        } else {
+                            log.warning(localize('process.successful.timeout', 'The command was successful whilst timed out : {0}', `${cmdstr}`));
+                        }
                     }, options.timeout);
                 }
             }
