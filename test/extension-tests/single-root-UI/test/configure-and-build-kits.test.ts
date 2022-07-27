@@ -134,7 +134,7 @@ suite('Build using Kits and Variants', () => {
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
             await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[1].kitLabel)).name);
-            await vscode.commands.executeCommand('cmake.build');
+            await vscode.commands.executeCommand('Copy compile_commands.json to a pre-determined path');
 
             const result1 = await testEnv.result.getResultAsJson();
             expect(result1['compiler']).to.eql(compiler[1].compiler);

@@ -60,7 +60,7 @@ suite('Build', () => {
         }
     });
 
-    test('Configure', async () => {
+    /*test('Configure', async () => {
         expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
 
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
@@ -94,7 +94,7 @@ suite('Build', () => {
         const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
-    }).timeout(100000);
+    }).timeout(100000);*/
 
     test('Configure with cache-initializer', async () => {
         testEnv.config.updatePartial({ cacheInit: 'TestCacheInit.cmake' });
@@ -183,7 +183,7 @@ suite('Build', () => {
         expect(result1['cmake-generator']).to.eql(result3['cmake-generator']);
     }).timeout(100000);
 
-    test('Test kit switch between different preferred generators and compilers',
+    /*test('Test kit switch between different preferred generators and compilers',
         async function (this: Mocha.Context) {
             // Select compiler build node dependent
             const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
@@ -206,7 +206,7 @@ suite('Build', () => {
             const result1 = await testEnv.result.getResultAsJson();
             expect(result1['compiler']).to.eql(compiler[1].compiler);
         })
-        .timeout(100000);
+        .timeout(100000);*/
 
     test('Test kit switch between different preferred generators and same compiler',
         async function (this: Mocha.Context) {
@@ -278,7 +278,7 @@ suite('Build', () => {
         expect(result1['cmake-generator']).to.eql(compiler[0].generator);
     }).timeout(200000);
 
-    test('Test build twice', async function (this: Mocha.Context) {
+    /*test('Test build twice', async function (this: Mocha.Context) {
         console.log('1. Build');
         expect(await cmt.build()).eq(0);
         console.log('2. Build');
@@ -309,7 +309,7 @@ suite('Build', () => {
         expect(await cmt.build()).eq(0);
 
         await testEnv.result.getResultAsJson();
-    }).timeout(100000);
+    }).timeout(100000);*/
 
     test('Copy compile_commands.json to a pre-determined path', async () => {
         expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
