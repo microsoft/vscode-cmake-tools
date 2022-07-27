@@ -228,6 +228,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 child.on('close', retc => {
                     try {
                         if (timeoutId) {
+                            log.warning(`clear timeout ID ${cmdstr}`);
                             clearTimeout(timeoutId);
                         }
                         rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
@@ -247,6 +248,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 if (options?.timeout) {
                     timeoutId = setTimeout(() => {
                         log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
+                        log.warning(`stdout: ${stdout_acc} , stderr: ${stderr_acc}`);
                         child?.kill();
                         resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
                     }, options.timeout);
