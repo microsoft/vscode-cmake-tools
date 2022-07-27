@@ -248,9 +248,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 if (options?.timeout) {
                     timeoutId = setTimeout(() => {
                         log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
-                        log.warning(`stdout: ${stdout_acc} , stderr: ${stderr_acc}`);
+                        log.warning(`<< stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
                         child?.kill();
-                        resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
+                        // resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
                     }, options.timeout);
                 }
             }
