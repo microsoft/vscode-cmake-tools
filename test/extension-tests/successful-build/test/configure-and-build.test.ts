@@ -178,6 +178,7 @@ suite('Build', () => {
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
         await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
         await cmt.build();
+
         const result3 = await testEnv.result.getResultAsJson();
         expect(result1['cmake-generator']).to.eql(result3['cmake-generator']);
     }).timeout(100000);
@@ -234,8 +235,8 @@ suite('Build', () => {
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
             await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-
             retc = await cmt.build();
+
             expect(retc).eq(0);
             const result1 = await testEnv.result.getResultAsJson();
             expect(result1['cmake-generator']).to.eql(compiler[1].generator);
@@ -262,7 +263,6 @@ suite('Build', () => {
         testEnv.config.updatePartial({ preferredGenerators: [] });
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
         await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-
         await cmt.build();
 
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
@@ -271,8 +271,8 @@ suite('Build', () => {
 
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
         await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-
         await cmt.build();
+
         const result1 = await testEnv.result.getResultAsJson();
         expect(result1['cmake-generator']).to.eql(compiler[0].generator);
     }).timeout(200000);
