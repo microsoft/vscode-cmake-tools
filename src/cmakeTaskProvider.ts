@@ -11,7 +11,6 @@ import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
 import CMakeTools from './cmakeTools';
 import * as preset from '@cmt/preset';
-import * as ctest from '@cmt/ctest';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
