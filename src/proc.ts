@@ -228,7 +228,6 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 child.on('close', retc => {
                     try {
                         if (timeoutId) {
-                            log.warning(`clear timeout ID ${cmdstr}`);
                             clearTimeout(timeoutId);
                         }
                         rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
