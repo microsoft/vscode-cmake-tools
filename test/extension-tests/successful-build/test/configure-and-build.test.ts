@@ -12,7 +12,6 @@ import {
     getMatchingSystemKit
 } from '@test/util';
 import * as path from 'path';
-import * as proc from '@cmt/proc';
 
 const workername: string = process.platform;
 
@@ -123,25 +122,13 @@ suite('Build', () => {
         await cmt.setKit(await getMatchingSystemKit(cmt, compiler[0].kitLabel));
         await cmt.build();
 
-        console.log('Clang kit not found');
-        let binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang.exe";
-        let exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-        console.log(exec.retc);
-        console.log(exec.stdout);
-        console.log(exec.stderr);
-        binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang-cl.exe";
-        exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-        console.log(exec.retc);
-        console.log(exec.stdout);
-        console.log(exec.stderr);
-
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
         await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
         await cmt.build();
 
         const result1 = await testEnv.result.getResultAsJson();
         expect(result1['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(120000 * 2); // Compiler detection can run a little slow
+    }).timeout(100000);
 
     test('Test kit switch after missing preferred generator #512', async function (this: Mocha.Context) {
         // Select compiler build node dependent
@@ -211,18 +198,6 @@ suite('Build', () => {
             await cmt.setKit(await getMatchingSystemKit(cmt, compiler[0].kitLabel));
             await cmt.build();
 
-            console.log('Clang kit not found');
-            let binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang.exe";
-            let exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-            console.log(exec.retc);
-            console.log(exec.stdout);
-            console.log(exec.stderr);
-            binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang-cl.exe";
-            exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-            console.log(exec.retc);
-            console.log(exec.stdout);
-            console.log(exec.stderr);
-
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
             await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
             await cmt.build();
@@ -230,7 +205,7 @@ suite('Build', () => {
             const result1 = await testEnv.result.getResultAsJson();
             expect(result1['compiler']).to.eql(compiler[1].compiler);
         })
-        .timeout(120000 * 2); // Compiler detection can run a little slow
+        .timeout(100000);
 
     test('Test kit switch between different preferred generators and same compiler',
         async function (this: Mocha.Context) {
@@ -256,18 +231,6 @@ suite('Build', () => {
 
             let retc = await cmt.build();
             expect(retc).eq(0);
-
-            console.log('Clang kit not found');
-            let binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang.exe";
-            let exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-            console.log(exec.retc);
-            console.log(exec.stdout);
-            console.log(exec.stderr);
-            binPath = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang-cl.exe";
-            exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-            console.log(exec.retc);
-            console.log(exec.stdout);
-            console.log(exec.stderr);
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
             await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
