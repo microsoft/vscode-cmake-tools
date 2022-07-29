@@ -165,10 +165,12 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             };
         }
         if (options.encoding) {
-            child.stdout?.setEncoding(options.encoding);
+            child?.stdout?.setEncoding(options.encoding);
         }
 
         const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
+
+        child.stdin?.end();
 
         result = new Promise<ExecutionResult>(resolve => {
             let stdout_acc = '';
