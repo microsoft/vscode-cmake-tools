@@ -189,12 +189,14 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 resolve({ retc: -1, stdout: "", stderr: err.message ?? '' });
             });
             child?.on('exit', (code, signal) => {
-                log.warning(localize('process.stopped', 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
-                log.warning(`exit << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
+                if (code !== 0) {
+                    log.warning(localize('process.stopped', 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
+                    log.warning(`exit << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
+                }
                 if (options?.timeout) {
                     clearTimeout(timeoutId);
                 }
-                resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
+                resolve({retc: code, stdout: stdout_acc, stderr: stderr_acc });
             });
             child?.stdout?.on('data', (data: Uint8Array) => {
                 rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
