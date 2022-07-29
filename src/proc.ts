@@ -175,12 +175,15 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             let line_acc = '';
             let stderr_acc = '';
             let stderr_line_acc = '';
-            const timeoutId: NodeJS.Timeout = setTimeout(() => {
-                log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
-                child?.kill("SIGKILL");
-                log.warning('after process is killed');
-                log.warning(`timeout << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
-            }, options?.timeout);
+            let timeoutId: NodeJS.Timeout;
+            if (options?.timeout) {
+                timeoutId = setTimeout(() => {
+                    log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
+                    child?.kill("SIGKILL");
+                    log.warning('after process is killed');
+                    log.warning(`timeout << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
+                }, options?.timeout);
+            }
             child?.on('error', err => {
                 log.warning(localize('process.error', 'The command threw error: {0}', `${cmdstr}`));
                 resolve({ retc: -1, stdout: "", stderr: err.message ?? '' });
@@ -188,7 +191,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             child?.on('exit', (code, signal) => {
                 log.warning(localize('process.stopped', 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
                 log.warning(`exit << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
-                clearTimeout(timeoutId);
+                if (options?.timeout) {
+                    clearTimeout(timeoutId);
+                }
                 resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
             });
             child?.stdout?.on('data', (data: Uint8Array) => {
@@ -235,7 +240,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // the whole output of the command.
             child?.on('close', retc => {
                 try {
-                    clearTimeout(timeoutId);
+                    if (options?.timeout) {
+                        clearTimeout(timeoutId);
+                    }
                     rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
                         if (line_acc && outputConsumer) {
                             outputConsumer.output(line_acc);
