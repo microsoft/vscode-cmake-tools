@@ -180,6 +180,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             let withinStderrData: boolean = false;
             let startedStdoutData: boolean = false;
             let startedStderrData: boolean = false;
+            let startedLamba1: boolean = false;
+            let startedLamba2: boolean = false;
             if (options?.timeout) {
                 timeoutId = setTimeout(() => {
                     log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
@@ -187,13 +189,23 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         log.warning('stderr had started before timeout');
                     }
                     if (startedStdoutData) {
-                        log.warning('stderr had started before timeout');
+                        log.warning('stdout had started before timeout');
                     }
                     if (withinStderrData) {
                         log.warning('stderr incomplete');
                     }
                     if (withinStdoutData) {
                         log.warning('stdout incomplete');
+                    }
+                    if (startedLamba1) {
+                        log.warning('lambda 1 ran');
+                    } else {
+                        log.warning('lambda 1 never ran');
+                    }
+                    if (startedLamba1) {
+                        log.warning('lambda 2 ran');
+                    } else {
+                        log.warning('lambda 2 never ran');
                     }
                     child?.kill("SIGKILL");
                     log.warning('after process is killed');
@@ -220,28 +232,30 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 startedStdoutData = true;
                 try {
                     rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
-                        const str = iconv.decode(Buffer.from(data), encoding);
-                        const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-                        while (lines.length > 1) {
-                            line_acc += lines[0];
-                            if (outputConsumer) {
-                                outputConsumer.output(line_acc);
-                            } else if (util.isTestMode()) {
-                                log.info(line_acc);
+                        startedLamba1 = true;
+                        try {
+                            const str = iconv.decode(Buffer.from(data), encoding);
+                            const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
+                            while (lines.length > 1) {
+                                line_acc += lines[0];
+                                if (outputConsumer) {
+                                    outputConsumer.output(line_acc);
+                                } else if (util.isTestMode()) {
+                                    log.info(line_acc);
+                                }
+                                line_acc = '';
+                                // Erase the first line from the list
+                                lines.splice(0, 1);
                             }
-                            line_acc = '';
-                            // Erase the first line from the list
-                            lines.splice(0, 1);
+                            console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
+                            line_acc += lines[0];
+                            stdout_acc += str;
+                        } catch (err: any) {
+                            log.warning(`caught an exception in rollbar.invoke() lambda 1:  ${err}`);
                         }
-                        console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-                        line_acc += lines[0];
-                        stdout_acc += str;
                     });
                 } catch (err: any) {
-                    // No error handling since Rollbar has taken the error.
-                    if (cmdstr.includes('clang')) {
-                        log.warning(`2 close stdout rollbar error:  ${err}`);
-                    }
+                    log.warning(`2 close stdout rollbar error:  ${err}`);
                 }
                 withinStdoutData = false;
             });
@@ -250,28 +264,30 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 startedStderrData = true;
                 try {
                     rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), { data, command, args }, () => {
-                        const str = iconv.decode(Buffer.from(data), encoding);
-                        const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-                        while (lines.length > 1) {
-                            stderr_line_acc += lines[0];
-                            if (outputConsumer) {
-                                outputConsumer.error(stderr_line_acc);
-                            } else if (util.isTestMode() && stderr_line_acc) {
-                                log.info(stderr_line_acc);
+                        startedLamba2 = true;
+                        try {
+                            const str = iconv.decode(Buffer.from(data), encoding);
+                            const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
+                            while (lines.length > 1) {
+                                stderr_line_acc += lines[0];
+                                if (outputConsumer) {
+                                    outputConsumer.error(stderr_line_acc);
+                                } else if (util.isTestMode() && stderr_line_acc) {
+                                    log.info(stderr_line_acc);
+                                }
+                                stderr_line_acc = '';
+                                // Erase the first line from the list
+                                lines.splice(0, 1);
                             }
-                            stderr_line_acc = '';
-                            // Erase the first line from the list
-                            lines.splice(0, 1);
+                            console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
+                            stderr_line_acc += lines[0];
+                            stderr_acc += str;
+                        } catch (err: any) {
+                            log.warning(`caught an exception in rollbar.invoke() lambda 2:  ${err}`);
                         }
-                        console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-                        stderr_line_acc += lines[0];
-                        stderr_acc += str;
                     });
                 } catch (err: any) {
-                    // No error handling since Rollbar has taken the error.
-                    if (cmdstr.includes('clang')) {
-                        log.warning(`2 close stderr rollbar error:  ${err}`);
-                    }
+                    log.warning(`2 close stderr rollbar error:  ${err}`);
                 }
                 withinStderrData = false;
             });
@@ -292,10 +308,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                     });
                 } catch (err: any) {
-                    // No error handling since Rollbar has taken the error.
-                    if (cmdstr.includes('clang')) {
-                        log.warning(`2 close rollbar error:  ${err}`);
-                    }
+                    log.warning(`2 close rollbar error:  ${err}`);
                     resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                 }
             });
