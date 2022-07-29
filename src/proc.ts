@@ -197,11 +197,20 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 if (options?.timeout) {
                     clearTimeout(timeoutId);
                 }
+                if (cmdstr.includes('clang')) {
+                    log.warning('exit: {0}', `${cmdstr}`);
+                }
                 resolve({retc: code, stdout: stdout_acc, stderr: stderr_acc });
             });
             child?.stdout?.on('data', (data: Uint8Array) => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('3 stdout data start: {0}', `${cmdstr}`);
+                }
                 rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
                     const str = iconv.decode(Buffer.from(data), encoding);
+                    if (cmdstr.includes('clang')) {
+                        log.warning('3 stdout data inside rollbar start str: {0}', `${str}`);
+                    }
                     const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                     while (lines.length > 1) {
                         line_acc += lines[0];
@@ -217,11 +226,23 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
                     line_acc += lines[0];
                     stdout_acc += str;
+                    if (cmdstr.includes('clang')) {
+                        log.warning('3 stdout data rollbar end stderr_acc: {0}', `${stderr_acc}`);
+                    }
                 });
+                if (cmdstr.includes('clang')) {
+                    log.warning('3 stdout data end: {0}', `${cmdstr}`);
+                }
             });
             child?.stderr?.on('data', (data: Uint8Array) => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('1 data start: {0}', `${cmdstr}`);
+                }
                 rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), { data, command, args }, () => {
                     const str = iconv.decode(Buffer.from(data), encoding);
+                    if (cmdstr.includes('clang')) {
+                        log.warning('1 data inside rollbar start str: {0}', `${str}`);
+                    }
                     const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                     while (lines.length > 1) {
                         stderr_line_acc += lines[0];
@@ -237,11 +258,20 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
                     stderr_line_acc += lines[0];
                     stderr_acc += str;
+                    if (cmdstr.includes('clang')) {
+                        log.warning('1 data rollbar end stderr_acc: {0}', `${stderr_acc}`);
+                    }
                 });
+                if (cmdstr.includes('clang')) {
+                    log.warning('1 data end: {0}', `${cmdstr}`);
+                }
             });
             // Don't stop until the child stream is closed, otherwise we might not read
             // the whole output of the command.
             child?.on('close', retc => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('2 data: {0}', `${cmdstr}`);
+                }
                 try {
                     if (options?.timeout) {
                         clearTimeout(timeoutId);
@@ -253,10 +283,16 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         if (stderr_line_acc && outputConsumer) {
                             outputConsumer.error(stderr_line_acc);
                         }
+                        if (cmdstr.includes('clang')) {
+                            log.warning('2 close rollbar end: {0}', `${cmdstr}`);
+                        }
                         resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                     });
                 } catch (_) {
                     // No error handling since Rollbar has taken the error.
+                    if (cmdstr.includes('clang')) {
+                        log.warning('2 close rollbar error: {0}', `${cmdstr}`);
+                    }
                     resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                 }
             });
