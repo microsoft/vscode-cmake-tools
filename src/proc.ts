@@ -235,9 +235,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // the whole output of the command.
             child?.on('close', retc => {
                 try {
-                    log.warning('close clear timeout before');
                     clearTimeout(timeoutId);
-                    log.warning('close clear timeout after');
                     rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
                         if (line_acc && outputConsumer) {
                             outputConsumer.output(line_acc);
@@ -245,11 +243,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         if (stderr_line_acc && outputConsumer) {
                             outputConsumer.error(stderr_line_acc);
                         }
-                        log.warning('call resolve in close');
                         resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                     });
                 } catch (_) {
-                    log.warning('call resolve in close catch error');
                     // No error handling since Rollbar has taken the error.
                     resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                 }
