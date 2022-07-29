@@ -129,8 +129,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
-        shell: !!options.shell,
-        detached: true
+        shell: !!options.shell
     };
     if (options && options.cwd) {
         spawn_opts.cwd = options.cwd;
