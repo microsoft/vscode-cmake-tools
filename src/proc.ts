@@ -176,9 +176,25 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             let stderr_acc = '';
             let stderr_line_acc = '';
             let timeoutId: NodeJS.Timeout;
+            let withinStdoutData: boolean = false;
+            let withinStderrData: boolean = false;
+            let startedStdoutData: boolean = false;
+            let startedStderrData: boolean = false;
             if (options?.timeout) {
                 timeoutId = setTimeout(() => {
                     log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
+                    if (startedStderrData) {
+                        log.warning('stderr had started before timeout');
+                    }
+                    if (startedStdoutData) {
+                        log.warning('stderr had started before timeout');
+                    }
+                    if (withinStderrData) {
+                        log.warning('stderr incomplete');
+                    }
+                    if (withinStdoutData) {
+                        log.warning('stdout incomplete');
+                    }
                     child?.kill("SIGKILL");
                     log.warning('after process is killed');
                     log.warning(`timeout << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
@@ -200,6 +216,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 resolve({retc: code, stdout: stdout_acc, stderr: stderr_acc });
             });
             child?.stdout?.on('data', (data: Uint8Array) => {
+                withinStdoutData = true;
+                startedStdoutData = true;
                 try {
                     rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
                         const str = iconv.decode(Buffer.from(data), encoding);
@@ -225,8 +243,11 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         log.warning(`2 close stdout rollbar error:  ${err}`);
                     }
                 }
+                withinStdoutData = false;
             });
             child?.stderr?.on('data', (data: Uint8Array) => {
+                withinStderrData = true;
+                startedStderrData = true;
                 try {
                     rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), { data, command, args }, () => {
                         const str = iconv.decode(Buffer.from(data), encoding);
@@ -252,6 +273,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         log.warning(`2 close stderr rollbar error:  ${err}`);
                     }
                 }
+                withinStderrData = false;
             });
             // Don't stop until the child stream is closed, otherwise we might not read
             // the whole output of the command.
