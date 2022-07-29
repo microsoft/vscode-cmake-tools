@@ -202,7 +202,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     } else {
                         log.warning('lambda 1 never ran');
                     }
-                    if (startedLamba1) {
+                    if (startedLamba2) {
                         log.warning('lambda 2 ran');
                     } else {
                         log.warning('lambda 2 never ran');
