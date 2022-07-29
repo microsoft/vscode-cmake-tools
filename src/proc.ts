@@ -182,6 +182,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     child?.kill("SIGKILL");
                     log.warning('after process is killed');
                     log.warning(`timeout << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
+                    resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
                 }, options?.timeout);
             }
             child?.on('error', err => {
