@@ -172,12 +172,10 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             child.stdin.end();
         }
 
-        //console.log("skipping encoding for now...");
-
-        // if (options.encoding) {
-        //     log.warning('setting encoding on stdout');
-        //     child.stdout?.setEncoding(options.encoding);
-        // }
+        if (options.encoding) {
+            log.warning(`(disabled) setting encoding on stdout to: ${options.encoding}`);
+            // child.stdout?.setEncoding(options.encoding);
+        }
 
         if (!child.stdout) {
             log.warning('child.stdout undefined');
