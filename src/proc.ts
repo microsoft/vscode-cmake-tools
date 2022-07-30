@@ -172,7 +172,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             child.stdin.end();
         }
 
-        console.log("skipping encoding for now...");
+        //console.log("skipping encoding for now...");
 
         // if (options.encoding) {
         //     log.warning('setting encoding on stdout');
