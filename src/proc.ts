@@ -205,12 +205,12 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
                     log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
                     log.warning(`Timeout fired after: ${firedTimeout - startTimeout}ms`);
-                    log.warning(`environment used:`);
+                    // log.warning(`environment used:`);
 
-                    for (const key in final_env) {
-                        const value = final_env[key];
-                        console.log(`ENV: ${key}: ${value}`);
-                    }
+                    // for (const key in final_env) {
+                    //     const value = final_env[key];
+                    //     console.log(`ENV: ${key}: ${value}`);
+                    // }
 
                     if (startedStderrData) {
                         log.warning('stderr had started before timeout');
@@ -336,6 +336,90 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                 }
             });
+
+            child?.on('disconnect', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('disconnect: {0}', cmdstr);
+                }
+            });
+            child?.on('message', retc => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('message: {0} {1}', cmdstr, JSON.stringify(retc));
+                }
+            });
+
+            child?.stderr?.on('close', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stderr close: {0}', cmdstr);
+                }
+            });
+
+            child?.stderr?.on('end', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stderr end: {0}', cmdstr);
+                }
+            });
+
+            child?.stderr?.on('error', (err: Error) => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stderr error: {0} {1}', cmdstr, JSON.stringify(err));
+                }
+            });
+
+            child?.stderr?.on('pause', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stderr pause: {0}', cmdstr);
+                }
+            });
+
+            child?.stderr?.on('readable', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stderr readable: {0}', cmdstr);
+                }
+            });
+
+            child?.stderr?.on('resume', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stderr resume: {0}', cmdstr);
+                }
+            });
+
+            child?.stdout?.on('close', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stdout close: {0}', cmdstr);
+                }
+            });
+
+            child?.stdout?.on('end', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stdout end: {0}', cmdstr);
+                }
+            });
+
+            child?.stdout?.on('error', (err: Error) => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stdout error: {0} {1}', cmdstr, JSON.stringify(err));
+                }
+            });
+
+            child?.stdout?.on('pause', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stdout pause: {0}', cmdstr);
+                }
+            });
+
+            child?.stdout?.on('readable', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stdout readable: {0}', cmdstr);
+                }
+            });
+
+            child?.stdout?.on('resume', () => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('stdout resume: {0}', cmdstr);
+                }
+            });
+
         });
     }
     return { child, result };
