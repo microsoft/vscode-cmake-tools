@@ -131,9 +131,13 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         env: final_env,
         shell: !!options.shell
     };
-    if (options && options.cwd) {
+    if (options?.cwd !== undefined) {
         spawn_opts.cwd = options.cwd;
     }
+    if (options?.timeout) {
+        spawn_opts.timeout = options.timeout;
+    }
+
     let child: proc.ChildProcess | undefined;
     let result: Promise<ExecutionResult>;
     const useTask = (options && options.useTask) ? options.useTask : false;
@@ -174,25 +178,18 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
 
         result = new Promise<ExecutionResult>(resolve => {
-            let resolved = false;
             let stdout_acc = '';
             let line_acc = '';
             let stderr_acc = '';
             let stderr_line_acc = '';
-            let timeout: NodeJS.Timeout | undefined;
-            if (options?.timeout) {
-                timeout = setTimeout(() => {
-                    timeout = undefined;
-                    if (!resolved) {
-                        log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
-                    }
-                    if (!resolved) {
-                        resolved = true;
-                        child?.kill("SIGKILL");
-                        resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
-                    }
-                }, options?.timeout);
-            }
+            child?.on('error', err => {
+                log.warning(localize('process.error', 'The command: {0} failed with error: {1}', `${cmdstr}`, `${err}`));
+            });
+            child?.on('exit', (code, signal) => {
+                if (code !== 0) {
+                    console.log('The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`);
+                }
+            });
             child?.stdout?.on('data', (data: Uint8Array) => {
                 rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
                     const str = iconv.decode(Buffer.from(data), encoding);
@@ -237,9 +234,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // This is distinct from the 'exit' event, since multiple processes might share the same stdio streams.
             // The 'close' event will always emit after 'exit' was already emitted, or 'error' if the child failed to spawn.
             child?.on('close', retc => {
-                if (!!timeout) {
-                    clearTimeout(timeout);
-                    timeout = undefined;
+                if (retc !== 0) {
+                    console.log('The command: {0} closed with code: {1}', `${cmdstr}`, `${retc}`);
                 }
                 try {
                     rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
