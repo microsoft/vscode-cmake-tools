@@ -167,8 +167,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         }
 
         // Since we won't be sending anything to this process, close stdin.
-        if (child.stdin !== undefined) {
+        if (!!child.stdin) {
             log.warning('child.stdin ignored, but still defined');
+            child.stdin.end();
         }
 
         if (options.encoding) {
