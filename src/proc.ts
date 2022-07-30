@@ -172,10 +172,12 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             child.stdin.end();
         }
 
-        if (options.encoding) {
-            log.warning('setting encoding on stdout');
-            child.stdout?.setEncoding(options.encoding);
-        }
+        console.log("skipping encoding for now...");
+
+        // if (options.encoding) {
+        //     log.warning('setting encoding on stdout');
+        //     child.stdout?.setEncoding(options.encoding);
+        // }
 
         if (!child.stdout) {
             log.warning('child.stdout undefined');
@@ -206,6 +208,12 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
                     log.warning(`Timeout fired after: {0}ms`, firedTimeout - startTimeout);
                     log.warning(`environment used: ${JSON.stringify(final_env)}`);
+
+                    for (const key in final_env) {
+                        const value = final_env[key];
+                        log.warning(`ENV: ${key}: ${value}`);
+                    }
+
                     if (startedStderrData) {
                         log.warning('stderr had started before timeout');
                     }
@@ -220,18 +228,12 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     }
                     if (startedLamba1) {
                         log.warning('lambda 1 ran');
-                    } else {
-                        log.warning('lambda 1 never ran');
                     }
                     if (startedLamba2) {
                         log.warning('lambda 2 ran');
-                    } else {
-                        log.warning('lambda 2 never ran');
                     }
                     child?.kill("SIGKILL");
-                    log.warning('after process is killed');
-                    log.warning(`timeout << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
-                    resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
+                    // resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
                 }, options?.timeout);
             }
             child?.on('error', err => {
