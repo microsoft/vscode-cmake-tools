@@ -199,9 +199,13 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             let startedLamba1: boolean = false;
             let startedLamba2: boolean = false;
             if (options?.timeout) {
+                const startTimeout: number = new Date().getTime();
                 timeoutId = setTimeout(() => {
+                    const firedTimeout: number = new Date().getTime();
+
                     log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
-                    log.warning(`environment used: ${spawn_opts.env}`);
+                    log.warning(`Timeout fired after: {0}ms`, firedTimeout - startTimeout);
+                    log.warning(`environment used: ${JSON.stringify(final_env)}`);
                     if (startedStderrData) {
                         log.warning('stderr had started before timeout');
                     }
