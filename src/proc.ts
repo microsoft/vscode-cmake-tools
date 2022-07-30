@@ -173,8 +173,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         }
 
         if (options.encoding) {
-            log.warning(`(disabled) setting encoding on stdout to: ${options.encoding}`);
-            // child.stdout?.setEncoding(options.encoding);
+            console.log(`(disabled) setting encoding on stdout to: ${options.encoding}`);
+            child.stdout?.setEncoding(options.encoding);
         }
 
         if (!child.stdout) {
@@ -204,12 +204,12 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     const firedTimeout: number = new Date().getTime();
 
                     log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
-                    log.warning(`Timeout fired after: {0}ms`, firedTimeout - startTimeout);
-                    log.warning(`environment used: ${JSON.stringify(final_env)}`);
+                    log.warning(`Timeout fired after: ${firedTimeout - startTimeout}ms`);
+                    log.warning(`environment used:`);
 
                     for (const key in final_env) {
                         const value = final_env[key];
-                        log.warning(`ENV: ${key}: ${value}`);
+                        console.log(`ENV: ${key}: ${value}`);
                     }
 
                     if (startedStderrData) {
@@ -315,6 +315,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // Don't stop until the child stream is closed, otherwise we might not read
             // the whole output of the command.
             child?.on('close', retc => {
+                if (cmdstr.includes('clang')) {
+                    log.warning('close: {0}', `${cmdstr}`);
+                }
                 try {
                     if (options?.timeout) {
                         clearTimeout(timeoutId);
