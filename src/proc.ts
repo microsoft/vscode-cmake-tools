@@ -165,13 +165,22 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 })
             };
         }
-        const child2: proc.ChildProcess = child;
 
         // Since we won't be sending anything to this process, close stdin.
-        child2.stdin?.end();
+        if (child.stdin !== undefined) {
+            log.warning('child.stdin ignored, but still defined');
+        }
 
         if (options.encoding) {
-            child2.stdout?.setEncoding(options.encoding);
+            log.warning('setting encoding on stdout');
+            child.stdout?.setEncoding(options.encoding);
+        }
+
+        if (!child.stdout) {
+            log.warning('child.stdout undefined');
+        }
+        if (!child.stderr) {
+            log.warning('child.stderr undefined');
         }
 
         const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
@@ -191,6 +200,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             if (options?.timeout) {
                 timeoutId = setTimeout(() => {
                     log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
+                    log.warning(`environment used: ${spawn_opts.env}`);
                     if (startedStderrData) {
                         log.warning('stderr had started before timeout');
                     }
@@ -213,17 +223,17 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     } else {
                         log.warning('lambda 2 never ran');
                     }
-                    child2.kill("SIGKILL");
+                    child?.kill("SIGKILL");
                     log.warning('after process is killed');
                     log.warning(`timeout << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
                     resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
                 }, options?.timeout);
             }
-            child2.on('error', err => {
+            child?.on('error', err => {
                 log.warning(localize('process.error', 'The command threw error: {0}', `${cmdstr}`));
                 resolve({ retc: -1, stdout: "", stderr: err.message ?? '' });
             });
-            child2.on('exit', (code, signal) => {
+            child?.on('exit', (code, signal) => {
                 if (code !== 0) {
                     log.warning(localize('process.stopped', 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
                     log.warning(`exit << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
@@ -233,7 +243,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 }
                 resolve({retc: code, stdout: stdout_acc, stderr: stderr_acc });
             });
-            child2.stdout?.on('data', (data: Uint8Array) => {
+            child?.stdout?.on('data', (data: Uint8Array) => {
                 withinStdoutData = true;
                 startedStdoutData = true;
                 try {
@@ -265,7 +275,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 }
                 withinStdoutData = false;
             });
-            child2.stderr?.on('data', (data: Uint8Array) => {
+            child?.stderr?.on('data', (data: Uint8Array) => {
                 withinStderrData = true;
                 startedStderrData = true;
                 try {
@@ -299,7 +309,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             });
             // Don't stop until the child stream is closed, otherwise we might not read
             // the whole output of the command.
-            child2.on('close', retc => {
+            child?.on('close', retc => {
                 try {
                     if (options?.timeout) {
                         clearTimeout(timeoutId);
