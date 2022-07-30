@@ -168,20 +168,19 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
         // Since we won't be sending anything to this process, close stdin.
         if (!!child.stdin) {
-            log.warning('child.stdin ignored, but still defined');
+            console.log('child.stdin ignored, but still defined');
             child.stdin.end();
         }
 
         if (options.encoding) {
-            console.log(`(disabled) setting encoding on stdout to: ${options.encoding}`);
             child.stdout?.setEncoding(options.encoding);
         }
 
         if (!child.stdout) {
-            log.warning('child.stdout undefined');
+            console.log('child.stdout undefined');
         }
         if (!child.stderr) {
-            log.warning('child.stderr undefined');
+            console.log('child.stderr undefined');
         }
 
         const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
@@ -203,9 +202,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 timeoutId = setTimeout(() => {
                     const firedTimeout: number = new Date().getTime();
 
-                    log.warning(localize('process.timeout', 'The command timed out: {0}', `${cmdstr}`));
-                    log.warning(`Timeout fired after: ${firedTimeout - startTimeout}ms`);
-                    // log.warning(`environment used:`);
+                    console.log(localize('process.timeout', 'The command timed out: {0}', cmdstr));
+                    console.log(`Timeout fired after: ${firedTimeout - startTimeout}ms`);
+                    // console.log(`environment used:`);
 
                     // for (const key in final_env) {
                     //     const value = final_env[key];
@@ -213,35 +212,35 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     // }
 
                     if (startedStderrData) {
-                        log.warning('stderr had started before timeout');
+                        console.log('stderr had started before timeout');
                     }
                     if (startedStdoutData) {
-                        log.warning('stdout had started before timeout');
+                        console.log('stdout had started before timeout');
                     }
                     if (withinStderrData) {
-                        log.warning('stderr incomplete');
+                        console.log('stderr incomplete');
                     }
                     if (withinStdoutData) {
-                        log.warning('stdout incomplete');
+                        console.log('stdout incomplete');
                     }
                     if (startedLamba1) {
-                        log.warning('lambda 1 ran');
+                        console.log('lambda 1 ran');
                     }
                     if (startedLamba2) {
-                        log.warning('lambda 2 ran');
+                        console.log('lambda 2 ran');
                     }
                     child?.kill("SIGKILL");
                     // resolve({retc: -1, stdout: stdout_acc, stderr: stderr_acc });
                 }, options?.timeout);
             }
             child?.on('error', err => {
-                log.warning(localize('process.error', 'The command threw error: {0}', `${cmdstr}`));
+                console.log(localize('process.error', 'The command threw error: {0}', cmdstr));
                 resolve({ retc: -1, stdout: "", stderr: err.message ?? '' });
             });
             child?.on('exit', (code, signal) => {
                 if (code !== 0) {
-                    log.warning(localize('process.stopped', 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
-                    log.warning(`exit << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
+                    console.log(localize('process.stopped', 'The command: {0} exited with code: {1} and signal: {2}', cmdstr, code, signal));
+                    console.log(`exit << stdout: ${stdout_acc} , stderr: ${stderr_acc} >>`);
                 }
                 if (options?.timeout) {
                     clearTimeout(timeoutId);
@@ -272,11 +271,11 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                             line_acc += lines[0];
                             stdout_acc += str;
                         } catch (err: any) {
-                            log.warning(`caught an exception in rollbar.invoke() lambda 1:  ${err}`);
+                            console.log(`caught an exception in rollbar.invoke() lambda 1:  ${err}`);
                         }
                     });
                 } catch (err: any) {
-                    log.warning(`2 close stdout rollbar error:  ${err}`);
+                    console.log(`2 close stdout rollbar error:  ${err}`);
                 }
                 withinStdoutData = false;
             });
@@ -304,11 +303,11 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                             stderr_line_acc += lines[0];
                             stderr_acc += str;
                         } catch (err: any) {
-                            log.warning(`caught an exception in rollbar.invoke() lambda 2:  ${err}`);
+                            console.log(`caught an exception in rollbar.invoke() lambda 2: ${err}`);
                         }
                     });
                 } catch (err: any) {
-                    log.warning(`2 close stderr rollbar error:  ${err}`);
+                    console.log(`2 close stderr rollbar error:  ${err}`);
                 }
                 withinStderrData = false;
             });
@@ -316,7 +315,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // the whole output of the command.
             child?.on('close', retc => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('close: {0}', `${cmdstr}`);
+                    console.log('close: {0}', `${cmdstr}`);
                 }
                 try {
                     if (options?.timeout) {
@@ -332,91 +331,91 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                     });
                 } catch (err: any) {
-                    log.warning(`2 close rollbar error:  ${err}`);
+                    console.log(`2 close rollbar error:  ${err}`);
                     resolve({ retc, stdout: stdout_acc, stderr: stderr_acc });
                 }
             });
 
             child?.on('disconnect', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('disconnect: {0}', cmdstr);
+                    console.log(`disconnect: ${cmdstr}`);
                 }
             });
-            child?.on('message', retc => {
+            child?.on('message', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('message: {0} {1}', cmdstr, JSON.stringify(retc));
+                    console.log(`message: ${cmdstr}`);
                 }
             });
 
             child?.stderr?.on('close', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stderr close: {0}', cmdstr);
+                    console.log(`stderr close: ${cmdstr}`);
                 }
             });
 
             child?.stderr?.on('end', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stderr end: {0}', cmdstr);
+                    console.log(`stderr end: ${cmdstr}`);
                 }
             });
 
             child?.stderr?.on('error', (err: Error) => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stderr error: {0} {1}', cmdstr, JSON.stringify(err));
+                    console.log(`stderr error: ${cmdstr} ${JSON.stringify(err)}`);
                 }
             });
 
             child?.stderr?.on('pause', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stderr pause: {0}', cmdstr);
+                    console.log(`stderr pause: ${cmdstr}`);
                 }
             });
 
             child?.stderr?.on('readable', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stderr readable: {0}', cmdstr);
+                    console.log(`stderr readable: ${cmdstr}`);
                 }
             });
 
             child?.stderr?.on('resume', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stderr resume: {0}', cmdstr);
+                    console.log(`stderr resume: ${cmdstr}`);
                 }
             });
 
             child?.stdout?.on('close', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stdout close: {0}', cmdstr);
+                    console.log(`stdout close: ${cmdstr}`);
                 }
             });
 
             child?.stdout?.on('end', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stdout end: {0}', cmdstr);
+                    console.log(`stdout end: ${cmdstr}`);
                 }
             });
 
             child?.stdout?.on('error', (err: Error) => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stdout error: {0} {1}', cmdstr, JSON.stringify(err));
+                    console.log(`stderr error: ${cmdstr} ${JSON.stringify(err)}`);
                 }
             });
 
             child?.stdout?.on('pause', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stdout pause: {0}', cmdstr);
+                    console.log(`stdout pause: {cmdstr}`);
                 }
             });
 
             child?.stdout?.on('readable', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stdout readable: {0}', cmdstr);
+                    console.log(`stdout readable: {cmdstr}`);
                 }
             });
 
             child?.stdout?.on('resume', () => {
                 if (cmdstr.includes('clang')) {
-                    log.warning('stdout resume: {0}', cmdstr);
+                    console.log(`stdout resume: {cmdstr}`);
                 }
             });
 
