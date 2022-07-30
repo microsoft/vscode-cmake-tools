@@ -336,88 +336,88 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 }
             });
 
-            // child?.on('disconnect', () => {
+            // // child?.on('disconnect', () => {
+            // //     if (cmdstr.includes('clang')) {
+            // //         console.log(`disconnect: ${cmdstr}`);
+            // //     }
+            // // });
+            // // child?.on('message', () => {
+            // //     if (cmdstr.includes('clang')) {
+            // //         console.log(`message: ${cmdstr}`);
+            // //     }
+            // // });
+
+            // child?.stderr?.on('close', () => {
             //     if (cmdstr.includes('clang')) {
-            //         console.log(`disconnect: ${cmdstr}`);
-            //     }
-            // });
-            // child?.on('message', () => {
-            //     if (cmdstr.includes('clang')) {
-            //         console.log(`message: ${cmdstr}`);
-            //     }
-            // });
-
-            child?.stderr?.on('close', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stderr close: ${cmdstr}`);
-                }
-            });
-
-            child?.stderr?.on('end', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stderr end: ${cmdstr}`);
-                }
-            });
-
-            child?.stderr?.on('error', (err: Error) => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stderr error: ${cmdstr} ${JSON.stringify(err)}`);
-                }
-            });
-
-            child?.stderr?.on('pause', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stderr pause: ${cmdstr}`);
-                }
-            });
-
-            child?.stderr?.on('readable', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stderr readable: ${cmdstr}`);
-                }
-            });
-
-            // child?.stderr?.on('resume', () => {
-            //     if (cmdstr.includes('clang')) {
-            //         console.log(`stderr resume: ${cmdstr}`);
+            //         console.log(`stderr close: ${cmdstr}`);
             //     }
             // });
 
-            child?.stdout?.on('close', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stdout close: ${cmdstr}`);
-                }
-            });
-
-            child?.stdout?.on('end', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stdout end: ${cmdstr}`);
-                }
-            });
-
-            child?.stdout?.on('error', (err: Error) => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stderr error: ${cmdstr} ${JSON.stringify(err)}`);
-                }
-            });
-
-            child?.stdout?.on('pause', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stdout pause: ${cmdstr}`);
-                }
-            });
-
-            child?.stdout?.on('readable', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stdout readable: ${cmdstr}`);
-                }
-            });
-
-            // child?.stdout?.on('resume', () => {
+            // child?.stderr?.on('end', () => {
             //     if (cmdstr.includes('clang')) {
-            //         console.log(`stdout resume: ${cmdstr}`);
+            //         console.log(`stderr end: ${cmdstr}`);
             //     }
             // });
+
+            // child?.stderr?.on('error', (err: Error) => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stderr error: ${cmdstr} ${JSON.stringify(err)}`);
+            //     }
+            // });
+
+            // child?.stderr?.on('pause', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stderr pause: ${cmdstr}`);
+            //     }
+            // });
+
+            // child?.stderr?.on('readable', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stderr readable: ${cmdstr}`);
+            //     }
+            // });
+
+            // // child?.stderr?.on('resume', () => {
+            // //     if (cmdstr.includes('clang')) {
+            // //         console.log(`stderr resume: ${cmdstr}`);
+            // //     }
+            // // });
+
+            // child?.stdout?.on('close', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stdout close: ${cmdstr}`);
+            //     }
+            // });
+
+            // child?.stdout?.on('end', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stdout end: ${cmdstr}`);
+            //     }
+            // });
+
+            // child?.stdout?.on('error', (err: Error) => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stderr error: ${cmdstr} ${JSON.stringify(err)}`);
+            //     }
+            // });
+
+            // child?.stdout?.on('pause', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stdout pause: ${cmdstr}`);
+            //     }
+            // });
+
+            // child?.stdout?.on('readable', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stdout readable: ${cmdstr}`);
+            //     }
+            // });
+
+            // // child?.stdout?.on('resume', () => {
+            // //     if (cmdstr.includes('clang')) {
+            // //         console.log(`stdout resume: ${cmdstr}`);
+            // //     }
+            // // });
 
         });
     }
