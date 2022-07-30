@@ -336,16 +336,16 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 }
             });
 
-            child?.on('disconnect', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`disconnect: ${cmdstr}`);
-                }
-            });
-            child?.on('message', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`message: ${cmdstr}`);
-                }
-            });
+            // child?.on('disconnect', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`disconnect: ${cmdstr}`);
+            //     }
+            // });
+            // child?.on('message', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`message: ${cmdstr}`);
+            //     }
+            // });
 
             child?.stderr?.on('close', () => {
                 if (cmdstr.includes('clang')) {
@@ -377,11 +377,11 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 }
             });
 
-            child?.stderr?.on('resume', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stderr resume: ${cmdstr}`);
-                }
-            });
+            // child?.stderr?.on('resume', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stderr resume: ${cmdstr}`);
+            //     }
+            // });
 
             child?.stdout?.on('close', () => {
                 if (cmdstr.includes('clang')) {
@@ -403,21 +403,21 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
             child?.stdout?.on('pause', () => {
                 if (cmdstr.includes('clang')) {
-                    console.log(`stdout pause: {cmdstr}`);
+                    console.log(`stdout pause: ${cmdstr}`);
                 }
             });
 
             child?.stdout?.on('readable', () => {
                 if (cmdstr.includes('clang')) {
-                    console.log(`stdout readable: {cmdstr}`);
+                    console.log(`stdout readable: ${cmdstr}`);
                 }
             });
 
-            child?.stdout?.on('resume', () => {
-                if (cmdstr.includes('clang')) {
-                    console.log(`stdout resume: {cmdstr}`);
-                }
-            });
+            // child?.stdout?.on('resume', () => {
+            //     if (cmdstr.includes('clang')) {
+            //         console.log(`stdout resume: ${cmdstr}`);
+            //     }
+            // });
 
         });
     }
