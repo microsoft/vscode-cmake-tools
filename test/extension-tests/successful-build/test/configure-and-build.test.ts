@@ -8,8 +8,7 @@ import {
     DefaultEnvironment,
     expect,
     getFirstSystemKit,
-    getMatchingProjectKit,
-    getMatchingSystemKit
+    getMatchingProjectKit
 } from '@test/util';
 import * as path from 'path';
 
