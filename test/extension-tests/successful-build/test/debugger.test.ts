@@ -25,15 +25,6 @@ suite('Debug/Launch interface', () => {
         testEnv.teardown();
     });
 
-    test('Test call of debugger', async () => {
-        const executablesTargets = await cmt.executableTargets;
-        expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
-
-        await cmt.debugTarget();
-        //sinon.assert.calledWith(testEnv.vs_debug_start_debugging);
-    }).timeout(60000);
-
     test('Test buildTargetName for use in other extensions or launch.json', async () => {
         const executablesTargets = await cmt.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
