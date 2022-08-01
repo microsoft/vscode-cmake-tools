@@ -157,8 +157,8 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     if (pr) {
         pr.report({ message: localize('getting.compiler.version', 'Getting {0} version for {1}', vendor, binPath) });
     }
-    const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 30000 }).result;
-    if (exec.retc !== 0) {
+    const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true, timeout: 60000 }).result;
+    if (exec.retc !== 0 && !exec.stderr) {
         log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns {1}): {2}', vendor, exec.retc, binPath));
         return null;
     }
