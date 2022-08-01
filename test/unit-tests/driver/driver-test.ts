@@ -381,6 +381,13 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
             expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
             expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.not.eq('Ninja');
+
+            if (process.platform === 'win32') {
+                expect(driver.allTargetName).to.eq('ALL_BUILD');
+            } else {
+                expect(driver.allTargetName).to.eq('all');
+            }
+
         }).timeout(90000);
 
         test('Test Visual Studio kit with wrong all target name', async () => {
