@@ -234,9 +234,6 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // This is distinct from the 'exit' event, since multiple processes might share the same stdio streams.
             // The 'close' event will always emit after 'exit' was already emitted, or 'error' if the child failed to spawn.
             child?.on('close', retc => {
-                if (retc !== 0) {
-                    log.warning(localize('process.close', 'The command: {0} closed with code: {1}', `${cmdstr}`, `${retc}`));
-                }
                 try {
                     rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
                         if (line_acc && outputConsumer) {
