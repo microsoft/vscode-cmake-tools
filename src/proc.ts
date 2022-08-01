@@ -187,7 +187,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             });
             child?.on('exit', (code, signal) => {
                 if (code !== 0) {
-                    console.log('The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`);
+                    log.warning(localize('process.exit', 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
                 }
             });
             child?.stdout?.on('data', (data: Uint8Array) => {
@@ -235,7 +235,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // The 'close' event will always emit after 'exit' was already emitted, or 'error' if the child failed to spawn.
             child?.on('close', retc => {
                 if (retc !== 0) {
-                    console.log('The command: {0} closed with code: {1}', `${cmdstr}`, `${retc}`);
+                    log.warning(localize('process.close', 'The command: {0} closed with code: {1}', `${cmdstr}`, `${retc}`));
                 }
                 try {
                     rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
