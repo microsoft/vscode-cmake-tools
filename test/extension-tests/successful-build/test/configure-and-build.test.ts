@@ -8,8 +8,7 @@ import {
     DefaultEnvironment,
     expect,
     getFirstSystemKit,
-    getMatchingProjectKit,
-    getMatchingSystemKit
+    getMatchingProjectKit
 } from '@test/util';
 import * as path from 'path';
 
@@ -70,31 +69,6 @@ suite('Build', () => {
         expect(result['cookie']).to.eq('cache-init-cookie');
     }).timeout(100000);
 
-    test('Test kit switch after missing preferred generator', async function (this: Mocha.Context) {
-        // Select compiler build node dependent
-        const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-            linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
-        };
-        if (!(workername in os_compilers)) {
-            this.skip();
-        }
-        const compiler = os_compilers[workername];
-
-        // Run test
-        testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await cmt.setKit(await getMatchingSystemKit(cmt, compiler[0].kitLabel));
-
-        await cmt.build();
-
-        testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
-
-        await cmt.build();
-        const result1 = await testEnv.result.getResultAsJson();
-        expect(result1['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(100000);
-
     test('Test kit switch after missing preferred generator #512', async function (this: Mocha.Context) {
         // Select compiler build node dependent
         const os_compilers: { [osName: string]: { kitLabel: RegExp; generator: string }[] } = {
@@ -143,6 +117,7 @@ suite('Build', () => {
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
         await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
         await cmt.build();
+
         const result3 = await testEnv.result.getResultAsJson();
         expect(result1['cmake-generator']).to.eql(result3['cmake-generator']);
     }).timeout(100000);
@@ -174,8 +149,8 @@ suite('Build', () => {
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
             await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-
             retc = await cmt.build();
+
             expect(retc).eq(0);
             const result1 = await testEnv.result.getResultAsJson();
             expect(result1['cmake-generator']).to.eql(compiler[1].generator);
@@ -202,7 +177,6 @@ suite('Build', () => {
         testEnv.config.updatePartial({ preferredGenerators: [] });
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
         await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-
         await cmt.build();
 
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
@@ -211,8 +185,8 @@ suite('Build', () => {
 
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
         await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-
         await cmt.build();
+
         const result1 = await testEnv.result.getResultAsJson();
         expect(result1['cmake-generator']).to.eql(compiler[0].generator);
     }).timeout(200000);
