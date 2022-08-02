@@ -983,8 +983,8 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
 
                             if (!vsInstall) {
                                 log.warning(localize('specified.vs.not.found',
-                                    "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE={1} was not found, falling back on default instance lookup behavior.",
-                                    preset.name, `"${cmakeGeneratorInstance}"`));
+                                    "Configure preset {0}: Visual Studio instance specified by {1}={2} was not found, falling back on default instance lookup behavior.",
+                                    preset.name, "CMAKE_GENERATOR_INSTANCE", `"${cmakeGeneratorInstance}"`));
                             }
                         }
                     }
