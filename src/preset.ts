@@ -172,7 +172,7 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
         } else if (util.isArrayOfString(preset.inherits)) {
             return preset.inherits.every(parentName => evaluateParent(parentName));
         }
-        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits {1}', preset.name, `"${preset.inherits}"`));
+        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for {1} {2}', preset.name, "\"inherits\":", `"${preset.inherits}"`));
         return false;
     }
     return true;
@@ -983,8 +983,8 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
 
                             if (!vsInstall) {
                                 log.warning(localize('specified.vs.not.found',
-                                    "Configure preset {0}: Visual Studio instance specified by CMAKE_GENERATOR_INSTANCE={1} was not found, falling back on default instance lookup behavior.",
-                                    preset.name, `"${cmakeGeneratorInstance}"`));
+                                    "Configure preset {0}: Visual Studio instance specified by {1} was not found, falling back on default instance lookup behavior.",
+                                    preset.name, `CMAKE_GENERATOR_INSTANCE="${cmakeGeneratorInstance}"`));
                             }
                         }
                     }

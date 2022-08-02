@@ -203,11 +203,11 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 return undefined;
             }
             if (!expandedConfigurePreset.binaryDir) {
-                log.error(localize('binaryDir.not.set.config.preset', '"binaryDir" is not set in configure preset: {0}', configurePreset));
+                log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
                 return undefined;
             }
             if (!expandedConfigurePreset.generator) {
-                log.error(localize('generator.not.set.config.preset', '"generator" is not set in configure preset: {0}', configurePreset));
+                log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
                 return undefined;
             }
             return expandedConfigurePreset;
@@ -294,7 +294,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             }
             this._buildPreset.set(expandedBuildPreset);
             if (!expandedBuildPreset.configurePreset) {
-                log.error(localize('configurePreset.not.set.build.preset', '"configurePreset" is not set in build preset: {0}', buildPreset));
+                log.error(localize('configurePreset.not.set.build.preset', '{0} is not set in build preset: {1}', "\"configurePreset\"", buildPreset));
                 this._buildPreset.set(null);
                 return;
             }
@@ -350,7 +350,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 return undefined;
             }
             if (!expandedTestPreset.configurePreset) {
-                log.error(localize('configurePreset.not.set.test.preset', '"configurePreset" is not set in test preset: {0}', testPreset));
+                log.error(localize('configurePreset.not.set.test.preset', '{0} is not set in test preset: {1}', "\"configurePreset\"", testPreset));
                 return undefined;
             }
             return expandedTestPreset;
