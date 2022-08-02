@@ -26,12 +26,12 @@ type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefin
 
 export class PresetsController {
     private _presetsWatcher: chokidar.FSWatcher | undefined;
-    private _userPresetsWatcher: chokidar.FSWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _presetsFileExists = false;
     private _userPresetsFileExists = false;
     private _isChangingPresets = false;
+    private _referencedFiles: string[] = [];
 
     private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
     private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
@@ -64,41 +64,11 @@ export class PresetsController {
 
         presetsController._sourceDir = await expandSourceDir(cmakeTools.workspaceContext.config.sourceDirectory);
 
-        const watchPresetsChange = async () => {
-            // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
-            // there might be timing issues, since listeners are invoked async.
-            await presetsController.reapplyPresets();
+        // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
+        // there might be timing issues, since listeners are invoked async.
+        await presetsController.reapplyPresets();
 
-            if (presetsController._presetsWatcher) {
-                presetsController._presetsWatcher.close().then(() => {}, () => {});
-            }
-            if (presetsController._userPresetsWatcher) {
-                presetsController._userPresetsWatcher.close().then(() => {}, () => {});
-            }
-
-            presetsController._presetsWatcher = chokidar.watch(presetsController.presetsPath, { ignoreInitial: true })
-                .on('add', async () => {
-                    await presetsController.reapplyPresets();
-                })
-                .on('change', async () => {
-                    await presetsController.reapplyPresets();
-                })
-                .on('unlink', async () => {
-                    await presetsController.reapplyPresets();
-                });
-            presetsController._userPresetsWatcher = chokidar.watch(presetsController.userPresetsPath, { ignoreInitial: true })
-                .on('add', async () => {
-                    await presetsController.reapplyPresets();
-                })
-                .on('change', async () => {
-                    await presetsController.reapplyPresets();
-                })
-                .on('unlink', async () => {
-                    await presetsController.reapplyPresets();
-                });
-        };
-
-        await watchPresetsChange();
+        await presetsController.watchPresetsChange();
 
         cmakeTools.workspaceContext.config.onChange('allowCommentsInPresetsFile', async () => {
             await presetsController.reapplyPresets();
@@ -119,7 +89,8 @@ export class PresetsController {
             presetsController._sourceDir = await expandSourceDir(value);
 
             if (presetsController._sourceDir !== oldSourceDir) {
-                await watchPresetsChange();
+                await presetsController.reapplyPresets();
+                await presetsController.watchPresetsChange();
             }
         });
 
@@ -180,11 +151,14 @@ export class PresetsController {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void) {
+    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Set<string>) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
         fileExistCallback(Boolean(presetsFileBuffer));
+
+        // Record the file as referenced, even if the file does not exist.
+        referencedFiles.add(file);
 
         let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
         if (presetsFile) {
@@ -194,15 +168,22 @@ export class PresetsController {
             setOriginalPresetsFile(this.folder.uri.fsPath, undefined);
         }
         presetsFile = await this.validatePresetsFile(presetsFile, file);
+        // Private fields must be set after validation, otherwise validation would fail.
+        this.populatePrivatePresetsFields(presetsFile, file);
+        await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
         setPresetsFile(this.folder.uri.fsPath, presetsFile);
     }
 
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
     // (need to clean or reload driver)
     async reapplyPresets() {
+        const referencedFiles: Set<string> = new Set();
+
         // Reset all changes due to expansion since parents could change
-        await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists);
-        await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists);
+        await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
+
+        this._referencedFiles = Array.from(referencedFiles);
 
         this._cmakeTools.minCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
 
@@ -955,17 +936,89 @@ export class PresetsController {
         return presetsFile;
     }
 
+    private populatePrivatePresetsFields(presetsFile: preset.PresetsFile | undefined, file: string) {
+        if (!presetsFile) {
+            return;
+        }
+
+        presetsFile.__path = file;
+        const setFile = (presets?: preset.Preset[]) => {
+            if (presets) {
+                for (const preset of presets) {
+                    preset.__file = presetsFile;
+                }
+            }
+        };
+        setFile(presetsFile.configurePresets);
+        setFile(presetsFile.buildPresets);
+        setFile(presetsFile.testPresets);
+    }
+
+    private async mergeIncludeFiles(rootPresetsFile: preset.PresetsFile | undefined, presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Set<string>): Promise<void> {
+        if (!rootPresetsFile || !presetsFile || !presetsFile.include) {
+            return;
+        }
+
+        // Merge the includes in reverse order so that the final presets order is correct
+        for (let i = presetsFile.include.length - 1; i >= 0; i--) {
+            const fullIncludePath = path.normalize(path.resolve(path.dirname(file), presetsFile.include[i]));
+
+            // Do not include files more than once
+            if (referencedFiles.has(fullIncludePath)) {
+                continue;
+            }
+            // Record the file as referenced, even if the file does not exist.
+            referencedFiles.add(fullIncludePath);
+
+            const includeFileBuffer = await this.readPresetsFile(fullIncludePath);
+            if (!includeFileBuffer) {
+                log.error(localize('included.presets.file.not.found', 'Included presets file {0} cannot be found', fullIncludePath));
+                continue;
+            }
+
+            let includeFile = await this.parsePresetsFile(includeFileBuffer, fullIncludePath);
+            includeFile = await this.validatePresetsFile(includeFile, fullIncludePath);
+            if (!includeFile) {
+                continue;
+            }
+
+            // Private fields must be set after validation, otherwise validation would fail.
+            this.populatePrivatePresetsFields(includeFile, fullIncludePath);
+
+            if (includeFile.cmakeMinimumRequired) {
+                if (!rootPresetsFile.cmakeMinimumRequired || util.versionLess(rootPresetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
+                    rootPresetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
+                }
+            }
+            if (includeFile.configurePresets) {
+                rootPresetsFile.configurePresets = includeFile.configurePresets.concat(rootPresetsFile.configurePresets || []);
+            }
+            if (includeFile.buildPresets) {
+                rootPresetsFile.buildPresets = includeFile.buildPresets.concat(rootPresetsFile.buildPresets || []);
+            }
+            if (includeFile.testPresets) {
+                rootPresetsFile.testPresets = includeFile.testPresets.concat(rootPresetsFile.testPresets || []);
+            }
+
+            // Recursively merge included files
+            await this.mergeIncludeFiles(rootPresetsFile, includeFile, fullIncludePath, referencedFiles);
+        }
+    }
+
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {
         if (!presetsFile) {
             return undefined;
         }
+        let schemaFile;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
             return undefined;
-        }
-        let schemaFile = 'schemas/CMakePresets-schema.json';
-        if (presetsFile.version >= 3) {
+        } else if (presetsFile.version === 2) {
+            schemaFile = 'schemas/CMakePresets-schema.json';
+        } else if (presetsFile.version === 3) {
             schemaFile = 'schemas/CMakePresets-v3-schema.json';
+        } else {
+            schemaFile = 'schemas/CMakePresets-v4-schema.json';
         }
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);
@@ -1028,12 +1081,23 @@ export class PresetsController {
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));
     }
 
-    dispose() {
+    private async watchPresetsChange() {
         if (this._presetsWatcher) {
             this._presetsWatcher.close().then(() => {}, () => {});
         }
-        if (this._userPresetsWatcher) {
-            this._userPresetsWatcher.close().then(() => {}, () => {});
+
+        const handler = () => {
+            void this.reapplyPresets();
+        };
+        this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
+            .on('add', handler)
+            .on('change', handler)
+            .on('unlink', handler);
+    };
+
+    dispose() {
+        if (this._presetsWatcher) {
+            this._presetsWatcher.close().then(() => {}, () => {});
         }
         if (this._sourceDirChangedSub) {
             this._sourceDirChangedSub.dispose();

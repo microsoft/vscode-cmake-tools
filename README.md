@@ -8,6 +8,7 @@
 - [Configure and build a project with CMake Presets](docs/cmake-presets.md)
 - [Configure a project with kits and variants](docs/how-to.md#configure-a-project)
 - [Build a project with kits and variants](docs/how-to.md#build-a-project)
+- [Configure and build a project using tasks](docs/tasks.md)
 - [Debug a project](docs/how-to.md#debug-a-project)
 - [Configure CMake Tools settings](docs/cmake-settings.md)
 - [How to](docs/how-to.md)
@@ -20,8 +21,9 @@
 **PLEASE**, if you experience any problems, have any questions, or have an idea
 for a new feature, create an issue on [the GitHub page](https://github.com/microsoft/vscode-cmake-tools)!
 
-This extension itself *does not* provide language support for the CMake
-scripting language. For that we recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+This extension itself *does not* provide language support for the CMake scripting language.
+For that we bundle [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) which provides the support.
+A closed-source extension that provides even better support can also be installed: [CMake Language Support](https://marketplace.visualstudio.com/items?itemName=josetr.cmake-language-support-vscode)
 
 ### Microsoft Open Source Code of Conduct
 

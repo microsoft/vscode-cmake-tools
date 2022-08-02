@@ -5,7 +5,7 @@ import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as fs from 'fs';
 import * as path from 'path';
 
-suite('Debug/Launch interface', async () => {
+suite('Debug/Launch interface', () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 
@@ -24,15 +24,6 @@ suite('Debug/Launch interface', async () => {
         await cmt.asyncDispose();
         testEnv.teardown();
     });
-
-    test('Test call of debugger', async () => {
-        const executablesTargets = await cmt.executableTargets;
-        expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
-
-        await cmt.debugTarget();
-        //sinon.assert.calledWith(testEnv.vs_debug_start_debugging);
-    }).timeout(60000);
 
     test('Test buildTargetName for use in other extensions or launch.json', async () => {
         const executablesTargets = await cmt.executableTargets;
@@ -182,7 +173,7 @@ suite('Debug/Launch interface', async () => {
 
         const terminal = await cmt.launchTarget();
         expect(terminal).to.be.not.null;
-        expect(terminal!.name).to.eq('CMake/Launch');
+        expect(terminal!.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
         const start = new Date();
         // Needed to get launch target result
@@ -221,7 +212,7 @@ suite('Debug/Launch interface', async () => {
 
         const term2 = await cmt.launchTarget();
         expect(term2).to.be.not.null;
-        expect(term2!.name).of.be.eq('CMake/Launch');
+        expect(term2!.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
         const term2Pid = await term2?.processId;
         expect(term1Pid).to.not.eq(term2Pid);

@@ -2,12 +2,12 @@
 
 import * as api from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools, ConfigureTrigger } from '@cmt/cmakeTools';
+import { CMakeTools } from '@cmt/cmakeTools';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import { fs } from '@cmt/pr';
 import * as path from 'path';
 
-suite('Environment Variables in Variants', async () => {
+suite('Environment Variables in Variants', () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 
@@ -37,23 +37,6 @@ suite('Environment Variables in Variants', async () => {
         await cmt.asyncDispose();
         testEnv.teardown();
     });
-
-    test('Check for environment variables being passed to configure', async () => {
-        // Set fake settings
-        // Configure
-        expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[variantEnv] configure failed');
-        expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-        const cache = await CMakeCache.fromPath(await cmt.cachePath);
-
-        const cacheEntry_ = cache.get('variantEnv');
-        expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
-        const cacheEntry = cacheEntry_!;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
-        expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
-        expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
-        expect(cacheEntry.as<string>())
-            .to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');
-    }).timeout(100000);
 
     test('Replace default variant', async () => {
         const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');

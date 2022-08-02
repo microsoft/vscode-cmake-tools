@@ -13,7 +13,7 @@ import CMakeTools from '@cmt/cmakeTools';
 
 const workername: string = process.platform;
 
-suite('Build using Kits and Variants', async () => {
+suite('Build using Kits and Variants', () => {
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
     let cmakeTools: CMakeTools;

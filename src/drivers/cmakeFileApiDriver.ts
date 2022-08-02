@@ -7,6 +7,7 @@ import { ConfigurationReader } from '@cmt/extensionConfigs';
 import {
     createQueryFileForApi,
     loadCacheContent,
+    loadCMakeFiles,
     loadConfigurationTargetMap,
     loadExtCodeModelContent,
     loadIndexFile,
@@ -79,6 +80,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     // Information from cmake file api
     private _cache: Map<string, api.CacheEntry> = new Map<string, api.CacheEntry>();
+    private _cmakeFiles: string[] | null = null;
     private _generatorInformation: Index.GeneratorInformation | null = null;
     private _target_map: Map<string, api.Target[]> = new Map();
 
@@ -115,7 +117,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         if (cacheExists && this.generator?.name === await this.getGeneratorFromCache(this.cachePath)) {
             await this.loadGeneratorInformationFromCache(this.cachePath);
             const code_model_exist = await this.updateCodeModel();
-            if (!code_model_exist) {
+            if (!code_model_exist && this.config.configureOnOpen === true) {
                 await this.doConfigure([], undefined);
             }
         } else {
@@ -177,11 +179,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return this._needsReconfigure;
     }
 
-    async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    async doSetKit(cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
-        if (need_clean) {
-            await this._cleanPriorConfiguration();
-        }
         await cb();
         if (!this.generator) {
             throw new NoGeneratorError();
@@ -261,7 +260,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
             const env = await this.getConfigureEnvironment();
-            const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env }).result;
+            const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env, cwd: this.binaryDir }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
             if (res.retc === 0) {
@@ -326,6 +325,14 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 }
             }
 
+            // load cmake files if available
+            const cmakefiles_obj = indexFile.objects.find((value: Index.ObjectKind) => value.kind === 'cmakeFiles');
+            if (cmakefiles_obj) {
+                this._cmakeFiles = await loadCMakeFiles(path.join(reply_path, cmakefiles_obj.jsonFile));
+            } else {
+                this._cmakeFiles = [];
+            }
+
             this._codeModelChanged.fire(this._codeModelContent);
         }
         return indexFile !== null;
@@ -370,6 +377,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 name: t.name,
                 path: (t as api.RichTarget).filepath
             }));
+    }
+
+    get cmakeFiles(): string[] {
+        return this._cmakeFiles || [];
     }
 
     private readonly _codeModelChanged = new vscode.EventEmitter<null | codeModel.CodeModelContent>();

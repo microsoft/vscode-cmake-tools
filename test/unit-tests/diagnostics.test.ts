@@ -23,7 +23,7 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
     }
 }
 
-suite('Diagnostics', async () => {
+suite('Diagnostics', () => {
     let consumer = new CMakeOutputConsumer('dummyPath');
     let build_consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
     setup(() => {
