@@ -153,6 +153,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             resolve({ retc: 0, stdout: '', stderr: '' });
         });
     } else {
+        // Since we won't be sending anything to this process, close its stdin.
+        spawn_opts.stdio = ['ignore', 'pipe', 'pipe'];
         try {
             child = proc.spawn(command, args ?? [], spawn_opts);
         } catch {
