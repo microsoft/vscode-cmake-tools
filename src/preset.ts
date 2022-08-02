@@ -172,7 +172,7 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
         } else if (util.isArrayOfString(preset.inherits)) {
             return preset.inherits.every(parentName => evaluateParent(parentName));
         }
-        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for {1} {2}', preset.name, "inherits", `"${preset.inherits}"`));
+        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for {1} {2}', preset.name, "\"inherits\"", `"${preset.inherits}"`));
         return false;
     }
     return true;
