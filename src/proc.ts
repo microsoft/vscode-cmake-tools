@@ -191,7 +191,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 }
             });
             child?.stdout?.on('data', (data: Uint8Array) => {
-                rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), { data, command, args }, () => {
+                rollbar.invoke(localize('processing.data.event.stdout', 'Processing {0} event from proc stdout', "\"data\""), { data, command, args }, () => {
                     const str = iconv.decode(Buffer.from(data), encoding);
                     const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                     while (lines.length > 1) {
@@ -211,7 +211,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 });
             });
             child?.stderr?.on('data', (data: Uint8Array) => {
-                rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), { data, command, args }, () => {
+                rollbar.invoke(localize('processing.data.event.stderr', 'Processing {0} event from proc stderr', "\"data\""), { data, command, args }, () => {
                     const str = iconv.decode(Buffer.from(data), encoding);
                     const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                     while (lines.length > 1) {
@@ -235,7 +235,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // The 'close' event will always emit after 'exit' was already emitted, or 'error' if the child failed to spawn.
             child?.on('close', retc => {
                 try {
-                    rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), { line_acc, stderr_line_acc, command, retc }, () => {
+                    rollbar.invoke(localize('resolving.close.event', 'Resolving process on {0} event', "\"close\""), { line_acc, stderr_line_acc, command, retc }, () => {
                         if (line_acc && outputConsumer) {
                             outputConsumer.output(line_acc);
                         }
