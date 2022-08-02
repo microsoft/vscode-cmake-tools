@@ -172,7 +172,7 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
         } else if (util.isArrayOfString(preset.inherits)) {
             return preset.inherits.every(parentName => evaluateParent(parentName));
         }
-        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for {1} {2}', preset.name, "\"inherits\"", `"${preset.inherits}"`));
+        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for {1} {2}', preset.name, "\"inherits\":", `"${preset.inherits}"`));
         return false;
     }
     return true;
@@ -1018,8 +1018,8 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
 
                     if (!vsInstall) {
                         log.error(localize('specified.cl.not.found',
-                            "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the {4} Scan for Compilers{5} command if this toolset exists on your computer.",
-                            preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`, "\'CMake:", "\'"));
+                            "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
+                            preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
                     } else {
                         log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
                         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
