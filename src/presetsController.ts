@@ -42,7 +42,11 @@ export class PresetsController {
         const presetsController = new PresetsController(cmakeTools, kitsController);
 
         const expandSourceDir = async (dir: string) => {
-            const workspaceFolder = cmakeTools.folder.uri.fsPath;
+            let workspaceFolder = cmakeTools.folder.uri.fsPath;
+            if (workspaceFolder.length > 1 && workspaceFolder.charCodeAt(0) > 97 && workspaceFolder.charCodeAt(0) <= 122 && workspaceFolder[1] === ':') {
+                // Windows drive letter should be uppercase, for consistency with other tools like Visual Studio.
+                workspaceFolder = workspaceFolder[0] + workspaceFolder[1].toUpperCase() + workspaceFolder.slice(2);
+            }
             const expansionOpts: ExpansionOptions = {
                 vars: {
                     workspaceFolder,
