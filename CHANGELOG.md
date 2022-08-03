@@ -12,6 +12,7 @@ Bug Fixes:
 - Clear output channel after auto-reconfigure. [#2628](https://github.com/microsoft/vscode-cmake-tools/issues/2628)
 - Don't delete CMakeCache.txt when switching kits if the buildDirectory also changes. [#2546](https://github.com/microsoft/vscode-cmake-tools/issues/2546) [@david-fong](https://github.com/david-fong)
 - Add "description" properties to the cmake.revealLog setting. [#2578](https://github.com/microsoft/vscode-cmake-tools/issues/2578)
+- Support launching the target in new powershell terminal. [#2621](https://github.com/microsoft/vscode-cmake-tools/issues/2621)
 
 - Detect clang-cl.exe compilers that are not bundled with Visual Studio. [#2622](https://github.com/microsoft/vscode-cmake-tools/issues/2622)
 
