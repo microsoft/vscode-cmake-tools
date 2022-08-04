@@ -2223,16 +2223,18 @@ export class CMakeTools implements api.CMakeToolsAPI {
         const terminal: vscode.Terminal = await this.createTerminal(executable);
 
         let executablePath = shlex.quote(executable.path);
-        let launchTerminalPath = (terminal.creationOptions as vscode.TerminalOptions).env![this.launchTerminalPath];
-        if (process.platform === 'win32') {
-            executablePath = executablePath.replace(/\\/g, "/");
-            launchTerminalPath = launchTerminalPath?.toLocaleLowerCase();
-            if (launchTerminalPath?.includes("pwsh.exe") || launchTerminalPath?.includes("powershell")) {
-                executablePath = `.${executablePath}`;
-            }
-        } else {
-            if (launchTerminalPath?.endsWith("pwsh")) {
-                executablePath = `.${executablePath}`;
+        if (executablePath.startsWith("\"")) {
+            let launchTerminalPath = (terminal.creationOptions as vscode.TerminalOptions).env![this.launchTerminalPath];
+            if (process.platform === 'win32') {
+                executablePath = executablePath.replace(/\\/g, "/");
+                launchTerminalPath = launchTerminalPath?.toLocaleLowerCase();
+                if (launchTerminalPath?.includes("pwsh.exe") || launchTerminalPath?.includes("powershell")) {
+                    executablePath = `.${executablePath}`;
+                }
+            } else {
+                if (launchTerminalPath?.endsWith("pwsh")) {
+                    executablePath = `.${executablePath}`;
+                }
             }
         }
 
