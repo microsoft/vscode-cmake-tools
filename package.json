@@ -558,7 +558,7 @@
           },
           "options": {
             "type": "object",
-            "description": "Additional command options",
+            "description": "%cmake-tools.taskDefinitions.properties.options.description",
             "properties": {
               "cwd": {
                 "type": "string",
@@ -566,19 +566,7 @@
               },
               "environment": {
                 "type": "object",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "description": "%cmake-tools.taskDefinitions.properties.options.environment.name.description%"
-                    },
-                    "value": {
-                      "type": "string",
-                      "description": "%cmake-tools.taskDefinitions.properties.options.environment.value.description%"
-                    }
-                  }
-                }
+                "description": "%cmake-tools.taskDefinitions.properties.options.environment.description%"
               }
             }
           },

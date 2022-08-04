@@ -89,7 +89,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const taskName: string = localizeCommandType(commandType);
         let buildTargets: string[] | undefined;
         let preset: string | undefined;
-        const options: { cwd?: string ; environment?: Environment } = {};
+        //const options: { cwd?: string ; environment?: Environment } = {};
         if (commandType === CommandType.build) {
             buildTargets = targets;
         }
@@ -114,8 +114,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             label: CMakeTaskProvider.CMakeSourceStr + ": " + taskName,
             command: commandType,
             targets: buildTargets,
-            preset: preset,
-            options: options
+            preset: preset
         };
         const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>

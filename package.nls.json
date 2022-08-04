@@ -154,9 +154,9 @@
     "cmake-tools.taskDefinitions.properties.label.description": "The name of the task",
     "cmake-tools.taskDefinitions.properties.command.description": "CMake command",
     "cmake-tools.taskDefinitions.properties.targets.description": "CMake build targets",
-    "cmake-tools.taskDefinitions.properties.preset.description": "CMake preset name. This is a configuration, build or install preset, based on the CMake command",
+    "cmake-tools.taskDefinitions.properties.preset.description": "CMake preset name. This is a configuration, build or test preset, based on the CMake command",
+    "cmake-tools.taskDefinitions.properties.options.description": "Additional command options",
     "cmake-tools.taskDefinitions.properties.options.cwd.description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used.",
-    "cmake-tools.taskDefinitions.properties.options.environment.name.description": "Name of environment variable.",
-    "cmake-tools.taskDefinitions.properties.options.environment.value.description": "Value for the environment variable.",
+    "cmake-tools.taskDefinitions.properties.options.environment.description": "Environment variables.",
     "cmake-tools.taskDefinitions.properties.details.description": "Additional details of the task"
 }
