@@ -4,7 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import { ConfigurationReader } from '@cmt/extensionConfigs';
+import { ConfigurationReader } from '@cmt/config';
 import paths from '@cmt/paths';
 import { StateManager } from '@cmt/state';
 

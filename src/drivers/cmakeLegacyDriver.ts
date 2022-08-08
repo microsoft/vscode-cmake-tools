@@ -15,7 +15,7 @@ import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
-import { ConfigurationReader } from '@cmt/extensionConfigs';
+import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 import { CodeModelContent } from './codeModel';

@@ -101,7 +101,7 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
         return input;
     }
 
-    const MaxRecursion = 10;
+    const maxRecursion = 10;
     let result = input;
     let didReplacement = false;
     let circularReference: string | undefined;
@@ -114,11 +114,11 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
         didReplacement = expansion.didReplacement;
         circularReference = expansion.circularReference;
         i++;
-    } while (i < MaxRecursion && opts.recursive && didReplacement && !circularReference);
+    } while (i < maxRecursion && opts.recursive && didReplacement && !circularReference);
 
     if (circularReference) {
         log.warning(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
-    } else if (i === MaxRecursion) {
+    } else if (i === maxRecursion) {
         log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
     }
 
@@ -159,8 +159,8 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
     while ((mat = envRegex1.exec(input))) {
         const full = mat[0];
         const varName = mat[1];
-        const repl = fixPaths(env[varName]) || '';
-        subs.set(full, repl);
+        const replacement = fixPaths(env[varName]) || '';
+        subs.set(full, replacement);
     }
 
     const envRegex2 = RegExp(`\\$\\{env\\.(${varValueRegexp})\\}`, "g");
@@ -179,8 +179,8 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         // Avoid replacing an env variable by itself, e.g. PATH:env{PATH}.
         const envRegex4 = RegExp(`\\$env\\{(${varValueRegexp})\\}`, "g");
         mat = envRegex4.exec(replacement);
-        const varNameRepl = mat ? mat[1] : undefined;
-        if (varNameRepl && varNameRepl === varName) {
+        const varNameReplacement = mat ? mat[1] : undefined;
+        if (varNameReplacement && varNameReplacement === varName) {
             circularReference = `\"${varName}\" : \"${input}\"`;
             break;
         }

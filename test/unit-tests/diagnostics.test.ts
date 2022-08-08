@@ -9,7 +9,7 @@ chai.use(chaiAsPromised);
 import { expect } from 'chai';
 import * as diags from '@cmt/diagnostics/build';
 import { OutputConsumer } from '../../src/proc';
-import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/extensionConfigs';
+import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/config';
 import { platformPathEquivalent } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { populateCollection } from '@cmt/diagnostics/util';

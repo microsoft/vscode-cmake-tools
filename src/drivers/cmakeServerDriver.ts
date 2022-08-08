@@ -12,7 +12,7 @@ import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
-import { ConfigurationReader } from '@cmt/extensionConfigs';
+import { ConfigurationReader } from '@cmt/config';
 import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
 import * as ext from '@cmt/extension';

@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 
-import { ConfigurationReader } from '@cmt/extensionConfigs';
+import { ConfigurationReader } from '@cmt/config';
 import * as logging from './logging';
 import { fs } from './pr';
 import { Environment, EnvironmentUtils } from './environmentVariables';

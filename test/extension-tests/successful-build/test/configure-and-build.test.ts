@@ -2,7 +2,7 @@
 import { CMakeTools, ConfigureTrigger } from '@cmt/cmakeTools';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
-import { ExtensionConfigurationSettings } from '@cmt/extensionConfigs';
+import { ExtensionConfigurationSettings } from '@cmt/config';
 import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,

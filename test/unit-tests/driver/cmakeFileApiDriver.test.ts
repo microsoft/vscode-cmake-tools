@@ -1,5 +1,5 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
-import { ConfigurationReader } from '@cmt/extensionConfigs';
+import { ConfigurationReader } from '@cmt/config';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';

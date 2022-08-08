@@ -68,7 +68,6 @@ interface EncodedMeasurementValue {
     _: string;
 }
 
-// clang-format off
 interface MessyResults {
     site: {
         $: {};
@@ -92,7 +91,7 @@ interface MessyResults {
     };
 }
 
-function parseXMLString<T>(xml: string): Promise<T> {
+function parseXmlString<T>(xml: string): Promise<T> {
     return new Promise((resolve, reject) => {
         xml2js.parseString(xml, (err, result) => {
             if (err) {
@@ -114,9 +113,8 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue | string): string
     }
     return buffer.toString('utf-8');
 }
-// clang-format on
 
-function cleanupResultsXML(messy: MessyResults): CTestResults {
+function cleanupResultsXml(messy: MessyResults): CTestResults {
     const testingHead = messy.site.testing[0];
     if (testingHead.testList.length === 1 && (testingHead.testList[0] as any as string) === '') {
         // XML parsing is obnoxious. This condition means that there are no tests,
@@ -150,36 +148,36 @@ function cleanupResultsXML(messy: MessyResults): CTestResults {
     };
 }
 
-export async function readTestResultsFile(testXML: string) {
-    const content = (await fs.readFile(testXML)).toString();
-    const data = await parseXMLString(content) as MessyResults;
-    const clean = cleanupResultsXML(data);
+export async function readTestResultsFile(testXml: string) {
+    const content = (await fs.readFile(testXml)).toString();
+    const data = await parseXmlString(content) as MessyResults;
+    const clean = cleanupResultsXml(data);
     return clean;
 }
 
 export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
-    const wsLines = output.split('\n');
-    const lines = wsLines.map(l => l.trim());
+    const untrimmedLines = output.split('\n');
+    const lines = untrimmedLines.map(l => l.trim());
     const decorations: FailingTestDecoration[] = [];
     for (let cursor = 0; cursor < lines.length; ++cursor) {
         const line = lines[cursor];
         const regex = process.platform === 'win32' ? /^(.*)\((\d+)\): FAILED:/ : /^(.*):(\d+): FAILED:/;
         const result = regex.exec(line);
         if (result) {
-            const [, file, lineNumber] = result;
-            const lineno = parseInt(lineNumber) - 1;
+            const [, file, arg2] = result;
+            const lineNumber = parseInt(arg2) - 1;
             let message = '~~~c++\n';
             for (let i = 0; ; ++i) {
-                const exprLine = wsLines[cursor + i];
-                if (exprLine.startsWith('======') || exprLine.startsWith('------')) {
+                const untrimmedLine = untrimmedLines[cursor + i];
+                if (untrimmedLine.startsWith('======') || untrimmedLine.startsWith('------')) {
                     break;
                 }
-                message += exprLine + '\n';
+                message += untrimmedLine + '\n';
             }
 
             decorations.push({
                 fileName: file,
-                lineNumber: lineno,
+                lineNumber: lineNumber,
                 hoverMessage: `${message}\n~~~`
             });
         }
@@ -448,13 +446,13 @@ export class CTestDriver implements vscode.Disposable {
             .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
             .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
             .map(([, id, tname]) => ({ id: parseInt(id!), name: tname! })) ?? [];
-        const tagfile = path.join(driver.binaryDir, 'Testing', 'TAG');
-        const tag = (await fs.exists(tagfile)) ? (await fs.readFile(tagfile)).toString().split('\n')[0].trim() : null;
-        const tagdir = tag ? path.join(driver.binaryDir, 'Testing', tag) : null;
-        const resultsFile = tagdir ? path.join(tagdir, 'Test.xml') : null;
+        const tagFile = path.join(driver.binaryDir, 'Testing', 'TAG');
+        const tag = (await fs.exists(tagFile)) ? (await fs.readFile(tagFile)).toString().split('\n')[0].trim() : null;
+        const tagDir = tag ? path.join(driver.binaryDir, 'Testing', tag) : null;
+        const resultsFile = tagDir ? path.join(tagDir, 'Test.xml') : null;
         this.tests = tests;
         if (resultsFile && await fs.exists(resultsFile)) {
-            console.assert(tagdir);
+            console.assert(tagDir);
             await this.reloadTestResults(resultsFile);
         } else {
             this.testResults = null;
@@ -463,8 +461,8 @@ export class CTestDriver implements vscode.Disposable {
         return tests;
     }
 
-    private async reloadTestResults(testXML: string): Promise<void> {
-        this.testResults = await readTestResultsFile(testXML);
+    private async reloadTestResults(testXml: string): Promise<void> {
+        this.testResults = await readTestResultsFile(testXml);
         const failing = this.testResults.site.testing.test.filter(t => t.status === 'failed');
         this.decorationManager.clearFailingTestDecorations();
         const newDecors = [] as FailingTestDecoration[];

@@ -13,7 +13,7 @@ import * as nls from 'vscode-nls';
 
 import { CMakeCache } from '@cmt/cache';
 import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmakeTools';
-import { ConfigurationReader, TouchBarConfig } from '@cmt/extensionConfigs';
+import { ConfigurationReader, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { CMakeToolsFolderController, CMakeToolsFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/folders';
 import {

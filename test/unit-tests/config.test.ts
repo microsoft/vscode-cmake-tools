@@ -1,4 +1,4 @@
-import { ConfigurationReader, ExtensionConfigurationSettings } from '@cmt/extensionConfigs';
+import { ConfigurationReader, ExtensionConfigurationSettings } from '@cmt/config';
 import { expect } from '@test/util';
 
 function createConfig(conf: Partial<ExtensionConfigurationSettings>): ConfigurationReader {

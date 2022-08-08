@@ -276,5 +276,5 @@ export async function showLogFile(): Promise<void> {
 // here since we may have circular imports
 import * as util from './util';
 import { fs } from './pr';
-import { LogLevelKey } from './extensionConfigs';
+import { LogLevelKey } from './config';
 import paths from './paths';

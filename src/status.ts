@@ -1,4 +1,4 @@
-import { ConfigurationReader, StatusBarButtonVisibility as ButtonVisibility } from '@cmt/extensionConfigs';
+import { ConfigurationReader, StatusBarButtonVisibility as ButtonVisibility } from '@cmt/config';
 import { BasicTestResults } from '@cmt/ctest';
 import { SpecialKits } from '@cmt/kit';
 import * as vscode from 'vscode';

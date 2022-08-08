@@ -119,7 +119,7 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     };
 }
 
-function createMSVCDebugConfiguration(target: ExecutableTarget): VSCodeDebugConfiguration {
+function createMsvcDebugConfiguration(target: ExecutableTarget): VSCodeDebugConfiguration {
     return {
         type: 'cppvsdbg',
         name: `Debug ${target.name}`,
@@ -166,9 +166,9 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     const entry = cache.get('CMAKE_LINKER');
     if (entry !== null && !modeOverride && !debuggerPathOverride) {
         const linker = entry.value as string;
-        const isMSVCLinker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
-        if (isMSVCLinker) {
-            return createMSVCDebugConfiguration(target);
+        const isMsvcLinker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
+        if (isMsvcLinker) {
+            return createMsvcDebugConfiguration(target);
         }
     }
 
@@ -190,7 +190,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     }
 
     if (compilerPath.endsWith('cl.exe')) {
-        return createMSVCDebugConfiguration(target);
+        return createMsvcDebugConfiguration(target);
     }
 
     // Look for a debugger, in the following order:
