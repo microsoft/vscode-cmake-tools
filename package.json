@@ -1219,7 +1219,7 @@
         },
         "cmake.enabledOutputParsers": {
           "type": "array",
-          "description": "%cmake-tools.configuration.cmake.enabledOutputParsers.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.enabledOutputParsers.description%",
           "items": {
             "type": "string",
             "enum": [
@@ -1272,7 +1272,7 @@
                   "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
                   "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
                 ],
-                "description": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
+                "markdownDescription": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
             },
             "logging": {
               "type": "object",
@@ -1975,7 +1975,7 @@
         "cmake.ignoreCMakeListsMissing": {
           "type": "boolean",
           "default": false,
-          "description": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
           "scope": "resource"
         }
       }
