@@ -214,13 +214,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 return;
             }
             if (!expandedConfigurePreset.binaryDir) {
-                log.error(localize('binaryDir.not.set.config.preset', '"binaryDir" is not set in configure preset: {0}', configurePreset));
+                log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
                 // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
                 await this.resetPresets();
                 return;
             }
             if (!expandedConfigurePreset.generator) {
-                log.error(localize('generator.not.set.config.preset', '"generator" is not set in configure preset: {0}', configurePreset));
+                log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
                 // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
                 await this.resetPresets();
                 return;
@@ -279,7 +279,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 return;
             }
             if (!expandedBuildPreset.configurePreset) {
-                log.error(localize('configurePreset.not.set.build.preset', '"configurePreset" is not set in build preset: {0}', buildPreset));
+                log.error(localize('configurePreset.not.set.build.preset', '{0} is not set in build preset: {1}', "\"configurePreset\"", buildPreset));
                 this._buildPreset.set(null);
                 return;
             }
@@ -341,7 +341,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 return;
             }
             if (!expandedTestPreset.configurePreset) {
-                log.error(localize('configurePreset.not.set.test.preset', '"configurePreset" is not set in test preset: {0}', testPreset));
+                log.error(localize('configurePreset.not.set.test.preset', '{0} is not set in test preset: {1}', "\"configurePreset\"", testPreset));
                 this._testPreset.set(null);
                 return;
             }
@@ -2220,15 +2220,21 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
 
         const userConfig = this.workspaceContext.config.debugConfig;
-        const terminal = await this.createTerminal(executable);
+        const terminal: vscode.Terminal = await this.createTerminal(executable);
 
         let executablePath = shlex.quote(executable.path);
-
-        if (process.platform === 'win32') {
-            executablePath = executablePath.replace(/\\/g, "/");
-
-            if (vscode.env.shell.indexOf("PowerShell") > 0) {
-                executablePath = `.${executablePath}`;
+        if (executablePath.startsWith("\"")) {
+            let launchTerminalPath = (terminal.creationOptions as vscode.TerminalOptions).env![this.launchTerminalPath];
+            if (process.platform === 'win32') {
+                executablePath = executablePath.replace(/\\/g, "/");
+                launchTerminalPath = launchTerminalPath?.toLocaleLowerCase();
+                if (launchTerminalPath?.includes("pwsh.exe") || launchTerminalPath?.includes("powershell")) {
+                    executablePath = `.${executablePath}`;
+                }
+            } else {
+                if (launchTerminalPath?.endsWith("pwsh")) {
+                    executablePath = `.${executablePath}`;
+                }
             }
         }
 

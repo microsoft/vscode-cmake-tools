@@ -156,7 +156,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             // that was done earlier by that ongoing configure process.
             if (!this.configOrBuildInProgress()) {
                 if (this.config.configureOnEdit) {
-                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
+                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected {0} setting update, attempting automatic reconfigure...", "\'cmake.sourceDirectory\'"));
                     await this.configure(ConfigureTrigger.sourceDirectoryChange, []);
                 }
 
