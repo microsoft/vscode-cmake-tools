@@ -566,7 +566,7 @@
               },
               "environment": {
                 "type": "object",
-                "description": "%cmake-tools.taskDefinitions.properties.options.environment.description%"
+                "markdownDescription": "%cmake-tools.taskDefinitions.properties.options.environment.markdownDescription%"
               }
             }
           },

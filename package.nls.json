@@ -157,6 +157,6 @@
     "cmake-tools.taskDefinitions.properties.preset.description": "CMake preset name. This is a configuration, build or test preset, based on the CMake command",
     "cmake-tools.taskDefinitions.properties.options.description": "Additional command options",
     "cmake-tools.taskDefinitions.properties.options.cwd.description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used.",
-    "cmake-tools.taskDefinitions.properties.options.environment.description": "Environment variables.",
+    "cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": { "message": "Environment variables in the format of \"name\": \"value\".", "comment": [ "\"name\": \"value\" should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation should not be altered." ] },
     "cmake-tools.taskDefinitions.properties.details.description": "Additional details of the task"
 }
