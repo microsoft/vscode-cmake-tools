@@ -349,7 +349,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
                 // Check for working mingw32-make
                 const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH }, timeout: 30000 }).result;
                 if (execMake.retc !== 0) {
-                    log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ("-v" returns non-zero): {0}', bin));
+                    log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ({0} returns non-zero): {1}', "\"-v\"", bin));
                 } else {
                     let make_version_output = execMake.stdout;
                     if (make_version_output.length === 0) {
