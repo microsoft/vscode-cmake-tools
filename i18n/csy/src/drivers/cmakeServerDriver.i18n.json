@@ -11,5 +11,5 @@
 	"build.all.target": "Speciální cíl umožňující sestavení všech dostupných cílů",
 	"install.all.target": "Speciální cíl umožňující instalaci všech dostupných cílů",
 	"utility.target": "Cíl nástroje",
-	"cmakelists.save.trigger.reconfigure": "Zjistila se aktualizace nastavení cmake.sourceDirectory, probíhá pokus o automatickou změnu konfigurace..."
+	"cmakelists.save.trigger.reconfigure": "Zjistila se aktualizace nastavení {0}, probíhá pokus o automatickou změnu konfigurace..."
 }

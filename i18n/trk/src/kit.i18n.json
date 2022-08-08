@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "Hatalı {0} ikili dosyası (\"-v\" {1} döndürüyor): {2}",
 	"bad.compiler.binary.output": "Hatalı {0} ikilisi. {1} raporları sürümü: {2} çıkış: {3}",
 	"detected.compiler": "{0} derleyicisi algılandı: {1}",
-	"bad.mingw32-make.binary": "Hatalı mingw32-make ikili dosyası (\"-v\" sıfır olmayan değer döndürüyor): {0}",
+	"bad.mingw32-make.binary": "Hatalı mingw32-make ikili dosyası ({0} sıfır olmayan değer döndürür): {1}",
 	"detected.clang.compiler": "Clang derleyicisi algılandı: {0}",
 	"skipping.scan.of.appdata": "%LocalAppData% klasörünün taraması atlanıyor",
 	"skipping.scan.of.not.existing.path": "Mevcut olmayan {0} yolunun taraması atlanıyor",
