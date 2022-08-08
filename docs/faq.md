@@ -18,7 +18,9 @@ CMake Tools was created separately from the [CMake extension](https://marketplac
 
 CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake. See Jason Turner's [C++ Weekly - Intro to CMake](https://www.youtube.com/watch?v=HPMvU64RUTY) for a good video introduction.
 
-[CMake's documentation](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) is also available.
+[CMake's documentation](https://cmake.org/cmake/help/latest/) is also available.
+
+One of the maintainers of CMake, Craig Scott, publishes a (paid) book, ["Professional CMake"](https://crascit.com/professional-cmake/).
 
 ## How does CMake Tools work with C and C++ IntelliSense?
 
