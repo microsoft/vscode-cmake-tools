@@ -1063,8 +1063,10 @@ export class PresetsController {
 
     private getIndentationSettings() {
         const config = vscode.workspace.getConfiguration('editor', this.folder.uri);
-        const tabSize = config.get<number>('tabSize') || 4;
-        const insertSpaces = config.get<boolean>('insertSpaces') || true;
+        let tabSize = config.get<number>('tabSize');
+        tabSize = (tabSize === undefined) ? 4 : tabSize;
+        let insertSpaces = config.get<boolean>('insertSpaces');
+        insertSpaces = (insertSpaces === undefined) ? true : insertSpaces;
         return { insertSpaces, tabSize };
     }
 
