@@ -362,11 +362,11 @@ export class CTestDriver implements vscode.Disposable {
     private readonly _resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
     readonly onResultsChanged = this._resultsChangedEmitter.event;
 
-    public async runCTest(driver: CMakeDriver, customized: boolean = false, testPreset?: TestPreset): Promise<number|null> {
-        if (!customized) {
+    public async runCTest(driver: CMakeDriver, testPreset?: TestPreset): Promise<number|null> {
+        if (!testPreset) {
             log.showChannel();
-            this._decorationManager.clearFailingTestDecorations();
         }
+        this._decorationManager.clearFailingTestDecorations();
 
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
         if (ctestpath === null) {
@@ -375,9 +375,9 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         let ctestArgs: string[];
-        if (customized && testPreset) {
+        if (testPreset) {
             ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
-        } else if (!customized && driver.useCMakePresets) {
+        } else if (driver.useCMakePresets) {
             if (!driver.testPreset) {
                 log.error(localize('test.preset.not.set', 'Test preset is not set'));
                 return -3;
@@ -406,7 +406,7 @@ export class CTestDriver implements vscode.Disposable {
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
         await this.reloadTests(driver);
-        if (!customized) {
+        if (!testPreset) {
             if (res.retc === null) {
                 log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
                 return -1;

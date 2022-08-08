@@ -76,7 +76,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         this._cacheWatcher.dispose();
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, taskCustomConfig?: boolean): Promise<number> {
         // Ensure the binary directory exists
         const binary_dir = this.binaryDir;
         await fs.mkdir_p(binary_dir);
@@ -108,10 +108,12 @@ export class CMakeLegacyDriver extends CMakeDriver {
             }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
-            if (res.retc === 0) {
-                this._needsReconfigure = false;
+            if (!taskCustomConfig) {
+                if (res.retc === 0) {
+                    this._needsReconfigure = false;
+                }
+                await this._reloadPostConfigure();
             }
-            await this._reloadPostConfigure();
             return res.retc === null ? -1 : res.retc;
         }
     }

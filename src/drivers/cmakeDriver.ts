@@ -71,7 +71,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * @returns The exit code from CMake
      */
-    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number>;
+    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, taskCustomConfig?: boolean): Promise<number>;
     protected abstract doCacheConfigure(): Promise<number>;
 
     private _isConfiguredAtLeastOnce = false;
@@ -1226,6 +1226,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
+    public async taskCustomConfigure(args: string[]): Promise<number> {
+        return this.doConfigure(args, undefined, false, true);
+    }
+
     async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
@@ -1617,7 +1621,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     getCMakeCommand(): string {
-        return this.cmake.path;
+        return this.cmake.path ? this.cmake.path : ((process.platform === 'win32') ? "cmake.exe" : "cmake");
     }
 
     // Create a command for a given build preset.

@@ -190,28 +190,29 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 
     async expandConfigPresetbyName(configurePreset: string | null): Promise<preset.BuildPreset | undefined> {
-        if (configurePreset) {
-            log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
-            const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
-                configurePreset,
-                lightNormalizePath(this.folder.uri.fsPath || '.'),
-                this.sourceDir,
-                this.getPreferredGeneratorName(),
-                true);
-            if (!expandedConfigurePreset) {
-                log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
-                return undefined;
-            }
-            if (!expandedConfigurePreset.binaryDir) {
-                log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
-                return undefined;
-            }
-            if (!expandedConfigurePreset.generator) {
-                log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
-                return undefined;
-            }
-            return expandedConfigurePreset;
+        if (!configurePreset) {
+            return undefined;
         }
+        log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
+        const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
+            configurePreset,
+            lightNormalizePath(this.folder.uri.fsPath || '.'),
+            this.sourceDir,
+            this.getPreferredGeneratorName(),
+            true);
+        if (!expandedConfigurePreset) {
+            log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
+            return undefined;
+        }
+        if (!expandedConfigurePreset.binaryDir) {
+            log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
+            return undefined;
+        }
+        if (!expandedConfigurePreset.generator) {
+            log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
+            return undefined;
+        }
+        return expandedConfigurePreset;
     }
 
     /**
@@ -265,21 +266,22 @@ export class CMakeTools implements api.CMakeToolsAPI {
     private readonly _buildPreset = new Property<preset.BuildPreset | null>(null);
 
     async expandBuildPresetbyName(buildPreset: string | null): Promise<preset.BuildPreset | undefined> {
-        if (buildPreset) {
-            log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
-            const expandedBuildPreset = await preset.expandBuildPreset(this.folder.uri.fsPath,
-                buildPreset,
-                lightNormalizePath(this.folder.uri.fsPath || '.'),
-                this.sourceDir,
-                this.getPreferredGeneratorName(),
-                true,
-                this.configurePreset?.name);
-            if (!expandedBuildPreset) {
-                log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
-                return undefined;
-            }
-            return expandedBuildPreset;
+        if (!buildPreset) {
+            return undefined;
         }
+        log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
+        const expandedBuildPreset = await preset.expandBuildPreset(this.folder.uri.fsPath,
+            buildPreset,
+            lightNormalizePath(this.folder.uri.fsPath || '.'),
+            this.sourceDir,
+            this.getPreferredGeneratorName(),
+            true,
+            this.configurePreset?.name);
+        if (!expandedBuildPreset) {
+            log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
+            return undefined;
+        }
+        return expandedBuildPreset;
     }
 
     /**
@@ -336,25 +338,26 @@ export class CMakeTools implements api.CMakeToolsAPI {
     private readonly _testPreset = new Property<preset.TestPreset | null>(null);
 
     async expandTestPresetbyName(testPreset: string | null): Promise<preset.TestPreset | undefined> {
-        if (testPreset) {
-            log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
-            const expandedTestPreset = await preset.expandTestPreset(this.folder.uri.fsPath,
-                testPreset,
-                lightNormalizePath(this.folder.uri.fsPath || '.'),
-                this.sourceDir,
-                this.getPreferredGeneratorName(),
-                true,
-                this.configurePreset?.name);
-            if (!expandedTestPreset) {
-                log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
-                return undefined;
-            }
-            if (!expandedTestPreset.configurePreset) {
-                log.error(localize('configurePreset.not.set.test.preset', '{0} is not set in test preset: {1}', "\"configurePreset\"", testPreset));
-                return undefined;
-            }
-            return expandedTestPreset;
+        if (!testPreset) {
+            return undefined;
         }
+        log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
+        const expandedTestPreset = await preset.expandTestPreset(this.folder.uri.fsPath,
+            testPreset,
+            lightNormalizePath(this.folder.uri.fsPath || '.'),
+            this.sourceDir,
+            this.getPreferredGeneratorName(),
+            true,
+            this.configurePreset?.name);
+        if (!expandedTestPreset) {
+            log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
+            return undefined;
+        }
+        if (!expandedTestPreset.configurePreset) {
+            log.error(localize('configurePreset.not.set.test.preset', '{0} is not set in test preset: {1}', "\"configurePreset\"", testPreset));
+            return undefined;
+        }
+        return expandedTestPreset;
     }
 
     /**
@@ -1755,7 +1758,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     private readonly cTestController = new CTestDriver(this.workspaceContext);
 
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset) {
-        return this.cTestController.runCTest(driver, true, testPreset);
+        return this.cTestController.runCTest(driver, testPreset);
     }
 
     async ctest(): Promise<number> {

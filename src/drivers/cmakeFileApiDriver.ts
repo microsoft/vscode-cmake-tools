@@ -221,9 +221,11 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
-        const api_path = this.getCMakeFileApiPath();
-        await createQueryFileForApi(api_path);
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, taskCustomConfig?: boolean): Promise<number> {
+        if (!taskCustomConfig) {
+            const api_path = this.getCMakeFileApiPath();
+            await createQueryFileForApi(api_path);
+        }
 
         // Dup args so we can modify them
         const args = Array.from(args_);
@@ -257,13 +259,17 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.info(proc.buildCmdStr(this.cmake.path, args));
             return 0;
         } else {
-            log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
+            if (!taskCustomConfig) {
+                log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
+            } else {
+                log.debug("Configuring using tasks");
+            }
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
             const env = await this.getConfigureEnvironment();
             const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env, cwd: this.binaryDir }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
-            if (res.retc === 0) {
+            if (res.retc === 0 && !taskCustomConfig) {
                 this._needsReconfigure = false;
                 await this.updateCodeModel();
             }

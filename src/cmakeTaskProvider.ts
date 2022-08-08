@@ -119,7 +119,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
-                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, resolvedDefinition.options)
+                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, {})
             ), []);
         task.group = commandType === CommandType.build ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
@@ -165,11 +165,11 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
         // At this point we can start using the terminal.
         switch (this.command) {
-            case CommandType.build:
-                await this.runBuildTask();
-                break;
             case CommandType.config:
                 await this.runConfigTask();
+                break;
+            case CommandType.build:
+                await this.runBuildTask();
                 break;
             case CommandType.install:
                 await this.runInstallTask();
@@ -194,14 +194,45 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         // The terminal has been closed. Shutdown the build.
     }
 
+    private async runConfigTask(): Promise<any> {
+        this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
+        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
+        if (cmakeDriver) {
+            const cmakePath: string = cmakeDriver.getCMakeCommand();
+            let args: string[] = [];
+            if (this.preset) {
+                const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
+                args = (configPreset) ? cmakeDriver.generateConfigArgsFromPreset(configPreset) : [];
+            } else {
+                args = await cmakeDriver.generateConfigArgsFromSettings();
+            }
+            log.debug('Invoking CMake', cmakePath, 'with arguments', JSON.stringify(args));
+            //const execResult = await proc.execute(cmakePath, args, this, this.options).result;
+            // const result = execResult?.retc;
+            const result = await cmakeDriver.taskCustomConfigure(args);
+            if (result === undefined || result === null) {
+                this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
+                this.closeEmitter.fire(-1);
+            } else {
+                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result) + endOfLine);
+                this.closeEmitter.fire(result);
+            }
+        } else {
+            log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
+            this.writeEmitter.fire(localize("configure.failed", "Configure failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        }
+    }
+
     private async runBuildTask(): Promise<any> {
         let fullCommand: proc.BuildCommand | null;
-        let cmakePath: string = "CMake.exe";
         let args: string[] = [];
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-
+        let cmakePath: string;
         if (cmakeDriver) {
+            cmakePath = cmakeDriver.getCMakeCommand();
             if (!this.options) {
                 this.options = {};
             }
@@ -225,7 +256,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
-            this.writeEmitter.fire(localize("configure.failed", "Configure failed.") + endOfLine);
+            this.writeEmitter.fire(localize("build.failed", "Build failed.") + endOfLine);
             this.closeEmitter.fire(-1);
             return;
         }
@@ -248,26 +279,6 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         }
     }
 
-    private async runConfigTask(): Promise<any> {
-        this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
-        let result: number | undefined | null;
-        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
-        const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-        const cmakePath: string = cmakeDriver?.getCMakeCommand() || "CMake.exe";
-        let args: string[] = [];
-        if (this.preset) {
-            const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
-            args = (cmakeDriver && configPreset) ? cmakeDriver.generateConfigArgsFromPreset(configPreset) : [];
-            const execResult = await proc.execute(cmakePath, args, this, this.options).result;
-            result = execResult?.retc;
-        } else {
-            args = cmakeDriver ? await cmakeDriver.generateConfigArgsFromSettings() : [];
-            const execResult = await proc.execute(cmakePath, args, this, this.options).result;
-            result = execResult?.retc;
-        }
-        this.closeEmitter.fire((result === undefined || result === null) ? -1 : result);
-    }
-
     private async runInstallTask(): Promise<any> {
         this.writeEmitter.fire(localize("install.started", "Install task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.install');
@@ -278,17 +289,24 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
         const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
-        let testPreset: preset.TestPreset | undefined;
-        if (this.preset) {
-            testPreset = await cmakeTools?.expandTestPresetbyName(this.preset);
+        if (cmakeDriver) {
+            let testPreset: preset.TestPreset | undefined;
+            if (this.preset) {
+                testPreset = await cmakeTools?.expandTestPresetbyName(this.preset);
+            }
+            const result: number | null | undefined = cmakeDriver ? await cmakeTools?.runCTestCustomized(cmakeDriver, testPreset) : undefined;
+            if (result === undefined || result === null) {
+                this.writeEmitter.fire(localize('ctest.run.terminated', 'CTest run was terminated') + endOfLine);
+                this.closeEmitter.fire(-1);
+            } else {
+                this.writeEmitter.fire(localize('ctest.finished.with.code', 'CTest finished with return code {0}', result) + endOfLine);
+                this.closeEmitter.fire(result);
+            }
+        }  else {
+            log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
+            this.writeEmitter.fire(localize("test.failed", "CTest run failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
         }
-        const result: number | null | undefined = cmakeDriver ? await cmakeTools?.runCTestCustomized(cmakeDriver, testPreset) : undefined;
-        if (result === null) {
-            this.writeEmitter.fire(localize('ctest.run.terminated', 'CTest run was terminated'));
-        } else {
-            this.writeEmitter.fire(localize('ctest.finished.with.code', 'CTest finished with return code {0}', result));
-        }
-        this.closeEmitter.fire((result === undefined || result === null) ? -1 : result);
     }
 
     private async runCleanTask(): Promise<any> {
