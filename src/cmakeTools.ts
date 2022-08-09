@@ -1758,7 +1758,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     private readonly cTestController = new CTestDriver(this.workspaceContext);
 
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset) {
-        return this.cTestController.runCTest(driver, testPreset);
+        return this.cTestController.runCTest(driver, true, testPreset);
     }
 
     async ctest(): Promise<number> {

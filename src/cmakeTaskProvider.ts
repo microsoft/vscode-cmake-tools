@@ -278,6 +278,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             }
             this.closeEmitter.fire(0);
         } catch {
+            this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s).") + endOfLine);
             this.closeEmitter.fire(-1);
         }
     }

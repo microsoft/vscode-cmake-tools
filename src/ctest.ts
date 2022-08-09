@@ -362,8 +362,8 @@ export class CTestDriver implements vscode.Disposable {
     private readonly _resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
     readonly onResultsChanged = this._resultsChangedEmitter.event;
 
-    public async runCTest(driver: CMakeDriver, testPreset?: TestPreset): Promise<number|null> {
-        if (!testPreset) {
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<number|null> {
+        if (!customizedTask) {
             log.showChannel();
         }
         this._decorationManager.clearFailingTestDecorations();
@@ -375,9 +375,9 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         let ctestArgs: string[];
-        if (testPreset) {
+        if (customizedTask && testPreset) {
             ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
-        } else if (driver.useCMakePresets) {
+        } else if (!customizedTask && driver.useCMakePresets) {
             if (!driver.testPreset) {
                 log.error(localize('test.preset.not.set', 'Test preset is not set'));
                 return -3;
@@ -406,7 +406,7 @@ export class CTestDriver implements vscode.Disposable {
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
         await this.reloadTests(driver);
-        if (!testPreset) {
+        if (!customizedTask) {
             if (res.retc === null) {
                 log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
                 return -1;
