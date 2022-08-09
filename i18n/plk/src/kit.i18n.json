@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "Nieprawidłowy {0} binarny (\"-v\" zwraca {1}): {2}",
 	"bad.compiler.binary.output": "Nieprawidłowy {0} binarny. {1} wersja raportów {2} : dane wyjściowe : {3}",
 	"detected.compiler": "Wykryto kompilator {0}: {1}",
-	"bad.mingw32-make.binary": "Nieprawidłowy plik binarny mingw32-make (parametr „-v” powoduje zwrócenie wartości różnej od zera): {0}",
+	"bad.mingw32-make.binary": "Nieprawidłowy plik binarny mingw32-make ({0} zwraca wartość inną niż zero): {1}",
 	"detected.clang.compiler": "Wykryto kompilator Clang: {0}",
 	"skipping.scan.of.appdata": "Pomijanie skanowania folderu %LocalAppData%",
 	"skipping.scan.of.not.existing.path": "Pomijanie skanowania nieistniejącej ścieżki {0}",

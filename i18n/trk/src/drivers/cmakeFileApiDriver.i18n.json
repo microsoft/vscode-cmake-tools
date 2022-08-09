@@ -6,6 +6,6 @@
 {
 	"removing": "{0} kaldırılıyor",
 	"unlink.failed": "Önbellek dosyası {0} kaldırılamadı",
-	"cmakelists.save.trigger.reconfigure": "'cmake.sourceDirectory' ayarı güncelleştirildi, otomatik olarak yeniden yapılandırılmaya çalışılıyor...",
+	"cmakelists.save.trigger.reconfigure": "{0} ayarı güncelleştirmesi algılandı, otomatik yeniden yapılandırmaya çalışılıyor...",
 	"toolchains.object.unsupported": "CMake'in bu sürümü \"toolchains\" nesne türünü desteklemiyor. Derleyici yolları CMakeCache.txt okunarak belirlenecek."
 }

@@ -6,6 +6,6 @@
 {
 	"removing": "Wird entfernt: {0}",
 	"unlink.failed": "Fehler beim Entfernen der Cachedatei {0}",
-	"cmakelists.save.trigger.reconfigure": "Update für Einstellung „cmake.sourceDirectory“ erkannt. Automatische Neukonfiguration wird versucht...",
+	"cmakelists.save.trigger.reconfigure": "Update für Einstellung {0} erkannt. Automatische Neukonfiguration wird versucht...",
 	"toolchains.object.unsupported": "Diese Version von CMake bietet keine Unterstützung für die Objektart \"toolchains\". Compilerpfade werden durch Lesen der „Datei CMakeCache.txt“ bestimmt."
 }
