@@ -210,7 +210,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             log.debug('Invoking CMake', cmakePath, 'with arguments', JSON.stringify(args));
             //const execResult = await proc.execute(cmakePath, args, this, this.options).result;
             // const result = execResult?.retc;
-            const result = await cmakeDriver.taskCustomConfigure(args);
+            const result = await cmakeDriver.taskCustomConfigure(args, this);
             if (result === undefined || result === null) {
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);

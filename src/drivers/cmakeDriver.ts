@@ -1226,8 +1226,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    public async taskCustomConfigure(args: string[]): Promise<number> {
-        return this.doConfigure(args, undefined, false, true);
+    public async taskCustomConfigure(args: string[], consumer?: proc.OutputConsumer): Promise<number> {
+        return this.doConfigure(args, consumer, false, true);
     }
 
     async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
