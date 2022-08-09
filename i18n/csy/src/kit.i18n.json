@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "Chybný binární soubor {0} (-v vrací {1}): {2}",
 	"bad.compiler.binary.output": "Chybný binární soubor {0}.{1} hlásí verzi: {2} výstup: {3}",
 	"detected.compiler": "Zjistil se kompilátor {0}: {1}",
-	"bad.mingw32-make.binary": "Chybný binární soubor mingw32-make (parametr -v vrací jinou hodnotu než hodnotu nula): {0}",
+	"bad.mingw32-make.binary": "Chybný binární soubor mingw32-make ({0} vrací jinou hodnotu než hodnotu nula): {1}",
 	"detected.clang.compiler": "Zjištěn kompilátor Clang: {0}",
 	"skipping.scan.of.appdata": "Přeskakuje se kontrola složky %LocalAppData%",
 	"skipping.scan.of.not.existing.path": "Přeskakuje se hledání neexistující cesty {0}.",
