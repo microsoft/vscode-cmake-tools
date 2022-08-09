@@ -15,6 +15,8 @@ suite('Environment Variables in Presets', () => {
         testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
         testEnv.projectFolder.buildDirectory.clear();
 
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'LinuxUser1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
         await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
@@ -40,7 +42,6 @@ suite('Environment Variables in Presets', () => {
         expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
         expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
-        expect(cacheEntry.as<string>())
-            .to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');
+        expect(cacheEntry.as<string>()).to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');
     }).timeout(100000);
 });
