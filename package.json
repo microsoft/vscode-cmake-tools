@@ -1943,10 +1943,10 @@
             "breakAndReuseTerminal",
             "newTerminal"
           ],
-          "enumDescriptions": [
-            "%cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description%",
-            "%cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description%",
-            "%cmake-tools.configuration.cmake.launchBehavior.newTerminal.description%"
+          "markdownEnumDescriptions": [
+            "%cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions%",
+            "%cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions%",
+            "%cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions%"
           ],
           "description": "%cmake-tools.configuration.cmake.launchBehavior.description%",
           "default": "reuseTerminal"
