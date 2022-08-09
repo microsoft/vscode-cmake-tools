@@ -81,7 +81,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         result.push(await this.provideTask(CommandType.install, cmakeTools?.useCMakePresets));
         result.push(await this.provideTask(CommandType.test, cmakeTools?.useCMakePresets));
         result.push(await this.provideTask(CommandType.clean, cmakeTools?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.cleanRebuild, cmakeTools?.useCMakePresets));
+        result.push(await this.provideTask(CommandType.cleanRebuild, cmakeTools?.useCMakePresets, targets));
         return result;
     }
 
@@ -90,7 +90,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         let buildTargets: string[] | undefined;
         let preset: string | undefined;
         //const options: { cwd?: string ; environment?: Environment } = {};
-        if (commandType === CommandType.build) {
+        if (commandType === CommandType.build || commandType === CommandType.cleanRebuild) {
             buildTargets = targets;
         }
         if (useCMakePresets) {
@@ -99,6 +99,9 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                     preset = "${command:cmake.activeConfigurePresetName}";
                     break;
                 case CommandType.build:
+                    preset = "${command:cmake.activeBuildPresetName}";
+                    break;
+                case CommandType.cleanRebuild:
                     preset = "${command:cmake.activeBuildPresetName}";
                     break;
                 case CommandType.test:
@@ -121,7 +124,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 // When the task is executed, this callback will run. Here, we setup for running the task.
                 new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, {})
             ), []);
-        task.group = commandType === CommandType.build ? vscode.TaskGroup.Build : undefined;
+        task.group = (commandType === CommandType.build || commandType === CommandType.cleanRebuild) ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
         return task;
     }
@@ -312,12 +315,23 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     private async runCleanTask(): Promise<any> {
         this.writeEmitter.fire(localize("clean.started", "Clean task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.clean');
-        this.closeEmitter.fire(result ? result : -1);
+        if (result === undefined || result !== 0) {
+            this.writeEmitter.fire(localize("clean.failed", "Clean task failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        } else {
+            this.writeEmitter.fire(localize("clean.finished.with.code", "Clean finished with return code {0}", result) + endOfLine);
+            this.closeEmitter.fire(result);
+        }
     }
 
     private async runCleanRebuildTask(): Promise<any> {
-        this.writeEmitter.fire(localize("clean.rebuild.started", "Clean Rebuild task started...") + endOfLine);
+        this.writeEmitter.fire(localize("clean.started", "Clean task started...") + endOfLine);
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.cleanRebuild');
-        this.closeEmitter.fire(result ? result : -1);
+        if (result === undefined || result !== 0) {
+            this.writeEmitter.fire(localize("clean.failed", "Clean task failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        }
+        this.writeEmitter.fire(localize("clean.finished", "Clean task finished.") + endOfLine);
+        await this.runBuildTask();
     }
 }
