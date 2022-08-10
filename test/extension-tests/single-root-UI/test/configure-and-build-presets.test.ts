@@ -22,8 +22,6 @@ suite('Build using Presets', () => {
         testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
 
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-
         await clearExistingKitConfigurationFile();
     });
 
@@ -33,6 +31,7 @@ suite('Build using Presets', () => {
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
         await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
         testEnv.projectFolder.buildDirectory.clear();
     });
 
@@ -40,7 +39,6 @@ suite('Build using Presets', () => {
     });
 
     suiteTeardown(async () => {
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
         if (testEnv) {
             testEnv.teardown();
         }
