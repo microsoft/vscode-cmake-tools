@@ -147,6 +147,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             const drv = await this.cmakeDriver;
             if (drv) {
                 log.debug(localize('disposing.driver', 'Disposing CMake driver'));
+                log.debug(new Error("getting callstack").stack || "");
                 await drv.asyncDispose();
                 this.cmakeDriver = Promise.resolve(null);
             }
@@ -196,7 +197,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
         const previousGenerator = this.configurePreset?.generator;
 
         if (configurePreset) {
-            log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
+            log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset: {0}', configurePreset));
+            log.debug(new Error("check callstack").stack || "");
             const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
                 configurePreset,
                 lightNormalizePath(this.folder.uri.fsPath || '.'),

@@ -85,7 +85,7 @@ suite('Build using Presets', () => {
         async function (this: Mocha.Context) {
             await vscode.commands.executeCommand('cmake.build');
 
-            await vscode.commands.executeCommand('cmake.setConfigurePreset', 'LinuxUser1');
+            await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'WindowsUser1' : 'LinuxUser1');
             await vscode.commands.executeCommand('cmake.build');
 
             const result = await testEnv.result.getResultAsJson();

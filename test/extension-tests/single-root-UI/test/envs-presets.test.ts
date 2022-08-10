@@ -15,7 +15,7 @@ suite('Environment Variables in Presets', () => {
         testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
         testEnv.projectFolder.buildDirectory.clear();
 
-        await vscode.commands.executeCommand('cmake.setConfigurePreset', 'LinuxUser1');
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'WindowsUser1' : 'LinuxUser1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
         await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
 
