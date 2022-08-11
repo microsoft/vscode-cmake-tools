@@ -41,8 +41,6 @@ suite('Environment Variables in Variants', () => {
             await fs.rename(variantFileBackup, variantFile);
         }
 
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
-
         testEnv.teardown();
     });
 

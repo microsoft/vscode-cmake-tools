@@ -99,6 +99,9 @@ class Paths {
      * application data should be stored.
      */
     get userLocalDir(): string {
+        if (util.isTestMode()) {
+            return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');
+        }
         if (process.platform === 'win32') {
             return this.windows.LocalAppData!;
         } else {

@@ -40,7 +40,6 @@ export class PresetsController {
 
     static async init(cmakeTools: CMakeTools, kitsController: KitsController): Promise<PresetsController> {
         const presetsController = new PresetsController(cmakeTools, kitsController);
-
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = cmakeTools.folder.uri.fsPath;
             const expansionOpts: ExpansionOptions = {
