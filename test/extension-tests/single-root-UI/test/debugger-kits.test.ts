@@ -1,6 +1,7 @@
 import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmakeTools';
+import { getSettingsChangePromise } from '@cmt/config';
 
 suite('Debug/Launch interface using Kits and Variants', () => {
     let testEnv: DefaultEnvironment;
@@ -16,6 +17,7 @@ suite('Debug/Launch interface using Kits and Variants', () => {
         cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
+        await getSettingsChangePromise();
 
         const kit = await getFirstSystemKit(cmakeTools);
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
