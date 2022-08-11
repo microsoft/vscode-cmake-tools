@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as which from 'which';
 import * as vscode from 'vscode';
 
-import { vsInstallations } from './installs/visual-studio';
+import { vsInstallations } from './installs/visualStudio';
 import { expandString } from './expand';
 import { fs } from './pr';
 import * as util from '@cmt/util';
@@ -99,6 +99,9 @@ class Paths {
      * application data should be stored.
      */
     get userLocalDir(): string {
+        if (util.isTestMode()) {
+            return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');
+        }
         if (process.platform === 'win32') {
             return this.windows.LocalAppData!;
         } else {
@@ -169,7 +172,7 @@ class Paths {
     }
 
     async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
-        const ctest_path = await this.expandStringPath(wsc.config.raw_ctestPath, wsc);
+        const ctest_path = await this.expandStringPath(wsc.config.rawCTestPath, wsc);
         if (!ctest_path || ctest_path === 'auto') {
             const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
             if (cmake === null) {
@@ -200,7 +203,7 @@ class Paths {
 
         let raw = overWriteCMakePathSetting;
         if (!raw) {
-            raw = await this.expandStringPath(wsc.config.raw_cmakePath, wsc);
+            raw = await this.expandStringPath(wsc.config.rawCMakePath, wsc);
         }
 
         if (raw === 'auto' || raw === 'cmake') {

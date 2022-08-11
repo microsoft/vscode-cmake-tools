@@ -13,7 +13,7 @@ import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
-import { getHostTargetArchString } from '@cmt/installs/visual-studio';
+import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 
@@ -40,7 +40,6 @@ export class PresetsController {
 
     static async init(cmakeTools: CMakeTools, kitsController: KitsController): Promise<PresetsController> {
         const presetsController = new PresetsController(cmakeTools, kitsController);
-
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = cmakeTools.folder.uri.fsPath;
             const expansionOpts: ExpansionOptions = {
@@ -1063,8 +1062,10 @@ export class PresetsController {
 
     private getIndentationSettings() {
         const config = vscode.workspace.getConfiguration('editor', this.folder.uri);
-        const tabSize = config.get<number>('tabSize') || 4;
-        const insertSpaces = config.get<boolean>('insertSpaces') || true;
+        let tabSize = config.get<number>('tabSize');
+        tabSize = (tabSize === undefined) ? 4 : tabSize;
+        let insertSpaces = config.get<boolean>('insertSpaces');
+        insertSpaces = (insertSpaces === undefined) ? true : insertSpaces;
         return { insertSpaces, tabSize };
     }
 

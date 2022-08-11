@@ -64,3 +64,11 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.6
         with:
           run: yarn extensionTestsMultiRoot
+
+      - name: Upload test logs if tests failed
+        if: failure()
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: TestLogs
+          path: test/**/log.txt
+          if-no-files-found: warn

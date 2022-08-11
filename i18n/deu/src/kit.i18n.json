@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "Ungültige Binärdatei {0} („-v“ gibt {1} zurück): {2}",
 	"bad.compiler.binary.output": "Ungültige {0} Binärdatei. {1} meldet Version: {2} Ausgabe: {3}",
 	"detected.compiler": "{0}-Compiler wurde erkannt: {1}",
-	"bad.mingw32-make.binary": "Ungültige mingw32-make-Binärdatei (\"-v\" gibt nicht 0 zurück): {0}",
+	"bad.mingw32-make.binary": "Ungültige mingw32-make-Binärdatei ({0} gibt nicht 0 zurück): {1}",
 	"detected.clang.compiler": "Erkannter Clang-Compiler: {0}",
 	"skipping.scan.of.appdata": "Scan des Ordners %LocalAppData% wird übersprungen",
 	"skipping.scan.of.not.existing.path": "Überprüfung überspringen des nicht vorhandenen Pfads {0}",
