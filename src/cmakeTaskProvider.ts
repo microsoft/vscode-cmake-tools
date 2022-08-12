@@ -11,6 +11,7 @@ import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
 import CMakeTools from './cmakeTools';
 import * as preset from '@cmt/preset';
+import { UseCMakePresets } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -197,9 +198,46 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         // The terminal has been closed. Shutdown the build.
     }
 
+    private async isTaskCompatibleWithPresets(cmakeTools: CMakeTools): Promise<boolean> {
+        const useCMakePresets: boolean = cmakeTools?.useCMakePresets;
+        const isCompatible = (useCMakePresets && this.preset) || (!useCMakePresets && !this.preset);
+        if (isCompatible) {
+            return true;
+        }
+        const change: string = localize('change.preset.setting', "Change preset settings");
+        const ignore: string = localize('ignore', "Ignore");
+        const selection = await vscode.window.showErrorMessage(
+            localize('task.not.compatible.with.preset.setting', 'The selected task is not compatible with preset setting.'),
+            change, ignore);
+        if (selection === change) {
+            const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
+            if (config) {
+                const newValue: UseCMakePresets = (this.preset) ? 'always' : 'never';
+                await config.update("cmake.useCMakePresets", newValue);
+                return true;
+            }
+        }
+        this.writeEmitter.fire(localize('task.not.compatible.with.preset.setting', 'The selected task is not compatible with preset setting.') + endOfLine);
+        this.closeEmitter.fire(-1);
+        return false;
+    }
+
+    private getCMakeTools(): CMakeTools | undefined {
+        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        if (!cmakeTools) {
+            log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
+            this.writeEmitter.fire(localize("task.failed", "Task failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        }
+        return cmakeTools;
+    }
+
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
-        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
+        if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
+            return;
+        }
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             const cmakePath: string = cmakeDriver.getCMakeCommand();
@@ -231,7 +269,10 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     private async runBuildTask(): Promise<any> {
         let fullCommand: proc.BuildCommand | null;
         let args: string[] = [];
-        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
+        if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
+            return;
+        }
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         let cmakePath: string;
         if (cmakeDriver) {
@@ -291,7 +332,10 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
-        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
+        if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
+            return;
+        }
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             let testPreset: preset.TestPreset | undefined;

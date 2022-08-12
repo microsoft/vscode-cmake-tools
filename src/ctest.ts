@@ -364,6 +364,7 @@ export class CTestDriver implements vscode.Disposable {
 
     public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<number|null> {
         if (!customizedTask) {
+            // We don't want to focus on log channel when running tasks.
             log.showChannel();
         }
         this._decorationManager.clearFailingTestDecorations();
