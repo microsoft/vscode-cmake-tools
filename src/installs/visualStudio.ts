@@ -400,7 +400,7 @@ async function collectDevBatVars(hostArch: string, devBat: string, args: string[
         if (newWinSdkBinPathExist &&
             existPath !== '' &&
             existPath.toLowerCase().indexOf(newWinSdkBinPath.toLowerCase()) < 0) {
-            log.info(localize({key: 'windows.sdk.path.patch', comment: ["The string \'Windows SDK bin\' should be kept as is, un-translated, with no extra quotes. "]}, 'Patch Windows SDK bin path from {0} to {1} for {2}',
+            log.info(localize('windows.sdk.path.patch', 'Patch Windows SDK path from {0} to {1} for {2}',
                 oldWinSdkBinPath, newWinSdkBinPath, devBat));
             vars['PATH'] = `${newWinSdkBinPath};${existPath}`;
         }
