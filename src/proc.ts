@@ -183,11 +183,11 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             let stderr_acc = '';
             let stderr_line_acc = '';
             child?.on('error', err => {
-                log.warning(localize('process.error', 'The command: {0} failed with error: {1}', `${cmdstr}`, `${err}`));
+                log.warning(localize({key: 'process.error', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} failed with error: {1}', `${cmdstr}`, `${err}`));
             });
             child?.on('exit', (code, signal) => {
                 if (code !== 0) {
-                    log.warning(localize('process.exit', 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
+                    log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
                 }
             });
             child?.stdout?.on('data', (data: Uint8Array) => {
