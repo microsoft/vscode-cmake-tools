@@ -12,7 +12,7 @@ import * as kitsController from '@cmt/kitsController';
 
 import CMakeTools from './cmakeTools';
 import * as expand from './expand';
-import { VSInstallation, vsInstallations, getHostTargetArchString, varsForVSInstallation, generatorPlatformFromVSArch } from './installs/visual-studio';
+import { VSInstallation, vsInstallations, getHostTargetArchString, varsForVSInstallation, generatorPlatformFromVSArch } from './installs/visualStudio';
 import * as logging from './logging';
 import paths from './paths';
 import { fs } from './pr';

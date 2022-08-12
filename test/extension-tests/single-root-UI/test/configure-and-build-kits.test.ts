@@ -49,7 +49,6 @@ suite('Build using Kits and Variants', () => {
     });
 
     suiteTeardown(async () => {
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
         if (testEnv) {
             testEnv.teardown();
         }
