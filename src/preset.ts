@@ -172,7 +172,7 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
         } else if (util.isArrayOfString(preset.inherits)) {
             return preset.inherits.every(parentName => evaluateParent(parentName));
         }
-        log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for {1} {2}', preset.name, "\"inherits\":", `"${preset.inherits}"`));
+        log.error(localize({key: 'invalid.inherits.type', comment: ['The space between placeholders {1} and {2} in the string \"{1} {2}"\ should be preserved.']}, 'Preset {0}: Invalid value for {1} {2}', preset.name, "\"inherits\":", `"${preset.inherits}"`));
         return false;
     }
     return true;
