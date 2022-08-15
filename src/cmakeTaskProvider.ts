@@ -205,23 +205,29 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
     }
     private async isTaskCompatibleWithPresets(cmakeTools: CMakeTools): Promise<boolean> {
         const useCMakePresets: boolean = cmakeTools?.useCMakePresets;
-        const isCompatible = (useCMakePresets && this.preset) || (!useCMakePresets && !this.preset);
+        const presetDefined: boolean = this.preset !== undefined && this.preset !== null;
+        const isCompatible = (useCMakePresets && presetDefined) || (!useCMakePresets && !presetDefined);
         if (isCompatible) {
             return true;
         }
         const change: string = localize('change.preset.setting', "Change preset settings");
         const ignore: string = localize('ignore', "Ignore");
-        const selection = await vscode.window.showErrorMessage(
+        /** We don't want to await on this error message,
+         * because if the user decides to change the settings, the task needs to re-run for the new settings to be effective.
+         * */
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        vscode.window.showErrorMessage(
             localize('task.not.compatible.with.preset.setting', 'The selected task is not compatible with preset setting.'),
-            change, ignore);
-        if (selection === change) {
-            const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
-            if (config) {
-                const newValue: UseCMakePresets = (this.preset) ? 'always' : 'never';
-                await config.update("cmake.useCMakePresets", newValue);
-                return true;
+            change, ignore).then((selection) => {
+            if (selection === change) {
+                const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
+                if (config) {
+                    const newValue: UseCMakePresets = (presetDefined) ? 'always' : 'never';
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    config.update("cmake.useCMakePresets", newValue);
+                }
             }
-        }
+        });
         this.writeEmitter.fire(localize('task.not.compatible.with.preset.setting', 'The selected task is not compatible with preset setting.') + endOfLine);
         this.closeEmitter.fire(-1);
         return false;
@@ -359,12 +365,12 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             let testPreset: preset.TestPreset | undefined;
             if (this.preset) {
                 testPreset = await cmakeTools?.expandTestPresetbyName(this.preset);
-            }
-            if (!testPreset) {
-                log.debug(localize("test.preset.not.found", 'Test preset not found.'));
-                this.writeEmitter.fire(localize("ctest.failed", "Test preset {0} not found. Test failed.", this.preset) + endOfLine);
-                this.closeEmitter.fire(-1);
-                return;
+                if (!testPreset) {
+                    log.debug(localize("test.preset.not.found", 'Test preset not found.'));
+                    this.writeEmitter.fire(localize("ctest.failed", "Test preset {0} not found. Test failed.", this.preset) + endOfLine);
+                    this.closeEmitter.fire(-1);
+                    return;
+                }
             }
             const result: number | null | undefined = cmakeDriver ? await cmakeTools?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
             if (result === undefined || result === null) {
