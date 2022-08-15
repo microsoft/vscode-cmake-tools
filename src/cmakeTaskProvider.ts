@@ -267,8 +267,6 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
                 args = await cmakeDriver.generateConfigArgsFromSettings();
             }
             log.debug('Invoking CMake', cmakePath, 'with arguments', JSON.stringify(args));
-            //const execResult = await proc.execute(cmakePath, args, this, this.options).result;
-            // const result = execResult?.retc;
             const result = await cmakeDriver.taskCustomConfigure(args, this);
             if (result === undefined || result === null) {
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
@@ -353,7 +351,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         if (!cmakeTools) {
             return;
         }
-        const result: number | undefined =  await cmakeTools.build(['install']);
+        const result: number | undefined =  await cmakeTools.runBuild(['install'], false, this);
         if (result === undefined || result === null) {
             this.writeEmitter.fire(localize('install.terminated', 'Install was terminated') + endOfLine);
             this.closeEmitter.fire(-1);
@@ -406,7 +404,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         if (!cmakeTools) {
             return;
         }
-        const result: number | undefined =  await cmakeTools.build(['clean']);
+        const result: number | undefined =  await cmakeTools.runBuild(['clean'], false, this);
         if (result === undefined || result !== 0) {
             this.writeEmitter.fire(localize("clean.failed", "Clean task failed.") + endOfLine);
             this.closeEmitter.fire(-1);

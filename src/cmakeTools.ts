@@ -1517,7 +1517,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean): Promise<number> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer): Promise<number> {
         if (!showCommandOnly) {
             log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
@@ -1580,10 +1580,12 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         }
                     });
                     cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
-                    log.showChannel();
+                    if (!taskConsumer) {
+                        log.showChannel();
+                    }
                     buildLogger.info(localize('starting.build', 'Starting build'));
                     await setContextValue(isBuildingKey, true);
-                    const rc = await drv!.build(newTargets, consumer);
+                    const rc = await drv!.build(newTargets, consumer, taskConsumer);
                     await setContextValue(isBuildingKey, false);
                     if (rc === null) {
                         buildLogger.info(localize('build.was.terminated', 'Build was terminated'));

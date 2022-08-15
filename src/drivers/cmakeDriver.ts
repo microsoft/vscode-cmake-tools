@@ -1226,8 +1226,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    public async taskCustomConfigure(args: string[], consumer?: proc.OutputConsumer): Promise<number> {
-        return this.doConfigure(args, consumer, false, true);
+    public async taskCustomConfigure(args: string[], taskConsumer?: proc.OutputConsumer): Promise<number> {
+        return this.doConfigure(args, taskConsumer, false, true);
     }
 
     async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
@@ -1497,7 +1497,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         });
     }
 
-    async build(targets?: string[], consumer?: proc.OutputConsumer): Promise<number | null> {
+    async build(targets?: string[], consumer?: proc.OutputConsumer, taskConsumer?: proc.OutputConsumer): Promise<number | null> {
         log.debug(localize('start.build', 'Start build'), targets?.join(', ') || '');
         if (this.configRunning) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
@@ -1515,7 +1515,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return -1;
         }
         const timeStart: number = new Date().getTime();
-        const child = await this._doCMakeBuild(targets, consumer);
+        const child = await this._doCMakeBuild(targets, taskConsumer ? taskConsumer : consumer);
         const timeEnd: number = new Date().getTime();
         const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
             ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
