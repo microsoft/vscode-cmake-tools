@@ -69,22 +69,23 @@ interface EncodedMeasurementValue {
 }
 
 interface MessyResults {
-    site: {
+    Site: {
         $: {};
-        testing: {
-            testList: { test: string[] }[]; endDateTime: string[];
-            endTestTime: string[];
-            elapsedMinutes: string[];
-            test: {
-                $: { status: TestStatus };
-                fullCommandLine: string[];
-                fullName: string[];
-                name: string[];
-                path: string[];
-                results: {
-                    namedMeasurement:
-                    { $: { type: string; name: string }; value: string[] }[];
-                    measurement: { value: [EncodedMeasurementValue | string] }[];
+        Testing: {
+            TestList: { Test: string[] }[];
+            EndDateTime: string[];
+            EndTestTime: string[];
+            ElapsedMinutes: string[];
+            Test: {
+                $: { Status: TestStatus };
+                FullCommandLine: string[];
+                FullName: string[];
+                Name: string[];
+                Path: string[];
+                Results: {
+                    NamedMeasurement:
+                    { $: { Type: string; Name: string }; Value: string[] }[];
+                    Measurement: { Value: [EncodedMeasurementValue | string] }[];
                 }[];
             }[];
         }[];
@@ -115,13 +116,13 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue | string): string
 }
 
 function cleanupResultsXml(messy: MessyResults): CTestResults {
-    const testingHead = messy.site.testing[0];
-    if (testingHead.testList.length === 1 && (testingHead.testList[0] as any as string) === '') {
+    const testingHead = messy.Site.Testing[0];
+    if (testingHead.TestList.length === 1 && (testingHead.TestList[0] as any as string) === '') {
         // XML parsing is obnoxious. This condition means that there are no tests,
         // but CTest is still enabled.
         return {
             site: {
-                $: messy.site.$,
+                $: messy.Site.$,
                 testing: {
                     testList: [],
                     test: []
@@ -131,17 +132,17 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
     }
     return {
         site: {
-            $: messy.site.$,
+            $: messy.Site.$,
             testing: {
-                testList: testingHead.testList.map(l => l.test[0]),
-                test: testingHead.test.map((test): Test => ({
-                    fullName: test.fullName[0],
-                    fullCommandLine: test.fullCommandLine[0],
-                    name: test.name[0],
-                    path: test.path[0],
-                    status: test.$.status,
+                testList: testingHead.TestList.map(l => l.Test[0]),
+                test: testingHead.Test.map((test): Test => ({
+                    fullName: test.FullName[0],
+                    fullCommandLine: test.FullCommandLine[0],
+                    name: test.Name[0],
+                    path: test.Path[0],
+                    status: test.$.Status,
                     measurements: new Map<string, TestMeasurement>(),
-                    output: decodeOutputMeasurement(test.results[0].measurement[0].value[0])
+                    output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0])
                 }))
             }
         }
