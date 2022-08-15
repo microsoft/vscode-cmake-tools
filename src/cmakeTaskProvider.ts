@@ -198,6 +198,11 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         // The terminal has been closed. Shutdown the build.
     }
 
+    private targetIsIgnored(): void {
+        if (this.targets && this.targets.length > 0) {
+            this.writeEmitter.fire(localize("target.is.ignored", "The defined targets in this task are being ignored.") + endOfLine);
+        }
+    }
     private async isTaskCompatibleWithPresets(cmakeTools: CMakeTools): Promise<boolean> {
         const useCMakePresets: boolean = cmakeTools?.useCMakePresets;
         const isCompatible = (useCMakePresets && this.preset) || (!useCMakePresets && !this.preset);
@@ -234,6 +239,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
+        this.targetIsIgnored();
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
@@ -336,12 +342,14 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runInstallTask(): Promise<any> {
         this.writeEmitter.fire(localize("install.started", "Install task started...") + endOfLine);
+        this.targetIsIgnored();
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.install');
         this.closeEmitter.fire(result ? result : -1);
     }
 
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
+        this.targetIsIgnored();
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
@@ -375,6 +383,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runCleanTask(): Promise<any> {
         this.writeEmitter.fire(localize("clean.started", "Clean task started...") + endOfLine);
+        this.targetIsIgnored();
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.clean');
         if (result === undefined || result !== 0) {
             this.writeEmitter.fire(localize("clean.failed", "Clean task failed.") + endOfLine);
