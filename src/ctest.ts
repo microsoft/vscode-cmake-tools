@@ -13,6 +13,7 @@ import * as util from './util';
 import * as nls from 'vscode-nls';
 import { testArgs, TestPreset } from './preset';
 import { expandString } from './expand';
+import * as proc from '@cmt/proc';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -359,7 +360,7 @@ export class CTestDriver implements vscode.Disposable {
     private readonly resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
     readonly onResultsChanged = this.resultsChangedEmitter.event;
 
-    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<number|null> {
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number|null> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
             log.showChannel();
@@ -400,7 +401,7 @@ export class CTestDriver implements vscode.Disposable {
         const child = driver.executeCommand(
             ctestpath,
             ctestArgs,
-            new CTestOutputLogger(),
+            ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
         await this.reloadTests(driver);

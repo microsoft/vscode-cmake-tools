@@ -4,7 +4,6 @@
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { CompilationDatabase } from '@cmt/compilationDatabase';
-
 import * as debuggerModule from '@cmt/debugger';
 import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
@@ -14,7 +13,7 @@ import { ProgressHandle, versionToString, lightNormalizePath, Version, versionLe
 import { DirectoryContext } from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
+import * as proc from '@cmt/proc';
 import * as api from './api';
 import { ExecutionOptions, ExecutionResult } from './api';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
@@ -1757,8 +1756,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
 
     private readonly cTestController = new CTestDriver(this.workspaceContext);
 
-    public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset) {
-        return this.cTestController.runCTest(driver, true, testPreset);
+    public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
+        return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
     async ctest(): Promise<number> {
