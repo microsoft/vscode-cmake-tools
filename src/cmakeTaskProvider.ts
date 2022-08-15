@@ -350,7 +350,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         this.writeEmitter.fire(localize("install.started", "Install task started...") + endOfLine);
         this.targetIsIgnored();
         const result: number | undefined =  await vscode.commands.executeCommand('cmake.install');
-        this.closeEmitter.fire(result ? result : -1);
+        this.closeEmitter.fire(result !== undefined ? result : -1);
     }
 
     private async runTestTask(): Promise<any> {

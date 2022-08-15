@@ -615,7 +615,11 @@ export function createDirIfNotExistsSync(dirPath: string | undefined): void {
         return;
     }
     if (!checkDirectoryExistsSync(dirPath)) {
-        fs.mkdirSync(dirPath);
+        try {
+            fs.mkdirSync(dirPath, {recursive: true});
+        } catch (e) {
+            console.log(e);
+        }
     }
 }
 
