@@ -244,6 +244,12 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             let args: string[] = [];
             if (this.preset) {
                 const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
+                if (!configPreset) {
+                    log.debug(localize("config.preset.not.found", 'Config preset not found.'));
+                    this.writeEmitter.fire(localize("configure.failed", "Configure preset {0} not found. Configure failed.", this.preset) + endOfLine);
+                    this.closeEmitter.fire(-1);
+                    return;
+                }
                 args = (configPreset) ? cmakeDriver.generateConfigArgsFromPreset(configPreset) : [];
             } else {
                 args = await cmakeDriver.generateConfigArgsFromSettings();
@@ -282,13 +288,17 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             }
             if (this.preset) {
                 const buildPreset: preset.BuildPreset | undefined = await cmakeTools?.expandBuildPresetbyName(this.preset);
-                if (buildPreset) {
-                    fullCommand = await cmakeDriver.generateBuildCommandFromPreset(buildPreset, this.targets);
-                    if (fullCommand) {
-                        cmakePath = fullCommand.command;
-                        args = fullCommand.args || [];
-                        this.options.environment = EnvironmentUtils.merge([ fullCommand.build_env, this.options.environment], {preserveNull: true});
-                    }
+                if (!buildPreset) {
+                    log.debug(localize("build.preset.not.found", 'Buils preset not found.'));
+                    this.writeEmitter.fire(localize("build.failed", "Buils preset {0} not found. Build failed.", this.preset) + endOfLine);
+                    this.closeEmitter.fire(-1);
+                    return;
+                }
+                fullCommand = await cmakeDriver.generateBuildCommandFromPreset(buildPreset, this.targets);
+                if (fullCommand) {
+                    cmakePath = fullCommand.command;
+                    args = fullCommand.args || [];
+                    this.options.environment = EnvironmentUtils.merge([ fullCommand.build_env, this.options.environment], {preserveNull: true});
                 }
             } else {
                 fullCommand = await cmakeDriver.generateBuildCommandFromSettings(this.targets);
@@ -341,6 +351,12 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             let testPreset: preset.TestPreset | undefined;
             if (this.preset) {
                 testPreset = await cmakeTools?.expandTestPresetbyName(this.preset);
+            }
+            if (!testPreset) {
+                log.debug(localize("test.preset.not.found", 'Test preset not found.'));
+                this.writeEmitter.fire(localize("ctest.failed", "Test preset {0} not found. Test failed.", this.preset) + endOfLine);
+                this.closeEmitter.fire(-1);
+                return;
             }
             const result: number | null | undefined = cmakeDriver ? await cmakeTools?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
             if (result === undefined || result === null) {

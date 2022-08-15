@@ -406,13 +406,11 @@ export class CTestDriver implements vscode.Disposable {
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
         await this.reloadTests(driver);
-        if (!customizedTask) {
-            if (res.retc === null) {
-                log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
-                return -1;
-            } else {
-                log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
-            }
+        if (res.retc === null) {
+            log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
+            return -1;
+        } else {
+            log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
         }
         return res.retc;
     }
