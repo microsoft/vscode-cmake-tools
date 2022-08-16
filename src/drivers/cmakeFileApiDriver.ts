@@ -222,10 +222,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, taskCustomConfig?: boolean): Promise<number> {
-        if (!taskCustomConfig) {
-            const api_path = this.getCMakeFileApiPath();
-            await createQueryFileForApi(api_path);
-        }
+        const api_path = this.getCMakeFileApiPath();
+        await createQueryFileForApi(api_path);
 
         // Dup args so we can modify them
         const args = Array.from(args_);
@@ -233,7 +231,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
         // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
         args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
         args.push(`-B${util.lightNormalizePath(this.binaryDir)}`);
-
         const gen = this.generator;
         let has_gen = false;
         for (const arg of args) {
@@ -269,8 +266,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
             const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env, cwd: this.binaryDir }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
-            if (res.retc === 0 && !taskCustomConfig) {
-                this._needsReconfigure = false;
+            if (res.retc === 0) {
+                if (!taskCustomConfig) {
+                    this._needsReconfigure = false;
+                }
                 await this.updateCodeModel();
             }
             return res.retc === null ? -1 : res.retc;

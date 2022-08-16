@@ -185,9 +185,7 @@ export class CMakeServerDriver extends CMakeDriver {
             } finally {
                 sub.dispose();
             }
-            if (!taskCustomConfig) {
-                await this._refreshPostConfigure();
-            }
+            await this._refreshPostConfigure();
         }
         return 0;
     }

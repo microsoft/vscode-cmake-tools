@@ -108,12 +108,10 @@ export class CMakeLegacyDriver extends CMakeDriver {
             }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
-            if (!taskCustomConfig) {
-                if (res.retc === 0) {
-                    this._needsReconfigure = false;
-                }
-                await this._reloadPostConfigure();
+            if (res.retc === 0 && !taskCustomConfig) {
+                this._needsReconfigure = false;
             }
+            await this._reloadPostConfigure();
             return res.retc === null ? -1 : res.retc;
         }
     }
