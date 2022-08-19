@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "CMakePresets.json'daki yorumlar gibi JSON uzantılarının kullanımına izin verin. Standart olmayan JSON kullanıyorsanız, CMakePresets.json dosyanızın diğer IDE'ler tarafından veya komut satırında geçersiz sayılabileceğini lütfen unutmayın.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` ise; CMakeLists.txt, çalışma alanında bulunduğunda ama kök klasörde bulunmadığında, uzantı kullanıcıdan yapılandırma için bir CMakeLists.txt dosyası seçmesini istemez.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Bir hedefi başlattığınızda başlatma terminaline ne olacağını kontrol eder.",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "Başlatma terminali örneği yeniden kullanılır ve hedef, terminal boşta kalır kalmaz başlatılır.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "Başlatma terminali örneği yeniden kullanılır ve hedefi başlatmadan önce herhangi bir etkin ön plan sürecini sonlandırmak için bir kesme komutu gönderilir.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez."
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedef, terminal boşta kalır kalmaz başlatılır.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedefi başlatmadan önce herhangi bir etkin ön plan sürecini sonlandırmak için bir kesme komutu gönderilir.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez."
 }

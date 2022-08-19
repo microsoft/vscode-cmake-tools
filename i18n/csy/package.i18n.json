@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Povolte v CMakePresets.json používání rozšíření JSON, jako jsou třeba komentáře. Pokud použijete nestandardní JSON, ostatní prostředí IDE nebo příkazový řádek může soubor CMakePresets.json považovat za neplatný.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Když se nastaví na true, rozšíření nebude uživatele žádat, aby vybral soubor CMakeLists.txt pro konfiguraci, když se nějaký najde v pracovním prostoru, ale ne v kořenové složce.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Určuje, co se stane se spouštěcím terminálem, když spustíte cíl.",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "Instance spouštěcího terminálu se znovu použije a cíl se spustí, jakmile bude terminál nečinný.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "Instance spouštěcího terminálu se znovu použije a před spuštěním cíle se odešle příkaz k přerušení veškerých aktivních procesů v popředí.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Vytvoří se nová instance terminál a cíl se v ní spustí. Existující terminály se automaticky nevyčistí."
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Instance spouštěcího terminálu se znovu použije a cíl se spustí, jakmile bude terminál nečinný.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Instance spouštěcího terminálu se znovu použije a před spuštěním cíle se odešle příkaz k přerušení veškerých aktivních procesů v popředí.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Vytvoří se nová instance terminál a cíl se v ní spustí. Existující terminály se automaticky nevyčistí."
 }

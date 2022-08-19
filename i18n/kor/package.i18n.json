@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "CMakePresets.json의 설명과 같은 JSON 확장 사용을 허용합니다. CMakePresets.json 파일은 다른 IDE에서 또는 비표준 JSON을 사용하는 경우 명령줄에서 유효하지 않은 것으로 간주될 수 있습니다.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true`이면 확장에서 작업 영역에 있지만 루트 폴더에는 없는 경우 구성을 위해 CMakeLists.txt 파일을 선택하도록 사용자에게 요청하지 않습니다.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "대상을 시작할 때 시작 터미널에서 수행되는 작업을 제어합니다.",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "시작 터미널 인스턴스가 다시 사용되며 터미널이 유휴 상태가 되면 대상이 시작됩니다.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "시작 터미널 인스턴스가 재사용되고 대상을 시작하기 전에 활성 포그라운드 프로세스를 종료하기 위해 break 명령이 전송됩니다.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "새 터미널 인스턴스가 만들어지고 대상이 해당 인스턴스에서 시작됩니다. 기존 터미널은 자동으로 정리되지 않습니다."
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "시작 터미널 인스턴스가 다시 사용되며 터미널이 유휴 상태가 되면 대상이 시작됩니다.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "시작 터미널 인스턴스가 재사용되고 대상을 시작하기 전에 활성 포그라운드 프로세스를 종료하기 위해 break 명령이 전송됩니다.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "새 터미널 인스턴스가 만들어지고 대상이 해당 인스턴스에서 시작됩니다. 기존 터미널은 자동으로 정리되지 않습니다."
 }

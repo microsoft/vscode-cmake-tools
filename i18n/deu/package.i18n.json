@@ -84,7 +84,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Pfad zur ausführbaren CTest-Datei. Bei NULL erfolgt ein Rückschluss von \"cmake.cmakePath\". (Die Beibehaltung von NULL wird empfohlen.)",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Die Anzahl paralleler Testaufträge. Verwenden Sie 0, um den Wert von \"cmake.parallelJobs\" zu verwenden.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Hiermit wird Compilerausgabe auf Warnungen und Fehler analysiert.",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Zu verwendende Ausgabeparser. Unterstützte Parser: `cmake`, `gcc`, `gnuld` für die Linkerausgabe im GNULD-Format, `msvc` für Microsoft Visual C++, `ghs` für den Green Hills-Compiler mit `--no_wrap_diagnostics --brief_diagnostics` und `diab` für den Wind River Diab-Compiler.",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Zu verwendende Ausgabeparser. Unterstützte Parser `cmake`, `gcc`, `gnuld` für die Linkerausgabe im GNULD-Format, `msvc` für Microsoft Visual C++, `ghs` für den Green Hills-Compiler mit --no_wrap_diagnostics --brief_diagnostics und `diab` für den Wind River Diab-Compiler.",
 	"cmake-tools.configuration.cmake.debugConfig.description": "Die Debugkonfiguration, die beim Debuggen eines Ziels verwendet werden soll.",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Symbolsuchpfade für Visual Studio-Debugger.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Pfade für GDB oder LLDB für die Suche nach SO-Dateien.",
@@ -151,9 +151,9 @@
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Ermöglicht das Exportieren von \"compile_commands.json\".",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Benutzen Sie \"CMakePresets.json\", um das Konfigurieren, Erstellen und Testen von \"CMake\" zu steuern. Bei Verwendung von \"CMakePresets.json\" werden Kits, Varianten und einige Einstellungen in \"settings.json\" ignoriert.",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Hiermit wird die Verwendung von JSON-Erweiterungen, wie z. B. Kommentare in CMakePresets.json, zugelassen. Beachten Sie, dass Ihre CMakePresets.json-Datei von anderen IDEs als ungültig betrachtet werden kann, oder in der Befehlszeile, wenn Sie nicht standardmäßiges JSON verwenden.",
-	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` gibt an, dass der Benutzer von der Erweiterung nicht aufgefordert wird, eine Datei `CMakeLists.txt` für die Konfiguration auszuwählen, wenn eine Datei im Arbeitsbereich, aber nicht im Stammordner gefunden wird.",
+	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` gibt an, dass der Benutzer von der Erweiterung nicht aufgefordert wird, eine CMakeLists.txt-Datei für die Konfiguration auszuwählen, wenn eine Datei im Arbeitsbereich, aber nicht im Stammordner gefunden wird.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Steuert, was mit dem Startterminal beim Starten eines Ziels geschieht.",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "Die Instanz des Startterminals wird wiederverwendet, und das Ziel wird gestartet, sobald sich das Terminal im Leerlauf befindet.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "Die Instanz des Startterminals wird wiederverwendet, und ein `break`-Befehl wird gesendet, um jeden aktiven Vordergrundprozess vor dem Starten des Ziels zu beenden.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Eine neue Terminalinstanz wird erstellt, und das Ziel wird darin gestartet. Vorhandene Terminals werden nicht automatisch bereinigt."
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Die Instanz des Startterminals wird wiederverwendet, und das Ziel wird gestartet, sobald sich das Terminal im Leerlauf befindet.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Die Startterminalinstanz wird wiederverwendet, und ein \"break\"-Befehl wird gesendet, um jeden aktiven Vordergrundprozess vor dem Starten des Ziels zu beenden.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Eine neue Terminalinstanz wird erstellt, und das Ziel wird darin gestartet. Vorhandene Terminals werden nicht automatisch bereinigt."
 }

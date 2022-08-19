@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Permita o uso de extensões JSON, tais como comentários em CMakePresets.json. Observe que seu arquivo CMakePresets.json pode ser considerado inválido por outros IDEs ou na linha de comando se você usar JSON não padrão.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Se for 'true', a extensão não solicitará que o usuário selecione um arquivo CMakeLists.txt para configuração quando um for encontrado no espaço de trabalho, mas não na pasta raiz.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Controla o que acontece com o terminal de lançamento quando você lança um alvo.",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "A instância do terminal de lançamento é reaproveitada e o alvo será lançado assim que o terminal estiver ocioso.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "A instância do terminal de lançamento é reutilizada e um comando de parada é enviado para terminar qualquer processo ativo em primeiro plano antes de lançar o alvo.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Uma nova instância terminal é criada e o alvo é lançado nela. Os terminais existentes não são limpos automaticamente."
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "A instância do terminal de lançamento é reaproveitada e o alvo será lançado assim que o terminal estiver ocioso.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "A instância do terminal de lançamento é reutilizada e um comando `break` é enviado para terminar qualquer processo ativo em primeiro plano antes de lançar o alvo.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Uma nova instância terminal é criada e o alvo é lançado nela. Os terminais existentes não são limpos automaticamente."
 }

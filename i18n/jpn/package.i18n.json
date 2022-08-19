@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "CMakePresets.json でコメントなどの JSON 拡張機能の使用を許可します。標準以外の JSON を使用した場合、他の IDE やコマンド ラインで CMakePresets.json ファイルが無効とみなされる可能性があることに注意してください。",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` の場合、拡張機能は、ワークスペース内で見つかったがルート フォルダーにない場合に、構成用の CMakeLists.txt ファイルを選択するようにユーザーに求めなくなります。",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "ターゲットを起動するときの起動ターミナルの動作を制御します。",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "起動ターミナル インスタンスが再利用され、ターミナルがアイドル状態になるとすぐにターゲットが起動します。",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "起動ターミナル インスタンスが再利用され、ターゲットを起動する前にアクティブなフォアグラウンド プロセスを終了するための break コマンドが送信されます。",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。"
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターミナルがアイドル状態になるとすぐにターゲットが起動します。",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターゲットを起動する前にアクティブなフォアグラウンド プロセスを終了するために 'break' コマンドが送信されます。",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。"
 }

@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Permitir el uso de extensiones JSON como comentarios en CMakePresets.json. Tenga en cuenta que el archivo CMakePresets.json puede considerarse no válido por otros IDE o en la línea de comandos si usa JSON no estándar.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Si es `true`, la extensión no pedirá al usuario que seleccione un archivo CMakeLists.txt para la configuración cuando se encuentre uno en el área de trabajo, pero no en la carpeta raíz.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Controla lo que sucede con el terminal de inicio al iniciar un destino.",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "La instancia del terminal de inicio se reutiliza y el destino se iniciará en cuanto el terminal esté inactivo.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "La instancia de terminal de inicio se reutiliza y se envía un comando break para finalizar cualquier proceso en primer plano activo antes de iniciar el destino.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente."
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "La instancia del terminal de inicio se reutiliza y el destino se iniciará en cuanto el terminal esté inactivo.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "La instancia de terminal de inicio se reutiliza y se envía un comando `break` para finalizar cualquier proceso en primer plano activo antes de iniciar el destino.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente."
 }
