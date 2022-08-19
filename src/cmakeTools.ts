@@ -641,6 +641,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                             }
                         } else {
                             // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
+                            // selection.label is the relative path to the selected CMakeLists.txt.
                             selectedFile = selection.label;
                         }
                         if (selectedFile) {
