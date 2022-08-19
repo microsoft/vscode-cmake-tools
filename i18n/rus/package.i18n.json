@@ -154,6 +154,6 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Если установлено значение \"true\", расширение не будет просить пользователя выбрать файл CMakeLists.txt для конфигурации, если такой файл обнаружен в рабочей области, но не в корневой папке.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Управляет тем, что происходит с терминалом запуска при запуске целевого объекта.",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Экземпляр терминала запуска используется повторно, а целевой объект запустится сразу после перехода терминала в режим простоя.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Экземпляр терминала запуска используется повторно, и в терминал отправляется команда \"break\" перед запуском целевого объекта, чтобы завершить все активные процессы переднего плана.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Экземпляр терминала запуска используется повторно, и в терминал отправляется команда `break` перед запуском целевого объекта, чтобы завершить все активные процессы переднего плана.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Создан новый экземпляр терминала, в котором запущен целевой объект. Существующие терминалы не очищаются автоматически."
 }
