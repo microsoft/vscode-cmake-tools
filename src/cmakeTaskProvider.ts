@@ -66,6 +66,21 @@ export class CMakeTask extends vscode.Task {
     detail?: string;
 }
 
+function getDefaultPresetName(commandType: CommandType): string | undefined {
+    switch (commandType) {
+        case CommandType.config:
+            return "${command:cmake.activeConfigurePresetName}";
+        case CommandType.build:
+            return "${command:cmake.activeBuildPresetName}";
+        case CommandType.cleanRebuild:
+            return "${command:cmake.activeBuildPresetName}";
+        case CommandType.test:
+            return "${command:cmake.activeTestPresetName}";
+        default:
+            return undefined;
+    }
+}
+
 export class CMakeTaskProvider implements vscode.TaskProvider {
     static CMakeScriptType: string = 'cmake';
     static CMakeSourceStr: string = "CMake";
@@ -90,27 +105,11 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const taskName: string = localizeCommandType(commandType);
         let buildTargets: string[] | undefined;
         let preset: string | undefined;
-        //const options: { cwd?: string ; environment?: Environment } = {};
         if (commandType === CommandType.build || commandType === CommandType.cleanRebuild) {
             buildTargets = targets;
         }
         if (useCMakePresets) {
-            switch (commandType) {
-                case CommandType.config:
-                    preset = "${command:cmake.activeConfigurePresetName}";
-                    break;
-                case CommandType.build:
-                    preset = "${command:cmake.activeBuildPresetName}";
-                    break;
-                case CommandType.cleanRebuild:
-                    preset = "${command:cmake.activeBuildPresetName}";
-                    break;
-                case CommandType.test:
-                    preset = "${command:cmake.activeTestPresetName}";
-                    break;
-                default:
-                    preset = undefined;
-            }
+            preset = getDefaultPresetName(commandType);
         }
 
         const definition: CMakeTaskDefinition = {
@@ -198,39 +197,44 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         // The terminal has been closed. Shutdown the build.
     }
 
-    private targetIsIgnored(): void {
-        if (this.targets && this.targets.length > 0) {
+    private checkTargets(shouldIgnore: boolean): void {
+        if (shouldIgnore && this.targets && this.targets.length > 0) {
             this.writeEmitter.fire(localize("target.is.ignored", "The defined targets in this task are being ignored.") + endOfLine);
         }
     }
     private async isTaskCompatibleWithPresets(cmakeTools: CMakeTools): Promise<boolean> {
         const useCMakePresets: boolean = cmakeTools?.useCMakePresets;
         const presetDefined: boolean = this.preset !== undefined && this.preset !== null;
-        const isCompatible = (useCMakePresets && presetDefined) || (!useCMakePresets && !presetDefined);
-        if (isCompatible) {
+        const isNotCompatible = !useCMakePresets && presetDefined;
+        if (!isNotCompatible) {
             return true;
         }
-        const change: string = localize('change.preset.setting', "Change preset settings");
+        const change: string = localize('enable.cmake.presets', "Enable CMakePresets");
         const ignore: string = localize('ignore', "Ignore");
         /** We don't want to await on this error message,
          * because if the user decides to change the settings, the task needs to re-run for the new settings to be effective.
          * */
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        vscode.window.showErrorMessage(
-            localize('task.not.compatible.with.preset.setting', 'The selected task is not compatible with preset setting.'),
+        void vscode.window.showErrorMessage(
+            localize('task.not.compatible.with.preset.setting', 'The selected task requests a CMakePreset, but the workspace is not configured for CMakePresets'),
             change, ignore).then((selection) => {
             if (selection === change) {
                 const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration();
                 if (config) {
                     const newValue: UseCMakePresets = (presetDefined) ? 'always' : 'never';
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    config.update("cmake.useCMakePresets", newValue);
+                    void config.update("cmake.useCMakePresets", newValue);
                 }
             }
         });
         this.writeEmitter.fire(localize('task.not.compatible.with.preset.setting', 'The selected task is not compatible with preset setting.') + endOfLine);
         this.closeEmitter.fire(-1);
         return false;
+    }
+
+    private resolvePresetName(preset: string | undefined, useCMakePresets: boolean, commandType: CommandType): string | undefined {
+        if (preset !== undefined) {
+            return preset;
+        }
+        return useCMakePresets ? getDefaultPresetName(commandType) : undefined;
     }
 
     private getCMakeTools(): CMakeTools | undefined {
@@ -245,7 +249,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
-        this.targetIsIgnored();
+        this.checkTargets(true);
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
@@ -254,6 +258,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         if (cmakeDriver) {
             const cmakePath: string = cmakeDriver.getCMakeCommand();
             let args: string[] = [];
+            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.config);
             if (this.preset) {
                 const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
                 if (!configPreset) {
@@ -296,6 +301,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
             if (!this.options) {
                 this.options = {};
             }
+            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.build);
             if (this.preset) {
                 const buildPreset: preset.BuildPreset | undefined = await cmakeTools?.expandBuildPresetbyName(this.preset);
                 if (!buildPreset) {
@@ -346,13 +352,13 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runInstallTask(): Promise<any> {
         this.writeEmitter.fire(localize("install.started", "Install task started...") + endOfLine);
-        this.targetIsIgnored();
+        this.checkTargets(true);
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
         if (!cmakeTools) {
             return;
         }
         const result: number | undefined =  await cmakeTools.runBuild(['install'], false, this);
-        if (result === undefined || result === null) {
+        if (result === undefined) {
             this.writeEmitter.fire(localize('install.terminated', 'Install was terminated') + endOfLine);
             this.closeEmitter.fire(-1);
         } else {
@@ -363,7 +369,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
-        this.targetIsIgnored();
+        this.checkTargets(true);
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
@@ -371,6 +377,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             let testPreset: preset.TestPreset | undefined;
+            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.test);
             if (this.preset) {
                 testPreset = await cmakeTools?.expandTestPresetbyName(this.preset);
                 if (!testPreset) {
@@ -397,9 +404,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
 
     private async runCleanTask(ignoreTargets: boolean = true): Promise<any> {
         this.writeEmitter.fire(localize("clean.started", "Clean task started...") + endOfLine);
-        if (ignoreTargets) {
-            this.targetIsIgnored();
-        }
+        this.checkTargets(ignoreTargets);
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
         if (!cmakeTools) {
             return;

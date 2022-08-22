@@ -1621,14 +1621,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     getCMakeCommand(): string {
-        return this.cmake.path ? this.cmake.path : ((process.platform === 'win32') ? "cmake.exe" : "cmake");
+        return this.cmake.path ? this.cmake.path : "cmake";
     }
 
     // Create a command for a given build preset.
     async generateBuildCommandFromPreset(buildPreset: preset.BuildPreset, targets?: string[]): Promise<proc.BuildCommand | null> {
-        if (targets) {
-            buildPreset.__targets = targets;
-        }
         if (targets && targets.length > 0) {
             buildPreset.__targets = targets;
         } else {
