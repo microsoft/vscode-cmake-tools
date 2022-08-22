@@ -1541,7 +1541,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                     telemetryMeasures['ErrorCount'] = errorCount;
                     telemetryMeasures['WarningCount'] = warningCount;
-                } else {
+                } else { // problem matcher ...
                     // Wrong type: shouldn't get here, just in case
                     rollbar.error('Wrong build result type.');
                     telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;

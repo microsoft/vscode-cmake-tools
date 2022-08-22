@@ -203,14 +203,14 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         }
     }
     private async isTaskCompatibleWithPresets(cmakeTools: CMakeTools): Promise<boolean> {
-        const useCMakePresets: boolean = cmakeTools?.useCMakePresets;
+        const useCMakePresets: boolean = cmakeTools.useCMakePresets;
         const presetDefined: boolean = this.preset !== undefined && this.preset !== null;
         const isNotCompatible = !useCMakePresets && presetDefined;
         if (!isNotCompatible) {
             return true;
         }
         const change: string = localize('enable.cmake.presets', "Enable CMakePresets");
-        const ignore: string = localize('ignore', "Ignore");
+        const ignore: string = localize('dismiss', "Dismiss");
         /** We don't want to await on this error message,
          * because if the user decides to change the settings, the task needs to re-run for the new settings to be effective.
          * */
