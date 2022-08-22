@@ -666,19 +666,22 @@ export class CMakeTools implements api.CMakeToolsAPI {
                             };
                             const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
                             if (cmakeListsFile) {
+                                // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
                                 selectedFile = cmakeListsFile[0].fsPath;
                             }
                         } else {
-                            selectedFile = selection.fullPath;
+                            // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
+                            // selection.label is the relative path to the selected CMakeLists.txt.
+                            selectedFile = selection.label;
                         }
                         if (selectedFile) {
-                            const relPath = util.getRelativePath(selectedFile, this.folder.uri.fsPath);
-                            void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", relPath);
+                            const newSourceDirectory = path.dirname(selectedFile);
+                            void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", newSourceDirectory);
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
                                 // another immediate configure, which will be blocked anyway).
-                                config.updatePartial({ sourceDirectory: relPath }, false);
+                                config.updatePartial({ sourceDirectory: newSourceDirectory }, false);
 
                                 // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
                                 // we know that it exists and we don't need any other additional checks on its value,

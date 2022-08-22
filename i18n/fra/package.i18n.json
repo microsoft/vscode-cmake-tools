@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Autoriser l’utilisation d’extensions JSON telles que des commentaires dans CMakePresets.jsactivé. Notez que votre CMakePresets.jssur le fichier peut être considérée comme non valide par d’autres IDE ou sur la ligne de commande si vous utilisez un JSON non standard.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Si la valeur est `true`, l’extension ne demande pas à l’utilisateur de sélectionner un fichier CMakeLists.txt pour la configuration lorsqu’un fichier est trouvé dans l’espace de travail mais pas dans le dossier racine.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Contrôle ce qui se passe avec le terminal de lancement quand vous lancez une cible.",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "L’instance de terminal de lancement est réutilisée et la cible se lance dès que le terminal est inactif.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "L’instance de terminal de lancement est réutilisée et une commande d’arrêt est envoyée pour arrêter tout processus de premier plan actif avant le lancement de la cible.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "Une instance de terminal est créée et la cible y est lancée. Les terminaux existants ne sont pas nettoyés automatiquement."
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "L’instance de terminal de lancement est réutilisée et la cible se lance dès que le terminal est inactif.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "L’instance de terminal de lancement est réutilisée et une commande d’arrêt est envoyée pour arrêter tout processus de premier plan actif avant le lancement de la cible.",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Une instance de terminal est créée et la cible y est lancée. Les terminaux existants ne sont pas nettoyés automatiquement."
 }

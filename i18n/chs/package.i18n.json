@@ -153,7 +153,7 @@
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "允许使用 JSON 扩展，如 CMakePresets.json 中的注释。请注意，如果使用非标准 JSON，则其他 IDE 或命令行可能认为 CMakePresets.json 文件无效。",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "如果为 `true`，则当在工作区中找到 CMakeLists.txt 文件，但未在根文件夹中找到时，扩展将不会要求用户选择 CMakeLists.txt 文件以进行配置。",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "控制启动目标时启动终端将执行的操作。",
-	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "已重用启动终端实例，并且目标将在终端空闲时立即启动。",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "已重用启动终端实例，并且将在启动目标之前发送中断命令以终止任何活动的前台进程。",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "已创建新的终端实例，并且已在其中启动目标。系统不会自动清理现有终端。"
+	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "已重用启动终端实例，并且目标将在终端空闲时立即启动。",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "已重用启动终端实例，并且将在启动目标之前发送“中断”命令以终止任何活动的前台进程。",
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已创建新的终端实例，并且已在其中启动目标。系统不会自动清理现有终端。"
 }
