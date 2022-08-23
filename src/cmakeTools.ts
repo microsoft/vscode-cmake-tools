@@ -1590,13 +1590,15 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     },
                     async (progress, cancel) => {
                         let oldProgress = 0;
-                        consumer?.onProgress(pr => {
-                            const increment = pr.value - oldProgress;
-                            if (increment >= 1) {
-                                progress.report({ increment, message: `${pr.value}%` });
-                                oldProgress += increment;
-                            }
-                        });
+                        if (consumer) {
+                            consumer.onProgress(pr => {
+                                const increment = pr.value - oldProgress;
+                                if (increment >= 1) {
+                                    progress.report({ increment, message: `${pr.value}%` });
+                                    oldProgress += increment;
+                                }
+                            });
+                        }
                         cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
@@ -1621,7 +1623,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
             await setContextValue(isBuildingKey, false);
             this.statusMessage.set(localize('ready.status', 'Ready'));
             this.isBusy.set(false);
-            consumer?.dispose();
+            if (consumer) {
+                consumer.dispose();
+            }
         }
     }
     /**
