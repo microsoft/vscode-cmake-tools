@@ -72,7 +72,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * @returns The exit code from CMake
      */
-    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, taskCustomConfig?: boolean): Promise<number>;
+    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: preset.ConfigurePreset | null): Promise<number>;
     protected abstract doCacheConfigure(): Promise<number>;
 
     private _isConfiguredAtLeastOnce = false;
@@ -198,9 +198,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * Get the environment variables that should be set at CMake-configure time.
      */
-    async getConfigureEnvironment(): Promise<Environment> {
+    async getConfigureEnvironment(configurePreset?: preset.ConfigurePreset | null): Promise<Environment> {
         if (this.useCMakePresets) {
-            return EnvironmentUtils.create(this._configurePreset?.environment);
+            return EnvironmentUtils.create(configurePreset ? configurePreset.environment : this._configurePreset?.environment);
         } else {
             let envs = this._kitEnvironmentVariables;
             /* NOTE: By mergeEnvironment one by one to enable expanding self containd variable such as PATH properly */
@@ -617,12 +617,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return cb();
     }
 
-    private async _refreshExpansions() {
+    private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
             this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
 
             const opts = this.expansionOptions;
-            opts.envOverride = await this.getConfigureEnvironment();
+            opts.envOverride = await this.getConfigureEnvironment(configurePreset);
 
             if (!this.useCMakePresets) {
                 this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
@@ -1227,10 +1227,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    public async taskCustomConfigure(args: string[], taskConsumer?: proc.OutputConsumer): Promise<number> {
-        return this.doConfigure(args, taskConsumer, false, true);
-    }
-
     async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, taskPreset?: preset.ConfigurePreset | undefined): Promise<number> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
@@ -1251,7 +1247,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         try {
             // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
             // (example: cmake.sourceDirectory).
-            await this._refreshExpansions();
+            const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? taskPreset : this._configurePreset;
+            await this._refreshExpansions(taskPreset);
             if (!showCommandOnly) {
                 if (!shouldUseCachedConfiguration) {
                     log.debug(localize('start.configure', 'Start configure'), extra_args);
@@ -1266,7 +1263,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             let expanded_flags: string[];
-            const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? taskPreset : this._configurePreset;
             if (this.useCMakePresets) {
                 if (!configurePreset) {
                     log.debug(localize('no.config.Preset', 'No configure preset selected'));
@@ -1282,7 +1278,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             // A more complete round of expansions
-            await this._refreshExpansions();
+            await this._refreshExpansions(configurePreset);
 
             const timeStart: number = new Date().getTime();
             let retc: number;
@@ -1291,7 +1287,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 this._isConfiguredAtLeastOnce = true;
                 return retc;
             } else {
-                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly);
+                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, taskPreset);
                 this._isConfiguredAtLeastOnce = true;
             }
             const timeEnd: number = new Date().getTime();

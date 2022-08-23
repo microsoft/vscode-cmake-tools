@@ -154,7 +154,7 @@ export class CMakeServerDriver extends CMakeDriver {
         })();
     }
 
-    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, taskCustomConfig?: boolean) {
+    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null) {
         await this._clientChangeInProgress;
         const cl = await this.getClient();
         const sub = this.onMessage(msg => {
@@ -170,7 +170,7 @@ export class CMakeServerDriver extends CMakeDriver {
             log.info(proc.buildCmdStr(this.cmake.path, args));
         } else {
             try {
-                if (!taskCustomConfig) {
+                if (!configurePreset) {
                     this._hadConfigurationChanged = false;
                 }
                 await cl.configure({ cacheArguments: args });

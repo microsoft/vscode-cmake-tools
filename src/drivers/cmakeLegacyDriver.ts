@@ -76,7 +76,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         this._cacheWatcher.dispose();
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, taskCustomConfig?: boolean): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null): Promise<number> {
         // Ensure the binary directory exists
         const binary_dir = this.binaryDir;
         await fs.mkdir_p(binary_dir);
@@ -85,14 +85,23 @@ export class CMakeLegacyDriver extends CMakeDriver {
         const args = Array.from(args_);
         args.push(util.lightNormalizePath(this.sourceDir));
 
-        const gen = this.generator;
-        if (gen) {
-            args.push(`-G${gen.name}`);
-            if (gen.toolset) {
-                args.push(`-T${gen.toolset}`);
+        if (configurePreset && configurePreset.generator) {
+            args.push('-G');
+            args.push(configurePreset.generator);
+            if (configurePreset.toolset) {
+                args.push('-T');
+                args.push(configurePreset.toolset.toString());
             }
-            if (gen.platform) {
-                args.push(`-A${gen.platform}`);
+        } else {
+            const gen = this.generator;
+            if (gen) {
+                args.push(`-G${gen.name}`);
+                if (gen.toolset) {
+                    args.push(`-T${gen.toolset}`);
+                }
+                if (gen.platform) {
+                    args.push(`-A${gen.platform}`);
+                }
             }
         }
         const cmake = this.cmake.path;
@@ -108,7 +117,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
             }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
-            if (res.retc === 0 && !taskCustomConfig) {
+            if (res.retc === 0 && !configurePreset) {
                 this._needsReconfigure = false;
             }
             await this._reloadPostConfigure();
