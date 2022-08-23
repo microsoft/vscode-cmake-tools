@@ -79,6 +79,7 @@ export enum ConfigureTrigger {
     commandCleanConfigure = "commandCleanConfigure",
     commandConfigureAll = "commandConfigureAll",
     commandCleanConfigureAll = "commandCleanConfigureAll",
+    taskProvider = "taskProvider"
 }
 
 /**
@@ -188,7 +189,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         this._testPreset.set(null);
     }
 
-    async expandConfigPresetbyName(configurePreset: string | null): Promise<preset.BuildPreset | undefined> {
+    async expandConfigPresetbyName(configurePreset: string | null | undefined): Promise<preset.ConfigurePreset | undefined> {
         if (!configurePreset) {
             return undefined;
         }
@@ -1562,50 +1563,65 @@ export class CMakeTools implements api.CMakeToolsAPI {
             targetName = newTargets.join(', ');
         }
 
-        const consumer = new CMakeBuildConsumer(buildLogger, drv.config);
+        let consumer: CMakeBuildConsumer | undefined;
         const isBuildingKey = 'cmake:isBuilding';
         try {
             this.statusMessage.set(localize('building.status', 'Building'));
             this.isBusy.set(true);
-            return await vscode.window.withProgress(
-                {
-                    location: vscode.ProgressLocation.Window,
-                    title: localize('building.target', 'Building: {0}', targetName),
-                    cancellable: true
-                },
-                async (progress, cancel) => {
-                    let oldProgress = 0;
-                    consumer.onProgress(pr => {
-                        const increment = pr.value - oldProgress;
-                        if (increment >= 1) {
-                            progress.report({ increment, message: `${pr.value}%` });
-                            oldProgress += increment;
-                        }
-                    });
-                    cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
-                    if (!taskConsumer) {
-                        log.showChannel();
-                    }
-                    buildLogger.info(localize('starting.build', 'Starting build'));
-                    await setContextValue(isBuildingKey, true);
-                    const rc = await drv!.build(newTargets, consumer, taskConsumer);
-                    await setContextValue(isBuildingKey, false);
-                    if (rc === null) {
-                        buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
-                    } else {
-                        buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
-                    }
-                    const fileDiags = consumer.compileConsumer.resolveDiagnostics(drv!.binaryDir);
-                    populateCollection(collections.build, fileDiags);
-                    await this.refreshCompileDatabase(drv!.expansionOptions);
-                    return rc === null ? -1 : rc;
+            let rc: number | null;
+            if (taskConsumer) {
+                buildLogger.info(localize('starting.build', 'Starting build'));
+                await setContextValue(isBuildingKey, true);
+                rc = await drv!.build(newTargets, taskConsumer);
+                await setContextValue(isBuildingKey, false);
+                if (rc === null) {
+                    buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
+                } else {
+                    buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                 }
-            );
+                return rc === null ? -1 : rc;
+            } else {
+                consumer = new CMakeBuildConsumer(buildLogger, drv.config);
+                return await vscode.window.withProgress(
+                    {
+                        location: vscode.ProgressLocation.Window,
+                        title: localize('building.target', 'Building: {0}', targetName),
+                        cancellable: true
+                    },
+                    async (progress, cancel) => {
+                        let oldProgress = 0;
+                        consumer?.onProgress(pr => {
+                            const increment = pr.value - oldProgress;
+                            if (increment >= 1) {
+                                progress.report({ increment, message: `${pr.value}%` });
+                                oldProgress += increment;
+                            }
+                        });
+                        cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
+                        log.showChannel();
+                        buildLogger.info(localize('starting.build', 'Starting build'));
+                        await setContextValue(isBuildingKey, true);
+                        const rc = await drv!.build(newTargets, consumer);
+                        await setContextValue(isBuildingKey, false);
+                        if (rc === null) {
+                            buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
+                        } else {
+                            buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
+                        }
+                        const fileDiags = consumer?.compileConsumer.resolveDiagnostics(drv!.binaryDir);
+                        if (fileDiags) {
+                            populateCollection(collections.build, fileDiags);
+                        }
+                        await this.refreshCompileDatabase(drv!.expansionOptions);
+                        return rc === null ? -1 : rc;
+                    }
+                );
+            }
         } finally {
             await setContextValue(isBuildingKey, false);
             this.statusMessage.set(localize('ready.status', 'Ready'));
             this.isBusy.set(false);
-            consumer.dispose();
+            consumer?.dispose();
         }
     }
     /**

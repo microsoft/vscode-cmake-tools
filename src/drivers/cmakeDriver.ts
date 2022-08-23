@@ -31,6 +31,7 @@ import * as preset from '@cmt/preset';
 import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/folders';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
+import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1230,7 +1231,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this.doConfigure(args, taskConsumer, false, true);
     }
 
-    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
+    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, taskPreset?: preset.ConfigurePreset | undefined): Promise<number> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
@@ -1265,13 +1266,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             let expanded_flags: string[];
+            const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? taskPreset : this._configurePreset;
             if (this.useCMakePresets) {
-                if (!this._configurePreset) {
+                if (!configurePreset) {
                     log.debug(localize('no.config.Preset', 'No configure preset selected'));
                     return -3;
                 }
                 // For now, fields in presets are expanded when the preset is selected
-                expanded_flags = this.generateConfigArgsFromPreset(this._configurePreset);
+                expanded_flags = this.generateConfigArgsFromPreset(configurePreset);
             } else {
                 expanded_flags = await this.generateConfigArgsFromSettings(extra_args, withoutCmakeSettings);
             }
@@ -1299,7 +1301,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (this.useCMakePresets) {
                 telemetryProperties = {
                     CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
-                    CMakeGenerator: this.getGeneratorNameForTelemetry(),
+                    CMakeGenerator: (trigger === ConfigureTrigger.taskProvider) ? taskPreset?.generator || "" : this.getGeneratorNameForTelemetry(),
                     Preset: this.useCMakePresets ? 'true' : 'false',
                     Trigger: trigger,
                     ShowCommandOnly: showCommandOnly ? 'true' : 'false'
@@ -1397,7 +1399,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     });
                     telemetryMeasures['ErrorCount'] = errorCount;
                     telemetryMeasures['WarningCount'] = warningCount;
-                } else {
+                } else if (!(consumer instanceof CustomBuildTaskTerminal)) {
                     // Wrong type: shouldn't get here, just in case
                     rollbar.error('Wrong build result type.');
                     telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
@@ -1497,7 +1499,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         });
     }
 
-    async build(targets?: string[], consumer?: proc.OutputConsumer, taskConsumer?: proc.OutputConsumer): Promise<number | null> {
+    async build(targets?: string[], consumer?: proc.OutputConsumer): Promise<number | null> {
         log.debug(localize('start.build', 'Start build'), targets?.join(', ') || '');
         if (this.configRunning) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
@@ -1515,7 +1517,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return -1;
         }
         const timeStart: number = new Date().getTime();
-        const child = await this._doCMakeBuild(targets, taskConsumer ? taskConsumer : consumer);
+        const child = await this._doCMakeBuild(targets, consumer);
         const timeEnd: number = new Date().getTime();
         const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
             ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
@@ -1541,7 +1543,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                     telemetryMeasures['ErrorCount'] = errorCount;
                     telemetryMeasures['WarningCount'] = warningCount;
-                } else { // problem matcher ...
+                } else if (!(consumer instanceof CustomBuildTaskTerminal)) {
                     // Wrong type: shouldn't get here, just in case
                     rollbar.error('Wrong build result type.');
                     telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;

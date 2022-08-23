@@ -9,7 +9,7 @@ import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
-import CMakeTools from './cmakeTools';
+import CMakeTools, { ConfigureTrigger } from './cmakeTools';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 
@@ -123,7 +123,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
                 new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, {})
-            ), []);
+            ), '$gcc');
         task.group = (commandType === CommandType.build || commandType === CommandType.cleanRebuild) ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
         return task;
@@ -144,7 +144,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     }
 }
 
-class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsumer {
+export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsumer {
     private writeEmitter = new vscode.EventEmitter<string>();
     private closeEmitter = new vscode.EventEmitter<number>();
     public get onDidWrite(): vscode.Event<string> {
@@ -256,23 +256,13 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsu
         }
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
-            const cmakePath: string = cmakeDriver.getCMakeCommand();
-            let args: string[] = [];
-            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.config);
-            if (this.preset) {
-                const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
-                if (!configPreset) {
-                    log.debug(localize("config.preset.not.found", 'Config preset not found.'));
-                    this.writeEmitter.fire(localize("configure.failed", "Configure preset {0} not found. Configure failed.", this.preset) + endOfLine);
-                    this.closeEmitter.fire(-1);
-                    return;
-                }
-                args = (configPreset) ? cmakeDriver.generateConfigArgsFromPreset(configPreset) : [];
-            } else {
-                args = await cmakeDriver.generateConfigArgsFromSettings();
+            if (cmakeTools.useCMakePresets && cmakeDriver.config.configureOnEdit) {
+                log.debug(localize("configure.on.edit", 'When running configure tasks using presets, setting configureOnEdit to true can potentially overwrite the task configurations.'));
             }
-            log.debug('Invoking CMake', cmakePath, 'with arguments', JSON.stringify(args));
-            const result = await cmakeDriver.taskCustomConfigure(args, this);
+
+            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.config);
+            const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
+            const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, false, false, configPreset);
             if (result === undefined || result === null) {
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
