@@ -222,7 +222,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null): Promise<number> {
-        const api_path = this.getCMakeFileApiPath();
+        const api_path = this.getCMakeFileApiPath(configurePreset?.binaryDir);
         await createQueryFileForApi(api_path);
 
         // Dup args so we can modify them
@@ -278,7 +278,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 if (!configurePreset) {
                     this._needsReconfigure = false;
                 }
-                await this.updateCodeModel();
+                await this.updateCodeModel(configurePreset?.binaryDir);
             }
             return res.retc === null ? -1 : res.retc;
         }
@@ -289,17 +289,17 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return true;
     }
 
-    private getCMakeFileApiPath() {
-        return path.join(this.binaryDir, '.cmake', 'api', 'v1');
+    private getCMakeFileApiPath(binaryDir?: string) {
+        return path.join(binaryDir ? binaryDir : this.binaryDir, '.cmake', 'api', 'v1');
     }
-    private getCMakeReplyPath() {
-        const api_path = this.getCMakeFileApiPath();
+    private getCMakeReplyPath(binaryDir?: string) {
+        const api_path = this.getCMakeFileApiPath(binaryDir);
         return path.join(api_path, 'reply');
     }
 
     private toolchainWarningProvided: boolean = false;
-    private async updateCodeModel(): Promise<boolean> {
-        const reply_path = this.getCMakeReplyPath();
+    private async updateCodeModel(binaryDir?: string): Promise<boolean> {
+        const reply_path = this.getCMakeReplyPath(binaryDir);
         const indexFile = await loadIndexFile(reply_path);
         if (indexFile) {
             this._generatorInformation = indexFile.cmake.generator;
