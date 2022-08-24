@@ -9,7 +9,7 @@ import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
-import CMakeTools, { ConfigureTrigger } from './cmakeTools';
+import { CMakeTools, ConfigureTrigger } from './cmakeTools';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 
@@ -123,7 +123,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
                 new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, {})
-            ), '$gcc');
+            ), []);
         task.group = (commandType === CommandType.build || commandType === CommandType.cleanRebuild) ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
         return task;

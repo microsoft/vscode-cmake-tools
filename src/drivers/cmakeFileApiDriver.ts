@@ -25,7 +25,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
-import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValueStrategy, TestPreset } from '@cmt/preset';
 
 import { NoGeneratorError } from './cmakeServerDriver';
 
@@ -227,30 +227,29 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
         // Dup args so we can modify them
         const args = Array.from(args_);
-        // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
-        args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
         let has_gen = false;
         for (const arg of args) {
             if (arg.startsWith("-DCMAKE_GENERATOR:STRING=")) {
                 has_gen = true;
             }
         }
-        if (configurePreset) {
-            args.push(`-B${util.lightNormalizePath(configurePreset.binaryDir ? configurePreset.binaryDir : this.binaryDir)}`);
-            if (!has_gen && configurePreset.generator) {
-                args.push('-G');
-                args.push(configurePreset.generator);
-                if (configurePreset.toolset) {
-                    args.push('-T');
-                    args.push(typeof(configurePreset.toolset) === "string" ? configurePreset.toolset as string : configurePreset.toolset.value || "");
+        const binaryDir = configurePreset?.binaryDir ? configurePreset.binaryDir : this.binaryDir;
+        // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
+        args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
+        args.push(`-B${util.lightNormalizePath(binaryDir)}`);
+
+        if (!has_gen) {
+            const generator = (configurePreset) ? {
+                name: configurePreset.generator,
+                platform: configurePreset.architecture ? getValueStrategy(configurePreset.architecture) : undefined,
+                toolset: configurePreset.toolset ? getValueStrategy(configurePreset.toolset) : undefined
+
+            } : this.generator ;
+            if (generator) {
+                if (generator.name) {
+                    args.push('-G');
+                    args.push(generator.name);
                 }
-            }
-        } else {
-            args.push(`-B${util.lightNormalizePath(this.binaryDir)}`);
-            const generator = this.generator;
-            if (!has_gen && generator) {
-                args.push('-G');
-                args.push(generator.name);
                 if (generator.toolset) {
                     args.push('-T');
                     args.push(generator.toolset);
@@ -271,7 +270,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
             const env = await this.getConfigureEnvironment(configurePreset);
-            const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env, cwd: (configurePreset && configurePreset.binaryDir) ? configurePreset.binaryDir : this.binaryDir }).result;
+            const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env, cwd: binaryDir }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
             if (res.retc === 0) {

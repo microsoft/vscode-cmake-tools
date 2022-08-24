@@ -32,6 +32,7 @@ import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/folders';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
+import { getValueStrategy } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -442,19 +443,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         this._binaryDir = configurePreset.binaryDir || '';
 
-        const getValue = (obj: string | preset.ValueStrategy) => {
-            if (util.isString(obj)) {
-                return obj;
-            } else if (obj.strategy === 'set') {
-                return obj.value;
-            }
-        };
-
         if (configurePreset.generator) {
             this._generator = {
                 name: configurePreset.generator,
-                platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
-                toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
+                platform: configurePreset.architecture ? getValueStrategy(configurePreset.architecture) : undefined,
+                toolset: configurePreset.toolset ? getValueStrategy(configurePreset.toolset) : undefined
             };
         } else {
             log.debug(localize('no.generator', 'No generator specified'));
@@ -1227,7 +1220,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, taskPreset?: preset.ConfigurePreset | undefined): Promise<number> {
+    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset): Promise<number> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
@@ -1247,8 +1240,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         try {
             // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
             // (example: cmake.sourceDirectory).
-            const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? taskPreset : this._configurePreset;
-            await this._refreshExpansions(taskPreset);
+            await this._refreshExpansions(presetOverride);
             if (!showCommandOnly) {
                 if (!shouldUseCachedConfiguration) {
                     log.debug(localize('start.configure', 'Start configure'), extra_args);
@@ -1264,6 +1256,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             let expanded_flags: string[];
             if (this.useCMakePresets) {
+                const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? presetOverride : this._configurePreset;
                 if (!configurePreset) {
                     log.debug(localize('no.config.Preset', 'No configure preset selected'));
                     return -3;
@@ -1278,7 +1271,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             // A more complete round of expansions
-            await this._refreshExpansions(configurePreset);
+            await this._refreshExpansions(presetOverride);
 
             const timeStart: number = new Date().getTime();
             let retc: number;
@@ -1287,7 +1280,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 this._isConfiguredAtLeastOnce = true;
                 return retc;
             } else {
-                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, taskPreset);
+                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, presetOverride);
                 this._isConfiguredAtLeastOnce = true;
             }
             const timeEnd: number = new Date().getTime();
@@ -1297,7 +1290,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (this.useCMakePresets) {
                 telemetryProperties = {
                     CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
-                    CMakeGenerator: (trigger === ConfigureTrigger.taskProvider) ? taskPreset?.generator || "" : this.getGeneratorNameForTelemetry(),
+                    CMakeGenerator: (trigger === ConfigureTrigger.taskProvider) ? presetOverride?.generator || "no.generator" : this.getGeneratorNameForTelemetry(),
                     Preset: this.useCMakePresets ? 'true' : 'false',
                     Trigger: trigger,
                     ShowCommandOnly: showCommandOnly ? 'true' : 'false'

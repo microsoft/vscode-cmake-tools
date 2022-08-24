@@ -1590,15 +1590,13 @@ export class CMakeTools implements api.CMakeToolsAPI {
                     },
                     async (progress, cancel) => {
                         let oldProgress = 0;
-                        if (consumer) {
-                            consumer.onProgress(pr => {
-                                const increment = pr.value - oldProgress;
-                                if (increment >= 1) {
-                                    progress.report({ increment, message: `${pr.value}%` });
-                                    oldProgress += increment;
-                                }
-                            });
-                        }
+                        consumer!.onProgress(pr => {
+                            const increment = pr.value - oldProgress;
+                            if (increment >= 1) {
+                                progress.report({ increment, message: `${pr.value}%` });
+                                oldProgress += increment;
+                            }
+                        });
                         cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
@@ -1610,7 +1608,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        const fileDiags = consumer?.compileConsumer.resolveDiagnostics(drv!.binaryDir);
+                        const fileDiags = consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir);
                         if (fileDiags) {
                             populateCollection(collections.build, fileDiags);
                         }
