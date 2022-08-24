@@ -66,19 +66,29 @@ export class CMakeTask extends vscode.Task {
     detail?: string;
 }
 
-function getDefaultPresetName(commandType: CommandType): string | undefined {
+async function getDefaultPresetName(commandType: CommandType, resolve: boolean = false): Promise<string | undefined> {
+    let result: string | undefined;
     switch (commandType) {
         case CommandType.config:
-            return "${command:cmake.activeConfigurePresetName}";
+            result = resolve ? await vscode.commands.executeCommand("cmake.activeConfigurePresetName", []) as string :
+                "${command:cmake.activeConfigurePresetName}";
+            break;
         case CommandType.build:
-            return "${command:cmake.activeBuildPresetName}";
+            result = resolve ? await vscode.commands.executeCommand("cmake.activeBuildPresetName", []) as string :
+                "${command:cmake.activeBuildPresetName}";
+            break;
         case CommandType.cleanRebuild:
-            return "${command:cmake.activeBuildPresetName}";
+            result = resolve ? await vscode.commands.executeCommand("cmake.activeBuildPresetName", []) as string :
+                "${command:cmake.activeBuildPresetName}";
+            break;
         case CommandType.test:
-            return "${command:cmake.activeTestPresetName}";
+            result = resolve ? await vscode.commands.executeCommand("cmake.activeTestPresetName", []) as string :
+                "${command:cmake.activeTestPresetName}";
+            break;
         default:
             return undefined;
     }
+    return result;
 }
 
 export class CMakeTaskProvider implements vscode.TaskProvider {
@@ -109,7 +119,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             buildTargets = targets;
         }
         if (useCMakePresets) {
-            preset = getDefaultPresetName(commandType);
+            preset = await getDefaultPresetName(commandType);
         }
 
         const definition: CMakeTaskDefinition = {
@@ -230,11 +240,11 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         return false;
     }
 
-    private resolvePresetName(preset: string | undefined, useCMakePresets: boolean, commandType: CommandType): string | undefined {
+    private async resolvePresetName(preset: string | undefined, useCMakePresets: boolean, commandType: CommandType): Promise<string | undefined> {
         if (preset !== undefined) {
             return preset;
         }
-        return useCMakePresets ? getDefaultPresetName(commandType) : undefined;
+        return useCMakePresets ? getDefaultPresetName(commandType, true) : undefined;
     }
 
     private getCMakeTools(): CMakeTools | undefined {
@@ -260,7 +270,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 log.debug(localize("configure.on.edit", 'When running configure tasks using presets, setting configureOnEdit to true can potentially overwrite the task configurations.'));
             }
 
-            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.config);
+            this.preset = await this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.config);
             const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
             const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, false, false, configPreset);
             if (result === undefined || result === null) {
@@ -291,7 +301,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             if (!this.options) {
                 this.options = {};
             }
-            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.build);
+            this.preset = await this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.build);
             if (this.preset) {
                 const buildPreset: preset.BuildPreset | undefined = await cmakeTools?.expandBuildPresetbyName(this.preset);
                 if (!buildPreset) {
@@ -367,7 +377,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             let testPreset: preset.TestPreset | undefined;
-            this.preset = this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.test);
+            this.preset = await this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.test);
             if (this.preset) {
                 testPreset = await cmakeTools?.expandTestPresetbyName(this.preset);
                 if (!testPreset) {
