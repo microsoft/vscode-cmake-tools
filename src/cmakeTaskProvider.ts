@@ -427,3 +427,5 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 }
+
+export const cmakeTaskProvider: CMakeTaskProvider = new CMakeTaskProvider();

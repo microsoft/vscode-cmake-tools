@@ -30,7 +30,7 @@ import { FireNow, FireLate } from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { StatusBar } from '@cmt/status';
-import { CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
+import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/tree';
 import * as util from '@cmt/util';
@@ -43,7 +43,6 @@ import { platform } from 'os';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
-export const cmakeTaskProvider: CMakeTaskProvider = new CMakeTaskProvider();
 let taskProvider: vscode.Disposable;
 
 const log = logging.createLogger('extension');
