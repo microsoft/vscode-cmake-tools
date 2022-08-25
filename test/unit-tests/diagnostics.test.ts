@@ -56,6 +56,22 @@ suite('Diagnostics', () => {
         expect(diag.diag.message).to.endsWith('I am a warning!');
         expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
     });
+    test('Parse a deprecation warning', () => {
+        const error_output = [
+            'CMake Deprecation Warning at CMakeLists.txt:14 (message):',
+            '  I am deprecated!',
+            '',
+            ''
+        ];
+        feedLines(consumer, [], error_output);
+        expect(consumer.diagnostics.length).to.eq(1);
+        const diag = consumer.diagnostics[0];
+        expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
+        expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(diag.diag.source).to.eq('CMake (message)');
+        expect(diag.diag.message).to.endsWith('I am deprecated!');
+        expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
+    });
     test('Parse two diags', () => {
         const error_output = [
             'CMake Warning at CMakeLists.txt:14 (message):',

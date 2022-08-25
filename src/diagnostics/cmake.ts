@@ -86,6 +86,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
                     const [full, level, filename, linestr, command] = result;
                     const lineno = oneLess(linestr);
                     const diagmap: { [k: string]: vscode.DiagnosticSeverity } = {
+                        'Deprecation Warning': vscode.DiagnosticSeverity.Warning,
                         Warning: vscode.DiagnosticSeverity.Warning,
                         Error: vscode.DiagnosticSeverity.Error
                     };
