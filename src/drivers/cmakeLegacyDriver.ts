@@ -17,7 +17,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, getValueStrategy, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import { CodeModelContent } from './codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -78,7 +78,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
 
     async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null): Promise<number> {
         // Ensure the binary directory exists
-        const binaryDir = configurePreset?.binaryDir ? configurePreset.binaryDir : this.binaryDir;
+        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         await fs.mkdir_p(binaryDir);
 
         // Dup args so we can modify them
@@ -87,8 +87,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
 
         const generator = (configurePreset) ? {
             name: configurePreset.generator,
-            platform: configurePreset.architecture ? getValueStrategy(configurePreset.architecture) : undefined,
-            toolset: configurePreset.toolset ? getValueStrategy(configurePreset.toolset) : undefined
+            platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
+            toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
 
         } : this.generator ;
         if (generator) {
@@ -121,6 +121,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
             log.trace(res.stdout);
             if (res.retc === 0 && !configurePreset) {
                 this._needsReconfigure = false;
+            }
+            if (!configurePreset) {
                 await this._reloadPostConfigure();
             }
             return res.retc === null ? -1 : res.retc;

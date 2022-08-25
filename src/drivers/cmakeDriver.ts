@@ -32,7 +32,7 @@ import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/folders';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
-import { getValueStrategy } from '@cmt/preset';
+import { getValue } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -446,8 +446,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (configurePreset.generator) {
             this._generator = {
                 name: configurePreset.generator,
-                platform: configurePreset.architecture ? getValueStrategy(configurePreset.architecture) : undefined,
-                toolset: configurePreset.toolset ? getValueStrategy(configurePreset.toolset) : undefined
+                platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
+                toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
             };
         } else {
             log.debug(localize('no.generator', 'No generator specified'));

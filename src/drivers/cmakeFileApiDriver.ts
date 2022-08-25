@@ -25,7 +25,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
-import { BuildPreset, ConfigurePreset, getValueStrategy, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 
 import { NoGeneratorError } from './cmakeServerDriver';
 
@@ -233,7 +233,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 has_gen = true;
             }
         }
-        const binaryDir = configurePreset?.binaryDir ? configurePreset.binaryDir : this.binaryDir;
+        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
         args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
         args.push(`-B${util.lightNormalizePath(binaryDir)}`);
@@ -241,8 +241,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
         if (!has_gen) {
             const generator = (configurePreset) ? {
                 name: configurePreset.generator,
-                platform: configurePreset.architecture ? getValueStrategy(configurePreset.architecture) : undefined,
-                toolset: configurePreset.toolset ? getValueStrategy(configurePreset.toolset) : undefined
+                platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
+                toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
 
             } : this.generator ;
             if (generator) {
@@ -289,7 +289,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     private getCMakeFileApiPath(binaryDir?: string) {
-        return path.join(binaryDir ? binaryDir : this.binaryDir, '.cmake', 'api', 'v1');
+        return path.join(binaryDir ?? this.binaryDir, '.cmake', 'api', 'v1');
     }
     private getCMakeReplyPath(binaryDir?: string) {
         const api_path = this.getCMakeFileApiPath(binaryDir);

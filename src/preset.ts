@@ -1658,7 +1658,7 @@ export function configurePresetChangeNeedsClean(newPreset: ConfigurePreset, oldP
     }
 }
 
-export function getValueStrategy(value: string | ValueStrategy): string | undefined {
+export function getValue(value: string | ValueStrategy): string | undefined {
     if (util.isString(value)) {
         return value;
     } else if (value.strategy === 'set') {
