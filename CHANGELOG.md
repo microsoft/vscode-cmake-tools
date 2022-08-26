@@ -17,6 +17,7 @@ Bug Fixes:
 - Fix issues with launching the target in PowerShell terminal. [#2650](https://github.com/microsoft/vscode-cmake-tools/issues/2650) [#2621](https://github.com/microsoft/vscode-cmake-tools/issues/2621) [#535](https://github.com/microsoft/vscode-cmake-tools/issues/535)
 - Detect clang-cl.exe compilers that are not bundled with Visual Studio. [#2622](https://github.com/microsoft/vscode-cmake-tools/issues/2622)
 - Respect VS Code setting "insertSpaces" when updating preset files via GUI. [#2677](https://github.com/microsoft/vscode-cmake-tools/issues/2677)
+- Deprecation warnings show up as errors in Problems view [#2708](https://github.com/microsoft/vscode-cmake-tools/issues/2708)
 
 ## 1.11.26
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
