@@ -1173,8 +1173,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         "Sublime Text 2 - Unix Makefiles"
     ];
 
-    private getGeneratorNameForTelemetry(): string {
-        const generator = this.generatorName;
+    private getGeneratorNameForTelemetry(generator: string | null = this.generatorName): string {
         if (generator) {
             return this.cmakeGenerators.find(g => generator.startsWith(g)) ?? 'other';
         }
@@ -1290,7 +1289,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (this.useCMakePresets) {
                 telemetryProperties = {
                     CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
-                    CMakeGenerator: (trigger === ConfigureTrigger.taskProvider) ? presetOverride?.generator || "no.generator" : this.getGeneratorNameForTelemetry(),
+                    CMakeGenerator: this.getGeneratorNameForTelemetry(presetOverride?.generator || this.generatorName),
                     Preset: this.useCMakePresets ? 'true' : 'false',
                     Trigger: trigger,
                     ShowCommandOnly: showCommandOnly ? 'true' : 'false'
