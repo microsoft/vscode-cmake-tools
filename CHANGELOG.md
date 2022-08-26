@@ -2,22 +2,24 @@
 
 ## 1.12
 Improvements:
-- Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
 - Support for presets version 4. [#2492](https://github.com/microsoft/vscode-cmake-tools/issues/2492) [@chausner](https://github.com/chausner)
+- Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
 - Add target name to terminal window name for launch. [#2613](https://github.com/microsoft/vscode-cmake-tools/issues/2613)
-- Add support for "preset" and "env" in task provider. [#2636](https://github.com/microsoft/vscode-cmake-tools/issues/2636)
+- Add support for "preset" and "env" in task provider. [#2636](https://github.com/microsoft/vscode-cmake-tools/issues/2636) [#2553](https://github.com/microsoft/vscode-cmake-tools/issues/2553)
 - Add Craig Scott's "Professional CMake" book to the list of resources in doc/faq.md for learning CMake. [#2679](https://github.com/microsoft/vscode-cmake-tools/pull/2679) [@david-fong](https://github.com/david-fong)
 
 Bug Fixes:
-- Set the working directory for the file api driver. [#2569](https://github.com/microsoft/vscode-cmake-tools/issues/2569)
 - CMakeUserPresets.json version not detected without CMakePresets.json. [#2469](https://github.com/microsoft/vscode-cmake-tools/issues/2469) [@chausner](https://github.com/chausner)
-- Clear output channel after auto-reconfigure. [#2628](https://github.com/microsoft/vscode-cmake-tools/issues/2628)
+- Do not prompt to select a Kit if `cmake.configureOnOpen` is `false`. [#2538](https://github.com/microsoft/vscode-cmake-tools/issues/2538)
 - Don't delete CMakeCache.txt when switching kits if the buildDirectory also changes. [#2546](https://github.com/microsoft/vscode-cmake-tools/issues/2546) [@david-fong](https://github.com/david-fong)
+- Set the working directory for the file api driver. [#2569](https://github.com/microsoft/vscode-cmake-tools/issues/2569)
 - Add "description" properties to the cmake.revealLog setting. [#2578](https://github.com/microsoft/vscode-cmake-tools/issues/2578)
-- Fix issues with launching the target in PowerShell terminal. [#2650](https://github.com/microsoft/vscode-cmake-tools/issues/2650) [#2621](https://github.com/microsoft/vscode-cmake-tools/issues/2621) [#535](https://github.com/microsoft/vscode-cmake-tools/issues/535)
 - Detect clang-cl.exe compilers that are not bundled with Visual Studio. [#2622](https://github.com/microsoft/vscode-cmake-tools/issues/2622)
+- Clear output channel after auto-reconfigure. [#2628](https://github.com/microsoft/vscode-cmake-tools/issues/2628)
+- Fix issues with launching the target in PowerShell terminal. [#2650](https://github.com/microsoft/vscode-cmake-tools/issues/2650) [#2621](https://github.com/microsoft/vscode-cmake-tools/issues/2621) [#535](https://github.com/microsoft/vscode-cmake-tools/issues/535)
 - Respect VS Code setting "insertSpaces" when updating preset files via GUI. [#2677](https://github.com/microsoft/vscode-cmake-tools/issues/2677)
-- Deprecation warnings show up as errors in Problems view [#2708](https://github.com/microsoft/vscode-cmake-tools/issues/2708)
+- CMake install task does not run in terminal. [#2693](https://github.com/microsoft/vscode-cmake-tools/issues/2693)
+- Deprecation warnings show up as errors in Problems view. [#2708](https://github.com/microsoft/vscode-cmake-tools/issues/2708)
 
 ## 1.11.26
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
