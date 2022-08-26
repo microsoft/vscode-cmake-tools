@@ -601,6 +601,28 @@ export function checkDirectoryExists(filePath: string): Promise<boolean> {
     });
 }
 
+/** Test whether a directory exists */
+export function checkDirectoryExistsSync(dirPath: string): boolean {
+    try {
+        return fs.statSync(dirPath).isDirectory();
+    } catch (e) {
+    }
+    return false;
+}
+
+export function createDirIfNotExistsSync(dirPath: string | undefined): void {
+    if (!dirPath) {
+        return;
+    }
+    if (!checkDirectoryExistsSync(dirPath)) {
+        try {
+            fs.mkdirSync(dirPath, {recursive: true});
+        } catch (e) {
+            console.log(e);
+        }
+    }
+}
+
 // Read the files in a directory.
 export function readDir(dirPath: string): Promise<string[]> {
     return new Promise((resolve) => {

@@ -11,8 +11,9 @@ import { fs } from './pr';
 import { OutputConsumer } from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
-import { testArgs } from './preset';
+import { testArgs, TestPreset } from './preset';
 import { expandString } from './expand';
+import * as proc from '@cmt/proc';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -360,8 +361,11 @@ export class CTestDriver implements vscode.Disposable {
     private readonly resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
     readonly onResultsChanged = this.resultsChangedEmitter.event;
 
-    async runCTest(driver: CMakeDriver): Promise<number> {
-        log.showChannel();
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number|null> {
+        if (!customizedTask) {
+            // We don't want to focus on log channel when running tasks.
+            log.showChannel();
+        }
         this.decorationManager.clearFailingTestDecorations();
 
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
@@ -371,7 +375,9 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         let ctestArgs: string[];
-        if (driver.useCMakePresets) {
+        if (customizedTask && testPreset) {
+            ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
+        } else if (!customizedTask && driver.useCMakePresets) {
             if (!driver.testPreset) {
                 log.error(localize('test.preset.not.set', 'Test preset is not set'));
                 return -3;
@@ -396,7 +402,7 @@ export class CTestDriver implements vscode.Disposable {
         const child = driver.executeCommand(
             ctestpath,
             ctestArgs,
-            new CTestOutputLogger(),
+            ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
         await this.reloadTests(driver);
@@ -487,3 +493,4 @@ export class CTestDriver implements vscode.Disposable {
         this.testResults = currentTestResults;
     }
 }
+

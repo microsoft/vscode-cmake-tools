@@ -531,7 +531,7 @@
         "properties": {
           "label": {
             "type": "string",
-            "description": "The name of the task"
+            "description": "%cmake-tools.taskDefinitions.properties.label.description%"
           },
           "command": {
             "type": "string",
@@ -543,27 +543,36 @@
               "clean",
               "cleanRebuild"
             ],
-            "description": "CMake build command"
+            "description": "%cmake-tools.taskDefinitions.properties.command.description%"
           },
           "targets": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "%cmake-tools.taskDefinitions.properties.targets.description%"
+          },
+          "preset": {
+            "type": "string",
+            "description": "%cmake-tools.taskDefinitions.properties.preset.description%"
           },
           "options": {
             "type": "object",
-            "description": "Additional command options",
+            "description": "%cmake-tools.taskDefinitions.properties.options.description",
             "properties": {
               "cwd": {
                 "type": "string",
-                "description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used."
+                "description": "%cmake-tools.taskDefinitions.properties.options.cwd.description%"
+              },
+              "environment": {
+                "type": "object",
+                "markdownDescription": "%cmake-tools.taskDefinitions.properties.options.environment.markdownDescription%"
               }
             }
           },
           "detail": {
             "type": "string",
-            "description": "Additional details of the task"
+            "description": "%cmake-tools.taskDefinitions.properties.details.description%"
           }
         }
       }
@@ -1234,24 +1243,24 @@
               "description": "%cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description%"
             },
             "externalConsole": {
-                "type": "boolean",
-                "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
+              "type": "boolean",
+              "description": "%cmake-tools.configuration.cmake.debugConfig.externalConsole.description%"
             },
             "console": {
-                "type": "string",
-                "enum": [
-                  "internalConsole",
-                  "integratedTerminal",
-                  "externalTerminal",
-                  "newExternalWindow"
-                ],
-                "enumDescriptions": [
-                  "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
-                  "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
-                ],
-                "markdownDescription": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
+              "type": "string",
+              "enum": [
+                "internalConsole",
+                "integratedTerminal",
+                "externalTerminal",
+                "newExternalWindow"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.debugConfig.console.internalConsole.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.integratedTerminal.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description%",
+                "%cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description%"
+              ],
+              "markdownDescription": "%cmake-tools.configuration.cmake.debugConfig.console.description%"
             },
             "logging": {
               "type": "object",
@@ -1912,7 +1921,7 @@
             "%cmake-tools.configuration.cmake.revealLog.always.description%",
             "%cmake-tools.configuration.cmake.revealLog.never.description%"
           ],
-          "description":"%cmake-tools.configuration.cmake.revealLog.description%"
+          "description": "%cmake-tools.configuration.cmake.revealLog.description%"
         },
         "cmake.exportCompileCommandsFile": {
           "type": "boolean",

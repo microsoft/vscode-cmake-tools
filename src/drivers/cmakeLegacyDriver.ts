@@ -17,7 +17,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import { CodeModelContent } from './codeModel';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -76,25 +76,36 @@ export class CMakeLegacyDriver extends CMakeDriver {
         this._cacheWatcher.dispose();
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null): Promise<number> {
         // Ensure the binary directory exists
-        const binary_dir = this.binaryDir;
-        await fs.mkdir_p(binary_dir);
+        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
+        await fs.mkdir_p(binaryDir);
 
         // Dup args so we can modify them
         const args = Array.from(args_);
         args.push(util.lightNormalizePath(this.sourceDir));
 
-        const gen = this.generator;
-        if (gen) {
-            args.push(`-G${gen.name}`);
-            if (gen.toolset) {
-                args.push(`-T${gen.toolset}`);
+        const generator = (configurePreset) ? {
+            name: configurePreset.generator,
+            platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
+            toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
+
+        } : this.generator ;
+        if (generator) {
+            if (generator.name) {
+                args.push('-G');
+                args.push(generator.name);
             }
-            if (gen.platform) {
-                args.push(`-A${gen.platform}`);
+            if (generator.toolset) {
+                args.push('-T');
+                args.push(generator.toolset);
+            }
+            if (generator.platform) {
+                args.push('-A');
+                args.push(generator.platform);
             }
         }
+
         const cmake = this.cmake.path;
         if (showCommandOnly) {
             log.showChannel();
@@ -103,15 +114,17 @@ export class CMakeLegacyDriver extends CMakeDriver {
         } else {
             log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
             const res = await this.executeCommand(cmake, args, outputConsumer, {
-                environment: await this.getConfigureEnvironment(),
-                cwd: binary_dir
+                environment: await this.getConfigureEnvironment(configurePreset),
+                cwd: binaryDir
             }).result;
             log.trace(res.stderr);
             log.trace(res.stdout);
-            if (res.retc === 0) {
+            if (res.retc === 0 && !configurePreset) {
                 this._needsReconfigure = false;
             }
-            await this._reloadPostConfigure();
+            if (!configurePreset) {
+                await this._reloadPostConfigure();
+            }
             return res.retc === null ? -1 : res.retc;
         }
     }

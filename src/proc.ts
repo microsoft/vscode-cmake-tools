@@ -10,7 +10,6 @@ import * as iconv from 'iconv-lite';
 import { createLogger } from './logging';
 import rollbar from './rollbar';
 import * as util from './util';
-
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { ExecutionResult } from './api';
@@ -132,6 +131,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         shell: !!options.shell
     };
     if (options?.cwd !== undefined) {
+        util.createDirIfNotExistsSync(options.cwd);
         spawn_opts.cwd = options.cwd;
     }
     if (options?.timeout) {

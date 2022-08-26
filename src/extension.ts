@@ -30,7 +30,7 @@ import { FireNow, FireLate } from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { StatusBar } from '@cmt/status';
-import { CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
+import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/tree';
 import * as util from '@cmt/util';
@@ -43,7 +43,6 @@ import { platform } from 'os';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
-export const cmakeTaskProvider: CMakeTaskProvider = new CMakeTaskProvider();
 let taskProvider: vscode.Disposable;
 
 const log = logging.createLogger('extension');
@@ -241,6 +240,10 @@ class ExtensionManager implements vscode.Disposable {
 
     public getCMTFolder(folder: vscode.WorkspaceFolder): CMakeToolsFolder | undefined {
         return this.folders.get(folder);
+    }
+
+    public getCMakeToolsForActiveFolder(): CMakeTools | undefined {
+        return this.folders.activeFolder?.cmakeTools;
     }
 
     public isActiveFolder(cmt: CMakeToolsFolder): boolean {
@@ -1817,6 +1820,10 @@ export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     extensionManager?.showStatusBar(fullFeatureSet);
 }
 
+export function getCMakeToolsForActiveFolder(): CMakeTools | undefined {
+    return extensionManager?.getCMakeToolsForActiveFolder();
+}
+
 export function isActiveFolder(folder: vscode.WorkspaceFolder): boolean | undefined {
     const cmtFolder = extensionManager?.getCMTFolder(folder);
     return cmtFolder && extensionManager?.isActiveFolder(cmtFolder);
@@ -1858,16 +1865,6 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
     log.info(`Cannot find CMT for folder ${folder.name} or we don't have an extension manager created yet. ` +
         `Setting feature set view to "full".`);
     await enableFullFeatureSet(true);
-}
-
-// update CMakeDriver in taskProvider
-export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
-    cmakeTaskProvider.updateCMakeDriver(cmakeDriver);
-}
-
-// update default target in taskProvider
-export function updateDefaultTargetsInTaskProvider(defaultTargets?: string[]) {
-    cmakeTaskProvider.updateDefaultTargets(defaultTargets);
 }
 
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
