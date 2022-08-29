@@ -5,7 +5,7 @@ Improvements:
 - Support for presets version 4. [#2492](https://github.com/microsoft/vscode-cmake-tools/issues/2492) [@chausner](https://github.com/chausner)
 - Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
 - Add target name to terminal window name for launch. [#2613](https://github.com/microsoft/vscode-cmake-tools/issues/2613)
-- Add support for "preset" and "env" in task provider. [#2636](https://github.com/microsoft/vscode-cmake-tools/issues/2636) [#2553](https://github.com/microsoft/vscode-cmake-tools/issues/2553)
+- Add support for "preset" and "env" in task provider. [#2636](https://github.com/microsoft/vscode-cmake-tools/issues/2636) [#2553](https://github.com/microsoft/vscode-cmake-tools/issues/2553) [#2714](https://github.com/microsoft/vscode-cmake-tools/issues/2714) [#2706](https://github.com/microsoft/vscode-cmake-tools/issues/2706)
 - Add Craig Scott's "Professional CMake" book to the list of resources in doc/faq.md for learning CMake. [#2679](https://github.com/microsoft/vscode-cmake-tools/pull/2679) [@david-fong](https://github.com/david-fong)
 
 Bug Fixes:

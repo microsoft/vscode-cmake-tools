@@ -182,16 +182,16 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 await this.runConfigTask();
                 break;
             case CommandType.build:
-                await this.runBuildTask();
+                await this.runBuildTask(CommandType.build);
                 break;
             case CommandType.install:
-                await this.runInstallTask();
+                await this.runBuildTask(CommandType.install);
                 break;
             case CommandType.test:
                 await this.runTestTask();
                 break;
             case CommandType.clean:
-                await this.runCleanTask();
+                await this.runBuildTask(CommandType.clean);
                 break;
             case CommandType.cleanRebuild:
                 await this.runCleanRebuildTask();
@@ -272,7 +272,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
             this.preset = await this.resolvePresetName(this.preset, cmakeTools.useCMakePresets, CommandType.config);
             const configPreset: preset.ConfigurePreset | undefined = await cmakeTools?.expandConfigPresetbyName(this.preset);
-            const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, false, false, configPreset);
+            const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, false, false, configPreset, this.options);
             if (result === undefined || result === null) {
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
@@ -287,7 +287,16 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    private async runBuildTask(): Promise<any> {
+    private async runBuildTask(commandType: CommandType): Promise<any> {
+        let targets = this.targets;
+        const taskName: string = localizeCommandType(commandType);
+        if (commandType === CommandType.install) {
+            this.checkTargets(true);
+            targets = ['install'];
+        } else if (commandType === CommandType.clean) {
+            this.checkTargets(true);
+            targets = ['clean'];
+        }
         let fullCommand: proc.BuildCommand | null;
         let args: string[] = [];
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
@@ -306,18 +315,18 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 const buildPreset: preset.BuildPreset | undefined = await cmakeTools?.expandBuildPresetbyName(this.preset);
                 if (!buildPreset) {
                     log.debug(localize("build.preset.not.found", 'Build preset not found.'));
-                    this.writeEmitter.fire(localize("build.failed", "Build preset {0} not found. Build failed.", this.preset) + endOfLine);
+                    this.writeEmitter.fire(localize("build.failed", "Build preset {0} not found. {1} failed.", this.preset, taskName) + endOfLine);
                     this.closeEmitter.fire(-1);
                     return;
                 }
-                fullCommand = await cmakeDriver.generateBuildCommandFromPreset(buildPreset, this.targets);
+                fullCommand = await cmakeDriver.generateBuildCommandFromPreset(buildPreset, targets);
                 if (fullCommand) {
                     cmakePath = fullCommand.command;
                     args = fullCommand.args || [];
                     this.options.environment = EnvironmentUtils.merge([ fullCommand.build_env, this.options.environment], {preserveNull: true});
                 }
             } else {
-                fullCommand = await cmakeDriver.generateBuildCommandFromSettings(this.targets);
+                fullCommand = await cmakeDriver.generateBuildCommandFromSettings(targets);
                 if (fullCommand) {
                     cmakePath = fullCommand.command;
                     args = fullCommand.args ? fullCommand.args : [];
@@ -326,44 +335,27 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
-            this.writeEmitter.fire(localize("build.failed", "Build failed.") + endOfLine);
+            this.writeEmitter.fire(localize("build.failed", "{0} failed.", taskName) + endOfLine);
             this.closeEmitter.fire(-1);
             return;
         }
-        this.writeEmitter.fire(localize("build.started", "Build task started....") + endOfLine);
+        this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
         try {
             const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
             if (result.retc) {
-                this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s).") + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             } else if (result.stderr && !result.stdout) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s).") + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
             } else if (result.stdout && result.stdout.includes("warning")) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s).") + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
             } else {
-                this.writeEmitter.fire(localize("build.finished.successfully", "Build finished successfully.") + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.successfully", "{0} finished successfully.", taskName) + endOfLine);
             }
             this.closeEmitter.fire(0);
         } catch {
-            this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s).") + endOfLine);
+            this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             this.closeEmitter.fire(-1);
-        }
-    }
-
-    private async runInstallTask(): Promise<any> {
-        this.writeEmitter.fire(localize("install.started", "Install task started...") + endOfLine);
-        this.checkTargets(true);
-        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
-        if (!cmakeTools) {
-            return;
-        }
-        const result: number | undefined =  await cmakeTools.runBuild(['install'], false, this);
-        if (result === undefined) {
-            this.writeEmitter.fire(localize('install.terminated', 'Install was terminated') + endOfLine);
-            this.closeEmitter.fire(-1);
-        } else {
-            this.writeEmitter.fire(localize('install.finished.with.code', 'Install finished with return code {0}', result) + endOfLine);
-            this.closeEmitter.fire(result);
         }
     }
 
@@ -402,28 +394,10 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    private async runCleanTask(ignoreTargets: boolean = true): Promise<any> {
-        this.writeEmitter.fire(localize("clean.started", "Clean task started...") + endOfLine);
-        this.checkTargets(ignoreTargets);
-        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
-        if (!cmakeTools) {
-            return;
-        }
-        const result: number | undefined =  await cmakeTools.runBuild(['clean'], false, this);
-        if (result === undefined || result !== 0) {
-            this.writeEmitter.fire(localize("clean.failed", "Clean task failed.") + endOfLine);
-            this.closeEmitter.fire(-1);
-        } else {
-            this.writeEmitter.fire(localize("clean.finished.with.code", "Clean finished with return code {0}", result) + endOfLine);
-            this.closeEmitter.fire(result);
-        }
-        return result;
-    }
-
     private async runCleanRebuildTask(): Promise<any> {
-        const cleanResult = await this.runCleanTask(false);
+        const cleanResult = await this.runBuildTask(CommandType.clean);
         if (cleanResult === 0) {
-            await this.runBuildTask();
+            await this.runBuildTask(CommandType.build);
         }
     }
 }
