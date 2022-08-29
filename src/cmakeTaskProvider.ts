@@ -315,7 +315,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 const buildPreset: preset.BuildPreset | undefined = await cmakeTools?.expandBuildPresetbyName(this.preset);
                 if (!buildPreset) {
                     log.debug(localize("build.preset.not.found", 'Build preset not found.'));
-                    this.writeEmitter.fire(localize("build.failed", "Build preset {0} not found. Build failed.", this.preset) + endOfLine);
+                    this.writeEmitter.fire(localize("build.failed", "Build preset {0} not found. {1} failed.", this.preset, taskName) + endOfLine);
                     this.closeEmitter.fire(-1);
                     return;
                 }
@@ -335,26 +335,26 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
-            this.writeEmitter.fire(localize("task.failed", "{0} failed.", taskName) + endOfLine);
+            this.writeEmitter.fire(localize("build.failed", "{0} failed.", taskName) + endOfLine);
             this.closeEmitter.fire(-1);
             return;
         }
-        this.writeEmitter.fire(localize("task.started", "{0} task started....", taskName) + endOfLine);
+        this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
         try {
             const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
             if (result.retc) {
-                this.writeEmitter.fire(localize("task.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             } else if (result.stderr && !result.stdout) {
-                this.writeEmitter.fire(localize("task.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
             } else if (result.stdout && result.stdout.includes("warning")) {
-                this.writeEmitter.fire(localize("task.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
             } else {
-                this.writeEmitter.fire(localize("task.finished.successfully", "{0} finished successfully.", taskName) + endOfLine);
+                this.writeEmitter.fire(localize("build.finished.successfully", "{0} finished successfully.", taskName) + endOfLine);
             }
             this.closeEmitter.fire(0);
         } catch {
-            this.writeEmitter.fire(localize("task.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
+            this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             this.closeEmitter.fire(-1);
         }
     }
