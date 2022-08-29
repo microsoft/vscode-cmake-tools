@@ -221,7 +221,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
         const api_path = this.getCMakeFileApiPath(configurePreset?.binaryDir);
         await createQueryFileForApi(api_path);
 
@@ -269,17 +269,20 @@ export class CMakeFileApiDriver extends CMakeDriver {
         } else {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
-            const env = await this.getConfigureEnvironment(configurePreset);
-            const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env, cwd: binaryDir }).result;
-            log.trace(res.stderr);
-            log.trace(res.stdout);
-            if (res.retc === 0) {
+            const env = await this.getConfigureEnvironment(configurePreset, options?.environment);
+            const result = await this.executeCommand(cmake, args, outputConsumer, {
+                environment: env,
+                cwd: options?.cwd ?? binaryDir
+            }).result;
+            log.trace(result.stderr);
+            log.trace(result.stdout);
+            if (result.retc === 0) {
                 if (!configurePreset) {
                     this._needsReconfigure = false;
                 }
                 await this.updateCodeModel(configurePreset?.binaryDir);
             }
-            return res.retc === null ? -1 : res.retc;
+            return result.retc === null ? -1 : result.retc;
         }
     }
 

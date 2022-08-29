@@ -76,7 +76,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         this._cacheWatcher.dispose();
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
         // Ensure the binary directory exists
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         await fs.mkdir_p(binaryDir);
@@ -113,19 +113,19 @@ export class CMakeLegacyDriver extends CMakeDriver {
             return 0;
         } else {
             log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
-            const res = await this.executeCommand(cmake, args, outputConsumer, {
-                environment: await this.getConfigureEnvironment(configurePreset),
-                cwd: binaryDir
+            const result = await this.executeCommand(cmake, args, outputConsumer, {
+                environment: await this.getConfigureEnvironment(configurePreset, options?.environment),
+                cwd: options?.cwd ?? binaryDir
             }).result;
-            log.trace(res.stderr);
-            log.trace(res.stdout);
-            if (res.retc === 0 && !configurePreset) {
+            log.trace(result.stderr);
+            log.trace(result.stdout);
+            if (result.retc === 0 && !configurePreset) {
                 this._needsReconfigure = false;
             }
             if (!configurePreset) {
                 await this._reloadPostConfigure();
             }
-            return res.retc === null ? -1 : res.retc;
+            return result.retc === null ? -1 : result.retc;
         }
     }
 
