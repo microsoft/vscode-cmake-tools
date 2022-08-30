@@ -15,6 +15,10 @@ chai.use(chaiAsPromised);
 
 export { expect };
 
+export function getTestResourceFilePath(filename: string): string {
+    return path.normalize(path.join(__dirname, '../../test/unit-tests', filename));
+}
+
 export async function clearExistingKitConfigurationFile() {
     await fs.writeFile(path.join(paths.dataDir, 'cmake-kits.json'), '[]');
 }
