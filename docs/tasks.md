@@ -84,21 +84,6 @@ You can chain a configure task to your build task by adding this to your task's 
         ]
 ```
 
-# Install with CMake Tools tasks
-Similarly, You can create an install task from the VS Code command pallette by running the **Tasks: Configure task** command.
-
-By selecting "CMake: install" template, this task will be generated in `tasks.json` file:
-
-```json
-    {
-        "type": "cmake",
-        "label": "CMake: install",
-        "command": "install",
-        "problemMatcher": [],
-        "detail": "CMake template install task"
-    }
-```
-
 # Test with CMake Tools tasks
 Similarly, You can create a test task from the VS Code command pallette by running the **Tasks: Configure task** command.
 
@@ -128,12 +113,18 @@ However, if you are using presets, this task will be generated in `tasks.json` f
 
 **Note**: When running this task, the test settings defined in `CMakeUserPresets.json`/`CMakePresets.json` will be used.
 
-# Clean/Clean-rebuild with CMake Tools tasks
-Similarly, you can create a Clean/Clean-rebuild task from the VS Code command pallette by running the **Tasks: Configure task** command.
+# Install/Clean/Clean-rebuild with CMake Tools tasks
+Similarly, you can create a Install/Clean/Clean-rebuild task from the VS Code command pallette by running the **Tasks: Configure task** command.
 
-By selecting "CMake: clean" or "CMake: clean rebuild" template, these task will be generated in `tasks.json` file:
+By selecting "CMake: install", "CMake: clean" or "CMake: clean rebuild" template, these tasks will be generated in `tasks.json` file:
 
 ```json
+    {
+        "type": "cmake",
+        "label": "CMake: install",
+        "command": "install",
+        "detail": "CMake template install task"
+    },
     {
         "type": "cmake",
         "label": "CMake: clean",
@@ -147,5 +138,30 @@ By selecting "CMake: clean" or "CMake: clean rebuild" template, these task will 
         "detail": "CMake template clean rebuild task"
     }
 ```
+However, if you are using presets, these tasks will be generated in `tasks.json` file.
 
-**Note**: Currently, if you are using presets, the clean task is only available for the active build preset.
+**Note**: Install, Clean, and Clean-rebuild tasks will run based on the build preset settings.
+
+```json
+    {
+        "type": "cmake",
+        "label": "CMake: install",
+        "command": "install",
+        "preset": "${command:cmake.activeBuildPresetName}",
+        "detail": "CMake template install task"
+    },
+    {
+        "type": "cmake",
+        "label": "CMake: clean",
+        "command": "clean",
+        "preset": "${command:cmake.activeBuildPresetName}",
+        "detail": "CMake template clean task"
+    },
+    {
+        "type": "cmake",
+        "label": "CMake: clean rebuild",
+        "command": "cleanRebuild",
+        "preset": "${command:cmake.activeBuildPresetName}",
+        "detail": "CMake template clean rebuild task"
+    }
+```
