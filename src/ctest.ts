@@ -169,7 +169,7 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
             const [, file, arg2] = result;
             const lineNumber = parseInt(arg2) - 1;
             let message = '~~~c++\n';
-            for (let i = 0; ; ++i) {
+            for (let i = 0; cursor + i < untrimmedLines.length; ++i) {
                 const untrimmedLine = untrimmedLines[cursor + i];
                 if (untrimmedLine.startsWith('======') || untrimmedLine.startsWith('------')) {
                     break;
