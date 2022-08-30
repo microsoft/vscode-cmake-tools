@@ -416,8 +416,9 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         const cleanResult = await this.runBuildTask(CommandType.clean, false);
         if (cleanResult === 0) {
             await this.runBuildTask(CommandType.build);
+        } else {
+            this.closeEmitter.fire(cleanResult);
         }
-        this.closeEmitter.fire(cleanResult);
     }
 }
 
