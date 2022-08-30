@@ -323,7 +323,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 const buildPreset: preset.BuildPreset | undefined = await cmakeTools?.expandBuildPresetbyName(this.preset);
                 if (!buildPreset) {
                     log.debug(localize("build.preset.not.found", 'Build preset not found.'));
-                    this.writeEmitter.fire(localize("build.failed", "Build preset {0} not found. {1} failed.", this.preset, taskName) + endOfLine);
+                    this.writeEmitter.fire(localize("build.no.preset.failed", "Build preset {0} not found. {1} failed.", this.preset, taskName) + endOfLine);
                     if (doCloseEmitter) {
                         this.closeEmitter.fire(-1);
                     }
