@@ -2060,11 +2060,6 @@
     "extensionTestsMultiRoot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
     "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/backend-unit-tests/**/*.test.ts"
   },
-  "husky": {
-    "hooks": {
-      "pre-push": "yarn run lint"
-    }
-  },
   "devDependencies": {
     "@octokit/rest": "^18.1.1",
     "@types/ajv": "^0.0.5",
