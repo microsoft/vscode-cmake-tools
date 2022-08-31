@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "Prüfungen und Schritte vor der Konfiguration werden ausgeführt",
 	"source.directory.not.set": "Das Quellverzeichnis wurde nicht festgelegt.",
 	"not.configuring": "Die Konfiguration wird nicht ausgeführt: {0} nicht vorhanden",
-	"no.build.preset": "Keine Buildvoreinstellung ausgewählt",
-	"cmake.build.args.are": "CMake-Buildargumente: {0}"
+	"cmake.build.args.are": "CMake-Buildargumente: {0}",
+	"no.build.preset": "Keine Buildvoreinstellung ausgewählt"
 }

@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "Uruchamianie wstępnie skonfigurowanych testów i kroków",
 	"source.directory.not.set": "Katalog źródłowy nie jest ustawiony",
 	"not.configuring": "Konfigurowanie nie jest możliwe: brak {0}",
-	"no.build.preset": "Nie wybrano predefiniowanej kompilacji",
-	"cmake.build.args.are": "Argumenty kompilacji narzędzia CMake: {0}"
+	"cmake.build.args.are": "Argumenty kompilacji narzędzia CMake: {0}",
+	"no.build.preset": "Nie wybrano predefiniowanej kompilacji"
 }

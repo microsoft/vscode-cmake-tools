@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "正在运行预配置检查和步骤",
 	"source.directory.not.set": "未设置源目录",
 	"not.configuring": "未配置: {0} 不存在",
-	"no.build.preset": "未选择生成预设",
-	"cmake.build.args.are": "CMake 生成参数为: {0}"
+	"cmake.build.args.are": "CMake 生成参数为: {0}",
+	"no.build.preset": "未选择生成预设"
 }

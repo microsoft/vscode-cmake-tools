@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "Ejecutando las comprobaciones y los pasos preconfigurados",
 	"source.directory.not.set": "No se ha establecido el directorio de origen.",
 	"not.configuring": "No se está configurando: no hay {0}",
-	"no.build.preset": "Compilación preestablecida no seleccionada",
-	"cmake.build.args.are": "Los argumentos de compilación de CMake son: {0}"
+	"cmake.build.args.are": "Los argumentos de compilación de CMake son: {0}",
+	"no.build.preset": "Compilación preestablecida no seleccionada"
 }
