@@ -135,7 +135,7 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
         site: {
             $: messy.Site.$,
             testing: {
-                testList: testingHead.TestList.map(l => l.Test[0]),
+                testList: testingHead.TestList[0].Test,
                 test: testingHead.Test.map((test): Test => ({
                     fullName: test.FullName[0],
                     fullCommandLine: test.FullCommandLine[0],
@@ -150,11 +150,15 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
     };
 }
 
-export async function readTestResultsFile(testXml: string) {
-    const content = (await fs.readFile(testXml)).toString();
-    const data = await parseXmlString(content) as MessyResults;
-    const clean = cleanupResultsXml(data);
-    return clean;
+export async function readTestResultsFile(testXml: string): Promise<CTestResults | undefined> {
+    try {
+        const content = (await fs.readFile(testXml)).toString();
+        const data = await parseXmlString(content) as MessyResults;
+        const clean = cleanupResultsXml(data);
+        return clean;
+    } catch {
+        return undefined;
+    }
 }
 
 export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
@@ -252,20 +256,16 @@ export class DecorationManager {
         const fails: vscode.DecorationOptions[] = [];
         const editorFile = util.lightNormalizePath(editor.document.fileName);
         for (const decor of this.failingTestDecorations) {
-            const decoratedFile = util.lightNormalizePath(
-                path.isAbsolute(decor.fileName) ? decor.fileName : path.join(this.binaryDir, decor.fileName));
+            const decoratedFile = util.lightNormalizePath(path.isAbsolute(decor.fileName) ? decor.fileName : path.join(this.binaryDir, decor.fileName));
             if (editorFile !== decoratedFile) {
                 continue;
             }
-            const fileLine = editor.document.lineAt(decor.lineNumber);
-            const range = new vscode.Range(decor.lineNumber,
-                fileLine.firstNonWhitespaceCharacterIndex,
-                decor.lineNumber,
-                fileLine.range.end.character);
-            fails.push({
-                hoverMessage: decor.hoverMessage,
-                range
-            });
+            try {
+                const fileLine = editor.document.lineAt(decor.lineNumber);
+                const range = new vscode.Range(decor.lineNumber, fileLine.firstNonWhitespaceCharacterIndex, decor.lineNumber, fileLine.range.end.character);
+                fails.push({ hoverMessage: decor.hoverMessage, range });
+            } catch {
+            }
         }
         editor.setDecorations(this.failingTestDecorationType, fails);
     }
@@ -343,11 +343,11 @@ export class CTestDriver implements vscode.Disposable {
     private readonly testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();
     readonly onTestsChanged = this.testsChangedEmitter.event;
 
-    private _testResults: CTestResults | null = null;
-    get testResults(): CTestResults | null {
+    private _testResults?: CTestResults;
+    get testResults(): CTestResults | undefined {
         return this._testResults;
     }
-    set testResults(v: CTestResults | null) {
+    set testResults(v: CTestResults | undefined) {
         this._testResults = v;
         if (v) {
             const total = v.site.testing.test.length;
@@ -462,7 +462,7 @@ export class CTestDriver implements vscode.Disposable {
             console.assert(tagDir);
             await this.reloadTestResults(resultsFile);
         } else {
-            this.testResults = null;
+            this.testResults = undefined;
         }
 
         return tests;
@@ -470,7 +470,7 @@ export class CTestDriver implements vscode.Disposable {
 
     private async reloadTestResults(testXml: string): Promise<void> {
         this.testResults = await readTestResultsFile(testXml);
-        const failing = this.testResults.site.testing.test.filter(t => t.status === 'failed');
+        const failing = this.testResults?.site.testing.test.filter(t => t.status === 'failed') || [];
         this.decorationManager.clearFailingTestDecorations();
         const newDecors = [] as FailingTestDecoration[];
         for (const t of failing) {
@@ -487,7 +487,7 @@ export class CTestDriver implements vscode.Disposable {
         if (!currentTestResults) {
             return;
         }
-        for (const cTestRes of currentTestResults.site.testing.test) {
+        for (const cTestRes of currentTestResults.site.testing.test || []) {
             cTestRes.status = 'notrun';
         }
         this.testResults = currentTestResults;
