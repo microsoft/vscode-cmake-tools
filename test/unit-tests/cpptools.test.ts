@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import { parseCompileFlags, getIntelliSenseMode, CppConfigurationProvider } from '@cmt/cpptools';
-import { expect } from '@test/util';
+import { expect, getTestResourceFilePath } from '@test/util';
 import { CMakeCache } from '@cmt/cache';
 import * as path from 'path';
 import * as codeModel from '@cmt/drivers/codeModel';
@@ -9,9 +9,6 @@ import { Version } from 'vscode-cpptools';
 import * as util from '@cmt/util';
 
 const here = __dirname;
-function getTestResourceFilePath(filename: string): string {
-    return path.normalize(path.join(here, '../../../test/unit-tests', filename));
-}
 
 suite('CppTools tests', () => {
     test('Parse some compiler flags', () => {
