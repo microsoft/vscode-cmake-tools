@@ -510,7 +510,7 @@ export class ConfigurationReader implements vscode.Disposable {
  * Tracks work that is done as a result of a settings change.
  */
 class PromiseTracker {
-    private static promises: Set<any> = new Set();
+    private promises: Set<any> = new Set();
 
     constructor() {
     }
@@ -520,13 +520,13 @@ class PromiseTracker {
             const result = cb();
             return result;
         }).then(() => {
-            PromiseTracker.promises.delete(selfDestructWrapper);
+            this.promises.delete(selfDestructWrapper);
         });
-        PromiseTracker.promises.add(selfDestructWrapper);
+        this.promises.add(selfDestructWrapper);
     }
 
     public getAwaiter(): Promise<any[]> {
-        return Promise.all(PromiseTracker.promises);
+        return Promise.all(this.promises);
     }
 }
 
