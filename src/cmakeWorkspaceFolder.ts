@@ -31,7 +31,7 @@ export interface DiagnosticsSettings {
     configureOnOpen: boolean | null;
 }
 
-export class CMakeToolsFolder {
+export class CMakeWorkspaceFolder {
     private _wasUsingCMakePresets: boolean | undefined;
     private _onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private _disposables: vscode.Disposable[] = [];
@@ -45,19 +45,19 @@ export class CMakeToolsFolder {
     static async init(cmakeTools: CMakeTools) {
         const kitsController = await KitsController.init(cmakeTools);
         const presetsController = await PresetsController.init(cmakeTools, kitsController);
-        const cmtFolder = new CMakeToolsFolder(cmakeTools, kitsController, presetsController);
+        const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeTools, kitsController, presetsController);
 
         const useCMakePresetsChangedListener = async () => {
-            const usingCMakePresets = cmtFolder.useCMakePresets;
-            if (usingCMakePresets !== cmtFolder._wasUsingCMakePresets) {
-                cmtFolder._wasUsingCMakePresets = usingCMakePresets;
+            const usingCMakePresets = cmakeWorkspaceFolder.useCMakePresets;
+            if (usingCMakePresets !== cmakeWorkspaceFolder._wasUsingCMakePresets) {
+                cmakeWorkspaceFolder._wasUsingCMakePresets = usingCMakePresets;
                 await setContextValue('useCMakePresets', usingCMakePresets);
                 await cmakeTools.setUseCMakePresets(usingCMakePresets);
-                await CMakeToolsFolder.initializeKitOrPresetsInCmt(cmtFolder);
+                await CMakeWorkspaceFolder.initializeKitOrPresetsInCmt(cmakeWorkspaceFolder);
 
                 if (usingCMakePresets) {
                     const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
-                        const config = cmtFolder.cmakeTools.workspaceContext.config;
+                        const config = cmakeWorkspaceFolder.cmakeTools.workspaceContext.config;
                         const fileName = path.basename(document.uri.fsPath);
                         if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
                             if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
@@ -69,29 +69,29 @@ export class CMakeToolsFolder {
                         }
                     };
 
-                    cmtFolder._onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
+                    cmakeWorkspaceFolder._onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
                         setPresetsFileLanguageMode(document)
                     );
 
                     vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
                 } else {
-                    if (cmtFolder._onDidOpenTextDocumentListener) {
-                        cmtFolder._onDidOpenTextDocumentListener.dispose();
-                        cmtFolder._onDidOpenTextDocumentListener = undefined;
+                    if (cmakeWorkspaceFolder._onDidOpenTextDocumentListener) {
+                        cmakeWorkspaceFolder._onDidOpenTextDocumentListener.dispose();
+                        cmakeWorkspaceFolder._onDidOpenTextDocumentListener = undefined;
                     }
                 }
 
-                cmtFolder._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
+                cmakeWorkspaceFolder._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
             }
         };
 
         await useCMakePresetsChangedListener();
 
-        cmtFolder._disposables.push(cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
-        cmtFolder._disposables.push(presetsController.onPresetsChanged(useCMakePresetsChangedListener));
-        cmtFolder._disposables.push(presetsController.onUserPresetsChanged(useCMakePresetsChangedListener));
+        cmakeWorkspaceFolder._disposables.push(cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
+        cmakeWorkspaceFolder._disposables.push(presetsController.onPresetsChanged(useCMakePresetsChangedListener));
+        cmakeWorkspaceFolder._disposables.push(presetsController.onUserPresetsChanged(useCMakePresetsChangedListener));
 
-        return cmtFolder;
+        return cmakeWorkspaceFolder;
     }
 
     get folder() {
@@ -160,7 +160,7 @@ export class CMakeToolsFolder {
         this.kitsController.dispose();
     }
 
-    private static async initializeKitOrPresetsInCmt(folder: CMakeToolsFolder) {
+    private static async initializeKitOrPresetsInCmt(folder: CMakeWorkspaceFolder) {
         if (folder.useCMakePresets) {
             const configurePreset = folder.cmakeTools.workspaceContext.state.configurePresetName;
             if (configurePreset) {
@@ -179,12 +179,12 @@ export class CMakeToolsFolder {
     }
 }
 
-export class CMakeToolsFolderController implements vscode.Disposable {
-    private readonly _instances = new Map<string, CMakeToolsFolder>();
+export class CMakeWorkspaceFolderController implements vscode.Disposable {
+    private readonly _instances = new Map<string, CMakeWorkspaceFolder>();
 
     private readonly _beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
-    private readonly _afterAddFolderEmitter = new vscode.EventEmitter<CMakeToolsFolder>();
-    private readonly _beforeRemoveFolderEmitter = new vscode.EventEmitter<CMakeToolsFolder>();
+    private readonly _afterAddFolderEmitter = new vscode.EventEmitter<CMakeWorkspaceFolder>();
+    private readonly _beforeRemoveFolderEmitter = new vscode.EventEmitter<CMakeWorkspaceFolder>();
     private readonly _afterRemoveFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly _subscriptions: vscode.Disposable[] = [
         this._beforeAddFolderEmitter,
@@ -214,7 +214,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
      * - Where we search for variants
      * - Where we search for workspace-local kits
      */
-    private _activeFolder?: CMakeToolsFolder;
+    private _activeFolder?: CMakeWorkspaceFolder;
     get activeFolder() {
         return this._activeFolder;
     }
@@ -249,7 +249,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
      * Get the CMakeTools instance associated with the given workspace folder, or undefined
      * @param ws The workspace folder to search, or array of command and workspace path
      */
-    get(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeToolsFolder | undefined {
+    get(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeWorkspaceFolder | undefined {
         if (ws) {
             if (util.isArrayOfString(ws)) {
                 return this._instances.get(ws[ws.length - 1]);
@@ -261,7 +261,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
         return undefined;
     }
 
-    getAll(): CMakeToolsFolder[] {
+    getAll(): CMakeWorkspaceFolder[] {
         return [...this._instances.values()];
     }
 
@@ -324,7 +324,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
         // Load for the workspace.
         const new_cmt = await this._loadCMakeToolsForWorkspaceFolder(folder);
         // Remember it
-        const inst = await CMakeToolsFolder.init(new_cmt);
+        const inst = await CMakeWorkspaceFolder.init(new_cmt);
 
         this._instances.set(folder.uri.fsPath, inst);
 
