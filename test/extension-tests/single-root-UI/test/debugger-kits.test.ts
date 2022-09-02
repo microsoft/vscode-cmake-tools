@@ -2,7 +2,7 @@ import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmakeTools';
 
-suite('Debug/Launch interface using Kits and Variants', async () => {
+suite('Debug/Launch interface using Kits and Variants', () => {
     let testEnv: DefaultEnvironment;
     let cmakeTools: CMakeTools;
 
@@ -25,8 +25,6 @@ suite('Debug/Launch interface using Kits and Variants', async () => {
 
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
-
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
 
         testEnv.teardown();
     });

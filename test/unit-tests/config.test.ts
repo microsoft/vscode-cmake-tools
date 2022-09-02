@@ -81,23 +81,49 @@ suite('Configuration', () => {
         expect(conf.parallelJobs).to.eq(4);
     });
 
-    test('Listen for config changes', () => {
+    test('Listen for config changes', async () => {
         const conf = createConfig({ parallelJobs: 22 });
         let jobs = conf.parallelJobs;
         expect(jobs).to.eq(22);
-        conf.onChange('parallelJobs', j => jobs = j);
-        conf.updatePartial({ parallelJobs: 3 });
+        await new Promise<void>(resolve => {
+            conf.onChange('parallelJobs', j => {
+                jobs = j;
+                resolve();
+            });
+            conf.updatePartial({ parallelJobs: 3 });
+        });
         expect(jobs).to.eq(3);
     });
 
-    test('Listen only fires for changing properties', () => {
+    async function didItComplete(promise: Promise<any>, timeout: number): Promise<boolean> {
+        try {
+            await new Promise<void>((resolve, reject) => {
+                setTimeout(() => {
+                    reject();
+                }, timeout);
+                void promise.then(() => {
+                    resolve();
+                });
+            });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    test('Listen only fires for changing properties', async () => {
         const conf = createConfig({ parallelJobs: 3 });
-        let fired = false;
-        conf.onChange('parallelJobs', _ => fired = true);
+        let changed = new Promise<void>(_ => {});  // never resolves
+        conf.onChange('parallelJobs', _ => {
+            changed = Promise.resolve();    // resolved
+        });
         conf.updatePartial({ buildDirectory: 'foo' });
-        expect(!fired, 'Event fired when it should not have');
+        let completed = await didItComplete(changed, 1000);
+        expect(!completed, 'Update event should not fire');
+
         conf.updatePartial({ parallelJobs: 4 });
-        expect(fired, 'Update event did not fire');
+        completed = await didItComplete(changed, 1000);
+        expect(completed, 'Update event should fire');
     });
 
     test('Unchanged values in partial update are unaffected', () => {

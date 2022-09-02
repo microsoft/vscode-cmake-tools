@@ -3,7 +3,7 @@ import { expect } from 'chai';
 
 import { smokeSuite, smokeTestDefaultKit } from '@test/smoke/smoke';
 
-suite('Smoke test: good project', async () => {
+suite('Smoke test: good project', () => {
     test('Successful configure', async () => {
         smokeSuite('Smoke test: good project', suite => {
             let cmt: CMakeTools;

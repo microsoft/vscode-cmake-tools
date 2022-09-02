@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "Выполнение проверок и действий перед настройкой.",
 	"source.directory.not.set": "Исходный каталог не задан.",
 	"not.configuring": "Настройка не выполнена: отсутствует {0}",
-	"no.build.preset": "Не выбрана ни одна предустановка сборки",
-	"cmake.build.args.are": "Аргументы сборки CMake: {0}"
+	"cmake.build.args.are": "Аргументы сборки CMake: {0}",
+	"no.build.preset": "Не выбрана ни одна предустановка сборки"
 }

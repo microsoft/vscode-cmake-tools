@@ -9,7 +9,7 @@ function getTestResourceFilePath(filename: string): string {
     return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
-suite('Dirty file checking', async () => {
+suite('Dirty file checking', () => {
     const test_file_path = getTestResourceFilePath('dirty-test-file');
     setup(async () => {
         if (await fs.exists(test_file_path)) {

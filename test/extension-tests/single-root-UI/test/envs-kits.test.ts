@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmakeTools';
 
-suite('Environment Variables in Variants', async () => {
+suite('Environment Variables in Variants', () => {
     let testEnv: DefaultEnvironment;
     let cmakeTools: CMakeTools;
 
@@ -40,8 +40,6 @@ suite('Environment Variables in Variants', async () => {
             const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
             await fs.rename(variantFileBackup, variantFile);
         }
-
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
 
         testEnv.teardown();
     });

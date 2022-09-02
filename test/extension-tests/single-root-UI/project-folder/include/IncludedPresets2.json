@@ -1,0 +1,16 @@
+{
+  "version": 4,
+  "configurePresets": [
+    {
+      "name": "LinuxIncluded2",
+      "description": "Sets generator, build and install directory, vcpkg",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${workspaceFolder}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    }
+  ]
+}

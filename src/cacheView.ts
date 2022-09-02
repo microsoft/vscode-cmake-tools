@@ -215,21 +215,18 @@ export class ConfigurationWebview {
      * reads local cmake cache path from build folder and returns array of IOption objects
      */
     async getConfigurationOptions(): Promise<IOption[]> {
-        return new Promise(async (resolve: (value: IOption[]) => void) => {
-            const options: IOption[] = [];
+        const options: IOption[] = [];
 
-            // get cmake cache
-            const cmakeCache = await CMakeCache.fromPath(this.cachePath);
-            for (const entry of cmakeCache.allEntries) {
-                // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
-                // Not useful to show these entries in the list.
-                if (entry.type !== api.CacheEntryType.Static) {
-                    options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
-                }
+        // get cmake cache
+        const cmakeCache = await CMakeCache.fromPath(this.cachePath);
+        for (const entry of cmakeCache.allEntries) {
+            // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
+            // Not useful to show these entries in the list.
+            if (entry.type !== api.CacheEntryType.Static) {
+                options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
             }
-
-            resolve(options);
-        });
+        }
+        return options;
     }
 
     /**

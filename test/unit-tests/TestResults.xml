@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20220830-1901-Experimental"
+	Name="(empty)"
+	Generator="ctest-3.23.2"
+	CompilerName=""
+	CompilerVersion=""
+	OSName="Windows"
+	Hostname="localhost"
+	OSRelease=" Professional"
+	OSVersion=" (Build 19044)"
+	OSPlatform="AMD64"
+	Is64Bits="1"
+	VendorString="GenuineIntel"
+	VendorID="Intel Corporation"
+	FamilyID="6"
+	ModelID="15"
+	ProcessorCacheSize="-1"
+	NumberOfLogicalCPU="8"
+	NumberOfPhysicalCPU="4"
+	TotalVirtualMemory="24492"
+	TotalPhysicalMemory="16300"
+	LogicalProcessorsPerPhysical="2"
+	ProcessorClockFrequency="3491"
+	>
+	<Testing>
+		<StartDateTime>Aug 30 12:01 Pacific Daylight Time</StartDateTime>
+		<StartTestTime>1661886092</StartTestTime>
+		<TestList>
+			<Test>./test1</Test>
+			<Test>./test2</Test>
+		</TestList>
+		<Test Status="passed">
+			<Name>test1</Name>
+			<Path>.</Path>
+			<FullName>./test1</FullName>
+			<FullCommandLine>D:\cmaketest\build\Debug\mytest.exe</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>5.22339</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Processors">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Completed</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Command Line">
+					<Value>D:\cmaketest\build\Debug\mytest.exe</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Environment">
+					<Value>#CTEST_RESOURCE_GROUP_COUNT=</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value>D:/cmaketest/build/Debug/mytest.exe
+debug
+</Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<Test Status="failed">
+			<Name>test2</Name>
+			<Path>.</Path>
+			<FullName>./test2</FullName>
+			<FullCommandLine>D:\cmaketest\build\Debug\mytest.exe</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>5.02486</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Processors">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Completed</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Command Line">
+					<Value>D:\cmaketest\build\Debug\mytest.exe</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Environment">
+					<Value>#CTEST_RESOURCE_GROUP_COUNT=</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value>D:/cmaketest/build/Debug/mytest.exe
+debug
+</Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<EndDateTime>Aug 30 12:01 Pacific Daylight Time</EndDateTime>
+		<EndTestTime>1661886103</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>

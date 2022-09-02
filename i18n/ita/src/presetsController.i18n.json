@@ -74,6 +74,7 @@
 	"loading.test.preset": "Caricamento set di impostazioni di test {0}",
 	"reading.presets.file": "Lettura dei file dei set di impostazioni {0}",
 	"failed.to.parse": "Non è stato possibile analizzare {0}: {1}",
+	"included.presets.file.not.found": "Impossibile trovare il file dei set di impostazioni inclusi {0}",
 	"invalid.file.error": "Il contenuto {0} ({1}) del kit non è valido:",
 	"successfully.validated.presets": "I set di impostazioni sono stati convalidati correttamente in {0}",
 	"use.kits.variants": "Usare kit e varianti",

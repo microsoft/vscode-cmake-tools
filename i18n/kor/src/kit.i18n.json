@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "잘못된 {0} 이진(\"-v\"는 {1}을(를) 반환): {2}",
 	"bad.compiler.binary.output": "잘못된 {0} 이진 파일입니다. {1} 보고서 버전: {2} 산출: {3}",
 	"detected.compiler": "{0} 컴파일러가 감지됨: {1}",
-	"bad.mingw32-make.binary": "잘못된 mingw32-make 이진 파일(\"-v\"가 0이 아닌 값을 반환함): {0}",
+	"bad.mingw32-make.binary": "잘못된 mingw32-make 이진 파일({0}이(가) 0이 아닌 값을 반환함): {1}",
 	"detected.clang.compiler": "검색된 Clang 컴파일러: {0}",
 	"skipping.scan.of.appdata": "%LocalAppData% 폴더 검사 건너뛰기",
 	"skipping.scan.of.not.existing.path": "존재하지 않는 경로 {0}의 검색을 건너뛰는 중",

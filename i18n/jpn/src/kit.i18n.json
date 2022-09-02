@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "適切ではない {0} バイナリ (\"-v\" によって {1} が返される): {2}",
 	"bad.compiler.binary.output": "バイナリ {0} が正しくありません。{1}レポート バージョン: {2}出力: {3}",
 	"detected.compiler": "検出された {0} コンパイラ: {1}",
-	"bad.mingw32-make.binary": "無効な mingw32-make バイナリ (\"-v\" が 0 以外を返す): {0}",
+	"bad.mingw32-make.binary": "無効な mingw32-make バイナリ ({0} が 0 以外を返す): {1}",
 	"detected.clang.compiler": "検出された Clang コンパイラ: {0}",
 	"skipping.scan.of.appdata": "%LocalAppData% フォルダーのスキャンをスキップしています",
 	"skipping.scan.of.not.existing.path": "存在しないパス {0} のスキャンをスキップしています",

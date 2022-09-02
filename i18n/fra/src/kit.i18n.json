@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "Ressource binaire {0} incorrecte (« -v » retourne {1}) : {2}",
 	"bad.compiler.binary.output": "Binaire {0} incorrect. version des rapports {1} : sortie {2} : {3}",
 	"detected.compiler": "Détection du compilateur {0} : {1}",
-	"bad.mingw32-make.binary": "Fichier binaire mingw32-make incorrect (\"-v\" retourne une valeur différente de zéro) : {0}",
+	"bad.mingw32-make.binary": "Binaire de type mingw32 incorrect ({0} retourne une valeur différente de zéro) : {1}",
 	"detected.clang.compiler": "Compilateur Clang détecté : {0}",
 	"skipping.scan.of.appdata": "Analyse du dossier %LocalAppData% ignorée",
 	"skipping.scan.of.not.existing.path": "Analyse ignorée du chemin non existant {0}",

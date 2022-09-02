@@ -9,7 +9,7 @@
 	"bad.compiler.binary": "{0} 二进制文件不正确 (“-v”返回 {1}): {2}",
 	"bad.compiler.binary.output": "二进制 {0} 错误。{1} 报表版本: {2} 输出: {3}",
 	"detected.compiler": "检测到 {0} 编译器: {1}",
-	"bad.mingw32-make.binary": "mingw32-make 二进制文件不正确(\"-v\" 返回非零值): {0}",
+	"bad.mingw32-make.binary": "mingw32-make 二进制文件不正确({0} 返回非零值): {1}",
 	"detected.clang.compiler": "已检测到 Clang 编译器: {0}",
 	"skipping.scan.of.appdata": "正在跳过 %LocalAppData% 文件夹扫描",
 	"skipping.scan.of.not.existing.path": "正在跳过扫描不存在的路径 {0}",

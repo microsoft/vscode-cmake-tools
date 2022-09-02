@@ -13,7 +13,7 @@ import * as vscode from 'vscode';
 
 const workername: string = process.platform;
 
-suite('Build', async () => {
+suite('Build', () => {
     let folder2: DefaultEnvironment;
     let compdb_cp_path: string;
 

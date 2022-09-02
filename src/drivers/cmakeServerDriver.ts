@@ -154,7 +154,7 @@ export class CMakeServerDriver extends CMakeDriver {
         })();
     }
 
-    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean) {
+    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, _options?: proc.ExecutionOptions) {
         await this._clientChangeInProgress;
         const cl = await this.getClient();
         const sub = this.onMessage(msg => {
@@ -170,7 +170,9 @@ export class CMakeServerDriver extends CMakeDriver {
             log.info(proc.buildCmdStr(this.cmake.path, args));
         } else {
             try {
-                this._hadConfigurationChanged = false;
+                if (!configurePreset) {
+                    this._hadConfigurationChanged = false;
+                }
                 await cl.configure({ cacheArguments: args });
                 await cl.compute();
             } catch (e) {
@@ -289,6 +291,10 @@ export class CMakeServerDriver extends CMakeDriver {
         return this.targets.reduce(targetReducer, []);
     }
 
+    get cmakeFiles(): string[] {
+        return this._cmakeInputFileSet.inputFiles.map(file => file.filePath);
+    }
+
     get generatorName(): string | null {
         return this._globalSettings ? this._globalSettings.generator : null;
     }
@@ -333,8 +339,8 @@ export class CMakeServerDriver extends CMakeDriver {
         await this._restartClient();
     }
 
-    doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
-        this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
+    doSetKit(cb: () => Promise<void>): Promise<void> {
+        this._clientChangeInProgress = this._setKitAndRestart(false, cb);
         return this._clientChangeInProgress;
     }
 
@@ -417,7 +423,7 @@ export class CMakeServerDriver extends CMakeDriver {
             // that was done earlier by that ongoing configure process.
             if (!this.configOrBuildInProgress()) {
                 if (this.config.configureOnEdit) {
-                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
+                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected {0} setting update, attempting automatic reconfigure...", "\'cmake.sourceDirectory\'"));
                     await this.configure(ConfigureTrigger.sourceDirectoryChange, []);
                 }
 
