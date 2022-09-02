@@ -1182,7 +1182,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 log.debug(localize('cannot.copy.compile.commands', 'Cannot copy {1} because it does not exist at {0}', compdbPath, 'compile_commands.json'));
             }
         }
-        if (this.workspaceContext.config.skipLoadingCompileCommands) {
+        if (!this.workspaceContext.config.loadCompileCommands) {
             this.compilationDatabase = null;
         } else if (compdbPaths.length > 0) {
             // Read the compilation database, and update our db property

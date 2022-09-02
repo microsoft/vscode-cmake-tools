@@ -1951,10 +1951,10 @@
           "description": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
           "scope": "resource"
         },
-        "cmake.skipLoadingCompileCommands": {
+        "cmake.loadCompileCommands": {
           "type": "boolean",
-          "default": false,
-          "description": "%cmake-tools.configuration.cmake.skipLoadingCompileCommands.description%",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.loadCompileCommands.description%",
           "scope": "resource"
         }
       }

@@ -147,5 +147,5 @@
     "cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.description": "The launch terminal instance is reused and the target will launch as soon as the terminal is idle.",
     "cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.description": "The launch terminal instance is reused and a break command is sent to terminate any active foreground process before launching the target.",
     "cmake-tools.configuration.cmake.launchBehavior.newTerminal.description": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
-    "cmake-tools.configuration.cmake.skipLoadingCompileCommands.description" : "Skip loading compile commands database. This leads to limited feature availability."
+    "cmake-tools.configuration.cmake.loadCompileCommands.description" : "Controls whether the extension reads compile_commands.json to enable single file compilation."
 }
