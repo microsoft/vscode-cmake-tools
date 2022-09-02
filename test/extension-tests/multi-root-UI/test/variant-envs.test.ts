@@ -8,7 +8,7 @@ import CMakeProject from '@cmt/cmakeProject';
 
 suite('Environment Variables in Variants', () => {
     let testEnv: DefaultEnvironment;
-    let cmakeTools: CMakeProject;
+    let cmakeProject: CMakeProject;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -17,14 +17,14 @@ suite('Environment Variables in Variants', () => {
         const exe_res = 'output.txt';
 
         testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
-        cmakeTools = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
 
-        const kit = await getFirstSystemKit(cmakeTools);
+        const kit = await getFirstSystemKit(cmakeProject);
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
 
         testEnv.projectFolder.buildDirectory.clear();

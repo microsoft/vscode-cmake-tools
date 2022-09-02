@@ -8,7 +8,7 @@ suite('Smoke test: good project', () => {
         smokeSuite('Smoke test: good project', suite => {
             let cmt: CMakeProject;
             suite.setup('create cmake-tools', async test => {
-                cmt = await test.createCMakeTools({
+                cmt = await test.createCMakeProject({
                     kit: await smokeTestDefaultKit()
                 });
             });

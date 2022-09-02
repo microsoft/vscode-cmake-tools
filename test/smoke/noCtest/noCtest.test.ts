@@ -12,7 +12,7 @@ import { smokeSuite, smokeTestDefaultKit } from '@test/smoke/smoke';
 suite('Smoke test: No ctest in bin dir', () => {
     test('Successful configure', async () => {
         smokeSuite('Smoke test: No ctest in bin dir', suite => {
-            suite.smokeTest('Successful configure', async ctx => ctx.withCMakeTools({
+            suite.smokeTest('Successful configure', async ctx => ctx.withCMakeProject({
                 kit: await smokeTestDefaultKit(),
                 async run(cmt) {
                     const cmake_filename = process.platform === 'win32' ? 'cmake.bat' : 'cmake.sh';
