@@ -116,7 +116,7 @@ class ExtensionManager implements vscode.Disposable {
                     this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
                 }
             }
-            const newCmt = cmakeWorkspaceFolder.cmakeTools;
+            const newCmt = cmakeWorkspaceFolder.cmakeProject;
             this.projectOutlineProvider.addFolder(cmakeWorkspaceFolder.folder);
             if (this.codeModelUpdateSubs.get(newCmt.folder.uri.fsPath)) {
                 // We already have this folder, do nothing
@@ -206,10 +206,10 @@ class ExtensionManager implements vscode.Disposable {
             for (const cmakeWorkspaceFolder of this.cmakeWorkspaceFolders) {
                 this.onUseCMakePresetsChangedSub = cmakeWorkspaceFolder.onUseCMakePresetsChanged(useCMakePresets => this.statusBar.useCMakePresets(useCMakePresets));
                 this.codeModelUpdateSubs.set(cmakeWorkspaceFolder.folder.uri.fsPath, [
-                    cmakeWorkspaceFolder.cmakeTools.onCodeModelChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
-                    cmakeWorkspaceFolder.cmakeTools.onTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
-                    cmakeWorkspaceFolder.cmakeTools.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
-                    cmakeWorkspaceFolder.cmakeTools.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder))
+                    cmakeWorkspaceFolder.cmakeProject.onCodeModelChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
+                    cmakeWorkspaceFolder.cmakeProject.onTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
+                    cmakeWorkspaceFolder.cmakeProject.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
+                    cmakeWorkspaceFolder.cmakeProject.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder))
                 ]);
                 rollbar.takePromise('Post-folder-open', { folder: cmakeWorkspaceFolder.folder }, this.postWorkspaceOpen(cmakeWorkspaceFolder));
             }
@@ -243,7 +243,7 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     public getCMakeProjectForActiveFolder(): CMakeProject | undefined {
-        return this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
+        return this.cmakeWorkspaceFolders.activeFolder?.cmakeProject;
     }
 
     public isActiveFolder(cmt: CMakeWorkspaceFolder): boolean {
@@ -355,7 +355,7 @@ class ExtensionManager implements vscode.Disposable {
      */
     private async ensureActiveConfigurePresetOrKit(cmt?: CMakeProject): Promise<boolean> {
         if (!cmt) {
-            cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
+            cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject;
         }
         if (!cmt) {
             // No CMakeTools. Probably no workspace open.
@@ -396,7 +396,7 @@ class ExtensionManager implements vscode.Disposable {
      */
     private readonly ensureActiveBuildPreset = async (cmt?: CMakeProject): Promise<boolean> => {
         if (!cmt) {
-            cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
+            cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject;
         }
         if (!cmt) {
             // No CMakeTools. Probably no workspace open.
@@ -417,7 +417,7 @@ class ExtensionManager implements vscode.Disposable {
 
     private readonly ensureActiveTestPreset = async (cmt?: CMakeProject): Promise<boolean> => {
         if (!cmt) {
-            cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
+            cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject;
         }
         if (!cmt) {
             // No CMakeTools. Probably no workspace open.
@@ -464,7 +464,7 @@ class ExtensionManager implements vscode.Disposable {
         }
         // Dispose of each CMake Tools we still have loaded
         for (const cmtf of this.cmakeWorkspaceFolders) {
-            await cmtf.cmakeTools.asyncDispose();
+            await cmtf.cmakeProject.asyncDispose();
         }
         this.cmakeWorkspaceFolders.dispose();
         await telemetry.deactivate();
@@ -522,7 +522,7 @@ class ExtensionManager implements vscode.Disposable {
 
     async postWorkspaceOpen(info: CMakeWorkspaceFolder) {
         const ws = info.folder;
-        const cmt = info.cmakeTools;
+        const cmt = info.cmakeProject;
 
         // Scan for kits even under presets mode, so we can create presets from compilers.
         // Silent re-scan when detecting a breaking change in the kits definition.
@@ -678,7 +678,7 @@ class ExtensionManager implements vscode.Disposable {
         const useCMakePresets = activeFolder?.useCMakePresets || false;
         this.statusBar.useCMakePresets(useCMakePresets);
         if (!useCMakePresets) {
-            this.statusBar.setActiveKitName(activeFolder?.cmakeTools.activeKit?.name || '');
+            this.statusBar.setActiveKitName(activeFolder?.cmakeProject.activeKit?.name || '');
         }
         this.projectOutlineProvider.setActiveFolder(ws);
         this.setupSubscriptions();
@@ -692,7 +692,7 @@ class ExtensionManager implements vscode.Disposable {
 
     private cpptoolsNumFoldersReady: number = 0;
     private updateCodeModel(folder: CMakeWorkspaceFolder) {
-        const cmt: CMakeProject = folder.cmakeTools;
+        const cmt: CMakeProject = folder.cmakeProject;
         this.projectOutlineProvider.updateCodeModel(
             cmt.workspaceContext.folder,
             cmt.codeModelContent,
@@ -782,7 +782,7 @@ class ExtensionManager implements vscode.Disposable {
     private setupSubscriptions() {
         this.disposeSubs();
         const folder = this.cmakeWorkspaceFolders.activeFolder;
-        const cmt = folder?.cmakeTools;
+        const cmt = folder?.cmakeProject;
         if (!cmt) {
             this.statusBar.setVisible(false);
             this.statusMessageSub = new DummyDisposable();
@@ -830,7 +830,7 @@ class ExtensionManager implements vscode.Disposable {
      */
     private readonly kitsWatcher = util.chokidarOnAnyChange(
         chokidar.watch(USER_KITS_FILEPATH, { ignoreInitial: true }),
-        _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this.cmakeWorkspaceFolders.activeFolder?.cmakeTools)));
+        _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this.cmakeWorkspaceFolders.activeFolder?.cmakeProject)));
 
     /**
      * Set the current kit for the specified workspace folder
@@ -884,7 +884,7 @@ class ExtensionManager implements vscode.Disposable {
 
     async scanForKits() {
         KitsController.minGWSearchDirs = await this.getMinGWDirs();
-        const cmakeTools = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
+        const cmakeTools = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject;
         if (undefined === cmakeTools) {
             return;
         }
@@ -894,7 +894,7 @@ class ExtensionManager implements vscode.Disposable {
             // Check each folder. If there is an active kit set and if it is of the old definition,
             // unset the kit
             for (const cmakeWorkspaceFolder of this.cmakeWorkspaceFolders) {
-                const activeKit = cmakeWorkspaceFolder.cmakeTools.activeKit;
+                const activeKit = cmakeWorkspaceFolder.cmakeProject.activeKit;
                 if (activeKit) {
                     const definition = activeKit.visualStudio;
                     if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
@@ -957,14 +957,14 @@ class ExtensionManager implements vscode.Disposable {
         const kitSelected = await cmakeWorkspaceFolder.kitsController.selectKit();
 
         let kitSelectionType;
-        if (this.cmakeWorkspaceFolders.activeFolder && this.cmakeWorkspaceFolders.activeFolder.cmakeTools.activeKit) {
-            this.statusBar.setActiveKitName(this.cmakeWorkspaceFolders.activeFolder.cmakeTools.activeKit.name);
+        if (this.cmakeWorkspaceFolders.activeFolder && this.cmakeWorkspaceFolders.activeFolder.cmakeProject.activeKit) {
+            this.statusBar.setActiveKitName(this.cmakeWorkspaceFolders.activeFolder.cmakeProject.activeKit.name);
 
-            if (this.cmakeWorkspaceFolders.activeFolder.cmakeTools.activeKit.name === "__unspec__") {
+            if (this.cmakeWorkspaceFolders.activeFolder.cmakeProject.activeKit.name === "__unspec__") {
                 kitSelectionType = "unspecified";
             } else {
-                if (this.cmakeWorkspaceFolders.activeFolder.cmakeTools.activeKit.visualStudio ||
-                    this.cmakeWorkspaceFolders.activeFolder.cmakeTools.activeKit.visualStudioArchitecture) {
+                if (this.cmakeWorkspaceFolders.activeFolder.cmakeProject.activeKit.visualStudio ||
+                    this.cmakeWorkspaceFolders.activeFolder.cmakeProject.activeKit.visualStudioArchitecture) {
                     kitSelectionType = "vsInstall";
                 } else {
                     kitSelectionType = "compilerSet";
@@ -999,8 +999,8 @@ class ExtensionManager implements vscode.Disposable {
                 await cmakeWorkspaceFolder.kitsController.setKitByName(kitName);
             }
         }
-        if (this.cmakeWorkspaceFolders.activeFolder && this.cmakeWorkspaceFolders.activeFolder.cmakeTools.activeKit) {
-            this.statusBar.setActiveKitName(this.cmakeWorkspaceFolders.activeFolder.cmakeTools.activeKit.name);
+        if (this.cmakeWorkspaceFolders.activeFolder && this.cmakeWorkspaceFolders.activeFolder.cmakeProject.activeKit) {
+            this.statusBar.setActiveKitName(this.cmakeWorkspaceFolders.activeFolder.cmakeProject.activeKit.name);
         }
     }
 
@@ -1063,7 +1063,7 @@ class ExtensionManager implements vscode.Disposable {
 
     // The below functions are all wrappers around the backend.
     async mapCMakeTools(fn: CMakeToolsMapFn,
-        cmt = this.cmakeWorkspaceFolders.activeFolder ? this.cmakeWorkspaceFolders.activeFolder.cmakeTools : undefined,
+        cmt = this.cmakeWorkspaceFolders.activeFolder ? this.cmakeWorkspaceFolders.activeFolder.cmakeProject : undefined,
         precheck?: (cmt: CMakeProject) => Promise<boolean>): Promise<any> {
         if (!cmt) {
             rollbar.error(localize('no.active.folder', 'No active folder.'));
@@ -1085,14 +1085,14 @@ class ExtensionManager implements vscode.Disposable {
         }
 
         for (const folder of this.cmakeWorkspaceFolders) {
-            if (!await this.ensureActiveConfigurePresetOrKit(folder.cmakeTools)) {
+            if (!await this.ensureActiveConfigurePresetOrKit(folder.cmakeProject)) {
                 return -1;
             }
-            if (precheck && !await precheck(folder.cmakeTools)) {
+            if (precheck && !await precheck(folder.cmakeProject)) {
                 return -100;
             }
 
-            const retc = await fn(folder.cmakeTools);
+            const retc = await fn(folder.cmakeProject);
             if (retc) {
                 return retc;
             }
@@ -1106,7 +1106,7 @@ class ExtensionManager implements vscode.Disposable {
             this.cleanOutputChannel();
         }
 
-        return this.mapCMakeTools(fn, this.cmakeWorkspaceFolders.get(folder)?.cmakeTools, precheck);
+        return this.mapCMakeTools(fn, this.cmakeWorkspaceFolders.get(folder)?.cmakeProject, precheck);
     }
 
     mapQueryCMakeTools(fn: CMakeToolsQueryMapFn, folder?: vscode.WorkspaceFolder | string) {
@@ -1114,7 +1114,7 @@ class ExtensionManager implements vscode.Disposable {
         if (workspaceFolder) {
             const cmakeWorkspaceFolder = this.cmakeWorkspaceFolders.get(workspaceFolder);
             if (cmakeWorkspaceFolder) {
-                return fn(cmakeWorkspaceFolder.cmakeTools);
+                return fn(cmakeWorkspaceFolder.cmakeProject);
             }
         } else {
             rollbar.error(localize('invalid.folder', 'Invalid folder.'));
@@ -1236,7 +1236,7 @@ class ExtensionManager implements vscode.Disposable {
         if (!cmakeWorkspaceFolder) {
             return; // Error or nothing is opened
         }
-        return cmakeWorkspaceFolder.cmakeTools.buildWithTarget();
+        return cmakeWorkspaceFolder.cmakeProject.buildWithTarget();
     }
 
     /**
@@ -1257,7 +1257,7 @@ class ExtensionManager implements vscode.Disposable {
             file = editor.document.uri.fsPath;
         }
         for (const folder of this.cmakeWorkspaceFolders) {
-            const term = await folder.cmakeTools.tryCompileFile(file);
+            const term = await folder.cmakeProject.tryCompileFile(file);
             if (term) {
                 return term;
             }
@@ -1364,7 +1364,7 @@ class ExtensionManager implements vscode.Disposable {
         const debugSessions: (vscode.DebugSession | null)[] = [];
         for (const cmakeWorkspaceFolder of this.cmakeWorkspaceFolders) {
             if (cmakeWorkspaceFolder) {
-                debugSessions.push(await this.mapCMakeTools(cmt => cmt.debugTarget(), cmakeWorkspaceFolder.cmakeTools));
+                debugSessions.push(await this.mapCMakeTools(cmt => cmt.debugTarget(), cmakeWorkspaceFolder.cmakeProject));
             }
         }
         return debugSessions;
@@ -1378,7 +1378,7 @@ class ExtensionManager implements vscode.Disposable {
         const terminals: (vscode.Terminal | null)[] = [];
         for (const cmakeWorkspaceFolder of this.cmakeWorkspaceFolders) {
             if (cmakeWorkspaceFolder) {
-                terminals.push(await this.mapCMakeTools(cmt => cmt.launchTarget(), cmakeWorkspaceFolder.cmakeTools));
+                terminals.push(await this.mapCMakeTools(cmt => cmt.launchTarget(), cmakeWorkspaceFolder.cmakeProject));
             }
         }
         return terminals;
@@ -1455,7 +1455,7 @@ class ExtensionManager implements vscode.Disposable {
     // without recalculating the valid states of CMakeLists.txt.
     async workspaceHasCMakeProject(): Promise<boolean> {
         for (const cmakeWorkspaceFolder of this.cmakeWorkspaceFolders) {
-            if (await this.folderIsCMakeProject(cmakeWorkspaceFolder.cmakeTools)) {
+            if (await this.folderIsCMakeProject(cmakeWorkspaceFolder.cmakeProject)) {
                 return true;
             }
         }
@@ -1465,17 +1465,17 @@ class ExtensionManager implements vscode.Disposable {
 
     activeConfigurePresetName(): string {
         telemetry.logEvent("substitution", { command: "activeConfigurePresetName" });
-        return this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.configurePreset?.name || '';
+        return this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.configurePreset?.name || '';
     }
 
     activeBuildPresetName(): string {
         telemetry.logEvent("substitution", { command: "activeBuildPresetName" });
-        return this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.buildPreset?.name || '';
+        return this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.buildPreset?.name || '';
     }
 
     activeTestPresetName(): string {
         telemetry.logEvent("substitution", { command: "activeTestPresetName" });
-        return this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.testPreset?.name || '';
+        return this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.testPreset?.name || '';
     }
 
     /**
@@ -1553,13 +1553,13 @@ class ExtensionManager implements vscode.Disposable {
 
         const presetSelected = await cmakeWorkspaceFolder.presetsController.selectConfigurePreset();
 
-        const configurePreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.configurePreset;
+        const configurePreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.configurePreset;
         this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
         // Reset build and test presets since they might not be used with the selected configure preset
-        const buildPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.buildPreset;
+        const buildPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.buildPreset;
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-        const testPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.testPreset;
+        const testPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
         return presetSelected;
@@ -1581,7 +1581,7 @@ class ExtensionManager implements vscode.Disposable {
 
         const presetSelected = await cmakeWorkspaceFolder.presetsController.selectBuildPreset();
 
-        const buildPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.buildPreset;
+        const buildPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.buildPreset;
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
 
         return presetSelected;
@@ -1603,7 +1603,7 @@ class ExtensionManager implements vscode.Disposable {
 
         const presetSelected = await cmakeWorkspaceFolder.presetsController.selectTestPreset();
 
-        const testPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools.testPreset;
+        const testPreset = this.cmakeWorkspaceFolders.activeFolder?.cmakeProject.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
         return presetSelected;
@@ -1836,7 +1836,7 @@ export function isActiveFolder(folder: vscode.WorkspaceFolder): boolean | undefi
 // sourceDirectory change, CMakeLists.txt creation/move/deletion.
 export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFolder) {
     if (extensionManager) {
-        const cmt = extensionManager.getCMakeWorkspaceFolder(folder)?.cmakeTools;
+        const cmt = extensionManager.getCMakeWorkspaceFolder(folder)?.cmakeProject;
         if (cmt) {
             // Save the CMakeLists valid state in the map for later reference
             // and evaluate its effects on the global full feature set view.
