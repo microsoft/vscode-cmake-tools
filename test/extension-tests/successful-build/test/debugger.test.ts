@@ -1,19 +1,19 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeTools } from '@cmt/cmakeProject';
+import { CMakeProject } from '@cmt/cmakeProject';
 import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 //import sinon = require('sinon');
 import * as fs from 'fs';
 import * as path from 'path';
 
 suite('Debug/Launch interface', () => {
-    let cmt: CMakeTools;
+    let cmt: CMakeProject;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
         await cmt.setKit(await getFirstSystemKit(cmt));
         testEnv.projectFolder.buildDirectory.clear();
         expect(await cmt.build()).to.be.eq(0);

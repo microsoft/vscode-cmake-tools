@@ -97,7 +97,7 @@ export enum ConfigureTrigger {
  * The second phases of fields will be called by the second phase of the parent
  * class. See the `init` private method for this initialization.
  */
-export class CMakeTools implements api.CMakeToolsAPI {
+export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
      * @param extensionContext The extension context
@@ -1149,9 +1149,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext): Promise<CMakeTools> {
+    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmaketools', 'Safe constructing new CMakeTools instance'));
-        const inst = new CMakeTools(ctx, wsc);
+        const inst = new CMakeProject(ctx, wsc);
         await inst.init();
         log.debug(localize('initialization.complete', 'CMakeTools instance initialization complete.'));
         return inst;
@@ -1162,10 +1162,10 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * @param folder Path to the directory for which to create
      * @param ext The extension context
      */
-    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeTools> {
+    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeProject> {
         // Create a context for the directory
         const dirContext = DirectoryContext.createForDirectory(folder, new StateManager(ext, folder));
-        return CMakeTools.create(ext, dirContext);
+        return CMakeProject.create(ext, dirContext);
     }
 
     private _activeKit: Kit | null = null;
@@ -2473,4 +2473,4 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 }
 
-export default CMakeTools;
+export default CMakeProject;

@@ -12,7 +12,7 @@ import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureType, ConfigureTrigger } from '@cmt/cmakeProject';
 import { ConfigurationReader, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { CMakeWorkspaceFolderController, CMakeWorkspaceFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeWorkspaceFolder';
@@ -58,8 +58,8 @@ const hideBuildCommandKey = 'cmake:hideBuildCommand';
  */
 let extensionManager: ExtensionManager | null = null;
 
-type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
-type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
+type CMakeToolsMapFn = (cmt: CMakeProject) => Thenable<any>;
+type CMakeToolsQueryMapFn = (cmt: CMakeProject) => Thenable<string | string[] | null>;
 
 interface Diagnostics {
     os: string;
@@ -242,7 +242,7 @@ class ExtensionManager implements vscode.Disposable {
         return this.cmakeWorkspaceFolders.get(folder);
     }
 
-    public getCMakeToolsForActiveFolder(): CMakeTools | undefined {
+    public getCMakeToolsForActiveFolder(): CMakeProject | undefined {
         return this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
     }
 
@@ -353,7 +353,7 @@ class ExtensionManager implements vscode.Disposable {
      * @returns `false` if there is not active CMakeTools, or it has no active kit
      * and the user cancelled the kit selection dialog.
      */
-    private async ensureActiveConfigurePresetOrKit(cmt?: CMakeTools): Promise<boolean> {
+    private async ensureActiveConfigurePresetOrKit(cmt?: CMakeProject): Promise<boolean> {
         if (!cmt) {
             cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
         }
@@ -394,7 +394,7 @@ class ExtensionManager implements vscode.Disposable {
      * @returns `false` if there is not active CMakeTools, or it has no active preset
      * and the user cancelled the preset selection dialog.
      */
-    private readonly ensureActiveBuildPreset = async (cmt?: CMakeTools): Promise<boolean> => {
+    private readonly ensureActiveBuildPreset = async (cmt?: CMakeProject): Promise<boolean> => {
         if (!cmt) {
             cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
         }
@@ -415,7 +415,7 @@ class ExtensionManager implements vscode.Disposable {
         return true;
     };
 
-    private readonly ensureActiveTestPreset = async (cmt?: CMakeTools): Promise<boolean> => {
+    private readonly ensureActiveTestPreset = async (cmt?: CMakeProject): Promise<boolean> => {
         if (!cmt) {
             cmt = this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
         }
@@ -470,7 +470,7 @@ class ExtensionManager implements vscode.Disposable {
         await telemetry.deactivate();
     }
 
-    async configureExtensionInternal(trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
+    async configureExtensionInternal(trigger: ConfigureTrigger, cmt: CMakeProject): Promise<void> {
         if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(cmt)) {
             return;
         }
@@ -481,7 +481,7 @@ class ExtensionManager implements vscode.Disposable {
     // This method evaluates whether the given folder represents a CMake project
     // (does have a valid CMakeLists.txt at the location pointed to by the "cmake.sourceDirectory" setting)
     // and also stores the answer in a map for later use.
-    async folderIsCMakeProject(cmt: CMakeTools): Promise<boolean> {
+    async folderIsCMakeProject(cmt: CMakeProject): Promise<boolean> {
         if (this.isCMakeFolder.get(cmt.folderName)) {
             return true;
         }
@@ -692,7 +692,7 @@ class ExtensionManager implements vscode.Disposable {
 
     private cpptoolsNumFoldersReady: number = 0;
     private updateCodeModel(folder: CMakeWorkspaceFolder) {
-        const cmt: CMakeTools = folder.cmakeTools;
+        const cmt: CMakeProject = folder.cmakeTools;
         this.projectOutlineProvider.updateCodeModel(
             cmt.workspaceContext.folder,
             cmt.codeModelContent,
@@ -1064,7 +1064,7 @@ class ExtensionManager implements vscode.Disposable {
     // The below functions are all wrappers around the backend.
     async mapCMakeTools(fn: CMakeToolsMapFn,
         cmt = this.cmakeWorkspaceFolders.activeFolder ? this.cmakeWorkspaceFolders.activeFolder.cmakeTools : undefined,
-        precheck?: (cmt: CMakeTools) => Promise<boolean>): Promise<any> {
+        precheck?: (cmt: CMakeProject) => Promise<boolean>): Promise<any> {
         if (!cmt) {
             rollbar.error(localize('no.active.folder', 'No active folder.'));
             return -2;
@@ -1079,7 +1079,7 @@ class ExtensionManager implements vscode.Disposable {
         return fn(cmt);
     }
 
-    async mapCMakeToolsAll(fn: CMakeToolsMapFn, precheck?: (cmt: CMakeTools) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
+    async mapCMakeToolsAll(fn: CMakeToolsMapFn, precheck?: (cmt: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
         if (cleanOutputChannel) {
             this.cleanOutputChannel();
         }
@@ -1101,7 +1101,7 @@ class ExtensionManager implements vscode.Disposable {
         return 0;
     }
 
-    mapCMakeToolsFolder(fn: CMakeToolsMapFn, folder?: vscode.WorkspaceFolder, precheck?: (cmt: CMakeTools) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
+    mapCMakeToolsFolder(fn: CMakeToolsMapFn, folder?: vscode.WorkspaceFolder, precheck?: (cmt: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
         if (cleanOutputChannel) {
             this.cleanOutputChannel();
         }
@@ -1820,7 +1820,7 @@ export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     extensionManager?.showStatusBar(fullFeatureSet);
 }
 
-export function getCMakeToolsForActiveFolder(): CMakeTools | undefined {
+export function getCMakeToolsForActiveFolder(): CMakeProject | undefined {
     return extensionManager?.getCMakeToolsForActiveFolder();
 }
 

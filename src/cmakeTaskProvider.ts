@@ -9,7 +9,7 @@ import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
-import { CMakeTools, ConfigureTrigger } from './cmakeProject';
+import { CMakeProject, ConfigureTrigger } from './cmakeProject';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 
@@ -108,7 +108,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public async provideTasks(): Promise<CMakeTask[]> {
         const result: CMakeTask[] = [];
-        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+        const cmakeTools: CMakeProject | undefined = getCMakeToolsForActiveFolder();
         const targets: string[] | undefined = await cmakeTools?.getDefaultBuildTargets() || ["all"];
         result.push(await this.provideTask(CommandType.config, cmakeTools?.useCMakePresets));
         result.push(await this.provideTask(CommandType.build, cmakeTools?.useCMakePresets, targets));
@@ -220,7 +220,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             this.writeEmitter.fire(localize("target.is.ignored", "The defined targets in this task are being ignored.") + endOfLine);
         }
     }
-    private async isTaskCompatibleWithPresets(cmakeTools: CMakeTools): Promise<boolean> {
+    private async isTaskCompatibleWithPresets(cmakeTools: CMakeProject): Promise<boolean> {
         const useCMakePresets: boolean = cmakeTools.useCMakePresets;
         const presetDefined: boolean = this.preset !== undefined && this.preset !== null;
         const isNotCompatible = !useCMakePresets && presetDefined;
@@ -255,8 +255,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         return useCMakePresets ? getDefaultPresetName(commandType, true) : undefined;
     }
 
-    private getCMakeTools(): CMakeTools | undefined {
-        const cmakeTools: CMakeTools | undefined = getCMakeToolsForActiveFolder();
+    private getCMakeTools(): CMakeProject | undefined {
+        const cmakeTools: CMakeProject | undefined = getCMakeToolsForActiveFolder();
         if (!cmakeTools) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
             this.writeEmitter.fire(localize("task.failed", "Task failed.") + endOfLine);
@@ -268,7 +268,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
         this.checkTargets(true);
-        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
+        const cmakeTools: CMakeProject | undefined = this.getCMakeTools();
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
         }
@@ -307,7 +307,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
         let fullCommand: proc.BuildCommand | null;
         let args: string[] = [];
-        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
+        const cmakeTools: CMakeProject | undefined = this.getCMakeTools();
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
         }
@@ -380,7 +380,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
         this.checkTargets(true);
-        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
+        const cmakeTools: CMakeProject | undefined = this.getCMakeTools();
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
         }

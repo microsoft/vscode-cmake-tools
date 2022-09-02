@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeTools, ConfigureTrigger } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureTrigger } from '@cmt/cmakeProject';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
 import { ExtensionConfigurationSettings } from '@cmt/config';
@@ -15,7 +15,7 @@ import * as path from 'path';
 const workername: string = process.platform;
 
 suite('Build', () => {
-    let cmt: CMakeTools;
+    let cmt: CMakeProject;
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
 
@@ -27,7 +27,7 @@ suite('Build', () => {
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-        cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
@@ -39,7 +39,7 @@ suite('Build', () => {
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
         const kit = await getFirstSystemKit(cmt);
         await cmt.setKit(kit);
         testEnv.projectFolder.buildDirectory.clear();

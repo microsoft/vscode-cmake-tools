@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import { CMakeTools } from '@cmt/cmakeProject';
+import { CMakeProject } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
@@ -38,7 +38,7 @@ export class PresetsController {
 
     private static readonly _addPreset = '__addPreset__';
 
-    static async init(cmakeTools: CMakeTools, kitsController: KitsController): Promise<PresetsController> {
+    static async init(cmakeTools: CMakeProject, kitsController: KitsController): Promise<PresetsController> {
         const presetsController = new PresetsController(cmakeTools, kitsController);
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = cmakeTools.folder.uri.fsPath;
@@ -96,7 +96,7 @@ export class PresetsController {
         return presetsController;
     }
 
-    private constructor(private readonly _cmakeTools: CMakeTools, private readonly _kitsController: KitsController) {}
+    private constructor(private readonly _cmakeTools: CMakeProject, private readonly _kitsController: KitsController) {}
 
     get presetsPath() {
         return path.join(this._sourceDir, 'CMakePresets.json');

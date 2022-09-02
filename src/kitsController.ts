@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import CMakeTools from '@cmt/cmakeProject';
+import CMakeProject from '@cmt/cmakeProject';
 import {
     Kit,
     descriptionForKit,
@@ -57,9 +57,9 @@ export class KitsController {
     folderKits: Kit[] = [];
     additionalKits: Kit[] = [];
 
-    private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: chokidar.FSWatcher) {}
+    private constructor(readonly cmakeTools: CMakeProject, private readonly _kitsWatcher: chokidar.FSWatcher) {}
 
-    static async expandAdditionalKitFiles(cmakeTools: CMakeTools): Promise<string[]> {
+    static async expandAdditionalKitFiles(cmakeTools: CMakeProject): Promise<string[]> {
         const additionalKitFiles: string[] = cmakeTools.workspaceContext.config.additionalKits;
 
         const opts: expand.ExpansionOptions = {
@@ -93,7 +93,7 @@ export class KitsController {
         return Promise.all(expandedAdditionalKitFiles);
     }
 
-    static async init(cmakeTools: CMakeTools) {
+    static async init(cmakeTools: CMakeProject) {
         if (KitsController.userKits.length === 0) {
             // never initialized before
             await KitsController.readUserKits(cmakeTools);
@@ -130,7 +130,7 @@ export class KitsController {
         return this.cmakeTools.folder;
     }
 
-    static async readUserKits(cmakeTools: CMakeTools | undefined, progress?: ProgressHandle) {
+    static async readUserKits(cmakeTools: CMakeProject | undefined, progress?: ProgressHandle) {
         if (undefined === cmakeTools) {
             return;
         }
@@ -351,7 +351,7 @@ export class KitsController {
      *
      * Always returns immediately.
      */
-    private static _startPruneOutdatedKitsAsync(cmakeTools: CMakeTools) {
+    private static _startPruneOutdatedKitsAsync(cmakeTools: CMakeProject) {
         // Iterate over _user_ kits. We don't care about workspace-local kits
         for (const kit of KitsController.userKits) {
             if (kit.keep === true) {
@@ -421,7 +421,7 @@ export class KitsController {
      * re-writes the user kits file.
      * @param kit The kit to mark
      */
-    private static async _keepKit(cmakeTools: CMakeTools, kit: Kit) {
+    private static async _keepKit(cmakeTools: CMakeProject, kit: Kit) {
         const new_kits = KitsController.userKits.map(k => {
             if (k.name === kit.name) {
                 return { ...k, keep: true };
@@ -437,7 +437,7 @@ export class KitsController {
      * Remove a kit from the user-local kits.
      * @param kit The kit to remove
      */
-    private static async _removeKit(cmakeTools: CMakeTools, kit: Kit) {
+    private static async _removeKit(cmakeTools: CMakeProject, kit: Kit) {
         const new_kits = KitsController.userKits.filter(k => k.name !== kit.name);
         KitsController.userKits = new_kits;
         return KitsController._writeUserKitsFile(cmakeTools, new_kits);
@@ -447,7 +447,7 @@ export class KitsController {
      * Write the given kits the the user-local cmake-kits.json file.
      * @param kits The kits to write to the file.
      */
-    private static async _writeUserKitsFile(cmakeTools: CMakeTools, kits: Kit[]) {
+    private static async _writeUserKitsFile(cmakeTools: CMakeProject, kits: Kit[]) {
         log.debug(localize('saving.kits.to', 'Saving kits to {0}', USER_KITS_FILEPATH));
 
         // Remove the special kits
@@ -518,7 +518,7 @@ export class KitsController {
      *
      * @returns if any duplicate vs kits are removed.
      */
-    static async scanForKits(cmakeTools: CMakeTools) {
+    static async scanForKits(cmakeTools: CMakeProject) {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
 
         // Do the scan:

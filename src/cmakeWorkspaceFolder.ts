@@ -6,7 +6,7 @@ import * as nls from 'vscode-nls';
 import * as path from 'path';
 
 import * as util from '@cmt/util';
-import CMakeTools from '@cmt/cmakeProject';
+import CMakeProject from '@cmt/cmakeProject';
 import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
@@ -38,11 +38,11 @@ export class CMakeWorkspaceFolder {
 
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
 
-    private constructor(readonly cmakeTools: CMakeTools,
+    private constructor(readonly cmakeTools: CMakeProject,
         readonly kitsController: KitsController,
         readonly presetsController: PresetsController) {}
 
-    static async init(cmakeTools: CMakeTools) {
+    static async init(cmakeTools: CMakeProject) {
         const kitsController = await KitsController.init(cmakeTools);
         const presetsController = await PresetsController.init(cmakeTools, kitsController);
         const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeTools, kitsController, presetsController);
@@ -306,7 +306,7 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
      */
     private loadCMakeToolsForWorkspaceFolder(folder: vscode.WorkspaceFolder) {
         // Create the backend:
-        return CMakeTools.createForDirectory(folder, this.extensionContext);
+        return CMakeProject.createForDirectory(folder, this.extensionContext);
     }
 
     /**

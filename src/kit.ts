@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as kitsController from '@cmt/kitsController';
 
-import CMakeTools from './cmakeProject';
+import CMakeProject from './cmakeProject';
 import * as expand from './expand';
 import { VSInstallation, vsInstallations, getHostTargetArchString, varsForVSInstallation, generatorPlatformFromVSArch } from './installs/visualStudio';
 import * as logging from './logging';
@@ -759,7 +759,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools?: CMakeTools): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools?: CMakeProject): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
         const isClangGnuCli = (path.basename(binPath, '.exe') === 'clang');
         const isClangMsvcCli = (path.basename(binPath, '.exe') === 'clang-cl');
@@ -845,7 +845,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools?: CMakeTools): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools?: CMakeProject): Promise<Promise<Kit[]>[]> {
     const vs_installs = await vsInstallations();
     const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeTools));
     return results;
@@ -964,7 +964,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(cmakeTools?: CMakeTools, opt?: KitScanOptions) {
+export async function scanForKits(cmakeTools?: CMakeProject, opt?: KitScanOptions) {
     const kit_options = opt || {};
 
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
@@ -1053,7 +1053,7 @@ export async function scanForKits(cmakeTools?: CMakeTools, opt?: KitScanOptions)
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(cmt: CMakeTools): Promise<boolean> {
+export async function scanForKitsIfNeeded(cmt: CMakeProject): Promise<boolean> {
     const kitsVersionSaved = cmt.extensionContext.globalState.get<number>('kitsVersionSaved');
     const kitsVersionCurrent = 2;
 
@@ -1201,7 +1201,7 @@ export function kitsForWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
 /**
  * Get the kits defined by the user in the files pointed by "cmake.additionalKits".
  */
-export async function getAdditionalKits(cmakeTools: CMakeTools): Promise<Kit[]> {
+export async function getAdditionalKits(cmakeTools: CMakeProject): Promise<Kit[]> {
     const additionalKitFiles = await kitsController.KitsController.expandAdditionalKitFiles(cmakeTools);
     let additionalKits: Kit[] = [];
     for (const kitFile of additionalKitFiles) {

@@ -4,11 +4,11 @@ import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirst
 import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmakeProject';
+import CMakeProject from '@cmt/cmakeProject';
 
 suite('Environment Variables in Variants', () => {
     let testEnv: DefaultEnvironment;
-    let cmakeTools: CMakeTools;
+    let cmakeTools: CMakeProject;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -17,7 +17,7 @@ suite('Environment Variables in Variants', () => {
         const exe_res = 'output.txt';
 
         testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
-        cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeTools = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed

@@ -1,8 +1,8 @@
-import { CMakeTools } from '@cmt/cmakeProject';
+import { CMakeProject } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 
 suite('cmake', () => {
-    let cmt: CMakeTools;
+    let cmt: CMakeProject;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
@@ -12,7 +12,7 @@ suite('cmake', () => {
         const exe_res = 'output.txt';
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-        cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed

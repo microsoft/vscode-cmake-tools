@@ -1,20 +1,20 @@
 /* eslint-disable no-unused-expressions */
 import * as api from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools, ConfigureTrigger } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureTrigger } from '@cmt/cmakeProject';
 import { readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH } from '@cmt/kit';
 import { platformNormalizePath } from '@cmt/util';
 import { DefaultEnvironment, expect } from '@test/util';
 
 suite('Toolchain Substitution', () => {
-    let cmt: CMakeTools;
+    let cmt: CMakeProject;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         const user_kits = await readKitsFile(USER_KITS_FILEPATH);
         const ws_kits = await kitsForWorkspaceDirectory(testEnv.projectFolder.location);

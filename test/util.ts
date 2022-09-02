@@ -1,4 +1,4 @@
-import { CMakeTools } from '@cmt/cmakeProject';
+import { CMakeProject } from '@cmt/cmakeProject';
 import { Kit, scanForKits, kitsForWorkspaceDirectory } from '@cmt/kit';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
@@ -24,7 +24,7 @@ export async function clearExistingKitConfigurationFile() {
 }
 
 export function getExtension() {
-    const cmt = vscode.extensions.getExtension<CMakeTools>('ms-vscode.cmake-tools');
+    const cmt = vscode.extensions.getExtension<CMakeProject>('ms-vscode.cmake-tools');
     if (!cmt) {
         throw new Error('Extension doesn\'t exist');
     }
@@ -33,7 +33,7 @@ export function getExtension() {
 
 let AVAIL_KITS: Kit[] | null = null;
 
-export async function getSystemKits(cmakeTools?: CMakeTools): Promise<Kit[]> {
+export async function getSystemKits(cmakeTools?: CMakeProject): Promise<Kit[]> {
     if (AVAIL_KITS === null) {
         AVAIL_KITS = await scanForKits(cmakeTools, { ignorePath: process.platform === 'win32' });
     }
@@ -43,7 +43,7 @@ export async function getSystemKits(cmakeTools?: CMakeTools): Promise<Kit[]> {
 /**
  * @returns a Visual Studio kit on Windows, a GCC or Clang kit on mac/linux
  */
-export async function getFirstSystemKit(cmakeTools?: CMakeTools): Promise<Kit> {
+export async function getFirstSystemKit(cmakeTools?: CMakeProject): Promise<Kit> {
     const kits = await getSystemKits(cmakeTools);
     console.assert(kits.length >= 1, 'No kits found for testing');
     return kits.find(kit => {
@@ -55,7 +55,7 @@ export async function getFirstSystemKit(cmakeTools?: CMakeTools): Promise<Kit> {
     })!;
 }
 
-export async function getMatchingSystemKit(cmakeTools: CMakeTools | undefined, re: RegExp): Promise<Kit> {
+export async function getMatchingSystemKit(cmakeTools: CMakeProject | undefined, re: RegExp): Promise<Kit> {
     const kits = await getSystemKits(cmakeTools);
     return getMatchingKit(kits, re);
 }
