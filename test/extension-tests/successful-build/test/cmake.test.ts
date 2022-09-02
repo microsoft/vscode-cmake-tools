@@ -1,4 +1,4 @@
-import { CMakeTools } from '@cmt/cmakeTools';
+import { CMakeTools } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 
 suite('cmake', () => {

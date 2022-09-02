@@ -9,7 +9,7 @@ import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
 import { getCMakeToolsForActiveFolder } from './extension';
-import { CMakeTools, ConfigureTrigger } from './cmakeTools';
+import { CMakeTools, ConfigureTrigger } from './cmakeProject';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 

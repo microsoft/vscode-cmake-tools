@@ -12,7 +12,7 @@ import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmakeTools';
+import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmakeProject';
 import { ConfigurationReader, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { CMakeWorkspaceFolderController, CMakeWorkspaceFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeWorkspaceFolder';

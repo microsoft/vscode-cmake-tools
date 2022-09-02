@@ -10,7 +10,7 @@ import * as kit from '../../src/kit';
 import * as triple from '../../src/triple';
 import { fs } from '../../src/pr';
 
-import { CMakeTools } from '@cmt/cmakeTools';
+import { CMakeTools } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment } from '@test/util';
 
 const here = __dirname;

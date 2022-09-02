@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as kitsController from '@cmt/kitsController';
 
-import CMakeTools from './cmakeTools';
+import CMakeTools from './cmakeProject';
 import * as expand from './expand';
 import { VSInstallation, vsInstallations, getHostTargetArchString, varsForVSInstallation, generatorPlatformFromVSArch } from './installs/visualStudio';
 import * as logging from './logging';

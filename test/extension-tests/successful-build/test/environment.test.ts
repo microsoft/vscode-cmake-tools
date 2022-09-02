@@ -1,6 +1,6 @@
 import * as api from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools } from '@cmt/cmakeTools';
+import { CMakeTools } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as path from 'path';
 

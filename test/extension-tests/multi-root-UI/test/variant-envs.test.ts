@@ -4,7 +4,7 @@ import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirst
 import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmakeTools';
+import CMakeTools from '@cmt/cmakeProject';
 
 suite('Environment Variables in Variants', () => {
     let testEnv: DefaultEnvironment;

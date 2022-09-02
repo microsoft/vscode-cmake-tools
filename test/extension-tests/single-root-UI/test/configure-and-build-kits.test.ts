@@ -9,7 +9,7 @@ import {
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmakeTools';
+import CMakeTools from '@cmt/cmakeProject';
 
 const workername: string = process.platform;
 
