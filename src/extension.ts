@@ -242,7 +242,7 @@ class ExtensionManager implements vscode.Disposable {
         return this.cmakeWorkspaceFolders.get(folder);
     }
 
-    public getCMakeToolsForActiveFolder(): CMakeProject | undefined {
+    public getCMakeProjectForActiveFolder(): CMakeProject | undefined {
         return this.cmakeWorkspaceFolders.activeFolder?.cmakeTools;
     }
 
@@ -1820,8 +1820,8 @@ export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     extensionManager?.showStatusBar(fullFeatureSet);
 }
 
-export function getCMakeToolsForActiveFolder(): CMakeProject | undefined {
-    return extensionManager?.getCMakeToolsForActiveFolder();
+export function getCMakeProjectForActiveFolder(): CMakeProject | undefined {
+    return extensionManager?.getCMakeProjectForActiveFolder();
 }
 
 export function isActiveFolder(folder: vscode.WorkspaceFolder): boolean | undefined {
