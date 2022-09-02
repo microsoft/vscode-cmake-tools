@@ -1,6 +1,5 @@
 import * as api from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { getSettingsChangePromise } from '@cmt/config';
 import { DefaultEnvironment, expect } from '@test/util';
 import * as vscode from 'vscode';
 
@@ -17,7 +16,7 @@ suite('Environment Variables in Presets', () => {
         testEnv.projectFolder.buildDirectory.clear();
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        await getSettingsChangePromise();
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'WindowsUser1' : 'LinuxUser1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');

@@ -1,4 +1,3 @@
-import { getSettingsChangePromise } from '@cmt/config';
 import { fs } from '@cmt/pr';
 import {
     clearExistingKitConfigurationFile,
@@ -26,7 +25,7 @@ suite('Preset include functionality', () => {
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
         await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        await getSettingsChangePromise();
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
@@ -46,7 +45,7 @@ suite('Preset include functionality', () => {
 
     suiteTeardown(async () => {
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
-        await getSettingsChangePromise();
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         if (testEnv) {
             testEnv.teardown();

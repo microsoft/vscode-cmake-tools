@@ -20,7 +20,8 @@ suite('Environment Variables in Variants', () => {
         cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
-        await cmakeTools.workspaceContext.config.getSettingsChangePromise();
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        console.log('disabled Presets');
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
@@ -36,7 +37,8 @@ suite('Environment Variables in Variants', () => {
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
-        await cmakeTools.workspaceContext.config.getSettingsChangePromise();
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        console.log('enabled Presets');
 
         const variantFileBackup = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
         if (await fs.exists(variantFileBackup)) {

@@ -824,7 +824,7 @@ export function scheduleTask<T>(task: () => T): Promise<T> {
 }
 
 /**
- * @brief Async version of scheduleTask
+ * @brief A version of scheduleTask that supports async tasks as input.
  */
 export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {

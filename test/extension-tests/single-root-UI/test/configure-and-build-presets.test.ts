@@ -1,4 +1,3 @@
-import { getSettingsChangePromise } from '@cmt/config';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
 import {
@@ -30,7 +29,7 @@ suite('Build using Presets', () => {
         this.timeout(100000);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        await getSettingsChangePromise();
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');

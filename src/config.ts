@@ -496,7 +496,7 @@ export class ConfigurationReader implements vscode.Disposable {
         // may not be the same...
         const emitter: vscode.EventEmitter<any> = this.emitters[setting];
         const awaitableCallback = (value: ExtensionConfigurationSettings[K]) => {
-            activeChangeEvents.track(() => cb(value));
+            activeChangeEvents.scheduleAndTrackTask(() => cb(value));
         };
         return emitter.event(awaitableCallback);
     }
@@ -511,28 +511,21 @@ export class ConfigurationReader implements vscode.Disposable {
  */
 class PromiseTracker {
     private static promises: Set<any> = new Set();
-    private static num = 0;
 
     constructor() {
-        console.log(new Error('created promise tracker').stack);
     }
 
-    public track(cb: () => any): void {
+    public scheduleAndTrackTask(cb: () => any): void {
         const selfDestructWrapper = util.scheduleTask(() => {
-            const mynum = PromiseTracker.num++;
             const result = cb();
-            console.log(mynum);
             return result;
         }).then(() => {
             PromiseTracker.promises.delete(selfDestructWrapper);
-            console.log('delete - set has', PromiseTracker.promises.size, 'elements');
         });
         PromiseTracker.promises.add(selfDestructWrapper);
-        console.log('add', PromiseTracker.num, '- set has', PromiseTracker.promises.size, 'elements');
     }
 
     public getAwaiter(): Promise<any[]> {
-        console.log('waiting on', PromiseTracker.promises.size, 'promises');
         return Promise.all(PromiseTracker.promises);
     }
 }

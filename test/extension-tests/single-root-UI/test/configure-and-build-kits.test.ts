@@ -10,7 +10,6 @@ import {
 import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmakeTools';
-import { getSettingsChangePromise } from '@cmt/config';
 
 const workername: string = process.platform;
 
@@ -30,7 +29,7 @@ suite('Build using Kits and Variants', () => {
         cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
-        await getSettingsChangePromise();
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed

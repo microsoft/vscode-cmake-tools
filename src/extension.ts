@@ -13,7 +13,7 @@ import * as nls from 'vscode-nls';
 
 import { CMakeCache } from '@cmt/cache';
 import { CMakeTools, ConfigureType, ConfigureTrigger } from '@cmt/cmakeTools';
-import { ConfigurationReader, TouchBarConfig } from '@cmt/config';
+import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { CMakeWorkspaceFolderController, CMakeWorkspaceFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeWorkspaceFolder';
 import {
@@ -1730,6 +1730,10 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     for (const key of funs) {
         log.trace(localize('register.command', 'Register CMakeTools extension command {0}', `cmake.${key}`));
         context.subscriptions.push(register(key));
+    }
+    if (util.isTestMode()) {
+        log.trace(localize('register.command', 'Register CMakeTools extension command cmake.getSettingsChangePromise'));
+        context.subscriptions.push(vscode.commands.registerCommand('cmake.getSettingsChangePromise', () => getSettingsChangePromise()));
     }
 
     // Util for the special commands to forward to real commands
