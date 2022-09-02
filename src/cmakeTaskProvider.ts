@@ -12,6 +12,7 @@ import { getCMakeToolsForActiveFolder } from './extension';
 import { CMakeTools, ConfigureTrigger } from './cmakeTools';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
+import * as telemetry from '@cmt/telemetry';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -266,6 +267,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async runConfigTask(): Promise<any> {
+        telemetry.logEvent("configure", {isTask: "true"});
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
         this.checkTargets(true);
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
@@ -299,11 +301,15 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         let targets = this.targets;
         const taskName: string = localizeCommandType(commandType);
         if (commandType === CommandType.install) {
+            telemetry.logEvent("install", {isTask: "true"});
             this.checkTargets(true);
             targets = ['install'];
         } else if (commandType === CommandType.clean) {
+            telemetry.logEvent("clean", {isTask: "true"});
             this.checkTargets(true);
             targets = ['clean'];
+        } else {
+            telemetry.logEvent("build", {isTask: "true"});
         }
         let fullCommand: proc.BuildCommand | null;
         let args: string[] = [];
@@ -378,6 +384,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async runTestTask(): Promise<any> {
+        telemetry.logEvent("test", {isTask: "true"});
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
         this.checkTargets(true);
         const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
