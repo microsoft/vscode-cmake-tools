@@ -37,7 +37,7 @@ import { setContextValue } from './util';
 import { VariantManager } from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
-import { CMakeToolsFolder } from './folders';
+import { CMakeWorkspaceFolder } from './cmakeWorkspaceFolder';
 import { ConfigurationWebview } from './cacheView';
 import { updateFullFeatureSetForFolder, enableFullFeatureSet, isActiveFolder, showCMakeListsExperiment } from './extension';
 import { ConfigurationReader } from './config';
@@ -2299,8 +2299,8 @@ export class CMakeTools implements api.CMakeToolsAPI {
     /**
      * Implementation of `cmake.quickStart`
      */
-    public async quickStart(cmtFolder?: CMakeToolsFolder): Promise<Number> {
-        if (!cmtFolder) {
+    public async quickStart(cmakeWorkspaceFolder?: CMakeWorkspaceFolder): Promise<Number> {
+        if (!cmakeWorkspaceFolder) {
             void vscode.window.showErrorMessage(localize('no.folder.open', 'No folder is open.'));
             return -2;
         }
