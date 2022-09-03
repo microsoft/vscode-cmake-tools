@@ -38,10 +38,10 @@ export class PresetsController {
 
     private static readonly _addPreset = '__addPreset__';
 
-    static async init(cmakeTools: CMakeProject, kitsController: KitsController): Promise<PresetsController> {
-        const presetsController = new PresetsController(cmakeTools, kitsController);
+    static async init(cmakeProject: CMakeProject, kitsController: KitsController): Promise<PresetsController> {
+        const presetsController = new PresetsController(cmakeProject, kitsController);
         const expandSourceDir = async (dir: string) => {
-            const workspaceFolder = cmakeTools.folder.uri.fsPath;
+            const workspaceFolder = cmakeProject.folder.uri.fsPath;
             const expansionOpts: ExpansionOptions = {
                 vars: {
                     workspaceFolder,
@@ -61,7 +61,7 @@ export class PresetsController {
             return util.normalizeAndVerifySourceDir(await expandString(dir, expansionOpts));
         };
 
-        presetsController._sourceDir = await expandSourceDir(cmakeTools.workspaceContext.config.sourceDirectory);
+        presetsController._sourceDir = await expandSourceDir(cmakeProject.workspaceContext.config.sourceDirectory);
 
         // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
         // there might be timing issues, since listeners are invoked async.
@@ -69,12 +69,12 @@ export class PresetsController {
 
         await presetsController.watchPresetsChange();
 
-        cmakeTools.workspaceContext.config.onChange('allowCommentsInPresetsFile', async () => {
+        cmakeProject.workspaceContext.config.onChange('allowCommentsInPresetsFile', async () => {
             await presetsController.reapplyPresets();
             vscode.workspace.textDocuments.forEach(doc => {
                 const fileName = path.basename(doc.uri.fsPath);
                 if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
-                    if (cmakeTools.workspaceContext.config.allowCommentsInPresetsFile) {
+                    if (cmakeProject.workspaceContext.config.allowCommentsInPresetsFile) {
                         void vscode.languages.setTextDocumentLanguage(doc, 'jsonc');
                     } else {
                         void vscode.languages.setTextDocumentLanguage(doc, 'json');
@@ -83,7 +83,7 @@ export class PresetsController {
             });
         });
 
-        presetsController._sourceDirChangedSub = cmakeTools.workspaceContext.config.onChange('sourceDirectory', async value => {
+        presetsController._sourceDirChangedSub = cmakeProject.workspaceContext.config.onChange('sourceDirectory', async value => {
             const oldSourceDir = presetsController._sourceDir;
             presetsController._sourceDir = await expandSourceDir(value);
 
@@ -96,7 +96,7 @@ export class PresetsController {
         return presetsController;
     }
 
-    private constructor(private readonly _cmakeTools: CMakeProject, private readonly _kitsController: KitsController) {}
+    private constructor(private readonly cmakeProject: CMakeProject, private readonly _kitsController: KitsController) {}
 
     get presetsPath() {
         return path.join(this._sourceDir, 'CMakePresets.json');
@@ -107,7 +107,7 @@ export class PresetsController {
     }
 
     get folder() {
-        return this._cmakeTools.folder;
+        return this.cmakeProject.folder;
     }
 
     get folderFsPath() {
@@ -184,10 +184,10 @@ export class PresetsController {
 
         this._referencedFiles = Array.from(referencedFiles);
 
-        this._cmakeTools.minCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
+        this.cmakeProject.minCMakeVersion = preset.minCMakeVersion(this.folderFsPath);
 
-        if (this._cmakeTools.configurePreset) {
-            await this.setConfigurePreset(this._cmakeTools.configurePreset.name);
+        if (this.cmakeProject.configurePreset) {
+            await this.setConfigurePreset(this.cmakeProject.configurePreset.name);
         }
         // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
     }
@@ -315,7 +315,7 @@ export class PresetsController {
                         return false;
                     } else {
                         if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                            await KitsController.scanForKits(this._cmakeTools);
+                            await KitsController.scanForKits(this.cmakeProject);
                             return false;
                         } else {
                             log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
@@ -638,7 +638,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.config.preset.selection', 'User cancelled configure preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.configurePreset?.name) {
+        } else if (chosenPreset === this.cmakeProject.configurePreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addConfigurePreset();
@@ -664,7 +664,7 @@ export class PresetsController {
                 location: vscode.ProgressLocation.Notification,
                 title: localize('loading.config.preset', 'Loading configure preset {0}', presetName)
             },
-            () => this._cmakeTools.setConfigurePreset(presetName)
+            () => this.cmakeProject.setConfigurePreset(presetName)
         );
 
         await vscode.window.withProgress(
@@ -673,13 +673,13 @@ export class PresetsController {
                 title: localize('reloading.build.test.preset', 'Reloading build and test presets')
             },
             async () => {
-                const configurePreset = this._cmakeTools.configurePreset?.name;
-                const buildPreset = configurePreset ? this._cmakeTools.workspaceContext.state.getBuildPresetName(configurePreset) : undefined;
-                const testPreset = configurePreset ? this._cmakeTools.workspaceContext.state.getTestPresetName(configurePreset) : undefined;
+                const configurePreset = this.cmakeProject.configurePreset?.name;
+                const buildPreset = configurePreset ? this.cmakeProject.workspaceContext.state.getBuildPresetName(configurePreset) : undefined;
+                const testPreset = configurePreset ? this.cmakeProject.workspaceContext.state.getTestPresetName(configurePreset) : undefined;
                 if (buildPreset) {
                     await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                 }
-                if (!buildPreset || !this._cmakeTools.buildPreset) {
+                if (!buildPreset || !this.cmakeProject.buildPreset) {
                     await this.guessBuildPreset();
                 }
 
@@ -695,7 +695,7 @@ export class PresetsController {
     }
 
     private async guessBuildPreset(): Promise<void> {
-        const selectedConfigurePreset = this._cmakeTools.configurePreset?.name;
+        const selectedConfigurePreset = this.cmakeProject.configurePreset?.name;
         let currentBuildPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
@@ -704,7 +704,7 @@ export class PresetsController {
                 // Set active build preset as the first valid build preset matches the selected configure preset
                 if (buildPreset.configurePreset === selectedConfigurePreset) {
                     await this.setBuildPreset(buildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                    currentBuildPreset = this._cmakeTools.buildPreset?.name;
+                    currentBuildPreset = this.cmakeProject.buildPreset?.name;
                 }
                 if (currentBuildPreset) {
                     break;
@@ -719,14 +719,14 @@ export class PresetsController {
     }
 
     private async checkConfigurePreset(): Promise<preset.ConfigurePreset | null> {
-        const selectedConfigurePreset = this._cmakeTools.configurePreset;
+        const selectedConfigurePreset = this.cmakeProject.configurePreset;
         if (!selectedConfigurePreset) {
             const message_noConfigurePreset = localize('config.preset.required', 'A configure preset needs to be selected. How would you like to proceed?');
             const option_selectConfigurePreset = localize('select.config.preset', 'Select configure preset');
             const option_later = localize('later', 'later');
             const result = await vscode.window.showErrorMessage(message_noConfigurePreset, option_selectConfigurePreset, option_later);
             if (result === option_selectConfigurePreset && await vscode.commands.executeCommand('cmake.selectConfigurePreset')) {
-                return this._cmakeTools.configurePreset;
+                return this.cmakeProject.configurePreset;
             }
         }
         return selectedConfigurePreset;
@@ -754,7 +754,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.buildPreset?.name) {
+        } else if (chosenPreset === this.cmakeProject.buildPreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addBuildPreset();
@@ -777,14 +777,14 @@ export class PresetsController {
         if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
             preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
             const _preset = preset.getPresetByName(preset.allBuildPresets(this.folderFsPath), presetName);
-            if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
+            if (_preset?.configurePreset !== this.cmakeProject.configurePreset?.name) {
                 log.error(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not match the selected configure preset', presetName));
                 await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Notification,
                         title: localize('unloading.build.preset', 'Unloading build preset')
                     },
-                    () => this._cmakeTools.setBuildPreset(null)
+                    () => this.cmakeProject.setBuildPreset(null)
                 );
 
                 if (checkChangingPreset) {
@@ -800,7 +800,7 @@ export class PresetsController {
                 location: vscode.ProgressLocation.Notification,
                 title: localize('loading.build.preset', 'Loading build preset {0}', presetName)
             },
-            () => this._cmakeTools.setBuildPreset(presetName)
+            () => this.cmakeProject.setBuildPreset(presetName)
         );
 
         if (checkChangingPreset) {
@@ -828,7 +828,7 @@ export class PresetsController {
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
             return false;
-        } else if (chosenPreset === this._cmakeTools.testPreset?.name) {
+        } else if (chosenPreset === this.cmakeProject.testPreset?.name) {
             return true;
         } else if (chosenPreset === '__addPreset__') {
             await this.addTestPreset();
@@ -852,14 +852,14 @@ export class PresetsController {
             if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
                 preset.expandConfigurePresetForPresets(this.folderFsPath, 'test');
                 const _preset = preset.getPresetByName(preset.allTestPresets(this.folderFsPath), presetName);
-                if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
+                if (_preset?.configurePreset !== this.cmakeProject.configurePreset?.name) {
                     log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not match the selected configure preset', presetName));
                     await vscode.window.withProgress(
                         {
                             location: vscode.ProgressLocation.Notification,
                             title: localize('unloading.test.preset', 'Unloading test preset')
                         },
-                        () => this._cmakeTools.setTestPreset(null)
+                        () => this.cmakeProject.setTestPreset(null)
                     );
 
                     if (checkChangingPreset) {
@@ -875,7 +875,7 @@ export class PresetsController {
                     location: vscode.ProgressLocation.Notification,
                     title: localize('loading.test.preset', 'Loading test preset {0}', presetName)
                 },
-                () => this._cmakeTools.setTestPreset(presetName)
+                () => this.cmakeProject.setTestPreset(presetName)
             );
 
             if (checkChangingPreset) {
@@ -887,7 +887,7 @@ export class PresetsController {
                     location: vscode.ProgressLocation.Notification,
                     title: localize('unloading.test.preset', 'Unloading test preset.')
                 },
-                () => this._cmakeTools.setTestPreset(null)
+                () => this.cmakeProject.setTestPreset(null)
             );
         }
     }
@@ -923,7 +923,7 @@ export class PresetsController {
 
         let presetsFile: preset.PresetsFile;
         try {
-            if (this._cmakeTools.workspaceContext.config.allowCommentsInPresetsFile) {
+            if (this.cmakeProject.workspaceContext.config.allowCommentsInPresetsFile) {
                 presetsFile = json5.parse(fileContent.toLocaleString());
             } else {
                 presetsFile = JSON.parse(fileContent.toLocaleString());
