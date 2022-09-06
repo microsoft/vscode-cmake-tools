@@ -1,4 +1,4 @@
-name: CI (Windows)
+name: CI (macOS)
 
 on:
   push:
@@ -8,11 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2019
+    runs-on: macos-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       - name: Setup Yarn environment
         uses: DerYeger/yarn-setup-action@v1.0.1
@@ -25,7 +24,6 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      # The cmake server mode has been removed since CMake 3.20
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@v3.18.3
 
@@ -37,7 +35,7 @@ jobs:
           install-build: true
 
       - name: Delete NOTICE.txt
-        run: del ${{ github.workspace }}/NOTICE.txt
+        run: rm ${{ github.workspace }}/NOTICE.txt
 
       - name: Run backend tests
         run: yarn backendTests

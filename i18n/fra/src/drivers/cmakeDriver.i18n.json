@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "Exécution des contrôles et des étapes de préconfiguration",
 	"source.directory.not.set": "Répertoire source non défini",
 	"not.configuring": "Aucune configuration : {0} n'existe pas",
-	"no.build.preset": "Aucune présélection de build sélectionnée",
-	"cmake.build.args.are": "Arguments de build CMake : {0}"
+	"cmake.build.args.are": "Arguments de build CMake : {0}",
+	"no.build.preset": "Aucune présélection de build sélectionnée"
 }

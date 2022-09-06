@@ -417,11 +417,11 @@ export function parseCompileDefinition(str: string): [string, string | null] {
 }
 
 export function thisExtension() {
-    const ext = vscode.extensions.getExtension('ms-vscode.cmake-tools');
-    if (!ext) {
-        throw new Error(localize('extension.is.null', 'Our own extension is null! What gives?'));
+    const extension = vscode.extensions.getExtension('ms-vscode.cmake-tools');
+    if (!extension) {
+        throw new Error(localize('extension.is.undefined', 'Extension is undefined!'));
     }
-    return ext;
+    return extension;
 }
 
 export interface PackageJSON {
@@ -599,6 +599,28 @@ export function checkDirectoryExists(filePath: string): Promise<boolean> {
             resolve(stats && stats.isDirectory());
         });
     });
+}
+
+/** Test whether a directory exists */
+export function checkDirectoryExistsSync(dirPath: string): boolean {
+    try {
+        return fs.statSync(dirPath).isDirectory();
+    } catch (e) {
+    }
+    return false;
+}
+
+export function createDirIfNotExistsSync(dirPath: string | undefined): void {
+    if (!dirPath) {
+        return;
+    }
+    if (!checkDirectoryExistsSync(dirPath)) {
+        try {
+            fs.mkdirSync(dirPath, {recursive: true});
+        } catch (e) {
+            console.log(e);
+        }
+    }
 }
 
 // Read the files in a directory.
