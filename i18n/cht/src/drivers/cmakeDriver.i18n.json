@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "正在執行預先設定的檢查及步驟",
 	"source.directory.not.set": "未設定來源目錄",
 	"not.configuring": "未設定: 沒有 {0}",
-	"no.build.preset": "未選取建置預設",
-	"cmake.build.args.are": "CMake 建置引數為: {0}"
+	"cmake.build.args.are": "CMake 建置引數為: {0}",
+	"no.build.preset": "未選取建置預設"
 }

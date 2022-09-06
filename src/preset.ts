@@ -1657,3 +1657,11 @@ export function configurePresetChangeNeedsClean(newPreset: ConfigurePreset, oldP
         return false;
     }
 }
+
+export function getValue(value: string | ValueStrategy): string | undefined {
+    if (util.isString(value)) {
+        return value;
+    } else if (value.strategy === 'set') {
+        return value.value;
+    }
+}

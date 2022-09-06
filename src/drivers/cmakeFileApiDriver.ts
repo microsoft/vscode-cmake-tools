@@ -1,5 +1,5 @@
 import * as api from '@cmt/api';
-import { ConfigureTrigger } from '@cmt/cmakeTools';
+import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { ExecutableTarget } from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
@@ -25,7 +25,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
-import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 
 import { NoGeneratorError } from './cmakeServerDriver';
 
@@ -221,36 +221,46 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
-        const api_path = this.getCMakeFileApiPath();
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
+        const api_path = this.getCMakeFileApiPath(configurePreset?.binaryDir);
         await createQueryFileForApi(api_path);
 
         // Dup args so we can modify them
         const args = Array.from(args_);
-
-        // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
-        args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
-        args.push(`-B${util.lightNormalizePath(this.binaryDir)}`);
-
-        const gen = this.generator;
         let has_gen = false;
         for (const arg of args) {
             if (arg.startsWith("-DCMAKE_GENERATOR:STRING=")) {
                 has_gen = true;
             }
         }
-        if (!has_gen && gen) {
-            args.push('-G');
-            args.push(gen.name);
-            if (gen.toolset) {
-                args.push('-T');
-                args.push(gen.toolset);
-            }
-            if (gen.platform) {
-                args.push('-A');
-                args.push(gen.platform);
+        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
+        // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
+        args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
+        args.push(`-B${util.lightNormalizePath(binaryDir)}`);
+
+        if (!has_gen) {
+            const generator = (configurePreset) ? {
+                name: configurePreset.generator,
+                platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
+                toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
+
+            } : this.generator ;
+            if (generator) {
+                if (generator.name) {
+                    args.push('-G');
+                    args.push(generator.name);
+                }
+                if (generator.toolset) {
+                    args.push('-T');
+                    args.push(generator.toolset);
+                }
+                if (generator.platform) {
+                    args.push('-A');
+                    args.push(generator.platform);
+                }
             }
         }
+
         const cmake = this.cmake.path;
         if (showCommandOnly) {
             log.showChannel();
@@ -259,15 +269,20 @@ export class CMakeFileApiDriver extends CMakeDriver {
         } else {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
-            const env = await this.getConfigureEnvironment();
-            const res = await this.executeCommand(cmake, args, outputConsumer, { environment: env, cwd: this.binaryDir }).result;
-            log.trace(res.stderr);
-            log.trace(res.stdout);
-            if (res.retc === 0) {
-                this._needsReconfigure = false;
-                await this.updateCodeModel();
+            const env = await this.getConfigureEnvironment(configurePreset, options?.environment);
+            const result = await this.executeCommand(cmake, args, outputConsumer, {
+                environment: env,
+                cwd: options?.cwd ?? binaryDir
+            }).result;
+            log.trace(result.stderr);
+            log.trace(result.stdout);
+            if (result.retc === 0) {
+                if (!configurePreset) {
+                    this._needsReconfigure = false;
+                }
+                await this.updateCodeModel(configurePreset?.binaryDir);
             }
-            return res.retc === null ? -1 : res.retc;
+            return result.retc === null ? -1 : result.retc;
         }
     }
 
@@ -276,17 +291,17 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return true;
     }
 
-    private getCMakeFileApiPath() {
-        return path.join(this.binaryDir, '.cmake', 'api', 'v1');
+    private getCMakeFileApiPath(binaryDir?: string) {
+        return path.join(binaryDir ?? this.binaryDir, '.cmake', 'api', 'v1');
     }
-    private getCMakeReplyPath() {
-        const api_path = this.getCMakeFileApiPath();
+    private getCMakeReplyPath(binaryDir?: string) {
+        const api_path = this.getCMakeFileApiPath(binaryDir);
         return path.join(api_path, 'reply');
     }
 
     private toolchainWarningProvided: boolean = false;
-    private async updateCodeModel(): Promise<boolean> {
-        const reply_path = this.getCMakeReplyPath();
+    private async updateCodeModel(binaryDir?: string): Promise<boolean> {
+        const reply_path = this.getCMakeReplyPath(binaryDir);
         const indexFile = await loadIndexFile(reply_path);
         if (indexFile) {
             this._generatorInformation = indexFile.cmake.generator;

@@ -1,4 +1,4 @@
-name: CI (Windows)
+name: CI (Linux)
 
 on:
   push:
@@ -8,11 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2019
+    runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       - name: Setup Yarn environment
         uses: DerYeger/yarn-setup-action@v1.0.1
@@ -25,7 +24,6 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      # The cmake server mode has been removed since CMake 3.20
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@v3.18.3
 
@@ -37,25 +35,35 @@ jobs:
           install-build: true
 
       - name: Delete NOTICE.txt
-        run: del ${{ github.workspace }}/NOTICE.txt
+        run: rm ${{ github.workspace }}/NOTICE.txt
 
       - name: Run backend tests
         run: yarn backendTests
 
       - name: Run smoke tests
-        run: yarn smokeTests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn smokeTests
 
       - name: Run unit tests
-        run: yarn unitTests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn unitTests
 
       - name: Run successful-build test
-        run: yarn extensionTestsSuccessfulBuild
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn extensionTestsSuccessfulBuild
 
       - name: Run single root test
-        run: yarn extensionTestsSingleRoot
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn extensionTestsSingleRoot
 
       - name: Run multi root test
-        run: yarn extensionTestsMultiRoot
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn extensionTestsMultiRoot
 
       - name: Upload test logs if tests failed
         if: failure()

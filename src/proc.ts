@@ -10,7 +10,6 @@ import * as iconv from 'iconv-lite';
 import { createLogger } from './logging';
 import rollbar from './rollbar';
 import * as util from './util';
-
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { ExecutionResult } from './api';
@@ -132,6 +131,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         shell: !!options.shell
     };
     if (options?.cwd !== undefined) {
+        util.createDirIfNotExistsSync(options.cwd);
         spawn_opts.cwd = options.cwd;
     }
     if (options?.timeout) {
@@ -176,6 +176,15 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         }
 
         const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
+        const accumulate = (str1: string, str2: string) => {
+            try {
+                return str1 + str2;
+            } catch {
+                // If the resulting string is longer than can be represented by `string.length`, an exception will be thrown.
+                // Don't accumulate any more content at this point.
+                return str1;
+            }
+        };
 
         result = new Promise<ExecutionResult>(resolve => {
             let stdout_acc = '';
@@ -195,7 +204,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     const str = iconv.decode(Buffer.from(data), encoding);
                     const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                     while (lines.length > 1) {
-                        line_acc += lines[0];
+                        line_acc = accumulate(line_acc, lines[0]);
                         if (outputConsumer) {
                             outputConsumer.output(line_acc);
                         } else if (util.isTestMode()) {
@@ -206,8 +215,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         lines.splice(0, 1);
                     }
                     console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-                    line_acc += lines[0];
-                    stdout_acc += str;
+                    line_acc = accumulate(line_acc, lines[0]);
+                    stdout_acc = accumulate(stdout_acc, str);
                 });
             });
             child?.stderr?.on('data', (data: Uint8Array) => {
@@ -215,7 +224,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     const str = iconv.decode(Buffer.from(data), encoding);
                     const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                     while (lines.length > 1) {
-                        stderr_line_acc += lines[0];
+                        stderr_line_acc = accumulate(stderr_line_acc, lines[0]);
                         if (outputConsumer) {
                             outputConsumer.error(stderr_line_acc);
                         } else if (util.isTestMode() && stderr_line_acc) {
@@ -226,8 +235,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         lines.splice(0, 1);
                     }
                     console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-                    stderr_line_acc += lines[0];
-                    stderr_acc += str;
+                    stderr_line_acc = accumulate(stderr_line_acc, lines[0]);
+                    stderr_acc = accumulate(stderr_acc, str);
                 });
             });
             // The 'close' event is emitted after a process has ended and the stdio streams of a child process have been closed.

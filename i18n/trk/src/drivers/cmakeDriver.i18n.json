@@ -40,6 +40,6 @@
 	"running.pre-configure.checks": "Ön yapılandırma denetimleri ve adımları çalıştırılıyor",
 	"source.directory.not.set": "Kaynak dizin ayarlanmadı",
 	"not.configuring": "Yapılandırma yok: {0} yok",
-	"no.build.preset": "Derleme ön ayarı seçilmedi",
-	"cmake.build.args.are": "CMake derleme bağımsız değişkenleri: {0}"
+	"cmake.build.args.are": "CMake derleme bağımsız değişkenleri: {0}",
+	"no.build.preset": "Derleme ön ayarı seçilmedi"
 }

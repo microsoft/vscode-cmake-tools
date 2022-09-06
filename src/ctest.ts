@@ -11,8 +11,9 @@ import { fs } from './pr';
 import { OutputConsumer } from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
-import { testArgs } from './preset';
+import { testArgs, TestPreset } from './preset';
 import { expandString } from './expand';
+import * as proc from '@cmt/proc';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -69,22 +70,23 @@ interface EncodedMeasurementValue {
 }
 
 interface MessyResults {
-    site: {
+    Site: {
         $: {};
-        testing: {
-            testList: { test: string[] }[]; endDateTime: string[];
-            endTestTime: string[];
-            elapsedMinutes: string[];
-            test: {
-                $: { status: TestStatus };
-                fullCommandLine: string[];
-                fullName: string[];
-                name: string[];
-                path: string[];
-                results: {
-                    namedMeasurement:
-                    { $: { type: string; name: string }; value: string[] }[];
-                    measurement: { value: [EncodedMeasurementValue | string] }[];
+        Testing: {
+            TestList: { Test: string[] }[];
+            EndDateTime: string[];
+            EndTestTime: string[];
+            ElapsedMinutes: string[];
+            Test: {
+                $: { Status: TestStatus };
+                FullCommandLine: string[];
+                FullName: string[];
+                Name: string[];
+                Path: string[];
+                Results: {
+                    NamedMeasurement:
+                    { $: { Type: string; Name: string }; Value: string[] }[];
+                    Measurement: { Value: [EncodedMeasurementValue | string] }[];
                 }[];
             }[];
         }[];
@@ -115,13 +117,13 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue | string): string
 }
 
 function cleanupResultsXml(messy: MessyResults): CTestResults {
-    const testingHead = messy.site.testing[0];
-    if (testingHead.testList.length === 1 && (testingHead.testList[0] as any as string) === '') {
+    const testingHead = messy.Site.Testing[0];
+    if (testingHead.TestList.length === 1 && (testingHead.TestList[0] as any as string) === '') {
         // XML parsing is obnoxious. This condition means that there are no tests,
         // but CTest is still enabled.
         return {
             site: {
-                $: messy.site.$,
+                $: messy.Site.$,
                 testing: {
                     testList: [],
                     test: []
@@ -131,28 +133,32 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
     }
     return {
         site: {
-            $: messy.site.$,
+            $: messy.Site.$,
             testing: {
-                testList: testingHead.testList.map(l => l.test[0]),
-                test: testingHead.test.map((test): Test => ({
-                    fullName: test.fullName[0],
-                    fullCommandLine: test.fullCommandLine[0],
-                    name: test.name[0],
-                    path: test.path[0],
-                    status: test.$.status,
+                testList: testingHead.TestList[0].Test,
+                test: testingHead.Test.map((test): Test => ({
+                    fullName: test.FullName[0],
+                    fullCommandLine: test.FullCommandLine[0],
+                    name: test.Name[0],
+                    path: test.Path[0],
+                    status: test.$.Status,
                     measurements: new Map<string, TestMeasurement>(),
-                    output: decodeOutputMeasurement(test.results[0].measurement[0].value[0])
+                    output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0])
                 }))
             }
         }
     };
 }
 
-export async function readTestResultsFile(testXml: string) {
-    const content = (await fs.readFile(testXml)).toString();
-    const data = await parseXmlString(content) as MessyResults;
-    const clean = cleanupResultsXml(data);
-    return clean;
+export async function readTestResultsFile(testXml: string): Promise<CTestResults | undefined> {
+    try {
+        const content = (await fs.readFile(testXml)).toString();
+        const data = await parseXmlString(content) as MessyResults;
+        const clean = cleanupResultsXml(data);
+        return clean;
+    } catch {
+        return undefined;
+    }
 }
 
 export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
@@ -167,7 +173,7 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
             const [, file, arg2] = result;
             const lineNumber = parseInt(arg2) - 1;
             let message = '~~~c++\n';
-            for (let i = 0; ; ++i) {
+            for (let i = 0; cursor + i < untrimmedLines.length; ++i) {
                 const untrimmedLine = untrimmedLines[cursor + i];
                 if (untrimmedLine.startsWith('======') || untrimmedLine.startsWith('------')) {
                     break;
@@ -250,20 +256,16 @@ export class DecorationManager {
         const fails: vscode.DecorationOptions[] = [];
         const editorFile = util.lightNormalizePath(editor.document.fileName);
         for (const decor of this.failingTestDecorations) {
-            const decoratedFile = util.lightNormalizePath(
-                path.isAbsolute(decor.fileName) ? decor.fileName : path.join(this.binaryDir, decor.fileName));
+            const decoratedFile = util.lightNormalizePath(path.isAbsolute(decor.fileName) ? decor.fileName : path.join(this.binaryDir, decor.fileName));
             if (editorFile !== decoratedFile) {
                 continue;
             }
-            const fileLine = editor.document.lineAt(decor.lineNumber);
-            const range = new vscode.Range(decor.lineNumber,
-                fileLine.firstNonWhitespaceCharacterIndex,
-                decor.lineNumber,
-                fileLine.range.end.character);
-            fails.push({
-                hoverMessage: decor.hoverMessage,
-                range
-            });
+            try {
+                const fileLine = editor.document.lineAt(decor.lineNumber);
+                const range = new vscode.Range(decor.lineNumber, fileLine.firstNonWhitespaceCharacterIndex, decor.lineNumber, fileLine.range.end.character);
+                fails.push({ hoverMessage: decor.hoverMessage, range });
+            } catch {
+            }
         }
         editor.setDecorations(this.failingTestDecorationType, fails);
     }
@@ -341,11 +343,11 @@ export class CTestDriver implements vscode.Disposable {
     private readonly testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();
     readonly onTestsChanged = this.testsChangedEmitter.event;
 
-    private _testResults: CTestResults | null = null;
-    get testResults(): CTestResults | null {
+    private _testResults?: CTestResults;
+    get testResults(): CTestResults | undefined {
         return this._testResults;
     }
-    set testResults(v: CTestResults | null) {
+    set testResults(v: CTestResults | undefined) {
         this._testResults = v;
         if (v) {
             const total = v.site.testing.test.length;
@@ -359,8 +361,11 @@ export class CTestDriver implements vscode.Disposable {
     private readonly resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
     readonly onResultsChanged = this.resultsChangedEmitter.event;
 
-    async runCTest(driver: CMakeDriver): Promise<number> {
-        log.showChannel();
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number|null> {
+        if (!customizedTask) {
+            // We don't want to focus on log channel when running tasks.
+            log.showChannel();
+        }
         this.decorationManager.clearFailingTestDecorations();
 
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
@@ -370,7 +375,9 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         let ctestArgs: string[];
-        if (driver.useCMakePresets) {
+        if (customizedTask && testPreset) {
+            ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
+        } else if (!customizedTask && driver.useCMakePresets) {
             if (!driver.testPreset) {
                 log.error(localize('test.preset.not.set', 'Test preset is not set'));
                 return -3;
@@ -395,7 +402,7 @@ export class CTestDriver implements vscode.Disposable {
         const child = driver.executeCommand(
             ctestpath,
             ctestArgs,
-            new CTestOutputLogger(),
+            ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
         await this.reloadTests(driver);
@@ -455,7 +462,7 @@ export class CTestDriver implements vscode.Disposable {
             console.assert(tagDir);
             await this.reloadTestResults(resultsFile);
         } else {
-            this.testResults = null;
+            this.testResults = undefined;
         }
 
         return tests;
@@ -463,7 +470,7 @@ export class CTestDriver implements vscode.Disposable {
 
     private async reloadTestResults(testXml: string): Promise<void> {
         this.testResults = await readTestResultsFile(testXml);
-        const failing = this.testResults.site.testing.test.filter(t => t.status === 'failed');
+        const failing = this.testResults?.site.testing.test.filter(t => t.status === 'failed') || [];
         this.decorationManager.clearFailingTestDecorations();
         const newDecors = [] as FailingTestDecoration[];
         for (const t of failing) {
@@ -480,9 +487,10 @@ export class CTestDriver implements vscode.Disposable {
         if (!currentTestResults) {
             return;
         }
-        for (const cTestRes of currentTestResults.site.testing.test) {
+        for (const cTestRes of currentTestResults.site.testing.test || []) {
             cTestRes.status = 'notrun';
         }
         this.testResults = currentTestResults;
     }
 }
+
