@@ -162,6 +162,6 @@
 	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "Переменные среды в формате \"name\": \"значение\".",
 	"cmake-tools.taskDefinitions.properties.details.description": "Дополнительные сведения о задаче",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Экземпляр терминала запуска используется повторно, а целевой объект запустится сразу после перехода терминала в режим простоя.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Экземпляр терминала запуска используется повторно, и в терминал отправляется команда \"break\" перед запуском целевого объекта, чтобы завершить все активные процессы переднего плана.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Экземпляр терминала запуска используется повторно, и в терминал отправляется команда `break` перед запуском целевого объекта, чтобы завершить все активные процессы переднего плана.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Создан новый экземпляр терминала, в котором запущен целевой объект. Существующие терминалы не очищаются автоматически."
 }
