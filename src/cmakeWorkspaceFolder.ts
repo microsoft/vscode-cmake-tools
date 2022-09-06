@@ -322,9 +322,9 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
             return existing;
         }
         // Load for the workspace.
-        const new_cmt = await this.loadCMakeProjectForWorkspaceFolder(folder);
+        const newProject = await this.loadCMakeProjectForWorkspaceFolder(folder);
         // Remember it
-        const inst = await CMakeWorkspaceFolder.init(new_cmt);
+        const inst = await CMakeWorkspaceFolder.init(newProject);
 
         this.instances.set(folder.uri.fsPath, inst);
 

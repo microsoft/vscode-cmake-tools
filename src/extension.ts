@@ -1857,9 +1857,9 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
         }
     }
 
-    // This shouldn't normally happen (not finding a CMT or not having a valid extension manager)
+    // This shouldn't normally happen (not finding a cmake project or not having a valid extension manager)
     // but just in case, enable full feature set.
-    log.info(`Cannot find CMT for folder ${folder.name} or we don't have an extension manager created yet. ` +
+    log.info(`Cannot find CMake Project for folder ${folder.name} or we don't have an extension manager created yet. ` +
         `Setting feature set view to "full".`);
     await enableFullFeatureSet(true);
 }
