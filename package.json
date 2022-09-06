@@ -1965,6 +1965,12 @@
           "default": false,
           "markdownDescription": "%cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description%",
           "scope": "resource"
+        },
+        "cmake.loadCompileCommands": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.loadCompileCommands.description%",
+          "scope": "resource"
         }
       }
     },

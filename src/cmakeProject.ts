@@ -1223,8 +1223,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
                 log.debug(localize('cannot.copy.compile.commands', 'Cannot copy {1} because it does not exist at {0}', compdbPath, 'compile_commands.json'));
             }
         }
-
-        if (compdbPaths.length > 0) {
+        if (!this.workspaceContext.config.loadCompileCommands) {
+            this.compilationDatabase = null;
+        } else if (compdbPaths.length > 0) {
             // Read the compilation database, and update our db property
             const newDB = await CompilationDatabase.fromFilePaths(compdbPaths);
             this.compilationDatabase = newDB;

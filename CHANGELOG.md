@@ -1,6 +1,10 @@
 # What's New?
 
-## 1.12
+## 1.13
+Improvements:
+- Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
+
+## 1.12.26
 Improvements:
 - Support for presets version 4. [#2492](https://github.com/microsoft/vscode-cmake-tools/issues/2492) [@chausner](https://github.com/chausner)
 - Triggering reconfigure after changes are made to included files. [#2526](https://github.com/microsoft/vscode-cmake-tools/issues/2526) [@chausner](https://github.com/chausner)
