@@ -1,33 +1,33 @@
 import * as api from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeTools, ConfigureTrigger } from '@cmt/cmakeTools';
+import { CMakeProject, ConfigureTrigger } from '@cmt/cmakeProject';
 import paths from '@cmt/paths';
 import { objectPairs, platformNormalizePath, makeHashString } from '@cmt/util';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as path from 'path';
 
 suite('Variable Substitution', () => {
-    let cmt: CMakeTools;
+    let cmakeProject: CMakeProject;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmt.setKit(await getFirstSystemKit(cmt));
+        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
 
         testEnv.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
-        await cmt.asyncDispose();
+        await cmakeProject.asyncDispose();
         testEnv.teardown();
     });
 
@@ -50,9 +50,9 @@ suite('Variable Substitution', () => {
 
         // Configure
         //expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[workspaceRoot] configure failed');
-        await cmt.configureInternal(ConfigureTrigger.runTests);
+        await cmakeProject.configureInternal(ConfigureTrigger.runTests);
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-        const cache = await CMakeCache.fromPath(await cmt.cachePath);
+        const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
         // Check substitution for "workspaceRoot"
         let cacheEntry = cache.get('workspaceRoot') as api.CacheEntry;
@@ -88,7 +88,7 @@ suite('Variable Substitution', () => {
         cacheEntry = cache.get('buildKit') as api.CacheEntry;
         expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[buildKit] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('buildKit', '[buildKit] unexpected cache entry key name');
-        const kit = cmt.activeKit;
+        const kit = cmakeProject.activeKit;
         expect(cacheEntry.as<string>()).to.eq(kit!.name, '[buildKit] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[buildKit] unexpected cache entry value type');
 
@@ -146,9 +146,9 @@ suite('Variable Substitution', () => {
         testEnv.config.updatePartial({ configureSettings: configSettings });
 
         // Configure and retrieve generated cache
-        expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[variant] configure failed');
+        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[variant] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, '[variant] cache not found');
-        const cache = await CMakeCache.fromPath(await cmt.cachePath);
+        const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
         // Helper function for checking test keys in a cmake cache
         const checkTestKey = async (testKey: [string, string], testCache: CMakeCache) => {
