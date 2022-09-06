@@ -6,7 +6,7 @@ import * as nls from 'vscode-nls';
 import * as path from 'path';
 
 import * as util from '@cmt/util';
-import CMakeTools from '@cmt/cmakeTools';
+import CMakeProject from '@cmt/cmakeProject';
 import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
@@ -38,26 +38,26 @@ export class CMakeWorkspaceFolder {
 
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
 
-    private constructor(readonly cmakeTools: CMakeTools,
+    private constructor(readonly cmakeProject: CMakeProject,
         readonly kitsController: KitsController,
         readonly presetsController: PresetsController) {}
 
-    static async init(cmakeTools: CMakeTools) {
-        const kitsController = await KitsController.init(cmakeTools);
-        const presetsController = await PresetsController.init(cmakeTools, kitsController);
-        const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeTools, kitsController, presetsController);
+    static async init(cmakeProject: CMakeProject) {
+        const kitsController = await KitsController.init(cmakeProject);
+        const presetsController = await PresetsController.init(cmakeProject, kitsController);
+        const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeProject, kitsController, presetsController);
 
         const useCMakePresetsChangedListener = async () => {
             const usingCMakePresets = cmakeWorkspaceFolder.useCMakePresets;
             if (usingCMakePresets !== cmakeWorkspaceFolder.wasUsingCMakePresets) {
                 cmakeWorkspaceFolder.wasUsingCMakePresets = usingCMakePresets;
                 await setContextValue('useCMakePresets', usingCMakePresets);
-                await cmakeTools.setUseCMakePresets(usingCMakePresets);
+                await cmakeProject.setUseCMakePresets(usingCMakePresets);
                 await CMakeWorkspaceFolder.initializeKitOrPresetsInCmt(cmakeWorkspaceFolder);
 
                 if (usingCMakePresets) {
                     const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
-                        const config = cmakeWorkspaceFolder.cmakeTools.workspaceContext.config;
+                        const config = cmakeWorkspaceFolder.cmakeProject.workspaceContext.config;
                         const fileName = path.basename(document.uri.fsPath);
                         if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
                             if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
@@ -87,7 +87,7 @@ export class CMakeWorkspaceFolder {
 
         await useCMakePresetsChangedListener();
 
-        cmakeWorkspaceFolder.disposables.push(cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
+        cmakeWorkspaceFolder.disposables.push(cmakeProject.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
         cmakeWorkspaceFolder.disposables.push(presetsController.onPresetsChanged(useCMakePresetsChangedListener));
         cmakeWorkspaceFolder.disposables.push(presetsController.onUserPresetsChanged(useCMakePresetsChangedListener));
 
@@ -95,25 +95,25 @@ export class CMakeWorkspaceFolder {
     }
 
     get folder() {
-        return this.cmakeTools.folder;
+        return this.cmakeProject.folder;
     }
 
     // Go through the decision tree here since there would be dependency issues if we do this in config.ts
     get useCMakePresets(): boolean {
-        if (this.cmakeTools.workspaceContext.config.useCMakePresets === 'auto') {
+        if (this.cmakeProject.workspaceContext.config.useCMakePresets === 'auto') {
             // TODO (P1): check if configured with kits + vars
             // // Always check if configured before since the state could be reset
-            // const state = this.cmakeTools.workspaceContext.state;
+            // const state = this.cmakeProject.workspaceContext.state;
             // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
             // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
             return this.presetsController.presetsFileExist;
         }
-        return this.cmakeTools.workspaceContext.config.useCMakePresets === 'always';
+        return this.cmakeProject.workspaceContext.config.useCMakePresets === 'always';
     }
 
     async getDiagnostics(): Promise<DiagnosticsConfiguration> {
         try {
-            const drv = await this.cmakeTools.getCMakeDriverInstance();
+            const drv = await this.cmakeProject.getCMakeDriverInstance();
             if (drv) {
                 return drv.getDiagnostics();
             }
@@ -131,7 +131,7 @@ export class CMakeWorkspaceFolder {
 
     async getSettingsDiagnostics(): Promise<DiagnosticsSettings> {
         try {
-            const drv = await this.cmakeTools.getCMakeDriverInstance();
+            const drv = await this.cmakeProject.getCMakeDriverInstance();
             if (drv) {
                 return {
                     communicationMode: drv.config.cmakeCommunicationMode,
@@ -156,24 +156,24 @@ export class CMakeWorkspaceFolder {
         if (this.onDidOpenTextDocumentListener) {
             this.onDidOpenTextDocumentListener.dispose();
         }
-        this.cmakeTools.dispose();
+        this.cmakeProject.dispose();
         this.kitsController.dispose();
     }
 
     private static async initializeKitOrPresetsInCmt(folder: CMakeWorkspaceFolder) {
         if (folder.useCMakePresets) {
-            const configurePreset = folder.cmakeTools.workspaceContext.state.configurePresetName;
+            const configurePreset = folder.cmakeProject.workspaceContext.state.configurePresetName;
             if (configurePreset) {
                 await folder.presetsController.setConfigurePreset(configurePreset);
             }
         } else {
-            // Check if the CMakeTools remembers what kit it was last using in this dir:
-            const kitName = folder.cmakeTools.workspaceContext.state.activeKitName;
+            // Check if the CMakeProject remembers what kit it was last using in this dir:
+            const kitName = folder.cmakeProject.workspaceContext.state.activeKitName;
             if (kitName) {
                 // It remembers a kit. Find it in the kits avail in this dir:
                 const kit = folder.kitsController.availableKits.find(k => k.name === kitName) || null;
                 // Set the kit: (May do nothing if no kit was found)
-                await folder.cmakeTools.setKit(kit);
+                await folder.cmakeProject.setKit(kit);
             }
         }
     }
@@ -210,7 +210,7 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
      * The active workspace folder. This controls several aspects of the extension,
      * including:
      *
-     * - Which CMakeTools backend receives commands from the user
+     * - Which CMakeProject backend receives commands from the user
      * - Where we search for variants
      * - Where we search for workspace-local kits
      */
@@ -246,7 +246,7 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
     }
 
     /**
-     * Get the CMakeTools instance associated with the given workspace folder, or undefined
+     * Get the CMakeProject instance associated with the given workspace folder, or undefined
      * @param ws The workspace folder to search, or array of command and workspace path
      */
     get(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeWorkspaceFolder | undefined {
@@ -301,19 +301,19 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
     }
 
     /**
-     * Load a new CMakeTools for the given workspace folder and remember it.
+     * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
      */
-    private loadCMakeToolsForWorkspaceFolder(folder: vscode.WorkspaceFolder) {
+    private loadCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder) {
         // Create the backend:
-        return CMakeTools.createForDirectory(folder, this.extensionContext);
+        return CMakeProject.createForDirectory(folder, this.extensionContext);
     }
 
     /**
      * Create a new instance of the backend to support the given workspace folder.
      * The given folder *must not* already be loaded.
      * @param folder The workspace folder to load for
-     * @returns The newly created CMakeTools backend for the given folder
+     * @returns The newly created CMakeProject backend for the given folder
      */
     private async _addFolder(folder: vscode.WorkspaceFolder) {
         const existing = this.get(folder);
@@ -322,9 +322,9 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
             return existing;
         }
         // Load for the workspace.
-        const new_cmt = await this.loadCMakeToolsForWorkspaceFolder(folder);
+        const newProject = await this.loadCMakeProjectForWorkspaceFolder(folder);
         // Remember it
-        const inst = await CMakeWorkspaceFolder.init(new_cmt);
+        const inst = await CMakeWorkspaceFolder.init(newProject);
 
         this.instances.set(folder.uri.fsPath, inst);
 
@@ -333,7 +333,7 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
     }
 
     /**
-     * Remove knowledge of the given workspace folder. Disposes of the CMakeTools
+     * Remove knowledge of the given workspace folder. Disposes of the CMakeProject
      * instance associated with the workspace.
      * @param folder The workspace to remove for
      */

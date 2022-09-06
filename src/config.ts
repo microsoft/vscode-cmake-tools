@@ -123,6 +123,7 @@ export interface ExtensionConfigurationSettings {
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
+    loadCompileCommands: boolean;
     configureOnOpen: boolean | null;
     configureOnEdit: boolean;
     skipConfigureIfCachePresent: boolean | null;
@@ -397,6 +398,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
     }
+    get loadCompileCommands(): boolean {
+        return this.configData.loadCompileCommands;
+    }
     get showSystemKits(): boolean {
         return this.configData.showSystemKits;
     }
@@ -466,6 +470,7 @@ export class ConfigurationReader implements vscode.Disposable {
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
+        loadCompileCommands: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean | null>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
