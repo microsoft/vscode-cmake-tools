@@ -6,97 +6,97 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 suite('Debug/Launch interface', () => {
-    let cmt: CMakeProject;
+    let cmakeProject: CMakeProject;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
-        await cmt.setKit(await getFirstSystemKit(cmt));
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
         testEnv.projectFolder.buildDirectory.clear();
-        expect(await cmt.build()).to.be.eq(0);
+        expect(await cmakeProject.build()).to.be.eq(0);
     });
 
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
-        await cmt.asyncDispose();
+        await cmakeProject.asyncDispose();
         testEnv.teardown();
     });
 
     test('Test buildTargetName for use in other extensions or launch.json', async () => {
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        expect(await cmt.buildTargetName()).to.be.eq(await cmt.allTargetName);
+        expect(await cmakeProject.buildTargetName()).to.be.eq(await cmakeProject.allTargetName);
 
-        await cmt.setDefaultTarget(executablesTargets[0].name);
-        expect(await cmt.buildTargetName()).to.be.eq(executablesTargets[0].name);
+        await cmakeProject.setDefaultTarget(executablesTargets[0].name);
+        expect(await cmakeProject.buildTargetName()).to.be.eq(executablesTargets[0].name);
     });
 
     test('Test launchTargetPath for use in other extensions or launch.json', async () => {
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        expect(await cmt.launchTargetPath()).to.be.eq(executablesTargets[0].path);
+        expect(await cmakeProject.launchTargetPath()).to.be.eq(executablesTargets[0].path);
     });
 
     test('Test launchTargetDirectory for use in other extensions or launch.json', async () => {
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        expect(await cmt.launchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
+        expect(await cmakeProject.launchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
     });
 
     test('Test launchTargetFilename for use in other extensions or launch.json', async () => {
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        expect(await cmt.launchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
+        expect(await cmakeProject.launchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
     });
 
     test('Test getLaunchTargetPath for use in other extensions or launch.json', async () => {
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        expect(await cmt.getLaunchTargetPath()).to.be.eq(executablesTargets[0].path);
+        expect(await cmakeProject.getLaunchTargetPath()).to.be.eq(executablesTargets[0].path);
     });
 
     test('Test getLaunchTargetDirectory for use in other extensions or launch.json', async () => {
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        expect(await cmt.getLaunchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
+        expect(await cmakeProject.getLaunchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
     });
 
     test('Test getLaunchTargetFilename for use in other extensions or launch.json', async () => {
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
 
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        expect(await cmt.getLaunchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
+        expect(await cmakeProject.getLaunchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
     });
 
     test('Test build on launch (default)', async () => {
         testEnv.config.updatePartial({ buildBeforeRun: undefined });
 
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        const launchProgramPath = await cmt.launchTargetPath();
+        const launchProgramPath = await cmakeProject.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
         const validPath: string = launchProgramPath!;
 
@@ -105,22 +105,22 @@ suite('Debug/Launch interface', () => {
         expect(fs.existsSync(validPath)).to.be.false;
 
         // Check that the 'get' version does not rebuild the target
-        await cmt.getLaunchTargetPath();
+        await cmakeProject.getLaunchTargetPath();
         expect(fs.existsSync(validPath)).to.be.false;
 
         // Check that the original version does rebuild the target
-        await cmt.launchTargetPath();
+        await cmakeProject.launchTargetPath();
         expect(fs.existsSync(validPath)).to.be.false;
     }).timeout(60000);
 
     test('Test build on launch on by config', async () => {
         testEnv.config.updatePartial({ buildBeforeRun: true });
 
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        const launchProgramPath = await cmt.launchTargetPath();
+        const launchProgramPath = await cmakeProject.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
         const validPath: string = launchProgramPath!;
 
@@ -128,7 +128,7 @@ suite('Debug/Launch interface', () => {
         fs.unlinkSync(validPath);
         expect(fs.existsSync(validPath)).to.be.false;
 
-        await cmt.launchTargetPath();
+        await cmakeProject.launchTargetPath();
 
         // Check that it is compiled as a new file
         expect(fs.existsSync(validPath)).to.be.true;
@@ -137,11 +137,11 @@ suite('Debug/Launch interface', () => {
     test('Test build on launch off by config', async () => {
         testEnv.config.updatePartial({ buildBeforeRun: false });
 
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        const launchProgramPath = await cmt.launchTargetPath();
+        const launchProgramPath = await cmakeProject.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
         const validPath: string = launchProgramPath!;
 
@@ -149,7 +149,7 @@ suite('Debug/Launch interface', () => {
         fs.unlinkSync(validPath);
         expect(fs.existsSync(validPath)).to.be.false;
 
-        await cmt.launchTargetPath();
+        await cmakeProject.launchTargetPath();
 
         // Check that it is compiled as a new file
         expect(fs.existsSync(validPath)).to.be.false;
@@ -158,11 +158,11 @@ suite('Debug/Launch interface', () => {
     test('Test launch target', async () => {
         testEnv.config.updatePartial({ buildBeforeRun: false });
 
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        const launchProgramPath = await cmt.launchTargetPath();
+        const launchProgramPath = await cmakeProject.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
 
         // Remove file if exists
@@ -171,7 +171,7 @@ suite('Debug/Launch interface', () => {
             fs.unlinkSync(createdFileOnExecution);
         }
 
-        const terminal = await cmt.launchTarget();
+        const terminal = await cmakeProject.launchTarget();
         expect(terminal).to.be.not.null;
         expect(terminal!.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
@@ -193,11 +193,11 @@ suite('Debug/Launch interface', () => {
             launchBehavior: 'newTerminal'
         });
 
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        const launchProgramPath = await cmt.launchTargetPath();
+        const launchProgramPath = await cmakeProject.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
 
         // Remove file if exists
@@ -206,11 +206,11 @@ suite('Debug/Launch interface', () => {
             fs.unlinkSync(createdFileOnExecution);
         }
 
-        const term1 = await cmt.launchTarget();
+        const term1 = await cmakeProject.launchTarget();
         expect(term1).to.be.not.null;
         const term1Pid = await term1?.processId;
 
-        const term2 = await cmt.launchTarget();
+        const term2 = await cmakeProject.launchTarget();
         expect(term2).to.be.not.null;
         expect(term2!.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
@@ -224,11 +224,11 @@ suite('Debug/Launch interface', () => {
             launchBehavior: 'reuseTerminal'
         });
 
-        const executablesTargets = await cmt.executableTargets;
+        const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
-        const launchProgramPath = await cmt.launchTargetPath();
+        const launchProgramPath = await cmakeProject.launchTargetPath();
         expect(launchProgramPath).to.be.not.null;
 
         // Remove file if exists
@@ -237,11 +237,11 @@ suite('Debug/Launch interface', () => {
             fs.unlinkSync(createdFileOnExecution);
         }
 
-        const term1 = await cmt.launchTarget();
+        const term1 = await cmakeProject.launchTarget();
         expect(term1).to.be.not.null;
         const term1Pid = await term1?.processId;
 
-        const term2 = await cmt.launchTarget();
+        const term2 = await cmakeProject.launchTarget();
         expect(term2).to.be.not.null;
 
         const term2Pid = await term2?.processId;

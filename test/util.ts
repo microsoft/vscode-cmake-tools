@@ -24,11 +24,11 @@ export async function clearExistingKitConfigurationFile() {
 }
 
 export function getExtension() {
-    const cmt = vscode.extensions.getExtension<CMakeProject>('ms-vscode.cmake-tools');
-    if (!cmt) {
-        throw new Error('Extension doesn\'t exist');
+    const extension = vscode.extensions.getExtension('ms-vscode.cmake-tools');
+    if (!extension) {
+        throw new Error('Extension is undefined!');
     }
-    return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
+    return extension.isActive ? Promise.resolve(extension.exports) : extension.activate();
 }
 
 let AVAIL_KITS: Kit[] | null = null;

@@ -15,7 +15,7 @@ import * as path from 'path';
 const workername: string = process.platform;
 
 suite('Build', () => {
-    let cmt: CMakeProject;
+    let cmakeProject: CMakeProject;
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
 
@@ -27,27 +27,27 @@ suite('Build', () => {
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmt.asyncDispose();
+        await cmakeProject.asyncDispose();
     });
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
-        const kit = await getFirstSystemKit(cmt);
-        await cmt.setKit(kit);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        const kit = await getFirstSystemKit(cmakeProject);
+        await cmakeProject.setKit(kit);
         testEnv.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function (this: Mocha.Context) {
         this.timeout(100000);
-        await cmt.asyncDispose();
+        await cmakeProject.asyncDispose();
     });
 
     suiteTeardown(async () => {
@@ -61,9 +61,9 @@ suite('Build', () => {
 
     test('Configure with cache-initializer', async () => {
         testEnv.config.updatePartial({ cacheInit: 'TestCacheInit.cmake' });
-        expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
-        await cmt.setDefaultTarget('runTestTarget');
-        expect(await cmt.build()).to.be.eq(0);
+        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
+        await cmakeProject.setDefaultTarget('runTestTarget');
+        expect(await cmakeProject.build()).to.be.eq(0);
         const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
         expect(result['cookie']).to.eq('cache-init-cookie');
@@ -90,20 +90,20 @@ suite('Build', () => {
 
         // Run configure kit
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-        await cmt.build();
+        await cmakeProject.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
+        await cmakeProject.build();
 
         // Run Configure kit without preferred generator
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-        await cmt.build();
+        await cmakeProject.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
+        await cmakeProject.build();
         // Keep result1 for a later comparison
         const result1 = await testEnv.result.getResultAsJson();
 
         // Test return to previous kit
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-        await cmt.build();
+        await cmakeProject.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
+        await cmakeProject.build();
 
         const result2 = await testEnv.result.getResultAsJson();
         expect(result2['cmake-generator']).to.eql(compiler[0].generator);
@@ -115,8 +115,8 @@ suite('Build', () => {
         // or kits preferred generator in cmake-tools-kits.json.
         testEnv.config.updatePartial({ preferredGenerators: ["Ninja", "Unix Makefiles"] });
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-        await cmt.build();
+        await cmakeProject.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
+        await cmakeProject.build();
 
         const result3 = await testEnv.result.getResultAsJson();
         expect(result1['cmake-generator']).to.eql(result3['cmake-generator']);
@@ -142,14 +142,14 @@ suite('Build', () => {
 
             testEnv.config.updatePartial({ preferredGenerators: [] });
             testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-            await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
+            await cmakeProject.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
 
-            let retc = await cmt.build();
+            let retc = await cmakeProject.build();
             expect(retc).eq(0);
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-            await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-            retc = await cmt.build();
+            await cmakeProject.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
+            retc = await cmakeProject.build();
 
             expect(retc).eq(0);
             const result1 = await testEnv.result.getResultAsJson();
@@ -176,16 +176,16 @@ suite('Build', () => {
 
         testEnv.config.updatePartial({ preferredGenerators: [] });
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-        await cmt.build();
+        await cmakeProject.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
+        await cmakeProject.build();
 
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-        await cmt.configureInternal(ConfigureTrigger.runTests);
+        await cmakeProject.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
+        await cmakeProject.configureInternal(ConfigureTrigger.runTests);
 
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
-        await cmt.build();
+        await cmakeProject.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
+        await cmakeProject.build();
 
         const result1 = await testEnv.result.getResultAsJson();
         expect(result1['cmake-generator']).to.eql(compiler[0].generator);
@@ -198,12 +198,12 @@ suite('Build', () => {
             newSettings.generator = 'Ninja';  // VS generators don't create compile_commands.json
             testEnv.config.updatePartial(newSettings);
         }
-        let retc = await cmt.cleanConfigure(ConfigureTrigger.runTests);
+        let retc = await cmakeProject.cleanConfigure(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
         newSettings.copyCompileCommands = compdb_cp_path;
         testEnv.config.updatePartial(newSettings);
-        retc = await cmt.configureInternal(ConfigureTrigger.runTests);
+        retc = await cmakeProject.configureInternal(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
     }).timeout(100000);

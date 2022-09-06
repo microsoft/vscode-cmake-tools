@@ -531,7 +531,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
      * Dispose the instance
      */
     dispose() {
-        log.debug(localize('disposing.extension', 'Disposing CMakeProject extension'));
+        log.debug(localize('disposing.extension', 'Disposing CMake Tools extension'));
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
@@ -881,7 +881,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
      * Second phase of two-phase init. Called by `create`.
      */
     private async init() {
-        log.debug(localize('second.phase.init', 'Starting CMakeProject second-phase init'));
+        log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
 
         this._sourceDir = await util.normalizeAndVerifySourceDir(
             await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
