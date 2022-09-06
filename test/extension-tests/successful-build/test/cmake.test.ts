@@ -2,7 +2,7 @@ import { CMakeProject } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 
 suite('cmake', () => {
-    let cmt: CMakeProject;
+    let cmakeProject: CMakeProject;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
@@ -12,26 +12,26 @@ suite('cmake', () => {
         const exe_res = 'output.txt';
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmt.setKit(await getFirstSystemKit(cmt));
+        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
 
         testEnv.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
-        await cmt.asyncDispose();
+        await cmakeProject.asyncDispose();
         testEnv.teardown();
     });
 
     test('No cmake present message', async () => {
         testEnv.config.updatePartial({ cmakePath: 'cmake3' });
-        await cmt.allTargetName;  // Using an cmaketools command which creates the instance once.
+        await cmakeProject.allTargetName;  // Using an cmaketools command which creates the instance once.
 
         expect(testEnv.errorMessagesQueue.length).to.eql(1);  // Expect only cmake error message
         expect(testEnv.errorMessagesQueue[0]).to.contain('Bad CMake executable');

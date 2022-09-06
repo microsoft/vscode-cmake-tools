@@ -6,19 +6,19 @@ import { smokeSuite, smokeTestDefaultKit } from '@test/smoke/smoke';
 suite('Smoke test: good project', () => {
     test('Successful configure', async () => {
         smokeSuite('Smoke test: good project', suite => {
-            let cmt: CMakeProject;
+            let cmakeProject: CMakeProject;
             suite.setup('create cmake-tools', async test => {
-                cmt = await test.createCMakeProject({
+                cmakeProject = await test.createCMakeProject({
                     kit: await smokeTestDefaultKit()
                 });
             });
             suite.teardown('dispose cmake-tools', async () => {
-                if (cmt) {
-                    await cmt.asyncDispose();
+                if (cmakeProject) {
+                    await cmakeProject.asyncDispose();
                 }
             });
             suite.smokeTest('Successful configure', async () => {
-                expect(await cmt.configure()).to.eq(0);
+                expect(await cmakeProject.configure()).to.eq(0);
             });
         });
     });

@@ -8,20 +8,20 @@ import { fs } from '@cmt/pr';
 import * as path from 'path';
 
 suite('Environment Variables in Variants', () => {
-    let cmt: CMakeProject;
+    let cmakeProject: CMakeProject;
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmt = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmt.setKit(await getFirstSystemKit(cmt));
+        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
 
         testEnv.projectFolder.buildDirectory.clear();
     });
@@ -34,7 +34,7 @@ suite('Environment Variables in Variants', () => {
         }
 
         this.timeout(30000);
-        await cmt.asyncDispose();
+        await cmakeProject.asyncDispose();
         testEnv.teardown();
     });
 
@@ -73,9 +73,9 @@ suite('Environment Variables in Variants', () => {
 
         try {
             // Configure
-            expect(await cmt.configure()).to.be.eq(0, '[variantEnv] configure failed');
+            expect(await cmakeProject.configure()).to.be.eq(0, '[variantEnv] configure failed');
             expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-            const cache = await CMakeCache.fromPath(await cmt.cachePath);
+            const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
             const cacheEntry_ = cache.get('variantEnv');
             expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
