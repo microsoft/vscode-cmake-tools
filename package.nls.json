@@ -158,5 +158,6 @@
     "cmake-tools.taskDefinitions.properties.details.description": "Additional details of the task",
     "cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "The launch terminal instance is reused and the target will launch as soon as the terminal is idle.",
     "cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": { "message": "The launch terminal instance is reused and a `break` command is sent to terminate any active foreground process before launching the target.", "comment": [ "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered." ] },
-    "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up."
+    "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
+    "cmake-tools.configuration.cmake.loadCompileCommands.description" : "Controls whether the extension reads compile_commands.json to enable single file compilation."
 }

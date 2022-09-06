@@ -3,7 +3,7 @@ import { SmokeTestExtensionContext } from '@test/helpers/vscodefake/extensioncon
 
 import * as vscode from 'vscode';
 
-import { CMakeTools } from '@cmt/cmakeTools';
+import { CMakeProject } from '@cmt/cmakeProject';
 
 type Result<T> = Thenable<T> | T;
 
@@ -14,8 +14,8 @@ export class SmokeContext {
 
     private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
-    async createCMakeTools(opts: { kit?: Kit | UnspecifiedKit }): Promise<CMakeTools> {
-        const cmt = await CMakeTools.createForDirectory(this.projectDir, this._extContext);
+    async createCMakeProject(opts: { kit?: Kit | UnspecifiedKit }): Promise<CMakeProject> {
+        const cmt = await CMakeProject.createForDirectory(this.projectDir, this._extContext);
         if (opts.kit) {
             if (opts.kit === SpecialKits.Unspecified) {
                 await cmt.setKit({ name: SpecialKits.Unspecified });
@@ -26,8 +26,8 @@ export class SmokeContext {
         return cmt;
     }
 
-    async withCMakeTools<T>(opts: { kit?: Kit | UnspecifiedKit; run(cmt: CMakeTools): TestResult<T> }): Promise<T> {
-        const cmt = await this.createCMakeTools(opts);
+    async withCMakeProject<T>(opts: { kit?: Kit | UnspecifiedKit; run(cmt: CMakeProject): TestResult<T> }): Promise<T> {
+        const cmt = await this.createCMakeProject(opts);
         try {
             const value = await Promise.resolve(opts.run(cmt));
             return Promise.resolve(value);

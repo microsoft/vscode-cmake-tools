@@ -1,5 +1,5 @@
 import * as api from '@cmt/api';
-import { ConfigureTrigger } from '@cmt/cmakeTools';
+import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { ExecutableTarget } from '@cmt/api';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
