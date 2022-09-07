@@ -216,7 +216,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async correctTargets(cmakeProject: CMakeProject, commandType: CommandType): Promise<string[]> {
-        let targets: string[] = [];
+        let targets: string[] = this.targets;
         const targetIsDefined: boolean = this.targets && this.targets.length > 0 ;
         const shouldIgnore: boolean = commandType !== CommandType.build;
 
