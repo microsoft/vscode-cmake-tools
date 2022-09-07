@@ -215,11 +215,25 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         // The terminal has been closed. Shutdown the build.
     }
 
-    private checkTargets(shouldIgnore: boolean): void {
-        if (shouldIgnore && this.targets && this.targets.length > 0) {
+    private async correctTargets(cmakeProject: CMakeProject, commandType: CommandType): Promise<string[]> {
+        let targets: string[] = [];
+        const targetIsDefined: boolean = this.targets && this.targets.length > 0 ;
+        const shouldIgnore: boolean = commandType !== CommandType.build;
+
+        if (shouldIgnore && targetIsDefined) {
             this.writeEmitter.fire(localize("target.is.ignored", "The defined targets in this task are being ignored.") + endOfLine);
         }
+
+        if (commandType === CommandType.install) {
+            targets = ['install'];
+        } else if (commandType === CommandType.clean) {
+            targets = ['clean'];
+        } else if (!shouldIgnore && !targetIsDefined && !cmakeProject.useCMakePresets) {
+            targets = [await cmakeProject.buildTargetName() || await cmakeProject.allTargetName];
+        }
+        return targets;
     }
+
     private async isTaskCompatibleWithPresets(cmakeProject: CMakeProject): Promise<boolean> {
         const useCMakePresets: boolean = cmakeProject.useCMakePresets;
         const presetDefined: boolean = this.preset !== undefined && this.preset !== null;
@@ -231,7 +245,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         const ignore: string = localize('dismiss', "Dismiss");
         /** We don't want to await on this error message,
          * because if the user decides to change the settings, the task needs to re-run for the new settings to be effective.
-         * */
+         **/
         void vscode.window.showErrorMessage(
             localize('task.not.compatible.with.preset.setting', 'The selected task requests a CMakePreset, but the workspace is not configured for CMakePresets'),
             change, ignore).then((selection) => {
@@ -267,11 +281,11 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
-        this.checkTargets(true);
         const cmakeProject: CMakeProject | undefined = this.getCMakeProject();
         if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }
+        await this.correctTargets(cmakeProject, CommandType.config);
         const cmakeDriver: CMakeDriver | undefined = (await cmakeProject?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             if (cmakeProject.useCMakePresets && cmakeDriver.config.configureOnEdit) {
@@ -298,19 +312,15 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true): Promise<any> {
         let targets = this.targets;
         const taskName: string = localizeCommandType(commandType);
-        if (commandType === CommandType.install) {
-            this.checkTargets(true);
-            targets = ['install'];
-        } else if (commandType === CommandType.clean) {
-            this.checkTargets(true);
-            targets = ['clean'];
-        }
         let fullCommand: proc.BuildCommand | null;
         let args: string[] = [];
+
         const cmakeProject: CMakeProject | undefined = this.getCMakeProject();
         if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }
+
+        targets = await this.correctTargets(cmakeProject, commandType);
         const cmakeDriver: CMakeDriver | undefined = (await cmakeProject?.getCMakeDriverInstance()) || undefined;
         let cmakePath: string;
         if (cmakeDriver) {
@@ -333,7 +343,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 if (fullCommand) {
                     cmakePath = fullCommand.command;
                     args = fullCommand.args || [];
-                    this.options.environment = EnvironmentUtils.merge([ fullCommand.build_env, this.options.environment], {preserveNull: true});
+                    this.options.environment = EnvironmentUtils.merge([fullCommand.build_env, this.options.environment], {preserveNull: true});
                 }
             } else {
                 fullCommand = await cmakeDriver.generateBuildCommandFromSettings(targets);
@@ -379,11 +389,13 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
-        this.checkTargets(true);
+
         const cmakeProject: CMakeProject | undefined = this.getCMakeProject();
         if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }
+        await this.correctTargets(cmakeProject, CommandType.config);
+
         const cmakeDriver: CMakeDriver | undefined = (await cmakeProject?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             let testPreset: preset.TestPreset | undefined;
