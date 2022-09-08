@@ -500,6 +500,46 @@ export class ConfigurationReader implements vscode.Disposable {
         // Can't use vscode.EventEmitter<ExtensionConfigurationSettings[K]> here, potentially because K and keyof ExtensionConfigurationSettings
         // may not be the same...
         const emitter: vscode.EventEmitter<any> = this.emitters[setting];
-        return emitter.event(cb);
+        const awaitableCallback = (value: ExtensionConfigurationSettings[K]) => {
+            activeChangeEvents.scheduleAndTrackTask(() => cb(value));
+        };
+        return emitter.event(awaitableCallback);
     }
+
+    getSettingsChangePromise() {
+        return activeChangeEvents.getAwaiter();
+    }
+}
+
+/**
+ * Tracks work that is done as a result of a settings change.
+ */
+class PromiseTracker {
+    private promises: Set<any> = new Set();
+
+    constructor() {
+    }
+
+    public scheduleAndTrackTask(cb: () => any): void {
+        const selfDestructWrapper = util.scheduleTask(() => {
+            const result = cb();
+            return result;
+        }).then(() => {
+            this.promises.delete(selfDestructWrapper);
+        });
+        this.promises.add(selfDestructWrapper);
+    }
+
+    public getAwaiter(): Promise<any[]> {
+        return Promise.all(this.promises);
+    }
+}
+
+const activeChangeEvents: PromiseTracker = new PromiseTracker();
+
+/**
+ * Get a promise that will resolve when the current set of settings change handlers have completed.
+ */
+export function getSettingsChangePromise(): Promise<any[]> {
+    return activeChangeEvents.getAwaiter();
 }

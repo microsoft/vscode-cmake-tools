@@ -84,24 +84,24 @@ export class CMakeFileApiDriver extends CMakeDriver {
     private _generatorInformation: Index.GeneratorInformation | null = null;
     private _target_map: Map<string, api.Target[]> = new Map();
 
-    async getGeneratorFromCache(cache_file_path: string): Promise<string> {
+    async getGeneratorFromCache(cache_file_path: string): Promise<string | undefined> {
         const cache = await CMakeCache.fromPath(cache_file_path);
 
-        return cache.get('CMAKE_GENERATOR')!.value;
+        return cache.get('CMAKE_GENERATOR')?.value;
     }
 
     async loadGeneratorInformationFromCache(cache_file_path: string) {
         const cache = await CMakeCache.fromPath(cache_file_path);
 
         this._generator = {
-            name: cache.get('CMAKE_GENERATOR')!.value,
-            platform: cache.get('CMAKE_GENERATOR_PLATFORM') ? cache.get('CMAKE_GENERATOR_PLATFORM')!.value : undefined,
-            toolset: cache.get('CMAKE_GENERATOR_TOOLSET') ? cache.get('CMAKE_GENERATOR_TOOLSET')!.value : undefined
+            name: cache.get('CMAKE_GENERATOR')?.value,
+            platform: cache.get('CMAKE_GENERATOR_PLATFORM')?.value,
+            toolset: cache.get('CMAKE_GENERATOR_TOOLSET')?.value
         } as CMakeGenerator;
 
         this._generatorInformation = {
-            name: cache.get('CMAKE_GENERATOR')!.value,
-            platform: cache.get('CMAKE_GENERATOR_PLATFORM') ? cache.get('CMAKE_GENERATOR_PLATFORM')!.value : undefined
+            name: cache.get('CMAKE_GENERATOR')?.value,
+            platform: cache.get('CMAKE_GENERATOR_PLATFORM')?.value
         };
     }
 

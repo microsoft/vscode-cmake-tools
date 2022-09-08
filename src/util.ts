@@ -808,3 +808,28 @@ export function getCmakeToolsTargetPopulation(): TargetPopulation {
     }
     return TargetPopulation.Internal;
 }
+
+/**
+ * @brief Schedule a task to be run at some future time. This allows other pending tasks to
+ * execute ahead of the scheduled task and provides a form of async behavior for TypeScript.
+ */
+export function scheduleTask<T>(task: () => T): Promise<T> {
+    return scheduleAsyncTask(() => {
+        try {
+            return Promise.resolve(task());
+        } catch (e: any) {
+            return Promise.reject(e);
+        }
+    });
+}
+
+/**
+ * @brief A version of scheduleTask that supports async tasks as input.
+ */
+export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        setImmediate(() => {
+            void task().then(resolve).catch(reject);
+        });
+    });
+}
