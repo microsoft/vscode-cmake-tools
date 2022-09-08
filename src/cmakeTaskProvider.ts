@@ -297,20 +297,20 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true, generateLog: boolean = true, cmakeProject?: CMakeTools): Promise<any> {
+    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true, generateLog: boolean = true, cmakeProject?: CMakeProject): Promise<any> {
         let targets = this.targets;
         const taskName: string = localizeCommandType(commandType);
         let fullCommand: proc.BuildCommand | null;
         let args: string[] = [];
 
         if (!cmakeProject) {
-            cmakeProject = this.getCMakeTools();
-            if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
+            cmakeProject = this.getCMakeProject();
+            if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
                 return;
             }
         }
         if (generateLog) {
-            telemetry.logEvent("task", {taskType: commandType, useCMakePresets: String(cmakeTools.useCMakePresets)});
+            telemetry.logEvent("task", {taskType: commandType, useCMakePresets: String(cmakeProject.useCMakePresets)});
         }
         if (commandType === CommandType.install) {
             this.checkTargets(true);
@@ -423,14 +423,14 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async runCleanRebuildTask(): Promise<any> {
-        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
-        if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
+        const cmakeProject: CMakeProject | undefined = this.getCMakeProject();
+        if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }
-        telemetry.logEvent("task", {taskType: "cleanRebuild", useCMakePresets: String(cmakeTools.useCMakePresets)});
-        const cleanResult = await this.runBuildTask(CommandType.clean, false, false, cmakeTools);
+        telemetry.logEvent("task", {taskType: "cleanRebuild", useCMakePresets: String(cmakeProject.useCMakePresets)});
+        const cleanResult = await this.runBuildTask(CommandType.clean, false, false, cmakeProject);
         if (cleanResult === 0) {
-            await this.runBuildTask(CommandType.build, true, false, cmakeTools);
+            await this.runBuildTask(CommandType.build, true, false, cmakeProject);
         } else {
             this.closeEmitter.fire(cleanResult);
         }
