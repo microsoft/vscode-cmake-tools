@@ -394,7 +394,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }
-        await this.correctTargets(cmakeProject, CommandType.config);
+        await this.correctTargets(cmakeProject, CommandType.test);
 
         const cmakeDriver: CMakeDriver | undefined = (await cmakeProject?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
