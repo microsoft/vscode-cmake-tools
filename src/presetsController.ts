@@ -590,7 +590,7 @@ export class PresetsController {
         interface PresetItem extends vscode.QuickPickItem {
             preset: string;
         }
-        const presetsPool: preset.Preset[] = showHiddenPresets ? candidates : candidates.filter(_preset => !_preset.hidden && preset.evaluatePresetCondition(_preset, allPresets));
+        const presetsPool: preset.Preset[] = showHiddenPresets ? candidates : candidates.filter(_preset => !_preset.hidden && preset.evaluatePresetCondition(_preset, allPresets) !== undefined);
         const items: PresetItem[] = presetsPool.map(
             _preset => ({
                 label: _preset.displayName || _preset.name,
