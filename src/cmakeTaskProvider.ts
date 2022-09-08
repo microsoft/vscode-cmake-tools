@@ -273,7 +273,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
         }
-        telemetry.logEvent("configure", {isTask: "true", useCMakePresets: String(cmakeTools.useCMakePresets)});
+        telemetry.logEvent("task", {taskType: "configure", useCMakePresets: String(cmakeTools.useCMakePresets)});
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             if (cmakeTools.useCMakePresets && cmakeDriver.config.configureOnEdit) {
@@ -297,26 +297,27 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true): Promise<any> {
+    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true, generateLog: boolean = true, cmakeTools?: CMakeTools): Promise<any> {
         let targets = this.targets;
         const taskName: string = localizeCommandType(commandType);
         let fullCommand: proc.BuildCommand | null;
         let args: string[] = [];
 
-        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
-        if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
-            return;
+        if (!cmakeTools) {
+            cmakeTools = this.getCMakeTools();
+            if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
+                return;
+            }
+        }
+        if (generateLog) {
+            telemetry.logEvent("task", {taskType: commandType, useCMakePresets: String(cmakeTools.useCMakePresets)});
         }
         if (commandType === CommandType.install) {
-            telemetry.logEvent("install", {isTask: "true", useCMakePresets: String(cmakeTools.useCMakePresets)});
             this.checkTargets(true);
             targets = ['install'];
         } else if (commandType === CommandType.clean) {
-            telemetry.logEvent("clean", {isTask: "true", useCMakePresets: String(cmakeTools.useCMakePresets)});
             this.checkTargets(true);
             targets = ['clean'];
-        } else {
-            telemetry.logEvent("build", {isTask: "true", useCMakePresets: String(cmakeTools.useCMakePresets)});
         }
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         let cmakePath: string;
@@ -391,7 +392,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
             return;
         }
-        telemetry.logEvent("test", {isTask: "true", useCMakePresets: String(cmakeTools.useCMakePresets)});
+        telemetry.logEvent("task", {taskType: "test", useCMakePresets: String(cmakeTools.useCMakePresets)});
         const cmakeDriver: CMakeDriver | undefined = (await cmakeTools?.getCMakeDriverInstance()) || undefined;
         if (cmakeDriver) {
             let testPreset: preset.TestPreset | undefined;
@@ -421,9 +422,14 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async runCleanRebuildTask(): Promise<any> {
-        const cleanResult = await this.runBuildTask(CommandType.clean, false);
+        const cmakeTools: CMakeTools | undefined = this.getCMakeTools();
+        if (!cmakeTools || !await this.isTaskCompatibleWithPresets(cmakeTools)) {
+            return;
+        }
+        telemetry.logEvent("task", {taskType: "cleanRebuild", useCMakePresets: String(cmakeTools.useCMakePresets)});
+        const cleanResult = await this.runBuildTask(CommandType.clean, false, false, cmakeTools);
         if (cleanResult === 0) {
-            await this.runBuildTask(CommandType.build);
+            await this.runBuildTask(CommandType.build, true, false, cmakeTools);
         } else {
             this.closeEmitter.fire(cleanResult);
         }
