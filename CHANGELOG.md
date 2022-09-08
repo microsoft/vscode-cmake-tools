@@ -4,6 +4,9 @@
 Improvements:
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
 
+Bug Fixes:
+- Show presets with hidden parent preset. [#2735](https://github.com/microsoft/vscode-cmake-tools/issues/2735)
+
 ## 1.12.26
 Improvements:
 - Support for presets version 4. [#2492](https://github.com/microsoft/vscode-cmake-tools/issues/2492) [@chausner](https://github.com/chausner)
