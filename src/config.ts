@@ -123,6 +123,7 @@ export interface ExtensionConfigurationSettings {
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
+    loadCompileCommands: boolean;
     configureOnOpen: boolean | null;
     configureOnEdit: boolean;
     skipConfigureIfCachePresent: boolean | null;
@@ -397,6 +398,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
     }
+    get loadCompileCommands(): boolean {
+        return this.configData.loadCompileCommands;
+    }
     get showSystemKits(): boolean {
         return this.configData.showSystemKits;
     }
@@ -466,6 +470,7 @@ export class ConfigurationReader implements vscode.Disposable {
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
+        loadCompileCommands: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean | null>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
@@ -495,6 +500,46 @@ export class ConfigurationReader implements vscode.Disposable {
         // Can't use vscode.EventEmitter<ExtensionConfigurationSettings[K]> here, potentially because K and keyof ExtensionConfigurationSettings
         // may not be the same...
         const emitter: vscode.EventEmitter<any> = this.emitters[setting];
-        return emitter.event(cb);
+        const awaitableCallback = (value: ExtensionConfigurationSettings[K]) => {
+            activeChangeEvents.scheduleAndTrackTask(() => cb(value));
+        };
+        return emitter.event(awaitableCallback);
     }
+
+    getSettingsChangePromise() {
+        return activeChangeEvents.getAwaiter();
+    }
+}
+
+/**
+ * Tracks work that is done as a result of a settings change.
+ */
+class PromiseTracker {
+    private promises: Set<any> = new Set();
+
+    constructor() {
+    }
+
+    public scheduleAndTrackTask(cb: () => any): void {
+        const selfDestructWrapper = util.scheduleTask(() => {
+            const result = cb();
+            return result;
+        }).then(() => {
+            this.promises.delete(selfDestructWrapper);
+        });
+        this.promises.add(selfDestructWrapper);
+    }
+
+    public getAwaiter(): Promise<any[]> {
+        return Promise.all(this.promises);
+    }
+}
+
+const activeChangeEvents: PromiseTracker = new PromiseTracker();
+
+/**
+ * Get a promise that will resolve when the current set of settings change handlers have completed.
+ */
+export function getSettingsChangePromise(): Promise<any[]> {
+    return activeChangeEvents.getAwaiter();
 }

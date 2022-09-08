@@ -92,12 +92,12 @@ export enum ConfigureTrigger {
  * class invariants are maintained at all times.
  *
  * Some fields also require two-phase init. Their first phase is in the first
- * phase of the CMakeTools init, ie. the constructor.
+ * phase of the CMakeProject init, ie. the constructor.
  *
  * The second phases of fields will be called by the second phase of the parent
  * class. See the `init` private method for this initialization.
  */
-export class CMakeTools implements api.CMakeToolsAPI {
+export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
      * @param extensionContext The extension context
@@ -106,18 +106,18 @@ export class CMakeTools implements api.CMakeToolsAPI {
      */
     private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext) {
         // Handle the active kit changing. We want to do some updates and teardown
-        log.debug(localize('constructing.cmaketools', 'Constructing new CMakeTools instance'));
+        log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
     }
 
     /**
-     * The workspace folder associated with this CMakeTools instance
+     * The workspace folder associated with this CMakeProject instance
      */
     get folder(): vscode.WorkspaceFolder {
         return this.workspaceContext.folder;
     }
 
     /**
-     * The name of the workspace folder for this CMakeTools instance
+     * The name of the workspace folder for this CMakeProject instance
      */
     get folderName(): string {
         return this.folder.name;
@@ -520,7 +520,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
     private cacheEditorWebview: ConfigurationWebview | undefined;
 
     /**
-     * Event fired just as CMakeTools is about to be disposed
+     * Event fired just as CMakeProject is about to be disposed
      */
     get onDispose() {
         return this.disposeEmitter.event;
@@ -531,7 +531,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * Dispose the instance
      */
     dispose() {
-        log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
+        log.debug(localize('disposing.extension', 'Disposing CMake Tools extension'));
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
@@ -719,7 +719,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
             telemetry.logEvent(telemetryEvent, telemetryProperties);
         }
 
-        // This CMT folder can go through various changes while executing this function
+        // This project folder can go through various changes while executing this function
         // that could be relevant to the partial/full feature set view.
         // This is a good place for an update.
         return updateFullFeatureSetForFolder(this.folder);
@@ -881,7 +881,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * Second phase of two-phase init. Called by `create`.
      */
     private async init() {
-        log.debug(localize('second.phase.init', 'Starting CMakeTools second-phase init'));
+        log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
 
         this._sourceDir = await util.normalizeAndVerifySourceDir(
             await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
@@ -1149,23 +1149,23 @@ export class CMakeTools implements api.CMakeToolsAPI {
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext): Promise<CMakeTools> {
-        log.debug(localize('safely.constructing.cmaketools', 'Safe constructing new CMakeTools instance'));
-        const inst = new CMakeTools(ctx, wsc);
+    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext): Promise<CMakeProject> {
+        log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
+        const inst = new CMakeProject(ctx, wsc);
         await inst.init();
-        log.debug(localize('initialization.complete', 'CMakeTools instance initialization complete.'));
+        log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
     }
 
     /**
-     * Create a new CMakeTools for the given directory.
+     * Create a new CMakeProject for the given directory.
      * @param folder Path to the directory for which to create
      * @param ext The extension context
      */
-    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeTools> {
+    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeProject> {
         // Create a context for the directory
         const dirContext = DirectoryContext.createForDirectory(folder, new StateManager(ext, folder));
-        return CMakeTools.create(ext, dirContext);
+        return CMakeProject.create(ext, dirContext);
     }
 
     private _activeKit: Kit | null = null;
@@ -1223,8 +1223,9 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 log.debug(localize('cannot.copy.compile.commands', 'Cannot copy {1} because it does not exist at {0}', compdbPath, 'compile_commands.json'));
             }
         }
-
-        if (compdbPaths.length > 0) {
+        if (!this.workspaceContext.config.loadCompileCommands) {
+            this.compilationDatabase = null;
+        } else if (compdbPaths.length > 0) {
             // Read the compilation database, and update our db property
             const newDB = await CompilationDatabase.fromFilePaths(compdbPaths);
             this.compilationDatabase = newDB;
@@ -1419,7 +1420,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
         }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
-                throw new Error(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake Tools'));
+                throw new Error(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
             }
             if (!this.variantManager.haveVariant) {
                 progress.report({ message: localize('waiting.on.variant', 'Waiting on variant selection') });
@@ -1430,7 +1431,7 @@ export class CMakeTools implements api.CMakeToolsAPI {
                 }
             }
         } else if (!this.configurePreset) {
-            throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake Tools'));
+            throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
         }
         log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
@@ -2473,4 +2474,4 @@ export class CMakeTools implements api.CMakeToolsAPI {
     }
 }
 
-export default CMakeTools;
+export default CMakeProject;
