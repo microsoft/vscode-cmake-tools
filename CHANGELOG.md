@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.13
+Improvements:
+- Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
+
 ## 1.12.27
 Bug Fixes:
 - Add default target to the build task when target is not defined. [#2729](https://github.com/microsoft/vscode-cmake-tools/issues/2729)
