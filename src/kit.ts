@@ -1108,29 +1108,38 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
     return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
 
+async function expandKitVariable(variable: string, kitName: string): Promise<string> {
+    return expand.expandString(variable, {
+        vars: {
+            buildKit: kitName,
+            buildType: '${buildType}',  // Unsupported variable substitutions use identity.
+            buildKitVendor: '${buildKitVendor}',
+            buildKitTriple: '${buildKitTriple}',
+            buildKitVersion: '${buildKitVersion}',
+            buildKitHostOs: '${buildKitVendor}',
+            buildKitTargetOs: '${buildKitTargetOs}',
+            buildKitTargetArch: '${buildKitTargetArch}',
+            buildKitVersionMajor: '${buildKitVersionMajor}',
+            buildKitVersionMinor: '${buildKitVersionMinor}',
+            generator: '${generator}',
+            userHome: paths.userHome,
+            workspaceFolder: '${workspaceFolder}',
+            workspaceFolderBasename: '${workspaceFolderBasename}',
+            workspaceHash: '${workspaceHash}',
+            workspaceRoot: '${workspaceRoot}',
+            workspaceRootFolderName: '${workspaceRootFolderName}'
+        }
+    });
+}
+
 async function expandKitVariables(kit: Kit): Promise<Kit> {
     if (kit.toolchainFile) {
-        kit.toolchainFile = await expand.expandString(kit.toolchainFile, {
-            vars: {
-                buildKit: kit.name,
-                buildType: '${buildType}',  // Unsupported variable substitutions use identity.
-                buildKitVendor: '${buildKitVendor}',
-                buildKitTriple: '${buildKitTriple}',
-                buildKitVersion: '${buildKitVersion}',
-                buildKitHostOs: '${buildKitVendor}',
-                buildKitTargetOs: '${buildKitTargetOs}',
-                buildKitTargetArch: '${buildKitTargetArch}',
-                buildKitVersionMajor: '${buildKitVersionMajor}',
-                buildKitVersionMinor: '${buildKitVersionMinor}',
-                generator: '${generator}',
-                userHome: paths.userHome,
-                workspaceFolder: '${workspaceFolder}',
-                workspaceFolderBasename: '${workspaceFolderBasename}',
-                workspaceHash: '${workspaceHash}',
-                workspaceRoot: '${workspaceRoot}',
-                workspaceRootFolderName: '${workspaceRootFolderName}'
-            }
-        });
+        kit.toolchainFile = await expandKitVariable(kit.toolchainFile, kit.name);
+    }
+    if (kit.compilers) {
+        for (const lang in kit.compilers) {
+            kit.compilers [lang] = await expandKitVariable(kit.compilers[lang], kit.name);
+        }
     }
     return kit;
 }
