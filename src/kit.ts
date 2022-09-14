@@ -22,7 +22,6 @@ import { TargetTriple, findTargetTriple, parseTargetTriple, computeTargetTriple 
 import { compare, dropNulls, Ordering, versionLess } from './util';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
-import { resolveVariable } from './expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1107,43 +1106,6 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
         return localize('search.for.compilers', 'Search for compilers on this computer');
     }
     return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
-}
-
-async function expandKitVariable(variable: string, kitName: string, workspaceFolder?: string): Promise<string> {
-
-    return expand.expandString(variable, {
-        vars: {
-            buildKit: kitName,
-            buildType: '${buildType}',  // Unsupported variable substitutions use identity.
-            buildKitVendor: '${buildKitVendor}',
-            buildKitTriple: '${buildKitTriple}',
-            buildKitVersion: '${buildKitVersion}',
-            buildKitHostOs: '${buildKitVendor}',
-            buildKitTargetOs: '${buildKitTargetOs}',
-            buildKitTargetArch: '${buildKitTargetArch}',
-            buildKitVersionMajor: '${buildKitVersionMajor}',
-            buildKitVersionMinor: '${buildKitVersionMinor}',
-            generator: '${generator}',
-            userHome: paths.userHome,
-            workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
-            workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
-            workspaceHash: '${workspaceHash}',
-            workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
-            workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'
-        }
-    });
-}
-
-async function expandKitVariables(kit: Kit, workspaceFolder: string, opts?: expand.ExpansionOptions): Promise<Kit> {
-    if (kit.toolchainFile) {
-        kit.toolchainFile = await expandKitVariable(kit.toolchainFile, kit.name);
-    }
-    if (kit.compilers) {
-        for (const lang in kit.compilers) {
-            kit.compilers [lang] = resolveVariable(kit.compilers[lang]);
-        }
-    }
-    return kit;
 }
 
 export async function readKitsFile(filePath: string, workspaceFolder?: string, opts?: expand.ExpansionOptions): Promise<Kit[]> {
