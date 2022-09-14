@@ -16,6 +16,7 @@ suite('Debug/Launch interface using Kits and Variants', () => {
         cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         const kit = await getFirstSystemKit(cmakeProject);
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
