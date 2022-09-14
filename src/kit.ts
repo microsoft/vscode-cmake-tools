@@ -1168,7 +1168,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, o
         }
         if (kit.compilers) {
             for (const lang in kit.compilers) {
-                kit.compilers [lang] = await expand.expandString(kit.compilers[lang], opts);
+                kit.compilers[lang] = await expand.expandString(kit.compilers[lang], opts);
             }
         }
         expandedKits.push(kit);
