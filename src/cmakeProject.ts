@@ -24,7 +24,7 @@ import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
 import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/cmakeDriver';
-import { expandString, ExpansionOptions } from './expand';
+import { expandArrayOfStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
@@ -44,6 +44,7 @@ import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
+import paths from './paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2471,6 +2472,36 @@ export class CMakeProject implements api.CMakeToolsAPI {
 
     async selectEnvironments() {
         return null;
+    }
+
+    async getExpansionOptions(): Promise<ExpansionOptions> {
+        const workspaceFolder: string = this.workspaceContext.folder.uri.fsPath;
+        return {
+            vars: {
+                buildKit: this.activeKit?.name || "",
+                buildType: await this.currentBuildType() || "",
+                buildKitVendor: "",
+                buildKitTriple: "",
+                buildKitVersion: "",
+                buildKitHostOs: "",
+                buildKitTargetOs: "",
+                buildKitTargetArch: "",
+                buildKitVersionMajor: "",
+                buildKitVersionMinor: "",
+                generator: "",
+                userHome: paths.userHome,
+                workspaceFolder: workspaceFolder,
+                workspaceFolderBasename: path.basename(workspaceFolder),
+                workspaceHash: "",
+                workspaceRoot: this.workspaceContext.folder.uri.fsPath,
+                workspaceRootFolderName: path.basename(workspaceFolder)
+            }
+        };
+    }
+
+    async getExpandedAdditionalKitFiles(): Promise<string[]> {
+        const opts: ExpansionOptions = await this.getExpansionOptions();
+        return expandArrayOfStrings(this.workspaceContext.config.additionalKits, opts);
     }
 }
 

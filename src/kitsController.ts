@@ -99,7 +99,8 @@ export class KitsController {
             await KitsController.readUserKits(cmakeProject);
         }
 
-        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.folder)].concat(await KitsController.expandAdditionalKitFiles(cmakeProject));
+        const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
+        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.folder)].concat(expandedAdditionalKitFiles);
         const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
         const kitsController = new KitsController(cmakeProject, kitsWatcher);
         chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
@@ -159,7 +160,7 @@ export class KitsController {
         // Load user-kits
         reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
-        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH);
+        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, undefined, await cmakeProject.getExpansionOptions());
 
         // Pruning requires user interaction, so it happens fully async
         KitsController._startPruneOutdatedKitsAsync(cmakeProject);

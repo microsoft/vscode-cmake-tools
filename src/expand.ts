@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-
+import * as os from 'os';
 import { createLogger } from './logging';
 import { replaceAll, fixPaths, errorToString } from './util';
 import * as nls from 'vscode-nls';
@@ -14,6 +14,7 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('expand');
+export const envDelimiter: string = (process.platform === 'win32') ? ";" : ":";
 
 /**
  * The required keys for expanding a string in CMake Tools.
@@ -248,4 +249,80 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         }
     });
     return { result: finalString, didReplacement, circularReference };
+}
+
+export function isString(input: any): input is string {
+    return typeof (input) === "string";
+}
+
+export function isArray(input: any): input is any[] {
+    return input instanceof Array;
+}
+
+export function isArrayOfString(input: any): input is string[] {
+    return isArray(input) && input.every(isString);
+}
+
+export function resolveVariable(input: string | undefined, additionalEnvironment?: { [key: string]: string | string[] }): string {
+    if (!input) {
+        return "";
+    }
+
+    // Replace environment and configuration variables.
+    const regexp: () => RegExp = () => /\$\{((workspaceFolder|workspaceFolderBasename|file|fileDirname|fileBasenameNoExtension|execPath|pathSeparator)(\.|:))?(.*?)\}/g;
+    let resolved: string = input;
+    const cycleCache: Set<string> = new Set();
+    while (!cycleCache.has(resolved)) {
+        cycleCache.add(resolved);
+        resolved = resolved.replace(regexp(), (match: string, _ignored1: string, varType: string, _ignored2: string, name: string) => {
+            let newValue: string | undefined;
+            if (!varType) {
+                varType = "env";
+            }
+            switch (varType) {
+                case "env": {
+                    if (additionalEnvironment) {
+                        const v: string | string[] | undefined = additionalEnvironment[name];
+                        if (isString(v)) {
+                            newValue = v;
+                        } else if (input === match && isArrayOfString(v)) {
+                            newValue = v.join(envDelimiter);
+                        }
+                    }
+                    if (newValue === undefined) {
+                        newValue = process.env[name];
+                    }
+                    break;
+                }
+                case "workspaceFolder": {
+                    if (name && vscode.workspace && vscode.workspace.workspaceFolders) {
+                        const folder: vscode.WorkspaceFolder | undefined = vscode.workspace.workspaceFolders.find(folder => folder.name.toLocaleLowerCase() === name.toLocaleLowerCase());
+                        if (folder) {
+                            newValue = folder.uri.fsPath;
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    log.error(localize("unknown.varType.matched", "unknown varType matched"));
+                }
+            }
+            return newValue !== undefined ? newValue : match;
+        });
+    }
+    return resolveHome(resolved);
+}
+
+// Resolve '~' at the start of the path.
+export function resolveHome(filePath: string): string {
+    return filePath.replace(/^\~/g, (_match: string, _name: string) => os.homedir());
+}
+
+export async function expandArrayOfStrings(inputs: string[], opts: ExpansionOptions): Promise<string[]> {
+    const expandedInputs: string[] = [];
+    for (const input of inputs) {
+        const expandedInput: string = await expandString(input, opts);
+        expandedInputs.push(expandedInput);
+    }
+    return expandedInputs;
 }
