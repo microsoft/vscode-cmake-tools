@@ -160,7 +160,7 @@ export class KitsController {
         // Load user-kits
         reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
-        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, undefined, await cmakeProject.getExpansionOptions());
+        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, cmakeProject.workspaceContext.folder.uri.fsPath, await cmakeProject.getExpansionOptions());
 
         // Pruning requires user interaction, so it happens fully async
         KitsController._startPruneOutdatedKitsAsync(cmakeProject);
@@ -176,7 +176,7 @@ export class KitsController {
 
         if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
             // Read default folder kits
-            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder));
+            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder), this.cmakeProject.workspaceContext.folder.uri.fsPath, await this.cmakeProject.getExpansionOptions());
 
             // Read additional folder kits
             this.additionalKits = await getAdditionalKits(this.cmakeProject);
