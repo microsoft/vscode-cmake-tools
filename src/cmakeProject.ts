@@ -44,6 +44,8 @@ import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
+import { KitsController } from './kitsController';
+import { PresetsController } from './presetsController';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -538,6 +540,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         for (const sub of [this.generatorSub, this.preferredGeneratorsSub, this.communicationModeSub, this.sourceDirSub]) {
             sub.dispose();
         }
+        this.kitsController.dispose();
         rollbar.invokeAsync(localize('extension.dispose', 'Extension dispose'), () => this.asyncDispose());
     }
 
@@ -1007,6 +1010,23 @@ export class CMakeProject implements api.CMakeToolsAPI {
                 }
             }
         }));
+
+        this.kitsController = await KitsController.init(this);
+        this.presetsController = await PresetsController.init(this, this.kitsController);
+    }
+
+    /**
+     * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
+     */
+    onPresetsChanged(listener: () => any) {
+        return this.presetsController.onPresetsChanged(listener);
+    }
+
+    /**
+     * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
+     */
+    onUserPresetsChanged(listener: () => any) {
+        return this.presetsController.onUserPresetsChanged(listener);
     }
 
     async isNinjaInstalled(): Promise<boolean> {
@@ -1779,6 +1799,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
     }
 
     private readonly cTestController = new CTestDriver(this.workspaceContext);
+    public kitsController!: KitsController;
+    public presetsController!: PresetsController;
 
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);

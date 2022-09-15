@@ -7,10 +7,8 @@ import * as path from 'path';
 
 import * as util from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
-import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
-import { PresetsController } from '@cmt/presetsController';
 import { CMakeCommunicationMode, UseCMakePresets } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -35,17 +33,16 @@ export class CMakeWorkspaceFolder {
     private wasUsingCMakePresets: boolean | undefined;
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
+    private sourceDirectoryToProjectMap = new Map<vscode.WorkspaceFolder, CMakeProject>();
 
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
 
-    private constructor(readonly cmakeProject: CMakeProject,
-        readonly kitsController: KitsController,
-        readonly presetsController: PresetsController) {}
+    private constructor(readonly cmakeProject: CMakeProject) {
+        this.sourceDirectoryToProjectMap.set(cmakeProject.folder, cmakeProject);
+    }
 
     static async init(cmakeProject: CMakeProject) {
-        const kitsController = await KitsController.init(cmakeProject);
-        const presetsController = await PresetsController.init(cmakeProject, kitsController);
-        const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeProject, kitsController, presetsController);
+        const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeProject);
 
         const useCMakePresetsChangedListener = async () => {
             const usingCMakePresets = cmakeWorkspaceFolder.useCMakePresets;
@@ -88,8 +85,8 @@ export class CMakeWorkspaceFolder {
         await useCMakePresetsChangedListener();
 
         cmakeWorkspaceFolder.disposables.push(cmakeProject.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
-        cmakeWorkspaceFolder.disposables.push(presetsController.onPresetsChanged(useCMakePresetsChangedListener));
-        cmakeWorkspaceFolder.disposables.push(presetsController.onUserPresetsChanged(useCMakePresetsChangedListener));
+        cmakeWorkspaceFolder.disposables.push(cmakeProject.onPresetsChanged(useCMakePresetsChangedListener));
+        cmakeWorkspaceFolder.disposables.push(cmakeProject.onUserPresetsChanged(useCMakePresetsChangedListener));
 
         return cmakeWorkspaceFolder;
     }
@@ -106,7 +103,7 @@ export class CMakeWorkspaceFolder {
             // const state = this.cmakeProject.workspaceContext.state;
             // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
             // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
-            return this.presetsController.presetsFileExist;
+            return this.cmakeProject.presetsController.presetsFileExist;
         }
         return this.cmakeProject.workspaceContext.config.useCMakePresets === 'always';
     }
@@ -157,21 +154,20 @@ export class CMakeWorkspaceFolder {
             this.onDidOpenTextDocumentListener.dispose();
         }
         this.cmakeProject.dispose();
-        this.kitsController.dispose();
     }
 
     private static async initializeKitOrPresetsInCmt(folder: CMakeWorkspaceFolder) {
         if (folder.useCMakePresets) {
             const configurePreset = folder.cmakeProject.workspaceContext.state.configurePresetName;
             if (configurePreset) {
-                await folder.presetsController.setConfigurePreset(configurePreset);
+                await folder.cmakeProject.presetsController.setConfigurePreset(configurePreset);
             }
         } else {
             // Check if the CMakeProject remembers what kit it was last using in this dir:
             const kitName = folder.cmakeProject.workspaceContext.state.activeKitName;
             if (kitName) {
                 // It remembers a kit. Find it in the kits avail in this dir:
-                const kit = folder.kitsController.availableKits.find(k => k.name === kitName) || null;
+                const kit = folder.cmakeProject.kitsController.availableKits.find(k => k.name === kitName) || null;
                 // Set the kit: (May do nothing if no kit was found)
                 await folder.cmakeProject.setKit(kit);
             }
