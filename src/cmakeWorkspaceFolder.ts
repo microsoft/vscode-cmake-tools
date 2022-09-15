@@ -37,7 +37,7 @@ export class CMakeWorkspaceFolder {
 
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
 
-    private constructor(readonly cmakeProject: CMakeProject) {
+    private constructor(private readonly cmakeProject: CMakeProject) {
         this.sourceDirectoryToProjectMap.set(cmakeProject.folder, cmakeProject);
     }
 
@@ -91,26 +91,29 @@ export class CMakeWorkspaceFolder {
         return cmakeWorkspaceFolder;
     }
 
+    get activeCMakeProject() {
+        return this.cmakeProject;
+    }
     get folder() {
-        return this.cmakeProject.folder;
+        return this.activeCMakeProject.folder;
     }
 
     // Go through the decision tree here since there would be dependency issues if we do this in config.ts
     get useCMakePresets(): boolean {
-        if (this.cmakeProject.workspaceContext.config.useCMakePresets === 'auto') {
+        if (this.activeCMakeProject.workspaceContext.config.useCMakePresets === 'auto') {
             // TODO (P1): check if configured with kits + vars
             // // Always check if configured before since the state could be reset
-            // const state = this.cmakeProject.workspaceContext.state;
+            // const state = this.activeCMakeProject.workspaceContext.state;
             // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
             // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
-            return this.cmakeProject.presetsController.presetsFileExist;
+            return this.activeCMakeProject.presetsController.presetsFileExist;
         }
-        return this.cmakeProject.workspaceContext.config.useCMakePresets === 'always';
+        return this.activeCMakeProject.workspaceContext.config.useCMakePresets === 'always';
     }
 
     async getDiagnostics(): Promise<DiagnosticsConfiguration> {
         try {
-            const drv = await this.cmakeProject.getCMakeDriverInstance();
+            const drv = await this.activeCMakeProject.getCMakeDriverInstance();
             if (drv) {
                 return drv.getDiagnostics();
             }
@@ -128,7 +131,7 @@ export class CMakeWorkspaceFolder {
 
     async getSettingsDiagnostics(): Promise<DiagnosticsSettings> {
         try {
-            const drv = await this.cmakeProject.getCMakeDriverInstance();
+            const drv = await this.activeCMakeProject.getCMakeDriverInstance();
             if (drv) {
                 return {
                     communicationMode: drv.config.cmakeCommunicationMode,
@@ -153,7 +156,7 @@ export class CMakeWorkspaceFolder {
         if (this.onDidOpenTextDocumentListener) {
             this.onDidOpenTextDocumentListener.dispose();
         }
-        this.cmakeProject.dispose();
+        this.activeCMakeProject.dispose();
     }
 
     private static async initializeKitOrPresetsInCmt(folder: CMakeWorkspaceFolder) {
