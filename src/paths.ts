@@ -242,23 +242,23 @@ class Paths {
     async expandStringPath(raw_path: string, wsc: DirectoryContext): Promise<string> {
         return expandString(raw_path, {
             vars: {
-                buildKit: '',
-                buildKitVendor: '',
-                buildKitTriple: '',
-                buildKitVersion: '',
-                buildKitHostOs: '',
-                buildKitTargetOs: '',
-                buildKitTargetArch: '',
-                buildKitVersionMajor: '',
-                buildKitVersionMinor: '',
-                buildType: '',
-                generator: '',
+                buildKit: '${buildKit}',
+                buildType: '${buildType}',
+                buildKitVendor: '${buildKitVendor}',
+                buildKitTriple: '${buildKitTriple}',
+                buildKitVersion: '${buildKitVersion}',
+                buildKitHostOs: '${buildKitVendor}',
+                buildKitTargetOs: '${buildKitTargetOs}',
+                buildKitTargetArch: '${buildKitTargetArch}',
+                buildKitVersionMajor: '${buildKitVersionMajor}',
+                buildKitVersionMinor: '${buildKitVersionMinor}',
+                generator: '${generator}',
+                userHome: this.userHome,
                 workspaceFolder: wsc.folder.uri.fsPath,
                 workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
-                workspaceRoot: wsc.folder.uri.fsPath,
-                workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
                 workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
-                userHome: this.userHome
+                workspaceRoot: wsc.folder.uri.fsPath,
+                workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath)
             }
         });
     }
