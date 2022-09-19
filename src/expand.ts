@@ -250,7 +250,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
     return { result: finalString, didReplacement, circularReference };
 }
 
-export async function expandArrayOfStrings(inputs: string[], opts: ExpansionOptions): Promise<string[]> {
+export async function expandStrings(inputs: string[], opts: ExpansionOptions): Promise<string[]> {
     const expandedInputs: string[] = [];
     for (const input of inputs) {
         const expandedInput: string = await expandString(input, opts);

@@ -24,7 +24,7 @@ import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
 import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/cmakeDriver';
-import { expandArrayOfStrings, expandString, ExpansionOptions } from './expand';
+import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
@@ -2480,19 +2480,19 @@ export class CMakeProject implements api.CMakeToolsAPI {
             vars: {
                 buildKit: this.activeKit?.name || "",
                 buildType: await this.currentBuildType() || "",
-                buildKitVendor: "",
-                buildKitTriple: "",
-                buildKitVersion: "",
-                buildKitHostOs: "",
-                buildKitTargetOs: "",
-                buildKitTargetArch: "",
-                buildKitVersionMajor: "",
-                buildKitVersionMinor: "",
-                generator: "",
+                buildKitVendor: '${buildKitVendor}',
+                buildKitTriple: '${buildKitTriple}',
+                buildKitVersion: '${buildKitVersion}',
+                buildKitHostOs: '${buildKitVendor}',
+                buildKitTargetOs: '${buildKitTargetOs}',
+                buildKitTargetArch: '${buildKitTargetArch}',
+                buildKitVersionMajor: '${buildKitVersionMajor}',
+                buildKitVersionMinor: '${buildKitVersionMinor}',
+                generator: '${generator}',
                 userHome: paths.userHome,
                 workspaceFolder: workspaceFolder,
                 workspaceFolderBasename: path.basename(workspaceFolder),
-                workspaceHash: "",
+                workspaceHash: '${workspaceHash}',
                 workspaceRoot: this.workspaceContext.folder.uri.fsPath,
                 workspaceRootFolderName: path.basename(workspaceFolder)
             }
@@ -2501,7 +2501,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
 
     async getExpandedAdditionalKitFiles(): Promise<string[]> {
         const opts: ExpansionOptions = await this.getExpansionOptions();
-        return expandArrayOfStrings(this.workspaceContext.config.additionalKits, opts);
+        return expandStrings(this.workspaceContext.config.additionalKits, opts);
     }
 }
 

@@ -1141,34 +1141,38 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, o
     log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, filePath));
 
     const expandedKits: Kit[] = [];
+    const expansionOptions: expand.ExpansionOptions = opts ? opts : {
+        vars: {
+            buildKit: "",
+            buildType: '${buildType}',  // Unsupported variable substitutions use identity.
+            buildKitVendor: '${buildKitVendor}',
+            buildKitTriple: '${buildKitTriple}',
+            buildKitVersion: '${buildKitVersion}',
+            buildKitHostOs: '${buildKitVendor}',
+            buildKitTargetOs: '${buildKitTargetOs}',
+            buildKitTargetArch: '${buildKitTargetArch}',
+            buildKitVersionMajor: '${buildKitVersionMajor}',
+            buildKitVersionMinor: '${buildKitVersionMinor}',
+            generator: '${generator}',
+            userHome: paths.userHome,
+            workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
+            workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
+            workspaceHash: '${workspaceHash}',
+            workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
+            workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'
+        }
+    };
     for (const kit of kits) {
-        opts = opts ? opts : {
-            vars: {
-                buildKit: kit.name,
-                buildType: '${buildType}',  // Unsupported variable substitutions use identity.
-                buildKitVendor: '${buildKitVendor}',
-                buildKitTriple: '${buildKitTriple}',
-                buildKitVersion: '${buildKitVersion}',
-                buildKitHostOs: '${buildKitVendor}',
-                buildKitTargetOs: '${buildKitTargetOs}',
-                buildKitTargetArch: '${buildKitTargetArch}',
-                buildKitVersionMajor: '${buildKitVersionMajor}',
-                buildKitVersionMinor: '${buildKitVersionMinor}',
-                generator: '${generator}',
-                userHome: paths.userHome,
-                workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
-                workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
-                workspaceHash: '${workspaceHash}',
-                workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
-                workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'
-            }
-        };
+        if (!opts) {
+            expansionOptions.vars.buildKit = kit.name;
+        }
+        expansionOptions.vars.buildKit = opts ? expansionOptions.vars.buildKit : kit.name;
         if (kit.toolchainFile) {
-            kit.toolchainFile = await expand.expandString(kit.toolchainFile, opts);
+            kit.toolchainFile = await expand.expandString(kit.toolchainFile, expansionOptions);
         }
         if (kit.compilers) {
             for (const lang in kit.compilers) {
-                kit.compilers[lang] = await expand.expandString(kit.compilers[lang], opts);
+                kit.compilers[lang] = await expand.expandString(kit.compilers[lang], expansionOptions);
             }
         }
         expandedKits.push(kit);

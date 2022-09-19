@@ -3,6 +3,7 @@
 ## 1.13
 Improvements:
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
+- Resolve `${workspaceFolder}` variable `cmake-kits.json`. [#2737](https://github.com/microsoft/vscode-cmake-tools/issues/2737)
 
 ## 1.12.27
 Bug Fixes:
