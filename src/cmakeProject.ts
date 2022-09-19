@@ -2182,8 +2182,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
         log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
             workspace: this.folder.uri.toString(),
-            config: debugConfig,
-            environment: debugConfig.environment
+            config: debugConfig
         }));
 
         const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('debugConfig');
