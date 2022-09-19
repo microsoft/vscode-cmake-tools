@@ -1216,9 +1216,8 @@ export async function getAdditionalKits(cmakeProject: CMakeProject): Promise<Kit
     const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
 
     let additionalKits: Kit[] = [];
-    const workspaceFolder: string = cmakeProject.workspaceContext.folder.uri.fsPath;
     for (const kitFile of expandedAdditionalKitFiles) {
-        additionalKits = additionalKits.concat(await readKitsFile(kitFile, workspaceFolder, opts));
+        additionalKits = additionalKits.concat(await readKitsFile(kitFile, cmakeProject.workspaceContext.folder.uri.fsPath, opts));
     }
     return additionalKits;
 }

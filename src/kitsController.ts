@@ -1,7 +1,6 @@
 'use strict';
 
 import * as chokidar from 'chokidar';
-import * as expand from './expand';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
