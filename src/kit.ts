@@ -1108,7 +1108,7 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
     return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
 
-export async function readKitsFile(filePath: string, workspaceFolder?: string, opts?: expand.ExpansionOptions): Promise<Kit[]> {
+export async function readKitsFile(filePath: string, workspaceFolder?: string, expansionOptions?: expand.ExpansionOptions): Promise<Kit[]> {
     const fileStats = await fs.tryStat(filePath);
     if (!fileStats) {
         log.debug(localize('not.reading.nonexistent.kit', 'Not reading non-existent kits file: {0}', filePath));
@@ -1141,32 +1141,31 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, o
     log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, filePath));
 
     const expandedKits: Kit[] = [];
-    const expansionOptions: expand.ExpansionOptions = opts ? opts : {
-        vars: {
-            buildKit: "",
-            buildType: '${buildType}',  // Unsupported variable substitutions use identity.
-            buildKitVendor: '${buildKitVendor}',
-            buildKitTriple: '${buildKitTriple}',
-            buildKitVersion: '${buildKitVersion}',
-            buildKitHostOs: '${buildKitVendor}',
-            buildKitTargetOs: '${buildKitTargetOs}',
-            buildKitTargetArch: '${buildKitTargetArch}',
-            buildKitVersionMajor: '${buildKitVersionMajor}',
-            buildKitVersionMinor: '${buildKitVersionMinor}',
-            generator: '${generator}',
-            userHome: paths.userHome,
-            workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
-            workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
-            workspaceHash: '${workspaceHash}',
-            workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
-            workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'
-        }
-    };
+    if (!expansionOptions) {
+        expansionOptions = {
+            vars: {
+                buildKit: '${buildKit}',
+                buildType: '${buildType}',
+                buildKitVendor: '${buildKitVendor}',
+                buildKitTriple: '${buildKitTriple}',
+                buildKitVersion: '${buildKitVersion}',
+                buildKitHostOs: '${buildKitVendor}',
+                buildKitTargetOs: '${buildKitTargetOs}',
+                buildKitTargetArch: '${buildKitTargetArch}',
+                buildKitVersionMajor: '${buildKitVersionMajor}',
+                buildKitVersionMinor: '${buildKitVersionMinor}',
+                generator: '${generator}',
+                userHome: paths.userHome,
+                workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
+                workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
+                workspaceHash: '${workspaceHash}',
+                workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
+                workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'
+            }
+        };
+    }
     for (const kit of kits) {
-        if (!opts) {
-            expansionOptions.vars.buildKit = kit.name;
-        }
-        expansionOptions.vars.buildKit = opts ? expansionOptions.vars.buildKit : kit.name;
+        expansionOptions.vars.buildKit = kit.name;
         if (kit.toolchainFile) {
             kit.toolchainFile = await expand.expandString(kit.toolchainFile, expansionOptions);
         }

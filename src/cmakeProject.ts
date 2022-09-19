@@ -2478,8 +2478,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
         const workspaceFolder: string = this.workspaceContext.folder.uri.fsPath;
         return {
             vars: {
-                buildKit: this.activeKit?.name || "",
-                buildType: await this.currentBuildType() || "",
+                buildKit: '${buildKit}',
+                buildType: '${buildType}',
                 buildKitVendor: '${buildKitVendor}',
                 buildKitTriple: '${buildKitTriple}',
                 buildKitVersion: '${buildKitVersion}',
