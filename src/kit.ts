@@ -1164,7 +1164,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
             }
         };
     }
-    for (const kit of kits) {
+    for (const kit of dropNulls(kits)) {
         expansionOptions.vars.buildKit = kit.name;
         if (kit.toolchainFile) {
             kit.toolchainFile = await expand.expandString(kit.toolchainFile, expansionOptions);
