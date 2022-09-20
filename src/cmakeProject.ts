@@ -24,7 +24,7 @@ import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
 import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/cmakeDriver';
-import { expandString, ExpansionOptions } from './expand';
+import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
@@ -46,6 +46,7 @@ import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import { KitsController } from './kitsController';
 import { PresetsController } from './presetsController';
+import paths from './paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2203,8 +2204,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
         log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
             workspace: this.folder.uri.toString(),
-            config: debugConfig,
-            environment: debugConfig.environment
+            config: debugConfig
         }));
 
         const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('debugConfig');
@@ -2493,6 +2493,36 @@ export class CMakeProject implements api.CMakeToolsAPI {
 
     async selectEnvironments() {
         return null;
+    }
+
+    async getExpansionOptions(): Promise<ExpansionOptions> {
+        const workspaceFolder: string = this.workspaceContext.folder.uri.fsPath;
+        return {
+            vars: {
+                buildKit: '${buildKit}',
+                buildType: '${buildType}',
+                buildKitVendor: '${buildKitVendor}',
+                buildKitTriple: '${buildKitTriple}',
+                buildKitVersion: '${buildKitVersion}',
+                buildKitHostOs: '${buildKitVendor}',
+                buildKitTargetOs: '${buildKitTargetOs}',
+                buildKitTargetArch: '${buildKitTargetArch}',
+                buildKitVersionMajor: '${buildKitVersionMajor}',
+                buildKitVersionMinor: '${buildKitVersionMinor}',
+                generator: '${generator}',
+                userHome: paths.userHome,
+                workspaceFolder: workspaceFolder,
+                workspaceFolderBasename: path.basename(workspaceFolder),
+                workspaceHash: '${workspaceHash}',
+                workspaceRoot: this.workspaceContext.folder.uri.fsPath,
+                workspaceRootFolderName: path.basename(workspaceFolder)
+            }
+        };
+    }
+
+    async getExpandedAdditionalKitFiles(): Promise<string[]> {
+        const opts: ExpansionOptions = await this.getExpansionOptions();
+        return expandStrings(this.workspaceContext.config.additionalKits, opts);
     }
 }
 

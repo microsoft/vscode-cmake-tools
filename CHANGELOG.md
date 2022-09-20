@@ -3,6 +3,8 @@
 ## 1.13
 Improvements:
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
+- Preset in CMakeUserPresets.json using "condition" does not appear in configure preset selection. [#2749](https://github.com/microsoft/vscode-cmake-tools/issues/2749)
+- Resolve workspace variables in `cmake-kits.json`. [#2737](https://github.com/microsoft/vscode-cmake-tools/issues/2737)
 
 ## 1.12.27
 Bug Fixes:
