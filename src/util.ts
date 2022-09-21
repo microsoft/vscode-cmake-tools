@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { platform } from 'os';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -704,6 +703,10 @@ export function isWorkspaceFolder(x?: any): boolean {
 
 export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<string> {
     let result = lightNormalizePath(sourceDir);
+    if (process.platform === 'win32' && result.length > 1 && result.charCodeAt(0) > 97 && result.charCodeAt(0) <= 122 && result[1] === ':') {
+        // Windows drive letter should be uppercase, for consistency with other tools like Visual Studio.
+        result = result[0].toUpperCase() + result.slice(1);
+    }
     if (path.basename(result).toLocaleLowerCase() === "cmakelists.txt") {
         // Don't fail if CMakeLists.txt was accidentally appended to the sourceDirectory.
         result = path.dirname(result);
@@ -767,7 +770,7 @@ export function isSupportedCompiler(compilerName: string | undefined): string | 
 }
 
 async function getHostSystemName(): Promise<string> {
-    if (platform() === "win32") {
+    if (process.platform === 'win32') {
         return "Windows";
     } else {
         const result = await execute('uname', ['-s']).result;
