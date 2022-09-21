@@ -1108,12 +1108,44 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
     return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
 
-async function expandKitVariables(kit: Kit): Promise<Kit> {
-    if (kit.toolchainFile) {
-        kit.toolchainFile = await expand.expandString(kit.toolchainFile, {
+export async function readKitsFile(filePath: string, workspaceFolder?: string, expansionOptions?: expand.ExpansionOptions): Promise<Kit[]> {
+    const fileStats = await fs.tryStat(filePath);
+    if (!fileStats) {
+        log.debug(localize('not.reading.nonexistent.kit', 'Not reading non-existent kits file: {0}', filePath));
+        return [];
+    }
+    if (!fileStats.isFile()) {
+        log.debug(localize('not.reading.invalid.path', 'Not reading invalid kits file: {0}', filePath));
+        return [];
+    }
+    log.debug(localize('reading.kits.file', 'Reading kits file {0}', filePath));
+    const content_str = await fs.readFile(filePath);
+    let kits_raw: object[] = [];
+    try {
+        kits_raw = json5.parse(content_str.toLocaleString());
+    } catch (e) {
+        log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filePath), util.errorToString(e)));
+        return [];
+    }
+    const validator = await loadSchema('schemas/kits-schema.json');
+    const is_valid = validator(kits_raw);
+    if (!is_valid) {
+        const errors = validator.errors!;
+        log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filePath), filePath));
+        for (const err of errors) {
+            log.error(` >> ${err.dataPath}: ${err.message}`);
+        }
+        return [];
+    }
+    const kits = kits_raw as Kit[];
+    log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, filePath));
+
+    const expandedKits: Kit[] = [];
+    if (!expansionOptions) {
+        expansionOptions = {
             vars: {
-                buildKit: kit.name,
-                buildType: '${buildType}',  // Unsupported variable substitutions use identity.
+                buildKit: '${buildKit}',
+                buildType: '${buildType}',
                 buildKitVendor: '${buildKitVendor}',
                 buildKitTriple: '${buildKitTriple}',
                 buildKitVersion: '${buildKitVersion}',
@@ -1124,49 +1156,27 @@ async function expandKitVariables(kit: Kit): Promise<Kit> {
                 buildKitVersionMinor: '${buildKitVersionMinor}',
                 generator: '${generator}',
                 userHome: paths.userHome,
-                workspaceFolder: '${workspaceFolder}',
-                workspaceFolderBasename: '${workspaceFolderBasename}',
+                workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
+                workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
                 workspaceHash: '${workspaceHash}',
-                workspaceRoot: '${workspaceRoot}',
-                workspaceRootFolderName: '${workspaceRootFolderName}'
+                workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
+                workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'
             }
-        });
+        };
     }
-    return kit;
-}
-
-export async function readKitsFile(filepath: string): Promise<Kit[]> {
-    const fileStats = await fs.tryStat(filepath);
-    if (!fileStats) {
-        log.debug(localize('not.reading.nonexistent.kit', 'Not reading non-existent kits file: {0}', filepath));
-        return [];
-    }
-    if (!fileStats.isFile()) {
-        log.debug(localize('not.reading.invalid.path', 'Not reading invalid kits file: {0}', filepath));
-        return [];
-    }
-    log.debug(localize('reading.kits.file', 'Reading kits file {0}', filepath));
-    const content_str = await fs.readFile(filepath);
-    let kits_raw: object[] = [];
-    try {
-        kits_raw = json5.parse(content_str.toLocaleString());
-    } catch (e) {
-        log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filepath), util.errorToString(e)));
-        return [];
-    }
-    const validator = await loadSchema('schemas/kits-schema.json');
-    const is_valid = validator(kits_raw);
-    if (!is_valid) {
-        const errors = validator.errors!;
-        log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filepath), filepath));
-        for (const err of errors) {
-            log.error(` >> ${err.dataPath}: ${err.message}`);
+    for (const kit of dropNulls(kits)) {
+        expansionOptions.vars.buildKit = kit.name;
+        if (kit.toolchainFile) {
+            kit.toolchainFile = await expand.expandString(kit.toolchainFile, expansionOptions);
         }
-        return [];
+        if (kit.compilers) {
+            for (const lang in kit.compilers) {
+                kit.compilers[lang] = await expand.expandString(kit.compilers[lang], expansionOptions);
+            }
+        }
+        expandedKits.push(kit);
     }
-    const kits = kits_raw as Kit[];
-    log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, filepath));
-    return Promise.all(dropNulls(kits).map(expandKitVariables));
+    return expandedKits;
 }
 
 function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
@@ -1191,23 +1201,24 @@ export function kitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder): string {
 
 /**
  * Get the kits declared for the given workspace directory. Looks in `.vscode/cmake-kits.json`.
- * @param dirPath The path to a VSCode workspace directory
+ * @param workspaceFolder The path to a VSCode workspace directory
  */
-export function kitsForWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
-    const ws_kits_file = path.join(dirPath, '.vscode/cmake-kits.json');
-    return readKitsFile(ws_kits_file);
+export function kitsForWorkspaceDirectory(workspaceFolder: string): Promise<Kit[]> {
+    const ws_kits_file = path.join(workspaceFolder, '.vscode/cmake-kits.json');
+    return readKitsFile(ws_kits_file, workspaceFolder);
 }
 
 /**
  * Get the kits defined by the user in the files pointed by "cmake.additionalKits".
  */
 export async function getAdditionalKits(cmakeProject: CMakeProject): Promise<Kit[]> {
-    const additionalKitFiles = await kitsController.KitsController.expandAdditionalKitFiles(cmakeProject);
-    let additionalKits: Kit[] = [];
-    for (const kitFile of additionalKitFiles) {
-        additionalKits = additionalKits.concat(await readKitsFile(kitFile));
-    }
+    const opts: expand.ExpansionOptions = await cmakeProject.getExpansionOptions();
+    const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
 
+    let additionalKits: Kit[] = [];
+    for (const kitFile of expandedAdditionalKitFiles) {
+        additionalKits = additionalKits.concat(await readKitsFile(kitFile, cmakeProject.workspaceContext.folder.uri.fsPath, opts));
+    }
     return additionalKits;
 }
 
