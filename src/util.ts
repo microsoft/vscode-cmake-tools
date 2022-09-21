@@ -115,9 +115,9 @@ export function normalizePath(p: string, opt: PathNormalizationOptions): string 
     // Remove trailing slashes
     norm = norm.replace(/\/$/g, '');
     // Special case for leading // on Windows, is a network drive
-    let savedLeadingDoubleSlash = process.platform === 'win32' && norm.startsWith('//');
+    const savedLeadingDoubleSlash = process.platform === 'win32' && norm.startsWith('//');
     if (savedLeadingDoubleSlash) {
-      norm = norm.substr(2)
+        norm = norm.slice(2);
     }
     // Remove duplicate slashes
     while (norm.includes('//')) {
