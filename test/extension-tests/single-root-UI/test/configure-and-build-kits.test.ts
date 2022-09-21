@@ -29,6 +29,7 @@ suite('Build using Kits and Variants', () => {
         cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed

@@ -1,7 +1,6 @@
 'use strict';
 
 import * as chokidar from 'chokidar';
-import * as expand from './expand';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -59,47 +58,14 @@ export class KitsController {
 
     private constructor(readonly cmakeProject: CMakeProject, private readonly _kitsWatcher: chokidar.FSWatcher) {}
 
-    static async expandAdditionalKitFiles(cmakeProject: CMakeProject): Promise<string[]> {
-        const additionalKitFiles: string[] = cmakeProject.workspaceContext.config.additionalKits;
-
-        const opts: expand.ExpansionOptions = {
-            vars: {
-                buildKit: cmakeProject.activeKit?.name || "",
-                buildType: await cmakeProject.currentBuildType() || "",
-                buildKitVendor: "",
-                buildKitTriple: "",
-                buildKitVersion: "",
-                buildKitHostOs: "",
-                buildKitTargetOs: "",
-                buildKitTargetArch: "",
-                buildKitVersionMajor: "",
-                buildKitVersionMinor: "",
-                generator: "",
-                userHome: paths.userHome,
-                workspaceFolder: cmakeProject.workspaceContext.folder.uri.fsPath,
-                workspaceFolderBasename: path.basename(cmakeProject.workspaceContext.folder.uri.fsPath),
-                workspaceHash: "",
-                workspaceRoot: cmakeProject.workspaceContext.folder.uri.fsPath,
-                workspaceRootFolderName: path.basename(cmakeProject.workspaceContext.folder.uri.fsPath)
-            }
-        };
-
-        const expandedAdditionalKitFiles: Promise<string>[] = [];
-        additionalKitFiles.forEach(kitFile => {
-            const expandedKitFile: Promise<string> = expand.expandString(kitFile, opts);
-            expandedAdditionalKitFiles.push(expandedKitFile);
-        });
-
-        return Promise.all(expandedAdditionalKitFiles);
-    }
-
     static async init(cmakeProject: CMakeProject) {
         if (KitsController.userKits.length === 0) {
             // never initialized before
             await KitsController.readUserKits(cmakeProject);
         }
 
-        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.folder)].concat(await KitsController.expandAdditionalKitFiles(cmakeProject));
+        const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
+        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.folder)].concat(expandedAdditionalKitFiles);
         const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
         const kitsController = new KitsController(cmakeProject, kitsWatcher);
         chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
@@ -159,7 +125,7 @@ export class KitsController {
         // Load user-kits
         reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
-        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH);
+        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, cmakeProject.workspaceContext.folder.uri.fsPath, await cmakeProject.getExpansionOptions());
 
         // Pruning requires user interaction, so it happens fully async
         KitsController._startPruneOutdatedKitsAsync(cmakeProject);
@@ -175,7 +141,7 @@ export class KitsController {
 
         if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
             // Read default folder kits
-            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder));
+            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder), this.cmakeProject.workspaceContext.folder.uri.fsPath, await this.cmakeProject.getExpansionOptions());
 
             // Read additional folder kits
             this.additionalKits = await getAdditionalKits(this.cmakeProject);

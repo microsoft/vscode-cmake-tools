@@ -4,7 +4,6 @@
  */
 
 import * as vscode from 'vscode';
-
 import { createLogger } from './logging';
 import { replaceAll, fixPaths, errorToString } from './util';
 import * as nls from 'vscode-nls';
@@ -14,6 +13,7 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('expand');
+export const envDelimiter: string = (process.platform === 'win32') ? ";" : ":";
 
 /**
  * The required keys for expanding a string in CMake Tools.
@@ -248,4 +248,13 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         }
     });
     return { result: finalString, didReplacement, circularReference };
+}
+
+export async function expandStrings(inputs: string[], opts: ExpansionOptions): Promise<string[]> {
+    const expandedInputs: string[] = [];
+    for (const input of inputs) {
+        const expandedInput: string = await expandString(input, opts);
+        expandedInputs.push(expandedInput);
+    }
+    return expandedInputs;
 }

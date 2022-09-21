@@ -13,7 +13,7 @@ import * as nls from 'vscode-nls';
 
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger } from '@cmt/cmakeProject';
-import { ConfigurationReader, TouchBarConfig } from '@cmt/config';
+import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { CMakeWorkspaceFolderController, CMakeWorkspaceFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeWorkspaceFolder';
 import {
@@ -484,25 +484,24 @@ class ExtensionManager implements vscode.Disposable {
         }
 
         const optsVars: KitContextVars = {
+            // sourceDirectory cannot be defined based on any of the below variables.
+            buildKit: '${buildKit}',
+            buildType: '${buildType}',
+            buildKitVendor: '${buildKitVendor}',
+            buildKitTriple: '${buildKitTriple}',
+            buildKitVersion: '${buildKitVersion}',
+            buildKitHostOs: '${buildKitVendor}',
+            buildKitTargetOs: '${buildKitTargetOs}',
+            buildKitTargetArch: '${buildKitTargetArch}',
+            buildKitVersionMajor: '${buildKitVersionMajor}',
+            buildKitVersionMinor: '${buildKitVersionMinor}',
+            generator: '${generator}',
             userHome: paths.userHome,
             workspaceFolder: cmakeProject.workspaceContext.folder.uri.fsPath,
             workspaceFolderBasename: cmakeProject.workspaceContext.folder.name,
+            workspaceHash: '${workspaceHash}',
             workspaceRoot: cmakeProject.workspaceContext.folder.uri.fsPath,
-            workspaceRootFolderName: cmakeProject.workspaceContext.folder.name,
-
-            // sourceDirectory cannot be defined based on any of the below variables.
-            buildKit: "",
-            buildType: "",
-            generator: "",
-            buildKitVendor: "",
-            buildKitTriple: "",
-            buildKitVersion: "",
-            buildKitHostOs: "",
-            buildKitTargetOs: "",
-            buildKitTargetArch: "",
-            buildKitVersionMajor: "",
-            buildKitVersionMinor: "",
-            workspaceHash: ""
+            workspaceRootFolderName: cmakeProject.workspaceContext.folder.name
         };
 
         const sourceDirectory: string = cmakeProject.workspaceContext.config.sourceDirectory;
@@ -1727,6 +1726,10 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     for (const key of funs) {
         log.trace(localize('register.command', 'Register CMakeTools extension command {0}', `cmake.${key}`));
         context.subscriptions.push(register(key));
+    }
+    if (util.isTestMode()) {
+        log.trace(localize('register.command', 'Register CMakeTools extension command cmake.getSettingsChangePromise'));
+        context.subscriptions.push(vscode.commands.registerCommand('cmake.getSettingsChangePromise', () => getSettingsChangePromise()));
     }
 
     // Util for the special commands to forward to real commands

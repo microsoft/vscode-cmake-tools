@@ -39,6 +39,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         emscriptenSearchDirs: [],
         mergedCompileCommands: null,
         copyCompileCommands: null,
+        loadCompileCommands: true,
         configureOnOpen: null,
         configureOnEdit: true,
         skipConfigureIfCachePresent: null,
