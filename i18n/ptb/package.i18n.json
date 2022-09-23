@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "Detalhes adicionais da tarefa",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "A instância do terminal de lançamento é reaproveitada e o alvo será lançado assim que o terminal estiver ocioso.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "A instância do terminal de lançamento é reutilizada e um comando `break` é enviado para terminar qualquer processo ativo em primeiro plano antes de lançar o alvo.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Uma nova instância terminal é criada e o alvo é lançado nela. Os terminais existentes não são limpos automaticamente."
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Uma nova instância terminal é criada e o alvo é lançado nela. Os terminais existentes não são limpos automaticamente.",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controla se a extensão lê compile_commands.json para habilitar a compilação de arquivo único."
 }

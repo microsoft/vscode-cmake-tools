@@ -159,9 +159,10 @@
 	"cmake-tools.taskDefinitions.properties.preset.description": "Nazwa ustawienia wstępnego narzędzia CMake. Jest to konfiguracja, kompilacja lub wstępne ustawienie testowe oparte na poleceniu CMake",
 	"cmake-tools.taskDefinitions.properties.options.description": "Dodatkowe opcje polecenia",
 	"cmake-tools.taskDefinitions.properties.options.cwd.description": "Bieżący katalog roboczy wykonanego programu lub skryptu. Jeśli pominięto, używany jest bieżący katalog główny obszaru roboczego programu Code.",
-	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "Zmienne środowiskowe w formacie \"name\": \"wartość\".",
+	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "Zmienne środowiskowe w formacie „nazwa”: „wartość”.",
 	"cmake-tools.taskDefinitions.properties.details.description": "Dodatkowe szczegóły zadania",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Wystąpienie terminalu uruchamiania zostanie ponownie uruchomione, a obiekt docelowy zostanie uruchomiony, gdy tylko terminal będzie bezczynny.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Wystąpienie terminalu uruchamiania jest ponownie uruchamiane, a polecenie `break` jest wysyłane w celu zakończenia wszelkich aktywnych procesów pierwszego planu przed uruchomieniem elementu docelowego.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone."
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone.",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku."
 }

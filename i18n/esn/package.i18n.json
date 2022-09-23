@@ -159,9 +159,10 @@
 	"cmake-tools.taskDefinitions.properties.preset.description": "Nombre preestablecido de CMake. Este es un ajuste preestablecido de configuración, compilación o prueba, basado en el comando CMake",
 	"cmake-tools.taskDefinitions.properties.options.description": "Opciones de comando adicionales",
 	"cmake-tools.taskDefinitions.properties.options.cwd.description": "Directorio de trabajo actual del script o el programa ejecutado. Si se omite, se usa la raíz del área de trabajo actual de Code.",
-	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "Variables de entorno con el formato \"name\": \"valor\".",
+	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "Variables de entorno con el formato \"nombre\": \"valor\".",
 	"cmake-tools.taskDefinitions.properties.details.description": "Detalles adicionales de la tarea",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "La instancia del terminal de inicio se reutiliza y el destino se iniciará en cuanto el terminal esté inactivo.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "La instancia de terminal de inicio se reutiliza y se envía un comando `break` para finalizar cualquier proceso en primer plano activo antes de iniciar el destino.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente."
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente.",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controla si la extensión lee compile_commands.json para habilitar la compilación de un solo archivo."
 }
