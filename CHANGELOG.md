@@ -4,6 +4,7 @@
 Improvements:
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
 - Resolve workspace variables in `cmake-kits.json`. [#2737](https://github.com/microsoft/vscode-cmake-tools/issues/2737)
+- Use upper case drive letters on Windows for `cmake.sourceDirectory`. [PR #2665](https://github.com/microsoft/vscode-cmake-tools/pull/2665) [@Danielmelody](https://github.com/Danielmelody)
 
 Bug Fixes:
 - Retain leading slashes for special paths in Windows. [#2607](https://github.com/microsoft/vscode-cmake-tools/issues/2607) [@musteresel](https://github.com/musteresel)
