@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "工作的其他詳細資料",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "已重複使用啟動終端機執行個體，當終端機閒置時，目標就會立即啟動。",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "已重複使用啟動終端機執行個體，並在啟動目標之前傳送 `break` 命令以終止任何使用中的前景進程。",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已建立新的終端機執行個體，並在其中啟動目標。不會自動清除現有的終端機。"
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已建立新的終端機執行個體，並在其中啟動目標。不會自動清除現有的終端機。",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制延伸模組是否要讀取 compile_commands.json 以啟用單一檔案編譯。"
 }

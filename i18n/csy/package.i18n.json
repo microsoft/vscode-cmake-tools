@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "Další podrobnosti o typu úlohy",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Instance spouštěcího terminálu se znovu použije a cíl se spustí, jakmile bude terminál nečinný.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Instance spouštěcího terminálu se znovu použije a před spuštěním cíle se odešle příkaz k přerušení veškerých aktivních procesů v popředí.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Vytvoří se nová instance terminál a cíl se v ní spustí. Existující terminály se automaticky nevyčistí."
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Vytvoří se nová instance terminál a cíl se v ní spustí. Existující terminály se automaticky nevyčistí.",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Určuje, jestli rozšíření přečte soubor compile_commands.json a povolí kompilaci jednoho souboru."
 }

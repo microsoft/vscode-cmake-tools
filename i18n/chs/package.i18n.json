@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "任务类型的其他详细信息",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "已重用启动终端实例，并且目标将在终端空闲时立即启动。",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "已重用启动终端实例，并且将在启动目标之前发送“中断”命令以终止任何活动的前台进程。",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已创建新的终端实例，并且已在其中启动目标。系统不会自动清理现有终端。"
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已创建新的终端实例，并且已在其中启动目标。系统不会自动清理现有终端。",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制扩展是否读取 compile_commands.json 以启用单个文件编译。"
 }
