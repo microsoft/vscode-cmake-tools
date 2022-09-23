@@ -162,7 +162,7 @@
 	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "Umgebungsvariablen im Format \"name\": \"value\".",
 	"cmake-tools.taskDefinitions.properties.details.description": "Zusätzliche Details zur Aufgabe",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Die Instanz des Startterminals wird wiederverwendet, und das Ziel wird gestartet, sobald sich das Terminal im Leerlauf befindet.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Die Startterminalinstanz wird wiederverwendet, und ein \"break\"-Befehl wird gesendet, um jeden aktiven Vordergrundprozess vor dem Starten des Ziels zu beenden.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Die Startterminalinstanz wird wiederverwendet, und ein `break`-Befehl wird gesendet, um jeden aktiven Vordergrundprozess vor dem Starten des Ziels zu beenden.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Eine neue Terminalinstanz wird erstellt, und das Ziel wird darin gestartet. Vorhandene Terminals werden nicht automatisch bereinigt.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Steuert, ob die Erweiterung compile_commands.json liest, um die Kompilierung einzelner Dateien zu ermöglichen."
 }
