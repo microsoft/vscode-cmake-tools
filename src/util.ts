@@ -379,6 +379,19 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
     }
 }
 
+/**
+ * Get the first non-empty item from an object that produces arrays of objects.
+ */
+export function first<In, Out>(array: Iterable<In>, fn: (item: In) => Out[]): Out[] {
+    for (const item of array) {
+        const result = fn(item);
+        if (result?.length > 0) {
+            return result;
+        }
+    }
+    return [];
+}
+
 export function makeDebuggerEnvironmentVars(env?: Environment): DebuggerEnvironmentVariable[] {
     if (!env) {
         return [];
