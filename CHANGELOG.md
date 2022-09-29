@@ -9,7 +9,7 @@ Improvements:
 - Custom browse configuration should not include (redundant) per-file arguments. [#2645](https://github.com/microsoft/vscode-cmake-tools/issues/2645)
 
 Bug Fixes:
-- Fix warning message that appears when using a default build preset with a multi-config generator.
+- Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
 
 ## 1.12.27
 Bug Fixes:
