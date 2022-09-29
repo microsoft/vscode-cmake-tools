@@ -1201,7 +1201,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             if (await fs.exists(compdbPath)) {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
-                // Now try to copy the compdb to the user-requested path
+                    // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
                     const expandedDest = await expandString(copyDest, opts);
                     const parentDir = path.dirname(expandedDest);
@@ -1319,6 +1319,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                             try {
                                 progress.report({ message: localize('configuring.project', 'Configuring project') });
                                 let result: number;
+                                this.isBusy.set(true);
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
                                     result = await drv.configure(trigger, [], consumer, true);
@@ -1350,6 +1351,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                                 return result;
                             } finally {
                                 await setContextValue(isConfiguringKey, false);
+                                this.isBusy.set(false);
                                 progress.report({ message: localize('finishing.configure', 'Finishing configure') });
                                 progressSub.dispose();
                             }
@@ -1360,7 +1362,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                     });
                 } catch (e: any) {
                     const error = e as Error;
-                    progress.report({ message: error.message});
+                    progress.report({ message: error.message });
                     return -1;
                 }
             }
