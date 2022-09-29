@@ -10,6 +10,9 @@ Improvements:
 - Support canceling configuration [#2759](https://github.com/microsoft/vscode-cmake-tools/pull/2759) [@Danielmelody](https://github.com/Danielmelody)
 
 
+Bug Fixes:
+- Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
+
 ## 1.12.27
 Bug Fixes:
 - Add default target to the build task when target is not defined. [#2729](https://github.com/microsoft/vscode-cmake-tools/issues/2729)
