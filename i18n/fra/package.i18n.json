@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "Détails supplémentaires de la tâche",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "L’instance de terminal de lancement est réutilisée et la cible se lance dès que le terminal est inactif.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "L’instance de terminal de lancement est réutilisée et une commande d’arrêt est envoyée pour arrêter tout processus de premier plan actif avant le lancement de la cible.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Une instance de terminal est créée et la cible y est lancée. Les terminaux existants ne sont pas nettoyés automatiquement."
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Une instance de terminal est créée et la cible y est lancée. Les terminaux existants ne sont pas nettoyés automatiquement.",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Contrôle si l’extension lit compile_commands.json pour activer la compilation de fichiers uniques."
 }

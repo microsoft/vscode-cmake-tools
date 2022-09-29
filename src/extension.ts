@@ -40,6 +40,7 @@ import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
+import { defaultBuildPreset } from './preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -722,13 +723,22 @@ class ExtensionManager implements vscode.Disposable {
                 const drv: CMakeDriver | null = await cmakeProject.getCMakeDriverInstance();
                 const configureEnv = await drv?.getConfigureEnvironment();
 
-                const isMultiConfig = !!cache.get('CMAKE_CONFIGURATION_TYPES');
+                const configurationTypes = cache.get('CMAKE_CONFIGURATION_TYPES');
+                const isMultiConfig = !!configurationTypes;
                 if (drv) {
                     drv.isMultiConfig = isMultiConfig;
                 }
                 const actualBuildType = await (async () => {
                     if (cmakeProject.useCMakePresets) {
                         if (isMultiConfig) {
+                            // The `configuration` is not set on the default build preset because it is optional for single-config generators.
+                            // If we have a multi-config generator we need to select the first value from CMAKE_CONFIGURATION_TYPES to match CMake's behavior.
+                            if (cmakeProject.buildPreset?.name === defaultBuildPreset.name) {
+                                const buildTypes = configurationTypes.as<string>().split(';');
+                                if (buildTypes.length > 0) {
+                                    return buildTypes[0];
+                                }
+                            }
                             return cmakeProject.buildPreset?.configuration || null;
                         } else {
                             const buildType = cache.get('CMAKE_BUILD_TYPE');

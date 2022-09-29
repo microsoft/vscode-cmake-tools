@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "Görevin ek ayrıntıları",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedef, terminal boşta kalır kalmaz başlatılır.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedefi başlatmadan önce herhangi bir etkin ön plan sürecini sonlandırmak için bir kesme komutu gönderilir.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez."
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez.",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Tek dosya derlemesini etkinleştirmek için uzantının compile_commands.json dosyasını okuyup okumadığını denetler."
 }

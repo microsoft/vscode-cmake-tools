@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "Dettagli aggiuntivi dell'attività",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "L'istanza del terminale di avvio viene riutilizzata e la destinazione verrà avviata non appena il terminale è inattivo.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "L'istanza del terminale di avvio viene riutilizzata e viene inviato un comando di interruzione per terminare qualsiasi processo in primo piano attivo prima di avviare la destinazione.",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Viene creata una nuova istanza del terminale in cui viene avviata la destinazione. I terminali esistenti non vengono puliti automaticamente."
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Viene creata una nuova istanza del terminale in cui viene avviata la destinazione. I terminali esistenti non vengono puliti automaticamente.",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controlla se l'estensione legge compile_commands.json per abilitare la compilazione di file singoli."
 }
