@@ -1660,9 +1660,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             } else {
                 if (gen) {
-                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
+                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets[0] !== 'clean') {
                         buildToolArgs.push('-j', numJobs.toString());
-                    } else if (/Visual Studio/.test(gen) && targets !== ['clean']) {
+                    } else if (/Visual Studio/.test(gen) && targets[0] !== 'clean') {
                         buildToolArgs.push('/maxcpucount:' + numJobs.toString());
                     }
                 }
