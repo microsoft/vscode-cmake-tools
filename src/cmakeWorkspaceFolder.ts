@@ -9,7 +9,8 @@ import * as util from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
-import { CMakeCommunicationMode, UseCMakePresets } from './config';
+import { CMakeCommunicationMode, ConfigurationReader, UseCMakePresets } from './config';
+import { DirectoryContext } from './workspace';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -33,28 +34,32 @@ export class CMakeWorkspaceFolder {
     private wasUsingCMakePresets: boolean | undefined;
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
-    private sourceDirectoryToProjectMap = new Map<vscode.WorkspaceFolder, CMakeProject>();
+    private sourceDirectoryMap = new Map<vscode.WorkspaceFolder, CMakeProject>();
 
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
 
-    private constructor(private readonly cmakeProject: CMakeProject) {
-        this.sourceDirectoryToProjectMap.set(cmakeProject.folder, cmakeProject);
+    private constructor(cmakeProjects: CMakeProject[]) {
+        for (const project of cmakeProjects) {
+            this.sourceDirectoryMap.set(project.folder, project);
+        }
     }
 
-    static async init(cmakeProject: CMakeProject) {
-        const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeProject);
+    static async init(cmakeProjects: CMakeProject[]) {
+        const cmakeWorkspaceFolder = new CMakeWorkspaceFolder(cmakeProjects);
 
         const useCMakePresetsChangedListener = async () => {
             const usingCMakePresets = cmakeWorkspaceFolder.useCMakePresets;
             if (usingCMakePresets !== cmakeWorkspaceFolder.wasUsingCMakePresets) {
                 cmakeWorkspaceFolder.wasUsingCMakePresets = usingCMakePresets;
                 await setContextValue('useCMakePresets', usingCMakePresets);
-                await cmakeProject.setUseCMakePresets(usingCMakePresets);
-                await CMakeWorkspaceFolder.initializeKitOrPresetsInCmt(cmakeWorkspaceFolder);
+                for (const project of cmakeWorkspaceFolder.cmakeProjects) {
+                    await project.setUseCMakePresets(usingCMakePresets);
+                }
+                await CMakeWorkspaceFolder.initializeKitOrPresetsInProject(cmakeWorkspaceFolder);
 
                 if (usingCMakePresets) {
                     const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
-                        const config = cmakeWorkspaceFolder.cmakeProject.workspaceContext.config;
+                        const config = cmakeWorkspaceFolder.config;
                         const fileName = path.basename(document.uri.fsPath);
                         if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
                             if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
@@ -84,43 +89,62 @@ export class CMakeWorkspaceFolder {
 
         await useCMakePresetsChangedListener();
 
-        cmakeWorkspaceFolder.disposables.push(cmakeProject.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
-        cmakeWorkspaceFolder.disposables.push(cmakeProject.onPresetsChanged(useCMakePresetsChangedListener));
-        cmakeWorkspaceFolder.disposables.push(cmakeProject.onUserPresetsChanged(useCMakePresetsChangedListener));
+        cmakeWorkspaceFolder.disposables.push(cmakeWorkspaceFolder.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
+        for (const project of cmakeWorkspaceFolder.cmakeProjects) {
+            cmakeWorkspaceFolder.disposables.push(project.onPresetsChanged(useCMakePresetsChangedListener));
+            cmakeWorkspaceFolder.disposables.push(project.onUserPresetsChanged(useCMakePresetsChangedListener));
+        }
 
         return cmakeWorkspaceFolder;
     }
 
-    get activeCMakeProject() {
-        return this.cmakeProject;
+    public getActiveCMakeProject(_openDocument?: vscode.TextDocument): CMakeProject {
+        if (this.cmakeProjects.length === 1) {
+            return this.cmakeProjects[0];
+        }
+        return this.cmakeProjects[0];
     }
-    get folder() {
-        return this.activeCMakeProject.folder;
+
+    get activeFolder() {
+        return this.getActiveCMakeProject().folder;
     }
 
     // Go through the decision tree here since there would be dependency issues if we do this in config.ts
     get useCMakePresets(): boolean {
-        if (this.activeCMakeProject.workspaceContext.config.useCMakePresets === 'auto') {
+        if (this.config.useCMakePresets === 'auto') {
             // TODO (P1): check if configured with kits + vars
             // // Always check if configured before since the state could be reset
             // const state = this.activeCMakeProject.workspaceContext.state;
             // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
             // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
-            return this.activeCMakeProject.presetsController.presetsFileExist;
+            return this.getActiveCMakeProject().presetsController.presetsFileExist;
         }
-        return this.activeCMakeProject.workspaceContext.config.useCMakePresets === 'always';
+        return this.config.useCMakePresets === 'always';
+    }
+
+    get config(): ConfigurationReader {
+        return this.cmakeProjects[0].workspaceContext.config;
+    }
+
+    get workspaceContext(): DirectoryContext {
+        // There is one directory context associated to all CMakeProjects in the same root.
+        return this.cmakeProjects[0].workspaceContext;
+    }
+
+    get cmakeProjects(): CMakeProject[] {
+        return Array.from(this.sourceDirectoryMap.values());
     }
 
     async getDiagnostics(): Promise<DiagnosticsConfiguration> {
         try {
-            const drv = await this.activeCMakeProject.getCMakeDriverInstance();
+            const drv = await this.getActiveCMakeProject().getCMakeDriverInstance();
             if (drv) {
                 return drv.getDiagnostics();
             }
         } catch {
         }
         return {
-            folder: this.folder.name,
+            folder: this.activeFolder.name,
             cmakeVersion: "unknown",
             configured: false,
             generator: "unknown",
@@ -131,7 +155,7 @@ export class CMakeWorkspaceFolder {
 
     async getSettingsDiagnostics(): Promise<DiagnosticsSettings> {
         try {
-            const drv = await this.activeCMakeProject.getCMakeDriverInstance();
+            const drv = await this.getActiveCMakeProject().getCMakeDriverInstance();
             if (drv) {
                 return {
                     communicationMode: drv.config.cmakeCommunicationMode,
@@ -156,23 +180,24 @@ export class CMakeWorkspaceFolder {
         if (this.onDidOpenTextDocumentListener) {
             this.onDidOpenTextDocumentListener.dispose();
         }
-        this.activeCMakeProject.dispose();
+        this.getActiveCMakeProject().dispose();
     }
 
-    private static async initializeKitOrPresetsInCmt(folder: CMakeWorkspaceFolder) {
+    private static async initializeKitOrPresetsInProject(folder: CMakeWorkspaceFolder) {
+        const activeCMakeProject: CMakeProject = folder.getActiveCMakeProject();
         if (folder.useCMakePresets) {
-            const configurePreset = folder.cmakeProject.workspaceContext.state.configurePresetName;
+            const configurePreset = activeCMakeProject.workspaceContext.state.configurePresetName;
             if (configurePreset) {
-                await folder.cmakeProject.presetsController.setConfigurePreset(configurePreset);
+                await activeCMakeProject.presetsController.setConfigurePreset(configurePreset);
             }
         } else {
             // Check if the CMakeProject remembers what kit it was last using in this dir:
-            const kitName = folder.cmakeProject.workspaceContext.state.activeKitName;
+            const kitName = activeCMakeProject.workspaceContext.state.activeKitName;
             if (kitName) {
                 // It remembers a kit. Find it in the kits avail in this dir:
-                const kit = folder.cmakeProject.kitsController.availableKits.find(k => k.name === kitName) || null;
+                const kit = activeCMakeProject.kitsController.availableKits.find(k => k.name === kitName) || null;
                 // Set the kit: (May do nothing if no kit was found)
-                await folder.cmakeProject.setKit(kit);
+                await activeCMakeProject.setKit(kit);
             }
         }
     }
@@ -323,7 +348,7 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
         // Load for the workspace.
         const newProject = await this.loadCMakeProjectForWorkspaceFolder(folder);
         // Remember it
-        const inst = await CMakeWorkspaceFolder.init(newProject);
+        const inst = await CMakeWorkspaceFolder.init([newProject]);
 
         this.instances.set(folder.uri.fsPath, inst);
 
