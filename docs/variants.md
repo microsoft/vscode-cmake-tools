@@ -143,12 +143,12 @@ Given the following variants file:
         vulkan:
           short: Vulkan
           long: Vulkan rendering
-          setting:
+          settings:
             ENGINE: Vulkan
         software:
           short: Software
           long: Software rendering
-          setting:
+          settings:
             ENGINE: Software
 
     network:
@@ -157,17 +157,17 @@ Given the following variants file:
         boost:
           short: Boost.Asio
           long: Use Boost.Asio for networking
-          setting:
+          settings:
             NETWORK: Boost
         asio:
           short: Asio
           long: Use standalone-Asio for networking
-          setting:
+          settings:
             NETWORK: Asio
         net-ts:
           short: NetTS
           long: Use the C++ Networking TS for networking
-          setting:
+          settings:
             NETWORK: net-ts
 ```
 
