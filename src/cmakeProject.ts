@@ -199,20 +199,22 @@ export class CMakeProject implements api.CMakeToolsAPI {
             configurePreset,
             lightNormalizePath(this.folder.uri.fsPath || '.'),
             this.sourceDir,
-            this.getPreferredGeneratorName(),
             true);
         if (!expandedConfigurePreset) {
             log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
             return undefined;
         }
-        if (!expandedConfigurePreset.binaryDir) {
-            log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
-            return undefined;
+        if (expandedConfigurePreset.__file && expandedConfigurePreset.__file.version <= 2) {
+            if (!expandedConfigurePreset.binaryDir) {
+                log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
+                return undefined;
+            }
+            if (!expandedConfigurePreset.generator) {
+                log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
+                return undefined;
+            }
         }
-        if (!expandedConfigurePreset.generator) {
-            log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
-            return undefined;
-        }
+
         return expandedConfigurePreset;
     }
 
