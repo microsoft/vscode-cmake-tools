@@ -29,7 +29,7 @@ interface CMakeTaskDefinition extends vscode.TaskDefinition {
     options?: { cwd?: string ; environment?: Environment };
 }
 
-enum CommandType {
+export enum CommandType {
     build = "build",
     config = "configure",
     install = "install",

@@ -31,7 +31,7 @@ import * as preset from '@cmt/preset';
 import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/cmakeWorkspaceFolder';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
-import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
+import { CustomBuildTaskTerminal, cmakeTaskProvider, CommandType } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -1696,25 +1696,60 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
-        const buildcmd = await this.getCMakeBuildCommand(targets);
-        if (buildcmd) {
-            let outputEnc = this.config.outputLogEncoding;
-            if (outputEnc === 'auto') {
-                if (process.platform === 'win32') {
-                    outputEnc = await codepages.getWindowsCodepage();
+    private async _findTasksForTargets(targets?: string[]): Promise<vscode.Task | undefined> {
+        let task: vscode.Task | undefined;
+
+        if (targets) {
+            if (targets.includes("configure")) {
+                task = await cmakeTaskProvider.provideTask(CommandType.config, this.useCMakePresets);
+            } else if (targets.includes("install")) {
+                task = await cmakeTaskProvider.provideTask(CommandType.install, this.useCMakePresets);
+            } else if (targets.includes("test")) {
+                task = await cmakeTaskProvider.provideTask(CommandType.test, this.useCMakePresets);
+            } else if (targets.includes("clean")) {
+                if (targets.length > 1) {
+                    targets.splice(targets.indexOf("clean"), 1);
+                    task = await cmakeTaskProvider.provideTask(CommandType.cleanRebuild, this.useCMakePresets, targets);
                 } else {
-                    outputEnc = 'utf8';
+                    task = await cmakeTaskProvider.provideTask(CommandType.clean, this.useCMakePresets);
                 }
+            } else {
+                task = await cmakeTaskProvider.provideTask(CommandType.build, this.useCMakePresets, targets);
             }
-            const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask };
-            const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
-            this._currentBuildProcess = child;
-            await child.result;
-            this._currentBuildProcess = null;
-            return child;
+        }
+
+        return task;
+    }
+    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
+        if (this.config.buildTask) {
+            const task = await this._findTasksForTargets(targets);
+
+            if (task) {
+                await vscode.tasks.executeTask(task);
+            }
+            return { child: undefined, result: new Promise<api.ExecutionResult>((resolve) => {
+                resolve({ retc: 0, stdout: '', stderr: '' });
+            }) };
         } else {
-            return null;
+            const buildcmd = await this.getCMakeBuildCommand(targets);
+            if (buildcmd) {
+                let outputEnc = this.config.outputLogEncoding;
+                if (outputEnc === 'auto') {
+                    if (process.platform === 'win32') {
+                        outputEnc = await codepages.getWindowsCodepage();
+                    } else {
+                        outputEnc = 'utf8';
+                    }
+                }
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask };
+                const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
+                this._currentBuildProcess = child;
+                await child.result;
+                this._currentBuildProcess = null;
+                return child;
+            } else {
+                return null;
+            }
         }
     }
 
