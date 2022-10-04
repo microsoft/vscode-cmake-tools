@@ -1525,7 +1525,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer): Promise<number> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
         if (!showCommandOnly) {
             log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
@@ -1576,7 +1576,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             if (taskConsumer) {
                 buildLogger.info(localize('starting.build', 'Starting build'));
                 await setContextValue(isBuildingKey, true);
-                rc = await drv!.build(newTargets, taskConsumer);
+                rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
                 await setContextValue(isBuildingKey, false);
                 if (rc === null) {
                     buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -1605,7 +1605,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextValue(isBuildingKey, true);
-                        const rc = await drv!.build(newTargets, consumer);
+                        const rc = await drv!.build(newTargets, consumer, isBuildCommand);
                         await setContextValue(isBuildingKey, false);
                         if (rc === null) {
                             buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -1633,8 +1633,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean): Promise<number> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand?: boolean): Promise<number> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand);
         return this.activeBuild;
     }
 
