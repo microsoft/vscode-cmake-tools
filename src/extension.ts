@@ -1157,11 +1157,11 @@ class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.editCacheUI());
     }
 
-    build(isBuildCommand: boolean = true, folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean) {
-        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.build(name ? [name] : undefined, showCommandOnly, isBuildCommand), folder, this.ensureActiveBuildPreset, true);
+    build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean, isBuildCommand?: boolean) {
+        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.build(name ? [name] : undefined, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand), folder, this.ensureActiveBuildPreset, true);
     }
     showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) {
-        return this.build(false, folder, name, true);
+        return this.build(folder, name, true, false);
     }
 
     buildAll(name?: string | string[]) {
@@ -1215,7 +1215,7 @@ class ExtensionManager implements vscode.Disposable {
 
     clean(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("clean");
-        return this.build(false, folder, 'clean');
+        return this.build(folder, 'clean', undefined, false);
     }
 
     cleanAll() {
