@@ -10,6 +10,7 @@ Improvements:
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
+- Commands from command palette should execute proper CMakeTask (build, clean, rebuild) when useTask option is configured [#2768](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis](https://github.com/piomis)
 
 ## 1.12.27
 Bug Fixes:
