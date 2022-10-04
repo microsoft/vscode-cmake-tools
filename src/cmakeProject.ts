@@ -1201,7 +1201,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             if (await fs.exists(compdbPath)) {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
-                // Now try to copy the compdb to the user-requested path
+                    // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
                     const expandedDest = await expandString(copyDest, opts);
                     const parentDir = path.dirname(expandedDest);
@@ -1295,10 +1295,15 @@ export class CMakeProject implements api.CMakeToolsAPI {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: localize('configuring.project', 'Configuring project')
+                title: localize('configuring.project', 'Configuring project'),
+                cancellable: true
             },
-            async progress => {
+            async (progress, cancel) => {
                 progress.report({ message: localize('preparing.to.configure', 'Preparing to configure') });
+                cancel.onCancellationRequested(() => {
+                    rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop());
+                });
+
                 if (type !== ConfigureType.ShowCommandOnly) {
                     log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extraArgs);
                 }
@@ -1360,7 +1365,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                     });
                 } catch (e: any) {
                     const error = e as Error;
-                    progress.report({ message: error.message});
+                    progress.report({ message: error.message });
                     return -1;
                 }
             }

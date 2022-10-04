@@ -7,6 +7,7 @@ Improvements:
 - Resolve workspace variables in `cmake-kits.json`. [#2737](https://github.com/microsoft/vscode-cmake-tools/issues/2737)
 - Use upper case drive letters on Windows for `cmake.sourceDirectory`. [PR #2665](https://github.com/microsoft/vscode-cmake-tools/pull/2665) [@Danielmelody](https://github.com/Danielmelody)
 - Custom browse configuration should not include (redundant) per-file arguments. [#2645](https://github.com/microsoft/vscode-cmake-tools/issues/2645)
+- Support canceling configuration [#2759](https://github.com/microsoft/vscode-cmake-tools/pull/2759) [@Danielmelody](https://github.com/Danielmelody)
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)

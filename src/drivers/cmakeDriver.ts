@@ -190,7 +190,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const opts = this.expansionOptions;
 
         for (const entry of Object.entries(toExpand)) {
-            env[entry[0]] = await expand.expandString(entry[1], {...opts, envOverride: expanded});
+            env[entry[0]] = await expand.expandString(entry[1], { ...opts, envOverride: expanded });
         }
 
         return env;
@@ -1603,7 +1603,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * The currently running process. We keep a handle on it so we can stop it
      * upon user request
      */
-    private _currentBuildProcess: proc.Subprocess | null = null;
+    protected currentBuildOrConfigureProcess: proc.Subprocess | null = null;
 
     private correctAllTargetName(targetnames: string[]) {
         for (let i = 0; i < targetnames.length; i++) {
@@ -1642,7 +1642,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
 
         const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
-        const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number|undefined>('parallelJobs');
+        const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number | undefined>('parallelJobs');
         let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
         // for Ninja generator, don't '-j' argument if user didn't define number of jobs
         // let numJobs: number | undefined = this.config.numJobs;
@@ -1660,9 +1660,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             } else {
                 if (gen) {
-                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
+                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && (targets.length === 1 && targets[0] === 'clean')) {
                         buildToolArgs.push('-j', numJobs.toString());
-                    } else if (/Visual Studio/.test(gen) && targets !== ['clean']) {
+                    } else if (/Visual Studio/.test(gen) && (targets.length === 1 && targets[0] === 'clean')) {
                         buildToolArgs.push('/maxcpucount:' + numJobs.toString());
                     }
                 }
@@ -1709,9 +1709,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask };
             const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
-            this._currentBuildProcess = child;
+            this.currentBuildOrConfigureProcess = child;
             await child.result;
-            this._currentBuildProcess = null;
+            this.currentBuildOrConfigureProcess = null;
             return child;
         } else {
             return null;
@@ -1731,7 +1731,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     async stopCurrentProcess(): Promise<void> {
         this.m_stop_process = true;
 
-        const cur = this._currentBuildProcess;
+        const cur = this.currentBuildOrConfigureProcess;
         if (cur) {
             if (cur.child) {
                 await util.termProc(cur.child);
