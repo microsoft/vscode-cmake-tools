@@ -840,6 +840,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this.configRunning || this.buildRunning;
     }
 
+    public configInProgress(): boolean {
+        return this.configRunning;
+    }
+
     /**
      * Perform a clean configure. Deletes cached files before running the config
      * @param consumer The output consumer
