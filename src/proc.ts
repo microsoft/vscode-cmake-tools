@@ -140,7 +140,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     let child: proc.ChildProcess | undefined;
     let result: Promise<ExecutionResult>;
-    const useBuildTask = (options && options.useBuildTask) ? options.useBuildTask : false;
+    const useBuildTask = options?.useBuildTask || false;
     if (useBuildTask) {
         void vscode.commands.executeCommand("workbench.action.tasks.build");
         result = new Promise<ExecutionResult>((resolve) => {
