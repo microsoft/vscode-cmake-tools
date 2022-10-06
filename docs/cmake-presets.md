@@ -299,7 +299,7 @@ For information on building with a command-line generator on Windows, see [Sourc
 
 ## Example `CMakePresets.json` file
 
-See the `CMakePresets.json` file checked in the [box2d-lite](https://github.com/esweet431/box2d-lite/blob/main/CMakePresets.json) code sample. It contains examples of Configure Presets, Build Presets, and Test Presets.
+See the `CMakePresets.json` file checked in the [box2d-lite](https://github.com/esweet431/box2d-lite/blob/vs-launch/CMakePresets.json) code sample. It contains examples of Configure Presets, Build Presets, and Test Presets.
 
 ## Next steps
 
