@@ -833,3 +833,10 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
         });
     });
 }
+
+export function isFileInsideFolder(openEditor: vscode.TextEditor, folder: vscode.WorkspaceFolder): boolean {
+    const parent = path.basename(lightNormalizePath(folder.uri.fsPath));
+    const dir = path.basename(lightNormalizePath(openEditor.document.uri.fsPath));
+    const relative = path.relative(parent, dir);
+    return relative.length > 0 && !relative.startsWith('..') && !path.isAbsolute(relative);
+}

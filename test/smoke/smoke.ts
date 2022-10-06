@@ -15,15 +15,16 @@ export class SmokeContext {
     private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
     async createCMakeProject(opts: { kit?: Kit | UnspecifiedKit }): Promise<CMakeProject> {
-        const cmt = await CMakeProject.createForDirectory(this.projectDir, this._extContext);
+        const cmakeProjects = await CMakeProject.createForDirectory(this.projectDir, this._extContext);
+        const cmakeProject = Array.isArray(cmakeProjects) ? cmakeProjects[0] : cmakeProjects;
         if (opts.kit) {
             if (opts.kit === SpecialKits.Unspecified) {
-                await cmt.setKit({ name: SpecialKits.Unspecified });
+                await cmakeProject.setKit({ name: SpecialKits.Unspecified });
             } else {
-                await cmt.setKit(opts.kit);
+                await cmakeProject.setKit(opts.kit);
             }
         }
-        return cmt;
+        return cmakeProject;
     }
 
     async withCMakeProject<T>(opts: { kit?: Kit | UnspecifiedKit; run(cmt: CMakeProject): TestResult<T> }): Promise<T> {

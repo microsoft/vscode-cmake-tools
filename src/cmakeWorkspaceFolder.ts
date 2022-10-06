@@ -98,11 +98,25 @@ export class CMakeWorkspaceFolder {
         return cmakeWorkspaceFolder;
     }
 
-    public getActiveCMakeProject(_openDocument?: vscode.TextDocument): CMakeProject {
+    private activeCMakeProject: CMakeProject | undefined;
+    public setActiveCMakeProject(openEditor?: vscode.TextEditor) {
         if (this.cmakeProjects.length === 1) {
-            return this.cmakeProjects[0];
+            this.activeCMakeProject = this.cmakeProjects[0];
         }
-        return this.cmakeProjects[0];
+        if (openEditor) {
+            for (const project of this.cmakeProjects) {
+                if (util.isFileInsideFolder(openEditor, project.folder)) {
+                    this.activeCMakeProject = project;
+                }
+            }
+        }
+    }
+
+    public getActiveCMakeProject(openEditor?: vscode.TextEditor): CMakeProject {
+        if (!this.activeCMakeProject) {
+            this.setActiveCMakeProject(openEditor);
+        }
+        return this.activeCMakeProject!;
     }
 
     get activeFolder() {
@@ -270,7 +284,7 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
     }
 
     /**
-     * Get the CMakeProject instance associated with the given workspace folder, or undefined
+     * Get the CMakeWorkspaceFolder instance associated with the given workspace folder, or undefined
      * @param ws The workspace folder to search, or array of command and workspace path
      */
     get(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeWorkspaceFolder | undefined {
@@ -328,7 +342,7 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
      * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
      */
-    private loadCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder) {
+    private loadCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject|CMakeProject[]> {
         // Create the backend:
         return CMakeProject.createForDirectory(folder, this.extensionContext);
     }
@@ -346,9 +360,9 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
             return existing;
         }
         // Load for the workspace.
-        const newProject = await this.loadCMakeProjectForWorkspaceFolder(folder);
+        const newProject: CMakeProject|CMakeProject[] = await this.loadCMakeProjectForWorkspaceFolder(folder);
         // Remember it
-        const inst = await CMakeWorkspaceFolder.init([newProject]);
+        const inst = await CMakeWorkspaceFolder.init(Array.isArray(newProject) ? newProject : [newProject]);
 
         this.instances.set(folder.uri.fsPath, inst);
 

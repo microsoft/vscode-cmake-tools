@@ -245,8 +245,8 @@ export class ConfigurationReader implements vscode.Disposable {
     get installPrefix(): string | null {
         return this.configData.installPrefix;
     }
-    get sourceDirectory(): string {
-        return this.configData.sourceDirectory as string;
+    get sourceDirectory(): string | string[] {
+        return this.configData.sourceDirectory;
     }
     get saveBeforeBuild(): boolean {
         return !!this.configData.saveBeforeBuild;

@@ -504,7 +504,7 @@ class ExtensionManager implements vscode.Disposable {
             workspaceRootFolderName: cmakeProject.workspaceContext.folder.name
         };
 
-        const sourceDirectory: string = cmakeProject.workspaceContext.config.sourceDirectory;
+        const sourceDirectory: string = cmakeProject.sourceDir;
         let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
         if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
             expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
@@ -612,11 +612,15 @@ class ExtensionManager implements vscode.Disposable {
             if (editor) {
                 ws = vscode.workspace.getWorkspaceFolder(editor.document.uri);
             }
-            if (ws && (!this.workspaceFolderController.activeFolder || ws.uri.fsPath !== this.workspaceFolderController.activeFolder.activeFolder.uri.fsPath)) {
-                // active folder changed.
-                await this.setActiveFolder(ws);
+            if (ws) {
+                if (!this.workspaceFolderController.activeFolder || ws.uri.fsPath !== this.workspaceFolderController.activeFolder.activeFolder.uri.fsPath) {
+                    // active folder changed.
+                    await this.setActiveFolder(ws, editor);
+                } else {
+                    await this.setActiveCMakeProject(editor);
+                }
             } else if (!ws && !this.workspaceFolderController.activeFolder && vscode.workspace.workspaceFolders.length >= 1) {
-                await this.setActiveFolder(vscode.workspace.workspaceFolders[0]);
+                await this.setActiveFolder(vscode.workspace.workspaceFolders[0], editor);
             } else if (!ws) {
                 // When adding a folder but the focus is on somewhere else
                 // Do nothing but make sure we are showing the active folder correctly
@@ -658,7 +662,7 @@ class ExtensionManager implements vscode.Disposable {
         if (!folder) {
             folder = vscode.workspace.workspaceFolders![0];
         }
-        return this.setActiveFolder(folder);
+        return this.setActiveFolder(folder, vscode.window.activeTextEditor);
     }
 
     /**
@@ -666,11 +670,12 @@ class ExtensionManager implements vscode.Disposable {
      * pieces to control which backend has control and receives user input.
      * @param ws The workspace to activate
      */
-    private async setActiveFolder(ws: vscode.WorkspaceFolder | undefined) {
+    private async setActiveFolder(ws: vscode.WorkspaceFolder | undefined, editor?: vscode.TextEditor | undefined) {
         // Set the new workspace
         this.workspaceFolderController.setActiveFolder(ws);
         this.statusBar.setActiveFolderName(ws?.name || '');
         const activeFolder = this.workspaceFolderController.activeFolder;
+        activeFolder?.setActiveCMakeProject(editor);
         const useCMakePresets = activeFolder?.useCMakePresets || false;
         this.statusBar.useCMakePresets(useCMakePresets);
         if (!useCMakePresets) {
@@ -678,6 +683,17 @@ class ExtensionManager implements vscode.Disposable {
         }
         this.projectOutlineProvider.setActiveFolder(ws);
         this.setupSubscriptions();
+    }
+
+    private async setActiveCMakeProject(editor?: vscode.TextEditor | undefined) {
+        // Set the new workspace
+        const activeFolder = this.workspaceFolderController.activeFolder;
+        activeFolder?.setActiveCMakeProject(editor);
+        const useCMakePresets = activeFolder?.useCMakePresets || false;
+        this.statusBar.useCMakePresets(useCMakePresets);
+        if (!useCMakePresets) {
+            this.statusBar.setActiveKitName(activeFolder?.getActiveCMakeProject().activeKit?.name || '');
+        }
     }
 
     private disposeSubs() {

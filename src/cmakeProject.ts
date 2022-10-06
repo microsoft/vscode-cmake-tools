@@ -494,9 +494,12 @@ export class CMakeProject implements api.CMakeToolsAPI {
     });
 
     private readonly sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () => {
-        this._sourceDir = await util.normalizeAndVerifySourceDir(
-            await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
-        );
+        const sourceDirectory: string | string[] = this.workspaceContext.config.sourceDirectory;
+        if (!Array.isArray(sourceDirectory) || sourceDirectory.length === 1) {
+            this._sourceDir = await util.normalizeAndVerifySourceDir(
+                await expandString(Array.isArray(sourceDirectory) ? sourceDirectory[0] : sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
+            );
+        }
     });
 
     /**
@@ -884,11 +887,12 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Second phase of two-phase init. Called by `create`.
      */
-    private async init() {
+    private async init(sourceDirectory?: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
 
+        const sourceDir: string = sourceDirectory ? sourceDirectory : Array.isArray(this.workspaceContext.config.sourceDirectory) ? this.workspaceContext.config.sourceDirectory[0] : this.workspaceContext.config.sourceDirectory;
         this._sourceDir = await util.normalizeAndVerifySourceDir(
-            await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
+            await expandString(sourceDir, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
         );
 
         // Start up the variant manager
@@ -1170,10 +1174,10 @@ export class CMakeProject implements api.CMakeToolsAPI {
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext): Promise<CMakeProject> {
+    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext, sourceDirectory?: string): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
         const inst = new CMakeProject(ctx, wsc);
-        await inst.init();
+        await inst.init(sourceDirectory);
         log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
     }
@@ -1183,10 +1187,19 @@ export class CMakeProject implements api.CMakeToolsAPI {
      * @param folder Path to the directory for which to create
      * @param ext The extension context
      */
-    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeProject> {
+    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeProject | CMakeProject[]> {
         // Create a context for the directory
         const dirContext = DirectoryContext.createForDirectory(folder, new StateManager(ext, folder));
-        return CMakeProject.create(ext, dirContext);
+        const sourceDirectory = dirContext.config.sourceDirectory;
+        if (!Array.isArray(sourceDirectory)) {
+            return CMakeProject.create(ext, dirContext, sourceDirectory);
+        } else {
+            const cmakeProjects: CMakeProject[] = [];
+            for (const source of sourceDirectory) {
+                cmakeProjects.push(await CMakeProject.create(ext, dirContext, source));
+            }
+            return cmakeProjects;
+        }
     }
 
     private _activeKit: Kit | null = null;

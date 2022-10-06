@@ -61,7 +61,7 @@ export class PresetsController {
             return util.normalizeAndVerifySourceDir(await expandString(dir, expansionOpts));
         };
 
-        presetsController._sourceDir = await expandSourceDir(cmakeProject.workspaceContext.config.sourceDirectory);
+        presetsController._sourceDir = await expandSourceDir(cmakeProject.sourceDir);
 
         // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
         // there might be timing issues, since listeners are invoked async.
