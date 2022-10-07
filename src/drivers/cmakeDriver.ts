@@ -1715,7 +1715,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     private async _findBuildTask(): Promise<vscode.Task | undefined> {
-        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => (task.group?.id === vscode.TaskGroup.Build.id && task.group?.isDefault) );
+        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => (task.group?.id === vscode.TaskGroup.Build.id) );
 
         if (tasks.length == 1) {
             return tasks[0];
