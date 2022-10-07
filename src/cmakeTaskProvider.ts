@@ -161,6 +161,15 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         }
         return undefined;
     }
+    public async cloneTaskAndAddTargets(task: CMakeTask, targets: string[]): Promise<CMakeTask | undefined> {
+        const definition: CMakeTaskDefinition = <any>task.definition;
+        const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
+        const clonedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+            new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
+                new CustomBuildTaskTerminal(resolvedDefinition.command, targets, resolvedDefinition.preset, resolvedDefinition.options)
+            ), task.problemMatchers);
+        return clonedTask;
+    }
 }
 
 export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsumer {
@@ -326,11 +335,16 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (generateLog) {
             telemetry.logEvent("task", {taskType: commandType, useCMakePresets: String(cmakeProject.useCMakePresets)});
         }
-        targets = await this.correctTargets(cmakeProject, commandType);
         const cmakeDriver: CMakeDriver | undefined = (await cmakeProject?.getCMakeDriverInstance()) || undefined;
         let cmakePath: string;
+        if(cmakeDriver)
+        {
+            this.targets = cmakeDriver.getRequestedTargets();
+        }
+        targets = await this.correctTargets(cmakeProject, commandType);
         if (cmakeDriver) {
             cmakePath = cmakeDriver.getCMakeCommand();
+
             if (!this.options) {
                 this.options = {};
             }
