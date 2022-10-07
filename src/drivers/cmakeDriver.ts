@@ -868,7 +868,24 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private configRunning: boolean = false;
 
-    private buildRunning: boolean = false;
+    private _buildRunning: boolean = false;
+    get buildRunning() : boolean {
+        return this._buildRunning;
+    }
+
+    set buildRunning(running : boolean) {
+        if (!running) {
+            this._requestedTargets = undefined;
+        }
+    }
+    getRequestedTargets(): string[]
+    {
+        if(this._requestedTargets) {
+            return this._requestedTargets
+        }
+        return [];
+    }
+    private _requestedTargets:  string[] | undefined = undefined;
 
     public configOrBuildInProgress(): boolean {
         return this.configRunning || this.buildRunning;
@@ -1536,6 +1553,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return -1;
         }
         this.buildRunning = true;
+        if(targets) {
+            this._requestedTargets = targets;
+        }
 
         const pre_build_ok = await this.doPreBuild();
         if (!pre_build_ok) {
@@ -1594,8 +1614,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this._refreshExpansions();
         }
 
-        this.buildRunning = false;
-        return (await child.result).retc;
+        return (await child.result.finally(() => {
+            this.buildRunning = false;
+        })).retc;
     }
 
     /**
@@ -1730,6 +1751,32 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
+    private async _findTasksForTargets(targets?: string[]): Promise<vscode.Task | undefined> {
+        if (targets) {
+                const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => (task.group?.id === vscode.TaskGroup.Build.id && task.group?.isDefault) );
+                const filteredTasks = tasks.filter(task => (task.group?.isDefault))
+
+                // If one task marked as default is found - use it
+                if( filteredTasks.length == 1) {
+                    return filteredTasks[0];
+                } else { // no default build tasks or more than one marked as default - print all available tasks and let user select 
+                    interface TaskItem extends vscode.QuickPickItem {
+                        task: vscode.Task
+                    }
+                    const choices = tasks.map((t): TaskItem => {
+                                    return {
+                                        label: t.name,
+                                        task: t
+                                    }
+                    });
+                    const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+                    return sel ? sel.task : undefined;
+                }
+            }
+            return undefined;
+        }
+
+
     private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
@@ -1742,12 +1789,32 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
-            const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useBuildTask: useBuildTask };
-            const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
-            this._currentBuildProcess = child;
-            await child.result;
-            this._currentBuildProcess = null;
-            return child;
+            if (useBuildTask) {
+                const task = await this._findTasksForTargets(targets);
+                if (task) {
+                    await vscode.tasks.executeTask(task);
+
+                    return { child: undefined, result: new Promise<api.ExecutionResult>(resolve => {
+                        let disposable = vscode.tasks.onDidEndTask(e => {
+                            if (e.execution.task.group?.id === vscode.TaskGroup.Build.id) {
+                                disposable.dispose();
+                                resolve({ retc: 0, stdout: '', stderr: '' });
+                            }
+                        });
+                    } ) };
+                }
+                return { child: undefined, result: new Promise<api.ExecutionResult>((resolve) => {
+                    resolve({ retc: 0, stdout: '', stderr: '' });
+                }) };
+
+            } else {
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useBuildTask: useBuildTask };
+                const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
+                this._currentBuildProcess = child;
+                await child.result;
+                this._currentBuildProcess = null;
+                return child;
+            }
         } else {
             return null;
         }
