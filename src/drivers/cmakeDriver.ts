@@ -1770,7 +1770,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                                 task: t
                             }
             });
-            const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+            const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.build.task', 'Select build task') });
             return sel ? sel.task : undefined;
         }
     }
