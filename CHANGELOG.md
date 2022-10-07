@@ -12,6 +12,7 @@ Improvements:
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
 - Avoid calling build tasks for "Clean", "Install" and "Run Tests" commands when "cmake: buildTask" setting is true. [#2768](https://github.com/microsoft/vscode-cmake-tools/issues/2768)
+- Generate the correct configurePresets for Clang or GCC compilers on Windows. [#2733](https://github.com/microsoft/vscode-cmake-tools/issues/2773)
 
 ## 1.12.27
 Bug Fixes:
