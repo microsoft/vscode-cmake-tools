@@ -1751,30 +1751,32 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _findTasksForTargets(targets?: string[]): Promise<vscode.Task | undefined> {
-        if (targets) {
-                const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => (task.group?.id === vscode.TaskGroup.Build.id && task.group?.isDefault) );
-                const filteredTasks = tasks.filter(task => (task.group?.isDefault))
+    private async _findBuildTask(): Promise<vscode.Task | undefined> {
+        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => (task.group?.id === vscode.TaskGroup.Build.id && task.group?.isDefault) );
 
-                // If one task marked as default is found - use it
-                if( filteredTasks.length == 1) {
-                    return filteredTasks[0];
-                } else { // no default build tasks or more than one marked as default - print all available tasks and let user select 
-                    interface TaskItem extends vscode.QuickPickItem {
-                        task: vscode.Task
-                    }
-                    const choices = tasks.map((t): TaskItem => {
-                                    return {
-                                        label: t.name,
-                                        task: t
-                                    }
-                    });
-                    const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
-                    return sel ? sel.task : undefined;
-                }
-            }
-            return undefined;
+        if (tasks.length == 1) {
+            return tasks[0];
         }
+
+        const filteredTasks = tasks.filter(task => (task.group?.isDefault))
+
+        // If one task marked as default is found - use it
+        if( filteredTasks.length == 1) {
+            return filteredTasks[0];
+        } else { // no default build tasks or more than one marked as default - print all available tasks and let user select 
+            interface TaskItem extends vscode.QuickPickItem {
+                task: vscode.Task
+            }
+            const choices = tasks.map((t): TaskItem => {
+                            return {
+                                label: t.name,
+                                task: t
+                            }
+            });
+            const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+            return sel ? sel.task : undefined;
+        }
+    }
 
 
     private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
