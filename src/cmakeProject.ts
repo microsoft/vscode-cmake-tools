@@ -1782,7 +1782,7 @@ export class CMakeProject {
         if (cleanResult !== 0) {
             return cleanResult;
         }
-        return this.build();
+        return this.build(undefined, false, true);
     }
 
     private readonly cTestController = new CTestDriver(this.workspaceContext);
