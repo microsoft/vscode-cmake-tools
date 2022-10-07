@@ -1519,9 +1519,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return -1;
         }
         this.buildRunning = true;
-        if(targets) {
-            this._requestedTargets = targets;
-        }
 
         const pre_build_ok = await this.doPreBuild();
         if (!pre_build_ok) {
@@ -1758,8 +1755,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
             if (useBuildTask) {
-                const task = await this._findTasksForTargets(targets);
+                const task = await this._findBuildTask();
                 if (task) {
+                    this._requestedTargets = targets;
                     await vscode.tasks.executeTask(task);
 
                     return { child: undefined, result: new Promise<api.ExecutionResult>(resolve => {
@@ -1776,7 +1774,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }) };
 
             } else {
-                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useBuildTask: useBuildTask };
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
                 const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
                 this._currentBuildProcess = child;
                 await child.result;
