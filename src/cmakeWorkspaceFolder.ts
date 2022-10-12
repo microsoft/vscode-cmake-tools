@@ -11,6 +11,7 @@ import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
 import { CMakeCommunicationMode, ConfigurationReader, UseCMakePresets } from './config';
 import { DirectoryContext } from './workspace';
+import { getCMakeProjectForActiveFolder } from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -98,29 +99,8 @@ export class CMakeWorkspaceFolder {
         return cmakeWorkspaceFolder;
     }
 
-    private activeCMakeProject: CMakeProject | undefined;
-    public setActiveCMakeProject(openEditor?: vscode.TextEditor) {
-        if (this.cmakeProjects.length === 1) {
-            this.activeCMakeProject = this.cmakeProjects[0];
-        }
-        if (openEditor) {
-            for (const project of this.cmakeProjects) {
-                if (util.isFileInsideFolder(openEditor, project.folder)) {
-                    this.activeCMakeProject = project;
-                }
-            }
-        }
-    }
-
-    public getActiveCMakeProject(openEditor?: vscode.TextEditor): CMakeProject {
-        if (!this.activeCMakeProject) {
-            this.setActiveCMakeProject(openEditor);
-        }
-        return this.activeCMakeProject!;
-    }
-
-    get activeFolder() {
-        return this.getActiveCMakeProject().folder;
+    get activeFolder(): vscode.WorkspaceFolder {
+        return getCMakeProjectForActiveFolder()?.folder! ;
     }
 
     // Go through the decision tree here since there would be dependency issues if we do this in config.ts
@@ -131,7 +111,7 @@ export class CMakeWorkspaceFolder {
             // const state = this.activeCMakeProject.workspaceContext.state;
             // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
             // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
-            return this.getActiveCMakeProject().presetsController.presetsFileExist;
+            return getCMakeProjectForActiveFolder()?.presetsController.presetsFileExist || false;
         }
         return this.config.useCMakePresets === 'always';
     }
@@ -151,14 +131,14 @@ export class CMakeWorkspaceFolder {
 
     async getDiagnostics(): Promise<DiagnosticsConfiguration> {
         try {
-            const drv = await this.getActiveCMakeProject().getCMakeDriverInstance();
+            const drv = await getCMakeProjectForActiveFolder()?.getCMakeDriverInstance();
             if (drv) {
                 return drv.getDiagnostics();
             }
         } catch {
         }
         return {
-            folder: this.activeFolder.name,
+            folder: this.activeFolder?.name || "",
             cmakeVersion: "unknown",
             configured: false,
             generator: "unknown",
@@ -169,7 +149,7 @@ export class CMakeWorkspaceFolder {
 
     async getSettingsDiagnostics(): Promise<DiagnosticsSettings> {
         try {
-            const drv = await this.getActiveCMakeProject().getCMakeDriverInstance();
+            const drv = await getCMakeProjectForActiveFolder()?.getCMakeDriverInstance();
             if (drv) {
                 return {
                     communicationMode: drv.config.cmakeCommunicationMode,
@@ -194,24 +174,26 @@ export class CMakeWorkspaceFolder {
         if (this.onDidOpenTextDocumentListener) {
             this.onDidOpenTextDocumentListener.dispose();
         }
-        this.getActiveCMakeProject().dispose();
+        getCMakeProjectForActiveFolder()?.dispose();
     }
 
     private static async initializeKitOrPresetsInProject(folder: CMakeWorkspaceFolder) {
-        const activeCMakeProject: CMakeProject = folder.getActiveCMakeProject();
-        if (folder.useCMakePresets) {
-            const configurePreset = activeCMakeProject.workspaceContext.state.configurePresetName;
-            if (configurePreset) {
-                await activeCMakeProject.presetsController.setConfigurePreset(configurePreset);
-            }
-        } else {
-            // Check if the CMakeProject remembers what kit it was last using in this dir:
-            const kitName = activeCMakeProject.workspaceContext.state.activeKitName;
-            if (kitName) {
-                // It remembers a kit. Find it in the kits avail in this dir:
-                const kit = activeCMakeProject.kitsController.availableKits.find(k => k.name === kitName) || null;
-                // Set the kit: (May do nothing if no kit was found)
-                await activeCMakeProject.setKit(kit);
+        const activeCMakeProject = getCMakeProjectForActiveFolder();
+        if (activeCMakeProject) {
+            if (folder.useCMakePresets) {
+                const configurePreset = activeCMakeProject.workspaceContext.state.configurePresetName;
+                if (configurePreset) {
+                    await activeCMakeProject.presetsController.setConfigurePreset(configurePreset);
+                }
+            } else {
+                // Check if the CMakeProject remembers what kit it was last using in this dir:
+                const kitName = activeCMakeProject.workspaceContext.state.activeKitName;
+                if (kitName) {
+                    // It remembers a kit. Find it in the kits avail in this dir:
+                    const kit = activeCMakeProject.kitsController.availableKits.find(k => k.name === kitName) || null;
+                    // Set the kit: (May do nothing if no kit was found)
+                    await activeCMakeProject.setKit(kit);
+                }
             }
         }
     }
@@ -256,12 +238,38 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
     get activeFolder() {
         return this._activeFolder;
     }
-    setActiveFolder(ws: vscode.WorkspaceFolder | undefined) {
+
+    setActiveFolder(ws: vscode.WorkspaceFolder | undefined, openEditor?: vscode.TextEditor) {
         if (ws) {
             this._activeFolder = this.get(ws);
+            this.setActiveCMakeProject(openEditor);
         } else {
             this._activeFolder = undefined;
         }
+    }
+
+    private activeCMakeProject: CMakeProject | undefined;
+    public setActiveCMakeProject(openEditor?: vscode.TextEditor) {
+        if (this._activeFolder) {
+            const cmakeProjects = this._activeFolder.cmakeProjects;
+            if (cmakeProjects.length === 1) {
+                this.activeCMakeProject = cmakeProjects[0];
+            }
+            if (openEditor) {
+                for (const project of cmakeProjects) {
+                    if (util.isFileInsideFolder(openEditor, project.folder)) {
+                        this.activeCMakeProject = project;
+                    }
+                }
+            }
+        }
+    }
+
+    public getActiveCMakeProject(openEditor?: vscode.TextEditor): CMakeProject {
+        if (!this.activeCMakeProject) {
+            this.setActiveCMakeProject(openEditor);
+        }
+        return this.activeCMakeProject!;
     }
 
     get size() {
