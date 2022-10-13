@@ -2046,13 +2046,15 @@
   },
   "_moduleAliases": {
     "@cmt": "out/src/",
-    "@test": "out/test/"
+    "@test": "out/test/",
+    "vscode-cmake-tools": "api/"
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile-production",
-    "compile": "yarn install && webpack --mode development",
-    "compile-watch": "yarn install && webpack --mode development --watch --progress",
-    "compile-production": "yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
+    "compile": "yarn run compile-api && yarn install && webpack --mode development",
+    "compile-watch": "yarn run compile-api && yarn install && webpack --mode development --watch --progress",
+    "compile-production": "yarn run compile-api && yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
+    "compile-api": "yarn --cwd api install && yarn --cwd api compile",
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",
     "translations-import": "gulp translations-import",

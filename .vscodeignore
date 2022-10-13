@@ -26,3 +26,4 @@ translations_auto_pr.js
 tslint.json
 webpack.config.js
 yarn.lock
+api/
