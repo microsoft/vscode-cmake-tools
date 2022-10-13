@@ -1,4 +1,4 @@
-import * as api from '@cmt/api';
+import * as api from '@cmt/legacyApi';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';

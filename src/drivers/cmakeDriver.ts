@@ -5,7 +5,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import * as api from '@cmt/api';
+import * as api from '@cmt/legacyApi';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger } from "@cmt/cmakeProject";

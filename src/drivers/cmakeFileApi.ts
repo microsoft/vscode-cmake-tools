@@ -6,7 +6,7 @@
  * This file implements only the new required structures.
  */
 
-import * as api from '@cmt/api';
+import * as api from '@cmt/legacyApi';
 import * as cache from '@cmt/cache';
 import {
     CodeModelConfiguration,

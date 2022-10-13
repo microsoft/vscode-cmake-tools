@@ -2,7 +2,7 @@
  * Module for reading from the CMake cache
  */ /** */
 
-import * as api from './api';
+import * as api from './legacyApi';
 import * as logging from './logging';
 import { fs } from './pr';
 import rollbar from './rollbar';

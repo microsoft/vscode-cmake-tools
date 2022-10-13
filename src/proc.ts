@@ -12,9 +12,9 @@ import rollbar from './rollbar';
 import * as util from './util';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { ExecutionResult } from './api';
+import { ExecutionResult } from './legacyApi';
 import { Environment, EnvironmentUtils } from './environmentVariables';
-export { ExecutionResult } from './api';
+export { ExecutionResult } from './legacyApi';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

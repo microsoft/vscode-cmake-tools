@@ -1,6 +1,6 @@
-import * as api from '@cmt/api';
+import * as api from '@cmt/legacyApi';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
-import { ExecutableTarget } from '@cmt/api';
+import { ExecutableTarget } from '@cmt/legacyApi';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';

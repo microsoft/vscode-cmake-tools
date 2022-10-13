@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import * as api from '@cmt/api';
+import * as api from '@cmt/legacyApi';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureTrigger } from '@cmt/cmakeProject';
 import { readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH } from '@cmt/kit';

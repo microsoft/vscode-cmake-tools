@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as telemetry from '@cmt/telemetry';
-import * as api from './api';
+import * as api from './legacyApi';
 import * as util from './util';
 
 import { CMakeCache } from './cache';

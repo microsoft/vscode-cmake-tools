@@ -6,7 +6,7 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as vscode from 'vscode';
 
-import * as api from '@cmt/api';
+import * as api from '@cmt/legacyApi';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';

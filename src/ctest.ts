@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
-import * as api from './api';
+import * as api from './legacyApi';
 import { CMakeDriver } from '@cmt/drivers/cmakeDriver';
 import * as logging from './logging';
 import { fs } from './pr';

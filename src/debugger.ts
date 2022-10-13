@@ -1,4 +1,4 @@
-import { ExecutableTarget } from '@cmt/api';
+import { ExecutableTarget } from '@cmt/legacyApi';
 import { CMakeCache } from '@cmt/cache';
 import * as proc from '@cmt/proc';
 import { createLogger } from './logging';

@@ -1,10 +1,8 @@
 /**
- * This module defines the external API for the extension. Other
- * extensions can access this API via the exports instance for the extension.
- *
- * Look at the `CMakeToolsAPI` interface for the actual exported API.
- *
- * Copy the `api.ts` source file into your project to use it.
+ * This module previously defined an exported API for the extension. While
+ * eventually it should be removed or refactored because there's now a new
+ * extension API, parts of the codebase still depend on these types for internal
+ * operations.
  */ /** */
 
 import { DebugSession, Disposable, Event, Terminal } from 'vscode';

@@ -6,7 +6,7 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
-import * as api from '../../src/api';
+import * as api from '../../src/legacyApi';
 import { CMakeCache } from '../../src/cache';
 import * as util from '../../src/util';
 
