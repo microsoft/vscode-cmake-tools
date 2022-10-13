@@ -30,7 +30,7 @@ export interface CMakeToolsExtensionExports {
 /**
  * An interface to allow VS Code extensions to interact with the CMake Tools extension.
  */
-export interface CMakeToolsApi extends vscode.Disposable {
+export interface CMakeToolsApi {
     /**
      * The version of the API.
      */
