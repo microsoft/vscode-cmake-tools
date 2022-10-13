@@ -1,114 +1,17 @@
 import { CMakeCache } from "@cmt/cache";
 
-export type TargetTypeString = 'STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY';
+import * as api from "vscode-cmake-tools/out/api";
 
-/** Describes a cmake target */
-export interface CodeModelTarget {
-    /**
-     * A string specifying the logical name of the target.
-     *
-     * (Source CMake Documentation cmake-file-api(7))
-     */
-    readonly name: string;
-
-    /**
-     * A string specifying the type of the target.
-     * The value is one of EXECUTABLE, STATIC_LIBRARY, SHARED_LIBRARY, MODULE_LIBRARY, OBJECT_LIBRARY, or UTILITY.
-     *
-     * (Source CMake Documentation cmake-file-api(7))
-     *
-     * \todo clarify need of INTERFACE_LIBRARY type
-     */
-    type: TargetTypeString;
-
-    /** A string specifying the absolute path to the target’s source directory. */
-    sourceDirectory?: string;
-
-    /** Name of the target artifact on disk (library or executable file name). */
-    fullName?: string;
-
-    /** List of absolute paths to a target´s build artifacts. */
-    artifacts?: string[];
-
-    /**
-     * The file groups describe a list of compilation information for artifacts of this target.
-     * The file groups contains source code files that use the same compilation information
-     * and are known by CMake.
-     */
-    fileGroups?: CodeModelFileGroup[];
-
-    /**
-     * Represents the CMAKE_SYSROOT variable
-     */
-    sysroot?: string;
-}
-
-/**
- * Describes a file group to describe the build settings.
- */
-export interface CodeModelFileGroup {
-    /** List of source files with the same compilation information */
-    sources: string[];
-
-    /** Specifies the language (C, C++, ...) for the toolchain */
-    language?: string;
-
-    /** Include paths for compilation of a source file */
-    includePath?: {
-        /** include path */
-        path: string;
-    }[];
-
-    /** Compiler flags */
-    compileCommandFragments?: string[];
-
-    /** Defines */
-    defines?: string[];
-
-    /** CMake generated file group */
-    isGenerated: boolean;
-}
-
-/**
- * Describes cmake project and all its related targets
- */
-export interface CodeModelProject {
-    /** Name of the project */
-    name: string;
-
-    /** List of targets */
-    targets: CodeModelTarget[];
-
-    /** Location of the Project */
-    sourceDirectory: string;
-
-    hasInstallRule?: boolean; // Exists in ServerCodeModelProject.
-
-}
-
-/**
- * Describes cmake configuration
- */
-export interface CodeModelConfiguration {
-    /** List of project() from CMakeLists.txt */
-    projects: CodeModelProject[];
-
-    /** Name of the active configuration in a multi-configuration generator.*/
-    name: string;
-}
-
-export interface CodeModelToolchain {
-    path: string;
-    target?: string;
-}
-
-/** Describes the cmake model */
-export interface CodeModelContent {
-    /** List of configurations provided by the selected generator */
-    configurations: CodeModelConfiguration[];
-
-    toolchains?: Map<string, CodeModelToolchain>;
-}
+// Re-export API types. This gives us flexibility add fields to the internal
+// representation of these data structures in the future without modifying the
+// public API.
+export type CodeModelConfiguration = api.CodeModelConfiguration;
+export type CodeModelContent = api.CodeModelContent;
+export type CodeModelFileGroup = api.CodeModelFileGroup;
+export type CodeModelProject = api.CodeModelProject;
+export type CodeModelTarget = api.CodeModelTarget;
+export type CodeModelToolchain = api.CodeModelToolchain;
+export type TargetTypeString = api.TargetTypeString;
 
 /**
  * Type given when updating the configuration data stored in the file index.

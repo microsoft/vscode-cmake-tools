@@ -3,7 +3,7 @@
  * eventually it should be removed or refactored because there's now a new
  * extension API, parts of the codebase still depend on these types for internal
  * operations.
- */ /** */
+ */
 
 import { DebugSession, Disposable, Event, Terminal } from 'vscode';
 
