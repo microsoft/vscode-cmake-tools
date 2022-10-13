@@ -40,13 +40,13 @@ export interface CMakeToolsApi {
      * Shows the given UI element.
      * @param element Element to show.
      */
-    showUiElement(element: UiElement): void;
+    showUiElement(element: UiElement): Promise<void>;
 
     /**
      * Hides the given UI element.
      * @param element Element to hide.
      */
-    hideUiElement(element: UiElement): void;
+    hideUiElement(element: UiElement): Promise<void>;
 
     /**
      * An event that fires when the selected build target changes.
@@ -59,10 +59,10 @@ export interface CMakeToolsApi {
     readonly onLaunchTargetNameChanged: vscode.Event<string>;
 
     /**
-     * Gets the code model from the CMake File API.
+     * Gets the code model from the CMake File API, if it is available.
      * @param folder The workspace folder containing the CMake project.
      */
-    getFileApiCodeModel(folder: vscode.WorkspaceFolder): Promise<CodeModelContent>;
+    getFileApiCodeModel(folder: vscode.WorkspaceFolder): Promise<CodeModelContent | undefined>;
 
     /**
      * An event that fires when any code model in the workspace is updated.
