@@ -677,7 +677,7 @@ export class StatusBar implements vscode.Disposable {
         this._buttons.forEach(btn => btn.forceHidden = !v);
     }
 
-    setActiveFolderName(v: string): void {
+    setActiveProjectName(v: string): void {
         this._workspaceButton.text = v;
     }
     setAutoSelectActiveFolder(autoSelectActiveFolder: boolean): void {

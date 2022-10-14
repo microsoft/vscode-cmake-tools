@@ -8,7 +8,7 @@ import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
-import { getCMakeProjectForActiveFolder } from './extension';
+import { getActiveCMakeProject } from './extension';
 import { CMakeProject, ConfigureTrigger } from './cmakeProject';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
@@ -109,7 +109,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public async provideTasks(): Promise<CMakeTask[]> {
         const result: CMakeTask[] = [];
-        const cmakeProject: CMakeProject | undefined = getCMakeProjectForActiveFolder();
+        const cmakeProject: CMakeProject | undefined = getActiveCMakeProject();
         const targets: string[] | undefined = await cmakeProject?.getDefaultBuildTargets() || ["all"];
         result.push(await this.provideTask(CommandType.config, cmakeProject?.useCMakePresets));
         result.push(await this.provideTask(CommandType.build, cmakeProject?.useCMakePresets, targets));
@@ -271,7 +271,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private getCMakeProject(): CMakeProject | undefined {
-        const cmakeProject: CMakeProject | undefined = getCMakeProjectForActiveFolder();
+        const cmakeProject: CMakeProject | undefined = getActiveCMakeProject();
         if (!cmakeProject) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
             this.writeEmitter.fire(localize("task.failed", "Task failed.") + endOfLine);
