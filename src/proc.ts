@@ -83,7 +83,7 @@ export interface ExecutionOptions {
     cwd?: string;
     encoding?: BufferEncoding;
     outputEncoding?: string;
-    useTask?: boolean;
+    useBuildTask?: boolean;
     overrideLocale?: boolean;
     timeout?: number;
 }
@@ -140,15 +140,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     let child: proc.ChildProcess | undefined;
     let result: Promise<ExecutionResult>;
-    const useTask = (options && options.useTask) ? options.useTask : false;
-    if (useTask) {
-        // child = undefined;
-        // const term = vscode.window.createTerminal("Cmake Build");
-        // term.show(true);
-        // term.sendText(cmdstr);
-
+    const useBuildTask = options?.useBuildTask || false;
+    if (useBuildTask) {
         void vscode.commands.executeCommand("workbench.action.tasks.build");
-
         result = new Promise<ExecutionResult>((resolve) => {
             resolve({ retc: 0, stdout: '', stderr: '' });
         });

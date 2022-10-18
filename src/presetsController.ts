@@ -322,8 +322,8 @@ export class PresetsController {
                             const generator = chosen_kit.kit.preferredGenerator?.name;
                             const cacheVariables: { [key: string]: preset.CacheVarType | undefined } = {
                                 CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
-                                CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C'] || chosen_kit.kit.visualStudio ? 'cl.exe' : undefined,
-                                CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX'] || chosen_kit.kit.visualStudio ? 'cl.exe' : undefined
+                                CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined),
+                                CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined)
                             };
                             isMultiConfigGenerator = util.isMultiConfGeneratorFast(generator || '');
                             if (!isMultiConfigGenerator) {

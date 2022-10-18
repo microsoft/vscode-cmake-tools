@@ -1491,7 +1491,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         });
     }
 
-    async build(targets?: string[], consumer?: proc.OutputConsumer): Promise<number | null> {
+    async build(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number | null> {
         log.debug(localize('start.build', 'Start build'), targets?.join(', ') || '');
         if (this.configRunning) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
@@ -1509,7 +1509,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return -1;
         }
         const timeStart: number = new Date().getTime();
-        const child = await this._doCMakeBuild(targets, consumer);
+        const child = await this._doCMakeBuild(targets, consumer, isBuildCommand);
         const timeEnd: number = new Date().getTime();
         const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
             ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
@@ -1660,9 +1660,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             } else {
                 if (gen) {
-                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets[0] !== 'clean') {
+                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets.length === 1 && targets[0] !== 'clean') {
                         buildToolArgs.push('-j', numJobs.toString());
-                    } else if (/Visual Studio/.test(gen) && targets[0] !== 'clean') {
+                    } else if (/Visual Studio/.test(gen) && targets.length === 1 && targets[0] !== 'clean') {
                         buildToolArgs.push('/maxcpucount:' + numJobs.toString());
                     }
                 }
@@ -1696,7 +1696,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
+    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
             let outputEnc = this.config.outputLogEncoding;
@@ -1707,7 +1707,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     outputEnc = 'utf8';
                 }
             }
-            const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask };
+            const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
+            const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useBuildTask: useBuildTask };
             const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
             this._currentBuildProcess = child;
             await child.result;

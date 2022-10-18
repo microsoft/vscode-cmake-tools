@@ -193,9 +193,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
             await this._cleanPriorConfiguration();
         }
         await cb();
-        if (!this.generator) {
-            throw new NoGeneratorError();
-        }
     }
 
     doSetBuildPreset(cb: () => Promise<void>): Promise<void> {

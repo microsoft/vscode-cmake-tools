@@ -163,5 +163,6 @@
 	"cmake-tools.taskDefinitions.properties.details.description": "タスクのその他の詳細",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターミナルがアイドル状態になるとすぐにターゲットが起動します。",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターゲットを起動する前にアクティブなフォアグラウンド プロセスを終了するために 'break' コマンドが送信されます。",
-	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。"
+	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。",
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "拡張子が単一ファイルのコンパイルを有効にするために compile_commands.json を読み取るかどうかを制御します。"
 }

@@ -26,7 +26,7 @@
 	"detected.kit.for.version": "Sürüm için VsKit algılandı",
 	"generator.present": "Mevcut Oluşturucu: {0}",
 	"selected.preferred.generator.name": "Seçili Tercih Edilen Oluşturucu Adı: {0} {1}",
-	"failed.to.scan.for.kits": "GNU CLI Clang setleri taranamıyor: cmakeTools tanımsız",
+	"failed.to.scan.for.kits": "GNU CLI Clang setleri taranamıyor: cmakeProject tanımsız",
 	"kit.env": "Set ortamı {0}: {1}",
 	"scanning.for.kits.on.system": "Sistemdeki Setler için taranıyor",
 	"scanning.for.kits": "Setler için taranıyor",

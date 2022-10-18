@@ -5,6 +5,14 @@ Improvements:
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
 - Preset in CMakeUserPresets.json using "condition" does not appear in configure preset selection. [#2749](https://github.com/microsoft/vscode-cmake-tools/issues/2749)
 - Resolve workspace variables in `cmake-kits.json`. [#2737](https://github.com/microsoft/vscode-cmake-tools/issues/2737)
+- Use upper case drive letters on Windows for `cmake.sourceDirectory`. [PR #2665](https://github.com/microsoft/vscode-cmake-tools/pull/2665) [@Danielmelody](https://github.com/Danielmelody)
+- Custom browse configuration should not include (redundant) per-file arguments. [#2645](https://github.com/microsoft/vscode-cmake-tools/issues/2645)
+- Support optional generator in `configurePresets` for version 3 and higher. [#2734](https://github.com/microsoft/vscode-cmake-tools/issues/2734) [@jochil](https://github.com/jochil)
+
+Bug Fixes:
+- Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
+- Avoid calling build tasks for "Clean", "Install" and "Run Tests" commands when "cmake: buildTask" setting is true. [#2768](https://github.com/microsoft/vscode-cmake-tools/issues/2768)
+- Generate the correct `configurePresets` for Clang or GCC compilers on Windows. [#2733](https://github.com/microsoft/vscode-cmake-tools/issues/2773)
 
 ## 1.12.27
 Bug Fixes:

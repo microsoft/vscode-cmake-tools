@@ -201,20 +201,22 @@ export class CMakeProject implements api.CMakeToolsAPI {
             configurePreset,
             lightNormalizePath(this.folder.uri.fsPath || '.'),
             this.sourceDir,
-            this.getPreferredGeneratorName(),
             true);
         if (!expandedConfigurePreset) {
             log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
             return undefined;
         }
-        if (!expandedConfigurePreset.binaryDir) {
-            log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
-            return undefined;
+        if (expandedConfigurePreset.__file && expandedConfigurePreset.__file.version <= 2) {
+            if (!expandedConfigurePreset.binaryDir) {
+                log.error(localize('binaryDir.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"binaryDir\"", configurePreset));
+                return undefined;
+            }
+            if (!expandedConfigurePreset.generator) {
+                log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
+                return undefined;
+            }
         }
-        if (!expandedConfigurePreset.generator) {
-            log.error(localize('generator.not.set.config.preset', '{0} is not set in configure preset: {1}', "\"generator\"", configurePreset));
-            return undefined;
-        }
+
         return expandedConfigurePreset;
     }
 
@@ -1556,7 +1558,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer): Promise<number> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
         if (!showCommandOnly) {
             log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
@@ -1607,7 +1609,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             if (taskConsumer) {
                 buildLogger.info(localize('starting.build', 'Starting build'));
                 await setContextValue(isBuildingKey, true);
-                rc = await drv!.build(newTargets, taskConsumer);
+                rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
                 await setContextValue(isBuildingKey, false);
                 if (rc === null) {
                     buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -1636,7 +1638,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextValue(isBuildingKey, true);
-                        const rc = await drv!.build(newTargets, consumer);
+                        const rc = await drv!.build(newTargets, consumer, isBuildCommand);
                         await setContextValue(isBuildingKey, false);
                         if (rc === null) {
                             buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -1664,8 +1666,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean): Promise<number> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand?: boolean): Promise<number> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand);
         return this.activeBuild;
     }
 
