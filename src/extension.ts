@@ -1304,48 +1304,48 @@ class ExtensionManager implements vscode.Disposable {
 
     launchTargetPath({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string, targetName?: string }) {
         telemetry.logEvent("substitution", { command: "launchTargetPath" });
-        return this.queryCMakeProject(cmakeProject => {
-            if (targetName != null) cmakeProject.setLaunchTargetByName(targetName);
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName != null) await cmakeProject.setLaunchTargetByName(targetName);
             return cmakeProject.launchTargetPath();
         }, folder);
     }
 
     launchTargetDirectory({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string, targetName?: string }) {
         telemetry.logEvent("substitution", { command: "launchTargetDirectory" });
-        return this.queryCMakeProject(cmakeProject => {
-            if (targetName != null) cmakeProject.setLaunchTargetByName(targetName);
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName != null) await cmakeProject.setLaunchTargetByName(targetName);
             return cmakeProject.launchTargetDirectory();
         }, folder);
     }
 
     launchTargetFilename({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string, targetName?: string }) {
         telemetry.logEvent("substitution", { command: "launchTargetFilename" });
-        return this.queryCMakeProject(cmakeProject => {
-            if (targetName != null) cmakeProject.setLaunchTargetByName(targetName);
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName != null) await cmakeProject.setLaunchTargetByName(targetName);
             return cmakeProject.launchTargetFilename();
         }, folder);
     }
 
     getLaunchTargetPath({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string, targetName?: string }) {
         telemetry.logEvent("substitution", { command: "getLaunchTargetPath" });
-        return this.queryCMakeProject(cmakeProject => {
-            if (targetName != null) cmakeProject.setLaunchTargetByName(targetName);
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName != null) await cmakeProject.setLaunchTargetByName(targetName);
             return cmakeProject.getLaunchTargetPath();
         }, folder);
     }
 
     getLaunchTargetDirectory({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string, targetName?: string }) {
         telemetry.logEvent("substitution", { command: "getLaunchTargetDirectory" });
-        return this.queryCMakeProject(cmakeProject => {
-            if (targetName != null) cmakeProject.setLaunchTargetByName(targetName);
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName != null) await cmakeProject.setLaunchTargetByName(targetName);
             return cmakeProject.getLaunchTargetDirectory();
         }, folder);
     }
 
     getLaunchTargetFilename({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string, targetName?: string }) {
         telemetry.logEvent("substitution", { command: "getLaunchTargetFilename" });
-        return this.queryCMakeProject(cmakeProject => {
-            if (targetName != null) cmakeProject.setLaunchTargetByName(targetName);
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName != null) await cmakeProject.setLaunchTargetByName(targetName);
             return cmakeProject.getLaunchTargetFilename();
         }, folder);
     }
