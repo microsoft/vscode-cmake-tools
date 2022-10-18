@@ -8,11 +8,13 @@ Improvements:
 - Use upper case drive letters on Windows for `cmake.sourceDirectory`. [PR #2665](https://github.com/microsoft/vscode-cmake-tools/pull/2665) [@Danielmelody](https://github.com/Danielmelody)
 - Custom browse configuration should not include (redundant) per-file arguments. [#2645](https://github.com/microsoft/vscode-cmake-tools/issues/2645)
 - Support optional generator in `configurePresets` for version 3 and higher. [#2734](https://github.com/microsoft/vscode-cmake-tools/issues/2734) [@jochil](https://github.com/jochil)
+- Add handling for build task failure. Reveal the Problem Panel when build task has failed (non zero exited code) or the compiler outputs warning. [PR #2803](https://github.com/microsoft/vscode-cmake-tools/pull/2803) [@BIKA-C](https://github.com/BIKA-C)
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
 - Avoid calling build tasks for "Clean", "Install" and "Run Tests" commands when "cmake: buildTask" setting is true. [#2768](https://github.com/microsoft/vscode-cmake-tools/issues/2768)
 - Generate the correct `configurePresets` for Clang or GCC compilers on Windows. [#2733](https://github.com/microsoft/vscode-cmake-tools/issues/2773)
+- Fix the build task output when warnings are generated but reported no warning. [PR #2803](https://github.com/microsoft/vscode-cmake-tools/pull/2803) [@BIKA-C](https://github.com/BIKA-C)
 
 ## 1.12.27
 Bug Fixes:
