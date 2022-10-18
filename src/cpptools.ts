@@ -485,12 +485,19 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
 
         if (sysroot) {
-            if (!useFragments) {
-                // Send sysroot with quoting for CppTools API V5 and below.
-                flags.push('--sysroot=' + shlex.quote(sysroot));
-            } else {
+            if (useFragments) {
                 // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
-                flags.push(('--sysroot=' + sysroot));
+                flags.push(`--sysroot=${sysroot}`);
+            } else {
+                // Send sysroot with quoting for CppTools API V5 and below.
+                flags.push(`--sysroot=${shlex.quote(sysroot)}`);
+            }
+        }
+        if (targetFromToolchains) {
+            if (useFragments) {
+                compileCommandFragments?.push(`--target=${targetFromToolchains}`);
+            } else {
+                flags.push(`--target=${targetFromToolchains}`);
             }
         }
 
