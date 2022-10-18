@@ -378,10 +378,12 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 }
                 vscode.commands.executeCommand("workbench.actions.view.problems")
                 return result.retc;
-            } else if (result.stderr && !result.stdout) {
+                
+              // to capture warning message. Previously the condition could not capture the case if both stderr and stdout have output
+            } else if (result.stderr || (result.stdout && result.stdout.includes("warning"))) {
                 this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
-            } else if (result.stdout && result.stdout.includes("warning")) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
+                vscode.commands.executeCommand("workbench.actions.view.problems")
+                vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
             } else {
                 this.writeEmitter.fire(localize("build.finished.successfully", "{0} finished successfully.", taskName) + endOfLine);
             }
