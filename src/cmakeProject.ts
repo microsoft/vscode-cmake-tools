@@ -37,10 +37,9 @@ import { setContextValue } from './util';
 import { VariantManager } from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
-import { CMakeWorkspaceFolder } from './cmakeWorkspaceFolder';
 import { ConfigurationWebview } from './cacheView';
 import { updateFullFeatureSetForFolder, enableFullFeatureSet, isActiveFolder, showCMakeListsExperiment } from './extension';
-import { ConfigurationReader } from './config';
+import { CMakeCommunicationMode, ConfigurationReader, UseCMakePresets } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -85,6 +84,21 @@ export enum ConfigureTrigger {
     taskProvider = "taskProvider"
 }
 
+export interface DiagnosticsConfiguration {
+    folder: string;
+    cmakeVersion: string;
+    compilers: { C?: string; CXX?: string };
+    usesPresets: boolean;
+    generator: string;
+    configured: boolean;
+}
+
+export interface DiagnosticsSettings {
+    communicationMode: CMakeCommunicationMode;
+    useCMakePresets: UseCMakePresets;
+    configureOnOpen: boolean | null;
+}
+
 /**
  * Class implementing the extension. It's all here!
  *
@@ -101,6 +115,11 @@ export enum ConfigureTrigger {
  * class. See the `init` private method for this initialization.
  */
 export class CMakeProject implements api.CMakeToolsAPI {
+
+    private wasUsingCMakePresets: boolean | undefined;
+    private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
+    private disposables: vscode.Disposable[] = [];
+    private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
      * @param extensionContext The extension context
@@ -556,6 +575,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
         }
         this.kitsController.dispose();
         rollbar.invokeAsync(localize('extension.dispose', 'Extension dispose'), () => this.asyncDispose());
+        if (this.onDidOpenTextDocumentListener) {
+            this.onDidOpenTextDocumentListener.dispose();
+        }
     }
 
     /**
@@ -1026,6 +1048,50 @@ export class CMakeProject implements api.CMakeToolsAPI {
             }
         }));
 
+        const config = this.workspaceContext.config;
+        const useCMakePresetsChangedListener = async () => {
+            const usingCMakePresets = this.useCMakePresets;
+            if (usingCMakePresets !== this.wasUsingCMakePresets) {
+                this.wasUsingCMakePresets = usingCMakePresets;
+                await setContextValue('useCMakePresets', usingCMakePresets);
+                await this.setUseCMakePresets(usingCMakePresets);
+                await this.initializeKitOrPresets();
+
+                if (usingCMakePresets) {
+                    const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
+                        const fileName = path.basename(document.uri.fsPath);
+                        if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+                            if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
+                                // setTextDocumentLanguage will trigger onDidOpenTextDocument
+                                void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
+                            } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
+                                void vscode.languages.setTextDocumentLanguage(document, 'json');
+                            }
+                        }
+                    };
+
+                    this.onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
+                        setPresetsFileLanguageMode(document)
+                    );
+
+                    vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
+                } else {
+                    if (this.onDidOpenTextDocumentListener) {
+                        this.onDidOpenTextDocumentListener.dispose();
+                        this.onDidOpenTextDocumentListener = undefined;
+                    }
+                }
+
+                this.onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
+            }
+        };
+
+        await useCMakePresetsChangedListener();
+
+        this.disposables.push(config.onChange('useCMakePresets', useCMakePresetsChangedListener));
+        this.disposables.push(this.onPresetsChanged(useCMakePresetsChangedListener));
+        this.disposables.push(this.onUserPresetsChanged(useCMakePresetsChangedListener));
+
         this.kitsController = await KitsController.init(this);
         this.presetsController = await PresetsController.init(this, this.kitsController);
     }
@@ -1042,6 +1108,24 @@ export class CMakeProject implements api.CMakeToolsAPI {
      */
     onUserPresetsChanged(listener: () => any) {
         return this.presetsController.onUserPresetsChanged(listener);
+    }
+
+    async initializeKitOrPresets() {
+        if (this.useCMakePresets) {
+            const configurePreset = this.workspaceContext.state.configurePresetName;
+            if (configurePreset) {
+                await this.presetsController.setConfigurePreset(configurePreset);
+            }
+        } else {
+            // Check if the CMakeProject remembers what kit it was last using in this dir:
+            const kitName = this.workspaceContext.state.activeKitName;
+            if (kitName) {
+                // It remembers a kit. Find it in the kits avail in this dir:
+                const kit = this.kitsController.availableKits.find(k => k.name === kitName) || null;
+                // Set the kit: (May do nothing if no kit was found)
+                await this.setKit(kit);
+            }
+        }
     }
 
     async isNinjaInstalled(): Promise<boolean> {
@@ -2345,8 +2429,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Implementation of `cmake.quickStart`
      */
-    public async quickStart(cmakeWorkspaceFolder?: CMakeWorkspaceFolder): Promise<Number> {
-        if (!cmakeWorkspaceFolder) {
+    public async quickStart(workspaceFolder?: vscode.WorkspaceFolder): Promise<Number> {
+        if (!workspaceFolder) {
             void vscode.window.showErrorMessage(localize('no.folder.open', 'No folder is open.'));
             return -2;
         }
@@ -2547,6 +2631,47 @@ export class CMakeProject implements api.CMakeToolsAPI {
         const opts: ExpansionOptions = await this.getExpansionOptions();
         return expandStrings(this.workspaceContext.config.additionalKits, opts);
     }
+    async getDiagnostics(): Promise<DiagnosticsConfiguration> {
+        try {
+            const drv = await this.getCMakeDriverInstance();
+            if (drv) {
+                return drv.getDiagnostics();
+            }
+        } catch {
+        }
+        return {
+            folder: (this.multiProejctSetting) ? this.sourceDir : this.rootFolder.uri.fsPath || "",
+            cmakeVersion: "unknown",
+            configured: false,
+            generator: "unknown",
+            usesPresets: false,
+            compilers: {}
+        };
+    }
+
+    async getSettingsDiagnostics(): Promise<DiagnosticsSettings> {
+        try {
+            const drv = await this.getCMakeDriverInstance();
+            if (drv) {
+                return {
+                    communicationMode: drv.config.cmakeCommunicationMode,
+                    useCMakePresets: drv.config.useCMakePresets,
+                    configureOnOpen: drv.config.configureOnOpen
+                };
+            }
+        } catch {
+        }
+        return {
+            communicationMode: 'automatic',
+            useCMakePresets: 'auto',
+            configureOnOpen: null
+        };
+    }
+
+    get onUseCMakePresetsChanged() {
+        return this.onUseCMakePresetsChangedEmitter.event;
+    }
+
 }
 
 export default CMakeProject;
