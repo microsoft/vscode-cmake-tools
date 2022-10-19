@@ -13,12 +13,12 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v2.1.2
         with:
-          node-version: '14'
+          node-version: '16'
           check-latest: true
 
       - name: Get Short SHA
@@ -39,7 +39,7 @@ jobs:
           yarn run package
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v2.1.4
+        uses: actions/upload-artifact@v3
         with:
           name: cmake-tools.vsix
           path: ./cmake-tools.vsix
