@@ -454,7 +454,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : undefined;
+        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
         const getAsFlags = (fragments?: string[]) => {
             if (!fragments) {
                 return [];
@@ -495,7 +495,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
         if (targetFromToolchains) {
             if (useFragments) {
-                compileCommandFragments?.push(`--target=${targetFromToolchains}`);
+                compileCommandFragments.push(`--target=${targetFromToolchains}`);
             } else {
                 flags.push(`--target=${targetFromToolchains}`);
             }
