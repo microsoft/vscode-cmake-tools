@@ -741,9 +741,9 @@ export function isTestMode(): boolean {
     return process.env['CMT_TESTING'] === '1';
 }
 
-export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
+export async function getAllCMakeListsPaths(path: string): Promise<string[] | undefined> {
     const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
-    return recGetAllFilePaths(dir.fsPath, regex, await readDir(dir.fsPath), []);
+    return recGetAllFilePaths(path, regex, await readDir(path), []);
 }
 
 async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], result: string[]) {
@@ -850,9 +850,9 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
     });
 }
 
-export function isFileInsideFolder(openEditor: vscode.TextEditor, folder: vscode.WorkspaceFolder): boolean {
-    const parent = path.basename(lightNormalizePath(folder.uri.fsPath));
-    const dir = path.basename(lightNormalizePath(openEditor.document.uri.fsPath));
-    const relative = path.relative(parent, dir);
+export function isFileInsideFolder(openEditor: vscode.TextEditor, folderPath: string): boolean {
+    const parent = lightNormalizePath(folderPath);
+    const file = lightNormalizePath(openEditor.document.uri.fsPath);
+    const relative = path.relative(parent, file);
     return relative.length > 0 && !relative.startsWith('..') && !path.isAbsolute(relative);
 }

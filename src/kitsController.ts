@@ -65,7 +65,7 @@ export class KitsController {
         }
 
         const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
-        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.folder)].concat(expandedAdditionalKitFiles);
+        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.rootFolder)].concat(expandedAdditionalKitFiles);
         const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
         const kitsController = new KitsController(cmakeProject, kitsWatcher);
         chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
@@ -93,7 +93,11 @@ export class KitsController {
     }
 
     get folder() {
-        return this.cmakeProject.folder;
+        return this.cmakeProject.rootFolder;
+    }
+
+    get folderName() {
+        return this.cmakeProject.folderName;
     }
 
     static async readUserKits(cmakeProject: CMakeProject | undefined, progress?: ProgressHandle) {
@@ -267,7 +271,7 @@ export class KitsController {
         );
         const items = await Promise.all(item_promises);
         const chosen_kit = await vscode.window.showQuickPick(items,
-            { placeHolder: localize('select.a.kit.placeholder', 'Select a Kit for {0}', this.folder.name) },
+            { placeHolder: localize('select.a.kit.placeholder', 'Select a Kit for {0}', this.folderName) },
             this._pickKitCancellationTokenSource.token);
         this._pickKitCancellationTokenSource.dispose();
         this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();

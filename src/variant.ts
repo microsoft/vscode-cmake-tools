@@ -200,13 +200,12 @@ export class VariantManager implements vscode.Disposable {
      * Create a new VariantManager
      * @param stateManager The state manager for this instance
      */
-    constructor(readonly folder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader) {
+    constructor(readonly folder: vscode.WorkspaceFolder, readonly base_path: string, readonly stateManager: StateManager, readonly config: ConfigurationReader) {
         log.debug(localize('constructing', 'Constructing {0}', 'VariantManager'));
         if (!vscode.workspace.workspaceFolders) {
             return;  // Nothing we can do. We have no directory open
         }
         // Ref: https://code.visualstudio.com/api/references/vscode-api#Uri
-        const base_path = folder.uri.fsPath;
         for (const filename of ['cmake-variants.yaml',
             'cmake-variants.json',
             '.vscode/cmake-variants.yaml',
@@ -235,7 +234,7 @@ export class VariantManager implements vscode.Disposable {
         this.customVariantsFileExists = false;
         const validate = await loadSchema('schemas/variants-schema.json');
 
-        const workdir = this.folder.uri.fsPath;
+        const workdir = this.base_path;
 
         if (!filepath || !await fs.exists(filepath)) {
             const candidates = [

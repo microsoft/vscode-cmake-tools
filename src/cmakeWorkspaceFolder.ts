@@ -35,13 +35,13 @@ export class CMakeWorkspaceFolder {
     private wasUsingCMakePresets: boolean | undefined;
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
-    private sourceDirectoryMap = new Map<vscode.WorkspaceFolder, CMakeProject>();
+    private sourceDirectoryMap = new Map<string, CMakeProject>();
 
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
 
     private constructor(cmakeProjects: CMakeProject[]) {
         for (const project of cmakeProjects) {
-            this.sourceDirectoryMap.set(project.folder, project);
+            this.sourceDirectoryMap.set(project.folderPath, project);
         }
     }
 
@@ -99,8 +99,16 @@ export class CMakeWorkspaceFolder {
         return cmakeWorkspaceFolder;
     }
 
-    get activeFolder(): vscode.WorkspaceFolder {
-        return getActiveCMakeProject()?.folder! ;
+    get rootFolder(): vscode.WorkspaceFolder {
+        return getActiveCMakeProject()?.rootFolder! ;
+    }
+
+    get activeFolderPath(): string {
+        return getActiveCMakeProject()?.folderPath!;
+    }
+
+    get activeFolderName(): string {
+        return getActiveCMakeProject()?.folderName!;
     }
 
     // Go through the decision tree here since there would be dependency issues if we do this in config.ts
@@ -138,7 +146,7 @@ export class CMakeWorkspaceFolder {
         } catch {
         }
         return {
-            folder: this.activeFolder?.name || "",
+            folder: this.activeFolderName || "",
             cmakeVersion: "unknown",
             configured: false,
             generator: "unknown",
@@ -234,32 +242,42 @@ export class CMakeWorkspaceFolderController implements vscode.Disposable {
      * - Where we search for variants
      * - Where we search for workspace-local kits
      */
-    private _activeFolder?: CMakeWorkspaceFolder;
-    get activeFolder() {
-        return this._activeFolder;
+    private _activeRootFolder?: CMakeWorkspaceFolder;
+    get activeRootFolder() {
+        return this._activeRootFolder;
+    }
+
+    get activeFolderPath(): string | undefined {
+        return this.activeCMakeProject?.folderPath;
+    }
+    /**
+     * The name of the folder for this CMakeProject instance
+     */
+    get activeFolderName(): string | undefined {
+        return this.activeCMakeProject?.folderName;
     }
 
     setActiveFolderandProject(ws: vscode.WorkspaceFolder | undefined, openEditor?: vscode.TextEditor): string {
         if (ws) {
-            this._activeFolder = this.get(ws);
+            this._activeRootFolder = this.get(ws);
             this.setActiveProject(openEditor);
-            return getActiveCMakeProject()?.folder.name || "";
+            return this.activeCMakeProject?.folderName || "";
         } else {
-            this._activeFolder = undefined;
+            this._activeRootFolder = undefined;
             return "";
         }
     }
 
     private activeCMakeProject: CMakeProject | undefined;
     private setActiveProject(openEditor?: vscode.TextEditor) {
-        if (this._activeFolder) {
-            const cmakeProjects = this._activeFolder.cmakeProjects;
+        if (this._activeRootFolder) {
+            const cmakeProjects = this._activeRootFolder.cmakeProjects;
             if (cmakeProjects.length === 1) {
                 this.activeCMakeProject = cmakeProjects[0];
             }
             if (openEditor) {
                 for (const project of cmakeProjects) {
-                    if (util.isFileInsideFolder(openEditor, project.folder)) {
+                    if (util.isFileInsideFolder(openEditor, project.folderPath)) {
                         this.activeCMakeProject = project;
                     }
                 }

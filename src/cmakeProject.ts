@@ -107,23 +107,31 @@ export class CMakeProject implements api.CMakeToolsAPI {
      *
      * This is private. You must call `create` to get an instance.
      */
-    private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext) {
+    private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext, readonly multiProejctSetting: boolean = false) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
     }
 
     /**
-     * The workspace folder associated with this CMakeProject instance
+     * The root folder associated with this CMakeProject instance
      */
-    get folder(): vscode.WorkspaceFolder {
+    get rootFolder(): vscode.WorkspaceFolder {
         return this.workspaceContext.folder;
     }
 
     /**
-     * The name of the workspace folder for this CMakeProject instance
+     * The folder associated with this CMakeProject instance
+     * In a multi-project setting, where there can be multiple projects in the same workspaceFolder, the sourceDir is the same as project folder.
+     * Otherwise, the sourceDir is allowed to be different from the workspaceFolder, i.e. the CMakeLists.txt doesn't have to be saved in the root.
+     */
+    get folderPath(): string {
+        return this.multiProejctSetting ? this.sourceDir : this.workspaceContext.folder.uri.fsPath;
+    }
+    /**
+     * The name of the folder for this CMakeProject instance
      */
     get folderName(): string {
-        return this.folder.name;
+        return this.multiProejctSetting ? path.dirname(this.sourceDir) : this.workspaceContext.folder.name;
     }
 
     /**
@@ -197,9 +205,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
             return undefined;
         }
         log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
-        const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
+        const expandedConfigurePreset = await preset.expandConfigurePreset(this.folderPath,
             configurePreset,
-            lightNormalizePath(this.folder.uri.fsPath || '.'),
+            lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             true);
         if (!expandedConfigurePreset) {
@@ -275,9 +283,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
             return undefined;
         }
         log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
-        const expandedBuildPreset = await preset.expandBuildPreset(this.folder.uri.fsPath,
+        const expandedBuildPreset = await preset.expandBuildPreset(this.folderPath,
             buildPreset,
-            lightNormalizePath(this.folder.uri.fsPath || '.'),
+            lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
@@ -347,9 +355,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
             return undefined;
         }
         log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
-        const expandedTestPreset = await preset.expandTestPreset(this.folder.uri.fsPath,
+        const expandedTestPreset = await preset.expandTestPreset(this.folderPath,
             testPreset,
-            lightNormalizePath(this.folder.uri.fsPath || '.'),
+            lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
@@ -499,7 +507,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         const sourceDirectory: string | string[] = this.workspaceContext.config.sourceDirectory;
         if (!Array.isArray(sourceDirectory) || sourceDirectory.length === 1) {
             this._sourceDir = await util.normalizeAndVerifySourceDir(
-                await expandString(Array.isArray(sourceDirectory) ? sourceDirectory[0] : sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
+                await expandString(Array.isArray(sourceDirectory) ? sourceDirectory[0] : sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folderPath))
             );
         }
     });
@@ -507,7 +515,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
      */
-    private readonly variantManager = new VariantManager(this.folder, this.workspaceContext.state, this.workspaceContext.config);
+    private readonly variantManager = new VariantManager(this.rootFolder, this.folderPath, this.workspaceContext.state, this.workspaceContext.config);
 
     /**
      * A strand to serialize operations with the CMake driver
@@ -618,7 +626,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                     const ignoreActivation = localize('ignore.activation', "Don't show again");
 
                     let showCMakeLists: boolean = await showCMakeListsExperiment();
-                    const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+                    const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folderPath);
 
                     telemetryProperties["showCMakeListsExperiment"] = (showCMakeLists).toString();
                     if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
@@ -649,7 +657,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                             fullPath: string;
                         }
                         const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
-                            label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
+                            label: util.getRelativePath(file, this.folderPath) + "/CMakeLists.txt",
                             fullPath: file
                         })) : [];
                         const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
@@ -670,7 +678,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                         } else if (selection.label === browse) {
                             const openOpts: vscode.OpenDialogOptions = {
                                 canSelectMany: false,
-                                defaultUri: vscode.Uri.file(this.folder.uri.fsPath),
+                                defaultUri: vscode.Uri.file(this.folderPath),
                                 filters: { "CMake files": ["txt"], "All files": ["*"] },
                                 openLabel: "Load"
                             };
@@ -686,7 +694,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                         }
                         if (selectedFile) {
                             const newSourceDirectory = path.dirname(selectedFile);
-                            void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", newSourceDirectory);
+                            void vscode.workspace.getConfiguration('cmake', this.rootFolder.uri).update("sourceDirectory", newSourceDirectory);
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -731,7 +739,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         // This project folder can go through various changes while executing this function
         // that could be relevant to the partial/full feature set view.
         // This is a good place for an update.
-        return updateFullFeatureSetForFolder(this.folder);
+        return updateFullFeatureSetForFolder(this.folderName);
     }
 
     /**
@@ -744,7 +752,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             throw new Error(localize('bad.cmake.executable', 'Bad CMake executable {0}.', `"${cmake.path}"`));
         }
 
-        const workspace = this.folder.uri.fsPath;
+        const workspace = this.folderPath;
         let drv: CMakeDriver;
         const preferredGenerators = this.getPreferredGenerators();
         const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, true, config);
@@ -894,7 +902,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
 
         const sourceDir: string = sourceDirectory ? sourceDirectory : Array.isArray(this.workspaceContext.config.sourceDirectory) ? this.workspaceContext.config.sourceDirectory[0] : this.workspaceContext.config.sourceDirectory;
         this._sourceDir = await util.normalizeAndVerifySourceDir(
-            await expandString(sourceDir, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
+            await expandString(sourceDir, CMakeDriver.sourceDirExpansionOptions(this.folderPath))
         );
 
         // Start up the variant manager
@@ -948,7 +956,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                 // Otherwise, fallback to a simple check (does not cover CMake include files)
                 isCmakeFile = false;
                 if (str.endsWith("cmakelists.txt")) {
-                    const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+                    const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folderPath);
                     // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
                     isCmakeFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
                         (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
@@ -958,7 +966,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             if (isCmakeFile) {
                 // CMakeLists.txt change event: its creation or deletion are relevant,
                 // so update full/partial feature set view for this folder.
-                await updateFullFeatureSetForFolder(this.folder);
+                await updateFullFeatureSetForFolder(this.folderName);
                 if (drv && !drv.configOrBuildInProgress()) {
                     if (drv.config.configureOnEdit) {
                         log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
@@ -977,7 +985,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             // For multi-root, the "onDidSaveTextDocument" will be received once for each project folder.
             // To avoid misleading telemetry, consider the notification only for the active folder.
             // There is always one active folder in a workspace and never more than one.
-            if (isActiveFolder(this.folder)) {
+            if (isActiveFolder(this.rootFolder)) {
                 // "outside" evaluates whether the modified cmake file belongs to the active folder.
                 // Currently, we don't differentiate between outside active folder but inside any of the other
                 // workspace folders versus outside any folder referenced by the current workspace.
@@ -1005,7 +1013,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                     // Instead of parsing how and from where a *.cmake file is included or imported
                     // let's consider one inside the active folder if it's in the workspace folder,
                     // sourceDirectory or binaryDirectory.
-                    if (str.startsWith(this.folder.uri.fsPath.toLowerCase()) ||
+                    if (str.startsWith(this.folderPath.toLowerCase()) ||
                         str.startsWith(sourceDirectory) ||
                         str.startsWith(binaryDirectory)) {
                         outside = false;
@@ -1176,9 +1184,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext, sourceDirectory?: string): Promise<CMakeProject> {
+    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext, sourceDirectory?: string, multiProejctSetting?: boolean): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
-        const inst = new CMakeProject(ctx, wsc);
+        const inst = multiProejctSetting ? new CMakeProject(ctx, wsc, multiProejctSetting) : new CMakeProject(ctx, wsc);
         await inst.init(sourceDirectory);
         log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
@@ -1198,7 +1206,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         } else {
             const cmakeProjects: CMakeProject[] = [];
             for (const source of sourceDirectory) {
-                cmakeProjects.push(await CMakeProject.create(ext, dirContext, source));
+                cmakeProjects.push(await CMakeProject.create(ext, dirContext, source, true));
             }
             return cmakeProjects;
         }
@@ -1954,7 +1962,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         }));
         let chosen: { label: string; detail: string } | undefined;
         if (!name) {
-            chosen = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.a.launch.target', 'Select a launch target for {0}', this.folder.name) });
+            chosen = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.a.launch.target', 'Select a launch target for {0}', this.folderName) });
         } else {
             chosen = choices.find(choice => choice.label === name);
         }
@@ -2218,11 +2226,11 @@ export class CMakeProject implements api.CMakeToolsAPI {
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
         log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
-            workspace: this.folder.uri.toString(),
+            workspace: this.rootFolder.uri.toString(),
             config: debugConfig
         }));
 
-        const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('debugConfig');
+        const cfg = vscode.workspace.getConfiguration('cmake', this.rootFolder.uri).inspect<object>('debugConfig');
         const customSetting = (cfg?.globalValue !== undefined || cfg?.workspaceValue !== undefined || cfg?.workspaceFolderValue !== undefined);
         let dbg = debugConfig.MIMode?.toString();
         if (!dbg && debugConfig.type === "cppvsdbg") {
@@ -2237,7 +2245,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
 
         telemetry.logEvent('debug', telemetryProperties);
 
-        await vscode.debug.startDebugging(this.folder, debugConfig);
+        await vscode.debug.startDebugging(this.rootFolder, debugConfig);
         return vscode.debug.activeDebugSession!;
     }
 

@@ -432,7 +432,7 @@ export class CMakeServerDriver extends CMakeDriver {
                 if (this.workspaceFolder) {
                     const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
                     if (folder) {
-                        await ext.updateFullFeatureSetForFolder(folder);
+                        await ext.updateFullFeatureSetForFolder(folder.name);
                     }
                 }
             }
