@@ -30,7 +30,7 @@ import * as preset from '@cmt/preset';
 import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/cmakeWorkspaceFolder';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
-import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
+import { CustomBuildTaskTerminal, CMakeTaskDefinition } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
 
@@ -1748,31 +1748,70 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _findBuildTask(): Promise<vscode.Task | undefined> {
-        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => (task.group?.id === vscode.TaskGroup.Build.id) );
+    private async _showTaskQuickPick(tasks: vscode.Task[]) : Promise<vscode.Task | undefined> {
+        interface TaskItem extends vscode.QuickPickItem {
+            task: vscode.Task
+        }
+        const choices = tasks.map((t): TaskItem => {
+                        return {
+                            label: t.name,
+                            task: t
+                        }
+        });
+        const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.build.task', 'Select build task') });
+        return sel ? sel.task : undefined;
+    }
 
+    private async _findBuildTask(targets?: string[]): Promise<vscode.Task | undefined> {
+
+        // Fetch all CMake task
+        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => ((task.group?.id === vscode.TaskGroup.Build.id)))
+
+        // There is only one found - stop searching
         if (tasks.length == 1) {
             return tasks[0];
         }
 
-        const filteredTasks = tasks.filter(task => (task.group?.isDefault))
+        // Get only tasks which target matches to one which is requested
+        const targetTasks = tasks.filter( task => 
+            (task.definition as CMakeTaskDefinition).targets == targets );
 
-        // If one task marked as default is found - use it
-        if( filteredTasks.length == 1) {
-            return filteredTasks[0];
-        } else { // no default build tasks or more than one marked as default - print all available tasks and let user select 
-            interface TaskItem extends vscode.QuickPickItem {
-                task: vscode.Task
+        if (targetTasks.length > 0) {
+            // Only one found - just return it
+            if (targetTasks.length == 1) {
+                return targetTasks[0];
+            } else {
+                // More than one - check if there is one marked as default
+                const defaultTargetTask = targetTasks.filter( task => task.group?.isDefault)
+                if (defaultTargetTask.length == 1) {
+                    return defaultTargetTask[0];
+                }
+                // None or more than one mark as default - show quick picker
+                return this._showTaskQuickPick(targetTasks);
             }
-            const choices = tasks.map((t): TaskItem => {
-                            return {
-                                label: t.name,
-                                task: t
-                            }
-            });
-            const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.build.task', 'Select build task') });
-            return sel ? sel.task : undefined;
         }
+
+        // Get only tasks with no targets set (template tasks)
+        const templateTasks = tasks.filter( task => 
+            (task.definition as CMakeTaskDefinition).targets == undefined );
+
+        if (templateTasks.length > 0) {
+            // Only one found - just return it
+            if (templateTasks.length == 1) {
+                return templateTasks[0];
+            } else {
+                // More than one - check if there is one marked as default
+                const defaultTemplateTask = templateTasks.filter( task => task.group?.isDefault)
+                if (defaultTemplateTask.length == 1) {
+                    return defaultTemplateTask[0];
+                }
+                // None or more than one mark as default - show quick picker
+                return this._showTaskQuickPick(templateTasks);
+            }
+        }
+
+        // No target dedicated tasks and not template tasks found - show all and let user pick
+        return this._showTaskQuickPick(tasks)
     }
 
 
@@ -1789,7 +1828,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
             if (useBuildTask) {
-                const task = await this._findBuildTask();
+                const task = await this._findBuildTask(targets);
                 if (task) {
                     this._requestedTargets = targets;
                     await vscode.tasks.executeTask(task);
