@@ -10,6 +10,7 @@ import { createLogger } from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
 import * as util from '@cmt/util';
+import { compile } from 'handlebars';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpptools from 'vscode-cpptools';
@@ -454,7 +455,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
+        let compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
         const getAsFlags = (fragments?: string[]) => {
             if (!fragments) {
                 return [];
@@ -495,6 +496,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
         if (targetFromToolchains) {
             if (useFragments) {
+                compileCommandFragments = compileCommandFragments.slice(0);
                 compileCommandFragments.push(`--target=${targetFromToolchains}`);
             } else {
                 flags.push(`--target=${targetFromToolchains}`);
