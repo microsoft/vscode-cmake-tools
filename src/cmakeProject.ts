@@ -276,6 +276,7 @@ export class CMakeProject {
             buildPreset,
             lightNormalizePath(this.folder.uri.fsPath || '.'),
             this.sourceDir,
+            this.workspaceContext.config,
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);

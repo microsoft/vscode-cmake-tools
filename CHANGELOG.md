@@ -8,6 +8,7 @@ Improvements:
 - Use upper case drive letters on Windows for `cmake.sourceDirectory`. [PR #2665](https://github.com/microsoft/vscode-cmake-tools/pull/2665) [@Danielmelody](https://github.com/Danielmelody)
 - Custom browse configuration should not include (redundant) per-file arguments. [#2645](https://github.com/microsoft/vscode-cmake-tools/issues/2645)
 - Support optional generator in `configurePresets` for version 3 and higher. [#2734](https://github.com/microsoft/vscode-cmake-tools/issues/2734) [@jochil](https://github.com/jochil)
+- Adhere to the setting entry "Parallel Jobs" (`cmake.parallelJobs`) when generating the default build preset. [#2765](https://github.com/microsoft/vscode-cmake-tools/issues/2765) [@maxmitti](https://github.com/maxmitti)
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
