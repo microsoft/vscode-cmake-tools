@@ -10,7 +10,6 @@ import { createLogger } from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
 import * as util from '@cmt/util';
-import { compile } from 'handlebars';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpptools from 'vscode-cpptools';
