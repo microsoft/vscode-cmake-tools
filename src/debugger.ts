@@ -1,4 +1,3 @@
-import { ExecutableTarget } from '@cmt/legacyApi';
 import { CMakeCache } from '@cmt/cache';
 import * as proc from '@cmt/proc';
 import { createLogger } from './logging';
@@ -6,6 +5,7 @@ import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { fs } from './pr';
+import { ExecutableTarget } from '@cmt/drivers/cmakeDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

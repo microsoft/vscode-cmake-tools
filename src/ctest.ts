@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
-import * as api from './legacyApi';
 import { CMakeDriver } from '@cmt/drivers/cmakeDriver';
 import * as logging from './logging';
 import { fs } from './pr';
@@ -19,6 +18,14 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('ctest');
+
+/**
+ * Information about a CTest test
+ */
+export interface CTest {
+    id: number;
+    name: string;
+}
 
 export interface BasicTestResults {
     passing: number;
@@ -331,16 +338,16 @@ export class CTestDriver implements vscode.Disposable {
     /**
      * Holds the most recent test informations
      */
-    private _tests: api.Test[] = [];
-    get tests(): api.Test[] {
+    private _tests: CTest[] = [];
+    get tests(): CTest[] {
         return this._tests;
     }
-    set tests(v: api.Test[]) {
+    set tests(v: CTest[]) {
         this._tests = v;
         this.testsChangedEmitter.fire(v);
     }
 
-    private readonly testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();
+    private readonly testsChangedEmitter = new vscode.EventEmitter<CTest[]>();
     readonly onTestsChanged = this.testsChangedEmitter.event;
 
     private _testResults?: CTestResults;
@@ -418,7 +425,7 @@ export class CTestDriver implements vscode.Disposable {
     /**
      * @brief Reload the list of CTest tests
      */
-    async reloadTests(driver: CMakeDriver): Promise<api.Test[]> {
+    async reloadTests(driver: CMakeDriver): Promise<CTest[]> {
         const ctestFile = path.join(driver.binaryDir, 'CTestTestfile.cmake');
         if (!(await fs.exists(ctestFile))) {
             this.testingEnabled = false;

@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as telemetry from '@cmt/telemetry';
-import * as api from './legacyApi';
 import * as util from './util';
 
-import { CMakeCache } from './cache';
+import { CacheEntryType, CMakeCache } from './cache';
 
 import * as logging from './logging';
 const log = logging.createLogger('cache');
@@ -222,8 +221,8 @@ export class ConfigurationWebview {
         for (const entry of cmakeCache.allEntries) {
             // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
             // Not useful to show these entries in the list.
-            if (entry.type !== api.CacheEntryType.Static) {
-                options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
+            if (entry.type !== CacheEntryType.Static) {
+                options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
             }
         }
         return options;

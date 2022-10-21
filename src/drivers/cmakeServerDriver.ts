@@ -3,11 +3,15 @@ import { InputFileSet } from '@cmt/dirty';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as api from '@cmt/legacyApi';
-import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/legacyApi';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cmakeServerClient';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import {
+    CMakeDriver,
+    CMakePreconditionProblemSolver,
+    ExecutableTarget,
+    RichTarget,
+    Target
+} from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
@@ -207,14 +211,14 @@ export class CMakeServerDriver extends CMakeDriver {
         this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
         const clcache = await client.getCMakeCacheContent();
         this._cacheEntries = clcache.cache.reduce((acc, el) => {
-            const entry_map: { [key: string]: api.CacheEntryType | undefined } = {
-                BOOL: api.CacheEntryType.Bool,
-                STRING: api.CacheEntryType.String,
-                PATH: api.CacheEntryType.Path,
-                FILEPATH: api.CacheEntryType.FilePath,
-                INTERNAL: api.CacheEntryType.Internal,
-                UNINITIALIZED: api.CacheEntryType.Uninitialized,
-                STATIC: api.CacheEntryType.Static
+            const entry_map: { [key: string]: cache.CacheEntryType | undefined } = {
+                BOOL: cache.CacheEntryType.Bool,
+                STRING: cache.CacheEntryType.String,
+                PATH: cache.CacheEntryType.Path,
+                FILEPATH: cache.CacheEntryType.FilePath,
+                INTERNAL: cache.CacheEntryType.Internal,
+                UNINITIALIZED: cache.CacheEntryType.Uninitialized,
+                STATIC: cache.CacheEntryType.Static
             };
             const type = entry_map[el.type];
             if (type === undefined) {
@@ -287,7 +291,7 @@ export class CMakeServerDriver extends CMakeDriver {
             .map(t => ({ name: t.name, path: t.filepath }));
     }
 
-    get uniqueTargets(): api.Target[] {
+    get uniqueTargets(): Target[] {
         return this.targets.reduce(targetReducer, []);
     }
 
@@ -318,7 +322,7 @@ export class CMakeServerDriver extends CMakeDriver {
         return this._cmakeInputFileSet.checkOutOfDate();
     }
 
-    get cmakeCacheEntries(): Map<string, CacheEntryProperties> {
+    get cmakeCacheEntries(): Map<string, cache.Entry> {
         return this._cacheEntries;
     }
 
