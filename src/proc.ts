@@ -107,13 +107,6 @@ export function buildCmdStr(command: string, args?: string[]): string {
  * which produce a lot of output should be careful about memory constraints.
  */
 export function execute(command: string, args?: string[], outputConsumer?: OutputConsumer | null, options?: ExecutionOptions): Subprocess {
-    const cmdstr = buildCmdStr(command, args);
-    if (options && options.silent !== true) {
-        log.info(// We do simple quoting of arguments with spaces.
-            // This is only shown to the user,
-            // and doesn't have to be 100% correct.
-            localize('executing.command', 'Executing command: {0}', cmdstr));
-    }
     if (!options) {
         options = {};
     }
@@ -126,6 +119,16 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         options.environment,
         options.overrideLocale ? localeOverride : {}]);
 
+    const cmdstr = buildCmdStr(command, args);
+    if (options && options.silent !== true) {
+        log.info(// We do simple quoting of arguments with spaces.
+            // This is only shown to the user,
+            // and doesn't have to be 100% correct.
+            localize('executing.command', 'Executing command: {0}', cmdstr));
+        if (options.environment) {
+            log.debug(localize('execution.environment', '  with environment: {0}', JSON.stringify(final_env)));
+        }
+    }
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
         shell: !!options.shell
