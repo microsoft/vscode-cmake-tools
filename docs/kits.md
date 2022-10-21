@@ -134,6 +134,10 @@ The following additional options may be specified:
 
 > A JSON object of key-value pairs specifying additional environment variables to be defined when using this kit.
 
+`environmentSetupScript`
+
+> The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
+
 ## Next steps
 
 - Explore the [CMake Tools documentation](README.md)
