@@ -5,52 +5,62 @@
 
 import * as vscode from 'vscode';
 import * as api from 'vscode-cmake-tools/out/api';
-import { ExtensionManager } from './extension';
-import { assertNever } from './util';
+import CMakeProject from '@cmt/cmakeProject';
+import { ExtensionManager } from '@cmt/extension';
+import { assertNever } from '@cmt/util';
 
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
 
-    version: api.Version = api.Version.v0;
+    version: api.Version = api.Version.v1;
 
-    showUiElement(element: api.UiElement): Promise<void> {
-        return this.setUiElementVisibility(element, true);
+    showUIElement(element: api.UIElement): Promise<void> {
+        return this.setUIElementVisibility(element, true);
     }
 
-    hideUiElement(element: api.UiElement): Promise<void> {
-        return this.setUiElementVisibility(element, false);
+    hideUIElement(element: api.UIElement): Promise<void> {
+        return this.setUIElementVisibility(element, false);
     }
 
-    get onBuildTargetNameChanged() {
-        return this.manager.onBuildTargetNameChanged;
+    get onBuildTargetChanged() {
+        return this.manager.onBuildTargetChanged;
     }
 
-    get onLaunchTargetNameChanged() {
-        return this.manager.onLaunchTargetNameChanged;
+    get onLaunchTargetChanged() {
+        return this.manager.onLaunchTargetChanged;
     }
 
-    get onActiveFolderChanged() {
-        return this.manager.onActiveFolderChanged;
+    get onActiveProjectChanged() {
+        return this.manager.onActiveProjectChanged;
     }
 
-    async getFileApiCodeModel(folder: vscode.WorkspaceFolder): Promise<api.CodeModelContent | undefined> {
-        return this.manager.cmakeWorkspaceFolders.get(folder)?.cmakeProject.codeModelContent ?? undefined;
+    async getProject(uri: vscode.Uri) {
+        const project = this.manager.cmakeWorkspaceFolders.get([uri.fsPath])?.cmakeProject;
+        return project && new CMakeProjectWrapper(project);
     }
 
-    get onFileApiCodeModelChanged() {
-        return this.manager.onCodeModelChanged;
-    }
-
-    private async setUiElementVisibility(element: api.UiElement, visible: boolean): Promise<void> {
+    private async setUIElementVisibility(element: api.UIElement, visible: boolean): Promise<void> {
         switch (element) {
-            case api.UiElement.StatusBarDebugButton:
+            case api.UIElement.StatusBarDebugButton:
                 await this.manager.hideDebugCommand(!visible);
                 break;
-            case api.UiElement.StatusBarLaunchButton:
+            case api.UIElement.StatusBarLaunchButton:
                 await this.manager.hideLaunchCommand(!visible);
                 break;
             default:
                 assertNever(element);
         }
+    }
+}
+
+class CMakeProjectWrapper implements api.Project {
+    constructor(private readonly project: CMakeProject) {}
+
+    get codeModel() {
+        return this.project.codeModelContent ?? undefined;
+    }
+
+    get onCodeModelChanged() {
+        return this.project.onCodeModelChangedApiEvent;
     }
 }

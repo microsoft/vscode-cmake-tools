@@ -10,8 +10,8 @@ import * as vscode from 'vscode';
  * API version information.
  */
 export enum Version {
-    v0 = 0,         // 0.x.x
-    latest = v0,
+    v1 = 1,         // 1.x.x
+    latest = v1,
 }
 
 /**
@@ -40,47 +40,57 @@ export interface CMakeToolsApi {
      * Shows the given UI element.
      * @param element Element to show.
      */
-    showUiElement(element: UiElement): Promise<void>;
+    showUIElement(element: UIElement): Promise<void>;
 
     /**
      * Hides the given UI element.
      * @param element Element to hide.
      */
-    hideUiElement(element: UiElement): Promise<void>;
+    hideUIElement(element: UIElement): Promise<void>;
 
     /**
      * An event that fires when the selected build target changes.
      */
-    readonly onBuildTargetNameChanged: vscode.Event<string>;
+    readonly onBuildTargetChanged: vscode.Event<string>;
 
     /**
      * An event that fires when the selected launch target changes.
      */
-    readonly onLaunchTargetNameChanged: vscode.Event<string>;
+    readonly onLaunchTargetChanged: vscode.Event<string>;
 
     /**
-     * An event that fires when the active folder changes.
+     * An event that fires when the active project changes.
      */
-    readonly onActiveFolderChanged: vscode.Event<vscode.WorkspaceFolder | undefined>;
+    readonly onActiveProjectChanged: vscode.Event<vscode.Uri | undefined>;
 
     /**
-     * Gets the code model from the CMake File API, if it is available.
-     * @param folder The workspace folder containing the CMake project.
+     * Gets the project associated with the given file or folder, if it exists.
+     * @param path The file or folder to get the project for.
      */
-    getFileApiCodeModel(folder: vscode.WorkspaceFolder): Promise<CodeModelContent | undefined>;
-
-    /**
-     * An event that fires when any code model in the workspace is updated.
-     */
-    readonly onFileApiCodeModelChanged: vscode.Event<vscode.WorkspaceFolder>;
+    getProject(path: vscode.Uri): Promise<Project | undefined>;
 }
 
-export enum UiElement {
+export enum UIElement {
     StatusBarLaunchButton,
     StatusBarDebugButton,
 }
 
-export type TargetTypeString =
+export interface Project {
+    /**
+     * Gets the code model for this project if it is available.
+     */
+    readonly codeModel: CodeModel.Content | undefined;
+
+    /**
+     * An event that fires when the code model for this project is updated.
+     */
+    readonly onCodeModelChanged: vscode.Event<void>;
+
+    // TODO: add configure, build, install, etc. and buildDirectory, activeBuildType, etc.
+}
+
+export namespace CodeModel {
+    export type TargetType =
     'STATIC_LIBRARY'
     | 'MODULE_LIBRARY'
     | 'SHARED_LIBRARY'
@@ -89,125 +99,126 @@ export type TargetTypeString =
     | 'UTILITY'
     | 'INTERFACE_LIBRARY';
 
-/**
- * Describes a CMake target.
- */
-export interface CodeModelTarget {
     /**
-     * A string specifying the logical name of the target.
-     *
-     * (Source CMake Documentation cmake-file-api(7))
+     * Describes a CMake target.
      */
-    readonly name: string;
+    export interface Target {
+        /**
+         * A string specifying the logical name of the target.
+         *
+         * (Source CMake Documentation cmake-file-api(7))
+         */
+        readonly name: string;
+
+        /**
+         * A string specifying the type of the target.
+         * The value is one of EXECUTABLE, STATIC_LIBRARY, SHARED_LIBRARY, MODULE_LIBRARY, OBJECT_LIBRARY, or UTILITY.
+         *
+         * (Source CMake Documentation cmake-file-api(7))
+         *
+         * \todo clarify need of INTERFACE_LIBRARY type
+         */
+        type: TargetType;
+
+        /** A string specifying the absolute path to the target’s source directory. */
+        sourceDirectory?: string;
+
+        /** Name of the target artifact on disk (library or executable file name). */
+        fullName?: string;
+
+        /** List of absolute paths to a target´s build artifacts. */
+        artifacts?: string[];
+
+        /**
+         * The file groups describe a list of compilation information for artifacts of this target.
+         * The file groups contains source code files that use the same compilation information
+         * and are known by CMake.
+         */
+        fileGroups?: FileGroup[];
+
+        /**
+         * Represents the CMAKE_SYSROOT variable
+         */
+        sysroot?: string;
+    }
 
     /**
-     * A string specifying the type of the target.
-     * The value is one of EXECUTABLE, STATIC_LIBRARY, SHARED_LIBRARY, MODULE_LIBRARY, OBJECT_LIBRARY, or UTILITY.
-     *
-     * (Source CMake Documentation cmake-file-api(7))
-     *
-     * \todo clarify need of INTERFACE_LIBRARY type
+     * Describes a file group to describe the build settings.
      */
-    type: TargetTypeString;
+    export interface FileGroup {
+        /** List of source files with the same compilation information */
+        sources: string[];
 
-    /** A string specifying the absolute path to the target’s source directory. */
-    sourceDirectory?: string;
+        /** Specifies the language (C, C++, ...) for the toolchain */
+        language?: string;
 
-    /** Name of the target artifact on disk (library or executable file name). */
-    fullName?: string;
+        /** Include paths for compilation of a source file */
+        includePath?: {
+            /** include path */
+            path: string;
+        }[];
 
-    /** List of absolute paths to a target´s build artifacts. */
-    artifacts?: string[];
+        /** Compiler flags */
+        compileCommandFragments?: string[];
+
+        /** Defines */
+        defines?: string[];
+
+        /** CMake generated file group */
+        isGenerated: boolean;
+    }
 
     /**
-     * The file groups describe a list of compilation information for artifacts of this target.
-     * The file groups contains source code files that use the same compilation information
-     * and are known by CMake.
+     * Describes cmake project and all its related targets
      */
-    fileGroups?: CodeModelFileGroup[];
+    export interface Project {
+        /** Name of the project */
+        name: string;
+
+        /** List of targets */
+        targets: Target[];
+
+        /** Location of the Project */
+        sourceDirectory: string;
+
+        hasInstallRule?: boolean; // Exists in ServerCodeModelProject.
+
+    }
 
     /**
-     * Represents the CMAKE_SYSROOT variable
+     * Describes cmake configuration
      */
-    sysroot?: string;
-}
+    export interface Configuration {
+        /** List of project() from CMakeLists.txt */
+        projects: Project[];
 
-/**
- * Describes a file group to describe the build settings.
- */
-export interface CodeModelFileGroup {
-    /** List of source files with the same compilation information */
-    sources: string[];
+        /** Name of the active configuration in a multi-configuration generator.*/
+        name: string;
+    }
 
-    /** Specifies the language (C, C++, ...) for the toolchain */
-    language?: string;
-
-    /** Include paths for compilation of a source file */
-    includePath?: {
-        /** include path */
+    export interface Toolchain {
         path: string;
-    }[];
+        target?: string;
+    }
 
-    /** Compiler flags */
-    compileCommandFragments?: string[];
+    /** Describes the cmake model */
+    export interface Content {
+        /** List of configurations provided by the selected generator */
+        configurations: Configuration[];
 
-    /** Defines */
-    defines?: string[];
-
-    /** CMake generated file group */
-    isGenerated: boolean;
-}
-
-/**
- * Describes cmake project and all its related targets
- */
-export interface CodeModelProject {
-    /** Name of the project */
-    name: string;
-
-    /** List of targets */
-    targets: CodeModelTarget[];
-
-    /** Location of the Project */
-    sourceDirectory: string;
-
-    hasInstallRule?: boolean; // Exists in ServerCodeModelProject.
-
-}
-
-/**
- * Describes cmake configuration
- */
-export interface CodeModelConfiguration {
-    /** List of project() from CMakeLists.txt */
-    projects: CodeModelProject[];
-
-    /** Name of the active configuration in a multi-configuration generator.*/
-    name: string;
-}
-
-export interface CodeModelToolchain {
-    path: string;
-    target?: string;
-}
-
-/** Describes the cmake model */
-export interface CodeModelContent {
-    /** List of configurations provided by the selected generator */
-    configurations: CodeModelConfiguration[];
-
-    toolchains?: Map<string, CodeModelToolchain>;
+        toolchains?: Map<string, Toolchain>;
+    }
 }
 
 /**
  * Helper function to get the CMakeToolsApi from the CMake Tools extension.
- * @param version The desired API version.
+ * @param desiredVersion The desired API version.
  * @param exactMatch If true, the version must match exactly. Otherwise, the
  * function will attempt to return the requested version, but it may not match
  * exactly.
  * @returns The API object, or undefined if the API is not available.
  */
-export async function getCMakeToolsApi(version: Version, exactMatch = true): Promise<CMakeToolsApi | undefined> {
+export async function getCMakeToolsApi(desiredVersion: Version, exactMatch = false): Promise<CMakeToolsApi | undefined> {
     const extension = vscode.extensions.getExtension('ms-vscode.cmake-tools');
 
     if (!extension) {
@@ -230,13 +241,13 @@ export async function getCMakeToolsApi(version: Version, exactMatch = true): Pro
         return undefined;
     }
 
-    const api = exports.getApi(version);
-    if (version !== api.version) {
+    const api = exports.getApi(desiredVersion);
+    if (desiredVersion !== api.version) {
         if (exactMatch) {
-            console.warn(`[vscode-cmake-tools-api] CMake Tools API version ${version} is not available.`);
+            console.warn(`[vscode-cmake-tools-api] CMake Tools API version ${desiredVersion} is not available.`);
             return undefined;
         } else {
-            console.warn(`[vscode-cmake-tools-api] CMake Tools API version ${version} is not available. Using ${api.version}.`);
+            console.warn(`[vscode-cmake-tools-api] CMake Tools API version ${desiredVersion} is not available. Using ${api.version}.`);
         }
     }
 

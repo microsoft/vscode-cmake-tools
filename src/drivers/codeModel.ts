@@ -5,13 +5,13 @@ import * as api from "vscode-cmake-tools/out/api";
 // Re-export API types. This gives us flexibility add fields to the internal
 // representation of these data structures in the future without modifying the
 // public API.
-export type CodeModelConfiguration = api.CodeModelConfiguration;
-export type CodeModelContent = api.CodeModelContent;
-export type CodeModelFileGroup = api.CodeModelFileGroup;
-export type CodeModelProject = api.CodeModelProject;
-export type CodeModelTarget = api.CodeModelTarget;
-export type CodeModelToolchain = api.CodeModelToolchain;
-export type TargetTypeString = api.TargetTypeString;
+export type CodeModelConfiguration = api.CodeModel.Configuration;
+export type CodeModelContent = api.CodeModel.Content;
+export type CodeModelFileGroup = api.CodeModel.FileGroup;
+export type CodeModelProject = api.CodeModel.Project;
+export type CodeModelTarget = api.CodeModel.Target;
+export type CodeModelToolchain = api.CodeModel.Toolchain;
+export type TargetTypeString = api.CodeModel.TargetType;
 
 /**
  * Type given when updating the configuration data stored in the file index.

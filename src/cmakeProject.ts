@@ -30,7 +30,7 @@ import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable } from './proc';
-import { Property } from './prop';
+import { FireLate, Property } from './prop';
 import rollbar from './rollbar';
 import * as telemetry from './telemetry';
 import { setContextValue } from './util';
@@ -108,6 +108,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
     private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
+        this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
     }
 
     /**
@@ -477,6 +478,11 @@ export class CMakeProject implements api.CMakeToolsAPI {
     }
     private readonly _codeModelContent = new Property<CodeModelContent | null>(null);
     private codeModelDriverSub: vscode.Disposable | null = null;
+
+    get onCodeModelChangedApiEvent() {
+        return this._codeModelChangedApiEventEmitter.event;
+    }
+    private readonly _codeModelChangedApiEventEmitter = new vscode.EventEmitter<void>();
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
         log.info(localize('communication.changed.restart.driver', "Restarting the CMake driver after a communication mode change."));

@@ -124,7 +124,6 @@ export class ExtensionManager implements vscode.Disposable {
                 const subs: vscode.Disposable[] = [];
                 subs.push(newCmt.onCodeModelChanged(FireLate, () => {
                     this.updateCodeModel(cmakeWorkspaceFolder);
-                    this.onCodeModelChangedEmitter.fire(newCmt.folder);
                 }));
                 subs.push(newCmt.onTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)));
                 subs.push(newCmt.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)));
@@ -212,7 +211,6 @@ export class ExtensionManager implements vscode.Disposable {
                 this.codeModelUpdateSubs.set(cmakeWorkspaceFolder.folder.uri.fsPath, [
                     cmakeWorkspaceFolder.cmakeProject.onCodeModelChanged(FireLate, () => {
                         this.updateCodeModel(cmakeWorkspaceFolder);
-                        this.onCodeModelChangedEmitter.fire(cmakeWorkspaceFolder.cmakeProject.folder);
                     }),
                     cmakeWorkspaceFolder.cmakeProject.onTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
                     cmakeWorkspaceFolder.cmakeProject.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(cmakeWorkspaceFolder)),
@@ -688,7 +686,7 @@ export class ExtensionManager implements vscode.Disposable {
         }
         this.projectOutlineProvider.setActiveFolder(ws);
         this.setupSubscriptions();
-        this.onActiveFolderChangedEmitter.fire(ws);
+        this.onActiveProjectChangedEmitter.fire(ws?.uri);
     }
 
     private disposeSubs() {
@@ -820,12 +818,12 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
                 this.statusBar.setBuildTargetName(t);
-                this.onBuildTargetNameChangedEmitter.fire(t);
+                this.onBuildTargetChangedEmitter.fire(t);
             });
             this.buildTypeSub = cmakeProject.onActiveVariantNameChanged(FireNow, bt => this.statusBar.setVariantLabel(bt));
             this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, t => {
                 this.statusBar.setLaunchTargetName(t || '');
-                this.onLaunchTargetNameChangedEmitter.fire(t || '');
+                this.onLaunchTargetChangedEmitter.fire(t || '');
             });
             this.ctestEnabledSub = cmakeProject.onCTestEnabledChanged(FireNow, e => this.statusBar.setCTestEnabled(e));
             this.testResultsSub = cmakeProject.onTestResultsChanged(FireNow, r => this.statusBar.setTestResults(r));
@@ -1629,25 +1627,20 @@ export class ExtensionManager implements vscode.Disposable {
 
     public api: CMakeToolsApiImpl;
 
-    get onBuildTargetNameChanged() {
-        return this.onBuildTargetNameChangedEmitter.event;
+    get onBuildTargetChanged() {
+        return this.onBuildTargetChangedEmitter.event;
     }
-    private readonly onBuildTargetNameChangedEmitter = new vscode.EventEmitter<string>();
+    private readonly onBuildTargetChangedEmitter = new vscode.EventEmitter<string>();
 
-    get onLaunchTargetNameChanged() {
-        return this.onLaunchTargetNameChangedEmitter.event;
+    get onLaunchTargetChanged() {
+        return this.onLaunchTargetChangedEmitter.event;
     }
-    private readonly onLaunchTargetNameChangedEmitter = new vscode.EventEmitter<string>();
+    private readonly onLaunchTargetChangedEmitter = new vscode.EventEmitter<string>();
 
-    get onActiveFolderChanged() {
-        return this.onActiveFolderChangedEmitter.event;
+    get onActiveProjectChanged() {
+        return this.onActiveProjectChangedEmitter.event;
     }
-    private readonly onActiveFolderChangedEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder | undefined>();
-
-    get onCodeModelChanged() {
-        return this.onCodeModelChangedEmitter.event;
-    }
-    private readonly onCodeModelChangedEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
+    private readonly onActiveProjectChangedEmitter = new vscode.EventEmitter<vscode.Uri | undefined>();
 }
 
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
