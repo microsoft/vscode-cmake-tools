@@ -59,6 +59,11 @@ export interface CMakeToolsApi {
     readonly onLaunchTargetNameChanged: vscode.Event<string>;
 
     /**
+     * An event that fires when the active folder changes.
+     */
+    readonly onActiveFolderChanged: vscode.Event<vscode.WorkspaceFolder | undefined>;
+
+    /**
      * Gets the code model from the CMake File API, if it is available.
      * @param folder The workspace folder containing the CMake project.
      */

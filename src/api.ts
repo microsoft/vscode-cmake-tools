@@ -29,6 +29,10 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
         return this.manager.onLaunchTargetNameChanged;
     }
 
+    get onActiveFolderChanged() {
+        return this.manager.onActiveFolderChanged;
+    }
+
     async getFileApiCodeModel(folder: vscode.WorkspaceFolder): Promise<api.CodeModelContent | undefined> {
         return this.manager.cmakeWorkspaceFolders.get(folder)?.cmakeProject.codeModelContent ?? undefined;
     }

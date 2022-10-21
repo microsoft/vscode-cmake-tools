@@ -688,6 +688,7 @@ export class ExtensionManager implements vscode.Disposable {
         }
         this.projectOutlineProvider.setActiveFolder(ws);
         this.setupSubscriptions();
+        this.onActiveFolderChangedEmitter.fire(ws);
     }
 
     private disposeSubs() {
@@ -1637,6 +1638,11 @@ export class ExtensionManager implements vscode.Disposable {
         return this.onLaunchTargetNameChangedEmitter.event;
     }
     private readonly onLaunchTargetNameChangedEmitter = new vscode.EventEmitter<string>();
+
+    get onActiveFolderChanged() {
+        return this.onActiveFolderChangedEmitter.event;
+    }
+    private readonly onActiveFolderChangedEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder | undefined>();
 
     get onCodeModelChanged() {
         return this.onCodeModelChangedEmitter.event;
