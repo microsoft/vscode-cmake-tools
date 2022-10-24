@@ -9,8 +9,7 @@
         ],
         "paths": {
             "@cmt/*": ["src/*"],
-            "@test/*": ["test/*"],
-            "vscode-cmake-tools/*": ["api/*"]
+            "@test/*": ["test/*"]
         },
         "sourceMap": true,
         "rootDir": ".",
@@ -23,7 +22,6 @@
     },
     "exclude": [
         "node_modules",
-        ".vscode-test",
-        "api",
+        ".vscode-test"
     ]
 }

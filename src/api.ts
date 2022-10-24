@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import * as api from 'vscode-cmake-tools/out/api';
+import * as api from 'vscode-cmake-tools';
 import CMakeProject from '@cmt/cmakeProject';
 import { ExtensionManager } from '@cmt/extension';
 import { assertNever } from '@cmt/util';

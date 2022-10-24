@@ -258,7 +258,6 @@ gulp.task('translations-generate', gulp.series(generatedSrcLocBundle, generatedA
 const allTypeScript = [
     'src/**/*.ts',
     'test/**/*.ts',
-    'api/**/*.ts',
     '!**/*.d.ts',
     '!**/typings**'
 ];

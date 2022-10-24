@@ -1,6 +1,6 @@
 import { CMakeCache } from "@cmt/cache";
 
-import * as api from "vscode-cmake-tools/out/api";
+import * as api from "vscode-cmake-tools";
 
 // Re-export API types. This gives us flexibility add fields to the internal
 // representation of these data structures in the future without modifying the

@@ -30,12 +30,7 @@ const config = {
     resolve: { // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
         extensions: ['.ts', '.js'],
         alias: {
-            "@cmt": path.resolve(__dirname, 'src'),
-
-            // Everyone else should be pulling this from NPM, but for the inner
-            // dev loop of CMake Tools it's helpful to have this always be
-            // up-to-date with the source code.
-            "vscode-cmake-tools": path.resolve(__dirname, 'api'),
+            "@cmt": path.resolve(__dirname, 'src')
         },
         mainFields: ['main', 'module']
     },

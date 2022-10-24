@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
-import * as api from 'vscode-cmake-tools/out/api';
+import * as api from 'vscode-cmake-tools';
 
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger } from '@cmt/cmakeProject';
