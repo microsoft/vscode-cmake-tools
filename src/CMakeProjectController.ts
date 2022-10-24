@@ -24,12 +24,12 @@ get useCMakePresets(): boolean {
     }
     return this.config.useCMakePresets === 'always';
 }*/
-
+export type FolderProjectMap = {folder: vscode.WorkspaceFolder; projects: CMakeProject[]};
 export class CMakeProjectController implements vscode.Disposable {
     private readonly cmakeProjectsMap = new Map<string, CMakeProject[]>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
-    private readonly afterAddFolderEmitter = new vscode.EventEmitter<CMakeProject[]>();
+    private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectMap>();
     private readonly beforeRemoveFolderEmitter = new vscode.EventEmitter<CMakeProject[]>();
     private readonly afterRemoveFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly subscriptions: vscode.Disposable[] = [
@@ -72,7 +72,7 @@ export class CMakeProjectController implements vscode.Disposable {
     }
 
     private activeCMakeProject: CMakeProject | undefined;
-    setActiveFolderandProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): string | undefined {
+    setActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): string | undefined {
         const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(workspaceFolder);
         if (cmakeProjects && cmakeProjects.length === 1) {
             if (openEditor) {
@@ -92,25 +92,29 @@ export class CMakeProjectController implements vscode.Disposable {
         }
     }
 
-    public getActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): CMakeProject | undefined {
-        if (!this.activeCMakeProject) {
-            this.setActiveFolderandProject(workspaceFolder, openEditor);
+    public getActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, setActive?: boolean): CMakeProject | undefined {
+        if (!this.activeCMakeProject && setActive) {
+            this.setActiveCMakeProject(workspaceFolder, openEditor);
         }
         return this.activeCMakeProject;
     }
 
-    get size() {
+    get numOfRoots(): number {
         return this.cmakeProjectsMap.size;
     }
 
-    get isMultiRoot() {
-        return this.size > 1;
+    get numOfProjects(): number {
+        return this.getAllCMakeProjects().length;
+    }
+
+    get isMultiRoot(): boolean {
+        return this.numOfRoots > 1;
     }
 
     constructor(readonly extensionContext: vscode.ExtensionContext) {
         this.subscriptions = [
             vscode.workspace.onDidChangeWorkspaceFolders(
-                e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this._onChange(e)))
+                e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this.onChange(e)))
         ];
     }
 
@@ -143,35 +147,35 @@ export class CMakeProjectController implements vscode.Disposable {
     /**
      * Load all the folders currently open in VSCode
      */
-    async loadAllCurrent() {
+    async loadAllProjects() {
         this.getAllCMakeProjects().forEach(project => project.dispose());
         this.cmakeProjectsMap.clear();
         if (vscode.workspace.workspaceFolders) {
             for (const folder of vscode.workspace.workspaceFolders) {
-                await this._addFolder(folder);
+                await this.addFolder(folder);
             }
         }
     }
 
     /**
      * Handle workspace change event.
-     * @param e Workspace change event
+     * @param event Workspace change event
      */
-    private async _onChange(e: vscode.WorkspaceFoldersChangeEvent) {
+    private async onChange(event: vscode.WorkspaceFoldersChangeEvent) {
         // Un-register each CMake Tools we have loaded for each removed workspace
-        for (const folder of e.removed) {
+        for (const folder of event.removed) {
             const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(folder);
             if (cmakeProjects) {
                 this.beforeRemoveFolderEmitter.fire(cmakeProjects);
             }
-            await this._removeFolder(folder);
+            await this.removeFolder(folder);
             this.afterRemoveFolderEmitter.fire(folder);
         }
         // Load a new CMake Tools instance for each folder that has been added.
-        for (const folder of e.added) {
+        for (const folder of event.added) {
             this.beforeAddFolderEmitter.fire(folder);
-            const cmakeProjects = await this._addFolder(folder);
-            this.afterAddFolderEmitter.fire(cmakeProjects);
+            const cmakeProjects = await this.addFolder(folder);
+            this.afterAddFolderEmitter.fire({folder: folder, projects: cmakeProjects});
         }
     }
 
@@ -179,25 +183,32 @@ export class CMakeProjectController implements vscode.Disposable {
      * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
      */
-    private loadCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject|CMakeProject[]> {
+    private createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject|CMakeProject[]> {
         // Create the backend:
         return CMakeProject.createForDirectory(folder, this.extensionContext);
     }
 
+    public useCMakePresetsForFolder(folder: vscode.WorkspaceFolder): boolean {
+        const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(folder);
+        if (cmakeProjects && cmakeProjects.length > 0) {
+            return cmakeProjects[0].useCMakePresets;
+        }
+        return false;
+    }
     /**
      * Create a new instance of the backend to support the given workspace folder.
      * The given folder *must not* already be loaded.
      * @param folder The workspace folder to load for
      * @returns The newly created CMakeProject backend for the given folder
      */
-    private async _addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
+    private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
         const existing = this.getCMakeProjectsForFolder(folder);
         if (existing) {
             rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
             return existing;
         }
         // Load for the workspace.
-        let newProjects: CMakeProject|CMakeProject[] = await this.loadCMakeProjectForWorkspaceFolder(folder);
+        let newProjects: CMakeProject|CMakeProject[] = await this.createCMakeProjectForWorkspaceFolder(folder);
         newProjects = Array.isArray(newProjects) ? newProjects : [newProjects];
         this.cmakeProjectsMap.set(folder.uri.fsPath, newProjects);
         return newProjects;
@@ -208,7 +219,7 @@ export class CMakeProjectController implements vscode.Disposable {
      * instance associated with the workspace.
      * @param folder The workspace to remove for
      */
-    private async _removeFolder(folder: vscode.WorkspaceFolder) {
+    private async removeFolder(folder: vscode.WorkspaceFolder) {
         const cmakeProjects = this.getCMakeProjectsForFolder(folder);
         if (!cmakeProjects) {
             // CMake Tools should always be aware of all workspace folders. If we
