@@ -618,7 +618,7 @@ class ExtensionManager implements vscode.Disposable {
     async selectActiveFolder() {
         if (vscode.workspace.workspaceFolders?.length) {
             const lastActiveFolderPath = this.activeFolderPath();
-            const selection = await vscode.window.showWorkspaceFolderPick();
+            const selection = await vscode.window.showWorkspaceFolderPick(); //ELLA
             if (selection) {
                 // Ingore if user cancelled
                 await this.setActiveProject(selection);

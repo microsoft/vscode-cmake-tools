@@ -120,8 +120,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
-    public kitsController: KitsController;
-    public presetsController: PresetsController;
+    public kitsController!: KitsController;
+    public presetsController!: PresetsController;
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
      * @param extensionContext The extension context
@@ -1051,6 +1051,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
         }));
 
         const config = this.workspaceContext.config;
+        this.kitsController = await KitsController.init(this);
+        this.presetsController = await PresetsController.init(this, this.kitsController);
         const useCMakePresetsChangedListener = async () => {
             const usingCMakePresets = this.useCMakePresets;
             if (usingCMakePresets !== this.wasUsingCMakePresets) {
@@ -1089,9 +1091,6 @@ export class CMakeProject implements api.CMakeToolsAPI {
         };
 
         await useCMakePresetsChangedListener();
-
-        this.kitsController = await KitsController.init(this);
-        this.presetsController = await PresetsController.init(this, this.kitsController);
 
         this.disposables.push(config.onChange('useCMakePresets', useCMakePresetsChangedListener));
         this.disposables.push(this.onPresetsChanged(useCMakePresetsChangedListener));

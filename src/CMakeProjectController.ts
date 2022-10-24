@@ -82,7 +82,8 @@ export class CMakeProjectController implements vscode.Disposable {
                         break;
                     }
                 }
-            } else {
+            }
+            if (!this.activeCMakeProject) {
                 this.activeCMakeProject = cmakeProjects[0];
             }
             return this.activeCMakeProject?.folderName;
