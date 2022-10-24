@@ -72,7 +72,16 @@ export class CMakeProjectController implements vscode.Disposable {
     }
 
     private activeCMakeProject: CMakeProject | undefined;
-    setActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): string | undefined {
+    setActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, folderName?: string): string | undefined {
+        if (folderName) {
+            const cmakeProjects: CMakeProject[] | undefined = this.getAllCMakeProjects();
+            for (const project of cmakeProjects) {
+                if (project.folderName === folderName) {
+                    this.activeCMakeProject = project;
+                    return folderName;
+                }
+            }
+        }
         const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(workspaceFolder);
         if (cmakeProjects && cmakeProjects.length === 1) {
             if (openEditor) {
@@ -140,8 +149,8 @@ export class CMakeProjectController implements vscode.Disposable {
     }
 
     getAllCMakeProjects(): CMakeProject[] {
-        const allCMakeProjects: CMakeProject[] = [];
-        allCMakeProjects.concat(...this.cmakeProjectsMap.values());
+        let allCMakeProjects: CMakeProject[] = [];
+        allCMakeProjects = allCMakeProjects.concat(...this.cmakeProjectsMap.values());
         return allCMakeProjects;
     }
 

@@ -618,10 +618,11 @@ class ExtensionManager implements vscode.Disposable {
     async selectActiveFolder() {
         if (vscode.workspace.workspaceFolders?.length) {
             const lastActiveFolderPath = this.activeFolderPath();
-            const selection = await vscode.window.showWorkspaceFolderPick(); //ELLA
+            //const selection = await vscode.window.showWorkspaceFolderPick();
+            const selection: CMakeProject | undefined = await this.pickCMakeProject();
             if (selection) {
                 // Ingore if user cancelled
-                await this.setActiveProject(selection);
+                await this.setActiveProject(undefined, undefined, selection.folderName);
                 telemetry.logEvent("selectactivefolder");
                 // this.folders.activeFolder must be there at this time
                 const currentActiveFolderPath = this.activeFolderPath();
@@ -629,7 +630,7 @@ class ExtensionManager implements vscode.Disposable {
                 if (lastActiveFolderPath !== currentActiveFolderPath) {
                     const folder: vscode.WorkspaceFolder | undefined = this.activeCMakeWorkspaceFolder()!;
                     const cmakeProject: CMakeProject | undefined = this.getActiveCMakeProject();
-                    rollbar.takePromise('Post-folder-open', { folder: selection }, this.postWorkspaceOpen(folder, cmakeProject));
+                    rollbar.takePromise('Post-folder-open', { folder: selection.folderName }, this.postWorkspaceOpen(folder, cmakeProject));
                 }
             }
         }
@@ -655,9 +656,9 @@ class ExtensionManager implements vscode.Disposable {
      * pieces to control which backend has control and receives user input.
      * @param ws The workspace to activate
      */
-    private async setActiveProject(ws: vscode.WorkspaceFolder | undefined, editor?: vscode.TextEditor | undefined) {
+    private async setActiveProject(ws?: vscode.WorkspaceFolder, editor?: vscode.TextEditor, folderName?: string) {
         // Set the new workspace
-        const activeProjectName = this.cmakeProjectController.setActiveCMakeProject(ws, editor);
+        const activeProjectName = this.cmakeProjectController.setActiveCMakeProject(ws, editor, folderName);
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         this.statusBar.setActiveProjectName(activeProjectName || ws?.name || "");
         const useCMakePresets = activeProject?.useCMakePresets || false;
