@@ -27,7 +27,7 @@ import { CMakeGenerator, Kit } from './kit';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
 import { fs } from './pr';
-import { buildCmdStr, DebuggerEnvironmentVariable } from './proc';
+import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
 import { FireLate, Property } from './prop';
 import rollbar from './rollbar';
 import * as telemetry from './telemetry';
@@ -79,54 +79,6 @@ export enum ConfigureTrigger {
     commandConfigureAll = "commandConfigureAll",
     commandCleanConfigureAll = "commandCleanConfigureAll",
     taskProvider = "taskProvider"
-}
-
-/**
- * The result of executing a program.
- */
-export interface ExecutionResult {
-    /**
-     * The return code of the program.
-     */
-    retc: number | null;
-    /**
-     * The full standard output of the program. May be `` if standard out
-     * was not captured.
-     */
-    stdout: string;
-    /**
-     * Standard error output of the program. May be `` if standard error was
-     * not captured
-     */
-    stderr: string;
-}
-
-/**
- * Options for executing a command.
- */
-export interface ExecutionOptions {
-    /**
-     * Whether output from the command should be suppressed from CMake Tools'
-     * output channel.
-     */
-    silent: boolean;
-    /**
-     * Additional environment variables to define when executing the command.
-     */
-    environment: { [key: string]: string };
-    /**
-     * Whether we should collect output from the command.
-     *
-     * @note All output from the command is collected into a single string, so
-     * commands which emit a lot of output may consume a lot of memory if
-     * `collectOutput` is set to `true`.
-     */
-    collectOutput?: boolean;
-    /**
-     * The working directory for the command. The default directory is
-     * unspecified.
-     */
-    workingDirectory?: string;
 }
 
 /**
