@@ -53,6 +53,13 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     }
 }
 
+async function withErrorCheck(name: string, action: () => Thenable<number>): Promise<void> {
+    const code = await action();
+    if (code !== 0) {
+        throw new Error(`${name} failed with code ${code}`);
+    }
+}
+
 class CMakeProjectWrapper implements api.Project {
     constructor(private readonly project: CMakeProject) {}
 
@@ -62,5 +69,33 @@ class CMakeProjectWrapper implements api.Project {
 
     get onCodeModelChanged() {
         return this.project.onCodeModelChangedApiEvent;
+    }
+
+    configure(): Promise<void> {
+        return withErrorCheck('configure', () => this.project.configure());
+    }
+
+    build(targets?: string[]): Promise<void> {
+        return withErrorCheck('build', () => this.project.build(targets));
+    }
+
+    install(): Promise<void> {
+        return withErrorCheck('install', () => this.project.install());
+    }
+
+    clean(): Promise<void> {
+        return withErrorCheck('clean', () => this.project.clean());
+    }
+
+    reconfigure(): Promise<void> {
+        return withErrorCheck('reconfigure', () => this.project.cleanConfigure());
+    }
+
+    async getBuildDirectory(): Promise<string | undefined> {
+        return (await this.project.buildDirectory()) ?? undefined;
+    }
+
+    async getActiveBuildType(): Promise<string | undefined> {
+        return (await this.project.currentBuildType()) ?? undefined;
     }
 }

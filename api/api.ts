@@ -86,7 +86,41 @@ export interface Project {
      */
     readonly onCodeModelChanged: vscode.Event<void>;
 
-    // TODO: add configure, build, install, etc. and buildDirectory, activeBuildType, etc.
+    /**
+     * Configures the project.
+     */
+    configure(): Promise<void>;
+
+    /**
+     * Builds the given targets or the active build target if none are given.
+     */
+    build(targets?: string[]): Promise<void>;
+
+    /**
+     * Installs the project.
+     */
+    install(): Promise<void>;
+
+    /**
+     * Cleans the build output from the project.
+     */
+    clean(): Promise<void>;
+
+    /**
+     * Removes the CMake cache file and any intermediate configuration files,
+     * then configures the project.
+     */
+    reconfigure(): Promise<void>;
+
+    /**
+     * Gets the directory where build output is placed, if it is defined.
+     */
+    getBuildDirectory(): Promise<string | undefined>;
+
+    /**
+     * Gets the type of build for the currently selected configuration.
+     */
+    getActiveBuildType(): Promise<string | undefined>;
 }
 
 export namespace CodeModel {
