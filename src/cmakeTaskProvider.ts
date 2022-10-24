@@ -311,7 +311,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true, generateLog: boolean = true, cmakeProject?: CMakeProject): Promise<any> {
+    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true, generateLog: boolean = true, cmakeProject?: CMakeProject): Promise<number> {
         let targets = this.targets;
         const taskName: string = localizeCommandType(commandType);
         let fullCommand: proc.BuildCommand | null;
@@ -320,7 +320,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (!cmakeProject) {
             cmakeProject = this.getCMakeProject();
             if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
-                return;
+                return -1;
             }
         }
         if (generateLog) {
@@ -373,17 +373,15 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
-            } else if (result.stderr && !result.stdout) {
-                this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
-            } else if (result.stdout && result.stdout.includes("warning")) {
+            } else if (result.stderr || (result.stdout && result.stdout.includes("warning"))) {
                 this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
             } else {
                 this.writeEmitter.fire(localize("build.finished.successfully", "{0} finished successfully.", taskName) + endOfLine);
             }
             if (doCloseEmitter) {
-                this.closeEmitter.fire(0);
+                this.closeEmitter.fire(result.retc ?? 0);
             }
-            return 0;
+            return result.retc ?? 0;
         } catch {
             this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             if (doCloseEmitter) {
