@@ -536,7 +536,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
      */
-    private readonly variantManager = new VariantManager(this.rootFolder, this.folderPath, this.workspaceContext.state, this.workspaceContext.config);
+    private readonly variantManager = new VariantManager(this.rootFolder, this.workspaceContext.state, this.workspaceContext.config);
 
     /**
      * A strand to serialize operations with the CMake driver

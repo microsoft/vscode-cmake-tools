@@ -188,6 +188,7 @@ export class VariantManager implements vscode.Disposable {
      * Watches for changes to the variants file on the filesystem
      */
     private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true, followSymlinks: false });
+    private readonly rootFolderPath: string;
 
     private customVariantsFileExists: boolean = false;
 
@@ -200,7 +201,8 @@ export class VariantManager implements vscode.Disposable {
      * Create a new VariantManager
      * @param stateManager The state manager for this instance
      */
-    constructor(readonly folder: vscode.WorkspaceFolder, readonly base_path: string, readonly stateManager: StateManager, readonly config: ConfigurationReader) {
+    constructor(readonly rootFolder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader) {
+        this.rootFolderPath = rootFolder.uri.fsPath;
         log.debug(localize('constructing', 'Constructing {0}', 'VariantManager'));
         if (!vscode.workspace.workspaceFolders) {
             return;  // Nothing we can do. We have no directory open
@@ -210,7 +212,7 @@ export class VariantManager implements vscode.Disposable {
             'cmake-variants.json',
             '.vscode/cmake-variants.yaml',
             '.vscode/cmake-variants.json']) {
-            this._variantFileWatcher.add(path.join(base_path, filename));
+            this._variantFileWatcher.add(path.join(this.rootFolderPath, filename));
         }
         util.chokidarOnAnyChange(
             this._variantFileWatcher,
@@ -234,14 +236,12 @@ export class VariantManager implements vscode.Disposable {
         this.customVariantsFileExists = false;
         const validate = await loadSchema('schemas/variants-schema.json');
 
-        const workdir = this.base_path;
-
         if (!filepath || !await fs.exists(filepath)) {
             const candidates = [
-                path.join(workdir, 'cmake-variants.json'),
-                path.join(workdir, 'cmake-variants.yaml'),
-                path.join(workdir, '.vscode/cmake-variants.json'),
-                path.join(workdir, '.vscode/cmake-variants.yaml')
+                path.join(this.rootFolderPath, 'cmake-variants.json'),
+                path.join(this.rootFolderPath, 'cmake-variants.yaml'),
+                path.join(this.rootFolderPath, '.vscode/cmake-variants.json'),
+                path.join(this.rootFolderPath, '.vscode/cmake-variants.yaml')
             ];
             for (const testpath of candidates) {
                 if (await fs.exists(testpath)) {
@@ -389,7 +389,7 @@ export class VariantManager implements vscode.Disposable {
                 return false;
             }
 
-            const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('defaultVariants');
+            const cfg = vscode.workspace.getConfiguration('cmake', this.rootFolder.uri).inspect<object>('defaultVariants');
             const telemetryProperties: telemetry.Properties = {
                 customFile: (this.customVariantsFileExists).toString(),
                 customSetting: (cfg?.globalValue !== undefined ||
