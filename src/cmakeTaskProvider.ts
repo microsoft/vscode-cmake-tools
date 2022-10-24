@@ -311,7 +311,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true, generateLog: boolean = true, cmakeProject?: CMakeProject): Promise<any> {
+    private async runBuildTask(commandType: CommandType, doCloseEmitter: boolean = true, generateLog: boolean = true, cmakeProject?: CMakeProject): Promise<number> {
         let targets = this.targets;
         const taskName: string = localizeCommandType(commandType);
         let fullCommand: proc.BuildCommand | null;
@@ -320,7 +320,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (!cmakeProject) {
             cmakeProject = this.getCMakeProject();
             if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
-                return;
+                return -1;
             }
         }
         if (generateLog) {
@@ -373,7 +373,6 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
-                // to capture warning message. Previously the condition could not capture the case if both stderr and stdout have output
             } else if (result.stderr || (result.stdout && result.stdout.includes("warning"))) {
                 this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
             } else {
