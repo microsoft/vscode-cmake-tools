@@ -372,8 +372,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         try {
             const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
             if (result.retc) {
-                this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);             
-              // to capture warning message. Previously the condition could not capture the case if both stderr and stdout have output
+                this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
+                // to capture warning message. Previously the condition could not capture the case if both stderr and stdout have output
             } else if (result.stderr || (result.stdout && result.stdout.includes("warning"))) {
                 this.writeEmitter.fire(localize("build.finished.with.warnings", "{0} finished with warning(s).", taskName) + endOfLine);
             } else {
