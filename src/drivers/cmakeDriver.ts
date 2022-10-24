@@ -32,7 +32,7 @@ import { DiagnosticsConfiguration } from '@cmt/cmakeWorkspaceFolder';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
-import { Entry } from '@cmt/cache';
+import { CacheEntry } from '@cmt/cache';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1781,7 +1781,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * Will be automatically reloaded when the file on disk changes.
      */
-    abstract get cmakeCacheEntries(): Map<string, Entry>;
+    abstract get cmakeCacheEntries(): Map<string, CacheEntry>;
 
     private async _baseInit(useCMakePresets: boolean,
         kit: Kit | null,

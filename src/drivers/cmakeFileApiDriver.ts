@@ -1,5 +1,5 @@
 import { ConfigureTrigger } from '@cmt/cmakeProject';
-import { CMakeCache, Entry } from '@cmt/cache';
+import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import {
@@ -83,7 +83,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     private readonly _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
 
     // Information from cmake file api
-    private _cache: Map<string, Entry> = new Map<string, Entry>();
+    private _cache: Map<string, CacheEntry> = new Map<string, CacheEntry>();
     private _cmakeFiles: string[] | null = null;
     private _generatorInformation: Index.GeneratorInformation | null = null;
     private _target_map: Map<string, Target[]> = new Map();
@@ -359,7 +359,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return this._codeModelContent;
     }
 
-    get cmakeCacheEntries(): Map<string, Entry> {
+    get cmakeCacheEntries(): Map<string, CacheEntry> {
         return this._cache;
     }
     get generatorName(): string | null {

@@ -1,4 +1,4 @@
-import { CMakeCache, CacheEntryType, Entry } from '@cmt/cache';
+import { CMakeCache, CacheEntryType, CacheEntry } from '@cmt/cache';
 import { CMakeProject } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as path from 'path';
@@ -41,7 +41,7 @@ suite('Environment', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
-        const cacheEntry = cache.get('configureEnvironment') as Entry;
+        const cacheEntry = cache.get('configureEnvironment') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[configureEnvironment] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('configureEnvironment', '[configureEnvironment] unexpected cache entry key name');
         expect(cacheEntry.as<string>())
@@ -63,7 +63,7 @@ suite('Environment', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
-        const cacheEntry = cache.get('buildEnvironment') as Entry;
+        const cacheEntry = cache.get('buildEnvironment') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[buildEnvironment] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('buildEnvironment', '[buildEnvironment] unexpected cache entry key name');
         expect(cacheEntry.as<string>()).to.be.eq('', '[buildEnvironment] env-var got passed to CMake');
@@ -85,7 +85,7 @@ suite('Environment', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
-        const cacheEntry = cache.get('environment') as Entry;
+        const cacheEntry = cache.get('environment') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[environment] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('environment', '[environment] unexpected cache entry key name');
         expect(cacheEntry.as<string>())

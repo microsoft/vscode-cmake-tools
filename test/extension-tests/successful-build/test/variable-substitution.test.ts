@@ -1,4 +1,4 @@
-import { CMakeCache, CacheEntryType, Entry } from '@cmt/cache';
+import { CMakeCache, CacheEntryType, CacheEntry } from '@cmt/cache';
 import { CMakeProject, ConfigureTrigger } from '@cmt/cmakeProject';
 import paths from '@cmt/paths';
 import { objectPairs, platformNormalizePath, makeHashString } from '@cmt/util';
@@ -54,7 +54,7 @@ suite('Variable Substitution', () => {
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
         // Check substitution for "workspaceRoot"
-        let cacheEntry = cache.get('workspaceRoot') as Entry;
+        let cacheEntry = cache.get('workspaceRoot') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[workspaceRoot] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('workspaceRoot', '[workspaceRoot] unexpected cache entry key name');
         expect(platformNormalizePath(cacheEntry.as<string>()))
@@ -62,7 +62,7 @@ suite('Variable Substitution', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[workspaceRoot] unexpected cache entry value type');
 
         // Check substitution for "workspaceFolder".
-        cacheEntry = cache.get('workspaceFolder') as Entry;
+        cacheEntry = cache.get('workspaceFolder') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[workspaceFolder] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('workspaceFolder', '[workspaceFolder] unexpected cache entry key name');
         expect(platformNormalizePath(cacheEntry.as<string>()))
@@ -70,21 +70,21 @@ suite('Variable Substitution', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[workspaceFolder] unexpected cache entry value type');
 
         // Check substitution for "workspaceHash".
-        cacheEntry = cache.get('workspaceHash') as Entry;
+        cacheEntry = cache.get('workspaceHash') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[workspaceHash] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('workspaceHash', '[workspaceHash] unexpected cache entry key name');
         expect(cacheEntry.as<string>()).to.eq(makeHashString(testEnv.projectFolder.location), '[workspaceHash] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[workspaceHash] unexpected cache entry value type');
 
         // Check substitution for "buildType".
-        cacheEntry = cache.get('buildType') as Entry;
+        cacheEntry = cache.get('buildType') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[buildType] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('buildType', '[buildType] unexpected cache entry key name');
         expect(cacheEntry.as<string>()).to.eq('Debug', '[buildType] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[buildType] unexpected cache entry value type');
 
         // Check substitution for "buildKit".
-        cacheEntry = cache.get('buildKit') as Entry;
+        cacheEntry = cache.get('buildKit') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[buildKit] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('buildKit', '[buildKit] unexpected cache entry key name');
         const kit = cmakeProject.activeKit;
@@ -92,7 +92,7 @@ suite('Variable Substitution', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[buildKit] unexpected cache entry value type');
 
         // Check substitution for "workspaceRootFolderName".
-        cacheEntry = cache.get('workspaceRootFolderName') as Entry;
+        cacheEntry = cache.get('workspaceRootFolderName') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[workspaceRootFolderName] unexpected cache entry type');
         expect(cacheEntry.key)
             .to.eq('workspaceRootFolderName', '[workspaceRootFolderName] unexpected cache entry key name');
@@ -101,7 +101,7 @@ suite('Variable Substitution', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[workspaceRootFolderName] unexpected cache entry value type');
 
         // Check substitution for "workspaceFolderBasename".
-        cacheEntry = cache.get('workspaceFolderBasename') as Entry;
+        cacheEntry = cache.get('workspaceFolderBasename') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[workspaceFolderBasename] unexpected cache entry type');
         expect(cacheEntry.key)
             .to.eq('workspaceFolderBasename', '[workspaceFolderBasename] unexpected cache entry key name');
@@ -110,22 +110,22 @@ suite('Variable Substitution', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[workspaceFolderBasename] unexpected cache entry value type');
 
         // Check substitution for "generator".
-        cacheEntry = cache.get('generator') as Entry;
+        cacheEntry = cache.get('generator') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[generator] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('generator', '[generator] unexpected cache entry key name');
-        const generator = cache.get('CMAKE_GENERATOR') as Entry;
+        const generator = cache.get('CMAKE_GENERATOR') as CacheEntry;
         expect(cacheEntry.as<string>()).to.eq(generator.as<string>(), '[generator] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[generator] unexpected cache entry value type');
 
         // Check substitution for "userHome".
-        cacheEntry = cache.get('userHome') as Entry;
+        cacheEntry = cache.get('userHome') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[userHome] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('userHome', '[userHome] unexpected cache entry key name');
         expect(cacheEntry.as<string>()).to.eq(paths.userHome, '[userHome] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[userHome] unexpected cache entry value type');
 
         // Check substitution within "cmake.installPrefix".
-        cacheEntry = cache.get('CMAKE_INSTALL_PREFIX') as Entry;
+        cacheEntry = cache.get('CMAKE_INSTALL_PREFIX') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.String, '[cmakeInstallPrefix] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('CMAKE_INSTALL_PREFIX', '[cmakeInstallPrefix] unexpected cache entry key name');
         expect(platformNormalizePath(cacheEntry.as<string>()))
@@ -154,7 +154,7 @@ suite('Variable Substitution', () => {
             const [key, expected] = testKey;
 
             // Get cache entry for given test key
-            const cacheEntry = testCache.get(key) as Entry;
+            const cacheEntry = testCache.get(key) as CacheEntry;
 
             // Check type and value of the retrieved cache entry
             expect(cacheEntry.type).to.eq(CacheEntryType.String, `[variant:${key}] unexpected cache entry type`);

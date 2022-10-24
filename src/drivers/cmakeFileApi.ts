@@ -260,7 +260,7 @@ export async function loadIndexFile(replyPath: string): Promise<Index.IndexFile 
     return JSON.parse(fileContent.toString()) as Index.IndexFile;
 }
 
-export async function loadCacheContent(filename: string): Promise<Map<string, cache.Entry>> {
+export async function loadCacheContent(filename: string): Promise<Map<string, cache.CacheEntry>> {
     const fileContent = await tryReadFile(filename);
     if (!fileContent) {
         return new Map();
@@ -310,7 +310,7 @@ function findPropertyValue(cacheElement: Cache.CMakeCacheEntry, name: string): s
     return propertyElement ? propertyElement.value : '';
 }
 
-function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheContent): Map<string, cache.Entry> {
+function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheContent): Map<string, cache.CacheEntry> {
     return cmakeCacheContent.entries.reduce((acc, el) => {
         const fileApiToExtensionCacheMap: { [key: string]: cache.CacheEntryType | undefined } = {
             BOOL: cache.CacheEntryType.Bool,
@@ -328,9 +328,9 @@ function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheConte
         }
         const helpString = findPropertyValue(el, 'HELPSTRING');
         const advanced = findPropertyValue(el, 'ADVANCED');
-        acc.set(el.name, new cache.Entry(el.name, el.value, type, helpString, advanced === '1'));
+        acc.set(el.name, new cache.CacheEntry(el.name, el.value, type, helpString, advanced === '1'));
         return acc;
-    }, new Map<string, cache.Entry>());
+    }, new Map<string, cache.CacheEntry>());
 }
 
 export async function loadCodeModelContent(filename: string): Promise<CodeModelKind.Content | null> {

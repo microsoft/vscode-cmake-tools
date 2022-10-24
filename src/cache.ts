@@ -29,7 +29,7 @@ export enum CacheEntryType {
 /**
  * Implements access to CMake cache entries.
  */
-export class Entry {
+export class CacheEntry {
     public readonly type: CacheEntryType = CacheEntryType.Uninitialized;
     public readonly helpString: string = '';
     /** The name of the cache entry */
@@ -104,7 +104,7 @@ export class CMakeCache {
     }
 
     /** Get a list of all cache entries */
-    get allEntries(): Entry[] {
+    get allEntries(): CacheEntry[] {
         return Array.from(this.cacheEntries.values());
     }
 
@@ -114,7 +114,7 @@ export class CMakeCache {
      * @param path Path to the cache file
      * @param cacheEntries Entries in the cache
      */
-    private constructor(public readonly path: string, private readonly cacheEntries: Map<string, Entry>) {}
+    private constructor(public readonly path: string, private readonly cacheEntries: Map<string, CacheEntry>) {}
 
     /**
      * Reload the cache file and return a new instance. This will not modify this
@@ -131,11 +131,11 @@ export class CMakeCache {
      * @param content The contents of a CMake cache file.
      * @returns A map from the cache keys to the entries in the cache.
      */
-    static parseCache(content: string): Map<string, Entry> {
+    static parseCache(content: string): Map<string, CacheEntry> {
         log.debug(localize('parsing.cmake.cache.string', 'Parsing CMake cache string'));
         const lines = content.split(/\r\n|\n|\r/).filter(line => !!line.length).filter(line => !/^\s*#/.test(line));
 
-        const entries = new Map<string, Entry>();
+        const entries = new Map<string, CacheEntry>();
         let docStringAccumulator = '';
         const advancedNames: string[] = [];
         const choices: Map<string, string[]> = new Map();
@@ -181,7 +181,7 @@ export class CMakeCache {
                         rollbar.error(localize('cache.entry.unknown', 'Cache entry {0} has unknown type: {1}', `"${name}"`, `"${typeName}"`));
                     } else {
                         log.trace(localize('constructing.new.cache.entry', 'Constructing a new cache entry from the given line'));
-                        const entry = new Entry(key, value, type, docString, false);
+                        const entry = new CacheEntry(key, value, type, docString, false);
                         entry.serializedKey = serializedName;
                         entries.set(name, entry);
                     }
@@ -297,7 +297,7 @@ export class CMakeCache {
      * @param key The name of a cache entry
      * @returns The cache entry, or `null` if the cache entry is not present.
      */
-    get(key: string): Entry | null {
+    get(key: string): CacheEntry | null {
         const ret = this.cacheEntries.get(key) || null;
         if (ret) {
             log.trace(localize('get.cache.key', 'Get cache key {0}={1}', key, ret.value));

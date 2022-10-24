@@ -6,7 +6,7 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as vscode from 'vscode';
 
-import { CMakeCache, Entry } from '@cmt/cache';
+import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -197,7 +197,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
     }
 
     get cmakeCacheEntries() {
-        let ret = new Map<string, Entry>();
+        let ret = new Map<string, CacheEntry>();
         if (this.cmakeCache) {
             ret = util.reduce(this.cmakeCache.allEntries, ret, (acc, entry) => acc.set(entry.key, entry));
         }

@@ -51,7 +51,7 @@ export class CMakeServerDriver extends CMakeDriver {
     private _cmsClient: Promise<cms.CMakeServerClient | null> = Promise.resolve(null);
     private _clientChangeInProgress: Promise<void> = Promise.resolve();
     private _globalSettings!: cms.GlobalSettingsContent;
-    private _cacheEntries = new Map<string, cache.Entry>();
+    private _cacheEntries = new Map<string, cache.CacheEntry>();
     private _cmakeInputFileSet = InputFileSet.createEmpty();
 
     private readonly _progressEmitter = new vscode.EventEmitter<cms.ProgressMessage>();
@@ -226,9 +226,9 @@ export class CMakeServerDriver extends CMakeDriver {
                 return acc;
             }
             acc.set(el.key,
-                new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
+                new cache.CacheEntry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
             return acc;
-        }, new Map<string, cache.Entry>());
+        }, new Map<string, cache.CacheEntry>());
         // Convert ServerCodeModel to general CodeModel.
         this.codeModel = this.convertServerCodeModel(await client.codemodel());
         this._codeModelChanged.fire(this.codeModel);
@@ -322,7 +322,7 @@ export class CMakeServerDriver extends CMakeDriver {
         return this._cmakeInputFileSet.checkOutOfDate();
     }
 
-    get cmakeCacheEntries(): Map<string, cache.Entry> {
+    get cmakeCacheEntries(): Map<string, cache.CacheEntry> {
         return this._cacheEntries;
     }
 

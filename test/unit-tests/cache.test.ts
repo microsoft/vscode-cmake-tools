@@ -6,7 +6,7 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
-import { CMakeCache, CacheEntryType, Entry } from '../../src/cache';
+import { CMakeCache, CacheEntryType, CacheEntry } from '../../src/cache';
 import * as util from '../../src/util';
 
 const here = __dirname;
@@ -17,13 +17,13 @@ function getTestResourceFilePath(filename: string): string {
 suite('Cache test', () => {
     test('Read CMake Cache', async () => {
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
-        const generator = cache.get('CMAKE_GENERATOR') as Entry;
+        const generator = cache.get('CMAKE_GENERATOR') as CacheEntry;
         expect(generator.type).to.eq(CacheEntryType.Internal);
         expect(generator.key).to.eq('CMAKE_GENERATOR');
         expect(generator.as<string>()).to.eq('Ninja');
         expect(typeof generator.value).to.eq('string');
 
-        const build_testing = cache.get('BUILD_TESTING') as Entry;
+        const build_testing = cache.get('BUILD_TESTING') as CacheEntry;
         expect(build_testing.type).to.eq(CacheEntryType.Bool);
         expect(build_testing.as<boolean>()).to.be.true;
     });
