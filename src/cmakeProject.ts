@@ -120,6 +120,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
+    public kitsController: KitsController;
+    public presetsController: PresetsController;
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
      * @param extensionContext The extension context
@@ -1088,12 +1090,12 @@ export class CMakeProject implements api.CMakeToolsAPI {
 
         await useCMakePresetsChangedListener();
 
+        this.kitsController = await KitsController.init(this);
+        this.presetsController = await PresetsController.init(this, this.kitsController);
+
         this.disposables.push(config.onChange('useCMakePresets', useCMakePresetsChangedListener));
         this.disposables.push(this.onPresetsChanged(useCMakePresetsChangedListener));
         this.disposables.push(this.onUserPresetsChanged(useCMakePresetsChangedListener));
-
-        this.kitsController = await KitsController.init(this);
-        this.presetsController = await PresetsController.init(this, this.kitsController);
     }
 
     /**
@@ -1907,8 +1909,6 @@ export class CMakeProject implements api.CMakeToolsAPI {
     }
 
     private readonly cTestController = new CTestDriver(this.workspaceContext);
-    public kitsController!: KitsController;
-    public presetsController!: PresetsController;
 
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
