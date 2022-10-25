@@ -14,8 +14,6 @@ import { DirectoryContext } from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as proc from '@cmt/proc';
-import * as api from './api';
-import { ExecutionOptions, ExecutionResult } from './api';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
 import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
 import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
@@ -23,14 +21,14 @@ import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
-import { CMakeDriver, CMakePreconditionProblems } from '@cmt/drivers/cmakeDriver';
+import { CMakeDriver, CMakePreconditionProblems, ExecutableTarget } from '@cmt/drivers/cmakeDriver';
 import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
 import { fs } from './pr';
-import { buildCmdStr, DebuggerEnvironmentVariable } from './proc';
-import { Property } from './prop';
+import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
+import { FireLate, Property } from './prop';
 import rollbar from './rollbar';
 import * as telemetry from './telemetry';
 import { setContextValue } from './util';
@@ -98,7 +96,7 @@ export enum ConfigureTrigger {
  * The second phases of fields will be called by the second phase of the parent
  * class. See the `init` private method for this initialization.
  */
-export class CMakeProject implements api.CMakeToolsAPI {
+export class CMakeProject {
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
      * @param extensionContext The extension context
@@ -108,6 +106,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
     private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
+        this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
     }
 
     /**
@@ -477,6 +476,11 @@ export class CMakeProject implements api.CMakeToolsAPI {
     }
     private readonly _codeModelContent = new Property<CodeModelContent | null>(null);
     private codeModelDriverSub: vscode.Disposable | null = null;
+
+    get onCodeModelChangedApiEvent() {
+        return this._codeModelChangedApiEventEmitter.event;
+    }
+    private readonly _codeModelChangedApiEventEmitter = new vscode.EventEmitter<void>();
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
         log.info(localize('communication.changed.restart.driver', "Restarting the CMake driver after a communication mode change."));
@@ -1931,7 +1935,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         return chosen.detail;
     }
 
-    async getCurrentLaunchTarget(): Promise<api.ExecutableTarget | null> {
+    async getCurrentLaunchTarget(): Promise<ExecutableTarget | null> {
         const targetName = this.workspaceContext.state.launchTargetName;
         const target = (await this.executableTargets).find(e => e.name === targetName);
 
@@ -2056,8 +2060,8 @@ export class CMakeProject implements api.CMakeToolsAPI {
         }
     }
 
-    async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget | null> {
-        let chosen: api.ExecutableTarget;
+    async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
+        let chosen: ExecutableTarget;
 
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
         // executable targets and may show an uneccessary prompt to the user
@@ -2096,7 +2100,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         return chosen;
     }
 
-    async getOrSelectLaunchTarget(): Promise<api.ExecutableTarget | null> {
+    async getOrSelectLaunchTarget(): Promise<ExecutableTarget | null> {
         const current = await this.getCurrentLaunchTarget();
         if (current) {
             return current;
@@ -2217,7 +2221,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
         }
     });
 
-    private async createTerminal(executable: api.ExecutableTarget): Promise<vscode.Terminal> {
+    private async createTerminal(executable: ExecutableTarget): Promise<vscode.Terminal> {
         const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
         if (launchBehavior !== "newterminal") {
             for (const [, terminal] of this.launchTerminals) {

@@ -11,9 +11,7 @@ import { createLogger } from './logging';
 import rollbar from './rollbar';
 import * as util from './util';
 import * as nls from 'vscode-nls';
-import { ExecutionResult } from './api';
 import { Environment, EnvironmentUtils } from './environmentVariables';
-export { ExecutionResult } from './api';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -74,6 +72,26 @@ export interface BuildCommand {
 }
 
 export interface DebuggerEnvironmentVariable { name: string; value: string }
+
+/**
+ * The result of executing a program.
+ */
+export interface ExecutionResult {
+    /**
+     * The return code of the program.
+     */
+    retc: number | null;
+    /**
+     * The full standard output of the program. May be `` if standard out
+     * was not captured.
+     */
+    stdout: string;
+    /**
+     * Standard error output of the program. May be `` if standard error was
+     * not captured
+     */
+    stderr: string;
+}
 
 export interface ExecutionOptions {
     environment?: Environment;

@@ -6,8 +6,7 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
-import * as api from '../../src/api';
-import { CMakeCache } from '../../src/cache';
+import { CMakeCache, CacheEntryType, CacheEntry } from '../../src/cache';
 import * as util from '../../src/util';
 
 const here = __dirname;
@@ -18,14 +17,14 @@ function getTestResourceFilePath(filename: string): string {
 suite('Cache test', () => {
     test('Read CMake Cache', async () => {
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
-        const generator = cache.get('CMAKE_GENERATOR') as api.CacheEntry;
-        expect(generator.type).to.eq(api.CacheEntryType.Internal);
+        const generator = cache.get('CMAKE_GENERATOR') as CacheEntry;
+        expect(generator.type).to.eq(CacheEntryType.Internal);
         expect(generator.key).to.eq('CMAKE_GENERATOR');
         expect(generator.as<string>()).to.eq('Ninja');
         expect(typeof generator.value).to.eq('string');
 
-        const build_testing = cache.get('BUILD_TESTING') as api.CacheEntry;
-        expect(build_testing.type).to.eq(api.CacheEntryType.Bool);
+        const build_testing = cache.get('BUILD_TESTING') as CacheEntry;
+        expect(build_testing.type).to.eq(CacheEntryType.Bool);
         expect(build_testing.as<boolean>()).to.be.true;
     });
     test('Read cache with various newlines', async () => {
@@ -36,7 +35,7 @@ suite('Cache test', () => {
             expect(entries.has('SOMETHING')).to.be.true;
             const entry = entries.get('SOMETHING')!;
             expect(entry.value).to.eq('foo');
-            expect(entry.type).to.eq(api.CacheEntryType.String);
+            expect(entry.type).to.eq(CacheEntryType.String);
             expect(entry.helpString).to.eq('This line is docs');
         }
     });
@@ -47,7 +46,7 @@ suite('Cache test', () => {
         expect(entries.has('FIRSTPART:SECONDPART')).to.be.true;
         const entry = entries.get('FIRSTPART:SECONDPART')!;
         expect(entry.value).to.eq('value');
-        expect(entry.type).to.eq(api.CacheEntryType.String);
+        expect(entry.type).to.eq(CacheEntryType.String);
     });
     test('Read cache entry with double quotes, but no colon', async () => {
         const str = "\"QUOTED\":STRING=value";
@@ -56,7 +55,7 @@ suite('Cache test', () => {
         expect(entries.has('QUOTED')).to.be.true;
         const entry = entries.get('QUOTED')!;
         expect(entry.value).to.eq('value');
-        expect(entry.type).to.eq(api.CacheEntryType.String);
+        expect(entry.type).to.eq(CacheEntryType.String);
     });
     test('Falsey values', () => {
         const false_things = [
