@@ -12,9 +12,7 @@ import rollbar from './rollbar';
 import * as util from './util';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { ExecutionResult } from './api';
 import { Environment, EnvironmentUtils } from './environmentVariables';
-export { ExecutionResult } from './api';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -76,6 +74,26 @@ export interface BuildCommand {
 
 export interface DebuggerEnvironmentVariable { name: string; value: string }
 
+/**
+ * The result of executing a program.
+ */
+export interface ExecutionResult {
+    /**
+     * The return code of the program.
+     */
+    retc: number | null;
+    /**
+     * The full standard output of the program. May be `` if standard out
+     * was not captured.
+     */
+    stdout: string;
+    /**
+     * Standard error output of the program. May be `` if standard error was
+     * not captured
+     */
+    stderr: string;
+}
+
 export interface ExecutionOptions {
     environment?: Environment;
     shell?: boolean;
@@ -83,7 +101,7 @@ export interface ExecutionOptions {
     cwd?: string;
     encoding?: BufferEncoding;
     outputEncoding?: string;
-    useTask?: boolean;
+    useBuildTask?: boolean;
     overrideLocale?: boolean;
     timeout?: number;
 }
@@ -107,13 +125,6 @@ export function buildCmdStr(command: string, args?: string[]): string {
  * which produce a lot of output should be careful about memory constraints.
  */
 export function execute(command: string, args?: string[], outputConsumer?: OutputConsumer | null, options?: ExecutionOptions): Subprocess {
-    const cmdstr = buildCmdStr(command, args);
-    if (options && options.silent !== true) {
-        log.info(// We do simple quoting of arguments with spaces.
-            // This is only shown to the user,
-            // and doesn't have to be 100% correct.
-            localize('executing.command', 'Executing command: {0}', cmdstr));
-    }
     if (!options) {
         options = {};
     }
@@ -126,6 +137,16 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         options.environment,
         options.overrideLocale ? localeOverride : {}]);
 
+    const cmdstr = buildCmdStr(command, args);
+    if (options && options.silent !== true) {
+        log.info(// We do simple quoting of arguments with spaces.
+            // This is only shown to the user,
+            // and doesn't have to be 100% correct.
+            localize('executing.command', 'Executing command: {0}', cmdstr));
+        if (options.environment) {
+            log.debug(localize('execution.environment', '  with environment: {0}', JSON.stringify(final_env)));
+        }
+    }
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
         shell: !!options.shell
@@ -140,15 +161,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     let child: proc.ChildProcess | undefined;
     let result: Promise<ExecutionResult>;
-    const useTask = (options && options.useTask) ? options.useTask : false;
-    if (useTask) {
-        // child = undefined;
-        // const term = vscode.window.createTerminal("Cmake Build");
-        // term.show(true);
-        // term.sendText(cmdstr);
-
+    const useBuildTask = options?.useBuildTask || false;
+    if (useBuildTask) {
         void vscode.commands.executeCommand("workbench.action.tasks.build");
-
         result = new Promise<ExecutionResult>((resolve) => {
             resolve({ retc: 0, stdout: '', stderr: '' });
         });

@@ -1,7 +1,5 @@
-import * as api from '@cmt/api';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
-import { ExecutableTarget } from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import {
@@ -15,7 +13,13 @@ import {
     Index
 } from '@cmt/drivers/cmakeFileApi';
 import * as codeModel from '@cmt/drivers/codeModel';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import {
+    CMakeDriver,
+    CMakePreconditionProblemSolver,
+    ExecutableTarget,
+    RichTarget,
+    Target
+} from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -79,10 +83,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
     private readonly _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
 
     // Information from cmake file api
-    private _cache: Map<string, api.CacheEntry> = new Map<string, api.CacheEntry>();
+    private _cache: Map<string, CacheEntry> = new Map<string, CacheEntry>();
     private _cmakeFiles: string[] | null = null;
     private _generatorInformation: Index.GeneratorInformation | null = null;
-    private _target_map: Map<string, api.Target[]> = new Map();
+    private _target_map: Map<string, Target[]> = new Map();
 
     async getGeneratorFromCache(cache_file_path: string): Promise<string | undefined> {
         const cache = await CMakeCache.fromPath(cache_file_path);
@@ -358,13 +362,13 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return this._codeModelContent;
     }
 
-    get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> {
+    get cmakeCacheEntries(): Map<string, CacheEntry> {
         return this._cache;
     }
     get generatorName(): string | null {
         return this._generatorInformation ? this._generatorInformation.name : null;
     }
-    get targets(): api.Target[] {
+    get targets(): Target[] {
         const targets = this._target_map.get(this.currentBuildType);
         if (targets) {
             const metaTargets = [{
@@ -382,15 +386,15 @@ export class CMakeFileApiDriver extends CMakeDriver {
     /**
      * List of unique targets known to CMake
      */
-    get uniqueTargets(): api.Target[] {
+    get uniqueTargets(): Target[] {
         return this.targets.reduce(targetReducer, []);
     }
 
     get executableTargets(): ExecutableTarget[] {
-        return this.uniqueTargets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
+        return this.uniqueTargets.filter(t => t.type === 'rich' && (t as RichTarget).targetType === 'EXECUTABLE')
             .map(t => ({
                 name: t.name,
-                path: (t as api.RichTarget).filepath
+                path: (t as RichTarget).filepath
             }));
     }
 
@@ -410,14 +414,14 @@ export class CMakeFileApiDriver extends CMakeDriver {
  * @param set the accumulator
  * @t the RichTarget currently being examined.
  */
-function targetReducer(set: api.Target[], t: api.Target): api.Target[] {
+function targetReducer(set: Target[], t: Target): Target[] {
     if (!set.find(t2 => compareTargets(t, t2))) {
         set.push(t);
     }
     return set;
 }
 
-function compareTargets(a: api.Target, b: api.Target): boolean {
+function compareTargets(a: Target, b: Target): boolean {
     let same = false;
     if (a.type === b.type) {
         same = a.name === b.name;
