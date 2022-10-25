@@ -152,8 +152,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
      * The name of the folder for this CMakeProject instance
      */
     get folderName(): string {
-        return this.multiProejctSetting ? this.sourceDir.substring(this.sourceDir.indexOf(this.workspaceContext.folder.name)) :
-            this.workspaceContext.folder.name;
+        return this.multiProejctSetting ? path.basename(this.sourceDir) : this.workspaceContext.folder.name;
     }
 
     /**

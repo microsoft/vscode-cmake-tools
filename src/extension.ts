@@ -618,7 +618,6 @@ class ExtensionManager implements vscode.Disposable {
     async selectActiveFolder() {
         if (vscode.workspace.workspaceFolders?.length) {
             const lastActiveFolderPath = this.activeFolderPath();
-            //const selection = await vscode.window.showWorkspaceFolderPick();
             const selection: CMakeProject | undefined = await this.pickCMakeProject();
             if (selection) {
                 // Ingore if user cancelled
@@ -1232,8 +1231,9 @@ class ExtensionManager implements vscode.Disposable {
         }
         const items = projects.map(project => {
             const item: ProjectItem = {
-                label: project.folderName,
-                cmakeProject: project
+                label: project.folderPath,
+                cmakeProject: project,
+                description: project.folderName
             };
             return item;
         });
