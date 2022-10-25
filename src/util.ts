@@ -849,3 +849,11 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
         });
     });
 }
+
+/**
+ * Asserts that the given value has no valid type. Useful for exhaustiveness checks.
+ * @param value The value to be checked.
+ */
+export function assertNever(value: never): never {
+    throw new Error(`Unexpected value: ${value}`);
+}

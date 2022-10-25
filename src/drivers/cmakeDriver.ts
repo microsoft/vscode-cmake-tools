@@ -5,7 +5,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import * as api from '@cmt/api';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger } from "@cmt/cmakeProject";
@@ -33,6 +32,7 @@ import { DiagnosticsConfiguration } from '@cmt/cmakeWorkspaceFolder';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
+import { CacheEntry } from '@cmt/cache';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -56,6 +56,40 @@ export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, conf
 function nullableValueToString(arg: any | null | undefined): string {
     return arg === null ? 'empty' : arg;
 }
+
+/**
+ * Description of an executable CMake target, defined via `add_executable()`.
+ */
+export interface ExecutableTarget {
+    /**
+     * The name of the target.
+     */
+    name: string;
+    /**
+     * The absolute path to the build output.
+     */
+    path: string;
+}
+
+/**
+ * A target with a name, but no output. This may be created via `add_custom_command()`.
+ */
+export interface NamedTarget {
+    type: 'named';
+    name: string;
+}
+
+/**
+ * A target with a name, path, and type.
+ */
+export interface RichTarget {
+    type: 'rich';
+    name: string;
+    filepath: string;
+    targetType: string;
+}
+
+export type Target = NamedTarget | RichTarget;
 
 /**
  * Base class for CMake drivers.
@@ -112,19 +146,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * List of targets known to CMake
      */
-    abstract get targets(): api.Target[];
+    abstract get targets(): Target[];
 
     abstract get codeModelContent(): codeModel.CodeModelContent | null;
 
     /**
      * List of executable targets known to CMake
      */
-    abstract get executableTargets(): api.ExecutableTarget[];
+    abstract get executableTargets(): ExecutableTarget[];
 
     /**
      * List of unique targets known to CMake
      */
-    abstract get uniqueTargets(): api.Target[];
+    abstract get uniqueTargets(): Target[];
 
     /**
      * List of all files (CMakeLists.txt and included .cmake files) used by CMake
@@ -1747,7 +1781,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * Will be automatically reloaded when the file on disk changes.
      */
-    abstract get cmakeCacheEntries(): Map<string, api.CacheEntryProperties>;
+    abstract get cmakeCacheEntries(): Map<string, CacheEntry>;
 
     private async _baseInit(useCMakePresets: boolean,
         kit: Kit | null,
