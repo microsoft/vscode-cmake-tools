@@ -190,7 +190,7 @@ class WorkspaceButton extends Button {
         super(config, priority);
         this.command = 'cmake.selectActiveFolder';
         this.icon = 'folder-active';
-        this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active folder');
+        this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active project');
     }
 
     // private _autoSelect: boolean = false;

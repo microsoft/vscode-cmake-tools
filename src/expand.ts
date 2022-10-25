@@ -44,6 +44,7 @@ export interface KitContextVars extends RequiredExpansionContextVars {
     buildKitTargetArch: string;
     buildKitVersionMajor: string;
     buildKitVersionMinor: string;
+    sourceDir: string;
 }
 
 export interface PresetContextVars extends RequiredExpansionContextVars {
@@ -205,6 +206,17 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
             if (f) {
                 subs.set(full, f.uri.fsPath);
             }
+            mat = folderRegex.exec(input);
+        }
+    }
+
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        const folderRegex = RegExp(`\\$\\{sourceDir:(${varValueRegexp})\\}`, "g");
+        mat = folderRegex.exec(input);
+        while (mat) {
+            const full = mat[0];
+            const folderName = mat[1];
+            subs.set(full, folderName);
             mat = folderRegex.exec(input);
         }
     }

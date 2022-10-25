@@ -488,7 +488,8 @@ class ExtensionManager implements vscode.Disposable {
             workspaceFolderBasename: cmakeProject.workspaceContext.folder.name,
             workspaceHash: '${workspaceHash}',
             workspaceRoot: cmakeProject.workspaceContext.folder.uri.fsPath,
-            workspaceRootFolderName: cmakeProject.workspaceContext.folder.name
+            workspaceRootFolderName: cmakeProject.workspaceContext.folder.name,
+            sourceDir: cmakeProject.sourceDir
         };
 
         const sourceDirectory: string = cmakeProject.sourceDir;
@@ -924,7 +925,8 @@ class ExtensionManager implements vscode.Disposable {
             buildKitTargetArch: "",
             buildKitVersionMajor: "",
             buildKitVersionMinor: "",
-            projectName: ""
+            projectName: "",
+            sourceDir: ""
         };
         const result = new Set<string>();
         for (const dir of this.workspaceConfig.mingwSearchDirs) {
