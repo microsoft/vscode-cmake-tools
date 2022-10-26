@@ -567,7 +567,7 @@ class ExtensionManager implements vscode.Disposable {
                 if (shouldConfigure === true) {
                     // We've opened a new workspace folder, and the user wants us to
                     // configure it now.
-                    log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', folder.uri.toString()));
+                    log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', cmakeProject.folderPath));
                     await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmakeProject);
                 } else {
                     const configureButtonMessage = localize('configure.now.button', 'Configure Now');
@@ -666,7 +666,7 @@ class ExtensionManager implements vscode.Disposable {
         if (!useCMakePresets) {
             this.statusBar.setActiveKitName(activeProject?.activeKit?.name || '');
         }
-        this.projectOutlineProvider.setActiveFolder(ws);
+        this.projectOutlineProvider.setActiveFolder(ws ? ws : activeProject?.rootFolder);
         this.setupSubscriptions();
     }
 

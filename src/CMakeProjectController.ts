@@ -73,6 +73,7 @@ export class CMakeProjectController implements vscode.Disposable {
 
     private activeCMakeProject: CMakeProject | undefined;
     setActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, folderName?: string): string | undefined {
+        // Setting the active CMake project from the status bar
         if (folderName) {
             const cmakeProjects: CMakeProject[] | undefined = this.getAllCMakeProjects();
             for (const project of cmakeProjects) {
@@ -92,9 +93,9 @@ export class CMakeProjectController implements vscode.Disposable {
                     }
                 }
             }
-            if (!this.activeCMakeProject) {
+            /*if (!this.activeCMakeProject) {
                 this.activeCMakeProject = cmakeProjects[0];
-            }
+            }*/
             return this.activeCMakeProject?.folderName;
         } else {
             this.activeCMakeProject = undefined;
