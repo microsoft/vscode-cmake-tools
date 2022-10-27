@@ -92,6 +92,11 @@ export class CMakeProjectController implements vscode.Disposable {
                         break;
                     }
                 }
+                if (!this.activeCMakeProject) {
+                    if (util.isFileInsideFolder(openEditor, cmakeProjects[0].rootFolder.uri.fsPath)) {
+                        this.activeCMakeProject = cmakeProjects[0];
+                    }
+                }
             }
             /*if (!this.activeCMakeProject) {
                 this.activeCMakeProject = cmakeProjects[0];
@@ -103,9 +108,9 @@ export class CMakeProjectController implements vscode.Disposable {
         }
     }
 
-    public getActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, setActive?: boolean): CMakeProject | undefined {
-        if (!this.activeCMakeProject && setActive) {
-            this.setActiveCMakeProject(workspaceFolder, openEditor);
+    public getActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, folderName?: string, setActive?: boolean): CMakeProject | undefined {
+        if (setActive) {
+            this.setActiveCMakeProject(workspaceFolder, openEditor, folderName);
         }
         return this.activeCMakeProject;
     }

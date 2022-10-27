@@ -1428,7 +1428,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
             async progress => {
                 progress.report({ message: localize('preparing.to.configure', 'Preparing to configure') });
                 if (type !== ConfigureType.ShowCommandOnly) {
-                    log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extraArgs);
+                    log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
 
                 try {
