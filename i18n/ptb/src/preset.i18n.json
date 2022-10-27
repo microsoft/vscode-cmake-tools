@@ -15,7 +15,6 @@
 	"default.test.preset.description": "Uma predefinição de teste vazia que não adiciona argumentos",
 	"circular.inherits.in.config.preset": "Circular herda na predefinição de configuração {0}",
 	"binaryDir.undefined": "Configurar predefinição {0}: Nenhum BinaryDir especificado, usando o valor padrão {1}",
-	"generator.undefined": "Configurar predefinição {0}: Nenhum gerador especificado, usando o valor padrão {1}",
 	"property.unsupported.v2": "Configurar a predefinição {0}: A propriedade {1} não é suportada nas predefinições v2",
 	"no.cl.arch": "Predefinição de configuração {0}: nenhuma arquitetura especificada para o cl.exe. Usando x86 por padrão",
 	"no.cl.toolset.arch": "Configurar predefinição {0}: Nenhuma arquitetura de conjunto de ferramentas especificada para cl.exe, usando {1} por padrão",
