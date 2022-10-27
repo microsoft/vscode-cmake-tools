@@ -82,9 +82,9 @@ export class CMakeProjectController implements vscode.Disposable {
             for (const project of cmakeProjects) {
                 if (project.folderName === folderName) {
                     this.activeCMakeProject = project;
-                    return this.activeCMakeProject;
                 }
             }
+            return this.activeCMakeProject;
         }
         const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(workspaceFolder);
         if (cmakeProjects && cmakeProjects.length > 0) {

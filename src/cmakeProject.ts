@@ -820,7 +820,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
             }
             switch (communicationMode) {
                 case fileApi:
-                    drv = await CMakeFileApiDriver.create(cmake, this.workspaceContext.config,
+                    drv = await CMakeFileApiDriver.create(cmake,
+                        this.workspaceContext.config,
+                        this.sourceDir,
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
@@ -833,6 +835,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                 case serverApi:
                     drv = await CMakeServerDriver.create(cmake,
                         this.workspaceContext.config,
+                        this.sourceDir,
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
@@ -845,6 +848,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
                 default:
                     drv = await CMakeLegacyDriver.create(cmake,
                         this.workspaceContext.config,
+                        this.sourceDir,
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
