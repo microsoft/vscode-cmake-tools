@@ -15,7 +15,6 @@
 	"default.test.preset.description": "Eine leere Testvoreinstellung, die keine Argumente hinzufügt",
 	"circular.inherits.in.config.preset": "Kreisförmige Erbvorgänge in Konfigurationsvoreinstellung {0}",
 	"binaryDir.undefined": "Konfigurationsvoreinstellung {0}: Kein binaryDir angegeben, Standardwert wird verwendet:{1}",
-	"generator.undefined": "Konfigurationsvoreinstellung {0}: Kein Generator angegeben, Standardwert wird verwendet: {1}",
 	"property.unsupported.v2": "Konfigurationsvoreinstellung {0}: Eigenschaft {1} nicht unterstützt in Voreinstellungen v2",
 	"no.cl.arch": "Konfigurationsvoreinstellung {0}: Für cl.exe wurde keine Architektur angegeben, die standardmäßig x86 verwendet",
 	"no.cl.toolset.arch": "Konfigurationsvoreinstellung {0}: Keine Toolsetarchitektur für cl.exe angegeben, standardmäßig wird {1} verwendet.",

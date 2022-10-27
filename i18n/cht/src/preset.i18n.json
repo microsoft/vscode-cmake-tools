@@ -15,7 +15,6 @@
 	"default.test.preset.description": "未新增任何引數的空白測試預設",
 	"circular.inherits.in.config.preset": "循環在設定預設 {0} 中繼承",
 	"binaryDir.undefined": "設定預設值 {0}: 未指定任何 binaryDir，使用預設值 {1}",
-	"generator.undefined": "設定預設值 {0}: 未指定任何產生器，使用預設值 {1}",
 	"property.unsupported.v2": "設定預設值 {0}: 在預設值 v2 中不支援屬性 {1}",
 	"no.cl.arch": "設定預設{0}: 沒有為 cl.exe 指定架構，預設使用 x86",
 	"no.cl.toolset.arch": "設定預設 {0}: 沒有為 cl.exe 指定的工具組架構，預設使用 {1}",

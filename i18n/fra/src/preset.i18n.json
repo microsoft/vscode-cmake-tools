@@ -15,7 +15,6 @@
 	"default.test.preset.description": "Présélection de test vide qui n’ajoute aucun argument",
 	"circular.inherits.in.config.preset": "Les héritages circulaires sont hérités dans la configuration prédéfinie {0}",
 	"binaryDir.undefined": "Configurer les prédéfinies {0} : Aucun répertoire binaire spécifié, en utilisant la valeur par défaut {1}",
-	"generator.undefined": "Configurer les prédéfinies {0} : Aucun générateur spécifié, en utilisant la valeur par défaut {1}",
 	"property.unsupported.v2": "Configurer les prédéfinies {0} : la Propriété {1} n’est pas prise en charge dans les présélections v2.",
 	"no.cl.arch": "Présélection de configuration {0} : aucune architecture spécifiée pour cl.exe, utilisation de x86 par défaut",
 	"no.cl.toolset.arch": "Présélection de configuration {0} : aucune architecture d’ensemble d’outils spécifiée pour cl.exe, utilisation de {1} par défaut",
