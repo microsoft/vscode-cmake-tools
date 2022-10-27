@@ -11,6 +11,8 @@ export interface CMakeExecutable {
     minimalFileApiModeVersion: util.Version;
 }
 
+const cmakeInfo = new Map<string, CMakeExecutable>();
+
 export async function getCMakeExecutableInformation(path: string): Promise<CMakeExecutable> {
     const cmake: CMakeExecutable = {
         path,
@@ -22,6 +24,11 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     // The check for 'path' seems unnecessary, but crash logs tell us otherwise. It is not clear
     // what causes 'path' to be undefined here.
     if (path && path.length !== 0) {
+        const normalizedPath = util.platformNormalizePath(path);
+        if (cmakeInfo.has(normalizedPath)) {
+            return cmakeInfo.get(normalizedPath)!;
+        }
+
         try {
             const execVersion = await proc.execute(path, ['--version']).result;
             if (execVersion.retc === 0 && execVersion.stdout) {
@@ -39,6 +46,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
             }
         } catch {
         }
+        cmakeInfo.set(normalizedPath, cmake);
     }
     return cmake;
 }
