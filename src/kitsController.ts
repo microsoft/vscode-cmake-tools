@@ -538,37 +538,9 @@ export class KitsController {
             {} as { [kit: string]: Kit }
         );
 
-        const path = process.env["PATH"]?.split(process.platform === 'win32' ? ';' : ':');
-        const isBetterMatch = (newCompilers?: {[lang: string]: string}, existingCompilers?: {[lang: string]: string}) => {
-            // Try to keep the best match (e.g. compilers for C and CXX exist)
-            if (!existingCompilers) {
-                return true;
-            }
-            if (newCompilers) {
-                const newLangs = Object.keys(newCompilers);
-                const existingLangs = Object.keys(existingCompilers);
-                if (newLangs.length > existingLangs.length) {
-                    return true;
-                }
-                if (path && newLangs.length === existingLangs.length) {
-                    // Prioritize compiler paths listed higher in the PATH environment variable.
-                    for (const p of path) {
-                        const newScore = newLangs.reduce((acc, lang) => newCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
-                        const existingScore = existingLangs.reduce((acc, lang) => existingCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
-                        if (newScore > existingScore) {
-                            return true;
-                        } else if (existingScore > newScore) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return false;
-        };
-
         // Update the new kits we know about.
         const new_kits_by_name = discovered_kits.reduce(
-            (acc, kit) => isBetterMatch(kit.compilers, acc[kit.name]?.compilers) ? { ...acc, [kit.name]: kit } : acc,
+            (acc, kit) => KitsController.isBetterMatch(kit, acc[kit.name]) ? { ...acc, [kit.name]: kit } : acc,
             old_kits_by_name
         );
 
@@ -580,4 +552,49 @@ export class KitsController {
 
         return duplicateRemoved;
     }
+
+    static isBetterMatch(newKit: Kit, existingKit?: Kit): boolean {
+        if (KitsController.isBetterClangCLDefinition(newKit, existingKit)) {
+            return true;
+        }
+        return KitsController.isBetterCompilerMatch(newKit.compilers, existingKit?.compilers);
+    }
+
+    static isBetterClangCLDefinition(newKit: Kit, existingKit?: Kit): boolean {
+        if (newKit.name.indexOf('MSVC CLI') >= 0) {
+            return (existingKit?.visualStudioArchitecture === 'amd64') ||
+                (existingKit?.preferredGenerator?.platform === 'amd64') ||
+                (existingKit?.preferredGenerator?.toolset !== undefined && existingKit.preferredGenerator.toolset.indexOf('amd64') >= 0);
+        }
+        return false;
+    }
+
+    static isBetterCompilerMatch(newCompilers?: {[lang: string]: string}, existingCompilers?: {[lang: string]: string}): boolean {
+        // Try to keep the best match (e.g. compilers for C and CXX exist)
+        if (!existingCompilers) {
+            return true;
+        }
+        if (newCompilers) {
+            const newLangs = Object.keys(newCompilers);
+            const existingLangs = Object.keys(existingCompilers);
+            if (newLangs.length > existingLangs.length) {
+                return true;
+            }
+            const path = process.env["PATH"]?.split(process.platform === 'win32' ? ';' : ':');
+            if (path && newLangs.length === existingLangs.length) {
+                // Prioritize compiler paths listed higher in the PATH environment variable.
+                for (const p of path) {
+                    const newScore = newLangs.reduce((acc, lang) => newCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                    const existingScore = existingLangs.reduce((acc, lang) => existingCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                    if (newScore > existingScore) {
+                        return true;
+                    } else if (existingScore > newScore) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
 }
