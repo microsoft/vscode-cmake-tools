@@ -835,19 +835,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private configRunning: boolean = false;
 
     private _buildRunning: boolean = false;
-    get buildRunning() : boolean {
+    get buildRunning(): boolean {
         return this._buildRunning;
     }
 
-    set buildRunning(running : boolean) {
+    set buildRunning(running: boolean) {
         if (!running) {
             this._requestedTargets = undefined;
         }
     }
-    getRequestedTargets(): string[]
-    {
-        if(this._requestedTargets) {
-            return this._requestedTargets
+    getRequestedTargets(): string[] {
+        if (this._requestedTargets) {
+            return this._requestedTargets;
         }
         return [];
     }
@@ -1714,16 +1713,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _showTaskQuickPick(tasks: vscode.Task[]) : Promise<vscode.Task | undefined> {
+    private async _showTaskQuickPick(tasks: vscode.Task[]): Promise<vscode.Task | undefined> {
         interface TaskItem extends vscode.QuickPickItem {
-            task: vscode.Task
+            task: vscode.Task;
         }
-        const choices = tasks.map((t): TaskItem => {
-                        return {
-                            label: t.name,
-                            task: t
-                        }
-        });
+        const choices = tasks.map((t): TaskItem => ({ label: t.name, task: t }));
         const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.build.task', 'Select build task') });
         return sel ? sel.task : undefined;
     }
@@ -1731,25 +1725,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private async _findBuildTask(targets?: string[]): Promise<vscode.Task | undefined> {
 
         // Fetch all CMake task
-        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => ((task.group?.id === vscode.TaskGroup.Build.id)))
+        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => ((task.group?.id === vscode.TaskGroup.Build.id)));
 
         // There is only one found - stop searching
-        if (tasks.length == 1) {
+        if (tasks.length === 1) {
             return tasks[0];
         }
 
         // Get only tasks which target matches to one which is requested
-        const targetTasks = tasks.filter( task => 
-            (task.definition as CMakeTaskDefinition).targets == targets );
+        const targetTasks = tasks.filter(task =>
+            (task.definition as CMakeTaskDefinition).targets === targets);
 
         if (targetTasks.length > 0) {
             // Only one found - just return it
-            if (targetTasks.length == 1) {
+            if (targetTasks.length === 1) {
                 return targetTasks[0];
             } else {
                 // More than one - check if there is one marked as default
-                const defaultTargetTask = targetTasks.filter( task => task.group?.isDefault)
-                if (defaultTargetTask.length == 1) {
+                const defaultTargetTask = targetTasks.filter(task => task.group?.isDefault);
+                if (defaultTargetTask.length === 1) {
                     return defaultTargetTask[0];
                 }
                 // None or more than one mark as default - show quick picker
@@ -1758,17 +1752,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
 
         // Get only tasks with no targets set (template tasks)
-        const templateTasks = tasks.filter( task => 
-            (task.definition as CMakeTaskDefinition).targets == undefined );
+        const templateTasks = tasks.filter(task =>
+            (task.definition as CMakeTaskDefinition).targets === undefined);
 
         if (templateTasks.length > 0) {
             // Only one found - just return it
-            if (templateTasks.length == 1) {
+            if (templateTasks.length === 1) {
                 return templateTasks[0];
             } else {
                 // More than one - check if there is one marked as default
-                const defaultTemplateTask = templateTasks.filter( task => task.group?.isDefault)
-                if (defaultTemplateTask.length == 1) {
+                const defaultTemplateTask = templateTasks.filter(task => task.group?.isDefault);
+                if (defaultTemplateTask.length === 1) {
                     return defaultTemplateTask[0];
                 }
                 // None or more than one mark as default - show quick picker
@@ -1777,9 +1771,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
 
         // No target dedicated tasks and not template tasks found - show all and let user pick
-        return this._showTaskQuickPick(tasks)
+        return this._showTaskQuickPick(tasks);
     }
-
 
     private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
@@ -1800,13 +1793,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     await vscode.tasks.executeTask(task);
 
                     return { child: undefined, result: new Promise<api.ExecutionResult>(resolve => {
-                        let disposable = vscode.tasks.onDidEndTask(e => {
+                        const disposable = vscode.tasks.onDidEndTask(e => {
                             if (e.execution.task.group?.id === vscode.TaskGroup.Build.id) {
                                 disposable.dispose();
                                 resolve({ retc: 0, stdout: '', stderr: '' });
                             }
                         });
-                    } ) };
+                    }) };
                 }
                 return { child: undefined, result: new Promise<api.ExecutionResult>((resolve) => {
                     resolve({ retc: 0, stdout: '', stderr: '' });
