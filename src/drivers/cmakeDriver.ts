@@ -149,7 +149,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         projectSourceDir: string,
         private readonly __workspaceFolder: string | null,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
-        this._sourceDirectory = projectSourceDir;
+        this.sourceDir = projectSourceDir;
         // We have a cache of file-compilation terminals. Wipe them out when the
         // user closes those terminals.
         vscode.window.onDidCloseTerminal(closed => {
@@ -607,10 +607,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @note This is distinct from the config values, since we do variable
      * substitution.
      */
-    get sourceDir(): string {
+    /*get sourceDir(): string {
         return this._sourceDirectory;
-    }
-    private _sourceDirectory = '';
+    }*/
+    protected sourceDir = '';
 
     protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
         return cb();
@@ -618,7 +618,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
-            this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this._sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
+            this.sourceDir = await util.normalizeAndVerifySourceDir(await expand.expandString(this.sourceDir, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);
