@@ -797,11 +797,12 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         const clangKits: Kit[] = [];
         for (const vs of vsInstalls) {
             const install_name = vsDisplayName(vs);
-            const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
-            const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
-            const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
+            const vsArch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'x64';
+            const archForKitName = vsArch === 'x86' ? 'x86' : 'amd64';
+            const clangArchPath = (vsArch === "x64") ? "x64\\" : "";
+            const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${archForKitName})`;
             const clangExists = async () => {
-                const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
+                const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArchPath}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
                 return exists;
             };
             if (isClangGnuCli) {
@@ -809,7 +810,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                     clangKits.push({
                         name: clangKitName,
                         visualStudio: kitVSName(vs),
-                        visualStudioArchitecture: vs_arch,
+                        visualStudioArchitecture: vsArch,
                         compilers: {
                             C: binPath,
                             CXX: binPath
@@ -824,11 +825,11 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                         clangKits.push({
                             name: clangKitName,
                             visualStudio: kitVSName(vs),
-                            visualStudioArchitecture: vs_arch,
+                            visualStudioArchitecture: vsArch,
                             preferredGenerator: {
                                 name: generatorName,
-                                platform: generatorPlatformFromVSArch[vs_arch] as string || vs_arch,
-                                toolset: `host=${vs_arch}`
+                                platform: generatorPlatformFromVSArch[vsArch] as string || vsArch,
+                                toolset: `ClangCL,host=${vsArch}`
                             },
                             compilers: {
                                 C: binPath,
