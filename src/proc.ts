@@ -158,7 +158,6 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
     }
 
     let child: proc.ChildProcess | undefined;
-    let result: Promise<ExecutionResult>;
 
     // Since we won't be sending anything to this process, close its stdin.
     spawn_opts.stdio = ['ignore', 'pipe', 'pipe'];
@@ -193,7 +192,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         }
     };
 
-    result = new Promise<ExecutionResult>(resolve => {
+    const result = new Promise<ExecutionResult>(resolve => {
         let stdout_acc = '';
         let line_acc = '';
         let stderr_acc = '';
