@@ -13,7 +13,7 @@ import * as nls from 'vscode-nls';
 import * as api from 'vscode-cmake-tools';
 
 import { CMakeCache } from '@cmt/cache';
-import { CMakeProject, ConfigureType, ConfigureTrigger } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureType, ConfigureTrigger, BuildTrigger } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { CMakeWorkspaceFolderController, CMakeWorkspaceFolder, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeWorkspaceFolder';
@@ -1167,17 +1167,17 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.editCacheUI());
     }
 
-    build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean, isBuildCommand?: boolean) {
-        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.build(name ? [name] : undefined, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand), folder, this.ensureActiveBuildPreset, true);
+    build(folder?: vscode.WorkspaceFolder, name?: string, buildTrigger?: BuildTrigger) {
+        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.build(name ? [name] : undefined, buildTrigger ?? BuildTrigger.command), folder, this.ensureActiveBuildPreset, true);
     }
     showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) {
-        return this.build(folder, name, true, false);
+        return this.build(folder, name, BuildTrigger.showCommand);
     }
 
-    buildAll(name?: string | string[]) {
+    buildAll(name?: string | string[], buildTrigger?: BuildTrigger) {
         return this.runCMakeCommandForAll(cmakeProject => {
             const targets = util.isArrayOfString(name) ? name : util.isString(name) ? [name] : undefined;
-            return cmakeProject.build(targets);
+            return cmakeProject.build(targets, buildTrigger);
         },
         this.ensureActiveBuildPreset,
         true);
@@ -1225,7 +1225,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     clean(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("clean");
-        return this.build(folder, 'clean', undefined, false);
+        return this.build(folder, 'clean', BuildTrigger.command);
     }
 
     cleanAll() {
@@ -1372,8 +1372,8 @@ export class ExtensionManager implements vscode.Disposable {
         return this.queryCMakeProject(cmakeProject => cmakeProject.tasksBuildCommand(), folder);
     }
 
-    debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> {
-        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.debugTarget(name), folder);
+    debugTarget(folder?: vscode.WorkspaceFolder, name?: string, buildTrigger?: BuildTrigger): Promise<vscode.DebugSession | null> {
+        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.debugTarget(name, buildTrigger ?? BuildTrigger.command), folder);
     }
 
     async debugTargetAll(): Promise<(vscode.DebugSession | null)[]> {
@@ -1386,8 +1386,8 @@ export class ExtensionManager implements vscode.Disposable {
         return debugSessions;
     }
 
-    launchTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.Terminal | null> {
-        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.launchTarget(name), folder);
+    launchTarget(folder?: vscode.WorkspaceFolder, name?: string, buildTrigger?: BuildTrigger): Promise<vscode.Terminal | null> {
+        return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.launchTarget(name, buildTrigger ?? BuildTrigger.command), folder);
     }
 
     async launchTargetAll(): Promise<(vscode.Terminal | null)[]> {
@@ -1777,31 +1777,22 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
-        vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
+        vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll', BuildTrigger.outline)),
         vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
-        vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
-        vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
+        vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll', BuildTrigger.outline)),
+        vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll', BuildTrigger.outline)),
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
-        vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
+        vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll', BuildTrigger.outline)),
         // Commands for outline items:
-        vscode.commands.registerCommand('cmake.outline.buildTarget',
-            (what: TargetNode) => runCommand('build', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
-            (what: TargetNode) => runCommand('build', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.debugTarget',
-            (what: TargetNode) => runCommand('debugTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.launchTarget',
-            (what: TargetNode) => runCommand('launchTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
-            (what: TargetNode) => runCommand('setDefaultTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
-            (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
-            (what: TargetNode) => what.openInCMakeLists()),
-        vscode.commands.registerCommand('cmake.outline.compileFile',
-            (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
-        vscode.commands.registerCommand('cmake.outline.selectWorkspace',
-            (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
+        vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, BuildTrigger.outline)),
+        vscode.commands.registerCommand('cmake.outline.runUtilityTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, BuildTrigger.outline)),
+        vscode.commands.registerCommand('cmake.outline.debugTarget', (what: TargetNode) => runCommand('debugTarget', what.folder, what.name, BuildTrigger.outline)),
+        vscode.commands.registerCommand('cmake.outline.launchTarget', (what: TargetNode) => runCommand('launchTarget', what.folder, what.name, BuildTrigger.outline)),
+        vscode.commands.registerCommand('cmake.outline.setDefaultTarget', (what: TargetNode) => runCommand('setDefaultTarget', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.setLaunchTarget', (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
+        vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath, BuildTrigger.outline)),
+        vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
     ]);
 
     return { getApi: (_version) => ext.api };

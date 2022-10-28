@@ -17,6 +17,7 @@ Bug Fixes:
 - CMake Tools does not send `--target=` to cpptools. [#1896](https://github.com/microsoft/vscode-cmake-tools/issues/1896) [#2800](https://github.com/microsoft/vscode-cmake-tools/issues/2800)
 - Fix the build task to return the error code. [#2799](https://github.com/microsoft/vscode-cmake-tools/issues/2799) [@BIKA-C](https://github.com/BIKA-C)
 - Generate correct ClangCL Kits. [#2790](https://github.com/microsoft/vscode-cmake-tools/issues/2790) [#2810](https://github.com/microsoft/vscode-cmake-tools/issues/2810)
+- Do not use the build task when building from the project outline. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2778)
 
 ## 1.12.27
 Bug Fixes:

@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
-import { ConfigureTrigger } from "@cmt/cmakeProject";
+import { BuildTrigger, ConfigureTrigger } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
@@ -1525,7 +1525,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         });
     }
 
-    async build(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number | null> {
+    async build(targets?: string[], consumer?: proc.OutputConsumer, buildTrigger?: BuildTrigger): Promise<number | null> {
         log.debug(localize('start.build', 'Start build'), targets?.join(', ') || '');
         if (this.configRunning) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
@@ -1543,7 +1543,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return -1;
         }
         const timeStart: number = new Date().getTime();
-        const child = await this._doCMakeBuild(targets, consumer, isBuildCommand);
+        const child = await this._doCMakeBuild(targets, consumer, buildTrigger);
         const timeEnd: number = new Date().getTime();
         const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
             ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
@@ -1730,7 +1730,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
+    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, buildTrigger?: BuildTrigger): Promise<proc.Subprocess | null> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
             let outputEnc = this.config.outputLogEncoding;
@@ -1741,7 +1741,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     outputEnc = 'utf8';
                 }
             }
-            const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
+            const useBuildTask: boolean = this.config.buildTask && buildTrigger !== BuildTrigger.outline;
             const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useBuildTask: useBuildTask };
             const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
             this._currentBuildProcess = child;

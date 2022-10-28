@@ -81,6 +81,13 @@ export enum ConfigureTrigger {
     taskProvider = "taskProvider"
 }
 
+export enum BuildTrigger {
+    api = "api",
+    command = "command",
+    outline = "outline",
+    showCommand = "showCommand"
+}
+
 /**
  * Class implementing the extension. It's all here!
  *
@@ -1529,12 +1536,12 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
-        if (!showCommandOnly) {
+    async runBuild(targets?: string[], buildTrigger?: BuildTrigger, taskConsumer?: proc.OutputConsumer): Promise<number> {
+        if (buildTrigger !== BuildTrigger.showCommand) {
             log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
-        if (showCommandOnly) {
+        if (buildTrigger === BuildTrigger.showCommand) {
             drv = await this.getCMakeDriverInstance();
             if (!drv) {
                 throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
@@ -1580,7 +1587,7 @@ export class CMakeProject {
             if (taskConsumer) {
                 buildLogger.info(localize('starting.build', 'Starting build'));
                 await setContextValue(isBuildingKey, true);
-                rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
+                rc = await drv!.build(newTargets, taskConsumer, buildTrigger);
                 await setContextValue(isBuildingKey, false);
                 if (rc === null) {
                     buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -1609,7 +1616,7 @@ export class CMakeProject {
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextValue(isBuildingKey, true);
-                        const rc = await drv!.build(newTargets, consumer, isBuildCommand);
+                        const rc = await drv!.build(newTargets, consumer, buildTrigger);
                         await setContextValue(isBuildingKey, false);
                         if (rc === null) {
                             buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -1637,8 +1644,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand?: boolean): Promise<number> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand);
+    async build(targets?: string[], buildTrigger?: BuildTrigger): Promise<number> {
+        this.activeBuild = this.runBuild(targets, buildTrigger);
         return this.activeBuild;
     }
 
@@ -1727,7 +1734,7 @@ export class CMakeProject {
         if (target === this.targetsInPresetName) {
             targets = this.buildPreset?.targets;
         }
-        return this.build(util.isString(targets) ? [targets] : targets);
+        return this.build(util.isString(targets) ? [targets] : targets, BuildTrigger.command);
     }
 
     private readonly targetsInPresetName = localize('targests.in.preset', '[Targets In Preset]');
@@ -1770,19 +1777,19 @@ export class CMakeProject {
     /**
      * Implementaiton of `cmake.clean`
      */
-    async clean(): Promise<number> {
-        return this.build(['clean']);
+    async clean(buildTrigger?: BuildTrigger): Promise<number> {
+        return this.build(['clean'], buildTrigger);
     }
 
     /**
      * Implementation of `cmake.cleanRebuild`
      */
-    async cleanRebuild(): Promise<number> {
-        const cleanResult = await this.clean();
+    async cleanRebuild(buildTrigger?: BuildTrigger): Promise<number> {
+        const cleanResult = await this.clean(buildTrigger);
         if (cleanResult !== 0) {
             return cleanResult;
         }
-        return this.build();
+        return this.build(undefined, buildTrigger);
     }
 
     private readonly cTestController = new CTestDriver(this.workspaceContext);
@@ -1792,8 +1799,7 @@ export class CMakeProject {
     }
 
     async ctest(): Promise<number> {
-
-        const buildResult = await this.build();
+        const buildResult = await this.build(undefined, BuildTrigger.command);
         if (buildResult !== 0) {
             this.cTestController.markAllCurrentTestsAsNotRun();
             return buildResult;
@@ -1810,7 +1816,7 @@ export class CMakeProject {
      * Implementation of `cmake.install`
      */
     async install(): Promise<number> {
-        return this.build(['install']);
+        return this.build(['install'], BuildTrigger.command);
     }
 
     /**
@@ -2060,7 +2066,7 @@ export class CMakeProject {
         }
     }
 
-    async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
+    async prepareLaunchTargetExecutable(name?: string, buildTrigger?: BuildTrigger): Promise<ExecutableTarget | null> {
         let chosen: ExecutableTarget;
 
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
@@ -2090,7 +2096,7 @@ export class CMakeProject {
 
         const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
         if (buildOnLaunch || isReconfigurationNeeded) {
-            const buildResult = await this.build([chosen.name]);
+            const buildResult = await this.build([chosen.name], buildTrigger ?? BuildTrigger.command);
             if (buildResult !== 0) {
                 log.debug(localize('build.failed', 'Build failed'));
                 return null;
@@ -2127,7 +2133,7 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.debugTarget`
      */
-    async debugTarget(name?: string): Promise<vscode.DebugSession | null> {
+    async debugTarget(name?: string, buildTrigger?: BuildTrigger): Promise<vscode.DebugSession | null> {
         const drv = await this.getCMakeDriverInstance();
         if (!drv) {
             void vscode.window.showErrorMessage(localize('set.up.and.build.project.before.debugging', 'Set up and build your CMake project before debugging.'));
@@ -2147,7 +2153,7 @@ export class CMakeProject {
             return null;
         }
 
-        const targetExecutable = await this.prepareLaunchTargetExecutable(name);
+        const targetExecutable = await this.prepareLaunchTargetExecutable(name, buildTrigger);
         if (!targetExecutable) {
             log.error(localize('failed.to.prepare.target', 'Failed to prepare executable target with name {0}', `"${name}"`));
             return null;
@@ -2262,8 +2268,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.launchTarget`
      */
-    async launchTarget(name?: string) {
-        const executable = await this.prepareLaunchTargetExecutable(name);
+    async launchTarget(name?: string, buildTrigger?: BuildTrigger) {
+        const executable = await this.prepareLaunchTargetExecutable(name, buildTrigger);
         if (!executable) {
             // The user has nothing selected and cancelled the prompt to select
             // a target.

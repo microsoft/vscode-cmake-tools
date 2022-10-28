@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import * as api from 'vscode-cmake-tools';
-import CMakeProject from '@cmt/cmakeProject';
+import CMakeProject, { BuildTrigger, ConfigureTrigger } from '@cmt/cmakeProject';
 import { ExtensionManager } from '@cmt/extension';
 import { assertNever } from '@cmt/util';
 
@@ -76,7 +76,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     build(targets?: string[]): Promise<void> {
-        return withErrorCheck('build', () => this.project.build(targets));
+        return withErrorCheck('build', () => this.project.build(targets, BuildTrigger.api));
     }
 
     install(): Promise<void> {
@@ -84,11 +84,11 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     clean(): Promise<void> {
-        return withErrorCheck('clean', () => this.project.clean());
+        return withErrorCheck('clean', () => this.project.clean(BuildTrigger.api));
     }
 
     reconfigure(): Promise<void> {
-        return withErrorCheck('reconfigure', () => this.project.cleanConfigure());
+        return withErrorCheck('reconfigure', () => this.project.cleanConfigure(ConfigureTrigger.api));
     }
 
     async getBuildDirectory(): Promise<string | undefined> {
