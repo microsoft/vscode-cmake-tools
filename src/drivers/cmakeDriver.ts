@@ -30,9 +30,10 @@ import * as preset from '@cmt/preset';
 import * as codeModel from '@cmt/drivers/codeModel';
 import { DiagnosticsConfiguration } from '@cmt/cmakeWorkspaceFolder';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
-import { CustomBuildTaskTerminal, CMakeTaskDefinition } from '@cmt/cmakeTaskProvider';
+import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
+import { CMakeBuildTaskRunner } from '@cmt/cmakeBuildTaskRunner';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -868,26 +869,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private configRunning: boolean = false;
 
-    private _buildRunning: boolean = false;
-    get buildRunning(): boolean {
-        return this._buildRunning;
-    }
-
-    set buildRunning(running: boolean) {
-        if (!running) {
-            this._requestedTargets = undefined;
-        }
-    }
-    getRequestedTargets(): string[] {
-        if (this._requestedTargets) {
-            return this._requestedTargets;
-        }
-        return [];
-    }
-    private _requestedTargets:  string[] | undefined = undefined;
+    private buildRunning: boolean = false;
 
     public configOrBuildInProgress(): boolean {
         return this.configRunning || this.buildRunning;
+    }
+
+    public getRequestedTargets(): string[] {
+        if (this._currentBuildTaskRunner) {
+            return this._currentBuildTaskRunner.getRequestedTargets();
+        }
+        return [];
     }
 
     /**
@@ -1656,6 +1648,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     private _currentBuildProcess: proc.Subprocess | null = null;
 
+    /**
+     * The currently running build task. We keep a handle on it so we can stop it
+     * upon user request
+     */
+    private _currentBuildTaskRunner: CMakeBuildTaskRunner | null = null;
+
     private correctAllTargetName(targetnames: string[]) {
         for (let i = 0; i < targetnames.length; i++) {
             if (targetnames[i] === 'all' || targetnames[i] === 'ALL_BUILD') {
@@ -1747,67 +1745,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _showTaskQuickPick(tasks: vscode.Task[]): Promise<vscode.Task | undefined> {
-        interface TaskItem extends vscode.QuickPickItem {
-            task: vscode.Task;
-        }
-        const choices = tasks.map((t): TaskItem => ({ label: t.name, task: t }));
-        const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.build.task', 'Select build task') });
-        return sel ? sel.task : undefined;
-    }
-
-    private async _findBuildTask(targets?: string[]): Promise<vscode.Task | undefined> {
-
-        // Fetch all CMake task
-        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => ((task.group?.id === vscode.TaskGroup.Build.id)));
-
-        // There is only one found - stop searching
-        if (tasks.length === 1) {
-            return tasks[0];
-        }
-
-        // Get only tasks which target matches to one which is requested
-        const targetTasks = tasks.filter(task =>
-            (task.definition as CMakeTaskDefinition).targets === targets);
-
-        if (targetTasks.length > 0) {
-            // Only one found - just return it
-            if (targetTasks.length === 1) {
-                return targetTasks[0];
-            } else {
-                // More than one - check if there is one marked as default
-                const defaultTargetTask = targetTasks.filter(task => task.group?.isDefault);
-                if (defaultTargetTask.length === 1) {
-                    return defaultTargetTask[0];
-                }
-                // None or more than one mark as default - show quick picker
-                return this._showTaskQuickPick(targetTasks);
-            }
-        }
-
-        // Get only tasks with no targets set (template tasks)
-        const templateTasks = tasks.filter(task =>
-            (task.definition as CMakeTaskDefinition).targets === undefined);
-
-        if (templateTasks.length > 0) {
-            // Only one found - just return it
-            if (templateTasks.length === 1) {
-                return templateTasks[0];
-            } else {
-                // More than one - check if there is one marked as default
-                const defaultTemplateTask = templateTasks.filter(task => task.group?.isDefault);
-                if (defaultTemplateTask.length === 1) {
-                    return defaultTemplateTask[0];
-                }
-                // None or more than one mark as default - show quick picker
-                return this._showTaskQuickPick(templateTasks);
-            }
-        }
-
-        // No target dedicated tasks and not template tasks found - show all and let user pick
-        return this._showTaskQuickPick(tasks);
-    }
-
     private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
@@ -1821,24 +1758,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
             if (useBuildTask) {
-                const task = await this._findBuildTask(targets);
-                if (task) {
-                    this._requestedTargets = targets;
-                    await vscode.tasks.executeTask(task);
-
-                    return { child: undefined, result: new Promise<api.ExecutionResult>(resolve => {
-                        const disposable = vscode.tasks.onDidEndTask(e => {
-                            if (e.execution.task.group?.id === vscode.TaskGroup.Build.id) {
-                                disposable.dispose();
-                                resolve({ retc: 0, stdout: '', stderr: '' });
-                            }
-                        });
-                    }) };
-                }
-                return { child: undefined, result: new Promise<api.ExecutionResult>((resolve) => {
-                    resolve({ retc: 0, stdout: '', stderr: '' });
-                }) };
-
+                this._currentBuildTaskRunner = new CMakeBuildTaskRunner(this._buildPreset, targets);
+                const result = await this._currentBuildTaskRunner.execute();
+                await result?.result;
+                this._currentBuildTaskRunner = null;
+                return result;
             } else {
                 const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
                 const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
@@ -1870,6 +1794,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (cur.child) {
                 await util.termProc(cur.child);
             }
+        }
+
+        const taskEx = this._currentBuildTaskRunner;
+        if (taskEx) {
+            taskEx.stop();
         }
 
         await this.onStop();

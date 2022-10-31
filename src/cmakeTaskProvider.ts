@@ -13,6 +13,7 @@ import { CMakeProject, ConfigureTrigger } from './cmakeProject';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
+import * as util from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -212,8 +213,14 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    close(): void {
-        // The terminal has been closed. Shutdown the build.
+    private _process: proc.Subprocess | undefined = undefined;
+    async close(): Promise<void> {
+        if (this._process) {
+            if (this._process.child) {
+                await util.termProc(this._process.child);
+            }
+            this._process = undefined;
+        }
     }
 
     private async correctTargets(cmakeProject: CMakeProject, commandType: CommandType): Promise<string[]> {
@@ -377,7 +384,9 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
         try {
-            const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
+            this._process = proc.execute(cmakePath, args, this, this.options);
+            const result: proc.ExecutionResult = await this._process.result;
+            this._process = undefined;
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             } else if (result.stderr || (result.stdout && result.stdout.includes("warning"))) {
