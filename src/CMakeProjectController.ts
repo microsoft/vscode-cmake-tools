@@ -8,25 +8,19 @@ import * as util from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
+import { ConfigurationReader } from './config';
+import { CMakeDriver } from './drivers/cmakeDriver';
+import { expandString } from './expand';
+import { DirectoryContext } from './workspace';
+import { StateManager } from './state';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-/*// Go through the decision tree here since there would be dependency issues if we do this in config.ts
-get useCMakePresets(): boolean {
-    if (this.config.useCMakePresets === 'auto') {
-        // TODO (P1): check if configured with kits + vars
-        // // Always check if configured before since the state could be reset
-        // const state = this.activeCMakeProject.workspaceContext.state;
-        // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
-        // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
-        return getActiveCMakeProject()?.presetsController.presetsFileExist || false;
-    }
-    return this.config.useCMakePresets === 'always';
-}*/
-export type FolderProjectMap = {folder: vscode.WorkspaceFolder; projects: CMakeProject[]};
+export type FolderProjectMap = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class CMakeProjectController implements vscode.Disposable {
     private readonly cmakeProjectsMap = new Map<string, CMakeProject[]>();
+    private readonly configMap = new Map<string, ConfigurationReader>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectMap>();
@@ -193,7 +187,7 @@ export class CMakeProjectController implements vscode.Disposable {
         for (const folder of event.added) {
             this.beforeAddFolderEmitter.fire(folder);
             const cmakeProjects = await this.addFolder(folder);
-            this.afterAddFolderEmitter.fire({folder: folder, projects: cmakeProjects});
+            this.afterAddFolderEmitter.fire({ folder: folder, projects: cmakeProjects });
         }
     }
 
@@ -201,9 +195,10 @@ export class CMakeProjectController implements vscode.Disposable {
      * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
      */
-    private createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject|CMakeProject[]> {
+    private async createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject | CMakeProject[]> {
         // Create the backend:
-        return CMakeProject.createForDirectory(folder, this.extensionContext);
+        const cmakeProjects: CMakeProject | CMakeProject[] = await CMakeProject.createForDirectory(folder, this.extensionContext);
+        return cmakeProjects;
     }
 
     public useCMakePresetsForFolder(folder: vscode.WorkspaceFolder): boolean {
@@ -226,9 +221,14 @@ export class CMakeProjectController implements vscode.Disposable {
             return existing;
         }
         // Load for the workspace.
-        let newProjects: CMakeProject|CMakeProject[] = await this.createCMakeProjectForWorkspaceFolder(folder);
+        let newProjects: CMakeProject | CMakeProject[] = await this.createCMakeProjectForWorkspaceFolder(folder);
         newProjects = Array.isArray(newProjects) ? newProjects : [newProjects];
         this.cmakeProjectsMap.set(folder.uri.fsPath, newProjects);
+        const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
+        if (config) {
+            this.configMap.set(folder.uri.fsPath, config);
+            config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories));
+        }
         return newProjects;
     }
 
@@ -253,6 +253,50 @@ export class CMakeProjectController implements vscode.Disposable {
             project.dispose();
         }
 
+    }
+
+    private getConfigurationReader(folder: vscode.WorkspaceFolder): ConfigurationReader | undefined {
+        const cmakeProjects = this.getCMakeProjectsForFolder(folder);
+        if (!cmakeProjects || cmakeProjects.length === 0) {
+            return undefined;
+        }
+        return cmakeProjects[0].getConfigurationReader();
+    }
+
+    private async doSourceDirectoryChange(folder: vscode.WorkspaceFolder, value: string | string[]) {
+        let sourceDirectories: string[] = [];
+        if (typeof (value) === 'string') {
+            sourceDirectories = [value];
+        } else if (value instanceof Array) {
+            sourceDirectories = value;
+        }
+        // Normalize the paths.
+        for (let i = 0; i < sourceDirectories.length; i++) {
+            sourceDirectories[i] = await util.normalizeAndVerifySourceDir(
+                await expandString(sourceDirectories[i], CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath)));
+        }
+        const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(folder);
+
+        if (cmakeProjects) {
+            // Remove projects.
+            for (let i = cmakeProjects.length - 1; i >= 0; i--) {
+                if (sourceDirectories.indexOf(cmakeProjects[i].sourceDir) !== -1) {
+                    sourceDirectories.splice(sourceDirectories.indexOf(cmakeProjects[i].sourceDir), 1);
+                } else {
+                    cmakeProjects[i].dispose();
+                    cmakeProjects.splice(i, 1);
+                }
+            }
+
+            // Add projects.
+            const dirContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+            for (let i = 0; i < sourceDirectories.length; i++) {
+                const cmakeProject: CMakeProject = await CMakeProject.create(this.extensionContext, dirContext, sourceDirectories[i]);
+                cmakeProjects.push(cmakeProject);
+            }
+            // Update the map.
+            this.cmakeProjectsMap.set(folder.uri.fsPath, cmakeProjects);
+        }
     }
 
     [Symbol.iterator]() {

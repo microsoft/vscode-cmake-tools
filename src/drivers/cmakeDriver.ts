@@ -607,9 +607,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @note This is distinct from the config values, since we do variable
      * substitution.
      */
-    /*get sourceDir(): string {
-        return this._sourceDirectory;
-    }*/
     protected sourceDir = '';
 
     protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> {

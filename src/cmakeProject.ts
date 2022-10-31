@@ -870,6 +870,9 @@ export class CMakeProject implements api.CMakeToolsAPI {
         return drv;
     }
 
+    public getConfigurationReader(): ConfigurationReader {
+        return this.workspaceContext.config;
+    }
     /**
      * Event fired after CMake configure runs
      */
@@ -925,12 +928,11 @@ export class CMakeProject implements api.CMakeToolsAPI {
     /**
      * Second phase of two-phase init. Called by `create`.
      */
-    private async init(sourceDirectory?: string) {
+    private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
 
-        const sourceDir: string = sourceDirectory ? sourceDirectory : Array.isArray(this.workspaceContext.config.sourceDirectory) ? this.workspaceContext.config.sourceDirectory[0] : this.workspaceContext.config.sourceDirectory;
         this._sourceDir = await util.normalizeAndVerifySourceDir(
-            await expandString(sourceDir, CMakeDriver.sourceDirExpansionOptions(this.folderPath))
+            await expandString(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folderPath))
         );
 
         // Start up the variant manager
@@ -1273,7 +1275,7 @@ export class CMakeProject implements api.CMakeToolsAPI {
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext, sourceDirectory?: string, multiProejctSetting?: boolean): Promise<CMakeProject> {
+    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext, sourceDirectory: string, multiProejctSetting?: boolean): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
         const inst = multiProejctSetting ? new CMakeProject(ctx, wsc, multiProejctSetting) : new CMakeProject(ctx, wsc);
         await inst.init(sourceDirectory);

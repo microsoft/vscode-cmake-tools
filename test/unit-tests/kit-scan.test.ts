@@ -89,7 +89,7 @@ suite('Kits scan test', () => {
         const exe_res = 'output.txt';
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
 
         await clearExistingKitConfigurationFile();
 

@@ -176,6 +176,7 @@ class ExtensionManager implements vscode.Disposable {
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
+
     }
 
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
