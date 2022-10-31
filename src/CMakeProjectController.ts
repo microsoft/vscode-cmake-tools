@@ -20,7 +20,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export type FolderProjectMap = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class CMakeProjectController implements vscode.Disposable {
     private readonly cmakeProjectsMap = new Map<string, CMakeProject[]>();
-    private readonly configMap = new Map<string, ConfigurationReader>();
+    private readonly sourceDirectorySubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectMap>();
@@ -226,8 +226,7 @@ export class CMakeProjectController implements vscode.Disposable {
         this.cmakeProjectsMap.set(folder.uri.fsPath, newProjects);
         const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
         if (config) {
-            this.configMap.set(folder.uri.fsPath, config);
-            config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories));
+            this.sourceDirectorySubs.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
         }
         return newProjects;
     }
@@ -252,7 +251,8 @@ export class CMakeProjectController implements vscode.Disposable {
         for (const project of cmakeProjects) {
             project.dispose();
         }
-
+        this.sourceDirectorySubs.get(folder)?.dispose();
+        this.sourceDirectorySubs.delete(folder);
     }
 
     private getConfigurationReader(folder: vscode.WorkspaceFolder): ConfigurationReader | undefined {
