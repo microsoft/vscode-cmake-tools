@@ -10,6 +10,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
+import * as api from 'vscode-cmake-tools';
 
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
@@ -42,6 +43,7 @@ import paths from '@cmt/paths';
 import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
+import { CMakeToolsApiImpl } from './api';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -80,7 +82,7 @@ interface Diagnostics {
  * necessitate user input, this class acts as intermediary and will send
  * important information down to the lower layers.
  */
-class ExtensionManager implements vscode.Disposable {
+export class ExtensionManager implements vscode.Disposable {
     constructor(public readonly extensionContext: vscode.ExtensionContext) {
         telemetry.activate(extensionContext);
         this.showCMakeLists = new Promise<boolean>(resolve => {
@@ -177,6 +179,7 @@ class ExtensionManager implements vscode.Disposable {
             this.statusBar.setAutoSelectActiveProject(v);
         });
 
+        this.api = new CMakeToolsApiImpl(this);
     }
 
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
@@ -273,7 +276,7 @@ class ExtensionManager implements vscode.Disposable {
     /**
      * The folder controller manages multiple instances. One per folder.
      */
-    private readonly cmakeProjectController = new CMakeProjectController(this.extensionContext);
+    public readonly cmakeProjectController = new CMakeProjectController(this.extensionContext);
 
     /**
      * The map caching for each folder whether it is a CMake project or not.
@@ -680,6 +683,7 @@ class ExtensionManager implements vscode.Disposable {
         }
         this.projectOutlineProvider.setActiveFolder(ws ? ws : activeProject?.rootFolder);
         this.setupSubscriptions();
+        this.onActiveProjectChangedEmitter.fire(ws?.uri);
         return activeProject;
     }
 
@@ -814,10 +818,12 @@ class ExtensionManager implements vscode.Disposable {
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
                 this.statusBar.setBuildTargetName(t);
+                this.onBuildTargetChangedEmitter.fire(t);
             });
             this.buildTypeSub = cmakeProject.onActiveVariantNameChanged(FireNow, bt => this.statusBar.setVariantLabel(bt));
             this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, t => {
                 this.statusBar.setLaunchTargetName(t || '');
+                this.onLaunchTargetChangedEmitter.fire(t || '');
             });
             this.ctestEnabledSub = cmakeProject.onCTestEnabledChanged(FireNow, e => this.statusBar.setCTestEnabled(e));
             this.testResultsSub = cmakeProject.onTestResultsChanged(FireNow, r => this.statusBar.setTestResults(r));
@@ -1641,9 +1647,26 @@ class ExtensionManager implements vscode.Disposable {
 
         return presetSelected;
     }
+
+    public api: CMakeToolsApiImpl;
+
+    get onBuildTargetChanged() {
+        return this.onBuildTargetChangedEmitter.event;
+    }
+    private readonly onBuildTargetChangedEmitter = new vscode.EventEmitter<string>();
+
+    get onLaunchTargetChanged() {
+        return this.onLaunchTargetChangedEmitter.event;
+    }
+    private readonly onLaunchTargetChangedEmitter = new vscode.EventEmitter<string>();
+
+    get onActiveProjectChanged() {
+        return this.onActiveProjectChangedEmitter.event;
+    }
+    private readonly onActiveProjectChangedEmitter = new vscode.EventEmitter<vscode.Uri | undefined>();
 }
 
-async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle) {
+async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
     reportProgress(localize('initial.setup', 'Initial setup'), progress);
 
     // Load a new extension manager
@@ -1803,6 +1826,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.selectWorkspace',
             (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
     ]);
+
+    return { getApi: (_version) => ext.api };
 }
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
@@ -1824,7 +1849,7 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @param context The extension context
  * @returns A promise that will resolve when the extension is ready for use
  */
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext): Promise<api.CMakeToolsExtensionExports> {
     // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
     // because the publisher changed (from vector-of-bool into ms-vscode),
     // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
@@ -1843,10 +1868,6 @@ export async function activate(context: vscode.ExtensionContext) {
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
 
     return setup(context);
-
-    // TODO: Return the extension API
-    // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmakeProject));
-
 }
 
 // Enable all or part of the CMake Tools palette commands

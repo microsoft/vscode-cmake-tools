@@ -856,3 +856,11 @@ export function isFileInsideFolder(openEditor: vscode.TextEditor, folderPath: st
     const relative = path.relative(parent, file);
     return relative.length > 0 && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
+
+/**
+ * Asserts that the given value has no valid type. Useful for exhaustiveness checks.
+ * @param value The value to be checked.
+ */
+export function assertNever(value: never): never {
+    throw new Error(`Unexpected value: ${value}`);
+}

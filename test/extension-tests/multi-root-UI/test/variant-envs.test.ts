@@ -1,5 +1,4 @@
-import * as api from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntryType } from '@cmt/cache';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import { fs } from '@cmt/pr';
 import * as path from 'path';
@@ -51,7 +50,7 @@ suite('Environment Variables in Variants', () => {
         const cacheEntry_ = cache.get('variantEnv');
         expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
         const cacheEntry = cacheEntry_!;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[variantEnv] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
         expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
         expect(cacheEntry.as<string>())

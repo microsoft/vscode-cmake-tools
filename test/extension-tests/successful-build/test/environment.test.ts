@@ -1,5 +1,4 @@
-import * as api from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntryType, CacheEntry } from '@cmt/cache';
 import { CMakeProject } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as path from 'path';
@@ -42,8 +41,8 @@ suite('Environment', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
-        const cacheEntry = cache.get('configureEnvironment') as api.CacheEntry;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[configureEnvironment] unexpected cache entry type');
+        const cacheEntry = cache.get('configureEnvironment') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[configureEnvironment] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('configureEnvironment', '[configureEnvironment] unexpected cache entry key name');
         expect(cacheEntry.as<string>())
             .to.eq(path.basename(testEnv.projectFolder.location), '[configureEnvironment] substitution incorrect');
@@ -64,8 +63,8 @@ suite('Environment', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
-        const cacheEntry = cache.get('buildEnvironment') as api.CacheEntry;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[buildEnvironment] unexpected cache entry type');
+        const cacheEntry = cache.get('buildEnvironment') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[buildEnvironment] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('buildEnvironment', '[buildEnvironment] unexpected cache entry key name');
         expect(cacheEntry.as<string>()).to.be.eq('', '[buildEnvironment] env-var got passed to CMake');
         expect(typeof cacheEntry.value).to.eq('string', '[buildEnvironment] unexpected cache entry value type');
@@ -86,8 +85,8 @@ suite('Environment', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
-        const cacheEntry = cache.get('environment') as api.CacheEntry;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[environment] unexpected cache entry type');
+        const cacheEntry = cache.get('environment') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[environment] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('environment', '[environment] unexpected cache entry key name');
         expect(cacheEntry.as<string>())
             .to.eq(path.basename(testEnv.projectFolder.location), '[environment] substitution incorrect');
