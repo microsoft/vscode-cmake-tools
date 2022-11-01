@@ -212,7 +212,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             child?.on('exit', (code, signal) => {
                 if (code !== 0) {
                     if (signal) {
-                        log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
+                        log.warning(localize({key: 'process.exit.with.signal', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
                     } else {
                         log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1}', `${cmdstr}`, `${code}`));
                     }
