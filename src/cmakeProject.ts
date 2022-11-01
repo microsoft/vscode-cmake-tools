@@ -528,15 +528,6 @@ export class CMakeProject {
         await this.reloadCMakeDriver();
     });
 
-    private readonly sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () => {
-        const sourceDirectory: string | string[] = this.workspaceContext.config.sourceDirectory;
-        if (!Array.isArray(sourceDirectory) || sourceDirectory.length === 1) {
-            this._sourceDir = await util.normalizeAndVerifySourceDir(
-                await expandString(Array.isArray(sourceDirectory) ? sourceDirectory[0] : sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folderPath))
-            );
-        }
-    });
-
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
      */
@@ -576,7 +567,7 @@ export class CMakeProject {
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
-        for (const sub of [this.generatorSub, this.preferredGeneratorsSub, this.communicationModeSub, this.sourceDirSub]) {
+        for (const sub of [this.generatorSub, this.preferredGeneratorsSub, this.communicationModeSub]) {
             sub.dispose();
         }
         this.kitsController.dispose();
@@ -935,9 +926,7 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
 
-        this._sourceDir = await util.normalizeAndVerifySourceDir(
-            await expandString(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folderPath))
-        );
+        this._sourceDir = await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folderPath));
 
         // Start up the variant manager
         await this.variantManager.initialize();

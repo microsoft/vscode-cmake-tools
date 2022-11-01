@@ -9,7 +9,7 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { expandString, ExpansionOptions } from '@cmt/expand';
+import { ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
@@ -58,7 +58,7 @@ export class PresetsController {
                     presetName: '${presetName}'
                 }
             };
-            return util.normalizeAndVerifySourceDir(await expandString(dir, expansionOpts));
+            return util.normalizeAndVerifySourceDir(dir, expansionOpts);
         };
 
         presetsController._sourceDir = await expandSourceDir(cmakeProject.sourceDir);

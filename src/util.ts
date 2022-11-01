@@ -9,6 +9,7 @@ import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
+import { expandString, ExpansionOptions } from './expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -714,7 +715,8 @@ export function isWorkspaceFolder(x?: any): boolean {
     return 'uri' in x && 'name' in x && 'index' in x;
 }
 
-export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<string> {
+export async function normalizeAndVerifySourceDir(sourceDir: string, expansionOpts: ExpansionOptions): Promise<string> {
+    sourceDir = await expandString(sourceDir, expansionOpts);
     let result = lightNormalizePath(sourceDir);
     if (process.platform === 'win32' && result.length > 1 && result.charCodeAt(0) > 97 && result.charCodeAt(0) <= 122 && result[1] === ':') {
         // Windows drive letter should be uppercase, for consistency with other tools like Visual Studio.

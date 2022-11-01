@@ -10,7 +10,6 @@ import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
 import { ConfigurationReader } from './config';
 import { CMakeDriver } from './drivers/cmakeDriver';
-import { expandString } from './expand';
 import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
 
@@ -78,7 +77,10 @@ export class CMakeProjectController implements vscode.Disposable {
                     this.activeCMakeProject = project;
                 }
             }
-            return this.activeCMakeProject;
+            // If active project is found, return, otherwise proceed to find a default active project.
+            if (this.activeCMakeProject) {
+                return this.activeCMakeProject;
+            }
         }
         const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(workspaceFolder);
         if (cmakeProjects && cmakeProjects.length > 0) {
@@ -86,14 +88,17 @@ export class CMakeProjectController implements vscode.Disposable {
                 for (const project of cmakeProjects) {
                     if (util.isFileInsideFolder(openEditor, project.folderPath)) {
                         this.activeCMakeProject = project;
-                        return this.activeCMakeProject;
+                        break;
                     }
                 }
                 if (!this.activeCMakeProject) {
                     if (util.isFileInsideFolder(openEditor, cmakeProjects[0].rootFolder.uri.fsPath)) {
                         this.activeCMakeProject = cmakeProjects[0];
-                        return this.activeCMakeProject;
                     }
+                }
+                // If active project is found, return, otherwise proceed to find a default active project.
+                if (this.activeCMakeProject) {
+                    return this.activeCMakeProject;
                 }
             } else {
                 this.activeCMakeProject = cmakeProjects[0];
@@ -135,7 +140,7 @@ export class CMakeProjectController implements vscode.Disposable {
     }
 
     /**
-     * Get the CMakeWorkspaceFolder instance associated with the given workspace folder, or undefined
+     * Get the all CMakeWorkspaceFolder instance associated with the given workspace folder, or undefined
      * @param ws The workspace folder to search, or array of command and workspace path
      */
     getCMakeProjectsForFolder(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeProject[] | undefined {
@@ -145,6 +150,17 @@ export class CMakeProjectController implements vscode.Disposable {
             } else if (util.isWorkspaceFolder(ws)) {
                 const folder = ws as vscode.WorkspaceFolder;
                 return this.cmakeProjectsMap.get(folder.uri.fsPath);
+            }
+        }
+        return undefined;
+    }
+
+    async getCMakeProjectForFolder(folder: string): Promise<CMakeProject | undefined> {
+        const sourceDir = await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder));
+        const allCMakeProjects: CMakeProject[] = this.getAllCMakeProjects();
+        for (const project of allCMakeProjects) {
+            if (project.sourceDir === sourceDir || project.rootFolder.uri.fsPath === sourceDir) {
+                return project;
             }
         }
         return undefined;
@@ -272,8 +288,7 @@ export class CMakeProjectController implements vscode.Disposable {
         }
         // Normalize the paths.
         for (let i = 0; i < sourceDirectories.length; i++) {
-            sourceDirectories[i] = await util.normalizeAndVerifySourceDir(
-                await expandString(sourceDirectories[i], CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath)));
+            sourceDirectories[i] = await util.normalizeAndVerifySourceDir(sourceDirectories[i], CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath));
         }
         const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(folder);
 
