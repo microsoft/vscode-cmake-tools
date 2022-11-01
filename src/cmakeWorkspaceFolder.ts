@@ -267,6 +267,7 @@ export class CMakeProjectController implements vscode.Disposable {
         for (const project of cmakeProjects) {
             project.dispose();
         }
+        // eslint-disable-next-line no-unused-expressions
         this.sourceDirectorySubs.get(folder)?.dispose();
         this.sourceDirectorySubs.delete(folder);
     }
