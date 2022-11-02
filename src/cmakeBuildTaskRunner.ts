@@ -17,9 +17,9 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
  */
 export class CMakeBuildTaskRunner {
 
-    _targets?: string[];
-    _buildPreset: preset.BuildPreset | null;
-    _taskExecutor: vscode.TaskExecution | null = null;
+    private _targets?: string[];
+    private _buildPreset: preset.BuildPreset | null;
+    private _taskExecutor: vscode.TaskExecution | null = null;
 
     constructor(buildPreset: preset.BuildPreset | null, targets?: string[]) {
         this._buildPreset = buildPreset;
