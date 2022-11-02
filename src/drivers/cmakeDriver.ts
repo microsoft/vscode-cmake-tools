@@ -874,7 +874,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     public getRequestedTargets(): string[] {
-            return this._currentBuildTaskRunner.getRequestedTargets();
+        return this._currentBuildTaskRunner.getRequestedTargets();
     }
 
     /**
@@ -1750,9 +1750,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 await this._currentBuildTaskRunner.execute(this._buildPreset, targets);
             } else {
                 const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
-                this._currentBuildTaskRunner.setBuildProcess( this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt) )
+                this._currentBuildTaskRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
-            return  this._currentBuildTaskRunner.getResult();
+            return this._currentBuildTaskRunner.getResult();
 
         } else {
             return null;
