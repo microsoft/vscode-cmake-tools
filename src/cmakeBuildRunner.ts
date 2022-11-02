@@ -79,7 +79,7 @@ export class CMakeBuildRunner {
         }
     }
 
-    public async getResult() : Promise<proc.Subprocess | null> {
+    public async getResult(): Promise<proc.Subprocess | null> {
         await this._currentBuildProcess?.result;
         const buildProcess = this._currentBuildProcess;
         this._currentBuildProcess = null;
@@ -94,7 +94,7 @@ export class CMakeBuildRunner {
         return [];
     }
 
-    public setBuildProcess(buildProcess: proc.Subprocess | null = null) : void {
+    public setBuildProcess(buildProcess: proc.Subprocess | null = null): void {
         this._currentBuildProcess = buildProcess;
     }
 
