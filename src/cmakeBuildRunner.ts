@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as proc from '@cmt/proc';
+import * as util from '@cmt/util';
 import * as preset from '@cmt/preset';
 import { CMakeTaskDefinition } from '@cmt/cmakeTaskProvider';
 
@@ -12,27 +13,44 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 /**
- * Class implementing Build Task Runner
+ * Class implementing Build Runner
  *
  */
-export class CMakeBuildTaskRunner {
+export class CMakeBuildRunner {
 
     private _targets?: string[];
-    private _buildPreset: preset.BuildPreset | null;
+    private _buildPreset: preset.BuildPreset | null = null;
     private _taskExecutor: vscode.TaskExecution | null = null;
+    private _currentBuildProcess: proc.Subprocess | null = null;
+    private _buildRunning: boolean = false;
 
-    constructor(buildPreset: preset.BuildPreset | null, targets?: string[]) {
-        this._buildPreset = buildPreset;
-        this._targets = targets;
+    constructor() {
+        this._buildRunning = false;
     }
 
-    public async execute(): Promise<proc.Subprocess | null> {
+    public isBuildRunning(): boolean {
+        return this._buildRunning;
+    }
+
+    public setBuildRunning(running: boolean): void {
+        if (running) {
+            this._buildRunning = true;
+        } else {
+            this._buildRunning = false;
+            this._targets = undefined;
+            this._buildPreset = null;
+        }
+    }
+
+    public async execute(buildPreset: preset.BuildPreset | null, targets?: string[]): Promise<void> {
         const task = await this._findBuildTask(this._buildPreset, this._targets);
 
         if (task) {
+            this._buildPreset = buildPreset;
+            this._targets = targets;
             this._taskExecutor = await vscode.tasks.executeTask(task);
 
-            return { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
+            this._currentBuildProcess =  { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
                 const disposable = vscode.tasks.onDidEndTask(e => {
                     if (e.execution.task.group?.id === vscode.TaskGroup.Build.id) {
                         disposable.dispose();
@@ -41,19 +59,32 @@ export class CMakeBuildTaskRunner {
                     }
                 });
             }) };
+            return;
         }
-        return { child: undefined, result: new Promise<proc.ExecutionResult>((resolve) => {
+        this._currentBuildProcess = { child: undefined, result: new Promise<proc.ExecutionResult>((resolve) => {
             resolve({ retc: 0, stdout: '', stderr: '' });
         }) };
     }
 
-    public stop(): void {
+    public async stop(): Promise<void> {
+        const cur = this._currentBuildProcess;
+        if (cur) {
+            if (cur.child) {
+                await util.termProc(cur.child);
+            }
+        }
         if (this._taskExecutor) {
             this._taskExecutor.terminate();
-            // TODO(PMi): clear this._taskExecutor?
+            this._taskExecutor = null;
         }
     }
 
+    public async getResult() : Promise<proc.Subprocess | null> {
+        await this._currentBuildProcess?.result;
+        const buildProcess = this._currentBuildProcess;
+        this._currentBuildProcess = null;
+        return buildProcess;
+    }
     public getRequestedTargets(): string[] {
         if (this._taskExecutor) {
             if (this._targets) {
@@ -61,6 +92,10 @@ export class CMakeBuildTaskRunner {
             }
         }
         return [];
+    }
+
+    public setBuildProcess(buildProcess: proc.Subprocess | null = null) : void {
+        this._currentBuildProcess = buildProcess;
     }
 
     private async _findBuildTask(buildPreset: preset.BuildPreset | null, targets?: string[]): Promise<vscode.Task | undefined> {

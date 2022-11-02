@@ -33,7 +33,7 @@ import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
-import { CMakeBuildTaskRunner } from '@cmt/cmakeBuildTaskRunner';
+import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -869,17 +869,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private configRunning: boolean = false;
 
-    private buildRunning: boolean = false;
-
     public configOrBuildInProgress(): boolean {
-        return this.configRunning || this.buildRunning;
+        return this.configRunning || this._currentBuildTaskRunner.isBuildRunning();
     }
 
     public getRequestedTargets(): string[] {
-        if (this._currentBuildTaskRunner) {
             return this._currentBuildTaskRunner.getRequestedTargets();
-        }
-        return [];
     }
 
     /**
@@ -891,7 +886,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.buildRunning) {
+        if (this._currentBuildTaskRunner.isBuildRunning()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
@@ -1277,7 +1272,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.buildRunning) {
+        if (this._currentBuildTaskRunner.isBuildRunning()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
@@ -1539,15 +1534,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.buildRunning) {
+        if (this._currentBuildTaskRunner.isBuildRunning()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
-        this.buildRunning = true;
+        this._currentBuildTaskRunner.setBuildRunning(true);
 
         const pre_build_ok = await this.doPreBuild();
         if (!pre_build_ok) {
-            this.buildRunning = false;
+            this._currentBuildTaskRunner.setBuildRunning(false);
             return -1;
         }
         const timeStart: number = new Date().getTime();
@@ -1588,13 +1583,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
             // Not sure what happened but there's an error...
             telemetryMeasures['ErrorCount'] = 1;
             telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
-            this.buildRunning = false;
+            this._currentBuildTaskRunner.setBuildRunning(false);
             return -1;
         }
         if (!this.m_stop_process) {
             const post_build_ok = await this.doPostBuild();
             if (!post_build_ok) {
-                this.buildRunning = false;
+                this._currentBuildTaskRunner.setBuildRunning(false);
                 return -1;
             }
         }
@@ -1603,7 +1598,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
 
         return (await child.result.finally(() => {
-            this.buildRunning = false;
+            this._currentBuildTaskRunner.setBuildRunning(false);
         })).retc;
     }
 
@@ -1643,16 +1638,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
 
     /**
-     * The currently running process. We keep a handle on it so we can stop it
-     * upon user request
-     */
-    private _currentBuildProcess: proc.Subprocess | null = null;
-
-    /**
      * The currently running build task. We keep a handle on it so we can stop it
      * upon user request
      */
-    private _currentBuildTaskRunner: CMakeBuildTaskRunner | null = null;
+    private _currentBuildTaskRunner: CMakeBuildRunner = new CMakeBuildRunner();
 
     private correctAllTargetName(targetnames: string[]) {
         for (let i = 0; i < targetnames.length; i++) {
@@ -1758,19 +1747,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
             if (useBuildTask) {
-                this._currentBuildTaskRunner = new CMakeBuildTaskRunner(this._buildPreset, targets);
-                const result = await this._currentBuildTaskRunner.execute();
-                await result?.result;
-                this._currentBuildTaskRunner = null;
-                return result;
+                await this._currentBuildTaskRunner.execute(this._buildPreset, targets);
             } else {
                 const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
-                const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
-                this._currentBuildProcess = child;
-                await child.result;
-                this._currentBuildProcess = null;
-                return child;
+                this._currentBuildTaskRunner.setBuildProcess( this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt) )
             }
+            return  this._currentBuildTaskRunner.getResult();
+
         } else {
             return null;
         }
@@ -1789,16 +1772,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     async stopCurrentProcess(): Promise<void> {
         this.m_stop_process = true;
 
-        const cur = this._currentBuildProcess;
-        if (cur) {
-            if (cur.child) {
-                await util.termProc(cur.child);
-            }
-        }
-
-        const taskEx = this._currentBuildTaskRunner;
-        if (taskEx) {
-            taskEx.stop();
+        const taskRunner = this._currentBuildTaskRunner;
+        if (taskRunner) {
+            await taskRunner.stop();
         }
 
         await this.onStop();
