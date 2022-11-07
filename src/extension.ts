@@ -218,7 +218,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             const activeCMakeProject = await this.initActiveProject();
             if (activeCMakeProject) {
-                const folder: vscode.WorkspaceFolder = activeCMakeProject.rootFolder;
+                const folder: vscode.WorkspaceFolder = activeCMakeProject.workspaceFolder;
                 this.onUseCMakePresetsChangedSub = activeCMakeProject?.onUseCMakePresetsChanged(useCMakePresets => this.statusBar.useCMakePresets(useCMakePresets));
                 this.codeModelUpdateSubs.set(folder.name, [
                     activeCMakeProject.onCodeModelChanged(FireLate, () => this.updateCodeModel(activeCMakeProject)),
@@ -360,7 +360,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.configurePreset) {
                 return true;
             }
-            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.rootFolder);
+            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
             if (!didChoosePreset && !cmakeProject.configurePreset) {
                 return false;
             }
@@ -371,7 +371,7 @@ export class ExtensionManager implements vscode.Disposable {
                 return true;
             }
             // No kit? Ask the user what they want.
-            const didChooseKit = await this.selectKit(cmakeProject.rootFolder);
+            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
             if (!didChooseKit && !cmakeProject.activeKit) {
                 // The user did not choose a kit and kit isn't set in other way such as setKitByName
                 return false;
@@ -400,7 +400,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.buildPreset) {
                 return true;
             }
-            const didChoosePreset = await this.selectBuildPreset(cmakeProject.rootFolder);
+            const didChoosePreset = await this.selectBuildPreset(cmakeProject.workspaceFolder);
             if (!didChoosePreset && !cmakeProject.buildPreset) {
                 return false;
             }
@@ -421,7 +421,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.testPreset) {
                 return true;
             }
-            const didChoosePreset = await this.selectTestPreset(cmakeProject.rootFolder);
+            const didChoosePreset = await this.selectTestPreset(cmakeProject.workspaceFolder);
             if (!didChoosePreset && !cmakeProject.testPreset) {
                 return false;
             }
@@ -518,7 +518,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (!cmakeProject) {
             return;
         }
-        const rootFolder: vscode.WorkspaceFolder = cmakeProject?.rootFolder;
+        const rootFolder: vscode.WorkspaceFolder = cmakeProject?.workspaceFolder;
         // Scan for kits even under presets mode, so we can create presets from compilers.
         // Silent re-scan when detecting a breaking change in the kits definition.
         // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
@@ -681,7 +681,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (!useCMakePresets) {
             this.statusBar.setActiveKitName(activeProject?.activeKit?.name || '');
         }
-        this.projectOutlineProvider.setActiveFolder(ws ? ws : activeProject?.rootFolder);
+        this.projectOutlineProvider.setActiveFolder(ws ? ws : activeProject?.workspaceFolder);
         this.setupSubscriptions();
         this.onActiveProjectChangedEmitter.fire(ws?.uri);
         return activeProject;
@@ -698,7 +698,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (!cmakeProject) {
             return;
         }
-        const folder: vscode.WorkspaceFolder = cmakeProject.rootFolder;
+        const folder: vscode.WorkspaceFolder = cmakeProject.workspaceFolder;
         this.projectOutlineProvider.updateCodeModel(
             cmakeProject.workspaceContext.folder,
             cmakeProject.codeModelContent,
@@ -1452,7 +1452,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     activeCMakeWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
-        return this.getActiveCMakeProject()?.rootFolder;
+        return this.getActiveCMakeProject()?.workspaceFolder;
     }
 
     activeFolderName(): string {

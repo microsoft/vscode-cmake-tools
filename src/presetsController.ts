@@ -41,7 +41,7 @@ export class PresetsController {
     static async init(cmakeProject: CMakeProject, kitsController: KitsController): Promise<PresetsController> {
         const presetsController = new PresetsController(cmakeProject, kitsController);
         const expandSourceDir = async (dir: string) => {
-            const workspaceFolder = cmakeProject.rootFolder.uri.fsPath;
+            const workspaceFolder = cmakeProject.workspaceFolder.uri.fsPath;
             const expansionOpts: ExpansionOptions = {
                 vars: {
                     workspaceFolder,
@@ -106,8 +106,8 @@ export class PresetsController {
         return path.join(this._sourceDir, 'CMakeUserPresets.json');
     }
 
-    get rootFolder() {
-        return this.cmakeProject.rootFolder;
+    get workspaceFolder() {
+        return this.cmakeProject.workspaceFolder;
     }
 
     get folderPath() {
@@ -1048,7 +1048,7 @@ export class PresetsController {
             localize('presets.version.error', 'CMakePresets version 1 is not supported. How would you like to proceed?'),
             useKitsVars, changePresets);
         if (result === useKitsVars) {
-            void vscode.workspace.getConfiguration('cmake', this.rootFolder.uri).update('useCMakePresets', 'never');
+            void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update('useCMakePresets', 'never');
         } else {
             await vscode.workspace.openTextDocument(vscode.Uri.file(file));
         }
@@ -1065,7 +1065,7 @@ export class PresetsController {
     }
 
     private getIndentationSettings() {
-        const config = vscode.workspace.getConfiguration('editor', this.rootFolder.uri);
+        const config = vscode.workspace.getConfiguration('editor', this.workspaceFolder.uri);
         let tabSize = config.get<number>('tabSize');
         tabSize = (tabSize === undefined) ? 4 : tabSize;
         let insertSpaces = config.get<boolean>('insertSpaces');

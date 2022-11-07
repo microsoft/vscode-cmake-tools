@@ -65,7 +65,7 @@ export class KitsController {
         }
 
         const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
-        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.rootFolder)].concat(expandedAdditionalKitFiles);
+        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.workspaceFolder)].concat(expandedAdditionalKitFiles);
         const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
         const kitsController = new KitsController(cmakeProject, kitsWatcher);
         chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
@@ -93,7 +93,7 @@ export class KitsController {
     }
 
     get folder() {
-        return this.cmakeProject.rootFolder;
+        return this.cmakeProject.workspaceFolder;
     }
 
     get folderName() {

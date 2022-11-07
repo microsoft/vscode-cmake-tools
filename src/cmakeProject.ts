@@ -126,7 +126,7 @@ export class CMakeProject {
      *
      * This is private. You must call `create` to get an instance.
      */
-    private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext, readonly multiProejctSetting: boolean = false) {
+    private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext, readonly isMultiProjectFolder: boolean = false) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
         this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
@@ -135,7 +135,7 @@ export class CMakeProject {
     /**
      * The root folder associated with this CMakeProject instance
      */
-    get rootFolder(): vscode.WorkspaceFolder {
+    get workspaceFolder(): vscode.WorkspaceFolder {
         return this.workspaceContext.folder;
     }
 
@@ -145,13 +145,13 @@ export class CMakeProject {
      * Otherwise, the sourceDir is allowed to be different from the workspaceFolder, i.e. the CMakeLists.txt doesn't have to be saved in the root.
      */
     get folderPath(): string {
-        return this.multiProejctSetting ? this.sourceDir : this.workspaceContext.folder.uri.fsPath;
+        return this.isMultiProjectFolder ? this.sourceDir : this.workspaceContext.folder.uri.fsPath;
     }
     /**
      * The name of the folder for this CMakeProject instance
      */
     get folderName(): string {
-        return this.multiProejctSetting ? path.basename(this.sourceDir) : this.workspaceContext.folder.name;
+        return this.isMultiProjectFolder ? path.basename(this.sourceDir) : this.workspaceContext.folder.name;
     }
 
     /**
@@ -531,7 +531,7 @@ export class CMakeProject {
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
      */
-    private readonly variantManager = new VariantManager(this.rootFolder, this.workspaceContext.state, this.workspaceContext.config);
+    private readonly variantManager = new VariantManager(this.workspaceFolder, this.workspaceContext.state, this.workspaceContext.config);
 
     /**
      * A strand to serialize operations with the CMake driver
@@ -713,7 +713,7 @@ export class CMakeProject {
                         }
                         if (selectedFile) {
                             const newSourceDirectory = path.dirname(selectedFile);
-                            void vscode.workspace.getConfiguration('cmake', this.rootFolder.uri).update("sourceDirectory", newSourceDirectory);
+                            void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", newSourceDirectory);
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -1008,7 +1008,7 @@ export class CMakeProject {
             // For multi-root, the "onDidSaveTextDocument" will be received once for each project folder.
             // To avoid misleading telemetry, consider the notification only for the active folder.
             // There is always one active folder in a workspace and never more than one.
-            if (isActiveFolder(this.rootFolder)) {
+            if (isActiveFolder(this.workspaceFolder)) {
                 // "outside" evaluates whether the modified cmake file belongs to the active folder.
                 // Currently, we don't differentiate between outside active folder but inside any of the other
                 // workspace folders versus outside any folder referenced by the current workspace.
@@ -2308,11 +2308,11 @@ export class CMakeProject {
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
         log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
-            workspace: this.rootFolder.uri.toString(),
+            workspace: this.workspaceFolder.uri.toString(),
             config: debugConfig
         }));
 
-        const cfg = vscode.workspace.getConfiguration('cmake', this.rootFolder.uri).inspect<object>('debugConfig');
+        const cfg = vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).inspect<object>('debugConfig');
         const customSetting = (cfg?.globalValue !== undefined || cfg?.workspaceValue !== undefined || cfg?.workspaceFolderValue !== undefined);
         let dbg = debugConfig.MIMode?.toString();
         if (!dbg && debugConfig.type === "cppvsdbg") {
@@ -2327,7 +2327,7 @@ export class CMakeProject {
 
         telemetry.logEvent('debug', telemetryProperties);
 
-        await vscode.debug.startDebugging(this.rootFolder, debugConfig);
+        await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
         return vscode.debug.activeDebugSession!;
     }
 
@@ -2638,7 +2638,7 @@ export class CMakeProject {
         } catch {
         }
         return {
-            folder: (this.multiProejctSetting) ? this.sourceDir : this.rootFolder.uri.fsPath || "",
+            folder: (this.isMultiProjectFolder) ? this.sourceDir : this.workspaceFolder.uri.fsPath || "",
             cmakeVersion: "unknown",
             configured: false,
             generator: "unknown",

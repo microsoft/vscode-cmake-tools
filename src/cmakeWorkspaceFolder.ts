@@ -92,7 +92,7 @@ export class CMakeProjectController implements vscode.Disposable {
                     }
                 }
                 if (!this.activeCMakeProject) {
-                    if (util.isFileInsideFolder(openEditor, cmakeProjects[0].rootFolder.uri.fsPath)) {
+                    if (util.isFileInsideFolder(openEditor, cmakeProjects[0].workspaceFolder.uri.fsPath)) {
                         this.activeCMakeProject = cmakeProjects[0];
                     }
                 }
@@ -159,7 +159,7 @@ export class CMakeProjectController implements vscode.Disposable {
         const sourceDir = await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder));
         const allCMakeProjects: CMakeProject[] = this.getAllCMakeProjects();
         for (const project of allCMakeProjects) {
-            if (project.sourceDir === sourceDir || project.rootFolder.uri.fsPath === sourceDir) {
+            if (project.sourceDir === sourceDir || project.workspaceFolder.uri.fsPath === sourceDir) {
                 return project;
             }
         }
