@@ -65,9 +65,9 @@ export class CMakeProjectController implements vscode.Disposable {
     }
 
     private activeCMakeProject: CMakeProject | undefined;
-    setActiveCMakeProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, folderName?: string): CMakeProject | undefined {
+    updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, folderName?: string): void {
         if (!workspaceFolder && !openEditor && !folderName) {
-            return this.activeCMakeProject;
+            return;
         }
         // Setting the active CMake project from the status bar
         if (folderName) {
@@ -79,7 +79,7 @@ export class CMakeProjectController implements vscode.Disposable {
             }
             // If active project is found, return, otherwise proceed to find a default active project.
             if (this.activeCMakeProject) {
-                return this.activeCMakeProject;
+                return;
             }
         }
         const cmakeProjects: CMakeProject[] | undefined = this.getCMakeProjectsForFolder(workspaceFolder);
@@ -98,14 +98,13 @@ export class CMakeProjectController implements vscode.Disposable {
                 }
                 // If active project is found, return, otherwise proceed to find a default active project.
                 if (this.activeCMakeProject) {
-                    return this.activeCMakeProject;
+                    return;
                 }
             } else {
                 this.activeCMakeProject = cmakeProjects[0];
-                return this.activeCMakeProject;
+                return;
             }
         }
-        return this.activeCMakeProject;
     }
 
     public getActiveCMakeProject(): CMakeProject | undefined {
@@ -211,9 +210,9 @@ export class CMakeProjectController implements vscode.Disposable {
      * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
      */
-    private async createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject | CMakeProject[]> {
+    private async createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
         // Create the backend:
-        const cmakeProjects: CMakeProject | CMakeProject[] = await CMakeProject.createForDirectory(folder, this.extensionContext);
+        const cmakeProjects: CMakeProject[] = await CMakeProject.createForDirectory(folder, this.extensionContext);
         return cmakeProjects;
     }
 
@@ -237,8 +236,7 @@ export class CMakeProjectController implements vscode.Disposable {
             return existing;
         }
         // Load for the workspace.
-        let newProjects: CMakeProject | CMakeProject[] = await this.createCMakeProjectForWorkspaceFolder(folder);
-        newProjects = Array.isArray(newProjects) ? newProjects : [newProjects];
+        const newProjects: CMakeProject[] = await this.createCMakeProjectForWorkspaceFolder(folder);
         this.cmakeProjectsMap.set(folder.uri.fsPath, newProjects);
         const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
         if (config) {

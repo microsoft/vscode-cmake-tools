@@ -92,12 +92,8 @@ export class KitsController {
         }
     }
 
-    get folder() {
+    get workspaceFolder() {
         return this.cmakeProject.workspaceFolder;
-    }
-
-    get folderName() {
-        return this.cmakeProject.folderName;
     }
 
     static async readUserKits(cmakeProject: CMakeProject | undefined, progress?: ProgressHandle) {
@@ -145,7 +141,7 @@ export class KitsController {
 
         if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
             // Read default folder kits
-            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder), this.cmakeProject.workspaceContext.folder.uri.fsPath, await this.cmakeProject.getExpansionOptions());
+            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.workspaceFolder), this.cmakeProject.workspaceContext.folder.uri.fsPath, await this.cmakeProject.getExpansionOptions());
 
             // Read additional folder kits
             this.additionalKits = await getAdditionalKits(this.cmakeProject);
@@ -271,7 +267,7 @@ export class KitsController {
         );
         const items = await Promise.all(item_promises);
         const chosen_kit = await vscode.window.showQuickPick(items,
-            { placeHolder: localize('select.a.kit.placeholder', 'Select a Kit for {0}', this.folderName) },
+            { placeHolder: localize('select.a.kit.placeholder', 'Select a Kit for {0}', this.cmakeProject.folderName) },
             this._pickKitCancellationTokenSource.token);
         this._pickKitCancellationTokenSource.dispose();
         this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();

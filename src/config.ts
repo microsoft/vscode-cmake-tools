@@ -93,7 +93,7 @@ export interface ExtensionConfigurationSettings {
     cmakePath: string;
     buildDirectory: string;
     installPrefix: string | null;
-    sourceDirectory: string;
+    sourceDirectory: string | string[];
     saveBeforeBuild: boolean;
     buildBeforeRun: boolean;
     clearOutputBeforeBuild: boolean;
@@ -245,8 +245,12 @@ export class ConfigurationReader implements vscode.Disposable {
     get installPrefix(): string | null {
         return this.configData.installPrefix;
     }
-    get sourceDirectory(): string | string[] {
-        return this.configData.sourceDirectory;
+    get sourceDirectory(): string[] {
+        if (!Array.isArray(this.configData.sourceDirectory)) {
+            return [this.configData.sourceDirectory];
+        } else {
+            return this.configData.sourceDirectory;
+        }
     }
     get saveBeforeBuild(): boolean {
         return !!this.configData.saveBeforeBuild;
@@ -440,7 +444,7 @@ export class ConfigurationReader implements vscode.Disposable {
         cmakePath: new vscode.EventEmitter<string>(),
         buildDirectory: new vscode.EventEmitter<string>(),
         installPrefix: new vscode.EventEmitter<string | null>(),
-        sourceDirectory: new vscode.EventEmitter<string>(),
+        sourceDirectory: new vscode.EventEmitter<string|string[]>(),
         saveBeforeBuild: new vscode.EventEmitter<boolean>(),
         buildBeforeRun: new vscode.EventEmitter<boolean>(),
         clearOutputBeforeBuild: new vscode.EventEmitter<boolean>(),

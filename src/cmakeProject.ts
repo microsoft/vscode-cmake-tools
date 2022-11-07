@@ -140,13 +140,14 @@ export class CMakeProject {
     }
 
     /**
-     * The folder associated with this CMakeProject instance
-     * In a multi-project setting, where there can be multiple projects in the same workspaceFolder, the sourceDir is the same as project folder.
-     * Otherwise, the sourceDir is allowed to be different from the workspaceFolder, i.e. the CMakeLists.txt doesn't have to be saved in the root.
+     * The folder associated with this CMakeProject.
+     * For single-project folders, this is the WorkspaceFolder for historical reasons.
+     * For multi-project folders, this is the directory where the CMakeProject lives (this.sourceDir)
      */
     get folderPath(): string {
         return this.isMultiProjectFolder ? this.sourceDir : this.workspaceContext.folder.uri.fsPath;
     }
+
     /**
      * The name of the folder for this CMakeProject instance
      */
@@ -1097,14 +1098,14 @@ export class CMakeProject {
     }
 
     /**
-     * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
+     * Call configurePresets, buildPresets, or testPresets to get the latest presets when the event is fired.
      */
     onPresetsChanged(listener: () => any) {
         return this.presetsController.onPresetsChanged(listener);
     }
 
     /**
-     * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
+     * Call configurePresets, buildPresets, or testPresets to get the latest presets when the event is fired.
      */
     onUserPresetsChanged(listener: () => any) {
         return this.presetsController.onUserPresetsChanged(listener);
@@ -1268,9 +1269,9 @@ export class CMakeProject {
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext, sourceDirectory: string, multiProejctSetting?: boolean): Promise<CMakeProject> {
+    static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext, sourceDirectory: string, isMultiProjectFolder?: boolean): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
-        const inst = multiProejctSetting ? new CMakeProject(ctx, wsc, multiProejctSetting) : new CMakeProject(ctx, wsc);
+        const inst = isMultiProjectFolder ? new CMakeProject(ctx, wsc, isMultiProjectFolder) : new CMakeProject(ctx, wsc);
         await inst.init(sourceDirectory);
         log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
@@ -1281,19 +1282,16 @@ export class CMakeProject {
      * @param folder Path to the directory for which to create
      * @param ext The extension context
      */
-    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeProject | CMakeProject[]> {
+    static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeProject[]> {
         // Create a context for the directory
         const dirContext = DirectoryContext.createForDirectory(folder, new StateManager(ext, folder));
-        const sourceDirectory = dirContext.config.sourceDirectory;
-        if (!Array.isArray(sourceDirectory)) {
-            return CMakeProject.create(ext, dirContext, sourceDirectory);
-        } else {
-            const cmakeProjects: CMakeProject[] = [];
-            for (const source of sourceDirectory) {
-                cmakeProjects.push(await CMakeProject.create(ext, dirContext, source, true));
-            }
-            return cmakeProjects;
+        const sourceDirectory: string[] = dirContext.config.sourceDirectory;
+        const isMultiProjectFolder: boolean = (sourceDirectory.length === 1) ? false : true;
+        const cmakeProjects: CMakeProject[] = [];
+        for (const source of sourceDirectory) {
+            cmakeProjects.push(await CMakeProject.create(ext, dirContext, source, isMultiProjectFolder));
         }
+        return cmakeProjects;
     }
 
     private _activeKit: Kit | null = null;
