@@ -43,7 +43,7 @@ export class CMakeBuildRunner {
     }
 
     public async execute(buildPreset: preset.BuildPreset | null, targets?: string[]): Promise<void> {
-        const task = await this._findBuildTask(this._buildPreset, this._targets);
+        const task = await this._findBuildTask(buildPreset, targets);
 
         if (task) {
             this._buildPreset = buildPreset;
