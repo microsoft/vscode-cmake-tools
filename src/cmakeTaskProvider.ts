@@ -8,7 +8,7 @@ import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
-import { getActiveCMakeProject } from './extension';
+import * as extension from './extension';
 import { CMakeProject, ConfigureTrigger } from './cmakeProject';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
@@ -109,7 +109,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public async provideTasks(): Promise<CMakeTask[]> {
         const result: CMakeTask[] = [];
-        const cmakeProject: CMakeProject | undefined = getActiveCMakeProject();
+        const cmakeProject: CMakeProject | undefined = extension.getActiveProject();
         const targets: string[] | undefined = await cmakeProject?.getDefaultBuildTargets() || ["all"];
         result.push(await this.provideTask(CommandType.config, cmakeProject?.useCMakePresets));
         result.push(await this.provideTask(CommandType.build, cmakeProject?.useCMakePresets, targets));
@@ -270,8 +270,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         return useCMakePresets ? getDefaultPresetName(commandType, true) : undefined;
     }
 
-    private getCMakeProject(): CMakeProject | undefined {
-        const cmakeProject: CMakeProject | undefined = getActiveCMakeProject();
+    private getActiveProject(): CMakeProject | undefined {
+        const cmakeProject: CMakeProject | undefined = extension.getActiveProject();
         if (!cmakeProject) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
             this.writeEmitter.fire(localize("task.failed", "Task failed.") + endOfLine);
@@ -282,7 +282,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
-        const cmakeProject: CMakeProject | undefined = this.getCMakeProject();
+        const cmakeProject: CMakeProject | undefined = this.getActiveProject();
         if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }
@@ -318,7 +318,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         let args: string[] = [];
 
         if (!cmakeProject) {
-            cmakeProject = this.getCMakeProject();
+            cmakeProject = this.getActiveProject();
             if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
                 return -1;
             }
@@ -394,7 +394,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
 
-        const cmakeProject: CMakeProject | undefined = this.getCMakeProject();
+        const cmakeProject: CMakeProject | undefined = this.getActiveProject();
         if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }
@@ -430,7 +430,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async runCleanRebuildTask(): Promise<any> {
-        const cmakeProject: CMakeProject | undefined = this.getCMakeProject();
+        const cmakeProject: CMakeProject | undefined = this.getActiveProject();
         if (!cmakeProject || !await this.isTaskCompatibleWithPresets(cmakeProject)) {
             return;
         }

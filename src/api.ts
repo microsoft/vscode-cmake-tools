@@ -35,7 +35,7 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     }
 
     async getProject(uri: vscode.Uri): Promise<CMakeProjectWrapper | undefined> {
-        const project: CMakeProject | undefined = await this.manager.cmakeProjectController.getCMakeProjectForFolder(uri.fsPath);
+        const project: CMakeProject | undefined = await this.manager.projectController.getCMakeProjectForFolder(uri.fsPath);
         return project ? new CMakeProjectWrapper(project) : undefined;
     }
 
