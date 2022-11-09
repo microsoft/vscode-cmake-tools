@@ -1,6 +1,5 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { InputFileSet } from '@cmt/dirty';
-import { ConfigureTrigger } from '@cmt/cmakeProject';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cache from '@cmt/cache';
@@ -19,7 +18,6 @@ import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
 import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
-import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 
