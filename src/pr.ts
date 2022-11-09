@@ -61,18 +61,14 @@ export namespace fs {
         }));
     }
 
+    export const constants = fs_.constants;
+    export const access = promisify(fs_.access);
     export const writeFile = limitify(promisify(fs_.writeFile));
-
     export const readdir = promisify(fs_.readdir);
-
     export const mkdir = promisify(fs_.mkdir);
-
     export const mkdtemp = promisify(fs_.mkdtemp);
-
     export const rename = promisify(fs_.rename);
-
     export const stat = promisify(fs_.stat);
-
     export const walk = promisify(walk_);
 
     /**
@@ -90,9 +86,7 @@ export namespace fs {
     }
 
     export const readlink = promisify(fs_.readlink);
-
     export const unlink = promisify(fs_.unlink);
-
     export const appendFile = limitify(promisify(fs_.appendFile));
 
     /**
