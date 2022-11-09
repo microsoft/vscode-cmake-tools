@@ -148,12 +148,13 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
                 log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input));
             } else {
                 subs.set(full, replacement);
+                if (full === "${sourceDir}") {
+                    subs.set("${sourceDirectory}", replacement);
+                }
             }
         }
     }
-    if (subs.has("${sourceDir}")) {
-        subs.set("${sourceDirectory}", subs.get("${sourceDir}")!);
-    }
+
     // Regular expression for variable value (between the variable suffix and the next ending curly bracket):
     // .+? matches any character (except line terminators) between one and unlimited times,
     // as few times as possible, expanding as needed (lazy)

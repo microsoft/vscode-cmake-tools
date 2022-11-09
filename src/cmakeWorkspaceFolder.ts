@@ -20,6 +20,7 @@ export type FolderProjectMap = { folder: vscode.WorkspaceFolder; projects: CMake
 export class ProjectController implements vscode.Disposable {
     private readonly projectsMap = new Map<string, CMakeProject[]>();
     private readonly sourceDirectorySubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
+    private readonly UseCMakePresetsSubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectMap>();
@@ -46,19 +47,13 @@ export class ProjectController implements vscode.Disposable {
     }
 
     /**
-     * The active workspace folder. This controls several aspects of the extension,
-     * including:
-     *
-     * - Which CMakeProject backend receives commands from the user
-     * - Where we search for variants
-     * - Where we search for workspace-local kits
+     * The path of the folder of the active CMakeProject instance
      */
-
     get activeFolderPath(): string | undefined {
         return this.activeProject?.folderPath;
     }
     /**
-     * The name of the folder for this CMakeProject instance
+     * The name of the folder of the active CMakeProject instance
      */
     get activeFolderName(): string | undefined {
         return this.activeProject?.folderName;
@@ -82,17 +77,17 @@ export class ProjectController implements vscode.Disposable {
                 return;
             }
         }
-        const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForFolder(workspaceFolder);
+        const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(workspaceFolder);
         if (cmakeProjects && cmakeProjects.length > 0) {
             if (openEditor) {
                 for (const project of cmakeProjects) {
-                    if (util.isFileInsideFolder(openEditor, project.folderPath)) {
+                    if (util.isFileInsideFolder(openEditor.document, project.folderPath)) {
                         this.activeProject = project;
                         break;
                     }
                 }
                 if (!this.activeProject) {
-                    if (util.isFileInsideFolder(openEditor, cmakeProjects[0].workspaceFolder.uri.fsPath)) {
+                    if (util.isFileInsideFolder(openEditor.document, cmakeProjects[0].workspaceFolder.uri.fsPath)) {
                         this.activeProject = cmakeProjects[0];
                     }
                 }
@@ -142,7 +137,7 @@ export class ProjectController implements vscode.Disposable {
      * Get the all CMakeWorkspaceFolder instance associated with the given workspace folder, or undefined
      * @param ws The workspace folder to search, or array of command and workspace path
      */
-    getProjectsForFolder(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeProject[] | undefined {
+    getProjectsForWorkspaceFolder(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeProject[] | undefined {
         if (ws) {
             if (util.isArrayOfString(ws)) {
                 return this.projectsMap.get(ws[ws.length - 1]);
@@ -154,7 +149,7 @@ export class ProjectController implements vscode.Disposable {
         return undefined;
     }
 
-    async getCMakeProjectForFolder(folder: string): Promise<CMakeProject | undefined> {
+    async getProjectForFolder(folder: string): Promise<CMakeProject | undefined> {
         const sourceDir = await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder));
         const allCMakeProjects: CMakeProject[] = this.getAllCMakeProjects();
         for (const project of allCMakeProjects) {
@@ -191,7 +186,7 @@ export class ProjectController implements vscode.Disposable {
     private async onChange(event: vscode.WorkspaceFoldersChangeEvent) {
         // Un-register each CMake Tools we have loaded for each removed workspace
         for (const folder of event.removed) {
-            const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForFolder(folder);
+            const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
             if (cmakeProjects) {
                 this.beforeRemoveFolderEmitter.fire(cmakeProjects);
             }
@@ -217,7 +212,7 @@ export class ProjectController implements vscode.Disposable {
     }
 
     public useCMakePresetsForFolder(folder: vscode.WorkspaceFolder): boolean {
-        const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForFolder(folder);
+        const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (cmakeProjects && cmakeProjects.length > 0) {
             return cmakeProjects[0].useCMakePresets;
         }
@@ -230,7 +225,7 @@ export class ProjectController implements vscode.Disposable {
      * @returns The newly created CMakeProject backend for the given folder
      */
     private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
-        const existing = this.getProjectsForFolder(folder);
+        const existing = this.getProjectsForWorkspaceFolder(folder);
         if (existing) {
             rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
             return existing;
@@ -241,6 +236,7 @@ export class ProjectController implements vscode.Disposable {
         const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
         if (config) {
             this.sourceDirectorySubs.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
+            this.UseCMakePresetsSubs.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
         }
         return newProjects;
     }
@@ -251,7 +247,7 @@ export class ProjectController implements vscode.Disposable {
      * @param folder The workspace to remove for
      */
     private async removeFolder(folder: vscode.WorkspaceFolder) {
-        const cmakeProjects = this.getProjectsForFolder(folder);
+        const cmakeProjects = this.getProjectsForWorkspaceFolder(folder);
         if (!cmakeProjects) {
             // CMake Tools should always be aware of all workspace folders. If we
             // somehow missed one, that's a bug
@@ -271,7 +267,7 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private getConfigurationReader(folder: vscode.WorkspaceFolder): ConfigurationReader | undefined {
-        const cmakeProjects = this.getProjectsForFolder(folder);
+        const cmakeProjects = this.getProjectsForWorkspaceFolder(folder);
         if (!cmakeProjects || cmakeProjects.length === 0) {
             return undefined;
         }
@@ -289,16 +285,16 @@ export class ProjectController implements vscode.Disposable {
         for (let i = 0; i < sourceDirectories.length; i++) {
             sourceDirectories[i] = await util.normalizeAndVerifySourceDir(sourceDirectories[i], CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath));
         }
-        const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForFolder(folder);
+        const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
 
-        if (cmakeProjects) {
+        if (projects) {
             // Remove projects.
-            for (let i = cmakeProjects.length - 1; i >= 0; i--) {
-                if (sourceDirectories.indexOf(cmakeProjects[i].sourceDir) !== -1) {
-                    sourceDirectories.splice(sourceDirectories.indexOf(cmakeProjects[i].sourceDir), 1);
+            for (let i = projects.length - 1; i >= 0; i--) {
+                if (sourceDirectories.indexOf(projects[i].sourceDir) !== -1) {
+                    sourceDirectories.splice(sourceDirectories.indexOf(projects[i].sourceDir), 1);
                 } else {
-                    cmakeProjects[i].dispose();
-                    cmakeProjects.splice(i, 1);
+                    projects[i].dispose();
+                    projects.splice(i, 1);
                 }
             }
 
@@ -306,10 +302,19 @@ export class ProjectController implements vscode.Disposable {
             const dirContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
             for (let i = 0; i < sourceDirectories.length; i++) {
                 const cmakeProject: CMakeProject = await CMakeProject.create(this.extensionContext, dirContext, sourceDirectories[i]);
-                cmakeProjects.push(cmakeProject);
+                projects.push(cmakeProject);
             }
             // Update the map.
-            this.projectsMap.set(folder.uri.fsPath, cmakeProjects);
+            this.projectsMap.set(folder.uri.fsPath, projects);
+        }
+    }
+
+    private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string): Promise<void> {
+        const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
+        if (projects) {
+            for (const project of projects) {
+                await project.setUseCMakePresets(useCMakePresets === "true");
+            }
         }
     }
 

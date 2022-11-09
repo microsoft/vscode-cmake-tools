@@ -133,7 +133,8 @@ export class CMakeProject {
     }
 
     /**
-     * The root folder associated with this CMakeProject instance
+     * The Workspace folder associated with this CMakeProject instance.
+     * This is where we search for the variants and workspace-local kits.
      */
     get workspaceFolder(): vscode.WorkspaceFolder {
         return this.workspaceContext.folder;
@@ -772,7 +773,7 @@ export class CMakeProject {
             throw new Error(localize('bad.cmake.executable', 'Bad CMake executable {0}.', `"${cmake.path}"`));
         }
 
-        const workspace = this.folderPath;
+        const workspace: string = this.workspaceFolder.uri.fsPath;
         let drv: CMakeDriver;
         const preferredGenerators = this.getPreferredGenerators();
         const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, true, config);
@@ -926,8 +927,8 @@ export class CMakeProject {
      */
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
-
-        this._sourceDir = await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folderPath));
+        // ELLA
+        this._sourceDir = await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath));
 
         // Start up the variant manager
         await this.variantManager.initialize();
@@ -961,12 +962,12 @@ export class CMakeProject {
             }
         }));
 
-        this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async td => {
-            const str = td.uri.fsPath.toLowerCase();
+        this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async editor => {
+            const filePath = editor.uri.fsPath.toLowerCase();
             const drv = await this.getCMakeDriverInstance();
 
             // If we detect a change in the CMake cache file, refresh the webview
-            if (this.cacheEditorWebview && drv && lightNormalizePath(str) === drv.cachePath.toLowerCase()) {
+            if (this.cacheEditorWebview && drv && lightNormalizePath(filePath) === drv.cachePath.toLowerCase()) {
                 await this.cacheEditorWebview.refreshPanel();
             }
 
@@ -975,15 +976,15 @@ export class CMakeProject {
             let isCmakeFile: boolean;
             if (drv && drv.cmakeFiles.length > 0) {
                 // If CMake file information is available from the driver, use it
-                isCmakeFile = drv.cmakeFiles.some(f => lightNormalizePath(str) === lightNormalizePath(path.resolve(this.sourceDir, f).toLowerCase()));
+                isCmakeFile = drv.cmakeFiles.some(f => lightNormalizePath(filePath) === lightNormalizePath(path.resolve(this.sourceDir, f).toLowerCase()));
             } else {
                 // Otherwise, fallback to a simple check (does not cover CMake include files)
                 isCmakeFile = false;
-                if (str.endsWith("cmakelists.txt")) {
+                if (filePath.endsWith("cmakelists.txt")) {
                     const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folderPath);
                     // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
-                    isCmakeFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
-                        (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
+                    isCmakeFile = (filePath === path.join(sourceDirectory, "cmakelists.txt")) ||
+                        (allcmakelists?.find(file => filePath === file.toLocaleLowerCase()) !== undefined);
                 }
             }
 
@@ -1009,37 +1010,37 @@ export class CMakeProject {
             // For multi-root, the "onDidSaveTextDocument" will be received once for each project folder.
             // To avoid misleading telemetry, consider the notification only for the active folder.
             // There is always one active folder in a workspace and never more than one.
-            if (isActiveFolder(this.workspaceFolder)) {
+            if (isActiveFolder(this.workspaceFolder) && util.isFileInsideFolder(editor, this.folderPath)) { // ELLA
                 // "outside" evaluates whether the modified cmake file belongs to the active folder.
                 // Currently, we don't differentiate between outside active folder but inside any of the other
                 // workspace folders versus outside any folder referenced by the current workspace.
                 let outside: boolean = true;
                 let fileType: string | undefined;
-                if (str.endsWith("cmakelists.txt")) {
+                if (filePath.endsWith("cmakelists.txt")) {
                     fileType = "CMakeLists";
 
                     // The CMakeLists.txt belongs to the current active folder only if sourceDirectory points to it.
-                    if (str === path.join(sourceDirectory, "cmakelists.txt")) {
+                    if (filePath === path.join(sourceDirectory, "cmakelists.txt")) {
                         outside = false;
                     }
-                } else if (str.endsWith("cmakecache.txt")) {
+                } else if (filePath.endsWith("cmakecache.txt")) {
                     fileType = "CMakeCache";
                     const binaryDirectory = (await this.binaryDir).toLowerCase();
 
                     // The CMakeCache.txt belongs to the current active folder only if binaryDirectory points to it.
-                    if (str === path.join(binaryDirectory, "cmakecache.txt")) {
+                    if (filePath === path.join(binaryDirectory, "cmakecache.txt")) {
                         outside = false;
                     }
-                } else if (str.endsWith(".cmake")) {
+                } else if (filePath.endsWith(".cmake")) {
                     fileType = ".cmake";
                     const binaryDirectory = (await this.binaryDir).toLowerCase();
 
                     // Instead of parsing how and from where a *.cmake file is included or imported
                     // let's consider one inside the active folder if it's in the workspace folder,
                     // sourceDirectory or binaryDirectory.
-                    if (str.startsWith(this.folderPath.toLowerCase()) ||
-                        str.startsWith(sourceDirectory) ||
-                        str.startsWith(binaryDirectory)) {
+                    if (filePath.startsWith(this.folderPath.toLowerCase()) ||
+                        filePath.startsWith(sourceDirectory) ||
+                        filePath.startsWith(binaryDirectory)) {
                         outside = false;
                     }
                 }

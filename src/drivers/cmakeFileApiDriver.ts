@@ -1,4 +1,3 @@
-import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
@@ -28,7 +27,6 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 
 import { NoGeneratorError } from './cmakeServerDriver';
@@ -151,30 +149,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
         this._cacheWatcher.onDidChange(() => {
             log.debug(`Reload CMake cache: ${this.cachePath} changed`);
             rollbar.invokeAsync('Reloading CMake Cache', () => this.updateCodeModel());
-        });
-
-        this.config.onChange('sourceDirectory', async () => {
-            // The configure process can determine correctly whether the features set activation
-            // should be full or partial, so there is no need to proactively enable full here,
-            // unless the automatic configure is disabled.
-            // If there is a configure or a build in progress, we should avoid setting full activation here,
-            // even if cmake.configureOnEdit is true, because this may overwrite a different decision
-            // that was done earlier by that ongoing configure process.
-            if (!this.configOrBuildInProgress()) {
-                if (this.config.configureOnEdit) {
-                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected {0} setting update, attempting automatic reconfigure...", "\'cmake.sourceDirectory\'"));
-                    await this.configure(ConfigureTrigger.sourceDirectoryChange, []);
-                }
-
-                // Evaluate for this folder (whose sourceDirectory setting just changed)
-                // if the new value points to a valid CMakeLists.txt.
-                if (this.workspaceFolder) {
-                    const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
-                    if (folder) {
-                        await ext.updateFullFeatureSetForFolder(folder.name);
-                    }
-                }
-            }
         });
     }
 
