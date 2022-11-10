@@ -18,6 +18,7 @@ Bug Fixes:
 - Fix the build task to return the error code. [#2799](https://github.com/microsoft/vscode-cmake-tools/issues/2799) [@BIKA-C](https://github.com/BIKA-C)
 - Generate correct ClangCL Kits. [#2790](https://github.com/microsoft/vscode-cmake-tools/issues/2790) [#2810](https://github.com/microsoft/vscode-cmake-tools/issues/2810)
 - ctest -N does not work with custom cmake path from preset. [#2842](https://github.com/microsoft/vscode-cmake-tools/issues/2842)
+- Resolve variables in args before passing them to the terminal. [#2846](https://github.com/microsoft/vscode-cmake-tools/issues/2846)
 
 ## 1.12.27
 Bug Fixes:
