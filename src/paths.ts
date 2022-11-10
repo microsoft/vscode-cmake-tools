@@ -172,29 +172,25 @@ class Paths {
     }
 
     async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
-        const ctest_path = await this.expandStringPath(wsc.config.rawCTestPath, wsc);
-        if (!ctest_path || ctest_path === 'auto') {
+        const ctestPath = await this.expandStringPath(wsc.config.rawCTestPath, wsc);
+        if (!ctestPath || ctestPath === 'auto' || overWriteCMakePathSetting) {
             const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
             if (cmake === null) {
                 return null;
             } else {
-                const ctest_sibling = path.join(path.dirname(cmake), 'ctest');
-                // Check if CTest is a sibling executable in the same directory
-                if (await fs.exists(ctest_sibling)) {
-                    const stat = await fs.stat(ctest_sibling);
-                    // eslint-disable-next-line no-bitwise
-                    if (stat.isFile() && stat.mode & 0b001001001) {
-                        return ctest_sibling;
-                    } else {
-                        return 'ctest';
-                    }
-                } else {
+                try {
+                    // Check if CTest is a sibling executable in the same directory
+                    const ctestName = process.platform === 'win32' ? 'ctest.exe' : 'ctest';
+                    const ctestSibling = path.join(path.dirname(cmake), ctestName);
+                    await fs.access(ctestSibling, fs.constants.X_OK);
+                    return ctestSibling;
+                } catch {
                     // The best we can do.
                     return 'ctest';
                 }
             }
         } else {
-            return ctest_path;
+            return ctestPath;
         }
     }
 
