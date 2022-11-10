@@ -34,7 +34,7 @@ import { StateManager } from './state';
 import { StatusBar } from '@cmt/status';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/tree';
+import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutlineProvider';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/variant';
@@ -120,16 +120,16 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.projectOutlineProvider.addFolder(folder);
             if (this.codeModelUpdateSubs.get(folder.uri.fsPath)) {
-                // We already have this folder, do nothing
-            } else {
-                const subs: vscode.Disposable[] = [];
-                for (const project of folderProjectMap.projects) {
-                    subs.push(project.onCodeModelChanged(FireLate, () => this.updateCodeModel(project)));
-                    subs.push(project.onTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
-                    subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
-                    subs.push(project.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(project)));
-                    this.codeModelUpdateSubs.set(project.folderPath, subs);
-                }
+                this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
+                this.codeModelUpdateSubs.delete(folder.uri.fsPath);
+            }
+            const subs: vscode.Disposable[] = [];
+            for (const project of folderProjectMap.projects) {
+                subs.push(project.onCodeModelChanged(FireLate, () => this.updateCodeModel(project)));
+                subs.push(project.onTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
+                subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
+                subs.push(project.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(project)));
+                this.codeModelUpdateSubs.set(project.folderPath, subs);
             }
             rollbar.takePromise('Post-folder-open', { folder: folder }, this.postWorkspaceOpen(this.getActiveProject()));
         });
@@ -137,6 +137,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.projectController.onAfterRemoveFolder(async folder => {
             console.assert((vscode.workspace.workspaceFolders === undefined && this.projectController.numOfRoots === 0) ||
                 (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this.projectController.numOfRoots));
+            this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
             this.codeModelUpdateSubs.delete(folder.uri.fsPath);
             if (!vscode.workspace.workspaceFolders?.length) {
                 await this.updateActiveProject(undefined);
@@ -198,7 +199,6 @@ export class ExtensionManager implements vscode.Disposable {
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
         let isMultiProject = false;
-        let activeProject: CMakeProject | undefined;
         if (vscode.workspace.workspaceFolders) {
             await this.projectController.loadAllProjects();
             isMultiProject = this.projectController.isMultiProject;
@@ -209,8 +209,8 @@ export class ExtensionManager implements vscode.Disposable {
                 this.onDidChangeActiveTextEditorSub.dispose();
                 this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
             }
-            activeProject = await this.initActiveProject();
-            if (activeProject) {
+            await this.initActiveProject();
+            /*if (activeProject) {..
                 const folder: vscode.WorkspaceFolder = activeProject.workspaceFolder;
                 // ELLA update the active status bar
                 // this.onUseCMakePresetsChangedSub = activeProject?.onUseCMakePresetsChanged(useCMakePresets => this.statusBar.useCMakePresets(useCMakePresets));
@@ -221,18 +221,15 @@ export class ExtensionManager implements vscode.Disposable {
                     activeProject.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(activeProject))
                 ]);
                 rollbar.takePromise('Post-folder-open', { folder: folder.name }, this.postWorkspaceOpen(activeProject));
-            }
+            }*/
         }
-
-        // const isFullyActivated: boolean = await this.workspaceHasCMakeProject(folder, this.getActiveProject()?.folderPath);
-        if (activeProject) { // ELLA
-            await enableFullFeatureSet(true);
-        }
+        const isFullyActivated: boolean = await this.workspaceHasAtLeastOneProject();
+        await enableFullFeatureSet(isFullyActivated);
 
         const telemetryProperties: telemetry.Properties = {
             isMultiRoot: `${this.projectController.isMultiRoot}`,
             isMultiProject: `${isMultiProject}`,
-            isFullyActivated: activeProject ? "true" : "false"
+            isFullyActivated: `${isFullyActivated}`
         };
         if (isMultiProject) {
             telemetryProperties['autoSelectActiveFolder'] = `${this.workspaceConfig.autoSelectActiveFolder}`;
@@ -271,11 +268,6 @@ export class ExtensionManager implements vscode.Disposable {
      * The folder controller manages multiple instances. One per folder.
      */
     public readonly projectController = new ProjectController(this.extensionContext);
-
-    /**
-     * The map caching for each folder whether it is a CMake project or not.
-     */
-    private readonly isCMakeFolder: Map<string, boolean> = new Map<string, boolean>();
 
     /**
      * The status bar controller
@@ -470,48 +462,6 @@ export class ExtensionManager implements vscode.Disposable {
         await cmakeProject.configureInternal(trigger, [], ConfigureType.Normal);
     }
 
-    // This method evaluates whether the given folder represents a CMake project
-    // (does have a valid CMakeLists.txt at the location pointed to by the "cmake.sourceDirectory" setting)
-    // and also stores the answer in a map for later use.
-    async projectHasCMakeLists(cmakeProject: CMakeProject): Promise<boolean> {
-        if (this.isCMakeFolder.get(cmakeProject.folderName)) {
-            return true;
-        }
-
-        const optsVars: KitContextVars = {
-            // sourceDirectory cannot be defined based on any of the below variables.
-            buildKit: '${buildKit}',
-            buildType: '${buildType}',
-            buildKitVendor: '${buildKitVendor}',
-            buildKitTriple: '${buildKitTriple}',
-            buildKitVersion: '${buildKitVersion}',
-            buildKitHostOs: '${buildKitVendor}',
-            buildKitTargetOs: '${buildKitTargetOs}',
-            buildKitTargetArch: '${buildKitTargetArch}',
-            buildKitVersionMajor: '${buildKitVersionMajor}',
-            buildKitVersionMinor: '${buildKitVersionMinor}',
-            generator: '${generator}',
-            userHome: paths.userHome,
-            workspaceFolder: cmakeProject.workspaceContext.folder.uri.fsPath,
-            workspaceFolderBasename: cmakeProject.workspaceContext.folder.name,
-            workspaceHash: '${workspaceHash}',
-            workspaceRoot: cmakeProject.workspaceContext.folder.uri.fsPath,
-            workspaceRootFolderName: cmakeProject.workspaceContext.folder.name,
-            sourceDir: cmakeProject.sourceDir
-        };
-
-        const sourceDirectory: string = cmakeProject.sourceDir;
-        let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
-        if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
-            expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
-        }
-
-        const isCMake = await fs.exists(expandedSourceDirectory);
-        this.isCMakeFolder.set(cmakeProject.folderName, isCMake);
-
-        return isCMake;
-    }
-
     async postWorkspaceOpen(cmakeProject?: CMakeProject) {
         if (!cmakeProject) {
             return;
@@ -573,7 +523,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
         }
         if (cmakeProject) {
-            if (!await this.projectHasCMakeLists(cmakeProject)) {
+            if (!await cmakeProject.hasCMakeLists()) {
                 await cmakeProject.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             } else {
                 if (shouldConfigure === true) {
@@ -649,11 +599,10 @@ export class ExtensionManager implements vscode.Disposable {
 
     private async initActiveProject(): Promise<CMakeProject | undefined> {
         let folder: vscode.WorkspaceFolder | undefined;
-        let activeProject: CMakeProject | undefined;
         if (vscode.workspace.workspaceFolders && vscode.window.activeTextEditor && this.workspaceConfig.autoSelectActiveFolder) {
             folder = vscode.workspace.getWorkspaceFolder(vscode.window.activeTextEditor.document.uri);
             await this.updateActiveProject(folder, vscode.window.activeTextEditor);
-            return activeProject;
+            return this.getActiveProject();
         }
         const activeFolder = this.extensionContext.workspaceState.get<string>('activeFolder');
         if (activeFolder) {
@@ -1491,7 +1440,7 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
         for (const project of projects) {
-            if (await this.projectHasCMakeLists(project)) {
+            if (await project.hasCMakeLists()) {
                 return true;
             }
         }
@@ -1882,39 +1831,21 @@ export function getActiveProject(): CMakeProject | undefined {
     return extensionManager?.getActiveProject();
 }
 
-// This method updates the full/partial view state of the given folder
+// This method updates the full/partial view state.
 // (by analyzing the valid state of its CMakeLists.txt)
 // and also calculates the impact on the whole workspace.
 // It is called whenever a project folder goes through a relevant event:
 // sourceDirectory change, CMakeLists.txt creation/move/deletion.
-export async function updateFullFeatureSetForFolder(folderName: string) {
+export async function updateFullFeatureSet() {
     if (extensionManager) {
-        const cmakeProject: CMakeProject | undefined = await extensionManager.getProjectForFolder(folderName);
-        if (cmakeProject) {
-            // Save the CMakeLists valid state in the map for later reference
-            // and evaluate its effects on the global full feature set view.
-            let folderFullFeatureSet: boolean = await extensionManager.projectHasCMakeLists(cmakeProject);
-
-            if (folderFullFeatureSet) {
-                // Reset ignoreCMakeListsMissing now that we have a valid CMakeLists.txt
-                // so that the next time we don't have one the user is notified.
-                await cmakeProject.workspaceContext.state.setIgnoreCMakeListsMissing(false);
-            } else {
-                // If the given folder is a CMake project, enable full feature set for the whole workspace,
-                // otherwise search for at least one more CMake project folder.
-                folderFullFeatureSet = (extensionManager && await extensionManager.workspaceHasAtLeastOneProject()) ? true : false;
-            }
-
-            await enableFullFeatureSet(folderFullFeatureSet);
-            return;
-        }
+        await enableFullFeatureSet(await extensionManager.workspaceHasAtLeastOneProject());
+    } else {
+        // This shouldn't normally happen (not finding a cmake project or not having a valid extension manager)
+        // but just in case, enable full feature set.
+        log.info(`We don't have an extension manager created yet. ` +
+            `Setting feature set view to "full".`);
+        await enableFullFeatureSet(true);
     }
-
-    // This shouldn't normally happen (not finding a cmake project or not having a valid extension manager)
-    // but just in case, enable full feature set.
-    log.info(`Cannot find CMake Project for folder ${folderName} or we don't have an extension manager created yet. ` +
-        `Setting feature set view to "full".`);
-    await enableFullFeatureSet(true);
 }
 
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup

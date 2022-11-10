@@ -22,7 +22,7 @@ import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
 import { CMakeDriver, CMakePreconditionProblems, ExecutableTarget } from '@cmt/drivers/cmakeDriver';
-import { expandStrings, expandString, ExpansionOptions } from './expand';
+import { expandStrings, expandString, ExpansionOptions, KitContextVars } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
@@ -36,7 +36,7 @@ import { VariantManager } from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
-import { updateFullFeatureSetForFolder, enableFullFeatureSet, isActiveFolder, showCMakeListsExperiment } from './extension';
+import { updateFullFeatureSet, enableFullFeatureSet, isActiveFolder, showCMakeListsExperiment } from './extension';
 import { CMakeCommunicationMode, ConfigurationReader, UseCMakePresets } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -760,7 +760,7 @@ export class CMakeProject {
         // This project folder can go through various changes while executing this function
         // that could be relevant to the partial/full feature set view.
         // This is a good place for an update.
-        return updateFullFeatureSetForFolder(this.folderName);
+        return updateFullFeatureSet();
     }
 
     /**
@@ -991,7 +991,7 @@ export class CMakeProject {
             if (isCmakeFile) {
                 // CMakeLists.txt change event: its creation or deletion are relevant,
                 // so update full/partial feature set view for this folder.
-                await updateFullFeatureSetForFolder(this.folderName);
+                await updateFullFeatureSet();
                 if (drv && !drv.configOrBuildInProgress()) {
                     if (drv.config.configureOnEdit) {
                         log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
@@ -2667,6 +2667,45 @@ export class CMakeProject {
 
     get onUseCMakePresetsChanged() {
         return this.onUseCMakePresetsChangedEmitter.event;
+    }
+
+    private hasCMakeListsFile: boolean | undefined;
+    async hasCMakeLists(): Promise<boolean> {
+        if (this.hasCMakeListsFile) {
+            return true;
+        }
+
+        const optsVars: KitContextVars = {
+            // sourceDirectory cannot be defined based on any of the below variables.
+            buildKit: '${buildKit}',
+            buildType: '${buildType}',
+            buildKitVendor: '${buildKitVendor}',
+            buildKitTriple: '${buildKitTriple}',
+            buildKitVersion: '${buildKitVersion}',
+            buildKitHostOs: '${buildKitVendor}',
+            buildKitTargetOs: '${buildKitTargetOs}',
+            buildKitTargetArch: '${buildKitTargetArch}',
+            buildKitVersionMajor: '${buildKitVersionMajor}',
+            buildKitVersionMinor: '${buildKitVersionMinor}',
+            generator: '${generator}',
+            userHome: paths.userHome,
+            workspaceFolder: this.workspaceContext.folder.uri.fsPath,
+            workspaceFolderBasename: this.workspaceContext.folder.name,
+            workspaceHash: '${workspaceHash}',
+            workspaceRoot: this.workspaceContext.folder.uri.fsPath,
+            workspaceRootFolderName: this.workspaceContext.folder.name,
+            sourceDir: this.sourceDir
+        };
+
+        const sourceDirectory: string = this.sourceDir;
+        let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
+        if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
+            expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
+        }
+
+        this.hasCMakeListsFile = await fs.exists(expandedSourceDirectory);
+
+        return this.hasCMakeListsFile;
     }
 
 }
