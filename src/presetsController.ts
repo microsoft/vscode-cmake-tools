@@ -83,16 +83,6 @@ export class PresetsController {
             });
         });
 
-        presetsController._sourceDirChangedSub = cmakeProject.workspaceContext.config.onChange('sourceDirectory', async value => {
-            const oldSourceDir = presetsController._sourceDir;
-            presetsController._sourceDir = await expandSourceDir(value);
-
-            if (presetsController._sourceDir !== oldSourceDir) {
-                await presetsController.reapplyPresets();
-                await presetsController.watchPresetsChange();
-            }
-        });
-
         return presetsController;
     }
 
