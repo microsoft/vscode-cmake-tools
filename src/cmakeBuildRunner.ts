@@ -116,8 +116,11 @@ export class CMakeBuildRunner {
             targetTasks = tasks.filter(task =>
                 (task.definition as CMakeTaskDefinition).preset === buildPreset.name);
         } else { // preset not set, filter by targets
-            targetTasks = tasks.filter(task =>
-                (task.definition as CMakeTaskDefinition).targets === targets);
+            targetTasks = tasks.filter(task => {
+                const a: string[] = (task.definition as CMakeTaskDefinition).targets || [];
+                const b: string[] = targets || [];
+                return a.length === b.length && a.every((elem, idx) => elem === b[idx]);
+            });
         }
 
         if (targetTasks.length > 0) {
@@ -135,22 +138,22 @@ export class CMakeBuildRunner {
             }
         }
 
-        // Get only tasks with no targets set (template tasks)
-        const templateTasks = tasks.filter(task =>
+        // Get only tasks with no targets set
+        const noTargetTasks = tasks.filter(task =>
             (task.definition as CMakeTaskDefinition).targets === undefined);
 
-        if (templateTasks.length > 0) {
+        if (noTargetTasks.length > 0) {
             // Only one found - just return it
-            if (templateTasks.length === 1) {
-                return templateTasks[0];
+            if (noTargetTasks.length === 1) {
+                return noTargetTasks[0];
             } else {
                 // More than one - check if there is one marked as default
-                const defaultTemplateTask = templateTasks.filter(task => task.group?.isDefault);
-                if (defaultTemplateTask.length === 1) {
-                    return defaultTemplateTask[0];
+                const defaultNoTargetTasksTask = noTargetTasks.filter(task => task.group?.isDefault);
+                if (defaultNoTargetTasksTask.length === 1) {
+                    return defaultNoTargetTasksTask[0];
                 }
                 // None or more than one mark as default - show quick picker
-                return this._showTaskQuickPick(templateTasks);
+                return this._showTaskQuickPick(noTargetTasks);
             }
         }
 
