@@ -20,7 +20,7 @@ export type FolderProjectMap = { folder: vscode.WorkspaceFolder; projects: CMake
 export class ProjectController implements vscode.Disposable {
     private readonly projectsMap = new Map<string, CMakeProject[]>();
     private readonly sourceDirectorySubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
-    private readonly UseCMakePresetsSubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
+    //private readonly UseCMakePresetsSubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectMap>();
@@ -236,7 +236,7 @@ export class ProjectController implements vscode.Disposable {
         const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
         if (config) {
             this.sourceDirectorySubs.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
-            this.UseCMakePresetsSubs.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
+            //this.UseCMakePresetsSubs.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
         }
         return newProjects;
     }
@@ -309,14 +309,14 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
-    private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string): Promise<void> {
+    /*private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string): Promise<void> {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             for (const project of projects) {
                 await project.setUseCMakePresets(useCMakePresets === "true");
             }
         }
-    }
+    }*/
 
     [Symbol.iterator]() {
         return this.projectsMap.values();
