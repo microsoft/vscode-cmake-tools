@@ -12,11 +12,13 @@ Improvements:
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
+- Update kits documentation. [#2761](https://github.com/microsoft/vscode-cmake-tools/issues/2761) [@jdeaton](https://github.com/jdeaton)
 - Avoid calling build tasks for "Clean", "Install" and "Run Tests" commands when "cmake: buildTask" setting is true. [#2768](https://github.com/microsoft/vscode-cmake-tools/issues/2768)
 - Generate the correct `configurePresets` for Clang or GCC compilers on Windows. [#2733](https://github.com/microsoft/vscode-cmake-tools/issues/2773)
 - CMake Tools does not send `--target=` to cpptools. [#1896](https://github.com/microsoft/vscode-cmake-tools/issues/1896) [#2800](https://github.com/microsoft/vscode-cmake-tools/issues/2800)
 - Fix the build task to return the error code. [#2799](https://github.com/microsoft/vscode-cmake-tools/issues/2799) [@BIKA-C](https://github.com/BIKA-C)
 - Generate correct ClangCL Kits. [#2790](https://github.com/microsoft/vscode-cmake-tools/issues/2790) [#2810](https://github.com/microsoft/vscode-cmake-tools/issues/2810)
+- Cache the version check for the cmake executable. [#2818](https://github.com/microsoft/vscode-cmake-tools/issues/2818)
 - ctest -N does not work with custom cmake path from preset. [#2842](https://github.com/microsoft/vscode-cmake-tools/issues/2842)
 - Resolve variables in args before passing them to the terminal. [#2846](https://github.com/microsoft/vscode-cmake-tools/issues/2846)
 
