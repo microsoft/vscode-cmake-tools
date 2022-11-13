@@ -238,8 +238,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             targets = ['clean'];
         } else if (!shouldIgnore && !targetIsDefined && !cmakeProject.useCMakePresets) {
             const cmakeDriver: CMakeDriver | undefined = (await cmakeProject?.getCMakeDriverInstance()) || undefined;
-            const requestedTargets = cmakeDriver?.getRequestedTargets() || undefined;
-            if (requestedTargets) {
+            const requestedTargets = cmakeDriver?.getRequestedTargets() || [];
+            if (requestedTargets.length > 0) {
                 targets = requestedTargets;
             } else {
                 targets = [await cmakeProject.buildTargetName() || await cmakeProject.allTargetName];
