@@ -210,18 +210,6 @@ export class ExtensionManager implements vscode.Disposable {
                 this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
             }
             await this.initActiveProject();
-            /*if (activeProject) {..
-                const folder: vscode.WorkspaceFolder = activeProject.workspaceFolder;
-                // ELLA update the active status bar
-                // this.onUseCMakePresetsChangedSub = activeProject?.onUseCMakePresetsChanged(useCMakePresets => this.statusBar.useCMakePresets(useCMakePresets));
-                this.codeModelUpdateSubs.set(folder.name, [
-                    activeProject.onCodeModelChanged(FireLate, () => this.updateCodeModel(activeProject)),
-                    activeProject.onTargetNameChanged(FireLate, () => this.updateCodeModel(activeProject)),
-                    activeProject.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(activeProject)),
-                    activeProject.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(activeProject))
-                ]);
-                rollbar.takePromise('Post-folder-open', { folder: folder.name }, this.postWorkspaceOpen(activeProject));
-            }*/
         }
         const isFullyActivated: boolean = await this.workspaceHasAtLeastOneProject();
         await enableFullFeatureSet(isFullyActivated);
@@ -243,6 +231,10 @@ export class ExtensionManager implements vscode.Disposable {
 
     public showStatusBar(fullFeatureSet: boolean) {
         this.statusBar.setVisible(fullFeatureSet);
+    }
+
+    public getStatusBar(): StatusBar {
+        return this.statusBar;
     }
 
     public isActiveFolder(folder: vscode.WorkspaceFolder): boolean {
@@ -1863,5 +1855,11 @@ export async function deactivate() {
     }
     if (taskProvider) {
         taskProvider.dispose();
+    }
+}
+
+export function getStatusBar(): StatusBar | undefined {
+    if (extensionManager) {
+        return extensionManager.getStatusBar();
     }
 }

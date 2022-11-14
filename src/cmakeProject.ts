@@ -1051,53 +1051,60 @@ export class CMakeProject {
             }
         }));
 
-        const config = this.workspaceContext.config;
         this.kitsController = await KitsController.init(this);
         this.presetsController = await PresetsController.init(this, this.kitsController);
-        const useCMakePresetsChangedListener = async () => {
-            const usingCMakePresets = this.useCMakePresets;
-            if (usingCMakePresets !== this.wasUsingCMakePresets) {
-                this.wasUsingCMakePresets = usingCMakePresets;
-                await setContextValue('useCMakePresets', usingCMakePresets);
-                await this.setUseCMakePresets(usingCMakePresets);
-                await this.initializeKitOrPresets();
 
-                if (usingCMakePresets) {
-                    const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
-                        const fileName = path.basename(document.uri.fsPath);
-                        if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
-                            if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
-                                // setTextDocumentLanguage will trigger onDidOpenTextDocument
-                                void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
-                            } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
-                                void vscode.languages.setTextDocumentLanguage(document, 'json');
-                            }
-                        }
-                    };
+        await this.doUseCMakePresetsChange();
 
-                    this.onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
-                        setPresetsFileLanguageMode(document)
-                    );
-
-                    vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
-                } else {
-                    if (this.onDidOpenTextDocumentListener) {
-                        this.onDidOpenTextDocumentListener.dispose();
-                        this.onDidOpenTextDocumentListener = undefined;
-                    }
-                }
-
-                this.onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
-            }
-        };
-
-        await useCMakePresetsChangedListener();
-
-        this.disposables.push(config.onChange('useCMakePresets', useCMakePresetsChangedListener));
-        this.disposables.push(this.onPresetsChanged(useCMakePresetsChangedListener));
-        this.disposables.push(this.onUserPresetsChanged(useCMakePresetsChangedListener));
+        this.disposables.push(this.onPresetsChanged(this.doUseCMakePresetsChange));
+        this.disposables.push(this.onUserPresetsChanged(this.doUseCMakePresetsChange));
     }
 
+    public async hasPresetsFiles(): Promise<boolean> {
+        if (await fs.exists(this.presetsController.presetsPath) || await fs.exists(this.presetsController.userPresetsPath)) {
+            return true;
+        }
+        return false;
+    }
+    async doUseCMakePresetsChange(useCMakePresets?: boolean) {
+        if (useCMakePresets !== undefined) {
+            this._useCMakePresets = useCMakePresets;
+        }
+        const usingCMakePresets = this.useCMakePresets;
+        if (usingCMakePresets !== this.wasUsingCMakePresets) {
+            this.wasUsingCMakePresets = usingCMakePresets;
+            await setContextValue('useCMakePresets', usingCMakePresets);
+            await this.setUseCMakePresets(usingCMakePresets);
+            await this.initializeKitOrPresets();
+            const config = this.workspaceContext.config;
+            if (usingCMakePresets) {
+                const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
+                    const fileName = path.basename(document.uri.fsPath);
+                    if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+                        if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
+                            // setTextDocumentLanguage will trigger onDidOpenTextDocument
+                            void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
+                        } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
+                            void vscode.languages.setTextDocumentLanguage(document, 'json');
+                        }
+                    }
+                };
+
+                this.onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
+                    setPresetsFileLanguageMode(document)
+                );
+
+                vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
+            } else {
+                if (this.onDidOpenTextDocumentListener) {
+                    this.onDidOpenTextDocumentListener.dispose();
+                    this.onDidOpenTextDocumentListener = undefined;
+                }
+            }
+
+            this.onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
+        }
+    }
     /**
      * Call configurePresets, buildPresets, or testPresets to get the latest presets when the event is fired.
      */

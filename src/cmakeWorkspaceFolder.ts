@@ -8,10 +8,11 @@ import * as util from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
-import { ConfigurationReader } from './config';
+import { ConfigurationReader, UseCMakePresets } from './config';
 import { CMakeDriver } from './drivers/cmakeDriver';
 import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
+import { getStatusBar } from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -20,7 +21,7 @@ export type FolderProjectMap = { folder: vscode.WorkspaceFolder; projects: CMake
 export class ProjectController implements vscode.Disposable {
     private readonly projectsMap = new Map<string, CMakeProject[]>();
     private readonly sourceDirectorySubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
-    //private readonly UseCMakePresetsSubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
+    private readonly useCMakePresetsSubs = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectMap>();
@@ -236,7 +237,7 @@ export class ProjectController implements vscode.Disposable {
         const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
         if (config) {
             this.sourceDirectorySubs.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
-            //this.UseCMakePresetsSubs.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
+            this.useCMakePresetsSubs.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
         }
         return newProjects;
     }
@@ -264,6 +265,8 @@ export class ProjectController implements vscode.Disposable {
         // eslint-disable-next-line no-unused-expressions
         this.sourceDirectorySubs.get(folder)?.dispose();
         this.sourceDirectorySubs.delete(folder);
+        this.useCMakePresetsSubs.get(folder)?.dispose();
+        this.useCMakePresetsSubs.delete(folder);
     }
 
     private getConfigurationReader(folder: vscode.WorkspaceFolder): ConfigurationReader | undefined {
@@ -309,14 +312,29 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
-    /*private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string): Promise<void> {
+    private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string) {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             for (const project of projects) {
-                await project.setUseCMakePresets(useCMakePresets === "true");
+                let use: boolean = false;
+                switch (useCMakePresets) {
+                    case 'always':
+                        use = true;
+                        break;
+                    case 'never':
+                        use = false;
+                        break;
+                    default:
+                        use = await project.hasPresetsFiles();
+                }
+                await project.doUseCMakePresetsChange(use);
             }
         }
-    }*/
+        if (this.activeProject) {
+            const use: boolean = this.activeProject.useCMakePresets;
+            getStatusBar()?.useCMakePresets(use);
+        }
+    }
 
     [Symbol.iterator]() {
         return this.projectsMap.values();
