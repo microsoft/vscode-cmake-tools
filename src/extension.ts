@@ -150,7 +150,7 @@ export class ExtensionManager implements vscode.Disposable {
                 await util.setContextValue(multiRootModeKey, this.projectController.isMultiProject);
                 // Update the full/partial view of the workspace by verifying if after the folder removal
                 // it still has at least one CMake project.
-                await enableFullFeatureSet(await this.workspaceHasAtLeastOneProject()); 
+                await enableFullFeatureSet(await this.workspaceHasAtLeastOneProject());
             }
 
             this.onDidChangeActiveTextEditorSub.dispose();
