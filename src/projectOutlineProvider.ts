@@ -573,12 +573,12 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         }
     }
 
-    setActiveFolder(ws: vscode.WorkspaceFolder | undefined): void {
-        if (!ws) {
+    setActiveProject(folderPath: string | undefined): void {
+        if (!folderPath) {
             return;
         }
         const current_node = this._selected_workspace;
-        const new_node = this._folders.get(ws.uri.fsPath);
+        const new_node = this._folders.get(folderPath);
         if (current_node) {
             current_node.setActive(false);
             this._changeEvent.fire(current_node);

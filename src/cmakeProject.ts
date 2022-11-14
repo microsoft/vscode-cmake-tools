@@ -153,7 +153,7 @@ export class CMakeProject {
      * The name of the folder for this CMakeProject instance
      */
     get folderName(): string {
-        return this.isMultiProjectFolder ? path.basename(this.sourceDir) : this.workspaceContext.folder.name;
+        return path.basename(this.folderPath);
     }
 
     /**
@@ -641,7 +641,7 @@ export class CMakeProject {
                 const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing || this.workspaceContext.config.ignoreCMakeListsMissing;
                 telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
 
-                if (!ignoreCMakeListsMissing) {
+                if (!ignoreCMakeListsMissing && !this.isMultiProjectFolder) {
                     const quickStart = localize('quickstart.cmake.project', "Create");
                     const changeSourceDirectory = localize('edit.setting', "Locate");
                     const ignoreActivation = localize('ignore.activation', "Don't show again");
@@ -715,7 +715,7 @@ export class CMakeProject {
                         }
                         if (selectedFile) {
                             const newSourceDirectory = path.dirname(selectedFile);
-                            void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", newSourceDirectory);
+                            void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", [newSourceDirectory]);
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -927,7 +927,6 @@ export class CMakeProject {
      */
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
-        // ELLA
         this._sourceDir = await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath));
 
         // Start up the variant manager
@@ -1010,7 +1009,7 @@ export class CMakeProject {
             // For multi-root, the "onDidSaveTextDocument" will be received once for each project folder.
             // To avoid misleading telemetry, consider the notification only for the active folder.
             // There is always one active folder in a workspace and never more than one.
-            if (isActiveFolder(this.workspaceFolder) && util.isFileInsideFolder(editor, this.folderPath)) { // ELLA
+            if (isActiveFolder(this.workspaceFolder) && util.isFileInsideFolder(editor, this.folderPath)) {
                 // "outside" evaluates whether the modified cmake file belongs to the active folder.
                 // Currently, we don't differentiate between outside active folder but inside any of the other
                 // workspace folders versus outside any folder referenced by the current workspace.
@@ -1295,11 +1294,11 @@ export class CMakeProject {
         const dirContext = DirectoryContext.createForDirectory(folder, new StateManager(ext, folder));
         const sourceDirectory: string[] = dirContext.config.sourceDirectory;
         const isMultiProjectFolder: boolean = (sourceDirectory.length === 1) ? false : true;
-        const cmakeProjects: CMakeProject[] = [];
+        const projects: CMakeProject[] = [];
         for (const source of sourceDirectory) {
-            cmakeProjects.push(await CMakeProject.create(ext, dirContext, source, isMultiProjectFolder));
+            projects.push(await CMakeProject.create(ext, dirContext, source, isMultiProjectFolder));
         }
-        return cmakeProjects;
+        return projects;
     }
 
     private _activeKit: Kit | null = null;

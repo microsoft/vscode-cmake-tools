@@ -853,8 +853,8 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
 }
 
 export function isFileInsideFolder(openEditor: vscode.TextDocument, folderPath: string): boolean {
-    const parent = lightNormalizePath(folderPath);
-    const file = lightNormalizePath(openEditor.uri.fsPath);
+    const parent = platformNormalizePath(folderPath);
+    const file = platformNormalizePath(openEditor.uri.fsPath);
     return file.startsWith(parent);
 }
 
