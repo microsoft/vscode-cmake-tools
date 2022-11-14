@@ -2416,8 +2416,9 @@ export class CMakeProject {
         }
 
         let launchArgs = '';
-        if (userConfig && userConfig.args) {
-            launchArgs = userConfig.args.join(" ");
+        if (userConfig?.args?.length !== undefined && userConfig.args.length > 0) {
+            const args = await expandStrings(userConfig.args, await this.getExpansionOptions());
+            launchArgs = args.join(" ");
         }
 
         terminal.sendText(`${executablePath} ${launchArgs}`);
