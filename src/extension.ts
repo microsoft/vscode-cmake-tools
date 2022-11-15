@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 import * as api from 'vscode-cmake-tools';
+import { URI } from 'vscode-uri';
 
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
@@ -235,10 +236,6 @@ export class ExtensionManager implements vscode.Disposable {
 
     public getStatusBar(): StatusBar {
         return this.statusBar;
-    }
-
-    public isActiveFolder(folder: vscode.WorkspaceFolder): boolean {
-        return this.activeCMakeWorkspaceFolder() === folder;
     }
 
     /**
@@ -621,7 +618,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.projectOutlineProvider.setActiveProject(activeProject.folderPath);
             this.setupSubscriptions();
-            this.onActiveProjectChangedEmitter.fire(activeProject.workspaceFolder.uri);
+            this.onActiveProjectChangedEmitter.fire(URI.file(activeProject.folderPath));
         }
     }
 
@@ -1811,10 +1808,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     await util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
     extensionManager?.showStatusBar(fullFeatureSet);
-}
-
-export function isActiveFolder(folder: vscode.WorkspaceFolder): boolean | undefined {
-    return extensionManager?.isActiveFolder(folder);
 }
 
 export function getActiveProject(): CMakeProject | undefined {

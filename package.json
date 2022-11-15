@@ -2126,6 +2126,7 @@
     "vsce": "^2.7.0",
     "vscode-cmake-tools": "^1.0.0",
     "vscode-nls-dev": "^3.3.2",
+    "vscode-uri": "3.0.6",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0"
   },
