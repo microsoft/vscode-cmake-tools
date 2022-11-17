@@ -645,7 +645,7 @@
         },
         {
           "command": "cmake.configureAll",
-          "when": "cmake:multiRoot"
+          "when": "cmake:multiProject"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -657,7 +657,7 @@
         },
         {
           "command": "cmake.buildAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -665,7 +665,7 @@
         },
         {
           "command": "cmake.installAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -681,7 +681,7 @@
         },
         {
           "command": "cmake.setVariantAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet && !useCMakePresets"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -692,7 +692,7 @@
         },
         {
           "command": "cmake.cleanConfigureAll",
-          "when": "cmake:multiRoot"
+          "when": "cmake:multiProject"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -700,7 +700,7 @@
         },
         {
           "command": "cmake.cleanAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -708,7 +708,7 @@
         },
         {
           "command": "cmake.cleanRebuildAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.editCacheUI",
@@ -720,7 +720,7 @@
         },
         {
           "command": "cmake.ctestAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -732,7 +732,7 @@
         },
         {
           "command": "cmake.debugTargetAll",
-          "when": "cmake:multiRoot && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.launchTarget",
@@ -740,7 +740,7 @@
         },
         {
           "command": "cmake.launchTargetAll",
-          "when": "cmake:multiRoot && !cmake:hideLaunchCommand && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && !cmake:hideLaunchCommand && cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -752,7 +752,7 @@
         },
         {
           "command": "cmake.stopAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.outline.configure",

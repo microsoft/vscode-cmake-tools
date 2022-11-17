@@ -105,16 +105,13 @@ export class ProjectController implements vscode.Disposable {
         return this.activeProject;
     }
 
-    get numOfRoots(): number {
+    // Number of workspace folders
+    get numOfWorkspaceFolders(): number {
         return this.folderToProjectsMap.size;
     }
 
     get numOfProjects(): number {
         return this.getAllCMakeProjects().length;
-    }
-
-    get isMultiRoot(): boolean {
-        return this.numOfRoots > 1;
     }
 
     get isMultiProject(): boolean {

@@ -52,7 +52,7 @@ let taskProvider: vscode.Disposable;
 
 const log = logging.createLogger('extension');
 
-const multiRootModeKey = 'cmake:multiRoot';
+const multiRootModeKey = 'cmake:multiProject';
 const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
 const hideDebugCommandKey = 'cmake:hideDebugCommand';
 const hideBuildCommandKey = 'cmake:hideBuildCommand';
@@ -102,23 +102,23 @@ export class ExtensionManager implements vscode.Disposable {
             }
         });
 
+        this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
+
         this.projectController.onAfterAddFolder(async (folderProjectMap: FolderProjectType) => {
             const folder: vscode.WorkspaceFolder = folderProjectMap.folder;
-            console.assert(this.projectController.numOfRoots === vscode.workspace.workspaceFolders?.length);
-            if (this.projectController.numOfRoots === 1) {
+            console.assert(this.projectController.numOfWorkspaceFolders === vscode.workspace.workspaceFolders?.length);
+            if (this.projectController.numOfWorkspaceFolders === 1) {
                 // First folder added
                 await this.updateActiveProject(folder);
             } else {
-                // Call initActiveFolder instead of just setupSubscriptions, since the active editor/file may not
-                // be in currently opened workspaces, and may be in the newly opened workspace.
                 await this.initActiveProject();
-                await util.setContextValue(multiRootModeKey, this.projectController.isMultiProject);
-                // sub go text edit change event in multiroot mode
-                if (this.workspaceConfig.autoSelectActiveFolder) {
-                    this.onDidChangeActiveTextEditorSub.dispose();
-                    this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
-                }
             }
+            await util.setContextValue(multiRootModeKey, this.projectController.isMultiProject);
+            // sub go text edit change event in multiroot mode
+            /*if (this.workspaceConfig.autoSelectActiveFolder) {
+                this.onDidChangeActiveTextEditorSub.dispose();
+                this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e, autoSelectActiveFolder, isMultiProject), this);
+            }*/
             this.projectOutlineProvider.addFolder(folder);
             if (this.codeModelUpdateSubs.get(folder.uri.fsPath)) {
                 this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
@@ -136,8 +136,8 @@ export class ExtensionManager implements vscode.Disposable {
         });
 
         this.projectController.onAfterRemoveFolder(async folder => {
-            console.assert((vscode.workspace.workspaceFolders === undefined && this.projectController.numOfRoots === 0) ||
-                (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this.projectController.numOfRoots));
+            console.assert((vscode.workspace.workspaceFolders === undefined && this.projectController.numOfWorkspaceFolders === 0) ||
+                (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this.projectController.numOfWorkspaceFolders));
             this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
             this.codeModelUpdateSubs.delete(folder.uri.fsPath);
             if (!vscode.workspace.workspaceFolders?.length) {
@@ -154,24 +154,24 @@ export class ExtensionManager implements vscode.Disposable {
                 await enableFullFeatureSet(await this.workspaceHasAtLeastOneProject());
             }
 
-            this.onDidChangeActiveTextEditorSub.dispose();
-            if (this.projectController.isMultiRoot && this.workspaceConfig.autoSelectActiveFolder) {
+            /*this.onDidChangeActiveTextEditorSub.dispose();
+            if (this.projectController.isMultiProject && this.workspaceConfig.autoSelectActiveFolder) {
                 this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
             } else {
                 this.onDidChangeActiveTextEditorSub = new DummyDisposable();
-            }
+            }*/
             this.projectOutlineProvider.removeFolder(folder);
         });
 
         this.workspaceConfig.onChange('autoSelectActiveFolder', v => {
             if (this.projectController.isMultiProject) {
                 telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
-                this.onDidChangeActiveTextEditorSub.dispose();
+                /*this.onDidChangeActiveTextEditorSub.dispose();
                 if (v) {
                     this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
                 } else {
                     this.onDidChangeActiveTextEditorSub = new DummyDisposable();
-                }
+                }*/
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
@@ -207,17 +207,17 @@ export class ExtensionManager implements vscode.Disposable {
             this.projectOutlineProvider.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
-                this.onDidChangeActiveTextEditorSub.dispose();
-                this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
+                //this.onDidChangeActiveTextEditorSub.dispose();
+                //this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
             }
             await this.initActiveProject();
         }
         const isFullyActivated: boolean = await this.workspaceHasAtLeastOneProject();
         await enableFullFeatureSet(isFullyActivated);
 
+        // Keep the name of the telemetry property "isMultiRoot" as before
         const telemetryProperties: telemetry.Properties = {
-            isMultiRoot: `${this.projectController.isMultiRoot}`,
-            isMultiProject: `${isMultiProject}`,
+            isMultiRoot: `${isMultiProject}`,
             isFullyActivated: `${isFullyActivated}`
         };
         if (isMultiProject) {
@@ -536,7 +536,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private async onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
-        if (vscode.workspace.workspaceFolders) {
+        if (this.workspaceConfig.autoSelectActiveFolder && this.projectController.isMultiProject && vscode.workspace.workspaceFolders) {
             let folder: vscode.WorkspaceFolder | undefined;
             if (editor) {
                 folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
@@ -610,7 +610,7 @@ export class ExtensionManager implements vscode.Disposable {
     private async postUpdateActiveProject() {
         const activeProject: CMakeProject | undefined = this.getActiveProject();
         if (activeProject) {
-            this.statusBar.setActiveProjectName(activeProject?.folderName);
+            this.statusBar.setActiveProjectName(activeProject?.folderName, this.projectController.isMultiProject);
             const useCMakePresets = activeProject?.useCMakePresets || false;
             this.statusBar.useCMakePresets(useCMakePresets);
             if (!useCMakePresets) {
@@ -713,9 +713,9 @@ export class ExtensionManager implements vscode.Disposable {
                 }
                 // Inform cpptools that custom CppConfigurationProvider will be able to service the current workspace.
                 this.ensureCppToolsProviderRegistered();
-                if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this.projectController.numOfRoots) {
+                if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this.projectController.numOfWorkspaceFolders) {
                     ++this.cpptoolsNumFoldersReady;
-                    if (this.cpptoolsNumFoldersReady === this.projectController.numOfRoots) {
+                    if (this.cpptoolsNumFoldersReady === this.projectController.numOfWorkspaceFolders) {
                         // Notify cpptools that the provider is ready to provide IntelliSense configurations.
                         cpptools.notifyReady(this.configProvider);
                         this.configProvider.markAsReady();
@@ -1194,7 +1194,7 @@ export class ExtensionManager implements vscode.Disposable {
             };
             return item;
         });
-        const selection = await vscode.window.showQuickPick(items);
+        const selection = await vscode.window.showQuickPick(items, { placeHolder: localize('select.the.active.project', 'Select the active project') });
         if (selection) {
             console.assert(selection.cmakeProject.folderName, 'Folder not found in folder controller.');
             return selection.cmakeProject;
