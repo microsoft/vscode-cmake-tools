@@ -14,6 +14,8 @@ import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
 import { getStatusBar } from './extension';
 import * as telemetry from './telemetry';
+import { StatsBase } from 'fs';
+import { StatusBar } from './status';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -244,6 +246,7 @@ export class ProjectController implements vscode.Disposable {
         // eslint-disable-next-line no-unused-expressions
         this.sourceDirectorySub.get(folder)?.dispose();
         this.sourceDirectorySub.delete(folder);
+        // eslint-disable-next-line no-unused-expressions
         this.useCMakePresetsSub.get(folder)?.dispose();
         this.useCMakePresetsSub.delete(folder);
     }
@@ -291,7 +294,7 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
-    private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string) {
+    private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string): Promise<void> {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             for (const project of projects) {
@@ -311,7 +314,10 @@ export class ProjectController implements vscode.Disposable {
         }
         if (this.activeProject) {
             const use: boolean = this.activeProject.useCMakePresets;
-            getStatusBar()?.useCMakePresets(use);
+            const statusBar: StatusBar | undefined = getStatusBar();
+            if (statusBar) {
+                statusBar.useCMakePresets(use);
+            }
         }
     }
 

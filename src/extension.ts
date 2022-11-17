@@ -114,11 +114,6 @@ export class ExtensionManager implements vscode.Disposable {
                 await this.initActiveProject();
             }
             await util.setContextValue(multiRootModeKey, this.projectController.isMultiProject);
-            // sub go text edit change event in multiroot mode
-            /*if (this.workspaceConfig.autoSelectActiveFolder) {
-                this.onDidChangeActiveTextEditorSub.dispose();
-                this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e, autoSelectActiveFolder, isMultiProject), this);
-            }*/
             this.projectOutlineProvider.addFolder(folder);
             if (this.codeModelUpdateSubs.get(folder.uri.fsPath)) {
                 this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
@@ -154,24 +149,12 @@ export class ExtensionManager implements vscode.Disposable {
                 await enableFullFeatureSet(await this.workspaceHasAtLeastOneProject());
             }
 
-            /*this.onDidChangeActiveTextEditorSub.dispose();
-            if (this.projectController.isMultiProject && this.workspaceConfig.autoSelectActiveFolder) {
-                this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
-            } else {
-                this.onDidChangeActiveTextEditorSub = new DummyDisposable();
-            }*/
             this.projectOutlineProvider.removeFolder(folder);
         });
 
         this.workspaceConfig.onChange('autoSelectActiveFolder', v => {
             if (this.projectController.isMultiProject) {
                 telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
-                /*this.onDidChangeActiveTextEditorSub.dispose();
-                if (v) {
-                    this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
-                } else {
-                    this.onDidChangeActiveTextEditorSub = new DummyDisposable();
-                }*/
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
@@ -207,8 +190,6 @@ export class ExtensionManager implements vscode.Disposable {
             this.projectOutlineProvider.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
-                //this.onDidChangeActiveTextEditorSub.dispose();
-                //this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
             }
             await this.initActiveProject();
         }
