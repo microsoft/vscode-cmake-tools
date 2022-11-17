@@ -14,7 +14,6 @@ import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
 import { getStatusBar } from './extension';
 import * as telemetry from './telemetry';
-import { StatsBase } from 'fs';
 import { StatusBar } from './status';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
