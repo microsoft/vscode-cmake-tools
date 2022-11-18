@@ -9,7 +9,8 @@ import {
     CMakePreconditionProblemSolver,
     ExecutableTarget,
     RichTarget,
-    Target
+    Target,
+    NoGeneratorError
 } from '@cmt/drivers/cmakeDriver';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
@@ -25,10 +26,6 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cms-driver');
-
-export class NoGeneratorError extends Error {
-    message: string = localize('no.usable.generator.found', 'No usable generator found.');
-}
 
 export class CMakeServerDriver extends CMakeDriver {
 

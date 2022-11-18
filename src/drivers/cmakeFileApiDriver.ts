@@ -17,7 +17,8 @@ import {
     CMakePreconditionProblemSolver,
     ExecutableTarget,
     RichTarget,
-    Target
+    Target,
+    NoGeneratorError
 } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -28,9 +29,6 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
-
-import { NoGeneratorError } from './cmakeServerDriver';
-
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

@@ -38,6 +38,10 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('driver');
 
+export class NoGeneratorError extends Error {
+    message: string = localize('no.usable.generator.found', 'No usable generator found.');
+}
+
 export enum CMakePreconditionProblems {
     ConfigureIsAlreadyRunning,
     BuildIsAlreadyRunning,
