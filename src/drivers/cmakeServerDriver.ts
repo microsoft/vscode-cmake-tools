@@ -3,15 +3,19 @@ import { InputFileSet } from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cache from '@cmt/cache';
-import * as cms from '@cmt/drivers/cmakeServerClient';
 import {
     CMakeDriver,
     CMakePreconditionProblemSolver,
+    CMakeServerClient,
     ExecutableTarget,
+    GlobalSettingsContent,
+    ProgressMessage,
     RichTarget,
+    ServerError,
+    ServerCodeModelContent,
     Target,
     NoGeneratorError
-} from '@cmt/drivers/cmakeDriver';
+} from '@cmt/drivers/drivers';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
@@ -43,13 +47,13 @@ export class CMakeServerDriver extends CMakeDriver {
         this.config.onChange('configureEnvironment', () => this._restartClient());
     }
 
-    private _cmsClient: Promise<cms.CMakeServerClient | null> = Promise.resolve(null);
+    private _cmsClient: Promise<CMakeServerClient | null> = Promise.resolve(null);
     private _clientChangeInProgress: Promise<void> = Promise.resolve();
-    private _globalSettings!: cms.GlobalSettingsContent;
+    private _globalSettings!: GlobalSettingsContent;
     private _cacheEntries = new Map<string, cache.CacheEntry>();
     private _cmakeInputFileSet = InputFileSet.createEmpty();
 
-    private readonly _progressEmitter = new vscode.EventEmitter<cms.ProgressMessage>();
+    private readonly _progressEmitter = new vscode.EventEmitter<ProgressMessage>();
     get onProgress() {
         return this._progressEmitter.event;
     }
@@ -61,7 +65,7 @@ export class CMakeServerDriver extends CMakeDriver {
     private _prevConfigureEnv = 'null';
 
     private codeModel: CodeModelContent | null = null;
-    private convertServerCodeModel(serverCodeModel: null | cms.ServerCodeModelContent): CodeModelContent | null {
+    private convertServerCodeModel(serverCodeModel: null | ServerCodeModelContent): CodeModelContent | null {
         if (serverCodeModel) {
             const codeModel: CodeModelContent = { configurations: [] };
             for (const config of serverCodeModel.configurations) {
@@ -128,7 +132,7 @@ export class CMakeServerDriver extends CMakeDriver {
         }
     }
 
-    private async getClient(): Promise<cms.CMakeServerClient> {
+    private async getClient(): Promise<CMakeServerClient> {
         if (!(await this._cmsClient)) {
             this._cmsClient = this._startNewClient();
         }
@@ -175,7 +179,7 @@ export class CMakeServerDriver extends CMakeDriver {
                 await cl.configure({ cacheArguments: args });
                 await cl.compute();
             } catch (e) {
-                if (e instanceof cms.ServerError) {
+                if (e instanceof ServerError) {
                     log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', errorToString(e)));
                     return 1;
                 } else {
@@ -362,7 +366,7 @@ export class CMakeServerDriver extends CMakeDriver {
         this._globalSettings = await client.getGlobalSettings();
     }
 
-    private async _doRestartClient(): Promise<cms.CMakeServerClient> {
+    private async _doRestartClient(): Promise<CMakeServerClient> {
         const old_client = await this._cmsClient;
         if (old_client) {
             await old_client.shutdownAsync();
@@ -375,7 +379,7 @@ export class CMakeServerDriver extends CMakeDriver {
             throw new NoGeneratorError();
         }
 
-        return cms.CMakeServerClient.start({
+        return CMakeServerClient.start({
             tmpdir: path.join(this.workspaceFolder!, '.vscode'),
             binaryDir: this.binaryDir,
             sourceDir: this.sourceDir,
@@ -414,7 +418,7 @@ export class CMakeServerDriver extends CMakeDriver {
         await this._restartClient();
     }
 
-    get codeModelContent(): cms.ServerCodeModelContent | null {
+    get codeModelContent(): ServerCodeModelContent | null {
         return null;
     }
 

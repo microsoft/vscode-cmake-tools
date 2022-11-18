@@ -1,6 +1,3 @@
-/**
- * Root of the extension
- */
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
 import { CompilationDatabase } from '@cmt/compilationDatabase';
@@ -15,16 +12,22 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as proc from '@cmt/proc';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
-import { BadHomeDirectoryError } from '@cmt/drivers/cmakeServerClient';
-import { CMakeServerDriver } from '@cmt/drivers/cmakeServerDriver';
+import {
+    BadHomeDirectoryError,
+    CMakeDriver,
+    CMakeFileApiDriver,
+    CMakeLegacyDriver,
+    CMakePreconditionProblems,
+    CMakeServerDriver,
+    ExecutableTarget,
+    NoGeneratorError
+} from '@cmt/drivers/drivers';
 import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
-import { CMakeDriver, CMakePreconditionProblems, ExecutableTarget, NoGeneratorError } from '@cmt/drivers/cmakeDriver';
 import { expandStrings, expandString, ExpansionOptions, KitContextVars } from './expand';
 import { CMakeGenerator, Kit } from './kit';
-import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import * as logging from './logging';
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
@@ -33,7 +36,6 @@ import rollbar from './rollbar';
 import * as telemetry from './telemetry';
 import { setContextValue } from './util';
 import { VariantManager } from './variant';
-import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
 import { updateFullFeatureSet, enableFullFeatureSet, showCMakeListsExperiment } from './extension';

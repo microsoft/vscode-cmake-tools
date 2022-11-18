@@ -21,7 +21,7 @@ import * as path from 'path';
 import * as nls from 'vscode-nls';
 import rollbar from '@cmt/rollbar';
 import { removeEmpty } from '@cmt/util';
-import { RichTarget, Target } from '@cmt/drivers/cmakeDriver';
+import { RichTarget, Target } from '@cmt/drivers/drivers';
 
 export interface ApiVersion {
     major: number;

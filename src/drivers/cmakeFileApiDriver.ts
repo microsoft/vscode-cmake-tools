@@ -9,17 +9,15 @@ import {
     loadExtCodeModelContent,
     loadIndexFile,
     loadToolchains,
-    Index
-} from '@cmt/drivers/cmakeFileApi';
-import * as codeModel from '@cmt/drivers/codeModel';
-import {
     CMakeDriver,
     CMakePreconditionProblemSolver,
     ExecutableTarget,
+    Index,
     RichTarget,
     Target,
     NoGeneratorError
-} from '@cmt/drivers/cmakeDriver';
+} from '@cmt/drivers/drivers';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
