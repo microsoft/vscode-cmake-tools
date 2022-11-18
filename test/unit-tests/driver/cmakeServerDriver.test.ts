@@ -1,14 +1,12 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
-import { CMakeServerDriver } from '@cmt/drivers/cmakeServerDriver';
-//import { CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import { CMakeServerDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/drivers';
 import { CMakeGenerator, Kit } from '@cmt/kit';
-
 import { makeCodeModelDriverTestsuite } from './driver-codemodel-tests';
 import { makeDriverTestsuite } from './driver-test';
 
-async function cmakeServerDriverFactory(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: any, preferredGenerators: CMakeGenerator[]) {
-    const d = await CMakeServerDriver.create(cmake, config, workspaceFolder || "", false, kit, null, null, null, workspaceFolder, preconditionHandler, preferredGenerators);
+async function cmakeServerDriverFactory(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) {
+    const d: CMakeServerDriver = await CMakeServerDriver.create(cmake, config, workspaceFolder || "", false, kit, null, null, null, workspaceFolder, preconditionHandler, preferredGenerators);
     return d;
 }
 
