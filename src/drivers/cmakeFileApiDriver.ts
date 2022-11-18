@@ -9,16 +9,15 @@ import {
     loadExtCodeModelContent,
     loadIndexFile,
     loadToolchains,
-    Index
-} from '@cmt/drivers/cmakeFileApi';
-import * as codeModel from '@cmt/drivers/codeModel';
-import {
     CMakeDriver,
     CMakePreconditionProblemSolver,
     ExecutableTarget,
+    Index,
+    NoGeneratorError,
     RichTarget,
     Target
-} from '@cmt/drivers/cmakeDriver';
+} from '@cmt/drivers/drivers';
+import * as codeModel from '@cmt/drivers/codeModel';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -28,8 +27,6 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
-
-import { NoGeneratorError } from './cmakeServerDriver';
 
 import * as nls from 'vscode-nls';
 

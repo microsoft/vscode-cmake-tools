@@ -9,7 +9,7 @@ import CMakeProject from '@cmt/cmakeProject';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
 import { ConfigurationReader } from './config';
-import { CMakeDriver } from './drivers/cmakeDriver';
+import { CMakeDriver } from './drivers/drivers';
 import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
 import { getStatusBar } from './extension';

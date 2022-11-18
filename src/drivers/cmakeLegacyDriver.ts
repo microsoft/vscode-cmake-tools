@@ -7,7 +7,7 @@ import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as vscode from 'vscode';
 
 import { CMakeCache, CacheEntry } from '@cmt/cache';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/drivers';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
