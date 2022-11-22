@@ -75,18 +75,23 @@ suite('Build using Kits and Variants', () => {
     }).timeout(100000);
 
     test('Configure and Build', async () => {
-        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
-        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        //expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        //expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
+        expect(await cmakeProject.build()).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(100000);
 
     test('Configure and Build run target', async () => {
-        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        //expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
 
-        await vscode.commands.executeCommand('cmake.setDefaultTarget', undefined, 'runTestTarget');
-        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        //await vscode.commands.executeCommand('cmake.setDefaultTarget', undefined, 'runTestTarget');
+        await cmakeProject.setDefaultTarget('runTestTarget');
+        //expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        expect(await cmakeProject.build()).to.be.eq(0);
 
         const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
