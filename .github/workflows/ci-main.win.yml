@@ -39,23 +39,23 @@ jobs:
       - name: Delete NOTICE.txt
         run: del ${{ github.workspace }}/NOTICE.txt
 
-      - name: Run backend tests
-        run: yarn backendTests
+      #- name: Run backend tests
+      #  run: yarn backendTests
 
-      - name: Run smoke tests
-        run: yarn smokeTests
+      #- name: Run smoke tests
+      #  run: yarn smokeTests
 
-      - name: Run unit tests
-        run: yarn unitTests
+      #- name: Run unit tests
+      #  run: yarn unitTests
 
       - name: Run successful-build test
         run: yarn extensionTestsSuccessfulBuild
 
-      - name: Run single root test
-        run: yarn extensionTestsSingleRoot
+      #- name: Run single root test
+      #  run: yarn extensionTestsSingleRoot
 
-      - name: Run multi root test
-        run: yarn extensionTestsMultiRoot
+      #- name: Run multi root test
+      #  run: yarn extensionTestsMultiRoot
 
       - name: Upload test logs if tests failed
         if: failure()

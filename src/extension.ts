@@ -544,9 +544,9 @@ export class ExtensionManager implements vscode.Disposable {
         if (vscode.workspace.workspaceFolders?.length) {
             const lastActiveFolderPath = this.activeFolderPath();
             const selection: CMakeProject | undefined = await this.pickCMakeProject();
-            if (selection && selection.folderName) {
+            if (selection) {
                 // Ingore if user cancelled
-                await this.updateActiveProjectbyName(selection.folderName);
+                await this.updateActiveProjectFromMenu(selection);
                 const cmakeProject: CMakeProject | undefined = this.getActiveProject();
                 telemetry.logEvent("selectactivefolder");
                 const currentActiveFolderPath = this.activeFolderPath();
@@ -582,9 +582,9 @@ export class ExtensionManager implements vscode.Disposable {
         await this.postUpdateActiveProject();
     }
 
-    // Update the active project by project name
-    private async updateActiveProjectbyName(folderName: string): Promise<void> {
-        this.projectController.updateActiveProjectbyName(folderName);
+    // Update the active project from the staus bar
+    private async updateActiveProjectFromMenu(project: CMakeProject): Promise<void> {
+        this.projectController.updateActiveProjectFromMenu(project);
         await this.postUpdateActiveProject();
     }
 
@@ -1498,8 +1498,8 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeWorkspaceFolder = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeWorkspaceFolder) {
+        const projects = this.getProjectsForWorkspaceFolder(folder);
+        if (!projects) {
             return false;
         }
 
@@ -1526,8 +1526,8 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeWorkspaceFolder = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeWorkspaceFolder) {
+        const projects = this.getProjectsForWorkspaceFolder(folder);
+        if (!projects) {
             return false;
         }
 
@@ -1548,8 +1548,8 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeWorkspaceFolder = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeWorkspaceFolder) {
+        const projects = this.getProjectsForWorkspaceFolder(folder);
+        if (!projects) {
             return false;
         }
 
@@ -1805,10 +1805,10 @@ export async function updateFullFeatureSet() {
         await enableFullFeatureSet(await extensionManager.workspaceHasAtLeastOneProject());
     } else {
         // This shouldn't normally happen (not finding a cmake project or not having a valid extension manager)
-        // but just in case, enable full feature set.
+        // but just in case, disable full feature set.
         log.info(`We don't have an extension manager created yet. ` +
-            `Setting feature set view to "full".`);
-        await enableFullFeatureSet(true);
+            `Feature set including CMake Tools commands palette is disabled.`);
+        await enableFullFeatureSet(false);
     }
 }
 

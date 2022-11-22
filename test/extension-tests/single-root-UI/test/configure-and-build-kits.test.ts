@@ -9,7 +9,7 @@ import {
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeProject from '@cmt/cmakeProject';
+import CMakeProject, { ConfigureTrigger } from '@cmt/cmakeProject';
 
 const workername: string = process.platform;
 
@@ -60,13 +60,15 @@ suite('Build using Kits and Variants', () => {
 
     test('Configure', async () => {
         expect(await vscode.commands.executeCommand('cmake.useCMakePresets', vscode.workspace.workspaceFolders![0])).to.be.eq(false);
-        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        //expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
 
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
     }).timeout(100000);
 
     test('Build', async () => {
-        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        //expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        expect(await cmakeProject.build()).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');

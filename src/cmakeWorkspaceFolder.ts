@@ -1,6 +1,6 @@
 /**
- * Class for managing workspace folders
- */ /** */
+ * Class for managing CMake projects
+ */
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
@@ -64,42 +64,34 @@ export class ProjectController implements vscode.Disposable {
 
     private activeProject: CMakeProject | undefined;
     updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): void {
-        const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(workspaceFolder);
-        if (cmakeProjects && cmakeProjects.length > 0) {
+        const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(workspaceFolder);
+        if (projects && projects.length > 0) {
             if (openEditor) {
-                for (const project of cmakeProjects) {
+                for (const project of projects) {
                     if (util.isFileInsideFolder(openEditor.document, project.folderPath)) {
                         this.activeProject = project;
                         break;
                     }
                 }
                 if (!this.activeProject) {
-                    if (util.isFileInsideFolder(openEditor.document, cmakeProjects[0].workspaceFolder.uri.fsPath)) {
-                        this.activeProject = cmakeProjects[0];
+                    if (util.isFileInsideFolder(openEditor.document, projects[0].workspaceFolder.uri.fsPath)) {
+                        this.activeProject = projects[0];
                     }
                 }
-                // If active project is found, return, otherwise proceed to find a default active project.
+                // If active project is found, return.
                 if (this.activeProject) {
                     return;
                 }
             } else {
-                this.activeProject = cmakeProjects[0];
+                // Set a default active project.
+                this.activeProject = projects[0];
                 return;
             }
         }
     }
 
-    updateActiveProjectbyName(folderName: string): void {
-        // Search for the new project by it's name in the list of all projects.
-        const cmakeProjects: CMakeProject[] | undefined = this.getAllCMakeProjects();
-        for (const project of cmakeProjects) {
-            if (project.folderName === folderName) {
-                this.activeProject = project;
-            }
-        }
-        if (this.activeProject) {
-            return;
-        }
+    updateActiveProjectFromMenu(project: CMakeProject): void {
+        this.activeProject = project;
     }
 
     public getActiveCMakeProject(): CMakeProject | undefined {

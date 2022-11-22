@@ -1548,7 +1548,7 @@ export class CMakeProject {
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // If we detect a change in the CMake cache file, refresh the webview
-        if (this.cacheEditorWebview && driver && lightNormalizePath(filePath) === driver.cachePath.toLowerCase()) {
+        if (this.cacheEditorWebview && driver && filePath === util.platformNormalizePath(driver.cachePath)) {
             await this.cacheEditorWebview.refreshPanel();
         }
 
@@ -1557,7 +1557,7 @@ export class CMakeProject {
         let isCmakeFile: boolean;
         if (driver && driver.cmakeFiles.length > 0) {
             // If CMake file information is available from the driver, use it
-            isCmakeFile = driver.cmakeFiles.some(f => lightNormalizePath(filePath) === lightNormalizePath(path.resolve(this.sourceDir, f).toLowerCase()));
+            isCmakeFile = driver.cmakeFiles.some(f => filePath === util.platformNormalizePath(path.resolve(this.sourceDir, f)));
         } else {
             // Otherwise, fallback to a simple check (does not cover CMake include files)
             isCmakeFile = false;
@@ -1565,7 +1565,7 @@ export class CMakeProject {
                 const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folderPath);
                 // Look for the CMakeLists.txt files that are in the sourceDirectory root.
                 isCmakeFile = (filePath === path.join(sourceDirectory, "cmakelists.txt")) ||
-                    (allcmakelists?.find(file => filePath === file.toLocaleLowerCase()) !== undefined);
+                    (allcmakelists?.find(file => filePath === util.platformNormalizePath(file)) !== undefined);
             }
         }
 
@@ -2612,12 +2612,12 @@ export class CMakeProject {
             }
         } else if (filePath.endsWith(".cmake")) {
             fileType = ".cmake";
-            const binaryDirectory = (await this.binaryDir).toLowerCase();
+            const binaryDirectory = util.platformNormalizePath(await this.binaryDir);
 
             // Instead of parsing how and from where a *.cmake file is included or imported
             // let's consider one inside the active folder if it's in the workspace folder,
             // sourceDirectory or binaryDirectory.
-            if (filePath.startsWith(this.folderPath.toLowerCase()) ||
+            if (filePath.startsWith(util.platformNormalizePath(this.folderPath)) ||
                 filePath.startsWith(sourceDirectory) ||
                 filePath.startsWith(binaryDirectory)) {
                 outside = false;
