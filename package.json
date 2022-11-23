@@ -1109,6 +1109,35 @@
         "cmake.configureSettings": {
           "type": "object",
           "default": {},
+          "additionalProperties": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "array"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [ "UNKNOWN", "BOOL", "STRING", "FILEPATH", ""]
+                        },
+                        "value": {
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": ["type", "value"]
+                }
+            ]
+          },
           "description": "%cmake-tools.configuration.cmake.configureSettings.description%",
           "scope": "resource"
         },

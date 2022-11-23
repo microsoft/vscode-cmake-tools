@@ -97,7 +97,7 @@ export interface ExtensionConfigurationSettings {
     saveBeforeBuild: boolean;
     buildBeforeRun: boolean;
     clearOutputBeforeBuild: boolean;
-    configureSettings: { [key: string]: any };
+    configureSettings: { [key: string]: string | util.CMakeValue };
     cacheInit: string | string[] | null;
     preferredGenerators: string[];
     generator: string | null;
@@ -257,7 +257,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get clearOutputBeforeBuild(): boolean {
         return !!this.configData.clearOutputBeforeBuild;
     }
-    get configureSettings(): any {
+    get configureSettings(): {[key: string]: string | util.CMakeValue} {
         return this.configData.configureSettings;
     }
     get cacheInit() {
