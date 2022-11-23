@@ -1121,14 +1121,17 @@
                     "type": "number"
                 },
                 {
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 {
                     "type": "object",
                     "properties": {
                         "type": {
                             "type": "string",
-                            "enum": [ "UNKNOWN", "BOOL", "STRING", "FILEPATH", ""]
+                            "enum": [ "", "BOOL", "STRING", "FILEPATH", "PATH"]
                         },
                         "value": {
                         }
