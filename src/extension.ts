@@ -11,8 +11,6 @@ import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 import * as api from 'vscode-cmake-tools';
-import { URI } from 'vscode-uri';
-
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
@@ -113,7 +111,7 @@ export class ExtensionManager implements vscode.Disposable {
             } else {
                 await this.initActiveProject();
             }
-            await util.setContextValue(multiRootModeKey, this.projectController.isMultiProject);
+            await util.setContextValue(multiRootModeKey, this.projectController.hasMultipleProjects);
             this.projectOutlineProvider.addFolder(folder);
             if (this.codeModelUpdateSubs.get(folder.uri.fsPath)) {
                 this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
@@ -143,7 +141,7 @@ export class ExtensionManager implements vscode.Disposable {
                 } else {
                     this.setupSubscriptions();
                 }
-                await util.setContextValue(multiRootModeKey, this.projectController.isMultiProject);
+                await util.setContextValue(multiRootModeKey, this.projectController.hasMultipleProjects);
                 // Update the full/partial view of the workspace by verifying if after the folder removal
                 // it still has at least one CMake project.
                 await enableFullFeatureSet(await this.workspaceHasAtLeastOneProject());
@@ -153,7 +151,7 @@ export class ExtensionManager implements vscode.Disposable {
         });
 
         this.workspaceConfig.onChange('autoSelectActiveFolder', v => {
-            if (this.projectController.isMultiProject) {
+            if (this.projectController.hasMultipleProjects) {
                 telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
             }
             this.statusBar.setAutoSelectActiveProject(v);
@@ -185,7 +183,7 @@ export class ExtensionManager implements vscode.Disposable {
         let isMultiProject = false;
         if (vscode.workspace.workspaceFolders) {
             await this.projectController.loadAllProjects();
-            isMultiProject = this.projectController.isMultiProject;
+            isMultiProject = this.projectController.hasMultipleProjects;
             await util.setContextValue(multiRootModeKey, isMultiProject);
             this.projectOutlineProvider.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
@@ -196,9 +194,9 @@ export class ExtensionManager implements vscode.Disposable {
         const isFullyActivated: boolean = await this.workspaceHasAtLeastOneProject();
         await enableFullFeatureSet(isFullyActivated);
 
-        // Keep the name of the telemetry property "isMultiRoot" as before
         const telemetryProperties: telemetry.Properties = {
-            isMultiRoot: `${isMultiProject}`,
+            isMultiRoot: `${this.projectController.hasMultipleRoots}`,
+            hasMultiProject: `${this.projectController.hasMultipleProjectsInOneFolder}`,
             isFullyActivated: `${isFullyActivated}`
         };
         if (isMultiProject) {
@@ -517,7 +515,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private async onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
-        if (this.workspaceConfig.autoSelectActiveFolder && this.projectController.isMultiProject && vscode.workspace.workspaceFolders) {
+        if (this.workspaceConfig.autoSelectActiveFolder && this.projectController.hasMultipleProjects && vscode.workspace.workspaceFolders) {
             let folder: vscode.WorkspaceFolder | undefined;
             if (editor) {
                 folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
@@ -591,7 +589,7 @@ export class ExtensionManager implements vscode.Disposable {
     private async postUpdateActiveProject() {
         const activeProject: CMakeProject | undefined = this.getActiveProject();
         if (activeProject) {
-            this.statusBar.setActiveProjectName(activeProject?.folderName, this.projectController.isMultiProject);
+            this.statusBar.setActiveProjectName(activeProject?.folderName, this.projectController.hasMultipleProjects);
             const useCMakePresets = activeProject?.useCMakePresets || false;
             this.statusBar.useCMakePresets(useCMakePresets);
             if (!useCMakePresets) {
@@ -599,7 +597,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.projectOutlineProvider.setActiveProject(activeProject.folderPath);
             this.setupSubscriptions();
-            this.onActiveProjectChangedEmitter.fire(URI.file(activeProject.folderPath));
+            this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
         }
     }
 
@@ -768,11 +766,13 @@ export class ExtensionManager implements vscode.Disposable {
      * Set the current kit for the specified workspace folder
      * @param k The kit
      */
-    async setFolderKit(wsf: vscode.WorkspaceFolder, k: Kit | null) {
-        const cmakeWorkspaceFolder = this.projectController.getProjectsForWorkspaceFolder(wsf);
-        // Ignore if folder doesn't exist
-        if (cmakeWorkspaceFolder) {
-            this.statusBar.setActiveKitName(await this.getActiveProject()!.kitsController.setFolderActiveKit(k));
+    async setFolderKit(ws: vscode.WorkspaceFolder, k: Kit | null) {
+        const projects: CMakeProject[] | undefined = this.projectController.getProjectsForWorkspaceFolder(ws);
+        // Ignore if there is no project exists.
+        if (projects) {
+            for (const project of projects) {
+                this.statusBar.setActiveKitName(await project.kitsController.setFolderActiveKit(k));
+            }
         }
     }
 
@@ -816,21 +816,21 @@ export class ExtensionManager implements vscode.Disposable {
 
     async scanForKits() {
         KitsController.minGWSearchDirs = await this.getMinGWDirs();
-        const cmakeProject =this.getActiveProject();
-        if (undefined === cmakeProject) {
+        const cmakeProject = this.getActiveProject();
+        if (!cmakeProject) {
             return;
         }
 
         const duplicateRemoved = await KitsController.scanForKits(cmakeProject);
         if (duplicateRemoved) {
-            // Check each folder. If there is an active kit set and if it is of the old definition,
-            // unset the kit
-            const activeProject = this.getActiveProject();
-            const activeKit = activeProject?.activeKit;
-            if (activeKit) {
-                const definition = activeKit.visualStudio;
-                if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
-                    await activeProject?.kitsController.setFolderActiveKit(null);
+            // Check each project. If there is an active kit set and if it is of the old definition, unset the kit.
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                const activeKit = project.activeKit;
+                if (activeKit) {
+                    const definition = activeKit.visualStudio;
+                    if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
+                        await project.kitsController.setFolderActiveKit(null);
+                    }
                 }
             }
         }
@@ -881,8 +881,8 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeWorkspaceFolder = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeWorkspaceFolder) {
+        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        if (!cmakeProject) {
             return false;
         }
 
@@ -890,7 +890,6 @@ export class ExtensionManager implements vscode.Disposable {
         const kitSelected = await activeProject?.kitsController.selectKit();
 
         let kitSelectionType;
-        // const activeFolder = this.activeFolder();
         const activeKit = activeProject?.activeKit;
         if (activeKit) {
             this.statusBar.setActiveKitName(activeKit.name);
@@ -930,9 +929,8 @@ export class ExtensionManager implements vscode.Disposable {
         if (folder) {
             await this.getActiveProject()?.kitsController.setKitByName(kitName);
         }
-        const activeFolder = this.activeCMakeWorkspaceFolder();
         const activeKit = this.getActiveProject()?.activeKit;
-        if (activeFolder && activeKit) {
+        if (activeKit) {
             this.statusBar.setActiveKitName(activeKit.name);
         }
     }
@@ -987,7 +985,7 @@ export class ExtensionManager implements vscode.Disposable {
         cmakeProject = this.getActiveProject(),
         precheck?: (cmakeProject: CMakeProject) => Promise<boolean>): Promise<any> {
         if (!cmakeProject) {
-            rollbar.error(localize('no.active.folder', 'No active folder.'));
+            rollbar.error(localize('no.active.cmake.project', 'No active CMake project.'));
             return -2;
         }
         if (!await this.ensureActiveConfigurePresetOrKit(cmakeProject)) {
@@ -1004,23 +1002,22 @@ export class ExtensionManager implements vscode.Disposable {
         if (cleanOutputChannel) {
             this.cleanOutputChannel();
         }
-
-        const activeProject = this.getActiveProject();
-        if (activeProject) {
-            if (!await this.ensureActiveConfigurePresetOrKit(activeProject)) {
+        const projects = this.projectController.getAllCMakeProjects();
+        for (const project of projects) {
+            if (!await this.ensureActiveConfigurePresetOrKit(project)) {
                 return -1;
             }
-            if (precheck && !await precheck(activeProject)) {
+            if (precheck && !await precheck(project)) {
                 return -100;
             }
 
-            const retc = await command(activeProject);
+            const retc = await command(project);
             if (retc) {
                 return retc;
             }
+            // Succeeded
+            return 0;
         }
-        // Succeeded
-        return 0;
     }
 
     runCMakeCommandForFolder(command: RunCMakeCommand, _folder?: vscode.WorkspaceFolder, precheck?: (cmakeProject: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
@@ -1034,8 +1031,8 @@ export class ExtensionManager implements vscode.Disposable {
     queryCMakeProject(query: QueryCMakeProject, folder?: vscode.WorkspaceFolder | string) {
         const workspaceFolder: vscode.WorkspaceFolder | undefined = this.getWorkspaceFolder(folder);
         if (workspaceFolder) {
-            const cmakeWorkspaceFolder = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
-            if (cmakeWorkspaceFolder) {
+            const cmakeProject = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
+            if (cmakeProject) {
                 return query(this.getActiveProject()!);
             }
         } else {
@@ -1169,15 +1166,15 @@ export class ExtensionManager implements vscode.Disposable {
         }
         const items = projects.map(project => {
             const item: ProjectItem = {
-                label: project.folderPath,
+                label: project.folderName,
                 cmakeProject: project,
-                description: project.folderName
+                description: project.folderPath
             };
             return item;
         });
-        const selection = await vscode.window.showQuickPick(items, { placeHolder: localize('select.the.active.project', 'Select the active project') });
+        const selection = await vscode.window.showQuickPick(items, { placeHolder: localize('select.a.cmake.project', 'Select a cmake project') });
         if (selection) {
-            console.assert(selection.cmakeProject.folderName, 'Folder not found in folder controller.');
+            console.assert(selection.cmakeProject.folderName, 'Project not found in project controller.');
             return selection.cmakeProject;
         }
     }
@@ -1199,9 +1196,11 @@ export class ExtensionManager implements vscode.Disposable {
             }
             file = editor.document.uri.fsPath;
         }
-        const term = await this.getActiveProject()?.tryCompileFile(file);
-        if (term) {
-            return term;
+        for (const project of this.projectController.getAllCMakeProjects()) {
+            const term = await project.tryCompileFile(file);
+            if (term) {
+                return term;
+            }
         }
         void vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
     }
@@ -1302,10 +1301,8 @@ export class ExtensionManager implements vscode.Disposable {
 
     async debugTargetAll(): Promise<(vscode.DebugSession | null)[]> {
         const debugSessions: (vscode.DebugSession | null)[] = [];
-        for (const cmakeWorkspaceFolder of this.projectController) {
-            if (cmakeWorkspaceFolder) {
-                debugSessions.push(await this.runCMakeCommand(cmakeProject => cmakeProject.debugTarget(), this.getActiveProject()));
-            }
+        for (const cmakeProject of this.projectController.getAllCMakeProjects()) {
+            debugSessions.push(await this.runCMakeCommand(cmakeProject => cmakeProject.debugTarget(), cmakeProject));
         }
         return debugSessions;
     }
@@ -1316,10 +1313,8 @@ export class ExtensionManager implements vscode.Disposable {
 
     async launchTargetAll(): Promise<(vscode.Terminal | null)[]> {
         const terminals: (vscode.Terminal | null)[] = [];
-        for (const cmakeWorkspaceFolder of this.projectController) {
-            if (cmakeWorkspaceFolder) {
-                terminals.push(await this.runCMakeCommand(cmakeProject => cmakeProject.launchTarget(), this.getActiveProject()));
-            }
+        for (const cmakeProject of this.projectController.getAllCMakeProjects()) {
+            terminals.push(await this.runCMakeCommand(cmakeProject => cmakeProject.launchTarget(), cmakeProject));
         }
         return terminals;
     }
@@ -1348,9 +1343,9 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("logDiagnostics");
         const configurations: DiagnosticsConfiguration[] = [];
         const settings: DiagnosticsSettings[] = [];
-        for (const folder of this.projectController.getAllCMakeProjects()) {
-            configurations.push(await folder.getDiagnostics());
-            settings.push(await folder.getSettingsDiagnostics());
+        for (const project of this.projectController.getAllCMakeProjects()) {
+            configurations.push(await project.getDiagnostics());
+            settings.push(await project.getSettingsDiagnostics());
         }
 
         const result: Diagnostics = {
@@ -1446,8 +1441,8 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeWorkspaceFolder = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeWorkspaceFolder) {
+        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        if (!cmakeProject) {
             return false;
         }
 
@@ -1463,8 +1458,8 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeWorkspaceFolder = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeWorkspaceFolder) {
+        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        if (!cmakeProject) {
             return false;
         }
 
@@ -1480,8 +1475,8 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeWorkspaceFolder = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeWorkspaceFolder) {
+        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        if (!cmakeProject) {
             return false;
         }
 

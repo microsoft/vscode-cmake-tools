@@ -215,8 +215,7 @@ class WorkspaceButton extends Button {
 
     public isMultiProject: boolean = false;
     protected isVisible(): boolean {
-        return super.isVisible() && ((vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 1) ||
-            (vscode.workspace.workspaceFolders !== undefined && this.isMultiProject));
+        return super.isVisible() && vscode.workspace.workspaceFolders !== undefined && (vscode.workspace.workspaceFolders.length > 1 || this.isMultiProject);
     }
 }
 

@@ -107,8 +107,21 @@ export class ProjectController implements vscode.Disposable {
         return this.getAllCMakeProjects().length;
     }
 
-    get isMultiProject(): boolean {
+    get hasMultipleProjects(): boolean {
         return this.numOfProjects > 1;
+    }
+
+    get hasMultipleProjectsInOneFolder(): boolean {
+        for (const projects of this.folderToProjectsMap) {
+            if (projects && projects.length > 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    get hasMultipleRoots(): boolean {
+        return this.numOfWorkspaceFolders > 1;
     }
 
     constructor(readonly extensionContext: vscode.ExtensionContext) {
@@ -178,10 +191,16 @@ export class ProjectController implements vscode.Disposable {
      * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
      */
-    private async createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
-        // Create the backend:
-        const cmakeProjects: CMakeProject[] = await CMakeProject.createForDirectory(folder, this.extensionContext);
-        return cmakeProjects;
+    public static async createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder, extensionContext: vscode.ExtensionContext): Promise<CMakeProject[]> {
+        // Create a context for the directory
+        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(extensionContext, folder));
+        const sourceDirectory: string[] = workspaceContext.config.sourceDirectory;
+        const isMultiProjectFolder: boolean = (sourceDirectory.length !== 1);
+        const projects: CMakeProject[] = [];
+        for (const source of sourceDirectory) {
+            projects.push(await CMakeProject.create(extensionContext, workspaceContext, source, isMultiProjectFolder));
+        }
+        return projects;
     }
 
     public useCMakePresetsForFolder(folder: vscode.WorkspaceFolder): boolean {
@@ -204,7 +223,7 @@ export class ProjectController implements vscode.Disposable {
             return existing;
         }
         // Load for the workspace.
-        const newProjects: CMakeProject[] = await this.createCMakeProjectForWorkspaceFolder(folder);
+        const newProjects: CMakeProject[] = await ProjectController.createCMakeProjectForWorkspaceFolder(folder, this.extensionContext);
         this.folderToProjectsMap.set(folder.uri.fsPath, newProjects);
         const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
         if (config) {
@@ -305,6 +324,7 @@ export class ProjectController implements vscode.Disposable {
         }
         if (this.activeProject) {
             const use: boolean = this.activeProject.useCMakePresets;
+            await util.setContextValue('useCMakePresets', use);
             const statusBar: StatusBar | undefined = getStatusBar();
             if (statusBar) {
                 statusBar.useCMakePresets(use);

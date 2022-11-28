@@ -184,10 +184,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     protected constructor(public readonly cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
-        projectSourceDir: string,
+        protected sourceDir: string, // The source directory, where the CMakeLists.txt exists.
         private readonly __workspaceFolder: string | null,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
-        this.sourceDir = projectSourceDir;
         // We have a cache of file-compilation terminals. Wipe them out when the
         // user closes those terminals.
         vscode.window.onDidCloseTerminal(closed => {
@@ -638,14 +637,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this.variantKeywordSettings = keywordSetting || null;
         await this._refreshExpansions();
     }
-
-    /**
-     * The source directory, where the root CMakeLists.txt lives.
-     *
-     * @note This is distinct from the config values, since we do variable
-     * substitution.
-     */
-    protected sourceDir = '';
 
     protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
         return cb();

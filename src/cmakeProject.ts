@@ -4,7 +4,6 @@ import { CompilationDatabase } from '@cmt/compilationDatabase';
 import * as debuggerModule from '@cmt/debugger';
 import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
-import { StateManager } from '@cmt/state';
 import { Strand } from '@cmt/strand';
 import { ProgressHandle, versionToString, lightNormalizePath, Version, versionLess } from '@cmt/util';
 import { DirectoryContext } from '@cmt/workspace';
@@ -717,7 +716,7 @@ export class CMakeProject {
                         }
                         if (selectedFile) {
                             const newSourceDirectory = path.dirname(selectedFile);
-                            void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", [newSourceDirectory]);
+                            void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", newSourceDirectory);
                             if (config) {
                                 // Updating sourceDirectory here, at the beginning of the configure process,
                                 // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -978,14 +977,13 @@ export class CMakeProject {
         const usingCMakePresets = this.useCMakePresets;
         if (usingCMakePresets !== this.wasUsingCMakePresets) {
             this.wasUsingCMakePresets = usingCMakePresets;
-            await setContextValue('useCMakePresets', usingCMakePresets);
             await this.setUseCMakePresets(usingCMakePresets);
             await this.initializeKitOrPresets();
             const config = this.workspaceContext.config;
             if (usingCMakePresets) {
                 const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
                     const fileName = path.basename(document.uri.fsPath);
-                    if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+                    if (util.isFileInsideFolder(document, this.folderPath) && fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
                         if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
                             // setTextDocumentLanguage will trigger onDidOpenTextDocument
                             void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
@@ -1184,27 +1182,10 @@ export class CMakeProject {
      */
     static async create(extensionContext: vscode.ExtensionContext, workspaceContext: DirectoryContext, sourceDirectory: string, isMultiProjectFolder?: boolean): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
-        const inst = isMultiProjectFolder ? new CMakeProject(extensionContext, workspaceContext, isMultiProjectFolder) : new CMakeProject(extensionContext, workspaceContext);
+        const inst = new CMakeProject(extensionContext, workspaceContext, isMultiProjectFolder);
         await inst.init(sourceDirectory);
         log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
-    }
-
-    /**
-     * Create a new CMakeProject for the given directory.
-     * @param folder Path to the directory for which to create
-     * @param extensionContext The extension context
-     */
-    static async createForDirectory(folder: vscode.WorkspaceFolder, extensionContext: vscode.ExtensionContext): Promise<CMakeProject[]> {
-        // Create a context for the directory
-        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(extensionContext, folder));
-        const sourceDirectory: string[] = workspaceContext.config.sourceDirectory;
-        const isMultiProjectFolder: boolean = (sourceDirectory.length === 1) ? false : true;
-        const projects: CMakeProject[] = [];
-        for (const source of sourceDirectory) {
-            projects.push(await CMakeProject.create(extensionContext, workspaceContext, source, isMultiProjectFolder));
-        }
-        return projects;
     }
 
     private _activeKit: Kit | null = null;

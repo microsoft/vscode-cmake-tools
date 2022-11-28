@@ -4,6 +4,7 @@ import { SmokeTestExtensionContext } from '@test/helpers/vscodefake/extensioncon
 import * as vscode from 'vscode';
 
 import { CMakeProject } from '@cmt/cmakeProject';
+import { ProjectController } from '@cmt/cmakeWorkspaceFolder';
 
 type Result<T> = Thenable<T> | T;
 
@@ -15,8 +16,8 @@ export class SmokeContext {
     private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
     async createCMakeProject(opts: { kit?: Kit | UnspecifiedKit }): Promise<CMakeProject> {
-        const cmakeProjects = await CMakeProject.createForDirectory(this.projectDir, this._extContext);
-        const cmakeProject = Array.isArray(cmakeProjects) ? cmakeProjects[0] : cmakeProjects;
+        const cmakeProjects: CMakeProject[] = await ProjectController.createCMakeProjectForWorkspaceFolder(this.projectDir, this._extContext);
+        const cmakeProject = cmakeProjects[0];
         if (opts.kit) {
             if (opts.kit === SpecialKits.Unspecified) {
                 await cmakeProject.setKit({ name: SpecialKits.Unspecified });
