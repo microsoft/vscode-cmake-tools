@@ -184,9 +184,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     protected constructor(public readonly cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
-        protected sourceDir: string, // The source directory, where the CMakeLists.txt exists.
+        protected sourceDirUnExpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
         private readonly __workspaceFolder: string | null,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
+        this.sourceDir = this.sourceDirUnExpanded;
         // We have a cache of file-compilation terminals. Wipe them out when the
         // user closes those terminals.
         vscode.window.onDidCloseTerminal(closed => {
@@ -200,6 +201,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         });
     }
 
+    protected sourceDir = '';
     /**
      * Dispose the driver. This disposes some things synchronously, but also
      * calls the `asyncDispose()` method to start any asynchronous shutdown.
@@ -644,7 +646,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
-            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDir, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder));
+            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnExpanded, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);

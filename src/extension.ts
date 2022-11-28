@@ -1161,6 +1161,9 @@ export class ExtensionManager implements vscode.Disposable {
 
     private async pickCMakeProject(): Promise<CMakeProject | undefined> {
         const projects: CMakeProject[] = this.projectController.getAllCMakeProjects();
+        if (projects.length === 0) {
+            return undefined;
+        }
         interface ProjectItem extends vscode.QuickPickItem {
             cmakeProject: CMakeProject;
         }
