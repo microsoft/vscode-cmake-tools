@@ -37,7 +37,7 @@ import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import * as nls from 'vscode-nls';
 import { CMakeWorkspaceFolder } from './cmakeWorkspaceFolder';
 import { ConfigurationWebview } from './cacheView';
-import { updateFullFeatureSetForFolder, enableFullFeatureSet, isActiveFolder, showCMakeListsExperiment } from './extension';
+import { updateFullFeatureSetForFolder, enableFullFeatureSet, isActiveFolder } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -611,111 +611,66 @@ export class CMakeProject {
                 telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
 
                 if (!ignoreCMakeListsMissing) {
-                    const quickStart = localize('quickstart.cmake.project', "Create");
-                    const changeSourceDirectory = localize('edit.setting', "Locate");
-                    const ignoreActivation = localize('ignore.activation', "Don't show again");
-
-                    let showCMakeLists: boolean = await showCMakeListsExperiment();
                     const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
-
-                    telemetryProperties["showCMakeListsExperiment"] = (showCMakeLists).toString();
                     if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
                         telemetryProperties["hasCmakeLists"] = "true";
                     } else {
-                        showCMakeLists = false;
                         telemetryProperties["hasCMakeLists"] = "false";
                     }
-
-                    telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
-
-                    const result = showCMakeLists ? changeSourceDirectory : await vscode.window.showErrorMessage(
-                        localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder {0}. How would you like to proceed?', `"${this.folderName}"`),
-                        quickStart, changeSourceDirectory, ignoreActivation);
-
-                    if (result === quickStart) {
-                        // Return here, since the updateFolderFullFeature set below (after the "switch")
-                        // will set unnecessarily a partial feature set view for this folder
-                        // if quickStart doesn't finish early enough.
-                        // quickStart will update correctly the full/partial view state at the end.
-                        telemetryProperties["missingCMakeListsUserAction"] = "quickStart";
-                        telemetry.logEvent(telemetryEvent, telemetryProperties);
-                        return vscode.commands.executeCommand('cmake.quickStart');
-                    } else if (result === changeSourceDirectory) {
-                        // Open the search file dialog from the path set by cmake.sourceDirectory or from the current workspace folder
-                        // if the setting is not defined.
-                        interface FileItem extends vscode.QuickPickItem {
-                            fullPath: string;
+                    interface FileItem extends vscode.QuickPickItem {
+                        fullPath: string;
+                    }
+                    const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
+                        label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
+                        fullPath: file
+                    })) : [];
+                    const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
+                    items.push({ label: browse, fullPath: "", description: "Search for CMakeLists.txt on this computer" });
+                    const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
+                        placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
+                    });
+                    telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-exp" : (selection.label === browse) ? "browse" : "pick";
+                    let selectedFile: string | undefined;
+                    if (!selection) {
+                        break; // User canceled it.
+                    } else if (selection.label === browse) {
+                        const openOpts: vscode.OpenDialogOptions = {
+                            canSelectMany: false,
+                            defaultUri: vscode.Uri.file(this.folder.uri.fsPath),
+                            filters: { "CMake files": ["txt"], "All files": ["*"] },
+                            openLabel: "Load"
+                        };
+                        const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
+                        if (cmakeListsFile) {
+                            // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
+                            selectedFile = cmakeListsFile[0].fsPath;
                         }
-                        const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
-                            label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
-                            fullPath: file
-                        })) : [];
-                        const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
-                        items.push({ label: browse, fullPath: "", description: "Search for CMakeLists.txt on this computer" });
-                        const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
-                            placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
-                        });
-
-                        if (showCMakeLists) {
-                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-exp" : (selection.label === browse) ? "browse" : "pick";
-                        } else {
-                            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-ctl" : "changeSourceDirectory";
-                        }
-
-                        let selectedFile: string | undefined;
-                        if (!selection) {
-                            break; // User canceled it.
-                        } else if (selection.label === browse) {
-                            const openOpts: vscode.OpenDialogOptions = {
-                                canSelectMany: false,
-                                defaultUri: vscode.Uri.file(this.folder.uri.fsPath),
-                                filters: { "CMake files": ["txt"], "All files": ["*"] },
-                                openLabel: "Load"
-                            };
-                            const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
-                            if (cmakeListsFile) {
-                                // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
-                                selectedFile = cmakeListsFile[0].fsPath;
-                            }
-                        } else {
-                            // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
-                            // selection.label is the relative path to the selected CMakeLists.txt.
-                            selectedFile = selection.label;
-                        }
-                        if (selectedFile) {
-                            const newSourceDirectory = path.dirname(selectedFile);
-                            void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", newSourceDirectory);
-                            if (config) {
-                                // Updating sourceDirectory here, at the beginning of the configure process,
-                                // doesn't need to fire the settings change event (which would trigger unnecessarily
-                                // another immediate configure, which will be blocked anyway).
-                                config.updatePartial({ sourceDirectory: newSourceDirectory }, false);
-
-                                // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
-                                // we know that it exists and we don't need any other additional checks on its value,
-                                // so simply enable full feature set.
-                                await enableFullFeatureSet(true);
-
-                                if (!isConfiguring) {
-                                    telemetry.logEvent(telemetryEvent, telemetryProperties);
-                                    return vscode.commands.executeCommand('cmake.configure');
-                                }
-                            }
-                        } else {
-                            telemetryProperties["missingCMakeListsUserAction"] = showCMakeLists ? "cancel-browse-exp" : "cancel-browse-ctl";
-                        }
-                    } else if (result === ignoreActivation) {
-                        // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
-                        // (hide commands and status bar) and record this choice so that this popup doesn't trigger next time.
-                        // The switch back to full functionality can be done later by changes to the cmake.sourceDirectory setting
-                        // or to the CMakeLists.txt file, a successful configure or a configure failing with anything but CMakePreconditionProblems.MissingCMakeListsFile.
-                        // After that switch (back to a full activation), another occurrence of missing CMakeLists.txt
-                        // would trigger this popup again.
-                        telemetryProperties["missingCMakeListsUserAction"] = "ignore";
-                        await this.workspaceContext.state.setIgnoreCMakeListsMissing(true);
                     } else {
-                        // "invalid" normally shouldn't happen since the popup can be closed by either dismissing it or clicking any of the three buttons.
-                        telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "cancel-dismiss" : "invalid";
+                        // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
+                        // selection.label is the relative path to the selected CMakeLists.txt.
+                        selectedFile = selection.label;
+                    }
+                    if (selectedFile) {
+                        const newSourceDirectory = path.dirname(selectedFile);
+                        void vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", newSourceDirectory);
+                        if (config) {
+                            // Updating sourceDirectory here, at the beginning of the configure process,
+                            // doesn't need to fire the settings change event (which would trigger unnecessarily
+                            // another immediate configure, which will be blocked anyway).
+                            config.updatePartial({ sourceDirectory: newSourceDirectory }, false);
+
+                            // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
+                            // we know that it exists and we don't need any other additional checks on its value,
+                            // so simply enable full feature set.
+                            await enableFullFeatureSet(true);
+
+                            if (!isConfiguring) {
+                                telemetry.logEvent(telemetryEvent, telemetryProperties);
+                                return vscode.commands.executeCommand('cmake.configure');
+                            }
+                        }
+                    } else {
+                        telemetryProperties["missingCMakeListsUserAction"] = "cancel-browse";
                     }
                 }
 

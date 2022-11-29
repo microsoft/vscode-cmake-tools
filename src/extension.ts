@@ -23,7 +23,6 @@ import {
     findCLCompilerPath,
     scanForKitsIfNeeded
 } from '@cmt/kit';
-import { IExperimentationService } from 'vscode-tas-client';
 import { KitsController } from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -83,22 +82,6 @@ interface Diagnostics {
 export class ExtensionManager implements vscode.Disposable {
     constructor(public readonly extensionContext: vscode.ExtensionContext) {
         telemetry.activate(extensionContext);
-        this.showCMakeLists = new Promise<boolean>(resolve => {
-            const experimentationService: Promise<IExperimentationService | undefined> | undefined = telemetry.getExperimentationService();
-            if (experimentationService) {
-                void experimentationService
-                    .then(expSrv => expSrv!.getTreatmentVariableAsync<boolean>("vscode", "partialActivation_showCMakeLists"))
-                    .then(showCMakeLists => {
-                        if (showCMakeLists !== undefined) {
-                            resolve(showCMakeLists);
-                        } else {
-                            resolve(false);
-                        }
-                    });
-            } else {
-                resolve(false);
-            }
-        });
 
         this.cmakeWorkspaceFolders.onAfterAddFolder(async cmakeWorkspaceFolder => {
             console.assert(this.cmakeWorkspaceFolders.size === vscode.workspace.workspaceFolders?.length);
@@ -263,11 +246,6 @@ export class ExtensionManager implements vscode.Disposable {
         const inst = new ExtensionManager(ctx);
         await inst.init();
         return inst;
-    }
-
-    private showCMakeLists: Promise<boolean>;
-    public showCMakeListsExperiment(): Promise<boolean> {
-        return this.showCMakeLists;
     }
 
     /**
@@ -1900,13 +1878,6 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
     log.info(`Cannot find CMake Project for folder ${folder.name} or we don't have an extension manager created yet. ` +
         `Setting feature set view to "full".`);
     await enableFullFeatureSet(true);
-}
-
-// Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
-// for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace
-// in a quickPick.)
-export function showCMakeListsExperiment(): Promise<boolean> {
-    return extensionManager?.showCMakeListsExperiment() || Promise.resolve(false);
 }
 
 // this method is called when your extension is deactivated.
