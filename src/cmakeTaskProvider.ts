@@ -178,7 +178,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 ), []);
             return resolvedTask;
         }
-        return undefined;
+        return task;
     }
 
     public static async findBuildTask(presetName?: string, targets?: string[]): Promise<CMakeTask | undefined> {
@@ -245,6 +245,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         }
 
         // Otherwise, ask the user to pick a task.
+        matchingTargetTasks.push(await CMakeTaskProvider.provideTask(CommandType.build, presetName, targets));
         const items: TaskMenu[] = matchingTargetTasks.map<TaskMenu>(task => ({ label: task.name, task: task, description: task.detail}));
         const selection = await vscode.window.showQuickPick(items, { placeHolder: localize('select.build.task', 'Select a build task') });
         return selection?.task;
