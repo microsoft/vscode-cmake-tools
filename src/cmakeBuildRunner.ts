@@ -1,172 +1,71 @@
 /**
  * Module for running CMake Build Task
- */ /** */
+ */
 
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as proc from '@cmt/proc';
 import * as util from '@cmt/util';
-import * as preset from '@cmt/preset';
-import { CMakeTaskDefinition } from '@cmt/cmakeTaskProvider';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
-const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-/**
- * Class implementing Build Runner
- *
- */
 export class CMakeBuildRunner {
 
-    private _targets?: string[];
-    private _buildPreset: preset.BuildPreset | null = null;
-    private _taskExecutor: vscode.TaskExecution | null = null;
-    private _currentBuildProcess: proc.Subprocess | null = null;
-    private _buildRunning: boolean = false;
+    private taskExecutor: vscode.TaskExecution | null = null;
+    private currentBuildProcess: proc.Subprocess | null = null;
+    private isBuildInProgress: boolean = false;
 
     constructor() {
-        this._buildRunning = false;
+        this.isBuildInProgress = false;
     }
 
-    public isBuildRunning(): boolean {
-        return this._buildRunning;
+    public buildInProgress(): boolean {
+        return this.isBuildInProgress;
     }
 
-    public setBuildRunning(running: boolean): void {
+    public setBuildInProgress(running: boolean): void {
         if (running) {
-            this._buildRunning = true;
+            this.isBuildInProgress = true;
         } else {
-            this._buildRunning = false;
-            this._targets = undefined;
-            this._buildPreset = null;
+            this.isBuildInProgress = false;
         }
     }
 
-    public async execute(buildPreset: preset.BuildPreset | null, targets?: string[]): Promise<void> {
-        const task = await this._findBuildTask(buildPreset, targets);
-
-        if (task) {
-            this._buildPreset = buildPreset;
-            this._targets = targets;
-            this._taskExecutor = await vscode.tasks.executeTask(task);
-
-            this._currentBuildProcess =  { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
-                const disposable = vscode.tasks.onDidEndTask(e => {
-                    if (e.execution.task.group?.id === vscode.TaskGroup.Build.id) {
-                        disposable.dispose();
-                        this._taskExecutor = null;
-                        resolve({ retc: 0, stdout: '', stderr: '' });
-                    }
-                });
-            }) };
-            return;
-        }
-        this._currentBuildProcess = { child: undefined, result: new Promise<proc.ExecutionResult>((resolve) => {
-            resolve({ retc: 0, stdout: '', stderr: '' });
-        }) };
+    public async setBuildProcessForTask(taskExecutor: vscode.TaskExecution): Promise<void> {
+        this.taskExecutor = taskExecutor;
+        this.currentBuildProcess =  { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
+            const disposable: vscode.Disposable = vscode.tasks.onDidEndTask((endEvent: vscode.TaskEndEvent) => {
+                if (endEvent.execution.task.group === vscode.TaskGroup.Build && endEvent.execution === this.taskExecutor) {
+                    disposable.dispose();
+                    resolve({ retc: 0, stdout: '', stderr: '' });
+                }
+            });
+        })};
     }
 
     public async stop(): Promise<void> {
-        const cur = this._currentBuildProcess;
+        const cur = this.currentBuildProcess;
         if (cur) {
             if (cur.child) {
                 await util.termProc(cur.child);
             }
+            this.currentBuildProcess = null;
         }
-        if (this._taskExecutor) {
-            this._taskExecutor.terminate();
-            this._taskExecutor = null;
+        if (this.taskExecutor) {
+            this.taskExecutor.terminate();
+            this.taskExecutor = null;
         }
     }
 
     public async getResult(): Promise<proc.Subprocess | null> {
-        await this._currentBuildProcess?.result;
-        const buildProcess = this._currentBuildProcess;
-        this._currentBuildProcess = null;
+        await this.currentBuildProcess?.result;
+        const buildProcess = this.currentBuildProcess;
+        this.currentBuildProcess = null;
         return buildProcess;
-    }
-    public getRequestedTargets(): string[] {
-        if (this._taskExecutor) {
-            if (this._targets) {
-                return this._targets;
-            }
-        }
-        return [];
     }
 
     public setBuildProcess(buildProcess: proc.Subprocess | null = null): void {
-        this._currentBuildProcess = buildProcess;
+        this.currentBuildProcess = buildProcess;
     }
 
-    private async _findBuildTask(buildPreset: preset.BuildPreset | null, targets?: string[]): Promise<vscode.Task | undefined> {
-
-        // Fetch all CMake task
-        const tasks = (await vscode.tasks.fetchTasks({ type: 'cmake' })).filter(task => ((task.group?.id === vscode.TaskGroup.Build.id)));
-
-        // There is only one found - stop searching
-        if (tasks.length === 1) {
-            return tasks[0];
-        }
-
-        // Get only tasks which target matches to one which is requested
-        let targetTasks: vscode.Task[];
-
-        // If buildPreset set try finding task for given preset
-        if (buildPreset) {
-            targetTasks = tasks.filter(task =>
-                (task.definition as CMakeTaskDefinition).preset === buildPreset.name);
-        } else { // preset not set, filter by targets
-            targetTasks = tasks.filter(task => {
-                const a: string[] = (task.definition as CMakeTaskDefinition).targets || [];
-                const b: string[] = targets || [];
-                return a.length === b.length && a.every((elem, idx) => elem === b[idx]);
-            });
-        }
-
-        if (targetTasks.length > 0) {
-            // Only one found - just return it
-            if (targetTasks.length === 1) {
-                return targetTasks[0];
-            } else {
-                // More than one - check if there is one marked as default
-                const defaultTargetTask = targetTasks.filter(task => task.group?.isDefault);
-                if (defaultTargetTask.length === 1) {
-                    return defaultTargetTask[0];
-                }
-                // None or more than one mark as default - show quick picker
-                return this._showTaskQuickPick(targetTasks);
-            }
-        }
-
-        // Get only tasks with no targets set
-        const noTargetTasks = tasks.filter(task =>
-            (task.definition as CMakeTaskDefinition).targets === undefined);
-
-        if (noTargetTasks.length > 0) {
-            // Only one found - just return it
-            if (noTargetTasks.length === 1) {
-                return noTargetTasks[0];
-            } else {
-                // More than one - check if there is one marked as default
-                const defaultNoTargetTasksTask = noTargetTasks.filter(task => task.group?.isDefault);
-                if (defaultNoTargetTasksTask.length === 1) {
-                    return defaultNoTargetTasksTask[0];
-                }
-                // None or more than one mark as default - show quick picker
-                return this._showTaskQuickPick(noTargetTasks);
-            }
-        }
-
-        // No target dedicated tasks and not template tasks found - show all and let user pick
-        return this._showTaskQuickPick(tasks);
-    }
-
-    private async _showTaskQuickPick(tasks: vscode.Task[]): Promise<vscode.Task | undefined> {
-        interface TaskItem extends vscode.QuickPickItem {
-            task: vscode.Task;
-        }
-        const choices = tasks.map((t): TaskItem => ({ label: t.name, task: t }));
-        const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.build.task', 'Select build task') });
-        return sel ? sel.task : undefined;
-    }
 }
