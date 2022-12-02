@@ -7,7 +7,8 @@
 	"executing.command": "Ejecutando el comando: {0}",
 	"execution.environment": "  con el entorno: {0}",
 	"process.error": "Error en el comando: {0} falló con el error: {1}",
-	"process.exit": "El comando: {0} salió con el código: {1} y la señal: {2}",
+	"process.exit.with.signal": "El comando: {0} salió con el código: {1} y la señal: {2}",
+	"process.exit": "El comando: {0} salió con el código: {1}",
 	"processing.data.event.stdout": "Procesando el evento {0} de proc StdOut",
 	"processing.data.event.stderr": "Procesando el evento {0} de proc stderr",
 	"resolving.close.event": "Resolviendo el proceso en el evento {0}"
