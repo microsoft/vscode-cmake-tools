@@ -1239,12 +1239,12 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanRebuild(folder?: vscode.WorkspaceFolder) {
-        telemetry.logEvent("clean", { command: "cleanRebuild", all: "false"});
+        telemetry.logEvent("cleanRebuild", { all: "false"});
         return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.cleanRebuild(), folder, this.ensureActiveBuildPreset, true);
     }
 
     cleanRebuildAll() {
-        telemetry.logEvent("clean", { command: "cleanRebuild", all: "true"});
+        telemetry.logEvent("cleanRebuild", { all: "true"});
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanRebuild(), this.ensureActiveBuildPreset, true);
     }
 
@@ -1379,12 +1379,12 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> {
-        telemetry.logEvent("debugTarget", { all: "false" });
+        telemetry.logEvent("debug", { all: "false" });
         return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.debugTarget(name), folder);
     }
 
     async debugTargetAll(): Promise<(vscode.DebugSession | null)[]> {
-        telemetry.logEvent("debugTarget", { all: "true" });
+        telemetry.logEvent("debug", { all: "true" });
         const debugSessions: (vscode.DebugSession | null)[] = [];
         for (const cmakeWorkspaceFolder of this.cmakeWorkspaceFolders) {
             if (cmakeWorkspaceFolder) {
@@ -1395,12 +1395,12 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     launchTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.Terminal | null> {
-        telemetry.logEvent("launchTarget", { all: "false" });
+        telemetry.logEvent("launch", { all: "false" });
         return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.launchTarget(name), folder);
     }
 
     async launchTargetAll(): Promise<(vscode.Terminal | null)[]> {
-        telemetry.logEvent("launchTarget", { all: "true" });
+        telemetry.logEvent("launch", { all: "true" });
         const terminals: (vscode.Terminal | null)[] = [];
         for (const cmakeWorkspaceFolder of this.cmakeWorkspaceFolders) {
             if (cmakeWorkspaceFolder) {
@@ -1411,7 +1411,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     selectLaunchTarget(folder?: vscode.WorkspaceFolder, name?: string) {
-        telemetry.logEvent("selectLaunchTarget");
         return this.runCMakeCommandForFolder(cmakeProject => cmakeProject.selectLaunchTarget(name), folder);
     }
 
