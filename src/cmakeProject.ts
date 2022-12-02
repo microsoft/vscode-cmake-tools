@@ -629,7 +629,7 @@ export class CMakeProject {
                     const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
                         placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
                     });
-                    telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel-exp" : (selection.label === browse) ? "browse" : "pick";
+                    telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel" : (selection.label === browse) ? "browse" : "pick";
                     let selectedFile: string | undefined;
                     if (!selection) {
                         break; // User canceled it.
