@@ -588,7 +588,7 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
 /**
  * Possible msvc host architectures
  */
-export const MSVC_HOST_ARCHES: string[] = ['x86', 'x64'];
+export const MSVC_HOST_ARCHES: string[] = ['x86', 'x64', 'arm64'];
 
 /**
  * Gets the environment variables set by a shell script.
