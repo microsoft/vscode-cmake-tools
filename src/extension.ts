@@ -42,6 +42,7 @@ import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
+import { DirectoryContext } from './workspace';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -794,12 +795,12 @@ export class ExtensionManager implements vscode.Disposable {
 
     async scanForKits() {
         KitsController.minGWSearchDirs = await this.getMinGWDirs();
-        const cmakeProject = this.getActiveProject();
-        if (!cmakeProject) {
+        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length < 1) {
             return;
         }
-
-        const duplicateRemoved = await KitsController.scanForKits(cmakeProject);
+        const workspaceContext = DirectoryContext.createForDirectory(vscode.workspace.workspaceFolders[0], new StateManager(this.extensionContext, vscode.workspace.workspaceFolders[0]));
+        const cmakePath: string = await workspaceContext.getCMakePath() || '';
+        const duplicateRemoved = await KitsController.scanForKits(cmakePath);
         if (duplicateRemoved) {
             // Check each project. If there is an active kit set and if it is of the old definition, unset the kit.
             for (const project of this.projectController.getAllCMakeProjects()) {

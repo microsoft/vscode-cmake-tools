@@ -33,9 +33,9 @@ export function getExtension() {
 
 let AVAIL_KITS: Kit[] | null = null;
 
-export async function getSystemKits(project?: CMakeProject): Promise<Kit[]> {
+export async function getSystemKits(cmakePath: string): Promise<Kit[]> {
     if (AVAIL_KITS === null) {
-        AVAIL_KITS = await scanForKits(project, { ignorePath: process.platform === 'win32' });
+        AVAIL_KITS = await scanForKits(cmakePath, { ignorePath: process.platform === 'win32' });
     }
     return AVAIL_KITS;
 }
@@ -43,8 +43,8 @@ export async function getSystemKits(project?: CMakeProject): Promise<Kit[]> {
 /**
  * @returns a Visual Studio kit on Windows, a GCC or Clang kit on mac/linux
  */
-export async function getFirstSystemKit(project?: CMakeProject): Promise<Kit> {
-    const kits = await getSystemKits(project);
+export async function getFirstSystemKit(cmakePath: string = 'cmake'): Promise<Kit> {
+    const kits = await getSystemKits(cmakePath);
     console.assert(kits.length >= 1, 'No kits found for testing');
     return kits.find(kit => {
         if (process.platform === 'win32') {
@@ -56,7 +56,7 @@ export async function getFirstSystemKit(project?: CMakeProject): Promise<Kit> {
 }
 
 export async function getMatchingSystemKit(project: CMakeProject | undefined, re: RegExp): Promise<Kit> {
-    const kits = await getSystemKits(project);
+    const kits = await getSystemKits(await project?.getCMakePathofProject() || 'cmake');
     return getMatchingKit(kits, re);
 }
 

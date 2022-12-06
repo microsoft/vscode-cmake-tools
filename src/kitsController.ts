@@ -128,7 +128,7 @@ export class KitsController {
         KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, project.workspaceContext.folder.uri.fsPath, await project.getExpansionOptions());
 
         // Pruning requires user interaction, so it happens fully async
-        KitsController._startPruneOutdatedKitsAsync(project);
+        KitsController._startPruneOutdatedKitsAsync(await project.getCMakePathofProject());
     }
 
     /**
@@ -216,7 +216,7 @@ export class KitsController {
         if (!KitsController.checkingHaveKits) {
             KitsController.checkingHaveKits = true;
             if (!KitsController.minGWSearchDirs) {
-                await KitsController.scanForKits(this.project);
+                await KitsController.scanForKits(await this.project.getCMakePathofProject());
             } else {
                 await vscode.commands.executeCommand('cmake.scanForKits');
             }
@@ -277,7 +277,7 @@ export class KitsController {
             return false;
         } else {
             if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                await KitsController.scanForKits(this.project);
+                await KitsController.scanForKits(await this.project.getCMakePathofProject());
                 return false;
             } else {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
@@ -317,7 +317,7 @@ export class KitsController {
      *
      * Always returns immediately.
      */
-    private static _startPruneOutdatedKitsAsync(project: CMakeProject) {
+    private static _startPruneOutdatedKitsAsync(cmakePath: string) {
         // Iterate over _user_ kits. We don't care about workspace-local kits
         for (const kit of KitsController.userKits) {
             if (kit.keep === true) {
@@ -373,9 +373,9 @@ export class KitsController {
                 }
                 switch (chosen.action) {
                     case 'keep':
-                        return KitsController._keepKit(project, kit);
+                        return KitsController._keepKit(cmakePath, kit);
                     case 'remove':
-                        return KitsController._removeKit(project, kit);
+                        return KitsController._removeKit(cmakePath, kit);
                 }
             });
             rollbar.takePromise(localize('pruning.kit', "Pruning kit"), { kit }, pr);
@@ -387,7 +387,7 @@ export class KitsController {
      * re-writes the user kits file.
      * @param kit The kit to mark
      */
-    private static async _keepKit(project: CMakeProject, kit: Kit) {
+    private static async _keepKit(cmakePath: string, kit: Kit) {
         const new_kits = KitsController.userKits.map(k => {
             if (k.name === kit.name) {
                 return { ...k, keep: true };
@@ -396,24 +396,24 @@ export class KitsController {
             }
         });
         KitsController.userKits = new_kits;
-        return KitsController._writeUserKitsFile(project, new_kits);
+        return KitsController._writeUserKitsFile(cmakePath, new_kits);
     }
 
     /**
      * Remove a kit from the user-local kits.
      * @param kit The kit to remove
      */
-    private static async _removeKit(project: CMakeProject, kit: Kit) {
+    private static async _removeKit(cmakePath: string, kit: Kit) {
         const new_kits = KitsController.userKits.filter(k => k.name !== kit.name);
         KitsController.userKits = new_kits;
-        return KitsController._writeUserKitsFile(project, new_kits);
+        return KitsController._writeUserKitsFile(cmakePath, new_kits);
     }
 
     /**
      * Write the given kits the the user-local cmake-kits.json file.
      * @param kits The kits to write to the file.
      */
-    private static async _writeUserKitsFile(project: CMakeProject, kits: Kit[]) {
+    private static async _writeUserKitsFile(cmakePath: string, kits: Kit[]) {
         log.debug(localize('saving.kits.to', 'Saving kits to {0}', USER_KITS_FILEPATH));
 
         // Remove the special kits
@@ -458,7 +458,7 @@ export class KitsController {
                     }
                     switch (choice.do) {
                         case 'retry':
-                            return KitsController.scanForKits(project);
+                            return KitsController.scanForKits(cmakePath);
                         case 'cancel':
                             return false;
                     }
@@ -484,11 +484,11 @@ export class KitsController {
      *
      * @returns if any duplicate vs kits are removed.
      */
-    static async scanForKits(project: CMakeProject) {
+    static async scanForKits(cmakePath: string) {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
 
         // Do the scan:
-        const discovered_kits = await scanForKits(project, { minGWSearchDirs: KitsController.minGWSearchDirs });
+        const discovered_kits = await scanForKits(cmakePath, { minGWSearchDirs: KitsController.minGWSearchDirs });
 
         // The list with the new definition user kits starts with the non VS ones,
         // which do not have any variations in the way they can be defined.
@@ -546,9 +546,9 @@ export class KitsController {
 
         const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
         KitsController.userKits = new_kits;
-        await KitsController._writeUserKitsFile(project, new_kits);
+        await KitsController._writeUserKitsFile(cmakePath, new_kits);
 
-        KitsController._startPruneOutdatedKitsAsync(project);
+        KitsController._startPruneOutdatedKitsAsync(cmakePath);
 
         return duplicateRemoved;
     }

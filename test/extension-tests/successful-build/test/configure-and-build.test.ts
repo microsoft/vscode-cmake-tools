@@ -40,7 +40,7 @@ suite('Build', () => {
         this.timeout(100000);
 
         cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
-        const kit = await getFirstSystemKit(cmakeProject);
+        const kit = await getFirstSystemKit();
         await cmakeProject.setKit(kit);
         testEnv.projectFolder.buildDirectory.clear();
     });
