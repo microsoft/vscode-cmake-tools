@@ -26,7 +26,7 @@ suite('Build using Kits and Variants', () => {
 
         testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, vscode.workspace.workspaceFolders![0].uri.fsPath);
+        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
         await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
@@ -41,8 +41,9 @@ suite('Build using Kits and Variants', () => {
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        const kit = await getFirstSystemKit(cmakeProject);
-        await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
+        // const kit = await getFirstSystemKit(cmakeProject);
+        // await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
+        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
         testEnv.projectFolder.buildDirectory.clear();
     });
 
