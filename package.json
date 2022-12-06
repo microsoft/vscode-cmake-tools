@@ -95,16 +95,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "cmake.activeFolderName",
-        "title": "Get active folder name",
-        "category": "CMake"
-      },
-      {
-        "command": "cmake.activeFolderPath",
-        "title": "Get active folder path",
-        "category": "CMake"
-      },
-      {
         "command": "cmake.openCMakePresets",
         "title": "%cmake-tools.command.cmake.openCMakePresets.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",

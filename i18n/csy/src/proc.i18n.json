@@ -7,7 +7,8 @@
 	"executing.command": "Provádí se příkaz: {0}",
 	"execution.environment": "  s prostředím: {0}",
 	"process.error": "Příkaz: {0} selhal s chybou: {1}",
-	"process.exit": "Příkaz: {0} ukončen s kódem: {1} a signálem: {2}",
+	"process.exit.with.signal": "Příkaz: {0} ukončen s kódem: {1} a signálem: {2}",
+	"process.exit": "Příkaz {0} byl ukončen s kódem {1}.",
 	"processing.data.event.stdout": "Zpracovává se událost {0} z ukazatele stdout procedury.",
 	"processing.data.event.stderr": "Zpracovává se událost {0} z ukazatele stderr procedury.",
 	"resolving.close.event": "Překládá se proces při události {0}."
