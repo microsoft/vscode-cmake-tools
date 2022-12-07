@@ -17,7 +17,7 @@ suite('Environment', () => {
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
+        await cmakeProject.setKit(await getFirstSystemKit());
 
         testEnv.projectFolder.buildDirectory.clear();
     });

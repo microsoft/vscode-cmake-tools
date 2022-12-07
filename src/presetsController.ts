@@ -309,7 +309,7 @@ export class PresetsController {
                         return false;
                     } else {
                         if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                            await KitsController.scanForKits(this.project);
+                            await KitsController.scanForKits(await this.project.getCMakePathofProject());
                             return false;
                         } else {
                             log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));

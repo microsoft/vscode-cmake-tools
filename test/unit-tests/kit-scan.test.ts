@@ -10,8 +10,8 @@ import * as kit from '../../src/kit';
 import * as triple from '../../src/triple';
 import { fs } from '../../src/pr';
 
-import { CMakeProject } from '@cmt/cmakeProject';
-import { clearExistingKitConfigurationFile, DefaultEnvironment } from '@test/util';
+// import { CMakeProject } from '@cmt/cmakeProject';
+import { clearExistingKitConfigurationFile } from '@test/util';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
@@ -27,8 +27,8 @@ function getPathWithoutCompilers() {
 }
 
 suite('Kits scan test', () => {
-    let cmakeProject: CMakeProject;
-    let testEnv: DefaultEnvironment;
+    //let cmakeProject: CMakeProject;
+    //let testEnv: DefaultEnvironment;
 
     const fakebin = getTestRootFilePath('fakebin');
     const mingwMakePath = path.join(fakebin, 'mingw32-make');
@@ -85,16 +85,16 @@ suite('Kits scan test', () => {
     });
 
     test('Detect system kits never throws', async () => {
-        const build_loc = 'build';
-        const exe_res = 'output.txt';
+        //const build_loc = 'build';
+        //const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
+        //testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
+        //cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
 
         await clearExistingKitConfigurationFile();
 
         // Don't care about the result, just check that we don't throw during the test
-        await kit.scanForKits(cmakeProject, { ignorePath: process.platform === 'win32' });
+        await kit.scanForKits('cmake', { ignorePath: process.platform === 'win32' });
     }).timeout(120000 * 2); // Compiler detection can run a little slow
 
     test('Detect a GCC compiler file', async () => {

@@ -1034,12 +1034,13 @@ export class CMakeProject {
         }
     }
 
-    async getCMakeExecutable() {
+    async getCMakePathofProject(): Promise<string> {
         const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
-        let cmakePath = await this.workspaceContext.getCMakePath(overWriteCMakePathSetting);
-        if (!cmakePath) {
-            cmakePath = '';
-        }
+        return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting) || '';
+    }
+
+    async getCMakeExecutable() {
+        const cmakePath: string = await this.getCMakePathofProject();
         const cmakeExe = await getCMakeExecutableInformation(cmakePath);
         if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
             rollbar.error(localize('cmake.version.not.supported',

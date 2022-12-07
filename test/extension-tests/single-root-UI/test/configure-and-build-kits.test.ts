@@ -9,14 +9,14 @@ import {
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeProject, { ConfigureTrigger } from '@cmt/cmakeProject';
+//import CMakeProject, { } from '@cmt/cmakeProject';
 
 const workername: string = process.platform;
 
 suite('Build using Kits and Variants', () => {
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
-    let cmakeProject: CMakeProject;
+    //let cmakeProject: CMakeProject;
 
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -26,7 +26,7 @@ suite('Build using Kits and Variants', () => {
 
         testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
+        //cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
         await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
@@ -41,9 +41,9 @@ suite('Build using Kits and Variants', () => {
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        // const kit = await getFirstSystemKit(cmakeProject);
-        // await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
-        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
+        const kit = await getFirstSystemKit();
+        await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
+        //await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
         testEnv.projectFolder.buildDirectory.clear();
     });
 
@@ -61,38 +61,38 @@ suite('Build using Kits and Variants', () => {
 
     test('Configure', async () => {
         expect(await vscode.commands.executeCommand('cmake.useCMakePresets', vscode.workspace.workspaceFolders![0])).to.be.eq(false);
-        //expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
-        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        //expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
 
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
     }).timeout(100000);
 
     test('Build', async () => {
-        //expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
-        expect(await cmakeProject.build()).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        // expect(await cmakeProject.build()).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(100000);
 
     test('Configure and Build', async () => {
-        //expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
-        //expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
-        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
-        expect(await cmakeProject.build()).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        // expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
+        // expect(await cmakeProject.build()).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(100000);
 
     test('Configure and Build run target', async () => {
-        //expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
-        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        // expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
 
-        //await vscode.commands.executeCommand('cmake.setDefaultTarget', undefined, 'runTestTarget');
-        await cmakeProject.setDefaultTarget('runTestTarget');
-        //expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
-        expect(await cmakeProject.build()).to.be.eq(0);
+        await vscode.commands.executeCommand('cmake.setDefaultTarget', undefined, 'runTestTarget');
+        // await cmakeProject.setDefaultTarget('runTestTarget');
+        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        // expect(await cmakeProject.build()).to.be.eq(0);
 
         const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
@@ -112,12 +112,12 @@ suite('Build using Kits and Variants', () => {
 
         // Run test
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[0].kitLabel)).name);
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
 
         await vscode.commands.executeCommand('cmake.build');
 
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[1].kitLabel)).name);
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
 
         await vscode.commands.executeCommand('cmake.build');
         const result1 = await testEnv.result.getResultAsJson();
@@ -137,11 +137,11 @@ suite('Build using Kits and Variants', () => {
             const compiler = os_compilers[workername];
 
             testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[0].kitLabel)).name);
+            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
             await vscode.commands.executeCommand('cmake.build');
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[1].kitLabel)).name);
+            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
             await vscode.commands.executeCommand('cmake.build');
 
             const result1 = await testEnv.result.getResultAsJson();
