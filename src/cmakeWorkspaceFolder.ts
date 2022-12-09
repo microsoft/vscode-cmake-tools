@@ -112,7 +112,7 @@ export class ProjectController implements vscode.Disposable {
     }
 
     get hasMultipleProjectsInOneFolder(): boolean {
-        for (const projects of this.folderToProjectsMap) {
+        for (const projects of this.folderToProjectsMap.values()) {
             if (projects && projects.length > 1) {
                 return true;
             }

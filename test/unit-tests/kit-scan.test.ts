@@ -10,7 +10,6 @@ import * as kit from '../../src/kit';
 import * as triple from '../../src/triple';
 import { fs } from '../../src/pr';
 
-// import { CMakeProject } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile } from '@test/util';
 
 const here = __dirname;
@@ -27,8 +26,6 @@ function getPathWithoutCompilers() {
 }
 
 suite('Kits scan test', () => {
-    //let cmakeProject: CMakeProject;
-    //let testEnv: DefaultEnvironment;
 
     const fakebin = getTestRootFilePath('fakebin');
     const mingwMakePath = path.join(fakebin, 'mingw32-make');
@@ -85,12 +82,6 @@ suite('Kits scan test', () => {
     });
 
     test('Detect system kits never throws', async () => {
-        //const build_loc = 'build';
-        //const exe_res = 'output.txt';
-
-        //testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-        //cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
-
         await clearExistingKitConfigurationFile();
 
         // Don't care about the result, just check that we don't throw during the test
