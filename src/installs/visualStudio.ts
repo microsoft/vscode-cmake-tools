@@ -437,6 +437,11 @@ export async function getVcVarsBatScript(vsInstall: VSInstallation, hostArch: st
         devBatFolder = path.join(vsInstall.installationPath, 'VC');
     }
 
+    // ARM64 host support was added in version 17.4, so anything less that 17 will not have support.
+    if (majorVersion < 17 && hostArch === 'ARM64') {
+        return null;
+    }
+
     const devBat = path.join(devBatFolder, vcVarsScript);
     // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
     // in the given VS installation.
