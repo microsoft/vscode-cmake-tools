@@ -585,10 +585,12 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
     return `${vsDisplayName(inst)} - ${getHostTargetArchString(hostArch, targetArch, true)}`;
 }
 
+export type MsvcHostArches = 'x86' | 'x64' | 'ARM64';
+
 /**
  * Possible msvc host architectures
  */
-export const MSVC_HOST_ARCHES = ['x86', 'x64', 'ARM64'] as const;
+export const MSVC_HOST_ARCHES: MsvcHostArches[] = ['x86', 'x64'];
 
 /**
  * Gets the environment variables set by a shell script.
@@ -739,12 +741,25 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
  */
 export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     const installs = await vsInstallations();
+
+    // Exclude ARM64 host checking on x86, x64, and unknown PROCESSOR_ARCHITECTURE
+    const hostArches: MsvcHostArches[] = (
+        // To determine ARM64 host, we check the processor id, which for Qualcomm's 8cx starts with
+        // ARMv8. If we check the PROCESSOR_ARCHITECTURE it's possible that we're emulating
+        // x86_64 on ARM64 and getting AMD64 for example. The processor id doesn't change
+        // even during x86_64 emulation.
+        process.env.PROCESSOR_IDENTIFIER?.startsWith('ARMv8')
+    ) ?
+        [...MSVC_HOST_ARCHES, 'ARM64'] :
+        MSVC_HOST_ARCHES;
+
     const prs = installs.map(async (inst): Promise<Kit[]> => {
         const ret = [] as Kit[];
         const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
         const version = util.tryParseVersion(inst.installationVersion);
 
         const sub_prs: Promise<Kit | null>[] = [];
+        hostArches.forEach(hostArch => {
             if (
                 hostArch === 'ARM64' &&
                 (
