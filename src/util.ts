@@ -352,17 +352,11 @@ export function parseVersion(str: string): Version {
 }
 
 export function tryParseVersion(str: string): Version | undefined {
-    const version_re = /(\d+)\.(\d+)\.(\d+)(.*)/;
-    const mat = version_re.exec(str);
-    if (!mat) {
+    try {
+        return parseVersion(str);
+    } catch {
         return undefined;
     }
-    const [, major, minor, patch] = mat;
-    return {
-        major: parseInt(major ?? '0'),
-        minor: parseInt(minor ?? '0'),
-        patch: parseInt(patch ?? '0')
-    };
 }
 
 export function compareVersion(va: Version, vb: Version) {
