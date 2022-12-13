@@ -1998,14 +1998,11 @@ export class CMakeProject {
                     buildType = this.buildPreset.configuration.split(';')[0];
                 } else {
                     try {
-                        const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
-                        if (driver?.isMultiConfig) {
-                            // Get the value from cache for multi-config generators
-                            const cache: CMakeCache = await CMakeCache.fromPath(await this.cachePath);
-                            const buildTypes: string[] | undefined = cache.get('CMAKE_CONFIGURATION_TYPES')?.as<string>().split(';');
-                            if (buildTypes && buildTypes.length > 0) {
-                                buildType = buildTypes[0];
-                            }
+                        // Get the value from cache for multi-config generators
+                        const cache: CMakeCache = await CMakeCache.fromPath(await this.cachePath);
+                        const buildTypes: string[] | undefined = cache.get('CMAKE_CONFIGURATION_TYPES')?.as<string>().split(';');
+                        if (buildTypes && buildTypes.length > 0) {
+                            buildType = buildTypes[0];
                         }
                     } catch (e: any) {
                     }
