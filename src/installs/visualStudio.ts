@@ -159,6 +159,13 @@ export function getHostTargetArchString(hostArch: string, targetArch?: string, a
         }
     }
 
+    // For arm64, cmake expects 'ARM64' for host toolset parameter, but
+    // then we fail the hostArch === targetArch below. This enables us to find
+    // all the Host ARM64 toolsets as well as still meet the `host=ARM64` requirement for cmake
+    if (hostArch === 'ARM64') {
+        hostArch = 'arm64';
+    }
+
     if (!targetArch) {
         targetArch = hostArch;
     }
