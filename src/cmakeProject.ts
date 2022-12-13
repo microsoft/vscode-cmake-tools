@@ -1989,7 +1989,7 @@ export class CMakeProject {
      * Implementation of `cmake.buildType`
      */
     async currentBuildType(): Promise<string | null> {
-        let buildType: string | null = null ;
+        let buildType: string | null = null;
         if (this.useCMakePresets) {
             if (this.buildPreset) {
                 if (this.buildPreset.configuration) {
@@ -2012,8 +2012,7 @@ export class CMakeProject {
                 // Single config generators set the build type in config preset.
                 buildType = preset.getStringValueFromCacheVar(this.configurePreset.cacheVariables["CMAKE_BUILD_TYPE"]);
             }
-        }
-        if (!buildType) {
+        } else {
             buildType = this.variantManager.activeVariantOptions.buildType || null;
         }
         return buildType;
