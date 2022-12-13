@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as os from 'os';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -349,6 +350,14 @@ export function parseVersion(str: string): Version {
         minor: parseInt(minor ?? '0'),
         patch: parseInt(patch ?? '0')
     };
+}
+
+export function tryParseVersion(str: string): Version | undefined {
+    try {
+        return parseVersion(str);
+    } catch {
+        return undefined;
+    }
 }
 
 export function compareVersion(va: Version, vb: Version) {
@@ -859,4 +868,18 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
  */
 export function assertNever(value: never): never {
     throw new Error(`Unexpected value: ${value}`);
+}
+
+export function GetHostArchitecture() {
+    const arch = os.arch();
+    switch (arch) {
+        case 'arm64':
+        case 'arm':
+            return arch;
+        case 'x32':
+        case 'ia32':
+            return 'x86';
+        default:
+            return 'x64';
+    }
 }
