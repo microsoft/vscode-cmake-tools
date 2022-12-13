@@ -870,7 +870,7 @@ export function assertNever(value: never): never {
     throw new Error(`Unexpected value: ${value}`);
 }
 
-export function GetHostArchitecture() {
+export function getHostArchitecture() {
     const arch = os.arch();
     switch (arch) {
         case 'arm64':

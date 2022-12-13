@@ -743,7 +743,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     const installs = await vsInstallations();
 
     // Exclude ARM64 host checking on x86 and x64 since they cannot act as an arm64 host.
-    const hostArches: MsvcHostArches[] = (util.GetHostArchitecture() === 'arm64') ?
+    const hostArches: MsvcHostArches[] = (util.getHostArchitecture() === 'arm64') ?
         [...MSVC_HOST_ARCHES, 'ARM64'] :
         MSVC_HOST_ARCHES;
 
@@ -752,17 +752,13 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
         const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
         const version = util.tryParseVersion(inst.installationVersion);
 
+        // ARM64 support as a host was added in Visual Studio 2022 17.4 and above,
+        // so we'll avoid checking it on anything lower.
+        const vsVersionSupportsArm64 = (version?.major === 17 && version.minor >= 4) || (version && version.major > 17);
+
         const sub_prs: Promise<Kit | null>[] = [];
         hostArches.forEach(hostArch => {
-            if (
-                hostArch === 'ARM64' &&
-                (
-                    !version ||
-                    version.major < 17 || (version.major === 17 && version.minor < 4)
-                )
-            ) {
-                // ARM64 support as a host was added in Visual Studio 2022 17.4 and above,
-                // so we'll avoid checking it on anything lower.
+            if (hostArch === 'ARM64' && !vsVersionSupportsArm64) {
                 return;
             }
 
