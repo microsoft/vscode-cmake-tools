@@ -1990,11 +1990,33 @@ export class CMakeProject {
      */
     async currentBuildType(): Promise<string | null> {
         let buildType: string | null = null ;
-        if (this.useCMakePresets && this.configurePreset && this.configurePreset.cacheVariables) {
-            const variable = this.configurePreset.cacheVariables["CMAKE_BUILD_TYPE"];
-            buildType = util.isString(variable) ? variable : null;
+        if (this.useCMakePresets) {
+            if (this.buildPreset) {
+                if (this.buildPreset.configuration) {
+                    // The `configuration` is set for multi-config generators, and is optional for single-config generators.
+                    // Get the first value for multi-config generators
+                    buildType = this.buildPreset.configuration.split(';')[0];
+                } else {
+                    try {
+                        const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
+                        if (driver?.isMultiConfig) {
+                            // Get the value from cache for multi-config generators
+                            const cache: CMakeCache = await CMakeCache.fromPath(await this.cachePath);
+                            const buildTypes: string[] | undefined = cache.get('CMAKE_CONFIGURATION_TYPES')?.as<string>().split(';');
+                            if (buildTypes && buildTypes.length > 0) {
+                                buildType = buildTypes[0];
+                            }
+                        }
+                    } catch (e: any) {
+                    }
+                }
+            }
+            if (!buildType && this.configurePreset && this.configurePreset.cacheVariables) {
+                // Single config generators set the build type in config preset.
+                buildType = preset.getStringValueFromCacheVar(this.configurePreset.cacheVariables["CMAKE_BUILD_TYPE"]);
+            }
         }
-        if (buildType === null) {
+        if (!buildType) {
             buildType = this.variantManager.activeVariantOptions.buildType || null;
         }
         return buildType;

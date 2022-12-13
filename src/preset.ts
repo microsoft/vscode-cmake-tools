@@ -920,14 +920,6 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
     // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
     // but they are not on PATH, then set the env automatically.
     if (process.platform === 'win32') {
-        const getStringValueFromCacheVar = (variable?: CacheVarType) => {
-            if (util.isString(variable)) {
-                return variable;
-            } else if (variable && typeof variable === 'object') {
-                return util.isString(variable.value) ? variable.value : null;
-            }
-            return null;
-        };
         if (preset.cacheVariables) {
             const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
             const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
@@ -1653,3 +1645,12 @@ export function getValue(value: string | ValueStrategy): string | undefined {
         return value.value;
     }
 }
+
+export function getStringValueFromCacheVar(variable?: CacheVarType): string | null {
+    if (util.isString(variable)) {
+        return variable;
+    } else if (variable && typeof variable === 'object') {
+        return util.isString(variable.value) ? variable.value : null;
+    }
+    return null;
+};
