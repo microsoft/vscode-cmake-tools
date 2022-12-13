@@ -1989,7 +1989,15 @@ export class CMakeProject {
      * Implementation of `cmake.buildType`
      */
     async currentBuildType(): Promise<string | null> {
-        return this.variantManager.activeVariantOptions.buildType || null;
+        let buildType: string | null = null ;
+        if (this.useCMakePresets && this.configurePreset && this.configurePreset.cacheVariables) {
+            const variable = this.configurePreset.cacheVariables["CMAKE_BUILD_TYPE"];
+            buildType = util.isString(variable) ? variable : null;
+        }
+        if (buildType === null) {
+            buildType = this.variantManager.activeVariantOptions.buildType || null;
+        }
+        return buildType;
     }
 
     /**
