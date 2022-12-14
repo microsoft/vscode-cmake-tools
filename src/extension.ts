@@ -926,18 +926,30 @@ export class ExtensionManager implements vscode.Disposable {
     async setConfigurePreset(presetName: string, folder?: vscode.WorkspaceFolder) {
         if (folder) {
             await this.getActiveProject()?.presetsController.setConfigurePreset(presetName);
+        } else {
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                await project.presetsController.setConfigurePreset(presetName);
+            }
         }
     }
 
     async setBuildPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
         if (folder) {
             await this.getActiveProject()?.presetsController.setBuildPreset(presetName);
+        } else {
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                await project.presetsController.setBuildPreset(presetName);
+            }
         }
     }
 
     async setTestPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
         if (folder) {
             await this.getActiveProject()?.presetsController.setTestPreset(presetName);
+        } else {
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                await project.presetsController.setTestPreset(presetName);
+            }
         }
     }
 
@@ -999,25 +1011,53 @@ export class ExtensionManager implements vscode.Disposable {
             if (retc) {
                 return retc;
             }
-            // Succeeded
-            return 0;
         }
+        // Succeeded
+        return 0;
     }
 
-    runCMakeCommandForFolder(command: RunCMakeCommand, _folder?: vscode.WorkspaceFolder, precheck?: (cmakeProject: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
+    runCMakeCommandForFolder(command: RunCMakeCommand, folder?: vscode.WorkspaceFolder, precheck?: (cmakeProject: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
         if (cleanOutputChannel) {
             this.cleanOutputChannel();
         }
-
-        return this.runCMakeCommand(command, this.getActiveProject(), precheck);
+        const workspaceFolder: vscode.WorkspaceFolder | undefined = this.getWorkspaceFolder(folder);
+        const activeProject: CMakeProject | undefined = this.getActiveProject();
+        if (workspaceFolder) {
+            const cmakeProjects: CMakeProject[] | undefined = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
+            if (!cmakeProjects || cmakeProjects.length === 0) {
+                return this.runCMakeCommand(command, activeProject, precheck);
+            } else {
+                for (const project of cmakeProjects) {
+                    // Choose the active project.
+                    if (activeProject?.folderPath === project.folderPath) {
+                        return this.runCMakeCommand(command, activeProject, precheck);
+                    }
+                }
+                // Choose the first project folder.
+                return this.runCMakeCommand(command, cmakeProjects[0], precheck);
+            }
+        } else {
+            rollbar.error(localize('invalid.folder', 'Invalid folder.'));
+        }
+        return this.runCMakeCommand(command, activeProject, precheck);
     }
 
     queryCMakeProject(query: QueryCMakeProject, folder?: vscode.WorkspaceFolder | string) {
         const workspaceFolder: vscode.WorkspaceFolder | undefined = this.getWorkspaceFolder(folder);
         if (workspaceFolder) {
-            const cmakeProject = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
-            if (cmakeProject) {
-                return query(this.getActiveProject()!);
+            const cmakeProjects: CMakeProject[] | undefined = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
+            const activeProject: CMakeProject | undefined = this.getActiveProject();
+            if (!cmakeProjects || cmakeProjects.length === 0) {
+                return query(activeProject!);
+            } else {
+                for (const project of cmakeProjects) {
+                    // Choose the active project.
+                    if (activeProject?.folderPath === project.folderPath) {
+                        return query(activeProject!);
+                    }
+                }
+                // Choose the first project folder.
+                return query(cmakeProjects[0]);
             }
         } else {
             rollbar.error(localize('invalid.folder', 'Invalid folder.'));
