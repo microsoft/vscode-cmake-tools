@@ -1994,8 +1994,7 @@ export class CMakeProject {
             if (this.buildPreset) {
                 if (this.buildPreset.configuration) {
                     // The `configuration` is set for multi-config generators, and is optional for single-config generators.
-                    // Get the first value for multi-config generators
-                    buildType = this.buildPreset.configuration.split(';')[0];
+                    buildType = this.buildPreset.configuration;
                 } else {
                     try {
                         // Get the value from cache for multi-config generators
