@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as os from 'os';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -247,11 +248,11 @@ export function product<T>(arrays: T[][]): T[][] {
 }
 
 export interface CMakeValue {
-    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH');  // There are more types, but we don't care ATM
+    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH' | 'PATH' | '');  // There are more types, but we don't care ATM
     value: string;
 }
 
-export function cmakeify(value: (string | boolean | number | string[])): CMakeValue {
+export function cmakeify(value: (string | boolean | number | string[] | CMakeValue)): CMakeValue {
     const ret: CMakeValue = {
         type: 'UNKNOWN',
         value: ''
@@ -259,7 +260,7 @@ export function cmakeify(value: (string | boolean | number | string[])): CMakeVa
     if (value === true || value === false) {
         ret.type = 'BOOL';
         ret.value = value ? 'TRUE' : 'FALSE';
-    } else if (typeof (value) === 'string') {
+    } else if (isString(value)) {
         ret.type = 'STRING';
         ret.value = replaceAll(value, ';', '\\;');
     } else if (typeof value === 'number') {
@@ -268,8 +269,11 @@ export function cmakeify(value: (string | boolean | number | string[])): CMakeVa
     } else if (value instanceof Array) {
         ret.type = 'STRING';
         ret.value = value.join(';');
+    } else if (Object.getOwnPropertyNames(value).filter(e => e === 'type' || e === 'value').length === 2) {
+        ret.type = value.type;
+        ret.value = value.value;
     } else {
-        throw new Error(`Invalid value to convert to cmake value: ${value}`);
+        throw new Error(localize('invalid.value', 'Invalid value to convert to cmake value: {0}', JSON.stringify(value)));
     }
     return ret;
 }
@@ -347,6 +351,14 @@ export function parseVersion(str: string): Version {
         minor: parseInt(minor ?? '0'),
         patch: parseInt(patch ?? '0')
     };
+}
+
+export function tryParseVersion(str: string): Version | undefined {
+    try {
+        return parseVersion(str);
+    } catch {
+        return undefined;
+    }
 }
 
 export function compareVersion(va: Version, vb: Version) {
@@ -864,4 +876,18 @@ export function isFileInsideFolder(openEditor: vscode.TextDocument, folderPath: 
  */
 export function assertNever(value: never): never {
     throw new Error(`Unexpected value: ${value}`);
+}
+
+export function getHostArchitecture() {
+    const arch = os.arch();
+    switch (arch) {
+        case 'arm64':
+        case 'arm':
+            return arch;
+        case 'x32':
+        case 'ia32':
+            return 'x86';
+        default:
+            return 'x64';
+    }
 }

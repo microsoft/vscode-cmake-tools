@@ -1109,6 +1109,38 @@
         "cmake.configureSettings": {
           "type": "object",
           "default": {},
+          "additionalProperties": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [ "", "BOOL", "STRING", "FILEPATH", "PATH"]
+                        },
+                        "value": {
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": ["type", "value"]
+                }
+            ]
+          },
           "description": "%cmake-tools.configuration.cmake.configureSettings.description%",
           "scope": "resource"
         },
@@ -2091,7 +2123,7 @@
     "chai-string": "^1.5.0",
     "eslint": "^8.15.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jsdoc": "^39.3.0",
+    "eslint-plugin-jsdoc": "^39.6.4",
     "event-stream": "^4.0.1",
     "fs-extra": "^9.1.0",
     "glob": "^7.1.6",
