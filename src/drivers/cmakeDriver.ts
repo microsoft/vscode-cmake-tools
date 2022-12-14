@@ -1463,10 +1463,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private generateCMakeSettingsFlags(): string[] {
         const settingMap: { [key: string]: util.CMakeValue } = {};
 
-        util.objectPairs(this.config.configureSettings)
-            .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
-        util.objectPairs(this._variantConfigureSettings)
-            .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+        try {
+            util.objectPairs(this.config.configureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value));
+        } catch (e: any) {
+            log.error(e.message);
+            throw e;
+        }
+        util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
         if (this._variantLinkage !== null) {
             settingMap.BUILD_SHARED_LIBS = util.cmakeify(this._variantLinkage === 'shared');
         }
@@ -1499,12 +1502,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
             log.debug(localize('using.compilers.in.for.configure', 'Using compilers in {0} for configure', this._kit.name));
             for (const lang in this._kit.compilers) {
                 const compiler = this._kit.compilers[lang];
-                settingMap[`CMAKE_${lang}_COMPILER`] = { type: 'FILEPATH', value: compiler } as util.CMakeValue;
+                settingMap[`CMAKE_${lang}_COMPILER`] = { type: 'FILEPATH', value: compiler };
             }
         }
         if (this._kit.toolchainFile) {
             log.debug(localize('using.cmake.toolchain.for.configure', 'Using CMake toolchain {0} for configuring', this._kit.name));
-            settingMap.CMAKE_TOOLCHAIN_FILE = { type: 'FILEPATH', value: this._kit.toolchainFile } as util.CMakeValue;
+            settingMap.CMAKE_TOOLCHAIN_FILE = { type: 'FILEPATH', value: this._kit.toolchainFile };
         }
         if (this._kit.cmakeSettings) {
             util.objectPairs(this._kit.cmakeSettings)
@@ -1514,6 +1517,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return util.objectPairs(settingMap).map(([key, value]) => {
             switch (value.type) {
                 case 'UNKNOWN':
+                case '':
                     return `-D${key}=${value.value}`;
                 default:
                     return `-D${key}:${value.type}=${value.value}`;

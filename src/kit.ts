@@ -586,10 +586,12 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
     return `${vsDisplayName(inst)} - ${getHostTargetArchString(hostArch, targetArch, true)}`;
 }
 
+export type MsvcHostArches = 'x86' | 'x64' | 'ARM64';
+
 /**
  * Possible msvc host architectures
  */
-export const MSVC_HOST_ARCHES: string[] = ['x86', 'x64'];
+export const MSVC_HOST_ARCHES: MsvcHostArches[] = ['x86', 'x64'];
 
 /**
  * Gets the environment variables set by a shell script.
@@ -740,12 +742,27 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
  */
 export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     const installs = await vsInstallations();
+
+    // Exclude ARM64 host checking on x86 and x64 since they cannot act as an arm64 host.
+    const hostArches: MsvcHostArches[] = (util.getHostArchitecture() === 'arm64') ?
+        [...MSVC_HOST_ARCHES, 'ARM64'] :
+        MSVC_HOST_ARCHES;
+
     const prs = installs.map(async (inst): Promise<Kit[]> => {
         const ret = [] as Kit[];
         const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
+        const version = util.tryParseVersion(inst.installationVersion);
+
+        // ARM64 support as a host was added in Visual Studio 2022 17.4 and above,
+        // so we'll avoid checking it on anything lower.
+        const vsVersionSupportsArm64 = (version?.major === 17 && version.minor >= 4) || (version && version.major > 17);
 
         const sub_prs: Promise<Kit | null>[] = [];
-        MSVC_HOST_ARCHES.forEach(hostArch => {
+        hostArches.forEach(hostArch => {
+            if (hostArch === 'ARM64' && !vsVersionSupportsArm64) {
+                return;
+            }
+
             targetArches.forEach(targetArch => {
                 sub_prs.push(tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr));
             });
