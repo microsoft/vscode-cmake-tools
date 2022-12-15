@@ -10,7 +10,7 @@ suite('Debug/Launch interface', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
+        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder-2', build_loc, exe_res);
 
         const kit = await getFirstSystemKit();
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
