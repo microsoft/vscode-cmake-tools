@@ -1073,14 +1073,14 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
 export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolean> {
-    const kitsVersionSaved = project.extensionContext.globalState.get<number>('kitsVersionSaved');
+    const kitsVersionSaved = project.workspaceContext.state.extensionContext.globalState.get<number>('kitsVersionSaved');
     const kitsVersionCurrent = 2;
 
     // Scan also when there is no kits version saved in the state.
     if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
         await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
-        await project.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+        await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
         return true;
     }
 

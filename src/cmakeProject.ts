@@ -123,11 +123,10 @@ export class CMakeProject {
 
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
-     * @param extensionContext The extension context
      *
      * This is private. You must call `create` to get an instance.
      */
-    private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext, readonly isMultiProjectFolder: boolean = false) {
+    private constructor(readonly workspaceContext: DirectoryContext, readonly isMultiProjectFolder: boolean = false) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
         this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
@@ -1137,9 +1136,9 @@ export class CMakeProject {
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(extensionContext: vscode.ExtensionContext, workspaceContext: DirectoryContext, sourceDirectory: string, isMultiProjectFolder?: boolean): Promise<CMakeProject> {
+    static async create(workspaceContext: DirectoryContext, sourceDirectory: string, isMultiProjectFolder?: boolean): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
-        const inst = new CMakeProject(extensionContext, workspaceContext, isMultiProjectFolder);
+        const inst = new CMakeProject(workspaceContext, isMultiProjectFolder);
         await inst.init(sourceDirectory);
         log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
@@ -2532,13 +2531,13 @@ export class CMakeProject {
     async sendFileTypeTelemetry(textDocument: vscode.TextDocument): Promise<void> {
         const filePath =  util.platformNormalizePath(textDocument.uri.fsPath);
         const sourceDirectory = util.platformNormalizePath(this.sourceDir);
-        // "outside" evaluates whether the modified cmake file belongs to the active project.
+        // "outside" evaluates whether the modified cmake file belongs to the project.
         let outside: boolean = true;
         let fileType: string | undefined;
         if (filePath.endsWith("cmakelists.txt")) {
             fileType = "CMakeLists";
 
-            // The CMakeLists.txt belongs to the current active folder only if sourceDirectory points to it.
+            // The CMakeLists.txt belongs to the project only if sourceDirectory points to it.
             if (filePath === path.join(sourceDirectory, "cmakelists.txt")) {
                 outside = false;
             }
@@ -2546,7 +2545,7 @@ export class CMakeProject {
             fileType = "CMakeCache";
             const binaryDirectory = util.platformNormalizePath(await this.binaryDir);
 
-            // The CMakeCache.txt belongs to the current active folder only if binaryDirectory points to it.
+            // The CMakeCache.txt belongs to the project only if binaryDirectory points to it.
             if (filePath === path.join(binaryDirectory, "cmakecache.txt")) {
                 outside = false;
             }
@@ -2555,9 +2554,9 @@ export class CMakeProject {
             const binaryDirectory = util.platformNormalizePath(await this.binaryDir);
 
             // Instead of parsing how and from where a *.cmake file is included or imported
-            // let's consider one inside the active folder if it's in the workspace folder,
+            // let's consider one inside the project if it's in the workspace folder (single-project),
             // sourceDirectory or binaryDirectory.
-            if (filePath.startsWith(util.platformNormalizePath(this.folderPath)) ||
+            if ((!this.isMultiProjectFolder && filePath.startsWith(util.platformNormalizePath(this.folderPath))) ||
                 filePath.startsWith(sourceDirectory) ||
                 filePath.startsWith(binaryDirectory)) {
                 outside = false;

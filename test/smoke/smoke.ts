@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 
 import { CMakeProject } from '@cmt/cmakeProject';
 import { ProjectController } from '@cmt/cmakeWorkspaceFolder';
+import { DirectoryContext } from '@cmt/workspace';
+import { StateManager } from '@cmt/state';
 
 type Result<T> = Thenable<T> | T;
 
@@ -16,7 +18,8 @@ export class SmokeContext {
     private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
     async createCMakeProject(opts: { kit?: Kit | UnspecifiedKit }): Promise<CMakeProject> {
-        const cmakeProjects: CMakeProject[] = await ProjectController.createCMakeProjectsForWorkspaceFolder(this.projectDir, this._extContext);
+        const workspaceContext = DirectoryContext.createForDirectory(this.projectDir, new StateManager(this._extContext, this.projectDir));
+        const cmakeProjects: CMakeProject[] = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext);
         const cmakeProject = cmakeProjects[0];
         if (opts.kit) {
             if (opts.kit === SpecialKits.Unspecified) {

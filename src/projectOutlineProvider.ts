@@ -573,7 +573,8 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         }
     }
 
-    setActiveProject(folderPath: string | undefined): void {
+    // TODO: project outline needs to be able to select a project in a multi-project folder. #2823
+    setActiveFolder(folderPath: string | undefined): void {
         if (!folderPath) {
             return;
         }

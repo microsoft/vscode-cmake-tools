@@ -11,7 +11,7 @@ suite('Environment', () => {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext, "${workspaceFolder}/");
+        cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}/");
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed

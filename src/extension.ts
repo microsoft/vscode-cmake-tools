@@ -573,7 +573,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (!useCMakePresets) {
                 this.statusBar.setActiveKitName(activeProject?.activeKit?.name || '');
             }
-            this.projectOutlineProvider.setActiveProject(activeProject.folderPath);
+            this.projectOutlineProvider.setActiveFolder(activeProject.folderPath);
             this.setupSubscriptions();
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
         }
@@ -1001,52 +1001,47 @@ export class ExtensionManager implements vscode.Disposable {
         return 0;
     }
 
+    private getProjectFromFolder(folder?: vscode.WorkspaceFolder | string) {
+        const workspaceFolder: vscode.WorkspaceFolder | undefined = this.getWorkspaceFolder(folder);
+        if (workspaceFolder) {
+            const activeProject: CMakeProject | undefined = this.getActiveProject();
+            const projects: CMakeProject[] | undefined = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
+            if (!projects || projects.length === 0) {
+                return activeProject;
+            } else {
+                for (const project of projects) {
+                    // Choose the active project.
+                    if (activeProject?.folderPath === project.folderPath) {
+                        return project;
+                    }
+                }
+                // Choose the first project folder.
+                return projects[0];
+            }
+        }
+        return undefined;
+    }
+
     runCMakeCommand(command: RunCMakeCommand, folder?: vscode.WorkspaceFolder, precheck?: (cmakeProject: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
         if (cleanOutputChannel) {
             this.cleanOutputChannel();
         }
-        const workspaceFolder: vscode.WorkspaceFolder | undefined = this.getWorkspaceFolder(folder);
-        const activeProject: CMakeProject | undefined = this.getActiveProject();
-        if (workspaceFolder) {
-            const cmakeProjects: CMakeProject[] | undefined = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
-            if (!cmakeProjects || cmakeProjects.length === 0) {
-                return this.runCMakeCommandForProject(command, activeProject, precheck);
-            } else {
-                for (const project of cmakeProjects) {
-                    // Choose the active project.
-                    if (activeProject?.folderPath === project.folderPath) {
-                        return this.runCMakeCommandForProject(command, activeProject, precheck);
-                    }
-                }
-                // Choose the first project folder.
-                return this.runCMakeCommandForProject(command, cmakeProjects[0], precheck);
-            }
-        } else {
-            rollbar.error(localize('invalid.folder', 'Invalid folder.'));
+        const project = this.getProjectFromFolder(folder);
+        if (project) {
+            return this.runCMakeCommandForProject(command, project, precheck);
         }
-        return this.runCMakeCommandForProject(command, activeProject, precheck);
+
+        rollbar.error(localize('invalid.folder', 'Invalid folder.'));
+        return this.runCMakeCommandForProject(command, project, precheck);
     }
 
     queryCMakeProject(query: QueryCMakeProject, folder?: vscode.WorkspaceFolder | string) {
-        const workspaceFolder: vscode.WorkspaceFolder | undefined = this.getWorkspaceFolder(folder);
-        if (workspaceFolder) {
-            const cmakeProjects: CMakeProject[] | undefined = this.projectController.getProjectsForWorkspaceFolder(workspaceFolder);
-            const activeProject: CMakeProject | undefined = this.getActiveProject();
-            if (!cmakeProjects || cmakeProjects.length === 0) {
-                return query(activeProject!);
-            } else {
-                for (const project of cmakeProjects) {
-                    // Choose the active project.
-                    if (activeProject?.folderPath === project.folderPath) {
-                        return query(activeProject!);
-                    }
-                }
-                // Choose the first CMake project.
-                return query(cmakeProjects[0]);
-            }
-        } else {
-            rollbar.error(localize('invalid.folder', 'Invalid folder.'));
+        const project = this.getProjectFromFolder(folder);
+        if (project) {
+            return query(project);
         }
+
+        rollbar.error(localize('invalid.folder', 'Invalid folder.'));
         return Promise.resolve(null);
     }
 
@@ -1463,12 +1458,12 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        const cmakeProject = this.getProjectFromFolder(folder);
         if (!cmakeProject) {
             return false;
         }
 
-        return this.getActiveProject()!.presetsController.addConfigurePreset();
+        return cmakeProject.presetsController.addConfigurePreset();
     }
 
     /**
@@ -1480,12 +1475,12 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        const cmakeProject = this.getProjectFromFolder(folder);
         if (!cmakeProject) {
             return false;
         }
 
-        return this.getActiveProject()!.presetsController.addBuildPreset();
+        return cmakeProject.presetsController.addBuildPreset();
     }
 
     /**
@@ -1497,12 +1492,12 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        const cmakeProject = this.getProjectFromFolder(folder);
         if (!cmakeProject) {
             return false;
         }
 
-        return this.getActiveProject()!.presetsController.addTestPreset();
+        return cmakeProject.presetsController.addTestPreset();
     }
 
     // Referred in presetsController.ts
@@ -1515,20 +1510,20 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const projects = this.getProjectsForWorkspaceFolder(folder);
-        if (!projects) {
+        const project = this.getProjectFromFolder(folder);
+        if (!project) {
             return false;
         }
 
-        const presetSelected = await this.getActiveProject()!.presetsController.selectConfigurePreset();
+        const presetSelected = await project.presetsController.selectConfigurePreset();
 
-        const configurePreset = this.getActiveProject()?.configurePreset;
+        const configurePreset = project.configurePreset;
         this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
         // Reset build and test presets since they might not be used with the selected configure preset
-        const buildPreset = this.getActiveProject()?.buildPreset;
+        const buildPreset = project.buildPreset;
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-        const testPreset = this.getActiveProject()?.testPreset;
+        const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
         return presetSelected;
@@ -1543,14 +1538,14 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const projects = this.getProjectsForWorkspaceFolder(folder);
-        if (!projects) {
+        const project = this.getProjectFromFolder(folder);
+        if (!project) {
             return false;
         }
 
-        const presetSelected = await this.getActiveProject()!.presetsController.selectBuildPreset();
+        const presetSelected = await project.presetsController.selectBuildPreset();
 
-        const buildPreset = this.getActiveProject()?.buildPreset;
+        const buildPreset = project.buildPreset;
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
 
         return presetSelected;
@@ -1565,14 +1560,14 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const projects = this.getProjectsForWorkspaceFolder(folder);
-        if (!projects) {
+        const project = this.getProjectFromFolder(folder);
+        if (!project) {
             return false;
         }
 
-        const presetSelected = await this.getActiveProject()!.presetsController.selectTestPreset();
+        const presetSelected = await project.presetsController.selectTestPreset();
 
-        const testPreset = this.getActiveProject()?.testPreset;
+        const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
         return presetSelected;

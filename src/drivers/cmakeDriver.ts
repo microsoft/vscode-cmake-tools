@@ -184,10 +184,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     protected constructor(public readonly cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
-        protected sourceDirUnExpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
+        protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
         private readonly __workspaceFolder: string | null,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
-        this.sourceDir = this.sourceDirUnExpanded;
+        this.sourceDir = this.sourceDirUnexpanded;
         // We have a cache of file-compilation terminals. Wipe them out when the
         // user closes those terminals.
         vscode.window.onDidCloseTerminal(closed => {
@@ -201,7 +201,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         });
     }
 
+    /**
+     * The source directory, where the root CMakeLists.txt lives.
+     *
+     * @note This is distinct from the config values, since we do variable
+     * substitution.
+     */
     protected sourceDir = '';
+
     /**
      * Dispose the driver. This disposes some things synchronously, but also
      * calls the `asyncDispose()` method to start any asynchronous shutdown.
@@ -646,7 +653,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
-            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnExpanded, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder));
+            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);

@@ -40,7 +40,6 @@ suite('Build using Kits and Variants', () => {
 
         const kit = await getFirstSystemKit();
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
-        //await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
         testEnv.projectFolder.buildDirectory.clear();
     });
 
