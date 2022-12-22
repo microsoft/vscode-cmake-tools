@@ -16,7 +16,7 @@ export class SmokeContext {
     private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
     async createCMakeProject(opts: { kit?: Kit | UnspecifiedKit }): Promise<CMakeProject> {
-        const cmakeProjects: CMakeProject[] = await ProjectController.createCMakeProjectForWorkspaceFolder(this.projectDir, this._extContext);
+        const cmakeProjects: CMakeProject[] = await ProjectController.createCMakeProjectsForWorkspaceFolder(this.projectDir, this._extContext);
         const cmakeProject = cmakeProjects[0];
         if (opts.kit) {
             if (opts.kit === SpecialKits.Unspecified) {

@@ -90,7 +90,7 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
-    updateActiveProjectFromMenu(project: CMakeProject): void {
+    setActiveProject(project: CMakeProject): void {
         this.activeProject = project;
     }
 
@@ -191,11 +191,11 @@ export class ProjectController implements vscode.Disposable {
      * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
      */
-    public static async createCMakeProjectForWorkspaceFolder(folder: vscode.WorkspaceFolder, extensionContext: vscode.ExtensionContext): Promise<CMakeProject[]> {
+    public static async createCMakeProjectsForWorkspaceFolder(folder: vscode.WorkspaceFolder, extensionContext: vscode.ExtensionContext): Promise<CMakeProject[]> {
         // Create a context for the directory
         const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(extensionContext, folder));
         const sourceDirectory: string[] = workspaceContext.config.sourceDirectory;
-        const isMultiProjectFolder: boolean = (sourceDirectory.length !== 1);
+        const isMultiProjectFolder: boolean = (sourceDirectory.length > 1);
         const projects: CMakeProject[] = [];
         for (const source of sourceDirectory) {
             projects.push(await CMakeProject.create(extensionContext, workspaceContext, source, isMultiProjectFolder));
@@ -223,7 +223,7 @@ export class ProjectController implements vscode.Disposable {
             return existing;
         }
         // Load for the workspace.
-        const newProjects: CMakeProject[] = await ProjectController.createCMakeProjectForWorkspaceFolder(folder, this.extensionContext);
+        const newProjects: CMakeProject[] = await ProjectController.createCMakeProjectsForWorkspaceFolder(folder, this.extensionContext);
         this.folderToProjectsMap.set(folder.uri.fsPath, newProjects);
         const config: ConfigurationReader | undefined = this.getConfigurationReader(folder);
         if (config) {
