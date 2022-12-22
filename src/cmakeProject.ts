@@ -2269,13 +2269,15 @@ export class CMakeProject {
             }
         }
 
-        let launchArgs = '';
+        terminal.sendText(executablePath, false);
+
         if (userConfig?.args?.length !== undefined && userConfig.args.length > 0) {
             const args = await expandStrings(userConfig.args, await this.getExpansionOptions());
-            launchArgs = args.join(" ");
+            args.forEach(arg => terminal.sendText(` ${shlex.quote(arg)}`, false));
         }
 
-        terminal.sendText(`${executablePath} ${launchArgs}`);
+        terminal.sendText('', true); // Finally send the newline to complete the command.
+
         terminal.show(true);
 
         const processId = await terminal.processId;

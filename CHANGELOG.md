@@ -23,6 +23,7 @@ Bug Fixes:
 - Cache the version check for the cmake executable. [#2818](https://github.com/microsoft/vscode-cmake-tools/issues/2818)
 - ctest -N does not work with custom cmake path from preset. [#2842](https://github.com/microsoft/vscode-cmake-tools/issues/2842)
 - Resolve variables in args before passing them to the terminal. [#2846](https://github.com/microsoft/vscode-cmake-tools/issues/2846)
+- Quote launch arguments sent to the terminal if they have special characters. [#2898](https://github.com/microsoft/vscode-cmake-tools/issues/2898)
 
 ## 1.12.27
 Bug Fixes:
