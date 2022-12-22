@@ -130,6 +130,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
     const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
     const env = EnvironmentUtils.create(envPreNormalize);
     const replacements = opts.vars;
+    replacements.sourceDirectory = replacements.sourceDir;
     let circularReference: string | undefined;
 
     // We accumulate a list of substitutions that we need to make, preventing
@@ -148,9 +149,6 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
                 log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input));
             } else {
                 subs.set(full, replacement);
-                if (full === "${sourceDir}") {
-                    subs.set("${sourceDirectory}", replacement);
-                }
             }
         }
     }

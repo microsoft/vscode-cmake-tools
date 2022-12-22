@@ -239,7 +239,10 @@ export class ConfigurationReader implements vscode.Disposable {
     get autoSelectActiveFolder(): boolean {
         return this.configData.autoSelectActiveFolder;
     }
-    get buildDirectory(): string {
+    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope): string {
+        if (multiProject && this.isDefaultValue('buildDirectory', workspaceFolder)) {
+            return '${sourceDirectory}/build';
+        }
         return this.configData.buildDirectory;
     }
     get installPrefix(): string | null {
@@ -508,6 +511,12 @@ export class ConfigurationReader implements vscode.Disposable {
             activeChangeEvents.scheduleAndTrackTask(() => cb(value));
         };
         return emitter.event(awaitableCallback);
+    }
+
+    isDefaultValue<K extends keyof ExtensionConfigurationSettings>(setting: K, configurationScope?: vscode.ConfigurationScope) {
+        const settings = vscode.workspace.getConfiguration('cmake', configurationScope);
+        const value = settings.inspect(setting);
+        return value?.globalValue === undefined && value?.workspaceValue === undefined && value?.workspaceFolderValue === undefined;
     }
 
     getSettingsChangePromise() {

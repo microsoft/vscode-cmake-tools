@@ -6,7 +6,7 @@ import { makeCodeModelDriverTestsuite } from './driver-codemodel-tests';
 import { makeDriverTestsuite } from './driver-test';
 
 async function cmakeServerDriverFactory(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) {
-    const d: CMakeServerDriver = await CMakeServerDriver.create(cmake, config, workspaceFolder || "", false, kit, null, null, null, workspaceFolder, preconditionHandler, preferredGenerators);
+    const d: CMakeServerDriver = await CMakeServerDriver.create(cmake, config, workspaceFolder || "", false, false, kit, null, null, null, workspaceFolder, preconditionHandler, preferredGenerators);
     return d;
 }
 

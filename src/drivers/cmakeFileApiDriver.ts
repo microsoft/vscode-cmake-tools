@@ -45,14 +45,16 @@ export class CMakeFileApiDriver extends CMakeDriver {
     private constructor(cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
         sourceDir: string,
+        isMultiProject: boolean,
         workspaceRootPath: string | null,
         preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, sourceDir, workspaceRootPath, preconditionHandler);
+        super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler);
     }
 
     static async create(cmake: CMakeExecutable,
         config: ConfigurationReader,
         sourceDir: string,
+        isMultiProject: boolean,
         useCMakePresets: boolean,
         kit: Kit | null,
         configurePreset: ConfigurePreset | null,
@@ -62,7 +64,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
         log.debug('Creating instance of CMakeFileApiDriver');
-        return this.createDerived(new CMakeFileApiDriver(cmake, config, sourceDir, workspaceRootPath, preconditionHandler),
+        return this.createDerived(new CMakeFileApiDriver(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler),
             useCMakePresets,
             kit,
             configurePreset,

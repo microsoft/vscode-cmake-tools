@@ -91,7 +91,7 @@ export class ProjectController implements vscode.Disposable {
         this.activeProject = undefined;
     }
 
-    setActiveProject(project: CMakeProject): void {
+    setActiveProject(project?: CMakeProject): void {
         this.activeProject = project;
     }
 
@@ -275,11 +275,19 @@ export class ProjectController implements vscode.Disposable {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
 
         if (projects) {
+            // Try to preserve the active project.
+            // If there's a transition between multi-project and single-project, we need to dispose all the projects.
+            let activeProjectPath: string | undefined;
+            const multiProjectChange: boolean = (sourceDirectories.length > 1) !== (projects.length > 1);
+
             // Remove projects.
             for (let i = projects.length - 1; i >= 0; i--) {
-                if (sourceDirectories.indexOf(projects[i].sourceDir) !== -1) {
+                if (!multiProjectChange && sourceDirectories.indexOf(projects[i].sourceDir) !== -1) {
                     sourceDirectories.splice(sourceDirectories.indexOf(projects[i].sourceDir), 1);
                 } else {
+                    if (this.activeProject?.sourceDir === projects[i].sourceDir) {
+                        activeProjectPath = projects[i].sourceDir;
+                    }
                     projects[i].dispose();
                     projects.splice(i, 1);
                 }
@@ -288,11 +296,26 @@ export class ProjectController implements vscode.Disposable {
             // Add projects.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
             for (let i = 0; i < sourceDirectories.length; i++) {
-                const cmakeProject: CMakeProject = await CMakeProject.create(workspaceContext, sourceDirectories[i]);
+                const cmakeProject: CMakeProject = await CMakeProject.create(workspaceContext, sourceDirectories[i], sourceDirectories.length > 1);
+                if (activeProjectPath === cmakeProject.sourceDir) {
+                    this.setActiveProject(cmakeProject);
+                    activeProjectPath = undefined;
+                }
                 projects.push(cmakeProject);
             }
+            if (activeProjectPath !== undefined) {
+                // Active project is no longer available. Pick a different one.
+                this.setActiveProject(projects.length > 0 ? projects[0] : undefined);
+            }
+
             // Update the map.
             this.folderToProjectsMap.set(folder.uri.fsPath, projects);
+
+            if (multiProjectChange || activeProjectPath !== undefined) {
+                // There's no way to reach into the extension manager and update the status bar, so we exposed a hidden command
+                // to referesh it.
+                void vscode.commands.executeCommand('cmake.statusbar.update');
+            }
         }
     }
 
@@ -300,18 +323,7 @@ export class ProjectController implements vscode.Disposable {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             for (const project of projects) {
-                let use: boolean = false;
-                switch (useCMakePresets) {
-                    case 'always':
-                        use = true;
-                        break;
-                    case 'never':
-                        use = false;
-                        break;
-                    default:
-                        use = await project.hasPresetsFiles();
-                }
-                await project.doUseCMakePresetsChange(use);
+                await project.doUseCMakePresetsChange(useCMakePresets);
             }
         }
         if (this.activeProject) {

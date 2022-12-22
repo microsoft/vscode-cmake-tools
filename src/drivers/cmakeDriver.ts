@@ -185,6 +185,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected constructor(public readonly cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
         protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
+        private readonly isMultiProject: boolean,
         private readonly __workspaceFolder: string | null,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
         this.sourceDir = this.sourceDirUnexpanded;
@@ -364,9 +365,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             buildKitTargetArch: target.targetArch ?? '__unknow_target_arch__',
             buildKitVersionMajor: majorVersionSemver(version),
             buildKitVersionMinor: minorVersionSemver(version),
+            sourceDir: this.sourceDir,
             // DEPRECATED EXPANSION: Remove this in the future:
-            projectName: 'ProjectName',
-            sourceDir: this.sourceDir
+            projectName: 'ProjectName'
         };
 
         // Update Variant replacements
@@ -565,7 +566,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         await this.doSetKit(async () => {
             await this._setKit(kit, preferredGenerators);
             await this._refreshExpansions();
-            const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, this.expansionOptions));
+            const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
+            const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), this.expansionOptions));
             if (needsCleanIfKitChange && (newBinaryDir === oldBinaryDir)) {
                 await this._cleanPriorConfiguration();
             }
@@ -659,7 +661,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);
 
             if (!this.useCMakePresets) {
-                this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
+                const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
+                this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), opts));
 
                 const installPrefix = this.config.installPrefix;
                 if (installPrefix) {

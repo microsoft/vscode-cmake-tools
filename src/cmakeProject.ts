@@ -776,6 +776,7 @@ export class CMakeProject {
                     drv = await CMakeFileApiDriver.create(cmake,
                         this.workspaceContext.config,
                         this.sourceDir,
+                        this.isMultiProjectFolder,
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
@@ -789,6 +790,7 @@ export class CMakeProject {
                     drv = await CMakeServerDriver.create(cmake,
                         this.workspaceContext.config,
                         this.sourceDir,
+                        this.isMultiProjectFolder,
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
@@ -802,6 +804,7 @@ export class CMakeProject {
                     drv = await CMakeLegacyDriver.create(cmake,
                         this.workspaceContext.config,
                         this.sourceDir,
+                        this.isMultiProjectFolder,
                         this.useCMakePresets,
                         this.activeKit,
                         this.configurePreset,
@@ -925,10 +928,13 @@ export class CMakeProject {
         }
         return false;
     }
-    async doUseCMakePresetsChange(useCMakePresets?: boolean) {
-        if (useCMakePresets !== undefined) {
-            this._useCMakePresets = useCMakePresets;
+
+    async doUseCMakePresetsChange(useCMakePresets?: string) {
+        if (useCMakePresets === undefined) {
+            useCMakePresets = this.workspaceContext.config.useCMakePresets;
         }
+        this._useCMakePresets = useCMakePresets === 'always' ? true : useCMakePresets === 'never' ? false : await this.hasPresetsFiles();
+
         const usingCMakePresets = this.useCMakePresets;
         if (usingCMakePresets !== this.wasUsingCMakePresets) {
             this.wasUsingCMakePresets = usingCMakePresets;

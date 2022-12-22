@@ -564,6 +564,10 @@ export class ExtensionManager implements vscode.Disposable {
         await this.postUpdateActiveProject();
     }
 
+    async updateStatusBarForActiveProjectChange(): Promise<void> {
+        await this.postUpdateActiveProject();
+    }
+
     private async postUpdateActiveProject() {
         const activeProject: CMakeProject | undefined = this.getActiveProject();
         if (activeProject) {
@@ -1732,24 +1736,17 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items:
-        vscode.commands.registerCommand('cmake.outline.buildTarget',
-            (what: TargetNode) => runCommand('build', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
-            (what: TargetNode) => runCommand('build', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.debugTarget',
-            (what: TargetNode) => runCommand('debugTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.launchTarget',
-            (what: TargetNode) => runCommand('launchTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
-            (what: TargetNode) => runCommand('setDefaultTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
-            (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name)),
-        vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
-            (what: TargetNode) => what.openInCMakeLists()),
-        vscode.commands.registerCommand('cmake.outline.compileFile',
-            (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
-        vscode.commands.registerCommand('cmake.outline.selectWorkspace',
-            (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
+        vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.runUtilityTarget', (what: TargetNode) => runCommand('build', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.debugTarget', (what: TargetNode) => runCommand('debugTarget', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.launchTarget', (what: TargetNode) => runCommand('launchTarget', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.setDefaultTarget', (what: TargetNode) => runCommand('setDefaultTarget', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.setLaunchTarget', (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
+        vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
+        vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
+        // Notification of active project change (e.g. when cmake.sourceDirectory changes)
+        vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange())
     ]);
 
     return { getApi: (_version) => ext.api };
