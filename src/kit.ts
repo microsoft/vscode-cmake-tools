@@ -22,6 +22,7 @@ import { TargetTriple, findTargetTriple, parseTargetTriple, computeTargetTriple 
 import { compare, dropNulls, Ordering, versionLess } from './util';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
+import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -585,10 +586,12 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
     return `${vsDisplayName(inst)} - ${getHostTargetArchString(hostArch, targetArch, true)}`;
 }
 
+export type MsvcHostArches = 'x86' | 'x64' | 'ARM64';
+
 /**
  * Possible msvc host architectures
  */
-export const MSVC_HOST_ARCHES: string[] = ['x86', 'x64'];
+export const MSVC_HOST_ARCHES: MsvcHostArches[] = ['x86', 'x64'];
 
 /**
  * Gets the environment variables set by a shell script.
@@ -739,12 +742,27 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
  */
 export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     const installs = await vsInstallations();
+
+    // Exclude ARM64 host checking on x86 and x64 since they cannot act as an arm64 host.
+    const hostArches: MsvcHostArches[] = (util.getHostArchitecture() === 'arm64') ?
+        [...MSVC_HOST_ARCHES, 'ARM64'] :
+        MSVC_HOST_ARCHES;
+
     const prs = installs.map(async (inst): Promise<Kit[]> => {
         const ret = [] as Kit[];
         const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
+        const version = util.tryParseVersion(inst.installationVersion);
+
+        // ARM64 support as a host was added in Visual Studio 2022 17.4 and above,
+        // so we'll avoid checking it on anything lower.
+        const vsVersionSupportsArm64 = (version?.major === 17 && version.minor >= 4) || (version && version.major > 17);
 
         const sub_prs: Promise<Kit | null>[] = [];
-        MSVC_HOST_ARCHES.forEach(hostArch => {
+        hostArches.forEach(hostArch => {
+            if (hostArch === 'ARM64' && !vsVersionSupportsArm64) {
+                return;
+            }
+
             targetArches.forEach(targetArch => {
                 sub_prs.push(tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr));
             });
@@ -759,7 +777,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeProject?: CMakeProject): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakePath?: string): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
         const isClangGnuCli = (path.basename(binPath, '.exe') === 'clang');
         const isClangMsvcCli = (path.basename(binPath, '.exe') === 'clang-cl');
@@ -776,11 +794,11 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
 
         // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
         if (isClangGnuCli) {
-            if (undefined === cmakeProject) {
-                log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: cmakeProject is undefined"));
+            if (cmakePath === undefined) {
+                log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: CMake Path is undefined"));
                 return null;
             } else {
-                const cmake_executable = await cmakeProject.getCMakeExecutable();
+                const cmake_executable = await getCMakeExecutableInformation(cmakePath);
                 if (undefined === cmake_executable.version) {
                     return null;
                 } else {
@@ -797,11 +815,12 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         const clangKits: Kit[] = [];
         for (const vs of vsInstalls) {
             const install_name = vsDisplayName(vs);
-            const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
-            const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
-            const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
+            const vsArch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'x64';
+            const archForKitName = vsArch === 'x86' ? 'x86' : 'amd64';
+            const clangArchPath = (vsArch === "x64") ? "x64\\" : "";
+            const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${archForKitName})`;
             const clangExists = async () => {
-                const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
+                const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArchPath}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
                 return exists;
             };
             if (isClangGnuCli) {
@@ -809,7 +828,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                     clangKits.push({
                         name: clangKitName,
                         visualStudio: kitVSName(vs),
-                        visualStudioArchitecture: vs_arch,
+                        visualStudioArchitecture: vsArch,
                         compilers: {
                             C: binPath,
                             CXX: binPath
@@ -824,11 +843,11 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                         clangKits.push({
                             name: clangKitName,
                             visualStudio: kitVSName(vs),
-                            visualStudioArchitecture: vs_arch,
+                            visualStudioArchitecture: vsArch,
                             preferredGenerator: {
                                 name: generatorName,
-                                platform: generatorPlatformFromVSArch[vs_arch] as string || vs_arch,
-                                toolset: `host=${vs_arch}`
+                                platform: generatorPlatformFromVSArch[vsArch] as string || vsArch,
+                                toolset: `ClangCL,host=${vsArch}`
                             },
                             compilers: {
                                 C: binPath,
@@ -845,9 +864,9 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangForMSVCKits(searchPaths: string[], cmakeProject?: CMakeProject): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakePath?: string): Promise<Promise<Kit[]>[]> {
     const vs_installs = await vsInstallations();
-    const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeProject));
+    const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakePath));
     return results;
 }
 
@@ -964,7 +983,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(cmakeProject?: CMakeProject, opt?: KitScanOptions) {
+export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
     const kit_options = opt || {};
 
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
@@ -1040,7 +1059,7 @@ export async function scanForKits(cmakeProject?: CMakeProject, opt?: KitScanOpti
             // Scan for kits
             const vs_kits = scanForVSKits(pr);
             kit_promises.push(vs_kits);
-            const clang_kits = await scanForClangForMSVCKits(Array.from(clang_paths), cmakeProject);
+            const clang_kits = await scanForClangForMSVCKits(Array.from(clang_paths), cmakePath);
             kit_promises = kit_promises.concat(clang_kits);
         }
 
@@ -1053,15 +1072,15 @@ export async function scanForKits(cmakeProject?: CMakeProject, opt?: KitScanOpti
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(cmakeProject: CMakeProject): Promise<boolean> {
-    const kitsVersionSaved = cmakeProject.extensionContext.globalState.get<number>('kitsVersionSaved');
+export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolean> {
+    const kitsVersionSaved = project.workspaceContext.state.extensionContext.globalState.get<number>('kitsVersionSaved');
     const kitsVersionCurrent = 2;
 
     // Scan also when there is no kits version saved in the state.
     if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-        await kitsController.KitsController.scanForKits(cmakeProject);
-        await cmakeProject.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
+        await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
         return true;
     }
 
@@ -1211,13 +1230,13 @@ export function kitsForWorkspaceDirectory(workspaceFolder: string): Promise<Kit[
 /**
  * Get the kits defined by the user in the files pointed by "cmake.additionalKits".
  */
-export async function getAdditionalKits(cmakeProject: CMakeProject): Promise<Kit[]> {
-    const opts: expand.ExpansionOptions = await cmakeProject.getExpansionOptions();
-    const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
+export async function getAdditionalKits(project: CMakeProject): Promise<Kit[]> {
+    const opts: expand.ExpansionOptions = await project.getExpansionOptions();
+    const expandedAdditionalKitFiles: string[] = await project.getExpandedAdditionalKitFiles();
 
     let additionalKits: Kit[] = [];
     for (const kitFile of expandedAdditionalKitFiles) {
-        additionalKits = additionalKits.concat(await readKitsFile(kitFile, cmakeProject.workspaceContext.folder.uri.fsPath, opts));
+        additionalKits = additionalKits.concat(await readKitsFile(kitFile, project.workspaceContext.folder.uri.fsPath, opts));
     }
     return additionalKits;
 }

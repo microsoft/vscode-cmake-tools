@@ -1,0 +1,4 @@
+{
+    "cmake.sourceDirectory": ["${workspaceFolder}/subroot1", "${workspaceFolder}/subroot2"],
+    "cmake.buildDirectory": "${sourceDir}/build"
+}

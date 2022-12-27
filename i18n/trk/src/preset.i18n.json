@@ -15,7 +15,6 @@
 	"default.test.preset.description": "Bağımsız değişken eklemeyen boş bir test ön ayarı",
 	"circular.inherits.in.config.preset": "{0} yapılandırma ön ayarındaki döngüsel devralmalar",
 	"binaryDir.undefined": "{0} ön ayarını yapılandır: Varsayılan {1} değeri kullanılarak binaryDir belirtilmedi",
-	"generator.undefined": "{0} ön ayarını yapılandır: Varsayılan {1} değeri kullanılarak oluşturucu belirtilmedi",
 	"property.unsupported.v2": "{0} ön ayarını yapılandır: {1} özelliği, v2 ön ayarlarında desteklenmiyor",
 	"no.cl.arch": "Yapılandırma ön ayarı {0}: cl.exe için varsayılan olarak x86 kullanan herhangi bir mimari belirtilmedi",
 	"no.cl.toolset.arch": "Yapılandırma ön ayarı {0}: cl.exe için varsayılan olarak {1} kullanan herhangi bir araç takımı mimarisi belirtilmedi",

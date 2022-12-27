@@ -14,7 +14,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpptools from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
-import { TargetTypeString } from './drivers/cmakeServerClient';
+import { TargetTypeString } from './drivers/drivers';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -454,7 +454,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : undefined;
+        let compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
         const getAsFlags = (fragments?: string[]) => {
             if (!fragments) {
                 return [];
@@ -485,12 +485,20 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
 
         if (sysroot) {
-            if (!useFragments) {
-                // Send sysroot with quoting for CppTools API V5 and below.
-                flags.push('--sysroot=' + shlex.quote(sysroot));
-            } else {
+            if (useFragments) {
                 // Pass sysroot (without quote added) as the only compilerArgs for CppTools API V6 and above.
-                flags.push(('--sysroot=' + sysroot));
+                flags.push(`--sysroot=${sysroot}`);
+            } else {
+                // Send sysroot with quoting for CppTools API V5 and below.
+                flags.push(`--sysroot=${shlex.quote(sysroot)}`);
+            }
+        }
+        if (targetFromToolchains) {
+            if (useFragments) {
+                compileCommandFragments = compileCommandFragments.slice(0);
+                compileCommandFragments.push(`--target=${targetFromToolchains}`);
+            } else {
+                flags.push(`--target=${targetFromToolchains}`);
             }
         }
 

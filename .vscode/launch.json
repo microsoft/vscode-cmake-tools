@@ -150,7 +150,7 @@
             "args": [
                 "${workspaceFolder}/test/smoke/_project-dir",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/smoke/index",
+                "--extensionTestsPath=${workspaceFolder}/out/test/smoke",
                 "--disable-extensions"
             ],
             "sourceMaps": true,

@@ -60,7 +60,7 @@
     "cmake-tools.configuration.cmake.cmakePath.description": "Name/path of the CMake executable to use.",
     "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go.",
     "cmake-tools.configuration.cmake.installPrefix.description": "The directory where CMake installed files will go.",
-    "cmake-tools.configuration.cmake.sourceDirectory.description": "The directory of the root CMakeLists.txt file.",
+    "cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
     "cmake-tools.configuration.cmake.saveBeforeBuild.description": "Save open files before building.",
     "cmake-tools.configuration.cmake.buildBeforeRun.description": "Build the target before running it.",
     "cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Clear build output before each build.",

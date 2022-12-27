@@ -1,5 +1,4 @@
-import * as api from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntryType } from '@cmt/cache';
 import { DefaultEnvironment, expect } from '@test/util';
 import * as vscode from 'vscode';
 
@@ -40,7 +39,7 @@ suite('Environment Variables in Presets', () => {
         const cacheEntry_ = cache.get('variantEnv');
         expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
         const cacheEntry = cacheEntry_!;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[variantEnv] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
         expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
         expect(cacheEntry.as<string>()).to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');

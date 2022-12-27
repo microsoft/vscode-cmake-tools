@@ -1,13 +1,21 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { InputFileSet } from '@cmt/dirty';
-import { ConfigureTrigger } from '@cmt/cmakeProject';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as api from '@cmt/api';
-import { CacheEntryProperties, ExecutableTarget, RichTarget } from '@cmt/api';
 import * as cache from '@cmt/cache';
-import * as cms from '@cmt/drivers/cmakeServerClient';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import {
+    CMakeDriver,
+    CMakePreconditionProblemSolver,
+    CMakeServerClient,
+    ExecutableTarget,
+    GlobalSettingsContent,
+    ProgressMessage,
+    RichTarget,
+    ServerError,
+    ServerCodeModelContent,
+    Target,
+    NoGeneratorError
+} from '@cmt/drivers/drivers';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
@@ -15,7 +23,6 @@ import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
 import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
-import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 
@@ -23,10 +30,6 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cms-driver');
-
-export class NoGeneratorError extends Error {
-    message: string = localize('no.usable.generator.found', 'No usable generator found.');
-}
 
 export class CMakeServerDriver extends CMakeDriver {
 
@@ -38,19 +41,19 @@ export class CMakeServerDriver extends CMakeDriver {
         throw new Error('Method not implemented.');
     }
 
-    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, workspaceFolder, preconditionHandler);
+    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+        super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
         this.config.onChange('environment', () => this._restartClient());
         this.config.onChange('configureEnvironment', () => this._restartClient());
     }
 
-    private _cmsClient: Promise<cms.CMakeServerClient | null> = Promise.resolve(null);
+    private _cmsClient: Promise<CMakeServerClient | null> = Promise.resolve(null);
     private _clientChangeInProgress: Promise<void> = Promise.resolve();
-    private _globalSettings!: cms.GlobalSettingsContent;
-    private _cacheEntries = new Map<string, cache.Entry>();
+    private _globalSettings!: GlobalSettingsContent;
+    private _cacheEntries = new Map<string, cache.CacheEntry>();
     private _cmakeInputFileSet = InputFileSet.createEmpty();
 
-    private readonly _progressEmitter = new vscode.EventEmitter<cms.ProgressMessage>();
+    private readonly _progressEmitter = new vscode.EventEmitter<ProgressMessage>();
     get onProgress() {
         return this._progressEmitter.event;
     }
@@ -62,7 +65,7 @@ export class CMakeServerDriver extends CMakeDriver {
     private _prevConfigureEnv = 'null';
 
     private codeModel: CodeModelContent | null = null;
-    private convertServerCodeModel(serverCodeModel: null | cms.ServerCodeModelContent): CodeModelContent | null {
+    private convertServerCodeModel(serverCodeModel: null | ServerCodeModelContent): CodeModelContent | null {
         if (serverCodeModel) {
             const codeModel: CodeModelContent = { configurations: [] };
             for (const config of serverCodeModel.configurations) {
@@ -129,7 +132,7 @@ export class CMakeServerDriver extends CMakeDriver {
         }
     }
 
-    private async getClient(): Promise<cms.CMakeServerClient> {
+    private async getClient(): Promise<CMakeServerClient> {
         if (!(await this._cmsClient)) {
             this._cmsClient = this._startNewClient();
         }
@@ -176,7 +179,7 @@ export class CMakeServerDriver extends CMakeDriver {
                 await cl.configure({ cacheArguments: args });
                 await cl.compute();
             } catch (e) {
-                if (e instanceof cms.ServerError) {
+                if (e instanceof ServerError) {
                     log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', errorToString(e)));
                     return 1;
                 } else {
@@ -207,14 +210,14 @@ export class CMakeServerDriver extends CMakeDriver {
         this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
         const clcache = await client.getCMakeCacheContent();
         this._cacheEntries = clcache.cache.reduce((acc, el) => {
-            const entry_map: { [key: string]: api.CacheEntryType | undefined } = {
-                BOOL: api.CacheEntryType.Bool,
-                STRING: api.CacheEntryType.String,
-                PATH: api.CacheEntryType.Path,
-                FILEPATH: api.CacheEntryType.FilePath,
-                INTERNAL: api.CacheEntryType.Internal,
-                UNINITIALIZED: api.CacheEntryType.Uninitialized,
-                STATIC: api.CacheEntryType.Static
+            const entry_map: { [key: string]: cache.CacheEntryType | undefined } = {
+                BOOL: cache.CacheEntryType.Bool,
+                STRING: cache.CacheEntryType.String,
+                PATH: cache.CacheEntryType.Path,
+                FILEPATH: cache.CacheEntryType.FilePath,
+                INTERNAL: cache.CacheEntryType.Internal,
+                UNINITIALIZED: cache.CacheEntryType.Uninitialized,
+                STATIC: cache.CacheEntryType.Static
             };
             const type = entry_map[el.type];
             if (type === undefined) {
@@ -222,9 +225,9 @@ export class CMakeServerDriver extends CMakeDriver {
                 return acc;
             }
             acc.set(el.key,
-                new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
+                new cache.CacheEntry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
             return acc;
-        }, new Map<string, cache.Entry>());
+        }, new Map<string, cache.CacheEntry>());
         // Convert ServerCodeModel to general CodeModel.
         this.codeModel = this.convertServerCodeModel(await client.codemodel());
         this._codeModelChanged.fire(this.codeModel);
@@ -287,7 +290,7 @@ export class CMakeServerDriver extends CMakeDriver {
             .map(t => ({ name: t.name, path: t.filepath }));
     }
 
-    get uniqueTargets(): api.Target[] {
+    get uniqueTargets(): Target[] {
         return this.targets.reduce(targetReducer, []);
     }
 
@@ -318,7 +321,7 @@ export class CMakeServerDriver extends CMakeDriver {
         return this._cmakeInputFileSet.checkOutOfDate();
     }
 
-    get cmakeCacheEntries(): Map<string, CacheEntryProperties> {
+    get cmakeCacheEntries(): Map<string, cache.CacheEntry> {
         return this._cacheEntries;
     }
 
@@ -363,7 +366,7 @@ export class CMakeServerDriver extends CMakeDriver {
         this._globalSettings = await client.getGlobalSettings();
     }
 
-    private async _doRestartClient(): Promise<cms.CMakeServerClient> {
+    private async _doRestartClient(): Promise<CMakeServerClient> {
         const old_client = await this._cmsClient;
         if (old_client) {
             await old_client.shutdownAsync();
@@ -376,7 +379,7 @@ export class CMakeServerDriver extends CMakeDriver {
             throw new NoGeneratorError();
         }
 
-        return cms.CMakeServerClient.start({
+        return CMakeServerClient.start({
             tmpdir: path.join(this.workspaceFolder!, '.vscode'),
             binaryDir: this.binaryDir,
             sourceDir: this.sourceDir,
@@ -413,38 +416,16 @@ export class CMakeServerDriver extends CMakeDriver {
 
     protected async doInit(): Promise<void> {
         await this._restartClient();
-
-        this.config.onChange('sourceDirectory', async () => {
-            // The configure process can determine correctly whether the features set activation
-            // should be full or partial, so there is no need to proactively enable full here,
-            // unless the automatic configure is disabled.
-            // If there is a configure or a build in progress, we should avoid setting full activation here,
-            // even if cmake.configureOnEdit is true, because this may overwrite a different decision
-            // that was done earlier by that ongoing configure process.
-            if (!this.configOrBuildInProgress()) {
-                if (this.config.configureOnEdit) {
-                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected {0} setting update, attempting automatic reconfigure...", "\'cmake.sourceDirectory\'"));
-                    await this.configure(ConfigureTrigger.sourceDirectoryChange, []);
-                }
-
-                // Evaluate for this folder (whose sourceDirectory setting just changed)
-                // if the new value points to a valid CMakeLists.txt.
-                if (this.workspaceFolder) {
-                    const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
-                    if (folder) {
-                        await ext.updateFullFeatureSetForFolder(folder);
-                    }
-                }
-            }
-        });
     }
 
-    get codeModelContent(): cms.ServerCodeModelContent | null {
+    get codeModelContent(): ServerCodeModelContent | null {
         return null;
     }
 
     static async create(cmake: CMakeExecutable,
         config: ConfigurationReader,
+        sourceDir: string,
+        isMultiProject: boolean,
         useCMakePresets: boolean,
         kit: Kit | null,
         configurePreset: ConfigurePreset | null,
@@ -453,7 +434,7 @@ export class CMakeServerDriver extends CMakeDriver {
         workspaceFolder: string | null,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeServerDriver> {
-        return this.createDerived(new CMakeServerDriver(cmake, config, workspaceFolder, preconditionHandler),
+        return this.createDerived(new CMakeServerDriver(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler),
             useCMakePresets,
             kit,
             configurePreset,

@@ -1,7 +1,4 @@
-import * as api from '@cmt/api';
-import { ConfigureTrigger } from '@cmt/cmakeProject';
-import { ExecutableTarget } from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import {
@@ -12,10 +9,15 @@ import {
     loadExtCodeModelContent,
     loadIndexFile,
     loadToolchains,
-    Index
-} from '@cmt/drivers/cmakeFileApi';
+    CMakeDriver,
+    CMakePreconditionProblemSolver,
+    ExecutableTarget,
+    Index,
+    RichTarget,
+    Target,
+    NoGeneratorError
+} from '@cmt/drivers/drivers';
 import * as codeModel from '@cmt/drivers/codeModel';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeGenerator, Kit } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -24,11 +26,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as ext from '@cmt/extension';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
-
-import { NoGeneratorError } from './cmakeServerDriver';
-
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -46,13 +44,17 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     private constructor(cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
+        sourceDir: string,
+        isMultiProject: boolean,
         workspaceRootPath: string | null,
         preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, workspaceRootPath, preconditionHandler);
+        super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler);
     }
 
     static async create(cmake: CMakeExecutable,
         config: ConfigurationReader,
+        sourceDir: string,
+        isMultiProject: boolean,
         useCMakePresets: boolean,
         kit: Kit | null,
         configurePreset: ConfigurePreset | null,
@@ -62,7 +64,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
         log.debug('Creating instance of CMakeFileApiDriver');
-        return this.createDerived(new CMakeFileApiDriver(cmake, config, workspaceRootPath, preconditionHandler),
+        return this.createDerived(new CMakeFileApiDriver(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler),
             useCMakePresets,
             kit,
             configurePreset,
@@ -79,10 +81,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
     private readonly _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
 
     // Information from cmake file api
-    private _cache: Map<string, api.CacheEntry> = new Map<string, api.CacheEntry>();
+    private _cache: Map<string, CacheEntry> = new Map<string, CacheEntry>();
     private _cmakeFiles: string[] | null = null;
     private _generatorInformation: Index.GeneratorInformation | null = null;
-    private _target_map: Map<string, api.Target[]> = new Map();
+    private _target_map: Map<string, Target[]> = new Map();
 
     async getGeneratorFromCache(cache_file_path: string): Promise<string | undefined> {
         const cache = await CMakeCache.fromPath(cache_file_path);
@@ -145,30 +147,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
         this._cacheWatcher.onDidChange(() => {
             log.debug(`Reload CMake cache: ${this.cachePath} changed`);
             rollbar.invokeAsync('Reloading CMake Cache', () => this.updateCodeModel());
-        });
-
-        this.config.onChange('sourceDirectory', async () => {
-            // The configure process can determine correctly whether the features set activation
-            // should be full or partial, so there is no need to proactively enable full here,
-            // unless the automatic configure is disabled.
-            // If there is a configure or a build in progress, we should avoid setting full activation here,
-            // even if cmake.configureOnEdit is true, because this may overwrite a different decision
-            // that was done earlier by that ongoing configure process.
-            if (!this.configOrBuildInProgress()) {
-                if (this.config.configureOnEdit) {
-                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected {0} setting update, attempting automatic reconfigure...", "\'cmake.sourceDirectory\'"));
-                    await this.configure(ConfigureTrigger.sourceDirectoryChange, []);
-                }
-
-                // Evaluate for this folder (whose sourceDirectory setting just changed)
-                // if the new value points to a valid CMakeLists.txt.
-                if (this.workspaceFolder) {
-                    const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
-                    if (folder) {
-                        await ext.updateFullFeatureSetForFolder(folder);
-                    }
-                }
-            }
         });
     }
 
@@ -355,13 +333,13 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return this._codeModelContent;
     }
 
-    get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> {
+    get cmakeCacheEntries(): Map<string, CacheEntry> {
         return this._cache;
     }
     get generatorName(): string | null {
         return this._generatorInformation ? this._generatorInformation.name : null;
     }
-    get targets(): api.Target[] {
+    get targets(): Target[] {
         const targets = this._target_map.get(this.currentBuildType);
         if (targets) {
             const metaTargets = [{
@@ -379,15 +357,15 @@ export class CMakeFileApiDriver extends CMakeDriver {
     /**
      * List of unique targets known to CMake
      */
-    get uniqueTargets(): api.Target[] {
+    get uniqueTargets(): Target[] {
         return this.targets.reduce(targetReducer, []);
     }
 
     get executableTargets(): ExecutableTarget[] {
-        return this.uniqueTargets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
+        return this.uniqueTargets.filter(t => t.type === 'rich' && (t as RichTarget).targetType === 'EXECUTABLE')
             .map(t => ({
                 name: t.name,
-                path: (t as api.RichTarget).filepath
+                path: (t as RichTarget).filepath
             }));
     }
 
@@ -407,14 +385,14 @@ export class CMakeFileApiDriver extends CMakeDriver {
  * @param set the accumulator
  * @t the RichTarget currently being examined.
  */
-function targetReducer(set: api.Target[], t: api.Target): api.Target[] {
+function targetReducer(set: Target[], t: Target): Target[] {
     if (!set.find(t2 => compareTargets(t, t2))) {
         set.push(t);
     }
     return set;
 }
 
-function compareTargets(a: api.Target, b: api.Target): boolean {
+function compareTargets(a: Target, b: Target): boolean {
     let same = false;
     if (a.type === b.type) {
         same = a.name === b.name;

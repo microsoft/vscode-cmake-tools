@@ -6,9 +6,8 @@
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as vscode from 'vscode';
 
-import * as api from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import { CMakeCache, CacheEntry } from '@cmt/cache';
+import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/drivers';
 import { Kit, CMakeGenerator } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -38,8 +37,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
         throw new Error('Method not implemented.');
     }
 
-    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, workspaceFolder, preconditionHandler);
+    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+        super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
     }
 
     private _needsReconfigure = true;
@@ -150,6 +149,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
 
     static async create(cmake: CMakeExecutable,
         config: ConfigurationReader,
+        sourceDir: string,
+        isMultiProject: boolean,
         useCMakePresets: boolean,
         kit: Kit | null,
         configurePreset: ConfigurePreset | null,
@@ -159,7 +160,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeLegacyDriver> {
         log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
-        return this.createDerived(new CMakeLegacyDriver(cmake, config, workspaceFolder, preconditionHandler),
+        return this.createDerived(new CMakeLegacyDriver(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler),
             useCMakePresets,
             kit,
             configurePreset,
@@ -198,7 +199,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
     }
 
     get cmakeCacheEntries() {
-        let ret = new Map<string, api.CacheEntryProperties>();
+        let ret = new Map<string, CacheEntry>();
         if (this.cmakeCache) {
             ret = util.reduce(this.cmakeCache.allEntries, ret, (acc, entry) => acc.set(entry.key, entry));
         }

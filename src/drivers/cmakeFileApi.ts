@@ -6,7 +6,6 @@
  * This file implements only the new required structures.
  */
 
-import * as api from '@cmt/api';
 import * as cache from '@cmt/cache';
 import {
     CodeModelConfiguration,
@@ -22,6 +21,7 @@ import * as path from 'path';
 import * as nls from 'vscode-nls';
 import rollbar from '@cmt/rollbar';
 import { removeEmpty } from '@cmt/util';
+import { RichTarget, Target } from '@cmt/drivers/drivers';
 
 export interface ApiVersion {
     major: number;
@@ -260,7 +260,7 @@ export async function loadIndexFile(replyPath: string): Promise<Index.IndexFile 
     return JSON.parse(fileContent.toString()) as Index.IndexFile;
 }
 
-export async function loadCacheContent(filename: string): Promise<Map<string, api.CacheEntry>> {
+export async function loadCacheContent(filename: string): Promise<Map<string, cache.CacheEntry>> {
     const fileContent = await tryReadFile(filename);
     if (!fileContent) {
         return new Map();
@@ -310,16 +310,16 @@ function findPropertyValue(cacheElement: Cache.CMakeCacheEntry, name: string): s
     return propertyElement ? propertyElement.value : '';
 }
 
-function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheContent): Map<string, api.CacheEntry> {
+function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheContent): Map<string, cache.CacheEntry> {
     return cmakeCacheContent.entries.reduce((acc, el) => {
-        const fileApiToExtensionCacheMap: { [key: string]: api.CacheEntryType | undefined } = {
-            BOOL: api.CacheEntryType.Bool,
-            STRING: api.CacheEntryType.String,
-            PATH: api.CacheEntryType.Path,
-            FILEPATH: api.CacheEntryType.FilePath,
-            INTERNAL: api.CacheEntryType.Internal,
-            UNINITIALIZED: api.CacheEntryType.Uninitialized,
-            STATIC: api.CacheEntryType.Static
+        const fileApiToExtensionCacheMap: { [key: string]: cache.CacheEntryType | undefined } = {
+            BOOL: cache.CacheEntryType.Bool,
+            STRING: cache.CacheEntryType.String,
+            PATH: cache.CacheEntryType.Path,
+            FILEPATH: cache.CacheEntryType.FilePath,
+            INTERNAL: cache.CacheEntryType.Internal,
+            UNINITIALIZED: cache.CacheEntryType.Uninitialized,
+            STATIC: cache.CacheEntryType.Static
         };
         const type = fileApiToExtensionCacheMap[el.type];
         if (type === undefined) {
@@ -328,9 +328,9 @@ function convertFileApiCacheToExtensionCache(cmakeCacheContent: Cache.CacheConte
         }
         const helpString = findPropertyValue(el, 'HELPSTRING');
         const advanced = findPropertyValue(el, 'ADVANCED');
-        acc.set(el.name, new cache.Entry(el.name, el.value, type, helpString, advanced === '1'));
+        acc.set(el.name, new cache.CacheEntry(el.name, el.value, type, helpString, advanced === '1'));
         return acc;
-    }, new Map<string, api.CacheEntry>());
+    }, new Map<string, cache.CacheEntry>());
 }
 
 export async function loadCodeModelContent(filename: string): Promise<CodeModelKind.Content | null> {
@@ -363,7 +363,7 @@ export async function loadTargetObject(filename: string): Promise<CodeModelKind.
     return JSON.parse(fileContent.toString()) as CodeModelKind.TargetObject;
 }
 
-async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, filePath: string): Promise<api.Target | null> {
+async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, filePath: string): Promise<Target | null> {
     const targetObject = await loadTargetObject(filePath);
     if (!targetObject) {
         return null;
@@ -382,10 +382,10 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
         filepath: executablePath,
         targetType: targetObject.type,
         type: 'rich' as 'rich'
-    } as api.RichTarget;
+    } as RichTarget;
 }
 
-export async function loadAllTargetsForBuildTypeConfiguration(replyPath: string, buildDirectory: string, configuration: CodeModelKind.Configuration): Promise<{ name: string; targets: api.Target[] }> {
+export async function loadAllTargetsForBuildTypeConfiguration(replyPath: string, buildDirectory: string, configuration: CodeModelKind.Configuration): Promise<{ name: string; targets: Target[] }> {
     const metaTargets = [];
     if (configuration.directories[0].hasInstallRule) {
         metaTargets.push({
@@ -403,7 +403,7 @@ export async function loadAllTargetsForBuildTypeConfiguration(replyPath: string,
     };
 }
 
-export async function loadConfigurationTargetMap(replyPath: string, codeModelFileName: string): Promise<Map<string, api.Target[]>> {
+export async function loadConfigurationTargetMap(replyPath: string, codeModelFileName: string): Promise<Map<string, Target[]>> {
     const codeModelContent = await loadCodeModelContent(path.join(replyPath, codeModelFileName));
     if (!codeModelContent) {
         return new Map();
@@ -414,7 +414,7 @@ export async function loadConfigurationTargetMap(replyPath: string, codeModelFil
     return targets.reduce((acc, el) => {
         acc.set(el.name, el.targets);
         return acc;
-    }, new Map<string, api.Target[]>());
+    }, new Map<string, Target[]>());
 }
 
 function convertToAbsolutePath(inputPath: string, basePath: string) {
