@@ -2056,7 +2056,32 @@ export class CMakeProject {
      * Implementation of `cmake.buildType`
      */
     async currentBuildType(): Promise<string | null> {
-        return this.variantManager.activeVariantOptions.buildType || null;
+        let buildType: string | null = null;
+        if (this.useCMakePresets) {
+            if (this.buildPreset) {
+                if (this.buildPreset.configuration) {
+                    // The `configuration` is set for multi-config generators, and is optional for single-config generators.
+                    buildType = this.buildPreset.configuration;
+                } else {
+                    try {
+                        // Get the value from cache for multi-config generators
+                        const cache: CMakeCache = await CMakeCache.fromPath(await this.cachePath);
+                        const buildTypes: string[] | undefined = cache.get('CMAKE_CONFIGURATION_TYPES')?.as<string>().split(';');
+                        if (buildTypes && buildTypes.length > 0) {
+                            buildType = buildTypes[0];
+                        }
+                    } catch (e: any) {
+                    }
+                }
+            }
+            if (!buildType && this.configurePreset && this.configurePreset.cacheVariables) {
+                // Single config generators set the build type in config preset.
+                buildType = preset.getStringValueFromCacheVar(this.configurePreset.cacheVariables["CMAKE_BUILD_TYPE"]);
+            }
+        } else {
+            buildType = this.variantManager.activeVariantOptions.buildType || null;
+        }
+        return buildType;
     }
 
     /**
