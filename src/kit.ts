@@ -22,6 +22,7 @@ import { TargetTriple, findTargetTriple, parseTargetTriple, computeTargetTriple 
 import { compare, dropNulls, Ordering, versionLess } from './util';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
+import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -776,7 +777,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeProject?: CMakeProject): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakePath?: string): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
         const isClangGnuCli = (path.basename(binPath, '.exe') === 'clang');
         const isClangMsvcCli = (path.basename(binPath, '.exe') === 'clang-cl');
@@ -793,11 +794,11 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
 
         // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
         if (isClangGnuCli) {
-            if (undefined === cmakeProject) {
-                log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: cmakeProject is undefined"));
+            if (cmakePath === undefined) {
+                log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: CMake Path is undefined"));
                 return null;
             } else {
-                const cmake_executable = await cmakeProject.getCMakeExecutable();
+                const cmake_executable = await getCMakeExecutableInformation(cmakePath);
                 if (undefined === cmake_executable.version) {
                     return null;
                 } else {
@@ -863,9 +864,9 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangForMSVCKits(searchPaths: string[], cmakeProject?: CMakeProject): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakePath?: string): Promise<Promise<Kit[]>[]> {
     const vs_installs = await vsInstallations();
-    const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeProject));
+    const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakePath));
     return results;
 }
 
@@ -982,7 +983,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(cmakeProject?: CMakeProject, opt?: KitScanOptions) {
+export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
     const kit_options = opt || {};
 
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
@@ -1058,7 +1059,7 @@ export async function scanForKits(cmakeProject?: CMakeProject, opt?: KitScanOpti
             // Scan for kits
             const vs_kits = scanForVSKits(pr);
             kit_promises.push(vs_kits);
-            const clang_kits = await scanForClangForMSVCKits(Array.from(clang_paths), cmakeProject);
+            const clang_kits = await scanForClangForMSVCKits(Array.from(clang_paths), cmakePath);
             kit_promises = kit_promises.concat(clang_kits);
         }
 
@@ -1071,15 +1072,15 @@ export async function scanForKits(cmakeProject?: CMakeProject, opt?: KitScanOpti
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(cmakeProject: CMakeProject): Promise<boolean> {
-    const kitsVersionSaved = cmakeProject.extensionContext.globalState.get<number>('kitsVersionSaved');
+export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolean> {
+    const kitsVersionSaved = project.workspaceContext.state.extensionContext.globalState.get<number>('kitsVersionSaved');
     const kitsVersionCurrent = 2;
 
     // Scan also when there is no kits version saved in the state.
     if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-        await kitsController.KitsController.scanForKits(cmakeProject);
-        await cmakeProject.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
+        await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
         return true;
     }
 
@@ -1229,13 +1230,13 @@ export function kitsForWorkspaceDirectory(workspaceFolder: string): Promise<Kit[
 /**
  * Get the kits defined by the user in the files pointed by "cmake.additionalKits".
  */
-export async function getAdditionalKits(cmakeProject: CMakeProject): Promise<Kit[]> {
-    const opts: expand.ExpansionOptions = await cmakeProject.getExpansionOptions();
-    const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
+export async function getAdditionalKits(project: CMakeProject): Promise<Kit[]> {
+    const opts: expand.ExpansionOptions = await project.getExpansionOptions();
+    const expandedAdditionalKitFiles: string[] = await project.getExpandedAdditionalKitFiles();
 
     let additionalKits: Kit[] = [];
     for (const kitFile of expandedAdditionalKitFiles) {
-        additionalKits = additionalKits.concat(await readKitsFile(kitFile, cmakeProject.workspaceContext.folder.uri.fsPath, opts));
+        additionalKits = additionalKits.concat(await readKitsFile(kitFile, project.workspaceContext.folder.uri.fsPath, opts));
     }
     return additionalKits;
 }

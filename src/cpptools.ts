@@ -14,7 +14,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpptools from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
-import { TargetTypeString } from './drivers/cmakeServerClient';
+import { TargetTypeString } from './drivers/drivers';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

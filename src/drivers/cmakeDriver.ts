@@ -7,13 +7,13 @@ import * as vscode from 'vscode';
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
-import { ConfigureTrigger } from "@cmt/cmakeProject";
+import { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
-import { ProgressMessage } from '@cmt/drivers/cmakeServerClient';
+import { ProgressMessage } from '@cmt/drivers/drivers';
 import * as expand from '@cmt/expand';
 import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment } from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -28,7 +28,6 @@ import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
 import * as codeModel from '@cmt/drivers/codeModel';
-import { DiagnosticsConfiguration } from '@cmt/cmakeWorkspaceFolder';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
@@ -38,6 +37,10 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('driver');
+
+export class NoGeneratorError extends Error {
+    message: string = localize('no.usable.generator.found', 'No usable generator found.');
+}
 
 export enum CMakePreconditionProblems {
     ConfigureIsAlreadyRunning,
@@ -181,8 +184,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     protected constructor(public readonly cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
+        protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
+        private readonly isMultiProject: boolean,
         private readonly __workspaceFolder: string | null,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
+        this.sourceDir = this.sourceDirUnexpanded;
         // We have a cache of file-compilation terminals. Wipe them out when the
         // user closes those terminals.
         vscode.window.onDidCloseTerminal(closed => {
@@ -195,6 +201,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
         });
     }
+
+    /**
+     * The source directory, where the root CMakeLists.txt lives.
+     *
+     * @note This is distinct from the config values, since we do variable
+     * substitution.
+     */
+    protected sourceDir = '';
 
     /**
      * Dispose the driver. This disposes some things synchronously, but also
@@ -351,6 +365,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             buildKitTargetArch: target.targetArch ?? '__unknow_target_arch__',
             buildKitVersionMajor: majorVersionSemver(version),
             buildKitVersionMinor: minorVersionSemver(version),
+            sourceDir: this.sourceDir,
             // DEPRECATED EXPANSION: Remove this in the future:
             projectName: 'ProjectName'
         };
@@ -551,7 +566,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         await this.doSetKit(async () => {
             await this._setKit(kit, preferredGenerators);
             await this._refreshExpansions();
-            const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, this.expansionOptions));
+            const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
+            const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), this.expansionOptions));
             if (needsCleanIfKitChange && (newBinaryDir === oldBinaryDir)) {
                 await this._cleanPriorConfiguration();
             }
@@ -633,30 +649,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
         await this._refreshExpansions();
     }
 
-    /**
-     * The source directory, where the root CMakeLists.txt lives.
-     *
-     * @note This is distinct from the config values, since we do variable
-     * substitution.
-     */
-    get sourceDir(): string {
-        return this._sourceDirectory;
-    }
-    private _sourceDirectory = '';
-
     protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
         return cb();
     }
 
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
-            this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
+            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);
 
             if (!this.useCMakePresets) {
-                this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
+                const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
+                this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), opts));
 
                 const installPrefix = this.config.installPrefix;
                 if (installPrefix) {

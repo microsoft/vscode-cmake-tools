@@ -32,7 +32,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.parallelJobs` | Specify the number of jobs run in parallel during the build. Using the value `1` will disable build parallelism. | | no |
 | `cmake.preferredGenerators` | A list of strings of generator names to try, in order, when configuring a CMake project for the first time. | | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
-| `cmake.sourceDirectory` | Directory where the root `CMakeLists.txt` is stored. | `${workspaceFolder}` | yes |
+| `cmake.sourceDirectory` | A directory or a list of directories where the root `CMakeLists.txt`s are stored. | `${workspaceFolder}` | yes |
 | `cmake.testEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when debugging, running and testing with CTest. | `null` (no environment variables) | yes |
 
 ## Variable substitution

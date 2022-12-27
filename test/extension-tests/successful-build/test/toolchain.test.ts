@@ -13,7 +13,7 @@ suite('Toolchain Substitution', () => {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}/");
 
         const user_kits = await readKitsFile(USER_KITS_FILEPATH);
         const ws_kits = await kitsForWorkspaceDirectory(testEnv.projectFolder.location);

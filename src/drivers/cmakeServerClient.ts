@@ -20,12 +20,6 @@ const enableCMakeServerDebugProtocol = false;
 
 const messageWrapperRegEx = /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" ==\]\s*([^]*)/;
 
-export class StartupError extends global.Error {
-    constructor(public readonly retc: number) {
-        super(localize('error.starting.cmake-server', 'Error starting up cmake-server'));
-    }
-}
-
 export interface ProtocolVersion {
     isExperimental: boolean;
     major: number;
@@ -621,9 +615,9 @@ export class CMakeServerClient {
                 onProgress: params.onProgress,
                 onDirty: params.onDirty,
                 generator: params.generator,
-                onCrash: async retc => {
+                onCrash: async _retc => {
                     if (!resolved) {
-                        reject(new StartupError(retc));
+                        reject(new global.Error(localize('error.starting.cmake-server', 'Error starting up cmake-server')));
                     }
                 },
                 onPipeError: async e => {
