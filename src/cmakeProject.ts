@@ -2547,6 +2547,7 @@ export class CMakeProject {
                 userHome: paths.userHome,
                 workspaceFolder: workspaceFolder,
                 workspaceFolderBasename: path.basename(workspaceFolder),
+                sourceDir: this.sourceDir,
                 workspaceHash: '${workspaceHash}',
                 workspaceRoot: this.workspaceContext.folder.uri.fsPath,
                 workspaceRootFolderName: path.basename(workspaceFolder)

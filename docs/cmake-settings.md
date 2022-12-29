@@ -37,12 +37,13 @@ Options that support substitution, in the table below, allow variable references
 
 ## Variable substitution
 
-Some options support the replacement of special values in their string value by using a `${variable}` syntax. The following built-in variables are expanded:
+Some settings support the replacement of special values in their string value by using a `${variable}` syntax. The following built-in variables are expanded:
 
 | Variable | Expansion |
 |---------|---------|
 |`${workspaceRoot}`|**DEPRECATED**. The full path to the workspace root directory.|
 |`${workspaceFolder}` | The full path to the workspace root directory. |
+|`${sourceDirectory}` | The full path to the root CMakeLists.txt. (not substituted for `cmake.sourceDirectory`, `cmake.cmakePath`, `cmake.ctestPath`, or in Kits) |
 |`${workspaceRootFolderName}`| The name of the leaf directory in the workspace directory path.|
 |`${buildType}`|The current CMake build type. For example: `Debug`, `Release`, `MinSizeRel`, `RelWithDebInfo`|
 |`${buildKit}`| The current CMake kit full name. For example: `GCC 7.3.0`|
