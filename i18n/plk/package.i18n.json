@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "Nazwa/ścieżka pliku wykonywalnego narzędzia CMake do użycia.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Katalog, w którym zostaną umieszczone pliki kompilacji narzędzia CMake.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Katalog, w którym zostaną umieszczone zainstalowane pliki narzędzia CMake.",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "Katalog głównego pliku CMakeLists.txt.",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Zapisz otwarte pliki przed kompilowaniem.",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "Skompiluj element docelowy przed jego uruchomieniem.",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Czyść dane wyjściowe kompilacji przed każdym kompilowaniem.",

@@ -26,7 +26,7 @@
 	"detected.kit.for.version": "バージョンの VsKit が検出されました",
 	"generator.present": "ジェネレーターが存在します: {0}",
 	"selected.preferred.generator.name": "選択された優先ジェネレーター名: {0} {1}",
-	"failed.to.scan.for.kits": "GNU CLI Clang キットをスキャンできません: CMakeProject が定義されていません",
+	"failed.to.scan.for.kits": "Unable to scan for GNU CLI Clang kits: CMake Path is undefined",
 	"kit.env": "キット {0} の環境: {1}",
 	"scanning.for.kits.on.system": "システムでキットをスキャンしています",
 	"scanning.for.kits": "キットをスキャンしています",

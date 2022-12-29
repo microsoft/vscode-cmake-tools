@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "Name/Pfad der zu verwendenden ausführbaren CMake-Datei.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Das Verzeichnis, in dem CMake-Builddateien abgelegt werden.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Das Verzeichnis, in dem installierte CMake-Dateien abgelegt werden.",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "Das Verzeichnis der Stammdatei \"CMakeLists.txt\".",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Hiermit werden geöffnete Dateien vor dem Erstellen gespeichert.",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "Hiermit wird vor der Ausführung das Ziel erstellt.",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Hiermit wird die Buildausgabe vor jedem Build gelöscht.",

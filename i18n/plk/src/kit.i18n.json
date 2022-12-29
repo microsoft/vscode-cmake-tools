@@ -26,7 +26,7 @@
 	"detected.kit.for.version": "Wykryto zestaw VsKit dla wersji",
 	"generator.present": "Generator jest dostępny: {0}",
 	"selected.preferred.generator.name": "Nazwa wybranego preferowanego generatora: {0} {1}",
-	"failed.to.scan.for.kits": "Nie można przeprowadzić skanowania dla zestawów GNU CLI Clang: element cmakeProject nie jest zdefiniowany",
+	"failed.to.scan.for.kits": "Unable to scan for GNU CLI Clang kits: CMake Path is undefined",
 	"kit.env": "Środowisko zestawu {0}: {1}",
 	"scanning.for.kits.on.system": "Trwa skanowanie w poszukiwaniu zestawów w systemie",
 	"scanning.for.kits": "Skanowanie w poszukiwaniu zestawów",

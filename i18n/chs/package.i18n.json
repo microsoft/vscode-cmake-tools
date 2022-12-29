@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "要使用的 CMake 可执行文件的名称/路径。",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "CMake 生成文件将转到其中的目录。",
 	"cmake-tools.configuration.cmake.installPrefix.description": "CMake 安装文件将转到其中的目录。",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "根文件 CMakeLists.txt 的目录。",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "在生成前保存打开的文件。",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "请先生成目标然后再运行目标。",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "在每次生成前清除生成输出。",

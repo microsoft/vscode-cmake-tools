@@ -26,7 +26,7 @@
 	"detected.kit.for.version": "VsKit détecté pour la version",
 	"generator.present": "Générateur présent : {0}",
 	"selected.preferred.generator.name": "Nom du générateur par défaut sélectionné : {0} {1}",
-	"failed.to.scan.for.kits": "Nous n’avons pas pu analyser les kits Clang CLI GNU : cmakeTools n’est pas défini.",
+	"failed.to.scan.for.kits": "Unable to scan for GNU CLI Clang kits: CMake Path is undefined",
 	"kit.env": "Environnement du kit {0}: {1}",
 	"scanning.for.kits.on.system": "Recherche de kits sur le système",
 	"scanning.for.kits": "Recherche de kits",

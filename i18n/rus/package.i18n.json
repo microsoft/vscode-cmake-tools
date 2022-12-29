@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "Имя используемого исполняемого файла CMake и путь к нему.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Каталог, в который помещаются файлы сборки CMake.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Каталог, в котором будут размещены установленные файлы CMake.",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "Каталог корневого файла CMakeLists.txt.",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Сохранение открытых файлов перед сборкой.",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "Создайте целевой объект перед его запуском.",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Очистка выходных данных сборки перед каждой сборкой.",

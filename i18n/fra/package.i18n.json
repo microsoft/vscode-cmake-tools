@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "Nom/chemin de l'exécutable CMake à utiliser.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Répertoire de destination des fichiers de build CMake.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Répertoire de destination des fichiers installés de CMake.",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "Répertoire du fichier CMakeLists.txt racine.",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Enregistre les fichiers ouverts avant la génération.",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "Générez la cible avant de l'exécuter.",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Efface la sortie de build avant chaque build.",
