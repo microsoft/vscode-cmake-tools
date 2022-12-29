@@ -918,8 +918,8 @@ export class CMakeProject {
 
         await this.doUseCMakePresetsChange();
 
-        this.disposables.push(this.onPresetsChanged(this.doUseCMakePresetsChange));
-        this.disposables.push(this.onUserPresetsChanged(this.doUseCMakePresetsChange));
+        this.disposables.push(this.onPresetsChanged(() => this.doUseCMakePresetsChange()));
+        this.disposables.push(this.onUserPresetsChanged(() => this.doUseCMakePresetsChange()));
     }
 
     public async hasPresetsFiles(): Promise<boolean> {
