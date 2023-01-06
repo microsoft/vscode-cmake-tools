@@ -26,7 +26,7 @@
 	"detected.kit.for.version": "已检测到适用于版本的 VsKit",
 	"generator.present": "存在生成器: {0}",
 	"selected.preferred.generator.name": "已选择首选生成器名称: {0} {1}",
-	"failed.to.scan.for.kits": "无法扫描 GNU CLI Clang 工具包: cmakeProject 未定义",
+	"failed.to.scan.for.kits": "无法扫描 GNU CLI Clang kits: CMake 路径未定义",
 	"kit.env": "工具包 {0} 的环境: {1}",
 	"scanning.for.kits.on.system": "正在系统上扫描工具包",
 	"scanning.for.kits": "正在扫描工具包",
