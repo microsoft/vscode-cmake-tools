@@ -26,7 +26,7 @@
 	"detected.kit.for.version": "Rilevato kit di Visual Studio per la versione",
 	"generator.present": "Generatore presente: {0}",
 	"selected.preferred.generator.name": "Nome del generatore preferito selezionato: {0} {1}",
-	"failed.to.scan.for.kits": "Non è possibile analizzare i kit Clang dell'interfaccia della riga di comando GNU: cmakeProject non è definito",
+	"failed.to.scan.for.kits": "Non è possibile cercare i kit Clang di GNU CLI: il percorso CMake non è definito",
 	"kit.env": "Ambiente per il kit {0}: {1}",
 	"scanning.for.kits.on.system": "Ricerca dei kit nel sistema",
 	"scanning.for.kits": "Ricerca dei kit",

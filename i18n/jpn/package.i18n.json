@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "使用する CMake 実行可能ファイルの名前またはパスです。",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "CMake のビルド ファイルが格納されるディレクトリです。",
 	"cmake-tools.configuration.cmake.installPrefix.description": "CMake でインストールされるファイルが格納されるディレクトリ。",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "ルート CMakeLists.txt ファイルのディレクトリです。",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "CMakeLists.txt ルート/ディレクトリへのパスまたはパスの配列。",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "ビルドの前に、開いているファイルを保存します。",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "実行する前にターゲットをビルドします。",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "ビルドの前に毎回ビルド出力をクリアします。",
