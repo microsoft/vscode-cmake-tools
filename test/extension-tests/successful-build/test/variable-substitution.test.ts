@@ -13,13 +13,13 @@ suite('Variable Substitution', () => {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}");
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
+        await cmakeProject.setKit(await getFirstSystemKit());
 
         testEnv.projectFolder.buildDirectory.clear();
     });
@@ -42,7 +42,11 @@ suite('Variable Substitution', () => {
                 workspaceRootFolderName: '${workspaceRootFolderName}',
                 workspaceFolderBasename: '${workspaceFolderBasename}',
                 generator: '${generator}',
-                userHome: '${userHome}'
+                userHome: '${userHome}',
+                test1: true,
+                test2: 123,
+                test3: ["1", "2", "3"],
+                test4: {"type": "PATH", "value": "/usr/bin"}
             },
             installPrefix: '${workspaceFolder}/build/dist'
         });
@@ -133,6 +137,21 @@ suite('Variable Substitution', () => {
                 '[cmakeInstallPrefix] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[cmakeInstallPrefix] unexpected cache entry value type');
 
+        cacheEntry = cache.get('test1') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.Bool);
+        expect(cacheEntry.value).to.eq(true);
+
+        cacheEntry = cache.get('test2') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.String);
+        expect(cacheEntry.value).to.eq('123');
+
+        cacheEntry = cache.get('test3') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.String);
+        expect(cacheEntry.value).to.eq('1;2;3');
+
+        cacheEntry = cache.get('test4') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.Path);
+        expect(cacheEntry.value).to.eq('/usr/bin');
     }).timeout(100000);
 
     test('Check substitution for variant names', async () => {

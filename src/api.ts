@@ -34,9 +34,9 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
         return this.manager.onActiveProjectChanged;
     }
 
-    async getProject(uri: vscode.Uri) {
-        const project = this.manager.cmakeWorkspaceFolders.get([uri.fsPath])?.cmakeProject;
-        return project && new CMakeProjectWrapper(project);
+    async getProject(uri: vscode.Uri): Promise<CMakeProjectWrapper | undefined> {
+        const project: CMakeProject | undefined = await this.manager.projectController.getProjectForFolder(uri.fsPath);
+        return project ? new CMakeProjectWrapper(project) : undefined;
     }
 
     private async setUIElementVisibility(element: api.UIElement, visible: boolean): Promise<void> {

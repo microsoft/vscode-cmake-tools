@@ -14,13 +14,13 @@ suite('Environment Variables in Variants', () => {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}");
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
+        await cmakeProject.setKit(await getFirstSystemKit());
 
         testEnv.projectFolder.buildDirectory.clear();
     });

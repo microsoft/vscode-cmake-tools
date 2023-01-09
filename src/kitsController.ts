@@ -56,21 +56,21 @@ export class KitsController {
     folderKits: Kit[] = [];
     additionalKits: Kit[] = [];
 
-    private constructor(readonly cmakeProject: CMakeProject, private readonly _kitsWatcher: chokidar.FSWatcher) {}
+    private constructor(readonly project: CMakeProject, private readonly _kitsWatcher: chokidar.FSWatcher) {}
 
-    static async init(cmakeProject: CMakeProject) {
+    static async init(project: CMakeProject) {
         if (KitsController.userKits.length === 0) {
             // never initialized before
-            await KitsController.readUserKits(cmakeProject);
+            await KitsController.readUserKits(project);
         }
 
-        const expandedAdditionalKitFiles: string[] = await cmakeProject.getExpandedAdditionalKitFiles();
-        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeProject.folder)].concat(expandedAdditionalKitFiles);
+        const expandedAdditionalKitFiles: string[] = await project.getExpandedAdditionalKitFiles();
+        const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(project.workspaceFolder)].concat(expandedAdditionalKitFiles);
         const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
-        const kitsController = new KitsController(cmakeProject, kitsWatcher);
+        const kitsController = new KitsController(project, kitsWatcher);
         chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
             kitsController.readKits(KitsReadMode.folderKits)));
-        cmakeProject.workspaceContext.config.onChange('additionalKits', () => kitsController.readKits(KitsReadMode.folderKits));
+        project.workspaceContext.config.onChange('additionalKits', () => kitsController.readKits(KitsReadMode.folderKits));
 
         await kitsController.readKits(KitsReadMode.folderKits);
         return kitsController;
@@ -85,19 +85,19 @@ export class KitsController {
 
     get availableKits() {
         console.assert(KitsController.length > 0, 'readKits should have been called at least once before.');
-        if (this.cmakeProject.workspaceContext.config.showSystemKits) {
+        if (this.project.workspaceContext.config.showSystemKits) {
             return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
         } else {
             return KitsController.specialKits.concat(this.folderKits);
         }
     }
 
-    get folder() {
-        return this.cmakeProject.folder;
+    get workspaceFolder() {
+        return this.project.workspaceFolder;
     }
 
-    static async readUserKits(cmakeProject: CMakeProject | undefined, progress?: ProgressHandle) {
-        if (undefined === cmakeProject) {
+    static async readUserKits(project: CMakeProject | undefined, progress?: ProgressHandle) {
+        if (undefined === project) {
             return;
         }
         // Read user kits if we are under userKits/allAvailable read mode, or if userKits is empty (which means userKits are never loaded)
@@ -125,10 +125,10 @@ export class KitsController {
         // Load user-kits
         reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
-        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, cmakeProject.workspaceContext.folder.uri.fsPath, await cmakeProject.getExpansionOptions());
+        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, project.workspaceContext.folder.uri.fsPath, await project.getExpansionOptions());
 
         // Pruning requires user interaction, so it happens fully async
-        KitsController._startPruneOutdatedKitsAsync(cmakeProject);
+        KitsController._startPruneOutdatedKitsAsync(await project.getCMakePathofProject());
     }
 
     /**
@@ -136,20 +136,20 @@ export class KitsController {
      */
     async readKits(kitsReadMode = KitsReadMode.allAvailable, progress?: ProgressHandle) {
         if (kitsReadMode === KitsReadMode.userKits || kitsReadMode === KitsReadMode.allAvailable) {
-            await KitsController.readUserKits(this.cmakeProject, progress);
+            await KitsController.readUserKits(this.project, progress);
         }
 
         if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
             // Read default folder kits
-            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder), this.cmakeProject.workspaceContext.folder.uri.fsPath, await this.cmakeProject.getExpansionOptions());
+            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.workspaceFolder), this.project.workspaceContext.folder.uri.fsPath, await this.project.getExpansionOptions());
 
             // Read additional folder kits
-            this.additionalKits = await getAdditionalKits(this.cmakeProject);
+            this.additionalKits = await getAdditionalKits(this.project);
         }
 
         // If the current kit was selected from the set that is updated with this call to readKits,
         // load it again to ensure it is up to date.
-        const current = this.cmakeProject.activeKit;
+        const current = this.project.activeKit;
         if (current) {
             const searchKits: Kit[] = (kitsReadMode === KitsReadMode.allAvailable) ? this.availableKits :
                 (kitsReadMode === KitsReadMode.userKits) ? KitsController.userKits : this.folderKits.concat(this.additionalKits);
@@ -173,7 +173,7 @@ export class KitsController {
      * @param k The kit
      */
     async setFolderActiveKit(k: Kit | null): Promise<string> {
-        const inst = this.cmakeProject;
+        const inst = this.project;
         const raw_name = k ? k.name : SpecialKits.Unspecified;
         if (inst) {
             // Generate a message that we will show in the progress notification
@@ -216,7 +216,7 @@ export class KitsController {
         if (!KitsController.checkingHaveKits) {
             KitsController.checkingHaveKits = true;
             if (!KitsController.minGWSearchDirs) {
-                await KitsController.scanForKits(this.cmakeProject);
+                await KitsController.scanForKits(await this.project.getCMakePathofProject());
             } else {
                 await vscode.commands.executeCommand('cmake.scanForKits');
             }
@@ -267,7 +267,7 @@ export class KitsController {
         );
         const items = await Promise.all(item_promises);
         const chosen_kit = await vscode.window.showQuickPick(items,
-            { placeHolder: localize('select.a.kit.placeholder', 'Select a Kit for {0}', this.folder.name) },
+            { placeHolder: localize('select.a.kit.placeholder', 'Select a Kit for {0}', this.project.folderName) },
             this._pickKitCancellationTokenSource.token);
         this._pickKitCancellationTokenSource.dispose();
         this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();
@@ -277,7 +277,7 @@ export class KitsController {
             return false;
         } else {
             if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                await KitsController.scanForKits(this.cmakeProject);
+                await KitsController.scanForKits(await this.project.getCMakePathofProject());
                 return false;
             } else {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
@@ -317,7 +317,7 @@ export class KitsController {
      *
      * Always returns immediately.
      */
-    private static _startPruneOutdatedKitsAsync(cmakeProject: CMakeProject) {
+    private static _startPruneOutdatedKitsAsync(cmakePath: string) {
         // Iterate over _user_ kits. We don't care about workspace-local kits
         for (const kit of KitsController.userKits) {
             if (kit.keep === true) {
@@ -373,9 +373,9 @@ export class KitsController {
                 }
                 switch (chosen.action) {
                     case 'keep':
-                        return KitsController._keepKit(cmakeProject, kit);
+                        return KitsController._keepKit(cmakePath, kit);
                     case 'remove':
-                        return KitsController._removeKit(cmakeProject, kit);
+                        return KitsController._removeKit(cmakePath, kit);
                 }
             });
             rollbar.takePromise(localize('pruning.kit', "Pruning kit"), { kit }, pr);
@@ -387,7 +387,7 @@ export class KitsController {
      * re-writes the user kits file.
      * @param kit The kit to mark
      */
-    private static async _keepKit(cmakeProject: CMakeProject, kit: Kit) {
+    private static async _keepKit(cmakePath: string, kit: Kit) {
         const new_kits = KitsController.userKits.map(k => {
             if (k.name === kit.name) {
                 return { ...k, keep: true };
@@ -396,24 +396,24 @@ export class KitsController {
             }
         });
         KitsController.userKits = new_kits;
-        return KitsController._writeUserKitsFile(cmakeProject, new_kits);
+        return KitsController._writeUserKitsFile(cmakePath, new_kits);
     }
 
     /**
      * Remove a kit from the user-local kits.
      * @param kit The kit to remove
      */
-    private static async _removeKit(cmakeProject: CMakeProject, kit: Kit) {
+    private static async _removeKit(cmakePath: string, kit: Kit) {
         const new_kits = KitsController.userKits.filter(k => k.name !== kit.name);
         KitsController.userKits = new_kits;
-        return KitsController._writeUserKitsFile(cmakeProject, new_kits);
+        return KitsController._writeUserKitsFile(cmakePath, new_kits);
     }
 
     /**
      * Write the given kits the the user-local cmake-kits.json file.
      * @param kits The kits to write to the file.
      */
-    private static async _writeUserKitsFile(cmakeProject: CMakeProject, kits: Kit[]) {
+    private static async _writeUserKitsFile(cmakePath: string, kits: Kit[]) {
         log.debug(localize('saving.kits.to', 'Saving kits to {0}', USER_KITS_FILEPATH));
 
         // Remove the special kits
@@ -458,7 +458,7 @@ export class KitsController {
                     }
                     switch (choice.do) {
                         case 'retry':
-                            return KitsController.scanForKits(cmakeProject);
+                            return KitsController.scanForKits(cmakePath);
                         case 'cancel':
                             return false;
                     }
@@ -484,11 +484,11 @@ export class KitsController {
      *
      * @returns if any duplicate vs kits are removed.
      */
-    static async scanForKits(cmakeProject: CMakeProject) {
+    static async scanForKits(cmakePath: string) {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
 
         // Do the scan:
-        const discovered_kits = await scanForKits(cmakeProject, { minGWSearchDirs: KitsController.minGWSearchDirs });
+        const discovered_kits = await scanForKits(cmakePath, { minGWSearchDirs: KitsController.minGWSearchDirs });
 
         // The list with the new definition user kits starts with the non VS ones,
         // which do not have any variations in the way they can be defined.
@@ -538,46 +538,63 @@ export class KitsController {
             {} as { [kit: string]: Kit }
         );
 
-        const path = process.env["PATH"]?.split(process.platform === 'win32' ? ';' : ':');
-        const isBetterMatch = (newCompilers?: {[lang: string]: string}, existingCompilers?: {[lang: string]: string}) => {
-            // Try to keep the best match (e.g. compilers for C and CXX exist)
-            if (!existingCompilers) {
-                return true;
-            }
-            if (newCompilers) {
-                const newLangs = Object.keys(newCompilers);
-                const existingLangs = Object.keys(existingCompilers);
-                if (newLangs.length > existingLangs.length) {
-                    return true;
-                }
-                if (path && newLangs.length === existingLangs.length) {
-                    // Prioritize compiler paths listed higher in the PATH environment variable.
-                    for (const p of path) {
-                        const newScore = newLangs.reduce((acc, lang) => newCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
-                        const existingScore = existingLangs.reduce((acc, lang) => existingCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
-                        if (newScore > existingScore) {
-                            return true;
-                        } else if (existingScore > newScore) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return false;
-        };
-
         // Update the new kits we know about.
         const new_kits_by_name = discovered_kits.reduce(
-            (acc, kit) => isBetterMatch(kit.compilers, acc[kit.name]?.compilers) ? { ...acc, [kit.name]: kit } : acc,
+            (acc, kit) => KitsController.isBetterMatch(kit, acc[kit.name]) ? { ...acc, [kit.name]: kit } : acc,
             old_kits_by_name
         );
 
         const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
         KitsController.userKits = new_kits;
-        await KitsController._writeUserKitsFile(cmakeProject, new_kits);
+        await KitsController._writeUserKitsFile(cmakePath, new_kits);
 
-        KitsController._startPruneOutdatedKitsAsync(cmakeProject);
+        KitsController._startPruneOutdatedKitsAsync(cmakePath);
 
         return duplicateRemoved;
     }
+
+    static isBetterMatch(newKit: Kit, existingKit?: Kit): boolean {
+        if (KitsController.isBetterClangCLDefinition(newKit, existingKit)) {
+            return true;
+        }
+        return KitsController.isBetterCompilerMatch(newKit.compilers, existingKit?.compilers);
+    }
+
+    static isBetterClangCLDefinition(newKit: Kit, existingKit?: Kit): boolean {
+        if (newKit.name.indexOf('MSVC CLI') >= 0) {
+            return (existingKit?.visualStudioArchitecture === 'amd64') ||
+                (existingKit?.preferredGenerator?.platform === 'amd64') ||
+                (existingKit?.preferredGenerator?.toolset !== undefined && existingKit.preferredGenerator.toolset.indexOf('amd64') >= 0);
+        }
+        return false;
+    }
+
+    static isBetterCompilerMatch(newCompilers?: {[lang: string]: string}, existingCompilers?: {[lang: string]: string}): boolean {
+        // Try to keep the best match (e.g. compilers for C and CXX exist)
+        if (!existingCompilers) {
+            return true;
+        }
+        if (newCompilers) {
+            const newLangs = Object.keys(newCompilers);
+            const existingLangs = Object.keys(existingCompilers);
+            if (newLangs.length > existingLangs.length) {
+                return true;
+            }
+            const path = process.env["PATH"]?.split(process.platform === 'win32' ? ';' : ':');
+            if (path && newLangs.length === existingLangs.length) {
+                // Prioritize compiler paths listed higher in the PATH environment variable.
+                for (const p of path) {
+                    const newScore = newLangs.reduce((acc, lang) => newCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                    const existingScore = existingLangs.reduce((acc, lang) => existingCompilers[lang]?.startsWith(p) ? 1 + acc : acc, 0);
+                    if (newScore > existingScore) {
+                        return true;
+                    } else if (existingScore > newScore) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
 }

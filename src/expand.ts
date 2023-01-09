@@ -44,6 +44,7 @@ export interface KitContextVars extends RequiredExpansionContextVars {
     buildKitTargetArch: string;
     buildKitVersionMajor: string;
     buildKitVersionMinor: string;
+    sourceDir: string;
 }
 
 export interface PresetContextVars extends RequiredExpansionContextVars {
@@ -129,6 +130,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
     const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
     const env = EnvironmentUtils.create(envPreNormalize);
     const replacements = opts.vars;
+    replacements.sourceDirectory = replacements.sourceDir;
     let circularReference: string | undefined;
 
     // We accumulate a list of substitutions that we need to make, preventing

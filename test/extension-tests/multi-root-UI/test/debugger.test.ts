@@ -1,10 +1,8 @@
 import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as vscode from 'vscode';
-import CMakeProject from '@cmt/cmakeProject';
 
 suite('Debug/Launch interface', () => {
     let testEnv: DefaultEnvironment;
-    let cmakeProject: CMakeProject;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -12,10 +10,9 @@ suite('Debug/Launch interface', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder-2', build_loc, exe_res);
 
-        const kit = await getFirstSystemKit(cmakeProject);
+        const kit = await getFirstSystemKit();
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
         testEnv.projectFolder.buildDirectory.clear();
         expect(await vscode.commands.executeCommand('cmake.buildAll')).to.be.eq(0);

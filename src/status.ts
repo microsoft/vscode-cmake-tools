@@ -190,7 +190,7 @@ class WorkspaceButton extends Button {
         super(config, priority);
         this.command = 'cmake.selectActiveFolder';
         this.icon = 'folder-active';
-        this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active folder');
+        this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active project');
     }
 
     // private _autoSelect: boolean = false;
@@ -213,8 +213,9 @@ class WorkspaceButton extends Button {
         return super.getTooltipShort();
     }
 
+    public isMultiProject: boolean = false;
     protected isVisible(): boolean {
-        return super.isVisible() && Boolean(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1);
+        return super.isVisible() && vscode.workspace.workspaceFolders !== undefined && (vscode.workspace.workspaceFolders.length > 1 || this.isMultiProject);
     }
 }
 
@@ -677,11 +678,12 @@ export class StatusBar implements vscode.Disposable {
         this._buttons.forEach(btn => btn.forceHidden = !v);
     }
 
-    setActiveFolderName(v: string): void {
+    setActiveProjectName(v: string, isMultiProject: boolean): void {
         this._workspaceButton.text = v;
+        this._workspaceButton.isMultiProject = isMultiProject;
     }
-    setAutoSelectActiveFolder(autoSelectActiveFolder: boolean): void {
-        this._workspaceButton.autoSelect = autoSelectActiveFolder;
+    setAutoSelectActiveProject(autoSelectActiveProject: boolean): void {
+        this._workspaceButton.autoSelect = autoSelectActiveProject;
     }
     setVariantLabel(v: string): void {
         this._cmakeToolsStatusItem.text = v;

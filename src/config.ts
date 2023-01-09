@@ -93,11 +93,11 @@ export interface ExtensionConfigurationSettings {
     cmakePath: string;
     buildDirectory: string;
     installPrefix: string | null;
-    sourceDirectory: string;
+    sourceDirectory: string | string[];
     saveBeforeBuild: boolean;
     buildBeforeRun: boolean;
     clearOutputBeforeBuild: boolean;
-    configureSettings: { [key: string]: any };
+    configureSettings: { [key: string]: boolean | number | string | string[] | util.CMakeValue };
     cacheInit: string | string[] | null;
     preferredGenerators: string[];
     generator: string | null;
@@ -239,14 +239,21 @@ export class ConfigurationReader implements vscode.Disposable {
     get autoSelectActiveFolder(): boolean {
         return this.configData.autoSelectActiveFolder;
     }
-    get buildDirectory(): string {
+    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope): string {
+        if (multiProject && this.isDefaultValue('buildDirectory', workspaceFolder)) {
+            return '${sourceDirectory}/build';
+        }
         return this.configData.buildDirectory;
     }
     get installPrefix(): string | null {
         return this.configData.installPrefix;
     }
-    get sourceDirectory(): string {
-        return this.configData.sourceDirectory as string;
+    get sourceDirectory(): string[] {
+        if (!Array.isArray(this.configData.sourceDirectory)) {
+            return [this.configData.sourceDirectory];
+        } else {
+            return this.configData.sourceDirectory;
+        }
     }
     get saveBeforeBuild(): boolean {
         return !!this.configData.saveBeforeBuild;
@@ -257,7 +264,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get clearOutputBeforeBuild(): boolean {
         return !!this.configData.clearOutputBeforeBuild;
     }
-    get configureSettings(): any {
+    get configureSettings(): {[key: string]: boolean | number | string | string[] | util.CMakeValue} {
         return this.configData.configureSettings;
     }
     get cacheInit() {
@@ -440,7 +447,7 @@ export class ConfigurationReader implements vscode.Disposable {
         cmakePath: new vscode.EventEmitter<string>(),
         buildDirectory: new vscode.EventEmitter<string>(),
         installPrefix: new vscode.EventEmitter<string | null>(),
-        sourceDirectory: new vscode.EventEmitter<string>(),
+        sourceDirectory: new vscode.EventEmitter<string|string[]>(),
         saveBeforeBuild: new vscode.EventEmitter<boolean>(),
         buildBeforeRun: new vscode.EventEmitter<boolean>(),
         clearOutputBeforeBuild: new vscode.EventEmitter<boolean>(),
@@ -504,6 +511,12 @@ export class ConfigurationReader implements vscode.Disposable {
             activeChangeEvents.scheduleAndTrackTask(() => cb(value));
         };
         return emitter.event(awaitableCallback);
+    }
+
+    isDefaultValue<K extends keyof ExtensionConfigurationSettings>(setting: K, configurationScope?: vscode.ConfigurationScope) {
+        const settings = vscode.workspace.getConfiguration('cmake', configurationScope);
+        const value = settings.inspect(setting);
+        return value?.globalValue === undefined && value?.workspaceValue === undefined && value?.workspaceFolderValue === undefined;
     }
 
     getSettingsChangePromise() {
