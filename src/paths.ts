@@ -264,19 +264,25 @@ class Paths {
 
         const vs_installations = await vsInstallations();
         if (vs_installations.length > 0) {
-            const bundled_tool_paths = [] as { cmake: string; ninja: string }[];
+            const bundled_tool_paths = [] as { cmake: string; ninja: string; instanceId: string; version: util.Version }[];
 
             for (const install of vs_installations) {
                 const bundled_tool_path = {
                     cmake: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe',
-                    ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe'
+                    ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe',
+                    instanceId: install.instanceId,
+                    version: util.parseVersion(install.installationVersion)
                 };
-                if (preferredInstanceId === install.instanceId) {
-                    bundled_tool_paths.unshift(bundled_tool_path);
-                } else {
-                    bundled_tool_paths.push(bundled_tool_path);
-                }
+                bundled_tool_paths.push(bundled_tool_path);
             }
+            bundled_tool_paths.sort((a, b) => {
+                if (preferredInstanceId === a.instanceId) {
+                    return -1;
+                } else if (preferredInstanceId === b.instanceId) {
+                    return 1;
+                }
+                return util.versionGreater(a.version, b.version) ? -1 : util.versionEquals(a.version, b.version) ? 0 : 1;
+            });
 
             for (const tool_path of bundled_tool_paths) {
                 if (await fs.exists(tool_path.cmake)) {
