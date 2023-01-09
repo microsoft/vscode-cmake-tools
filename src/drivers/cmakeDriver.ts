@@ -1734,7 +1734,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
+    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | undefined> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
             let outputEnc = this.config.outputLogEncoding;
@@ -1761,7 +1761,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return this.cmakeBuildRunner.getResult();
 
         } else {
-            return null;
+            return undefined;
         }
     }
 

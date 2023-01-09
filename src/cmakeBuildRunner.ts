@@ -11,8 +11,8 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 
 export class CMakeBuildRunner {
 
-    private taskExecutor: vscode.TaskExecution | null = null;
-    private currentBuildProcess: proc.Subprocess | null = null;
+    private taskExecutor: vscode.TaskExecution | undefined;
+    private currentBuildProcess: proc.Subprocess | undefined;
     private isBuildInProgress: boolean = false;
 
     constructor() {
@@ -49,22 +49,22 @@ export class CMakeBuildRunner {
             if (cur.child) {
                 await util.termProc(cur.child);
             }
-            this.currentBuildProcess = null;
+            this.currentBuildProcess = undefined;
         }
         if (this.taskExecutor) {
             this.taskExecutor.terminate();
-            this.taskExecutor = null;
+            this.taskExecutor = undefined;
         }
     }
 
-    public async getResult(): Promise<proc.Subprocess | null> {
+    public async getResult(): Promise<proc.Subprocess | undefined> {
         await this.currentBuildProcess?.result;
         const buildProcess = this.currentBuildProcess;
-        this.currentBuildProcess = null;
+        this.currentBuildProcess = undefined;
         return buildProcess;
     }
 
-    public setBuildProcess(buildProcess: proc.Subprocess | null = null): void {
+    public setBuildProcess(buildProcess?: proc.Subprocess): void {
         this.currentBuildProcess = buildProcess;
     }
 
