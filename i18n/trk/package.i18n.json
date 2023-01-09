@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "Kullanılacak CMake yürütülebilir dosyasının adı/yolu.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "CMake derleme dosyalarının yerleştirileceği dizin.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "CMake yüklü dosyaların gönderileceği dizin.",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "Kök CMakeLists.txt dosyasının dizini.",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "CMakeLists.txt kök dizinine/dizinlerine giden yol veya yollar dizisi.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Derlemeden önce açık dosyaları kaydet.",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "Çalıştırmadan önce hedefi derleyin.",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Her derlemeden önce derleme çıkışını temizle.",

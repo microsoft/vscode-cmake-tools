@@ -15,7 +15,7 @@ import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
-import { ProjectController, FolderProjectType} from '@cmt/cmakeWorkspaceFolder';
+import { ProjectController, FolderProjectType} from '@cmt/projectController';
 
 import {
     USER_KITS_FILEPATH,

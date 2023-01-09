@@ -65,7 +65,7 @@
 	"cmake-tools.configuration.cmake.cmakePath.description": "Nome/Percorso dell'eseguibile di CMake da usare.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Directory di destinazione dei file di compilazione di CMake.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Directory di destinazione dei file di installazione di CMake.",
-	"cmake-tools.configuration.cmake.sourceDirectory.description": "Directory del file CMakeLists.txt radice.",
+	"cmake-tools.configuration.cmake.sourceDirectory.description": "Il percorso o la matrice dei percorsi delle directory radice CMakeLists.txt.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Salva i file aperti prima della compilazione.",
 	"cmake-tools.configuration.cmake.buildBeforeRun.description": "Compila la destinazione prima di eseguirla.",
 	"cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Cancella l'output di compilazione prima di ogni compilazione.",
