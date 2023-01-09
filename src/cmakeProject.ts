@@ -685,6 +685,7 @@ export class CMakeProject {
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", newSourceDirectory);
+                        this._sourceDir = newSourceDirectory;
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
                             // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -2640,12 +2641,7 @@ export class CMakeProject {
         return this.onUseCMakePresetsChangedEmitter.event;
     }
 
-    private hasCMakeListsFile: boolean | undefined;
     async hasCMakeLists(): Promise<boolean> {
-        if (this.hasCMakeListsFile) {
-            return true;
-        }
-
         const optsVars: KitContextVars = {
             // sourceDirectory cannot be defined based on any of the below variables.
             buildKit: '${buildKit}',
@@ -2673,10 +2669,7 @@ export class CMakeProject {
         if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
             expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
         }
-
-        this.hasCMakeListsFile = await fs.exists(expandedSourceDirectory);
-
-        return this.hasCMakeListsFile;
+        return await fs.exists(expandedSourceDirectory);
     }
 
 }
