@@ -2669,7 +2669,7 @@ export class CMakeProject {
         if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
             expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
         }
-        return await fs.exists(expandedSourceDirectory);
+        return fs.exists(expandedSourceDirectory);
     }
 
 }
