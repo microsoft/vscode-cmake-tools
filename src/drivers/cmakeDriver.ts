@@ -239,7 +239,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const opts = this.expansionOptions;
 
         for (const entry of Object.entries(toExpand)) {
-            env[entry[0]] = await expand.expandString(entry[1], {...opts, envOverride: expanded});
+            env[entry[0]] = await expand.expandString(entry[1], { ...opts, envOverride: expanded });
         }
 
         return env;
@@ -884,12 +884,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private configRunning: boolean = false;
 
     public configOrBuildInProgress(): boolean {
-        return this.configRunning || this.cmakeBuildRunner.buildInProgress();
+        return this.configInProgress() || this.cmakeBuildRunner.buildInProgress();
     }
 
-    /*public getRequestedTargets(): string[] {
-        return this.cmakeTaskRunner.getRequestedTargets();
-    }*/
+    public configInProgress(): boolean {
+        return this.configRunning;
+    }
 
     /**
      * Perform a clean configure. Deletes cached files before running the config
@@ -1716,9 +1716,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             } else {
                 if (gen) {
-                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets.length === 1 && targets[0] !== 'clean') {
+                    if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && (targets.length === 1 && targets[0] === 'clean')) {
                         buildToolArgs.push('-j', numJobs.toString());
-                    } else if (/Visual Studio/.test(gen) && targets.length === 1 && targets[0] !== 'clean') {
+                    } else if (/Visual Studio/.test(gen) && (targets.length === 1 && targets[0] === 'clean')) {
                         buildToolArgs.push('/maxcpucount:' + numJobs.toString());
                     }
                 }
@@ -1799,7 +1799,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (taskRunner) {
             await taskRunner.stop();
         }
-
         await this.onStop();
     }
 

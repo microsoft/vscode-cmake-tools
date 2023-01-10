@@ -1276,10 +1276,15 @@ export class CMakeProject {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: localize('configuring.project', 'Configuring project')
+                title: localize('configuring.project', 'Configuring project'),
+                cancellable: true
             },
-            async progress => {
+            async (progress, cancel) => {
                 progress.report({ message: localize('preparing.to.configure', 'Preparing to configure') });
+                cancel.onCancellationRequested(() => {
+                    rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop());
+                });
+
                 if (type !== ConfigureType.ShowCommandOnly) {
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
