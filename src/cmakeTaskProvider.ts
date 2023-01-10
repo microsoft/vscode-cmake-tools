@@ -190,7 +190,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         // Fetch all CMake task from `tasks.json` files.
         const allTasks: vscode.Task[] = await vscode.tasks.fetchTasks({ type: CMakeTaskProvider.CMakeScriptType });
         const tasks: (CMakeTask | undefined)[] = allTasks.map((task: any) => {
-            if (!task.definition.label || !task.group || (task.group && task.group !== vscode.TaskGroup.Build)) {
+            if (!task.definition.label || !task.group || (task.group && task.group.id !== vscode.TaskGroup.Build.id)) {
                 return undefined;
             }
             const definition: CMakeTaskDefinition = {
@@ -236,7 +236,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 return matchingTargetTasks[0];
             } else {
                 // Search for the matching default task.
-                const defaultTask: CMakeTask[] = matchingTargetTasks.filter(task => task.group?.isDefault);
+                const defaultTask: CMakeTask[] = matchingTargetTasks.filter(task => task.isDefault);
                 if (defaultTask.length === 1) {
                     return defaultTask[0];
                 } else {
