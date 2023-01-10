@@ -36,6 +36,7 @@ suite('Variable Substitution', () => {
             configureSettings: {
                 workspaceRoot: '${workspaceRoot}',
                 workspaceFolder: '${workspaceFolder}',
+                sourceDir: '${sourceDir}',
                 workspaceHash: '${workspaceHash}',
                 buildType: '${buildType}',
                 buildKit: '${buildKit}',

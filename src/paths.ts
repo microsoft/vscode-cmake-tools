@@ -252,6 +252,7 @@ class Paths {
                 userHome: this.userHome,
                 workspaceFolder: wsc.folder.uri.fsPath,
                 workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+                sourceDir: '${sourceDir}',
                 workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
                 workspaceRoot: wsc.folder.uri.fsPath,
                 workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath)
