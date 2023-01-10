@@ -1777,7 +1777,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
             const result = await this.cmakeBuildRunner.getResult();
-            return  result? result! : null;
+            return  result? result : null;
 
         } else {
             return null;
