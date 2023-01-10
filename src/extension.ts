@@ -15,7 +15,7 @@ import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
-import { ProjectController, FolderProjectType} from '@cmt/cmakeWorkspaceFolder';
+import { ProjectController, FolderProjectType} from '@cmt/projectController';
 
 import {
     USER_KITS_FILEPATH,
@@ -107,8 +107,8 @@ export class ExtensionManager implements vscode.Disposable {
                 subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(project)));
                 this.codeModelUpdateSubs.set(project.folderPath, subs);
+                rollbar.takePromise('Post-folder-open', { folder: folder, project: project }, this.postWorkspaceOpen(project));
             }
-            rollbar.takePromise('Post-folder-open', { folder: folder }, this.postWorkspaceOpen(this.getActiveProject()));
         });
 
         this.projectController.onAfterRemoveFolder(async folder => {
@@ -171,6 +171,9 @@ export class ExtensionManager implements vscode.Disposable {
             this.projectOutlineProvider.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
+            }
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                rollbar.takePromise('Post-folder-open', { folder: project.folderPath, project: project }, this.postWorkspaceOpen(project));
             }
             await this.initActiveProject();
         }
@@ -518,18 +521,13 @@ export class ExtensionManager implements vscode.Disposable {
      */
     async selectActiveFolder() {
         if (vscode.workspace.workspaceFolders?.length) {
-            const lastActiveFolderPath = this.activeFolderPath();
             const selection: CMakeProject | undefined = await this.pickCMakeProject();
             if (selection) {
                 // Ingore if user cancelled
                 await this.setActiveProject(selection);
-                const cmakeProject: CMakeProject | undefined = this.getActiveProject();
                 telemetry.logEvent("selectactivefolder");
                 const currentActiveFolderPath = this.activeFolderPath();
                 await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
-                if (lastActiveFolderPath !== currentActiveFolderPath) {
-                    rollbar.takePromise('Post-folder-open', { folder: selection.folderName }, this.postWorkspaceOpen(cmakeProject));
-                }
             }
         }
     }
@@ -571,15 +569,17 @@ export class ExtensionManager implements vscode.Disposable {
     private async postUpdateActiveProject() {
         const activeProject: CMakeProject | undefined = this.getActiveProject();
         if (activeProject) {
-            this.statusBar.setActiveProjectName(activeProject?.folderName, this.projectController.hasMultipleProjects);
+            this.statusBar.setActiveProjectName(activeProject.folderName, this.projectController.hasMultipleProjects);
             const useCMakePresets = activeProject?.useCMakePresets || false;
             this.statusBar.useCMakePresets(useCMakePresets);
             if (!useCMakePresets) {
-                this.statusBar.setActiveKitName(activeProject?.activeKit?.name || '');
+                this.statusBar.setActiveKitName(activeProject.activeKit?.name || '');
             }
             this.projectOutlineProvider.setActiveFolder(activeProject.folderPath);
             this.setupSubscriptions();
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
+            const currentActiveFolderPath = this.activeFolderPath();
+            await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
         }
     }
 
