@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import * as api from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeProject, ConfigureTrigger } from '@cmt/cmakeProject';
 import { readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH } from '@cmt/kit';
 import { platformNormalizePath } from '@cmt/util';
@@ -14,7 +13,7 @@ suite('Toolchain Substitution', () => {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}/");
 
         const user_kits = await readKitsFile(USER_KITS_FILEPATH);
         const ws_kits = await kitsForWorkspaceDirectory(testEnv.projectFolder.location);
@@ -52,7 +51,7 @@ suite('Toolchain Substitution', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
-        const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as api.CacheEntry;
+        const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as CacheEntry;
         expect(cacheEntry).to.not.be.null;
         expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
         expect(platformNormalizePath(cacheEntry.as<string>()))

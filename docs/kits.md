@@ -21,7 +21,7 @@ When the CMake Tools extension runs for the first time, it will [scan for kits](
 
 A user-local kit is a kit that is available to a particular user for all projects open with CMake Tools.
 
-The user-local list of kits is stored in the `cmake-kits.json` file, which you can edit by invoking **Edit CMake Kits** from the command palette:
+The user-local list of kits is stored in the `cmake-tools-kits.json` file, which you can edit by invoking **Edit User-Local CMake Kits** from the command palette:
 
 ![Example cmake_kits_json file](images/cmake_kits_json.png)
 
@@ -56,20 +56,20 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 
 **3. Save results to the user-local kits file**
 
-- The [user-local kit](#user-local-kits) `cmake-kits.json` file is updated with the new kit information.
+- The [user-local kit](#user-local-kits) `cmake-tooks-kits.json` file is updated with the new kit information.
 
 > **Warning:**
-> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-kits.json`. It only adds and updates existing ones.
+> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-tools-kits.json`. It only adds and updates existing ones.
 
 ## Kit options
 
-CMake defines different options that can be specified for each kit in their definition in `cmake-kits.json`, and these options can be mixed-and-matched as needed. For example, a single kit may request a Visual Studio environment, while specifying `clang-cl` as a compiler.
+CMake defines different options that can be specified for each kit in their definition in `cmake-tools-kits.json` (user-local) or `.vscode/cmake-kits.json` (project-level), and these options can be mixed-and-matched as needed. For example, a single kit may request a Visual Studio environment, while specifying `clang-cl` as a compiler.
 
 See [Configure CMake](configure.md) for more information about how kits are applied during configuration.
 
 ### Specify a compiler
 
-To specify a compiler, list the path to the compiler in the `cmake-kits.json` file.
+To specify a compiler, list the path to the compiler in the `cmake-tools-kits.json` or `.vscode/cmake-kits.json` file.
 
 The most common CMake languages are `C` and `CXX`, and CMake Tools has built-in support for finding these. However, any language can be specified:
 
@@ -133,6 +133,10 @@ The following additional options may be specified:
 `environmentVariables`
 
 > A JSON object of key-value pairs specifying additional environment variables to be defined when using this kit.
+
+`environmentSetupScript`
+
+> The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
 
 ## Next steps
 

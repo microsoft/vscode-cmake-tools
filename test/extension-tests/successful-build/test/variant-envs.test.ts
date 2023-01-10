@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-expressions */
 
-import * as api from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntryType } from '@cmt/cache';
 import { CMakeProject } from '@cmt/cmakeProject';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import { fs } from '@cmt/pr';
@@ -15,13 +14,13 @@ suite('Environment Variables in Variants', () => {
         this.timeout(100000);
 
         testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}");
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await cmakeProject.setKit(await getFirstSystemKit(cmakeProject));
+        await cmakeProject.setKit(await getFirstSystemKit());
 
         testEnv.projectFolder.buildDirectory.clear();
     });
@@ -80,7 +79,7 @@ suite('Environment Variables in Variants', () => {
             const cacheEntry_ = cache.get('variantEnv');
             expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
             const cacheEntry = cacheEntry_!;
-            expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
+            expect(cacheEntry.type).to.eq(CacheEntryType.String, '[variantEnv] unexpected cache entry type');
             expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
             expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
             expect(cacheEntry.as<string>()).to.eq('0xCAFE', '[variantEnv] incorrect environment variable');

@@ -172,29 +172,25 @@ class Paths {
     }
 
     async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
-        const ctest_path = await this.expandStringPath(wsc.config.rawCTestPath, wsc);
-        if (!ctest_path || ctest_path === 'auto') {
+        const ctestPath = await this.expandStringPath(wsc.config.rawCTestPath, wsc);
+        if (!ctestPath || ctestPath === 'auto' || overWriteCMakePathSetting) {
             const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
             if (cmake === null) {
                 return null;
             } else {
-                const ctest_sibling = path.join(path.dirname(cmake), 'ctest');
-                // Check if CTest is a sibling executable in the same directory
-                if (await fs.exists(ctest_sibling)) {
-                    const stat = await fs.stat(ctest_sibling);
-                    // eslint-disable-next-line no-bitwise
-                    if (stat.isFile() && stat.mode & 0b001001001) {
-                        return ctest_sibling;
-                    } else {
-                        return 'ctest';
-                    }
-                } else {
+                try {
+                    // Check if CTest is a sibling executable in the same directory
+                    const ctestName = process.platform === 'win32' ? 'ctest.exe' : 'ctest';
+                    const ctestSibling = path.join(path.dirname(cmake), ctestName);
+                    await fs.access(ctestSibling, fs.constants.X_OK);
+                    return ctestSibling;
+                } catch {
                     // The best we can do.
                     return 'ctest';
                 }
             }
         } else {
-            return ctest_path;
+            return ctestPath;
         }
     }
 
@@ -256,6 +252,7 @@ class Paths {
                 userHome: this.userHome,
                 workspaceFolder: wsc.folder.uri.fsPath,
                 workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+                sourceDir: '${sourceDir}',
                 workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
                 workspaceRoot: wsc.folder.uri.fsPath,
                 workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath)
@@ -268,19 +265,25 @@ class Paths {
 
         const vs_installations = await vsInstallations();
         if (vs_installations.length > 0) {
-            const bundled_tool_paths = [] as { cmake: string; ninja: string }[];
+            const bundled_tool_paths = [] as { cmake: string; ninja: string; instanceId: string; version: util.Version }[];
 
             for (const install of vs_installations) {
                 const bundled_tool_path = {
                     cmake: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe',
-                    ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe'
+                    ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe',
+                    instanceId: install.instanceId,
+                    version: util.parseVersion(install.installationVersion)
                 };
-                if (preferredInstanceId === install.instanceId) {
-                    bundled_tool_paths.unshift(bundled_tool_path);
-                } else {
-                    bundled_tool_paths.push(bundled_tool_path);
-                }
+                bundled_tool_paths.push(bundled_tool_path);
             }
+            bundled_tool_paths.sort((a, b) => {
+                if (preferredInstanceId === a.instanceId) {
+                    return -1;
+                } else if (preferredInstanceId === b.instanceId) {
+                    return 1;
+                }
+                return util.versionGreater(a.version, b.version) ? -1 : util.versionEquals(a.version, b.version) ? 0 : 1;
+            });
 
             for (const tool_path of bundled_tool_paths) {
                 if (await fs.exists(tool_path.cmake)) {

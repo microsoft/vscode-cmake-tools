@@ -8,12 +8,12 @@ import * as chaiString from 'chai-string';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
-import { CMakeServerDriver, NoGeneratorError } from '@cmt/drivers/cmakeServerDriver';
+import { CMakeServerDriver } from '@cmt/drivers/cmakeServerDriver';
 
 chai.use(chaiString);
 
 import { Kit, CMakeGenerator } from '@cmt/kit';
-import { CMakePreconditionProblems, CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import { CMakePreconditionProblems, CMakeDriver, CMakePreconditionProblemSolver, NoGeneratorError } from '@cmt/drivers/cmakeDriver';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {

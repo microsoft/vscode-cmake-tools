@@ -2,7 +2,6 @@
  * Module for reading from the CMake cache
  */ /** */
 
-import * as api from './api';
 import * as logging from './logging';
 import { fs } from './pr';
 import rollbar from './rollbar';
@@ -15,19 +14,39 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('cache');
 
 /**
- * Implements access to CMake cache entries. See `api.CacheEntry` for more
- * information.
+ * The type of a CMake cache entry
  */
-export class Entry implements api.CacheEntry {
-    public readonly type: api.CacheEntryType = api.CacheEntryType.Uninitialized;
+export enum CacheEntryType {
+    Bool = 0,
+    String = 1,
+    Path = 2,
+    FilePath = 3,
+    Internal = 4,
+    Uninitialized = 5,
+    Static = 6,
+}
+
+/**
+ * Implements access to CMake cache entries.
+ */
+export class CacheEntry {
+    public readonly type: CacheEntryType = CacheEntryType.Uninitialized;
     public readonly helpString: string = '';
+    /** The name of the cache entry */
     public readonly key: string = '';
+    /** The entry's value. Type depends on `type`. */
     public readonly value: any = null;
+    /** Whether this entry is ADVANCED, meaning it hidden from the user. */
     advanced: boolean = false;
+    /** List of allowed values, as specified by STRINGS property */
     choices: string[] = [];
 
     serializedKey: string = '';
 
+    /**
+     * Return the value as a `T` instance. Does no actual conversion. It's up to
+     * you to check the value of `CacheEntryProperties.type`.
+     */
     as<T>(): T {
         return this.value as T;
     }
@@ -41,11 +60,11 @@ export class Entry implements api.CacheEntry {
      * @param docString The `DOC` string in the cache
      * @param advanced Whether the entry is `ADVANCED`
      */
-    constructor(key: string, value: string, type: api.CacheEntryType, docString: string, advanced: boolean) {
+    constructor(key: string, value: string, type: CacheEntryType, docString: string, advanced: boolean) {
         this.key = key;
         this.serializedKey = key; // may be overwritten later with quoted version of `key`
         this.type = type;
-        if (type === api.CacheEntryType.Bool) {
+        if (type === CacheEntryType.Bool) {
             this.value = util.isTruthy(value);
         } else {
             this.value = value;
@@ -85,7 +104,7 @@ export class CMakeCache {
     }
 
     /** Get a list of all cache entries */
-    get allEntries(): Entry[] {
+    get allEntries(): CacheEntry[] {
         return Array.from(this.cacheEntries.values());
     }
 
@@ -95,7 +114,7 @@ export class CMakeCache {
      * @param path Path to the cache file
      * @param cacheEntries Entries in the cache
      */
-    private constructor(public readonly path: string, private readonly cacheEntries: Map<string, Entry>) {}
+    private constructor(public readonly path: string, private readonly cacheEntries: Map<string, CacheEntry>) {}
 
     /**
      * Reload the cache file and return a new instance. This will not modify this
@@ -112,11 +131,11 @@ export class CMakeCache {
      * @param content The contents of a CMake cache file.
      * @returns A map from the cache keys to the entries in the cache.
      */
-    static parseCache(content: string): Map<string, Entry> {
+    static parseCache(content: string): Map<string, CacheEntry> {
         log.debug(localize('parsing.cmake.cache.string', 'Parsing CMake cache string'));
         const lines = content.split(/\r\n|\n|\r/).filter(line => !!line.length).filter(line => !/^\s*#/.test(line));
 
-        const entries = new Map<string, Entry>();
+        const entries = new Map<string, CacheEntry>();
         let docStringAccumulator = '';
         const advancedNames: string[] = [];
         const choices: Map<string, string[]> = new Map();
@@ -147,14 +166,14 @@ export class CMakeCache {
                 } else {
                     const key = name;
                     const typemap = {
-                        BOOL: api.CacheEntryType.Bool,
-                        STRING: api.CacheEntryType.String,
-                        PATH: api.CacheEntryType.Path,
-                        FILEPATH: api.CacheEntryType.FilePath,
-                        INTERNAL: api.CacheEntryType.Internal,
-                        UNINITIALIZED: api.CacheEntryType.Uninitialized,
-                        STATIC: api.CacheEntryType.Static
-                    } as { [type: string]: api.CacheEntryType | undefined };
+                        BOOL: CacheEntryType.Bool,
+                        STRING: CacheEntryType.String,
+                        PATH: CacheEntryType.Path,
+                        FILEPATH: CacheEntryType.FilePath,
+                        INTERNAL: CacheEntryType.Internal,
+                        UNINITIALIZED: CacheEntryType.Uninitialized,
+                        STATIC: CacheEntryType.Static
+                    } as { [type: string]: CacheEntryType | undefined };
                     const type = typemap[typeName];
                     const docString = docStringAccumulator.trim();
                     docStringAccumulator = '';
@@ -162,7 +181,7 @@ export class CMakeCache {
                         rollbar.error(localize('cache.entry.unknown', 'Cache entry {0} has unknown type: {1}', `"${name}"`, `"${typeName}"`));
                     } else {
                         log.trace(localize('constructing.new.cache.entry', 'Constructing a new cache entry from the given line'));
-                        const entry = new Entry(key, value, type, docString, false);
+                        const entry = new CacheEntry(key, value, type, docString, false);
                         entry.serializedKey = serializedName;
                         entries.set(name, entry);
                     }
@@ -278,7 +297,7 @@ export class CMakeCache {
      * @param key The name of a cache entry
      * @returns The cache entry, or `null` if the cache entry is not present.
      */
-    get(key: string): Entry | null {
+    get(key: string): CacheEntry | null {
         const ret = this.cacheEntries.get(key) || null;
         if (ret) {
             log.trace(localize('get.cache.key', 'Get cache key {0}={1}', key, ret.value));

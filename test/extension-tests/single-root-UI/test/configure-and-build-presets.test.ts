@@ -57,6 +57,23 @@ suite('Build using Presets', () => {
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
     }).timeout(100000);
 
+    // from v3 on configure presets are not required to have a generator defined
+    test('Configure >=v3 no fallback generator', async () => {
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', 'NoGenerator');
+        expect(await vscode.commands.executeCommand('cmake.showConfigureCommand')).to.be.eq(0);
+
+        // make sure that cmake configure was not invoked with the -G (Generator) flag by checking the logs
+        const logDocuments = vscode.workspace.textDocuments.filter(document => document.languageId === 'Log');
+        expect(logDocuments).lengthOf(1);
+        const lines = logDocuments[0].getText().split('\n');
+        for (const line of lines) {
+            if (line.startsWith('[cmakefileapi-driver]')) {
+                expect(line).not.contain('-G');
+            }
+        }
+
+    });
+
     test('Build', async () => {
         expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
 

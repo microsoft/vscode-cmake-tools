@@ -15,7 +15,6 @@
 	"default.test.preset.description": "引数を追加しない空のテストの事前設定",
 	"circular.inherits.in.config.preset": "構成プリセット {0} での循環継承",
 	"binaryDir.undefined": "プリセット {0} の構成: binaryDir が指定されていません。既定値 {1} を使用しています",
-	"generator.undefined": "プリセット {0} の構成: ジェネレーターが指定されていません。既定値 {1} を使用しています",
 	"property.unsupported.v2": "プリセット {0} の構成: プロパティ {1} はプリセット v2 ではサポートされていません",
 	"no.cl.arch": "構成の事前設定 {0}: 既定では x86 を使用する、cl.exe のアーキテクチャが指定されていません",
 	"no.cl.toolset.arch": "構成の事前設定 {0}: 既定では {1} を使用する、cl.exe のツールセット アーキテクチャが指定されていません",

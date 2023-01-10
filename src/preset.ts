@@ -659,7 +659,7 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
     }
 }
 
-export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
         referencedConfigurePresets.set(folder, new Set());
@@ -689,20 +689,16 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     expansionOpts.envOverride = expandedPreset.environment;
 
     if (preset.__file && preset.__file.version >= 3) {
-        // For presets v3+ binaryDir and generator are optional, but cmake-tools needs a value. Default to something reasonable.
+        // For presets v3+ binaryDir is optional, but cmake-tools needs a value. Default to something reasonable.
         if (!preset.binaryDir) {
             const defaultValue = '${sourceDir}/out/build/${presetName}';
 
             log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value {1}', preset.name, `"${defaultValue}"`));
             preset.binaryDir = defaultValue;
         }
-        if (!preset.generator) {
-            const defaultValue = preferredGeneratorName ?? 'Ninja';
+    }
 
-            log.debug(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value {1}', preset.name, `"${defaultValue}"`));
-            preset.generator = defaultValue;
-        }
-    } else {
+    if (preset.__file && preset.__file.version <= 2) {
         // toolchainFile and installDir added in presets v3
         if (preset.toolchainFile) {
             log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
@@ -924,14 +920,6 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
     // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
     // but they are not on PATH, then set the env automatically.
     if (process.platform === 'win32') {
-        const getStringValueFromCacheVar = (variable?: CacheVarType) => {
-            if (util.isString(variable)) {
-                return variable;
-            } else if (variable && typeof variable === 'object') {
-                return util.isString(variable.value) ? variable.value : null;
-            }
-            return null;
-        };
         if (preset.cacheVariables) {
             const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
             const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
@@ -1288,7 +1276,7 @@ async function expandBuildPresetHelper(folder: string, preset: BuildPreset, work
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
+        const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
         if (configurePreset) {
             preset.__binaryDir = configurePreset.binaryDir;
             preset.__generator = configurePreset.generator;
@@ -1469,7 +1457,7 @@ async function expandTestPresetHelper(folder: string, preset: TestPreset, worksp
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
+        const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
         if (configurePreset) {
             preset.__binaryDir = configurePreset.binaryDir;
             preset.__generator = configurePreset.generator;
@@ -1657,3 +1645,12 @@ export function getValue(value: string | ValueStrategy): string | undefined {
         return value.value;
     }
 }
+
+export function getStringValueFromCacheVar(variable?: CacheVarType): string | null {
+    if (util.isString(variable)) {
+        return variable;
+    } else if (variable && typeof variable === 'object') {
+        return util.isString(variable.value) ? variable.value : null;
+    }
+    return null;
+};

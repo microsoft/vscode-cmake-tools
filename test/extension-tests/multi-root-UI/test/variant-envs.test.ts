@@ -1,14 +1,11 @@
-import * as api from '@cmt/api';
-import { CMakeCache } from '@cmt/cache';
+import { CMakeCache, CacheEntryType } from '@cmt/cache';
 import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import { fs } from '@cmt/pr';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeProject from '@cmt/cmakeProject';
 
 suite('Environment Variables in Variants', () => {
     let testEnv: DefaultEnvironment;
-    let cmakeProject: CMakeProject;
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -16,15 +13,14 @@ suite('Environment Variables in Variants', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
+        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder-2', build_loc, exe_res);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
         await clearExistingKitConfigurationFile();
 
-        const kit = await getFirstSystemKit(cmakeProject);
+        const kit = await getFirstSystemKit();
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
 
         testEnv.projectFolder.buildDirectory.clear();
@@ -51,10 +47,9 @@ suite('Environment Variables in Variants', () => {
         const cacheEntry_ = cache.get('variantEnv');
         expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
         const cacheEntry = cacheEntry_!;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[variantEnv] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
         expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
-        expect(cacheEntry.as<string>())
-            .to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');
+        expect(cacheEntry.as<string>()).to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');
     }).timeout(100000);
 });
