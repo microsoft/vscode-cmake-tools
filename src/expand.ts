@@ -26,6 +26,7 @@ interface RequiredExpansionContextVars {
     generator: string;
     workspaceFolder: string;
     workspaceFolderBasename: string;
+    sourceDir: string;
     workspaceHash: string;
     workspaceRoot: string;
     workspaceRootFolderName: string;
@@ -129,6 +130,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
     const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
     const env = EnvironmentUtils.create(envPreNormalize);
     const replacements = opts.vars;
+    replacements.sourceDirectory = replacements.sourceDir;
     let circularReference: string | undefined;
 
     // We accumulate a list of substitutions that we need to make, preventing

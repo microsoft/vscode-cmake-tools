@@ -4,11 +4,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as os from 'os';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
+import { expandString, ExpansionOptions } from './expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -246,11 +248,11 @@ export function product<T>(arrays: T[][]): T[][] {
 }
 
 export interface CMakeValue {
-    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH');  // There are more types, but we don't care ATM
+    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH' | 'PATH' | '');  // There are more types, but we don't care ATM
     value: string;
 }
 
-export function cmakeify(value: (string | boolean | number | string[])): CMakeValue {
+export function cmakeify(value: (string | boolean | number | string[] | CMakeValue)): CMakeValue {
     const ret: CMakeValue = {
         type: 'UNKNOWN',
         value: ''
@@ -258,7 +260,7 @@ export function cmakeify(value: (string | boolean | number | string[])): CMakeVa
     if (value === true || value === false) {
         ret.type = 'BOOL';
         ret.value = value ? 'TRUE' : 'FALSE';
-    } else if (typeof (value) === 'string') {
+    } else if (isString(value)) {
         ret.type = 'STRING';
         ret.value = replaceAll(value, ';', '\\;');
     } else if (typeof value === 'number') {
@@ -267,8 +269,11 @@ export function cmakeify(value: (string | boolean | number | string[])): CMakeVa
     } else if (value instanceof Array) {
         ret.type = 'STRING';
         ret.value = value.join(';');
+    } else if (Object.getOwnPropertyNames(value).filter(e => e === 'type' || e === 'value').length === 2) {
+        ret.type = value.type;
+        ret.value = value.value;
     } else {
-        throw new Error(`Invalid value to convert to cmake value: ${value}`);
+        throw new Error(localize('invalid.value', 'Invalid value to convert to cmake value: {0}', JSON.stringify(value)));
     }
     return ret;
 }
@@ -335,17 +340,25 @@ export interface Version {
     patch: number;
 }
 export function parseVersion(str: string): Version {
-    const version_re = /(\d+)\.(\d+)\.(\d+)(.*)/;
+    const version_re = /(\d+)\.(\d+)(\.(\d+))?(.*)/;
     const mat = version_re.exec(str);
     if (!mat) {
         throw new InvalidVersionString(localize('invalid.version.string', 'Invalid version string {0}', str));
     }
-    const [, major, minor, patch] = mat;
+    const [, major, minor, , patch] = mat;
     return {
         major: parseInt(major ?? '0'),
         minor: parseInt(minor ?? '0'),
         patch: parseInt(patch ?? '0')
     };
+}
+
+export function tryParseVersion(str: string): Version | undefined {
+    try {
+        return parseVersion(str);
+    } catch {
+        return undefined;
+    }
 }
 
 export function compareVersion(va: Version, vb: Version) {
@@ -714,7 +727,8 @@ export function isWorkspaceFolder(x?: any): boolean {
     return 'uri' in x && 'name' in x && 'index' in x;
 }
 
-export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<string> {
+export async function normalizeAndVerifySourceDir(sourceDir: string, expansionOpts: ExpansionOptions): Promise<string> {
+    sourceDir = await expandString(sourceDir, expansionOpts);
     let result = lightNormalizePath(sourceDir);
     if (process.platform === 'win32' && result.length > 1 && result.charCodeAt(0) > 97 && result.charCodeAt(0) <= 122 && result[1] === ':') {
         // Windows drive letter should be uppercase, for consistency with other tools like Visual Studio.
@@ -741,9 +755,9 @@ export function isTestMode(): boolean {
     return process.env['CMT_TESTING'] === '1';
 }
 
-export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
+export async function getAllCMakeListsPaths(path: string): Promise<string[] | undefined> {
     const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
-    return recGetAllFilePaths(dir.fsPath, regex, await readDir(dir.fsPath), []);
+    return recGetAllFilePaths(path, regex, await readDir(path), []);
 }
 
 async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], result: string[]) {
@@ -850,10 +864,30 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
     });
 }
 
+export function isFileInsideFolder(openEditor: vscode.TextDocument, folderPath: string): boolean {
+    const parent = platformNormalizePath(folderPath);
+    const file = platformNormalizePath(openEditor.uri.fsPath);
+    return file.startsWith(parent);
+}
+
 /**
  * Asserts that the given value has no valid type. Useful for exhaustiveness checks.
  * @param value The value to be checked.
  */
 export function assertNever(value: never): never {
     throw new Error(`Unexpected value: ${value}`);
+}
+
+export function getHostArchitecture() {
+    const arch = os.arch();
+    switch (arch) {
+        case 'arm64':
+        case 'arm':
+            return arch;
+        case 'x32':
+        case 'ia32':
+            return 'x86';
+        default:
+            return 'x64';
+    }
 }

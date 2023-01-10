@@ -9,14 +9,12 @@ import {
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import CMakeProject from '@cmt/cmakeProject';
 
 const workername: string = process.platform;
 
 suite('Build using Kits and Variants', () => {
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
-    let cmakeProject: CMakeProject;
 
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -26,7 +24,6 @@ suite('Build using Kits and Variants', () => {
 
         testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-        cmakeProject = await CMakeProject.create(testEnv.vsContext, testEnv.wsContext);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
         await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
@@ -41,7 +38,7 @@ suite('Build using Kits and Variants', () => {
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        const kit = await getFirstSystemKit(cmakeProject);
+        const kit = await getFirstSystemKit();
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
         testEnv.projectFolder.buildDirectory.clear();
     });
@@ -104,12 +101,12 @@ suite('Build using Kits and Variants', () => {
 
         // Run test
         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[0].kitLabel)).name);
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
 
         await vscode.commands.executeCommand('cmake.build');
 
         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[1].kitLabel)).name);
+        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
 
         await vscode.commands.executeCommand('cmake.build');
         const result1 = await testEnv.result.getResultAsJson();
@@ -129,11 +126,11 @@ suite('Build using Kits and Variants', () => {
             const compiler = os_compilers[workername];
 
             testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[0].kitLabel)).name);
+            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
             await vscode.commands.executeCommand('cmake.build');
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeProject, compiler[1].kitLabel)).name);
+            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
             await vscode.commands.executeCommand('cmake.build');
 
             const result1 = await testEnv.result.getResultAsJson();

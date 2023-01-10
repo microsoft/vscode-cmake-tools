@@ -8,7 +8,9 @@ Improvements:
 - Use upper case drive letters on Windows for `cmake.sourceDirectory`. [PR #2665](https://github.com/microsoft/vscode-cmake-tools/pull/2665) [@Danielmelody](https://github.com/Danielmelody)
 - Custom browse configuration should not include (redundant) per-file arguments. [#2645](https://github.com/microsoft/vscode-cmake-tools/issues/2645)
 - Support optional generator in `configurePresets` for version 3 and higher. [#2734](https://github.com/microsoft/vscode-cmake-tools/issues/2734) [@jochil](https://github.com/jochil)
-- Add a public API for extension authors that depend on CMake Tools. [#494]((https://github.com/microsoft/vscode-cmake-tools/issues/494)
+- Add a public API for extension authors that depend on CMake Tools. [#494](https://github.com/microsoft/vscode-cmake-tools/issues/494)
+- Support explicit typing in `cmake.configureSettings`. [#1457](https://github.com/microsoft/vscode-cmake-tools/issues/1457)
+- Scan for kits will now add ARM64 hosts for MSVC. [PR #2887](https://github.com/microsoft/vscode-cmake-tools/pull/2887) [@scaryrawr](https://github.com/scaryrawr)
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
@@ -21,6 +23,8 @@ Bug Fixes:
 - Cache the version check for the cmake executable. [#2818](https://github.com/microsoft/vscode-cmake-tools/issues/2818)
 - ctest -N does not work with custom cmake path from preset. [#2842](https://github.com/microsoft/vscode-cmake-tools/issues/2842)
 - Resolve variables in args before passing them to the terminal. [#2846](https://github.com/microsoft/vscode-cmake-tools/issues/2846)
+- Quote launch arguments sent to the terminal if they have special characters. [#2898](https://github.com/microsoft/vscode-cmake-tools/issues/2898)
+- CMake Tools should choose cmake.exe from the newest VS when it's not found in the PATH. [#2753](https://github.com/microsoft/vscode-cmake-tools/issues/2753)
 - Calling build targets from CMake Project Outline always builds default target if useTasks option is set. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis]](https://github.com/piomis)
 
 ## 1.12.27
