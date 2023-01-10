@@ -1752,7 +1752,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | undefined> {
+    private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
             let outputEnc = this.config.outputLogEncoding;
@@ -1776,10 +1776,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
-            return this.cmakeBuildRunner.getResult();
+            const result = await this.cmakeBuildRunner.getResult();
+            return  result? result! : null;
 
         } else {
-            return undefined;
+            return null;
         }
     }
 
