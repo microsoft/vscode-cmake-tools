@@ -1177,6 +1177,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
                 userHome: paths.userHome,
                 workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
                 workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
+                sourceDir: '${sourceDir}',
                 workspaceHash: '${workspaceHash}',
                 workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
                 workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'

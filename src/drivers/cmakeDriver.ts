@@ -388,6 +388,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             generator: 'generator',
             workspaceFolder: ws_root,
             workspaceFolderBasename: path.basename(ws_root),
+            sourceDir: '${sourceDir}',
             workspaceHash: util.makeHashString(ws_root),
             workspaceRoot: ws_root,
             workspaceRootFolderName: path.basename(ws_root),
@@ -547,6 +548,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private async _setTestPreset(testPreset: preset.TestPreset): Promise<void> {
         this._testPreset = testPreset;
         log.debug(localize('cmakedriver.test.preset.set.to', 'CMakeDriver test preset set to {0}', testPreset.name));
+    }
+
+    /**
+     * Ensure that variables are up to date (e.g. sourceDirectory, buildDirectory, env, installDirectory)
+     */
+    async refreshSettings() {
+        await this._refreshExpansions();
     }
 
     /**
