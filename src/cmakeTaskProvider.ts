@@ -197,7 +197,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 type: task.definition.type,
                 label: task.definition.label,
                 command: task.definition.command,
-                targets: task.definition.targets,
+                targets: task.definition.targets || targets,
                 preset: task.definition.preset,
                 options: task.definition.options
             };
