@@ -674,12 +674,15 @@ export class ExtensionManager implements vscode.Disposable {
                 }
                 // Inform cpptools that custom CppConfigurationProvider will be able to service the current workspace.
                 this.ensureCppToolsProviderRegistered();
-                if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this.projectController.numOfWorkspaceFolders) {
-                    ++this.cpptoolsNumFoldersReady;
-                    if (this.cpptoolsNumFoldersReady === this.projectController.numOfWorkspaceFolders) {
-                        // Notify cpptools that the provider is ready to provide IntelliSense configurations.
-                        cpptools.notifyReady(this.configProvider);
-                        this.configProvider.markAsReady();
+                if (cpptools.notifyReady) {
+                    const projectCount = await this.projectController.getNumOfValidProjects();
+                    if (this.cpptoolsNumFoldersReady < projectCount) {
+                        ++this.cpptoolsNumFoldersReady;
+                        if (this.cpptoolsNumFoldersReady === projectCount) {
+                            // Notify cpptools that the provider is ready to provide IntelliSense configurations.
+                            cpptools.notifyReady(this.configProvider);
+                            this.configProvider.markAsReady();
+                        }
                     }
                 } else {
                     cpptools.didChangeCustomBrowseConfiguration(this.configProvider);
