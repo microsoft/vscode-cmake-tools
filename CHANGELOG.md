@@ -26,7 +26,7 @@ Bug Fixes:
 - Quote launch arguments sent to the terminal if they have special characters. [#2898](https://github.com/microsoft/vscode-cmake-tools/issues/2898)
 - CMake Tools should choose cmake.exe from the newest VS when it's not found in the PATH. [#2753](https://github.com/microsoft/vscode-cmake-tools/issues/2753)
 - Calling build targets from CMake Project Outline always builds default target if useTasks option is set. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis]](https://github.com/piomis)
-- Remove the default path for `cmake.mingwSearchDirs` since the path is world-writable. 
+- Remove the default path for `cmake.mingwSearchDirs` since the path is world-writable. [PR #2942](https://github.com/microsoft/vscode-cmake-tools/pull/2942)
 
 ## 1.12.27
 Bug Fixes:
