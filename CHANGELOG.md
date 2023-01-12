@@ -11,6 +11,7 @@ Improvements:
 - Add a public API for extension authors that depend on CMake Tools. [#494](https://github.com/microsoft/vscode-cmake-tools/issues/494)
 - Support explicit typing in `cmake.configureSettings`. [#1457](https://github.com/microsoft/vscode-cmake-tools/issues/1457)
 - Scan for kits will now add ARM64 hosts for MSVC. [PR #2887](https://github.com/microsoft/vscode-cmake-tools/pull/2887) [@scaryrawr](https://github.com/scaryrawr)
+- Adhere to the setting entry "Parallel Jobs" (`cmake.parallelJobs`) when generating the default build preset. [#2765](https://github.com/microsoft/vscode-cmake-tools/issues/2765) [@maxmitti](https://github.com/maxmitti)
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
@@ -28,6 +29,7 @@ Bug Fixes:
 - Calling build targets from CMake Project Outline always builds default target if useTasks option is set. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis]](https://github.com/piomis)
 - Fix a problem with multi-root projects not activating the configuration provider. [#2915](https://github.com/microsoft/vscode-cmake-tools/issues/2915)
 - Remove the default path for `cmake.mingwSearchDirs` since the path is world-writable. [PR #2942](https://github.com/microsoft/vscode-cmake-tools/pull/2942)
+- Build command is not able to properly pick-up tasks from tasks.json file if configured with isDefault option and cancellation of running build task is not working. [#2935](https://github.com/microsoft/vscode-cmake-tools/issues/2935) [@piomis]](https://github.com/piomis)
 
 ## 1.12.27
 Bug Fixes:
