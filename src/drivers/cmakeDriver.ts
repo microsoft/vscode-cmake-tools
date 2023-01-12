@@ -1654,10 +1654,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
     private readonly _argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
     private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
-
-    
     private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
-    protected configureProcess: proc.Subprocess | null = null
+    protected configureProcess: proc.Subprocess | null = null;
 
     private correctAllTargetName(targetnames: string[]) {
         for (let i = 0; i < targetnames.length; i++) {
