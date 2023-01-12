@@ -116,9 +116,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
                 environment: await this.getConfigureEnvironment(configurePreset, options?.environment),
                 cwd: options?.cwd ?? binaryDir
             });
-            this.currentBuildOrConfigureProcess = child;
+            this.configureProcess = child;
             const result = await child.result;
-            this.currentBuildOrConfigureProcess = null;
+            this.configureProcess = null;
             log.trace(result.stderr);
             log.trace(result.stdout);
             if (result.retc === 0 && !configurePreset) {
