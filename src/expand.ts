@@ -26,6 +26,7 @@ interface RequiredExpansionContextVars {
     generator: string;
     workspaceFolder: string;
     workspaceFolderBasename: string;
+    sourceDir: string;
     workspaceHash: string;
     workspaceRoot: string;
     workspaceRootFolderName: string;
@@ -44,7 +45,6 @@ export interface KitContextVars extends RequiredExpansionContextVars {
     buildKitTargetArch: string;
     buildKitVersionMajor: string;
     buildKitVersionMinor: string;
-    sourceDir: string;
 }
 
 export interface PresetContextVars extends RequiredExpansionContextVars {
