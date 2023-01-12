@@ -24,7 +24,12 @@ export class CMakeBuildRunner {
     }
 
     public setBuildInProgress(buildInProgress: boolean): void {
-            this.buildInProgress = buildInProgress;
+        this.buildInProgress = buildInProgress;
+    }
+
+    public setBuildProcess(buildProcess?: proc.Subprocess): void {
+        this.currentBuildProcess = buildProcess;
+        this.setBuildInProgress(true);
     }
 
     public async setBuildProcessForTask(taskExecutor: vscode.TaskExecution): Promise<void> {
@@ -38,6 +43,7 @@ export class CMakeBuildRunner {
                 }
             });
         })};
+        this.setBuildInProgress(true);
     }
 
     public async stop(): Promise<void> {
@@ -49,6 +55,7 @@ export class CMakeBuildRunner {
             this.taskExecutor.terminate();
             this.taskExecutor = undefined;
         }
+        this.setBuildInProgress(false);
     }
 
     public async getResult(): Promise<proc.Subprocess | undefined> {
@@ -56,10 +63,6 @@ export class CMakeBuildRunner {
         const buildProcess = this.currentBuildProcess;
         this.currentBuildProcess = undefined;
         return buildProcess;
-    }
-
-    public setBuildProcess(buildProcess?: proc.Subprocess): void {
-        this.currentBuildProcess = buildProcess;
     }
 
 }
