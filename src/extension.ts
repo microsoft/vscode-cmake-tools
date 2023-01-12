@@ -589,7 +589,6 @@ export class ExtensionManager implements vscode.Disposable {
         }
     }
 
-    private cpptoolsNumFoldersReady: number = 0;
     private updateCodeModel(cmakeProject?: CMakeProject) {
         if (!cmakeProject) {
             return;
@@ -674,20 +673,19 @@ export class ExtensionManager implements vscode.Disposable {
                 }
                 // Inform cpptools that custom CppConfigurationProvider will be able to service the current workspace.
                 this.ensureCppToolsProviderRegistered();
-                if (cpptools.notifyReady) {
-                    const projectCount = await this.projectController.getNumOfValidProjects();
-                    if (this.cpptoolsNumFoldersReady < projectCount) {
-                        ++this.cpptoolsNumFoldersReady;
-                        if (this.cpptoolsNumFoldersReady === projectCount) {
-                            // Notify cpptools that the provider is ready to provide IntelliSense configurations.
-                            cpptools.notifyReady(this.configProvider);
-                            this.configProvider.markAsReady();
-                        }
-                    }
-                } else {
+                if (this.configProvider.ready) {
+                    // TODO: Make this smarter and only notify when there are changes to files that have been requested by cpptools already.
                     cpptools.didChangeCustomBrowseConfiguration(this.configProvider);
                     cpptools.didChangeCustomConfiguration(this.configProvider);
+                } else {
                     this.configProvider.markAsReady();
+                    if (cpptools.notifyReady) {
+                        // Notify cpptools that the provider is ready to provide IntelliSense configurations.
+                        cpptools.notifyReady(this.configProvider);
+                    } else {
+                        cpptools.didChangeCustomBrowseConfiguration(this.configProvider);
+                        cpptools.didChangeCustomConfiguration(this.configProvider);
+                    }
                 }
             }
         });
