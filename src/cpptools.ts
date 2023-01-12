@@ -639,9 +639,12 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         this.lastUpdateSucceeded = !hadMissingCompilers;
     }
 
-    private ready: boolean = false;
+    private readyFlag: boolean = false;
+    get ready(): boolean {
+        return this.readyFlag;
+    }
     markAsReady() {
-        this.ready = true;
+        this.readyFlag = true;
     }
 
     getDiagnostics(): DiagnosticsCpptools {
@@ -666,7 +669,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
 
         return {
-            isReady: this.ready,
+            isReady: this.readyFlag,
             hasCodeModel: this.fileIndex.size > 0,
             activeBuildType: this.activeBuildType || "",
             buildTypesSeen: [...this.buildTypesSeen.values()],
