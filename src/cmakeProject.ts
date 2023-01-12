@@ -1660,7 +1660,7 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand?: boolean): Promise<number> {
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true): Promise<number> {
         this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand);
         return this.activeBuild;
     }
@@ -1794,7 +1794,7 @@ export class CMakeProject {
      * Implementaiton of `cmake.clean`
      */
     async clean(): Promise<number> {
-        return this.build(['clean']);
+        return this.build(['clean'], false, false);
     }
 
     /**
@@ -1816,7 +1816,7 @@ export class CMakeProject {
 
     async ctest(): Promise<number> {
 
-        const buildResult = await this.build();
+        const buildResult = await this.build(undefined, false, false);
         if (buildResult !== 0) {
             this.cTestController.markAllCurrentTestsAsNotRun();
             return buildResult;
@@ -1833,7 +1833,7 @@ export class CMakeProject {
      * Implementation of `cmake.install`
      */
     async install(): Promise<number> {
-        return this.build(['install']);
+        return this.build(['install'], false, false);
     }
 
     /**
