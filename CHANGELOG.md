@@ -24,6 +24,9 @@ Bug Fixes:
 - ctest -N does not work with custom cmake path from preset. [#2842](https://github.com/microsoft/vscode-cmake-tools/issues/2842)
 - Resolve variables in args before passing them to the terminal. [#2846](https://github.com/microsoft/vscode-cmake-tools/issues/2846)
 - Quote launch arguments sent to the terminal if they have special characters. [#2898](https://github.com/microsoft/vscode-cmake-tools/issues/2898)
+- CMake Tools should choose cmake.exe from the newest VS when it's not found in the PATH. [#2753](https://github.com/microsoft/vscode-cmake-tools/issues/2753)
+- Calling build targets from CMake Project Outline always builds default target if useTasks option is set. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis]](https://github.com/piomis)
+- Remove the default path for `cmake.mingwSearchDirs` since the path is world-writable. [PR #2942](https://github.com/microsoft/vscode-cmake-tools/pull/2942)
 - Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
 
 ## 1.12.27

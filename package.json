@@ -1527,9 +1527,7 @@
             "type": "string",
             "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
           },
-          "default": [
-            "${env:SystemDrive}/MinGW"
-          ],
+          "default": [],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
           "scope": "window"
         },
@@ -2111,7 +2109,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.56.0",
+    "@types/vscode": "1.60.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@typescript-eslint/eslint-plugin": "^5.25.0",
@@ -2157,7 +2155,7 @@
     "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.0.0",
-    "json5": "^2.2.0",
+    "json5": "^2.2.2",
     "minimist": "^1.2.6",
     "open": "^7.4.1",
     "p-limit": "^3.1.0",

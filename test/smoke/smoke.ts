@@ -4,7 +4,7 @@ import { SmokeTestExtensionContext } from '@test/helpers/vscodefake/extensioncon
 import * as vscode from 'vscode';
 
 import { CMakeProject } from '@cmt/cmakeProject';
-import { ProjectController } from '@cmt/cmakeWorkspaceFolder';
+import { ProjectController } from '@cmt/projectController';
 import { DirectoryContext } from '@cmt/workspace';
 import { StateManager } from '@cmt/state';
 

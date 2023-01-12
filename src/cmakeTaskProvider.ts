@@ -13,6 +13,7 @@ import { CMakeProject, ConfigureTrigger } from './cmakeProject';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
+import * as util from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -20,7 +21,7 @@ const log = logging.createLogger('TaskProvider');
 
 const endOfLine: string = "\r\n";
 
-interface CMakeTaskDefinition extends vscode.TaskDefinition {
+export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
     label: string;
     command: string; // Command is either "build", "configure", "install", or "test".
@@ -29,7 +30,17 @@ interface CMakeTaskDefinition extends vscode.TaskDefinition {
     options?: { cwd?: string ; environment?: Environment };
 }
 
-enum CommandType {
+export class CMakeTask extends vscode.Task {
+    detail?: string;
+    isDefault?: boolean;
+    isTemplate?: boolean;
+}
+
+export interface TaskMenu extends vscode.QuickPickItem {
+    task: CMakeTask;
+}
+
+export enum CommandType {
     build = "build",
     config = "configure",
     install = "install",
@@ -63,9 +74,6 @@ const localizeCommandType = (cmd: CommandType): string => {
         }
     };
 };
-export class CMakeTask extends vscode.Task {
-    detail?: string;
-}
 
 async function getDefaultPresetName(commandType: CommandType, resolve: boolean = false): Promise<string | undefined> {
     let result: string | undefined;
@@ -111,23 +119,25 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const result: CMakeTask[] = [];
         const project: CMakeProject | undefined = getActiveProject();
         const targets: string[] | undefined = await project?.getDefaultBuildTargets() || ["all"];
-        result.push(await this.provideTask(CommandType.config, project?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.build, project?.useCMakePresets, targets));
-        result.push(await this.provideTask(CommandType.install, project?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.test, project?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.clean, project?.useCMakePresets));
-        result.push(await this.provideTask(CommandType.cleanRebuild, project?.useCMakePresets, targets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.config, project?.useCMakePresets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.build, project?.useCMakePresets, targets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.install, project?.useCMakePresets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.test, project?.useCMakePresets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project?.useCMakePresets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.cleanRebuild, project?.useCMakePresets, targets));
         return result;
     }
 
-    public async provideTask(commandType: CommandType, useCMakePresets?: boolean, targets?: string[]): Promise<CMakeTask> {
+    public static async provideTask(commandType: CommandType, useCMakePresets?: boolean, targets?: string[], presetName?: string): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
         let buildTargets: string[] | undefined;
         let preset: string | undefined;
         if (commandType === CommandType.build || commandType === CommandType.cleanRebuild) {
             buildTargets = targets;
         }
-        if (useCMakePresets) {
+        if (presetName) {
+            preset = presetName;
+        } else if (useCMakePresets) {
             preset = await getDefaultPresetName(commandType);
         }
 
@@ -160,6 +170,91 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             return resolvedTask;
         }
         return undefined;
+    }
+
+    public static async resolveInternalTask(task: CMakeTask): Promise<CMakeTask | undefined> {
+        const execution: any = task.execution;
+        if (!execution) {
+            const definition: CMakeTaskDefinition = <any>task.definition;
+            const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
+            const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+                new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, resolvedDefinition.options)
+                ), []);
+            return resolvedTask;
+        }
+        return task;
+    }
+
+    public static async findBuildTask(presetName?: string, targets?: string[]): Promise<CMakeTask | undefined> {
+        // Fetch all CMake task from `tasks.json` files.
+        const allTasks: vscode.Task[] = await vscode.tasks.fetchTasks({ type: CMakeTaskProvider.CMakeScriptType });
+        const tasks: (CMakeTask | undefined)[] = allTasks.map((task: any) => {
+            if (!task.definition.label || !task.group || (task.group && task.group !== vscode.TaskGroup.Build)) {
+                return undefined;
+            }
+            const definition: CMakeTaskDefinition = {
+                type: task.definition.type,
+                label: task.definition.label,
+                command: task.definition.command,
+                targets: task.definition.targets || targets,
+                preset: task.definition.preset,
+                options: task.definition.options
+            };
+
+            const buildTask: CMakeTask = new vscode.Task(definition, vscode.TaskScope.Workspace, task.definition.label, CMakeTaskProvider.CMakeSourceStr);
+            buildTask.detail = task.detail;
+            if (task.group.isDefault) {
+                buildTask.isDefault = true;
+            }
+            return buildTask;
+        });
+
+        const buildTasks: CMakeTask[] = tasks.filter((task) => task !== undefined) as CMakeTask[];
+
+        // No CMake Task is found.
+        if (buildTasks.length === 0) {
+            return undefined;
+        }
+
+        // Find tasks with a target that matches the input preset's target or the input targets
+        let matchingTargetTasks: CMakeTask[];
+
+        if (presetName) {
+            matchingTargetTasks = buildTasks.filter(task => task.definition.preset === presetName);
+        } else {
+            matchingTargetTasks = buildTasks.filter(task => {
+                const taskTargets: string[] = task.definition.targets || [];
+                const inputTargets: string[] = targets || [];
+                return taskTargets.length === inputTargets.length && taskTargets.every((item, index) => item === inputTargets[index]);
+            });
+        }
+
+        if (matchingTargetTasks.length > 0) {
+            // One task is found.
+            if (matchingTargetTasks.length === 1) {
+                return matchingTargetTasks[0];
+            } else {
+                // Search for the matching default task.
+                const defaultTask: CMakeTask[] = matchingTargetTasks.filter(task => task.group?.isDefault);
+                if (defaultTask.length === 1) {
+                    return defaultTask[0];
+                } else {
+                    // Search for the matching existing task.
+                    const existingTask: CMakeTask[] = matchingTargetTasks.filter(task => !task.isTemplate);
+                    if (existingTask.length === 1) {
+                        return existingTask[0];
+                    }
+                }
+            }
+        }
+
+        // Fetch CMake task from from task provider
+        matchingTargetTasks.push(await CMakeTaskProvider.provideTask(CommandType.build, undefined, targets, presetName));
+        const items: TaskMenu[] = matchingTargetTasks.map<TaskMenu>(task => ({ label: task.name, task: task, description: task.detail}));
+        // Ask the user to pick a task.
+        const selection = await vscode.window.showQuickPick(items, { placeHolder: localize('select.build.task', 'Select a build task') });
+        return selection?.task;
     }
 }
 
@@ -212,8 +307,14 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    close(): void {
-        // The terminal has been closed. Shutdown the build.
+    private _process: proc.Subprocess | undefined = undefined;
+    async close(): Promise<void> {
+        if (this._process) {
+            if (this._process.child) {
+                await util.termProc(this._process.child);
+            }
+            this._process = undefined;
+        }
     }
 
     private async correctTargets(project: CMakeProject, commandType: CommandType): Promise<string[]> {
@@ -331,6 +432,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         let cmakePath: string;
         if (cmakeDriver) {
             cmakePath = cmakeDriver.getCMakeCommand();
+
             if (!this.options) {
                 this.options = {};
             }
@@ -370,7 +472,9 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
         try {
-            const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
+            this._process = proc.execute(cmakePath, args, this, this.options);
+            const result: proc.ExecutionResult = await this._process.result;
+            this._process = undefined;
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             } else if (result.stderr || (result.stdout && result.stdout.includes("warning"))) {

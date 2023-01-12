@@ -29,9 +29,10 @@ import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple
 import * as preset from '@cmt/preset';
 import * as codeModel from '@cmt/drivers/codeModel';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
-import { CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
+import { CMakeTask, CMakeTaskProvider, CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
+import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -388,6 +389,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             generator: 'generator',
             workspaceFolder: ws_root,
             workspaceFolderBasename: path.basename(ws_root),
+            sourceDir: '${sourceDir}',
             workspaceHash: util.makeHashString(ws_root),
             workspaceRoot: ws_root,
             workspaceRootFolderName: path.basename(ws_root),
@@ -547,6 +549,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private async _setTestPreset(testPreset: preset.TestPreset): Promise<void> {
         this._testPreset = testPreset;
         log.debug(localize('cmakedriver.test.preset.set.to', 'CMakeDriver test preset set to {0}', testPreset.name));
+    }
+
+    /**
+     * Ensure that variables are up to date (e.g. sourceDirectory, buildDirectory, env, installDirectory)
+     */
+    async refreshSettings() {
+        await this._refreshExpansions();
     }
 
     /**
@@ -874,11 +883,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private configRunning: boolean = false;
 
-    private buildRunning: boolean = false;
-
     public configOrBuildInProgress(): boolean {
-        return this.configRunning || this.buildRunning;
+        return this.configRunning || this.cmakeBuildRunner.buildInProgress();
     }
+
+    /*public getRequestedTargets(): string[] {
+        return this.cmakeTaskRunner.getRequestedTargets();
+    }*/
 
     /**
      * Perform a clean configure. Deletes cached files before running the config
@@ -889,7 +900,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.buildRunning) {
+        if (this.cmakeBuildRunner.buildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
@@ -1275,7 +1286,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.buildRunning) {
+        if (this.cmakeBuildRunner.buildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
@@ -1541,15 +1552,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.buildRunning) {
+        if (this.cmakeBuildRunner.buildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
-        this.buildRunning = true;
+        this.cmakeBuildRunner.setBuildInProgress(true);
 
         const pre_build_ok = await this.doPreBuild();
         if (!pre_build_ok) {
-            this.buildRunning = false;
+            this.cmakeBuildRunner.setBuildInProgress(false);
             return -1;
         }
         const timeStart: number = new Date().getTime();
@@ -1590,13 +1601,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
             // Not sure what happened but there's an error...
             telemetryMeasures['ErrorCount'] = 1;
             telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
-            this.buildRunning = false;
+            this.cmakeBuildRunner.setBuildInProgress(false);
             return -1;
         }
         if (!this.m_stop_process) {
             const post_build_ok = await this.doPostBuild();
             if (!post_build_ok) {
-                this.buildRunning = false;
+                this.cmakeBuildRunner.setBuildInProgress(false);
                 return -1;
             }
         }
@@ -1604,8 +1615,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this._refreshExpansions();
         }
 
-        this.buildRunning = false;
-        return (await child.result).retc;
+        return (await child.result.finally(() => {
+            this.cmakeBuildRunner.setBuildInProgress(false);
+        })).retc;
     }
 
     /**
@@ -1644,10 +1656,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
 
     /**
-     * The currently running process. We keep a handle on it so we can stop it
+     * The currently running build task. We keep a handle on it so we can stop it
      * upon user request
      */
-    private _currentBuildProcess: proc.Subprocess | null = null;
+    private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
 
     private correctAllTargetName(targetnames: string[]) {
         for (let i = 0; i < targetnames.length; i++) {
@@ -1752,12 +1764,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
-            const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useBuildTask: useBuildTask };
-            const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
-            this._currentBuildProcess = child;
-            await child.result;
-            this._currentBuildProcess = null;
-            return child;
+            if (useBuildTask) {
+                const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this._buildPreset?.name, targets);
+                if (task) {
+                    const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
+                    if (resolvedTask) {
+                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolvedTask));
+                    }
+                }
+            } else {
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
+                this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
+            }
+            const result = await this.cmakeBuildRunner.getResult();
+            return result ? result : null;
         } else {
             return null;
         }
@@ -1776,11 +1796,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     async stopCurrentProcess(): Promise<void> {
         this.m_stop_process = true;
 
-        const cur = this._currentBuildProcess;
-        if (cur) {
-            if (cur.child) {
-                await util.termProc(cur.child);
-            }
+        const taskRunner = this.cmakeBuildRunner;
+        if (taskRunner) {
+            await taskRunner.stop();
         }
 
         await this.onStop();

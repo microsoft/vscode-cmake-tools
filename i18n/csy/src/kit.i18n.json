@@ -26,7 +26,7 @@
 	"detected.kit.for.version": "Zjištěna sada VsKit pro verzi",
 	"generator.present": "Generátor je přítomen: {0}",
 	"selected.preferred.generator.name": "Název vybraného upřednostňovaného generátoru: {0} {1}",
-	"failed.to.scan.for.kits": "Nepovedlo se vyhledat sady Clang GNU CLI: cmakeProject není definován",
+	"failed.to.scan.for.kits": "Nepovedlo se vyhledat sady Clang GNU CLI: CMake Path není definován.",
 	"kit.env": "Prostředí pro sady {0}: {1}",
 	"scanning.for.kits.on.system": "Hledají se sady v systému.",
 	"scanning.for.kits": "Hledají se sady.",

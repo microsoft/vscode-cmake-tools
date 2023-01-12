@@ -12,6 +12,9 @@ export class TestMemento implements vscode.Memento {
         }
         return value;
     }
+    keys(): readonly string[] {
+        return Array.from(this.storage.keys());
+    }
     public update(key: string, value: any): Thenable<void> {
         this.storage.set(key, value);
         return Promise.resolve();
@@ -35,6 +38,9 @@ export class StateMemento implements vscode.Memento {
         } else {
             return defaultValue;
         }
+    }
+    keys(): readonly string[] {
+        return Array.from(this.storage.keys());
     }
     public update(key: string, value: any): Thenable<void> {
         return this.storage[key] = value;

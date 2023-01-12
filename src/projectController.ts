@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
 import * as util from '@cmt/util';
+import * as logging from '@cmt/logging';
 import CMakeProject from '@cmt/cmakeProject';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
@@ -19,10 +20,14 @@ import { StatusBar } from './status';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
+const log = logging.createLogger('workspace');
+
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
     private readonly folderToProjectsMap = new Map<string, CMakeProject[]>();
     private readonly sourceDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
+    private readonly buildDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
+    private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly useCMakePresetsSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
@@ -199,7 +204,40 @@ export class ProjectController implements vscode.Disposable {
         for (const source of sourceDirectory) {
             projects.push(await CMakeProject.create(workspaceContext, source, isMultiProjectFolder));
         }
+        await ProjectController.checkBuildDirectories(projects);
         return projects;
+    }
+
+    private static duplicateMessageShown = false;
+    private static async checkBuildDirectories(projects: CMakeProject[]) {
+        const buildDirectories: string[] = [];
+        for (const project of projects) {
+            const buildDirectory = await project.binaryDir;
+            if (buildDirectories.indexOf(buildDirectory) < 0) {
+                buildDirectories.push(buildDirectory);
+            }
+        }
+        if (buildDirectories.length < projects.length) {
+            const sameBinaryDir = localize('duplicate.build.directory.1', 'Multiple CMake projects in this folder are using the same CMAKE_BINARY_DIR.');
+            const mayCauseProblems = localize('duplicate.build.directory.2', 'This may cause problems when attempting to configure your projects.');
+            log.warning(sameBinaryDir);
+            log.warning(mayCauseProblems);
+            log.warning(localize('duplicate.build.directory.3', 'Folder: {0}', projects[0].workspaceFolder.uri.fsPath));
+            log.warning(localize('duplicate.build.directory.4', 'Consider using substitution variables in {0} such as {1}.', "'cmake.buildDirectory'", "'${sourceDirectory}'"));
+            log.warning(localize('duplicate.build.directory.5', 'More information can be found at: https://aka.ms/cmaketoolsvariables'));
+            const moreInfo = localize('more.info', 'More info');
+
+            if (!ProjectController.duplicateMessageShown) {
+                // Don't await this because it may never return.
+                void vscode.window.showInformationMessage(`${sameBinaryDir} ${mayCauseProblems}`, moreInfo).then(
+                    response => {
+                        if (response === moreInfo) {
+                            log.showChannel();
+                        }
+                    });
+                ProjectController.duplicateMessageShown = true;
+            }
+        }
     }
 
     public useCMakePresetsForFolder(folder: vscode.WorkspaceFolder): boolean {
@@ -228,6 +266,8 @@ export class ProjectController implements vscode.Disposable {
         const config: ConfigurationReader | undefined = workspaceContext.config;
         if (config) {
             this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
+            this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(folder)));
+            this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder)));
             this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
         }
         return newProjects;
@@ -253,11 +293,17 @@ export class ProjectController implements vscode.Disposable {
         for (const project of cmakeProjects) {
             project.dispose();
         }
-        // eslint-disable-next-line no-unused-expressions
-        this.sourceDirectorySub.get(folder)?.dispose();
+
+        void this.sourceDirectorySub.get(folder)?.dispose();
         this.sourceDirectorySub.delete(folder);
-        // eslint-disable-next-line no-unused-expressions
-        this.useCMakePresetsSub.get(folder)?.dispose();
+
+        void this.buildDirectorySub.get(folder)?.dispose();
+        this.buildDirectorySub.delete(folder);
+
+        void this.installPrefixSub.get(folder)?.dispose();
+        this.installPrefixSub.delete(folder);
+
+        void this.useCMakePresetsSub.get(folder)?.dispose();
         this.useCMakePresetsSub.delete(folder);
     }
 
@@ -303,6 +349,8 @@ export class ProjectController implements vscode.Disposable {
                 }
                 projects.push(cmakeProject);
             }
+            await ProjectController.checkBuildDirectories(projects);
+
             if (activeProjectPath !== undefined) {
                 // Active project is no longer available. Pick a different one.
                 this.setActiveProject(projects.length > 0 ? projects[0] : undefined);
@@ -316,6 +364,17 @@ export class ProjectController implements vscode.Disposable {
                 // to referesh it.
                 void vscode.commands.executeCommand('cmake.statusbar.update');
             }
+        }
+    }
+
+    private async refreshDriverSettings(folder: vscode.WorkspaceFolder) {
+        const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
+        if (projects) {
+            for (const project of projects) {
+                const driver = await project.getCMakeDriverInstance();
+                await driver?.refreshSettings();
+            }
+            await ProjectController.checkBuildDirectories(projects);
         }
     }
 

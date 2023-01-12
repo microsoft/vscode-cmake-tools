@@ -340,12 +340,12 @@ export interface Version {
     patch: number;
 }
 export function parseVersion(str: string): Version {
-    const version_re = /(\d+)\.(\d+)\.(\d+)(.*)/;
+    const version_re = /(\d+)\.(\d+)(\.(\d+))?(.*)/;
     const mat = version_re.exec(str);
     if (!mat) {
         throw new InvalidVersionString(localize('invalid.version.string', 'Invalid version string {0}', str));
     }
-    const [, major, minor, patch] = mat;
+    const [, major, minor, , patch] = mat;
     return {
         major: parseInt(major ?? '0'),
         minor: parseInt(minor ?? '0'),
