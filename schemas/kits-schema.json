@@ -10,6 +10,10 @@
                 "type": "string",
                 "description": "Name of this kit"
             },
+            "description": {
+                "type": "string",
+                "description": "A description of this kit"
+            },
             "vendor": {
                 "type": "string",
                 "description": "The vendor name of this kit"
