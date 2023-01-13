@@ -1282,7 +1282,7 @@ export class CMakeProject {
             async (progress, cancel) => {
                 progress.report({ message: localize('preparing.to.configure', 'Preparing to configure') });
                 cancel.onCancellationRequested(() => {
-                    rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop());
+                    rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
                 });
 
                 if (type !== ConfigureType.ShowCommandOnly) {
@@ -1305,7 +1305,6 @@ export class CMakeProject {
                             try {
                                 progress.report({ message: localize('configuring.project', 'Configuring project') });
                                 let result: number;
-                                this.isBusy.set(true);
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
                                     result = await drv.configure(trigger, [], consumer, true);
@@ -1337,7 +1336,6 @@ export class CMakeProject {
                                 return result;
                             } finally {
                                 await setContextValue(isConfiguringKey, false);
-                                this.isBusy.set(false);
                                 progress.report({ message: localize('finishing.configure', 'Finishing configure') });
                                 progressSub.dispose();
                             }
@@ -1855,6 +1853,19 @@ export class CMakeProject {
             await this.activeBuild;
             this.cmakeDriver = Promise.resolve(null);
             this.isBusy.set(false);
+            return true;
+        }, () => false);
+    }
+
+    async cancelConfiguration(): Promise<boolean> {
+        const drv = await this.cmakeDriver;
+        if (!drv) {
+            return false;
+        }
+
+        return drv.stopCurrentProcess().then(async () => {
+            await this.activeBuild;
+            this.cmakeDriver = Promise.resolve(null);
             return true;
         }, () => false);
     }
