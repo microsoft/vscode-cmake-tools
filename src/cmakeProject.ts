@@ -2588,8 +2588,8 @@ export class CMakeProject {
         return expandStrings(this.workspaceContext.config.additionalKits, opts);
     }
 
-    async sendFileTypeTelemetry(textDocument: vscode.TextDocument): Promise<void> {
-        const filePath =  util.platformNormalizePath(textDocument.uri.fsPath);
+    async sendFileTypeTelemetry(textDocument: vscode.Uri): Promise<void> {
+        const filePath =  util.platformNormalizePath(textDocument.fsPath);
         const sourceDirectory = util.platformNormalizePath(this.sourceDir);
         // "outside" evaluates whether the modified cmake file belongs to the project.
         let outside: boolean = true;

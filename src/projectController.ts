@@ -434,28 +434,26 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private async doSaveTextDocument(textDocument: vscode.TextDocument): Promise<void> {
-        const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
-        if (activeProject) {
-            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(textDocument.uri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
-            if (isFileInsideActiveProject) {
-                await activeProject.doCMakeFileSaveReconfigure(textDocument.uri);
-            }
-            await activeProject.sendFileTypeTelemetry(textDocument);
-        }
+        this.doCMakeFileChangeReconfigure(textDocument.uri);
     }
 
     private async onDidRenameFiles(renamedFileEvt: vscode.FileRenameEvent): Promise<void> {
         for (let file of renamedFileEvt.files) {
             const filePath = file.newUri.fsPath.toLowerCase();
-            if (filePath.endsWith("cmakelists.txt")){
-                const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
-                if (activeProject) {
-                    const isFileInsideActiveProject: boolean = util.isFileInsideFolder(file.newUri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
-                    if (isFileInsideActiveProject) {
-                        await activeProject.doCMakeFileSaveReconfigure(file.newUri);
-                    }
-                }                
+            if (filePath.endsWith("cmakelists.txt")) {
+                this.doCMakeFileChangeReconfigure(file.newUri);
             }
+        }
+    }
+
+    private async doCMakeFileChangeReconfigure (textDocument: vscode.Uri): Promise<void> {
+        const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
+        if (activeProject) {
+            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(textDocument, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
+            if (isFileInsideActiveProject) {
+                await activeProject.doCMakeFileSaveReconfigure(textDocument);
+            }
+            await activeProject.sendFileTypeTelemetry(textDocument);
         }
     }
 
