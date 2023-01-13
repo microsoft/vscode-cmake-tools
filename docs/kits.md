@@ -92,6 +92,7 @@ CMake Tools doesn't automatically detect toolchains, but you can specify a CMake
 {
     "name": "Emscripten",
     "toolchainFile": "/path/to/emscripten/toolchain.cmake"
+    "description": "A description of this kit"
 }
 ```
 
