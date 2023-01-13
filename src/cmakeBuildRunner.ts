@@ -36,6 +36,7 @@ export class CMakeBuildRunner {
         this.currentBuildProcess =  { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
             const disposable: vscode.Disposable = vscode.tasks.onDidEndTask((endEvent: vscode.TaskEndEvent) => {
                 if (endEvent.execution === this.taskExecutor) {
+                    this.taskExecutor = undefined;
                     disposable.dispose();
                     resolve({ retc: 0, stdout: '', stderr: '' });
                 }
@@ -53,7 +54,6 @@ export class CMakeBuildRunner {
         }
         if (this.taskExecutor) {
             this.taskExecutor.terminate();
-            this.taskExecutor = undefined;
         }
     }
 
