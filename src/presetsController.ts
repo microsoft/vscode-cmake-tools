@@ -1038,7 +1038,7 @@ export class PresetsController {
                 return presetsFile;
             } else {
                 showErrors(log.error);
-                log.error(localize('unsupported.presets.disable', 'If desired, unknown properties and macros can be ignored by using the {0} setting.', "'cmake.allowUnsupportedPresetsVersions'"));
+                log.error(localize('unsupported.presets.disable', 'Unknown properties and macros can be ignored by using the {0} setting.', "'cmake.allowUnsupportedPresetsVersions'"));
                 return undefined;
             }
         }
