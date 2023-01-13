@@ -53,7 +53,6 @@ export class CMakeBuildRunner {
         }
         if (this.taskExecutor) {
             this.taskExecutor.terminate();
-            this.taskExecutor = undefined;
         }
         this.setBuildInProgress(false);
     }
