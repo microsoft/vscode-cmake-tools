@@ -1495,7 +1495,7 @@ export class CMakeProject {
     }
 
     // Reconfigure if the saved file is a cmake file.
-    async doCMakeFileSaveReconfigure(textDocument: vscode.Uri) {
+    async doCMakeFileChangeReconfigure(textDocument: vscode.Uri) {
         const filePath = util.platformNormalizePath(textDocument.fsPath);
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
 

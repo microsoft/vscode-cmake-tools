@@ -144,7 +144,7 @@ export class ProjectController implements vscode.Disposable {
                 e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this.doWorkspaceFolderChange(e))),
             vscode.workspace.onDidOpenTextDocument((textDocument: vscode.TextDocument) => this.doOpenTextDocument(textDocument)),
             vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => this.doSaveTextDocument(textDocument)),
-            vscode.workspace.onDidRenameFiles(this.onDidRenameFiles,this)
+            vscode.workspace.onDidRenameFiles(this.onDidRenameFiles, this)
         ];
     }
 
@@ -434,24 +434,24 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private async doSaveTextDocument(textDocument: vscode.TextDocument): Promise<void> {
-        this.doCMakeFileChangeReconfigure(textDocument.uri);
+        await this.doCMakeFileChangeReconfigure(textDocument.uri);
     }
 
     private async onDidRenameFiles(renamedFileEvt: vscode.FileRenameEvent): Promise<void> {
-        for (let file of renamedFileEvt.files) {
+        for (const file of renamedFileEvt.files) {
             const filePath = file.newUri.fsPath.toLowerCase();
             if (filePath.endsWith("cmakelists.txt")) {
-                this.doCMakeFileChangeReconfigure(file.newUri);
+                await this.doCMakeFileChangeReconfigure(file.newUri);
             }
         }
     }
 
-    private async doCMakeFileChangeReconfigure (textDocument: vscode.Uri): Promise<void> {
+    private async doCMakeFileChangeReconfigure(textDocument: vscode.Uri): Promise<void> {
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         if (activeProject) {
             const isFileInsideActiveProject: boolean = util.isFileInsideFolder(textDocument, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
             if (isFileInsideActiveProject) {
-                await activeProject.doCMakeFileSaveReconfigure(textDocument);
+                await activeProject.doCMakeFileChangeReconfigure(textDocument);
             }
             await activeProject.sendFileTypeTelemetry(textDocument);
         }

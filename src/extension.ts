@@ -464,7 +464,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
         }
         if (project) {
-            if (!await project.hasCMakeLists()) {
+            if (!project.hasCMakeLists()) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             } else {
                 if (shouldConfigure === true) {
@@ -1425,7 +1425,7 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
         for (const project of projects) {
-            if (await project.hasCMakeLists()) {
+            if (project.hasCMakeLists()) {
                 return true;
             }
         }
