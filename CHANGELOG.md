@@ -13,7 +13,7 @@ Improvements:
 - Scan for kits will now add ARM64 hosts for MSVC. [PR #2887](https://github.com/microsoft/vscode-cmake-tools/pull/2887) [@scaryrawr](https://github.com/scaryrawr)
 - Pop up "Choose CMakeLists.txt" when user goes to configure while feature set is partially activated. [#2746](https://github.com/microsoft/vscode-cmake-tools/issues/2746)
 - Adhere to the setting entry "Parallel Jobs" (`cmake.parallelJobs`) when generating the default build preset. [#2765](https://github.com/microsoft/vscode-cmake-tools/issues/2765) [@maxmitti](https://github.com/maxmitti)
-- Add a setting to ignore unknown presets features from versions we don't support yet. [#1963](https://github.com/microsoft/vscode-cmake-tools/issues/1963)
+- Add a setting to ignore unknown presets features from the versions that CMake Tools doesn't support yet. [#1963](https://github.com/microsoft/vscode-cmake-tools/issues/1963)
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
