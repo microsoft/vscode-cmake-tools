@@ -1277,7 +1277,7 @@ export class CMakeProject {
 
         return vscode.window.withProgress(
             {
-                location: vscode.ProgressLocation.Notification,
+                location: vscode.ProgressLocation.Window,
                 title: localize('configuring.project', 'Configuring project'),
                 cancellable: true
             },
@@ -1305,7 +1305,7 @@ export class CMakeProject {
                                 }
                             });
                             try {
-                                progress.report({ message: localize('configuring.project', 'Configuring project') });
+                                progress.report({ message: this.folderName });
                                 let result: number;
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
