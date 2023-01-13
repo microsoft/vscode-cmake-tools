@@ -25,7 +25,7 @@ import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
-import { expandStrings, expandString, ExpansionOptions, KitContextVars } from './expand';
+import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import * as logging from './logging';
 import { fs } from './pr';
@@ -685,8 +685,9 @@ export class CMakeProject {
                     }
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
-                        void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", newSourceDirectory);
-                        this._sourceDir = newSourceDirectory;
+                        this._sourceDir = await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath));
+                        void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
+                        this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
                             // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -889,6 +890,7 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         this._sourceDir = await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath));
+        this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
 
         // Start up the variant manager
         await this.variantManager.initialize();
@@ -1517,6 +1519,7 @@ export class CMakeProject {
         if (isCmakeFile) {
             // CMakeLists.txt change event: its creation or deletion are relevant,
             // so update full/partial feature set view for this folder.
+            this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
             await updateFullFeatureSet();
             if (driver && !driver.configOrBuildInProgress()) {
                 if (driver.config.configureOnEdit) {
@@ -2462,6 +2465,11 @@ export class CMakeProject {
         return this._sourceDir;
     }
 
+    private cmakeListsExists: boolean = false;
+    hasCMakeLists(): boolean {
+        return this.cmakeListsExists;
+    }
+
     get mainListFile() {
         const drv = this.getCMakeDriverInstance();
 
@@ -2641,37 +2649,6 @@ export class CMakeProject {
 
     get onUseCMakePresetsChanged() {
         return this.onUseCMakePresetsChangedEmitter.event;
-    }
-
-    async hasCMakeLists(): Promise<boolean> {
-        const optsVars: KitContextVars = {
-            // sourceDirectory cannot be defined based on any of the below variables.
-            buildKit: '${buildKit}',
-            buildType: '${buildType}',
-            buildKitVendor: '${buildKitVendor}',
-            buildKitTriple: '${buildKitTriple}',
-            buildKitVersion: '${buildKitVersion}',
-            buildKitHostOs: '${buildKitVendor}',
-            buildKitTargetOs: '${buildKitTargetOs}',
-            buildKitTargetArch: '${buildKitTargetArch}',
-            buildKitVersionMajor: '${buildKitVersionMajor}',
-            buildKitVersionMinor: '${buildKitVersionMinor}',
-            generator: '${generator}',
-            userHome: paths.userHome,
-            workspaceFolder: this.workspaceContext.folder.uri.fsPath,
-            workspaceFolderBasename: this.workspaceContext.folder.name,
-            workspaceHash: '${workspaceHash}',
-            workspaceRoot: this.workspaceContext.folder.uri.fsPath,
-            workspaceRootFolderName: this.workspaceContext.folder.name,
-            sourceDir: this.sourceDir
-        };
-
-        const sourceDirectory: string = this.sourceDir;
-        let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
-        if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
-            expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
-        }
-        return fs.exists(expandedSourceDirectory);
     }
 
 }
