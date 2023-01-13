@@ -409,6 +409,9 @@ export class CMakeServerDriver extends CMakeDriver {
     async onStop(): Promise<void> {
         const client = await this._cmsClient;
         if (client) {
+            if (this.configInProgress()) {
+                client.shutdownServer();
+            }
             await client.shutdownAsync();
             this._cmsClient = Promise.resolve(null);
         }

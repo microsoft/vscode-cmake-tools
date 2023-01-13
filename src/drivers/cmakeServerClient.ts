@@ -10,6 +10,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
+import { ChildProcessWithoutNullStreams } from 'child_process';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -372,6 +373,7 @@ export class CMakeServerClient {
     private endPromise!: Promise<void>;
     private pipe!: net.Socket;
     private readonly pipeFilePath: string;
+    private serverProcess: ChildProcessWithoutNullStreams | null = null;
 
     private onMoreData(data: Uint8Array) {
         const str = data.toString();
@@ -534,6 +536,12 @@ export class CMakeServerClient {
         return this.sendRequest('cmakeInputs', params);
     }
 
+    public shutdownServer() {
+        if (this.serverProcess) {
+            this.serverProcess.kill();
+        }
+    }
+
     protected shutDownFlag = false;
     public async shutdownAsync() {
         this.shutDownFlag = true;
@@ -555,6 +563,7 @@ export class CMakeServerClient {
             env: finalEnv,
             cwd: params.binaryDir
         });
+        this.serverProcess = child;
         log.debug(localize('started.new.cmake.server.instance', 'Started new CMake Server instance with PID {0}', child.pid));
         child.stdout.on('data', data => {
             void this.params.onOtherOutput(data.toLocaleString());

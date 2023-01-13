@@ -89,7 +89,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
             platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
             toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
 
-        } : this.generator ;
+        } : this.generator;
         if (generator) {
             if (generator.name) {
                 args.push('-G');
@@ -112,10 +112,13 @@ export class CMakeLegacyDriver extends CMakeDriver {
             return 0;
         } else {
             log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
-            const result = await this.executeCommand(cmake, args, outputConsumer, {
+            const child = this.executeCommand(cmake, args, outputConsumer, {
                 environment: await this.getConfigureEnvironment(configurePreset, options?.environment),
                 cwd: options?.cwd ?? binaryDir
-            }).result;
+            });
+            this.configureProcess = child;
+            const result = await child.result;
+            this.configureProcess = null;
             log.trace(result.stderr);
             log.trace(result.stdout);
             if (result.retc === 0 && !configurePreset) {

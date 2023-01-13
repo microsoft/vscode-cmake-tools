@@ -1184,7 +1184,7 @@ export class CMakeProject {
             if (await fs.exists(compdbPath)) {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
-                // Now try to copy the compdb to the user-requested path
+                    // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
                     const expandedDest = await expandString(copyDest, opts);
                     const parentDir = path.dirname(expandedDest);
@@ -1277,11 +1277,16 @@ export class CMakeProject {
 
         return vscode.window.withProgress(
             {
-                location: vscode.ProgressLocation.Notification,
-                title: localize('configuring.project', 'Configuring project')
+                location: vscode.ProgressLocation.Window,
+                title: localize('configuring.project', 'Configuring project'),
+                cancellable: true
             },
-            async progress => {
+            async (progress, cancel) => {
                 progress.report({ message: localize('preparing.to.configure', 'Preparing to configure') });
+                cancel.onCancellationRequested(() => {
+                    rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
+                });
+
                 if (type !== ConfigureType.ShowCommandOnly) {
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
@@ -1300,7 +1305,7 @@ export class CMakeProject {
                                 }
                             });
                             try {
-                                progress.report({ message: localize('configuring.project', 'Configuring project') });
+                                progress.report({ message: this.folderName });
                                 let result: number;
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
@@ -1343,7 +1348,7 @@ export class CMakeProject {
                     });
                 } catch (e: any) {
                     const error = e as Error;
-                    progress.report({ message: error.message});
+                    progress.report({ message: error.message });
                     return -1;
                 }
             }
@@ -1850,6 +1855,19 @@ export class CMakeProject {
             await this.activeBuild;
             this.cmakeDriver = Promise.resolve(null);
             this.isBusy.set(false);
+            return true;
+        }, () => false);
+    }
+
+    async cancelConfiguration(): Promise<boolean> {
+        const drv = await this.cmakeDriver;
+        if (!drv) {
+            return false;
+        }
+
+        return drv.stopCurrentProcess().then(async () => {
+            await this.activeBuild;
+            this.cmakeDriver = Promise.resolve(null);
             return true;
         }, () => false);
     }

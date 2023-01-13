@@ -219,7 +219,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
                 toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
 
-            } : this.generator ;
+            } : this.generator;
             if (generator) {
                 if (generator.name) {
                     args.push('-G');
@@ -245,10 +245,13 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
             const env = await this.getConfigureEnvironment(configurePreset, options?.environment);
-            const result = await this.executeCommand(cmake, args, outputConsumer, {
+            const child = this.executeCommand(cmake, args, outputConsumer, {
                 environment: env,
                 cwd: options?.cwd ?? binaryDir
-            }).result;
+            });
+            this.configureProcess = child;
+            const result = await child.result;
+            this.configureProcess = null;
             log.trace(result.stderr);
             log.trace(result.stdout);
             if (result.retc === 0) {
