@@ -61,6 +61,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         },
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
+        allowUnsupportedPresetsVersions: false,
         launchBehavior: 'reuseTerminal',
         ignoreCMakeListsMissing: false
     });

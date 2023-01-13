@@ -140,6 +140,7 @@ export interface ExtensionConfigurationSettings {
     statusbar: StatusBarConfig;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
+    allowUnsupportedPresetsVersions: boolean;
     launchBehavior: string;
     ignoreCMakeListsMissing: boolean;
 }
@@ -359,6 +360,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.allowCommentsInPresetsFile;
     }
 
+    get allowUnsupportedPresetsVersions(): boolean {
+        return this.configData.allowUnsupportedPresetsVersions;
+    }
+
     get ignoreCMakeListsMissing(): boolean {
         return this.configData.ignoreCMakeListsMissing;
     }
@@ -494,6 +499,7 @@ export class ConfigurationReader implements vscode.Disposable {
         statusbar: new vscode.EventEmitter<StatusBarConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
+        allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>()
     };
