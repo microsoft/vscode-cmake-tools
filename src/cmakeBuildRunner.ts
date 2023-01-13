@@ -27,7 +27,7 @@ export class CMakeBuildRunner {
         this.buildInProgress = buildInProgress;
     }
 
-    public setBuildProcess(buildProcess?: proc.Subprocess): void {
+    public setBuildProcess(buildProcess: proc.Subprocess): void {
         this.currentBuildProcess = buildProcess;
         this.setBuildInProgress(true);
     }
