@@ -1527,9 +1527,7 @@
             "type": "string",
             "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
           },
-          "default": [
-            "${env:SystemDrive}/MinGW"
-          ],
+          "default": [],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
           "scope": "window"
         },
