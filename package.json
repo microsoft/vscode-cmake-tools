@@ -1975,6 +1975,12 @@
           "description": "%cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description%",
           "scope": "resource"
         },
+        "cmake.allowUnsupportedPresetsVersions": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description%",
+          "scope": "resource"
+        },
         "cmake.launchBehavior": {
           "type": "string",
           "enum": [

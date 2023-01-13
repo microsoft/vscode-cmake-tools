@@ -239,7 +239,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const opts = this.expansionOptions;
 
         for (const entry of Object.entries(toExpand)) {
-            env[entry[0]] = await expand.expandString(entry[1], {...opts, envOverride: expanded});
+            env[entry[0]] = await expand.expandString(entry[1], { ...opts, envOverride: expanded });
         }
 
         return env;
@@ -881,32 +881,32 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return null;
     }
 
-    private configRunning: boolean = false;
+    private isConfigInProgress: boolean = false;
 
     public configOrBuildInProgress(): boolean {
-        return this.configRunning || this.cmakeBuildRunner.buildInProgress();
+        return this.configInProgress() || this.cmakeBuildRunner.isBuildInProgress();
     }
 
-    /*public getRequestedTargets(): string[] {
-        return this.cmakeTaskRunner.getRequestedTargets();
-    }*/
+    public configInProgress(): boolean {
+        return this.isConfigInProgress;
+    }
 
     /**
      * Perform a clean configure. Deletes cached files before running the config
      * @param consumer The output consumer
      */
     public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
-        if (this.configRunning) {
+        if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.cmakeBuildRunner.buildInProgress()) {
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
-        this.configRunning = true;
+        this.isConfigInProgress = true;
         await this.doPreCleanConfigure();
-        this.configRunning = false;
+        this.isConfigInProgress = false;
 
         return this.configure(trigger, extra_args, consumer);
     }
@@ -1282,15 +1282,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             log.debug(localize('no.cached.config', "No cached config could be used for IntelliSense"));
             return -2;
         }
-        if (this.configRunning) {
+        if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.cmakeBuildRunner.buildInProgress()) {
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
-        this.configRunning = true;
+        this.isConfigInProgress = true;
         try {
             // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
             // (example: cmake.sourceDirectory).
@@ -1456,7 +1456,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             log.info(localize('configure.failed', 'Failed to configure project'));
             return -1;
         } finally {
-            this.configRunning = false;
+            this.isConfigInProgress = false;
         }
     }
 
@@ -1548,11 +1548,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     async build(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number | null> {
         log.debug(localize('start.build', 'Start build'), targets?.join(', ') || '');
-        if (this.configRunning) {
+        if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return -1;
         }
-        if (this.cmakeBuildRunner.buildInProgress()) {
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return -1;
         }
@@ -1654,12 +1654,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
     private readonly _argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
     private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
-
-    /**
-     * The currently running build task. We keep a handle on it so we can stop it
-     * upon user request
-     */
     private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
+    protected configureProcess: proc.Subprocess | null = null;
 
     private correctAllTargetName(targetnames: string[]) {
         for (let i = 0; i < targetnames.length; i++) {
@@ -1698,7 +1694,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
 
         const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
-        const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number|undefined>('parallelJobs');
+        const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number | undefined>('parallelJobs');
         let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
         // for Ninja generator, don't '-j' argument if user didn't define number of jobs
         // let numJobs: number | undefined = this.config.numJobs;
@@ -1795,12 +1791,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async stopCurrentProcess(): Promise<void> {
         this.m_stop_process = true;
-
-        const taskRunner = this.cmakeBuildRunner;
-        if (taskRunner) {
-            await taskRunner.stop();
+        if (this.configureProcess && this.configureProcess.child) {
+            await util.termProc(this.configureProcess.child);
+            this.configureProcess = null;
         }
-
+        if (this.cmakeBuildRunner) {
+            await this.cmakeBuildRunner.stop();
+        }
         await this.onStop();
     }
 
