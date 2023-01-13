@@ -73,13 +73,13 @@ export class ProjectController implements vscode.Disposable {
         if (projects && projects.length > 0) {
             if (openEditor) {
                 for (const project of projects) {
-                    if (util.isFileInsideFolder(openEditor.document, project.folderPath)) {
+                    if (util.isFileInsideFolder(openEditor.document.uri, project.folderPath)) {
                         this.activeProject = project;
                         break;
                     }
                 }
                 if (!this.activeProject) {
-                    if (util.isFileInsideFolder(openEditor.document, projects[0].workspaceFolder.uri.fsPath)) {
+                    if (util.isFileInsideFolder(openEditor.document.uri, projects[0].workspaceFolder.uri.fsPath)) {
                         this.activeProject = projects[0];
                     }
                 }
@@ -143,7 +143,8 @@ export class ProjectController implements vscode.Disposable {
             vscode.workspace.onDidChangeWorkspaceFolders(
                 e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this.doWorkspaceFolderChange(e))),
             vscode.workspace.onDidOpenTextDocument((textDocument: vscode.TextDocument) => this.doOpenTextDocument(textDocument)),
-            vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => this.doSaveTextDocument(textDocument))
+            vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => this.doSaveTextDocument(textDocument)),
+            vscode.workspace.onDidRenameFiles(this.onDidRenameFiles,this)
         ];
     }
 
@@ -435,11 +436,26 @@ export class ProjectController implements vscode.Disposable {
     private async doSaveTextDocument(textDocument: vscode.TextDocument): Promise<void> {
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         if (activeProject) {
-            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(textDocument, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
+            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(textDocument.uri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
             if (isFileInsideActiveProject) {
-                await activeProject.doCMakeFileSaveReconfigure(textDocument);
+                await activeProject.doCMakeFileSaveReconfigure(textDocument.uri);
             }
             await activeProject.sendFileTypeTelemetry(textDocument);
+        }
+    }
+
+    private async onDidRenameFiles(renamedFileEvt: vscode.FileRenameEvent): Promise<void> {
+        for (let file of renamedFileEvt.files) {
+            const filePath = file.newUri.fsPath.toLowerCase();
+            if (filePath.endsWith("cmakelists.txt")){
+                const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
+                if (activeProject) {
+                    const isFileInsideActiveProject: boolean = util.isFileInsideFolder(file.newUri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
+                    if (isFileInsideActiveProject) {
+                        await activeProject.doCMakeFileSaveReconfigure(file.newUri);
+                    }
+                }                
+            }
         }
     }
 

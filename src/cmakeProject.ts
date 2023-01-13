@@ -948,7 +948,7 @@ export class CMakeProject {
             if (usingCMakePresets) {
                 const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
                     const fileName = path.basename(document.uri.fsPath);
-                    if (util.isFileInsideFolder(document, this.folderPath) && fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+                    if (util.isFileInsideFolder(document.uri, this.folderPath) && fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
                         if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
                             // setTextDocumentLanguage will trigger onDidOpenTextDocument
                             void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
@@ -1490,8 +1490,8 @@ export class CMakeProject {
     }
 
     // Reconfigure if the saved file is a cmake file.
-    async doCMakeFileSaveReconfigure(textDocument: vscode.TextDocument) {
-        const filePath = util.platformNormalizePath(textDocument.uri.fsPath);
+    async doCMakeFileSaveReconfigure(textDocument: vscode.Uri) {
+        const filePath = util.platformNormalizePath(textDocument.fsPath);
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // If we detect a change in the CMake cache file, refresh the webview
