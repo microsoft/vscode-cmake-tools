@@ -92,7 +92,6 @@ CMake Tools doesn't automatically detect toolchains, but you can specify a CMake
 {
     "name": "Emscripten",
     "toolchainFile": "/path/to/emscripten/toolchain.cmake"
-    "description": "A description of this kit"
 }
 ```
 
@@ -138,6 +137,10 @@ The following additional options may be specified:
 `environmentSetupScript`
 
 > The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
+
+`description`
+
+> A short description of the kit, which will appear next to its name in the selection menu.
 
 ## Next steps
 
