@@ -685,9 +685,8 @@ export class CMakeProject {
                     }
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
-                        this._sourceDir = await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath));
+                        this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)))
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
-                        this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
                             // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -889,8 +888,7 @@ export class CMakeProject {
      */
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
-        this._sourceDir = await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath));
-        this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
+        this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
 
         // Start up the variant manager
         await this.variantManager.initialize();
@@ -2481,6 +2479,11 @@ export class CMakeProject {
     private _sourceDir = '';
     get sourceDir() {
         return this._sourceDir;
+    }
+
+    async setSourceDir(sourceDir: string) {
+        this._sourceDir = sourceDir;
+        this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
     }
 
     private cmakeListsExists: boolean = false;
