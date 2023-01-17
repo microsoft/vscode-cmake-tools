@@ -83,6 +83,10 @@ export class PresetsController {
             });
         });
 
+        project.workspaceContext.config.onChange('allowUnsupportedPresetsVersions', async () => {
+            await presetsController.reapplyPresets();
+        });
+
         return presetsController;
     }
 
@@ -1055,6 +1059,8 @@ export class PresetsController {
             return undefined;
         }
         let schemaFile;
+        const maxSupportedVersion = 4;
+        const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
             return undefined;
@@ -1068,16 +1074,25 @@ export class PresetsController {
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);
         if (!is_valid) {
-            const errors = validator.errors!;
-            log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
-            for (const err of errors) {
-                if (err.params && 'additionalProperty' in err.params) {
-                    log.error(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
-                } else {
-                    log.error(` >> ${err.dataPath}: ${err.message}`);
+            const showErrors = (logFunc: (...x: any[]) => void) => {
+                const errors = validator.errors!;
+                logFunc(localize('unsupported.presets', 'Unsupported presets detected in {0}. Support is limited to features defined by version {1}.', file, maxSupportedVersion));
+                for (const err of errors) {
+                    if (err.params && 'additionalProperty' in err.params) {
+                        logFunc(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
+                    } else {
+                        logFunc(` >> ${err.dataPath}: ${err.message}`);
+                    }
                 }
+            };
+            if (validationErrorsAreWarnings) {
+                showErrors(log.warning);
+                return presetsFile;
+            } else {
+                showErrors(log.error);
+                log.error(localize('unsupported.presets.disable', 'Unknown properties and macros can be ignored by using the {0} setting.', "'cmake.allowUnsupportedPresetsVersions'"));
+                return undefined;
             }
-            return undefined;
         }
         log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
         return presetsFile;

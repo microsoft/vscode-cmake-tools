@@ -13,22 +13,23 @@ export class CMakeBuildRunner {
 
     private taskExecutor: vscode.TaskExecution | undefined;
     private currentBuildProcess: proc.Subprocess | undefined;
-    private isBuildInProgress: boolean = false;
+    private buildInProgress: boolean = false;
 
     constructor() {
-        this.isBuildInProgress = false;
+        this.buildInProgress = false;
     }
 
-    public buildInProgress(): boolean {
-        return this.isBuildInProgress;
+    public isBuildInProgress(): boolean {
+        return this.buildInProgress;
     }
 
-    public setBuildInProgress(running: boolean): void {
-        if (running) {
-            this.isBuildInProgress = true;
-        } else {
-            this.isBuildInProgress = false;
-        }
+    public setBuildInProgress(buildInProgress: boolean): void {
+        this.buildInProgress = buildInProgress;
+    }
+
+    public setBuildProcess(buildProcess: proc.Subprocess): void {
+        this.currentBuildProcess = buildProcess;
+        this.setBuildInProgress(true);
     }
 
     public async setBuildProcessForTask(taskExecutor: vscode.TaskExecution): Promise<void> {
@@ -36,25 +37,24 @@ export class CMakeBuildRunner {
         this.currentBuildProcess =  { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
             const disposable: vscode.Disposable = vscode.tasks.onDidEndTask((endEvent: vscode.TaskEndEvent) => {
                 if (endEvent.execution === this.taskExecutor) {
+                    this.taskExecutor = undefined;
                     disposable.dispose();
                     resolve({ retc: 0, stdout: '', stderr: '' });
                 }
             });
         })};
+        this.setBuildInProgress(true);
     }
 
     public async stop(): Promise<void> {
-        const cur = this.currentBuildProcess;
-        if (cur) {
-            if (cur.child) {
-                await util.termProc(cur.child);
-            }
+        if (this.currentBuildProcess && this.currentBuildProcess.child) {
+            await util.termProc(this.currentBuildProcess.child);
             this.currentBuildProcess = undefined;
         }
         if (this.taskExecutor) {
             this.taskExecutor.terminate();
-            this.taskExecutor = undefined;
         }
+        this.setBuildInProgress(false);
     }
 
     public async getResult(): Promise<proc.Subprocess | undefined> {
@@ -62,10 +62,6 @@ export class CMakeBuildRunner {
         const buildProcess = this.currentBuildProcess;
         this.currentBuildProcess = undefined;
         return buildProcess;
-    }
-
-    public setBuildProcess(buildProcess?: proc.Subprocess): void {
-        this.currentBuildProcess = buildProcess;
     }
 
 }
