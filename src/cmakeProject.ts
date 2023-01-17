@@ -685,7 +685,7 @@ export class CMakeProject {
                     }
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
-                        this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)))
+                        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -888,7 +888,7 @@ export class CMakeProject {
      */
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
-        this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+        await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
 
         // Start up the variant manager
         await this.variantManager.initialize();
