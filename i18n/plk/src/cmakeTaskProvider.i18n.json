@@ -11,6 +11,7 @@
 	"clean": "wyczyść",
 	"clean.rebuild": "wyczyść ponowną kompilację",
 	"cmake.template.task": "Zadanie {0} szablonu narzędzia CMake",
+	"select.build.task": "Wybierz zadanie kompilacji",
 	"command.not.recognized": "{0} nie jest rozpoznawanym poleceniem.",
 	"target.is.ignored": "Zdefiniowane elementy docelowe w tym zadaniu są ignorowane.",
 	"enable.cmake.presets": "Włącz CMakePresets",

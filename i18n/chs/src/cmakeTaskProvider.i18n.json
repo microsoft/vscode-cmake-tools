@@ -11,6 +11,7 @@
 	"clean": "清理",
 	"clean.rebuild": "清理重新生成",
 	"cmake.template.task": "CMake 模板 {0} 任务",
+	"select.build.task": "选择一项生成任务",
 	"command.not.recognized": "{0} 不是已识别的命令。",
 	"target.is.ignored": "正在忽略此任务中定义的目标。",
 	"enable.cmake.presets": "启用 CMakePreset",

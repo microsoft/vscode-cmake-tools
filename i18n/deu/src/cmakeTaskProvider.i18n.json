@@ -11,6 +11,7 @@
 	"clean": "reinigen",
 	"clean.rebuild": "sauberer Umbau",
 	"cmake.template.task": "CMake-Vorlage {0} Aufgabe",
+	"select.build.task": "Buildaufgabe auswählen",
 	"command.not.recognized": "{0} ist kein bekannter Befehl.",
 	"target.is.ignored": "Die definierten Ziele in dieser Aufgabe werden ignoriert.",
 	"enable.cmake.presets": "CMakePresets aktivieren",

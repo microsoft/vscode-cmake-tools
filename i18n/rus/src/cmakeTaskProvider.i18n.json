@@ -11,6 +11,7 @@
 	"clean": "очистить",
 	"clean.rebuild": "очистка перестроения",
 	"cmake.template.task": "Задача шаблона CMake {0}",
+	"select.build.task": "Выберите задание сборки",
 	"command.not.recognized": "{0} не является распознаваемой командой.",
 	"target.is.ignored": "Определенные целевые объекты в этой задаче игнорируются.",
 	"enable.cmake.presets": "Включить CMakePresets",
