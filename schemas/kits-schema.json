@@ -12,7 +12,7 @@
             },
             "description": {
                 "type": "string",
-                "description": "A description of this kit"
+                "description": "The description of this kit"
             },
             "vendor": {
                 "type": "string",

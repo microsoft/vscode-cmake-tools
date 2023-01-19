@@ -1,4 +1,7 @@
 # What's New?
+## 1.14
+Improvements:
+- Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
 
 ## 1.13
 Improvements:
@@ -15,7 +18,6 @@ Improvements:
 - Support canceling configuration [#2436](https://github.com/microsoft/vscode-cmake-tools/issues/2436) [@Danielmelody](https://github.com/Danielmelody)
 - Pop up "Choose CMakeLists.txt" when user goes to configure while feature set is partially activated. [#2746](https://github.com/microsoft/vscode-cmake-tools/issues/2746)
 - Adhere to the setting entry "Parallel Jobs" (`cmake.parallelJobs`) when generating the default build preset. [#2765](https://github.com/microsoft/vscode-cmake-tools/issues/2765) [@maxmitti](https://github.com/maxmitti)
-- Option to describe kits [@TisziV](https://github.com/TisziV)
 - Add a setting to ignore unknown presets features from the versions that CMake Tools doesn't support yet. [#1963](https://github.com/microsoft/vscode-cmake-tools/issues/1963)
 
 Bug Fixes:
