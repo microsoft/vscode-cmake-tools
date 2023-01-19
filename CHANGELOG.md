@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.14
+Bug Fixes:
+- Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
+
 ## 1.13
 Improvements:
 - Support multiple projects in a single workspace folder. `cmake.sourceDirectory` setting now allows setting multiple paths. [#1374](https://github.com/microsoft/vscode-cmake-tools/issues/1374)
