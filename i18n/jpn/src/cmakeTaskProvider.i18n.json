@@ -11,6 +11,7 @@
 	"clean": "クリーン",
 	"clean.rebuild": "クリーンしてリビルド",
 	"cmake.template.task": "CMake テンプレート {0} タスク",
+	"select.build.task": "ビルド タスクの選択",
 	"command.not.recognized": "{0} は認識されたコマンドではありません。",
 	"target.is.ignored": "このタスクで定義されたターゲットは無視されます。",
 	"enable.cmake.presets": "CMakePresets を有効にする",
