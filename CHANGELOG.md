@@ -1,9 +1,9 @@
 # What's New?
+
 ## 1.14
 Improvements:
 - Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
 
-## 1.14
 Bug Fixes:
 - Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
 
