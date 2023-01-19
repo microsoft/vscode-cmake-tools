@@ -328,8 +328,8 @@ export function splitCommandLine(cmd: string): string[] {
 /**
  * This is an initial check without atually configuring. It may or may not be accurate.
  */
-export function isMultiConfGeneratorFast(gen: string): boolean {
-    return gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config');
+export function isMultiConfGeneratorFast(gen?: string): boolean {
+    return gen !== undefined && (gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config'));
 }
 
 export class InvalidVersionString extends Error {}
