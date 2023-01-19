@@ -11,6 +11,7 @@
 	"clean": "nettoyer",
 	"clean.rebuild": "Nouvelle regénération",
 	"cmake.template.task": "Tâche {0} de modèle CMake",
+	"select.build.task": "Sélectionner une tâche de build",
 	"command.not.recognized": "{0} n’est pas une commande reconnue.",
 	"target.is.ignored": "Les cibles définies dans cette tâche sont ignorées.",
 	"enable.cmake.presets": "Activer CMakePresets",
