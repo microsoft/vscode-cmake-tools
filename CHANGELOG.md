@@ -1,7 +1,12 @@
 # What's New?
 
+## 1.14
+Bug Fixes:
+- Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
+
 ## 1.13
 Improvements:
+- Support multiple projects in a single workspace folder. `cmake.sourceDirectory` setting now allows setting multiple paths. [#1374](https://github.com/microsoft/vscode-cmake-tools/issues/1374)
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
 - Preset in CMakeUserPresets.json using "condition" does not appear in configure preset selection. [#2749](https://github.com/microsoft/vscode-cmake-tools/issues/2749)
 - Resolve workspace variables in `cmake-kits.json`. [#2737](https://github.com/microsoft/vscode-cmake-tools/issues/2737)
@@ -11,7 +16,7 @@ Improvements:
 - Add a public API for extension authors that depend on CMake Tools. [#494](https://github.com/microsoft/vscode-cmake-tools/issues/494)
 - Support explicit typing in `cmake.configureSettings`. [#1457](https://github.com/microsoft/vscode-cmake-tools/issues/1457)
 - Scan for kits will now add ARM64 hosts for MSVC. [PR #2887](https://github.com/microsoft/vscode-cmake-tools/pull/2887) [@scaryrawr](https://github.com/scaryrawr)
-- Support canceling configuration [#2759](https://github.com/microsoft/vscode-cmake-tools/pull/2759) [@Danielmelody](https://github.com/Danielmelody)
+- Support canceling configuration [#2436](https://github.com/microsoft/vscode-cmake-tools/issues/2436) [@Danielmelody](https://github.com/Danielmelody)
 - Pop up "Choose CMakeLists.txt" when user goes to configure while feature set is partially activated. [#2746](https://github.com/microsoft/vscode-cmake-tools/issues/2746)
 - Adhere to the setting entry "Parallel Jobs" (`cmake.parallelJobs`) when generating the default build preset. [#2765](https://github.com/microsoft/vscode-cmake-tools/issues/2765) [@maxmitti](https://github.com/maxmitti)
 - Add a setting to ignore unknown presets features from the versions that CMake Tools doesn't support yet. [#1963](https://github.com/microsoft/vscode-cmake-tools/issues/1963)
@@ -29,11 +34,11 @@ Bug Fixes:
 - Resolve variables in args before passing them to the terminal. [#2846](https://github.com/microsoft/vscode-cmake-tools/issues/2846)
 - Quote launch arguments sent to the terminal if they have special characters. [#2898](https://github.com/microsoft/vscode-cmake-tools/issues/2898)
 - CMake Tools should choose cmake.exe from the newest VS when it's not found in the PATH. [#2753](https://github.com/microsoft/vscode-cmake-tools/issues/2753)
-- Calling build targets from CMake Project Outline always builds default target if useTasks option is set. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis]](https://github.com/piomis)
+- Calling build targets from CMake Project Outline always builds default target if useTasks option is set. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis](https://github.com/piomis)
+- Fix `${command:cmake.buildType}` so that it returns the right value when using CMake Presets. [#2894](https://github.com/microsoft/vscode-cmake-tools/issues/2894)
 - Fix a problem with multi-root projects not activating the configuration provider. [#2915](https://github.com/microsoft/vscode-cmake-tools/issues/2915)
 - Remove the default path for `cmake.mingwSearchDirs` since the path is world-writable. [PR #2942](https://github.com/microsoft/vscode-cmake-tools/pull/2942)
-- Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
-- Build command is not able to properly pick-up tasks from tasks.json file if configured with isDefault option and cancellation of running build task is not working. [#2935](https://github.com/microsoft/vscode-cmake-tools/issues/2935) [@piomis]](https://github.com/piomis)
+- Build command is not able to properly pick-up tasks from tasks.json file if configured with isDefault option and cancellation of running build task is not working. [#2935](https://github.com/microsoft/vscode-cmake-tools/issues/2935) [@piomis](https://github.com/piomis)
 
 ## 1.12.27
 Bug Fixes:

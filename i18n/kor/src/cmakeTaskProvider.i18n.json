@@ -11,6 +11,7 @@
 	"clean": "정리",
 	"clean.rebuild": "다시 빌드 정리",
 	"cmake.template.task": "CMake 템플릿 {0} 작업",
+	"select.build.task": "빌드 작업 선택",
 	"command.not.recognized": "{0} 인식할 수 없는 명령입니다.",
 	"target.is.ignored": "이 작업에 정의된 대상은 무시됩니다.",
 	"enable.cmake.presets": "CMakePresets 활성화",

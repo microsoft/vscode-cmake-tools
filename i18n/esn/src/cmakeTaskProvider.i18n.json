@@ -11,6 +11,7 @@
 	"clean": "limpiar",
 	"clean.rebuild": "recompilación limpia",
 	"cmake.template.task": "Tarea {0} plantilla de CMake",
+	"select.build.task": "Seleccionar una tarea de compilación",
 	"command.not.recognized": "{0} no es un comando reconocido.",
 	"target.is.ignored": "Los objetivos definidos en esta tarea se están ignorando.",
 	"enable.cmake.presets": "Habilitar CMakePresets",
