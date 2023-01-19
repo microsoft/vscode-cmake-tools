@@ -11,6 +11,7 @@
 	"clean": "temizle",
 	"clean.rebuild": "yeniden derlemeyi temizle",
 	"cmake.template.task": "CMake şablonu {0} görevi",
+	"select.build.task": "Derleme görevi seçin",
 	"command.not.recognized": "{0}, tanınan bir komut değil.",
 	"target.is.ignored": "Bu görevdeki tanımlı hedefler yoksayılıyor.",
 	"enable.cmake.presets": "CMakePresets'i etkinleştir",

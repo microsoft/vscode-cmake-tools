@@ -11,6 +11,7 @@
 	"clean": "vyčistit",
 	"clean.rebuild": "vyčistit a znovu sestavit",
 	"cmake.template.task": "Úloha {0} šablony CMake",
+	"select.build.task": "Vyberte úlohu sestavení.",
 	"command.not.recognized": "{0} není rozpoznaný příkaz.",
 	"target.is.ignored": "Definované cíle v této úloze se ignorují.",
 	"enable.cmake.presets": "Povolit CMakePresets",
