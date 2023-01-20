@@ -138,6 +138,10 @@ The following additional options may be specified:
 
 > The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
 
+`description`
+
+> A short description of the kit, which will appear next to its name in the selection menu.
+
 ## Next steps
 
 - Explore the [CMake Tools documentation](README.md)
