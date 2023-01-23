@@ -7,6 +7,7 @@
 	"schemas/kits-schema.json.": "Zestawy narzędzia CMake",
 	"schemas/kits-schema.json.items": "Zestaw",
 	"schemas/kits-schema.json.items.properties.name": "Nazwa tego zestawu",
+	"schemas/kits-schema.json.items.properties.description": "Opis tego zestawu",
 	"schemas/kits-schema.json.items.properties.vendor": "Nazwa dostawcy tego zestawu",
 	"schemas/kits-schema.json.items.properties.triple": "Trójka parametrów docelowych dla tego zestawu",
 	"schemas/kits-schema.json.items.properties.version": "Wersja tego zestawu",

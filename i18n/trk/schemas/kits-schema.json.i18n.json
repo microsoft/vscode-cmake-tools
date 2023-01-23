@@ -7,6 +7,7 @@
 	"schemas/kits-schema.json.": "CMake Setleri",
 	"schemas/kits-schema.json.items": "Bir set",
 	"schemas/kits-schema.json.items.properties.name": "Bu setin adı",
+	"schemas/kits-schema.json.items.properties.description": "Bu kitin açıklaması",
 	"schemas/kits-schema.json.items.properties.vendor": "Bu setin satıcı adı",
 	"schemas/kits-schema.json.items.properties.triple": "Bu setin hedefi üçlüsü",
 	"schemas/kits-schema.json.items.properties.version": "Bu setin sürümü",
