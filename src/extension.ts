@@ -537,20 +537,9 @@ export class ExtensionManager implements vscode.Disposable {
         if (vscode.workspace.workspaceFolders && this.workspaceConfig.autoSelectActiveFolder) {
             let editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
             if (editor) {
-                let isEditorInsideWorkspace: boolean = false;
-                for (const folder of  vscode.workspace.workspaceFolders) {
-                    if (util.isFileInsideFolder(editor.document, folder.uri.fsPath)) {
-                        isEditorInsideWorkspace = true;
-                        break;
-                    }
-                }  
-                if (isEditorInsideWorkspace) {
-                    folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-                } else {
-                    editor = undefined;
-                    folder = vscode.workspace.workspaceFolders[0];
-                }              
-            } else {
+                folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);            
+            }
+            if (!folder) {
                 folder = vscode.workspace.workspaceFolders[0];
             }
             await this.updateActiveProject(folder, editor);

@@ -74,23 +74,15 @@ export class ProjectController implements vscode.Disposable {
             if (openEditor) {
                 for (const project of projects) {
                     if (util.isFileInsideFolder(openEditor.document, project.folderPath)) {
+                        // If active project is found, return.
                         this.activeProject = project;
-                        break;
+                        return;
                     }
                 }
                 if (!this.activeProject) {
-                    if (util.isFileInsideFolder(openEditor.document, projects[0].workspaceFolder.uri.fsPath)) {
-                        this.activeProject = projects[0];
-                    }
-                }
-                // If active project is found, return.
-                if (this.activeProject) {
+                    this.activeProject = projects[0];
                     return;
                 }
-            } else {
-                // Set a default active project.
-                this.activeProject = projects[0];
-                return;
             }
         }
         this.activeProject = undefined;
