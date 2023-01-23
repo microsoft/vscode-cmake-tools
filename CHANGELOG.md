@@ -3,6 +3,7 @@
 ## 1.13.41
 Bug Fixes:
 - CMake Tools fails to initialize the Active Project. [#2952](https://github.com/microsoft/vscode-cmake-tools/issues/2952)
+- Fix "No folder is open" error when running quick start. [#2951](https://github.com/microsoft/vscode-cmake-tools/issues/2951)
 
 ## 1.13.40
 Improvements:
