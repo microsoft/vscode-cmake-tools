@@ -2378,6 +2378,9 @@ export class CMakeProject {
      */
     public async quickStart(workspaceFolder?: vscode.WorkspaceFolder): Promise<Number> {
         if (!workspaceFolder) {
+            workspaceFolder = this.workspaceContext.folder;
+        }
+        if (!workspaceFolder) {
             void vscode.window.showErrorMessage(localize('no.folder.open', 'No folder is open.'));
             return -2;
         }
