@@ -12,6 +12,7 @@ Bug Fixes:
 - Fix "No folder is open" error when running quick start. [#2951](https://github.com/microsoft/vscode-cmake-tools/issues/2951)
 - Add a control statement to the 'quote' function in shlex.ts to return the string without quotes. [#2955]
 (https://github.com/microsoft/vscode-cmake-tools/issues/2955)
+- CMake Tools fails to initialize the Active Project. [#2952](https://github.com/microsoft/vscode-cmake-tools/issues/2952)
 
 ## 1.13.40
 Improvements:
