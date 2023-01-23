@@ -1,6 +1,10 @@
 # What's New?
 
-## 1.13
+## 1.13.41
+Bug Fixes:
+- CMake Tools fails to initialize the Active Project. [#2952](https://github.com/microsoft/vscode-cmake-tools/issues/2952)
+
+## 1.13.40
 Improvements:
 - Support multiple projects in a single workspace folder. `cmake.sourceDirectory` setting now allows setting multiple paths. [#1374](https://github.com/microsoft/vscode-cmake-tools/issues/1374)
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
