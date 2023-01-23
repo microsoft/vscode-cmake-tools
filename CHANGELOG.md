@@ -1,16 +1,10 @@
 # What's New?
 
-## 1.14
-Improvements:
-- Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
-
-Bug Fixes:
-- Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
-
 ## 1.13.41
-+ Bug Fixes:
+Bug Fixes:
 - Add a control statement to the 'quote' function in shlex.ts to return the string without quotes. [#2955]
 (https://github.com/microsoft/vscode-cmake-tools/issues/2955)
+- Fix "No folder is open" error when running quick start. [#2951](https://github.com/microsoft/vscode-cmake-tools/issues/2951)
 
 ## 1.13.40
 Improvements:
