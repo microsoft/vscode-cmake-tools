@@ -534,9 +534,26 @@ export class ExtensionManager implements vscode.Disposable {
 
     private async initActiveProject(): Promise<CMakeProject | undefined> {
         let folder: vscode.WorkspaceFolder | undefined;
-        if (vscode.workspace.workspaceFolders && vscode.window.activeTextEditor && this.workspaceConfig.autoSelectActiveFolder) {
-            folder = vscode.workspace.getWorkspaceFolder(vscode.window.activeTextEditor.document.uri);
-            await this.updateActiveProject(folder, vscode.window.activeTextEditor);
+        if (vscode.workspace.workspaceFolders && this.workspaceConfig.autoSelectActiveFolder) {
+            let editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
+            if (editor) {
+                let isEditorInsideWorkspace: boolean = false;
+                for (const folder of  vscode.workspace.workspaceFolders) {
+                    if (util.isFileInsideFolder(editor.document, folder.uri.fsPath)) {
+                        isEditorInsideWorkspace = true;
+                        break;
+                    }
+                }  
+                if (isEditorInsideWorkspace) {
+                    folder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+                } else {
+                    editor = undefined;
+                    folder = vscode.workspace.workspaceFolders[0];
+                }              
+            } else {
+                folder = vscode.workspace.workspaceFolders[0];
+            }
+            await this.updateActiveProject(folder, editor);
             return this.getActiveProject();
         }
         const activeFolder = this.extensionContext.workspaceState.get<string>('activeFolder');
