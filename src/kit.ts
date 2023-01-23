@@ -94,6 +94,11 @@ export interface Kit extends KitDetect {
     name: string;
 
     /**
+     * A description of the kit
+     */
+    description?: string;
+
+    /**
      * The preferred CMake generator for this kit
      */
     preferredGenerator?: CMakeGenerator;
@@ -1092,6 +1097,9 @@ export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolea
  * @param kit The kit to generate a description for
  */
 export async function descriptionForKit(kit: Kit, shortVsName: boolean = false): Promise<string> {
+    if (kit.description) {
+        return kit.description;
+    }
     if (kit.toolchainFile) {
         return localize('kit.for.toolchain.file', 'Kit for toolchain file {0}', kit.toolchainFile);
     }
