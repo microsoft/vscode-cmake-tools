@@ -77,6 +77,11 @@ export function quote(str: string, opt?: ShlexOptions): string {
     if (str === '') {
         return '""';
     }
+    if (!/[\s]/g.test(str))
+    {
+        // Don't quote if the string doesn't have whitespace
+        return str;
+    }
     if (/[^\w@%\-+=:,./|]/.test(str)) {
         str = str.replace(/"/g, '\\"');
         return `"${str}"`;
