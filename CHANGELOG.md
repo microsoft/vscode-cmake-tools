@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.13.42
+Bug Fixes:
+- Fix failed activation when using the `cmake.allowUnsupportedPresetsVersions` setting. [#2968](https://github.com/microsoft/vscode-cmake-tools/issues/2968)
+
 ## 1.13.41
 Bug Fixes:
 - Fix "No folder is open" error when running quick start. [#2951](https://github.com/microsoft/vscode-cmake-tools/issues/2951)
