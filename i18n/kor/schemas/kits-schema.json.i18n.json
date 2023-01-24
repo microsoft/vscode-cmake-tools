@@ -7,6 +7,7 @@
 	"schemas/kits-schema.json.": "CMake 키트",
 	"schemas/kits-schema.json.items": "키트",
 	"schemas/kits-schema.json.items.properties.name": "이 키트 이름",
+	"schemas/kits-schema.json.items.properties.description": "이 키트에 대한 설명",
 	"schemas/kits-schema.json.items.properties.vendor": "이 키트의 공급업체 이름",
 	"schemas/kits-schema.json.items.properties.triple": "이 키트의 대상 3배",
 	"schemas/kits-schema.json.items.properties.version": "이 키트의 버전",

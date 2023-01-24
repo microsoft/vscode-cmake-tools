@@ -7,6 +7,7 @@
 	"schemas/kits-schema.json.": "CMake 套件",
 	"schemas/kits-schema.json.items": "套件",
 	"schemas/kits-schema.json.items.properties.name": "此套件的名稱",
+	"schemas/kits-schema.json.items.properties.description": "這個套件的說明。",
 	"schemas/kits-schema.json.items.properties.vendor": "此套件的廠商名稱",
 	"schemas/kits-schema.json.items.properties.triple": "此套件的目標三倍",
 	"schemas/kits-schema.json.items.properties.version": "此套件的版本",
