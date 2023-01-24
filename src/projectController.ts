@@ -212,12 +212,15 @@ export class ProjectController implements vscode.Disposable {
         for (const source of sourceDirectory) {
             projects.push(await CMakeProject.create(workspaceContext, source, isMultiProjectFolder));
         }
-        await ProjectController.checkBuildDirectories(projects);
+        await ProjectController.checkBuildDirectories(projects, sourceDirectory);
         return projects;
     }
 
     private static duplicateMessageShown = false;
-    private static async checkBuildDirectories(projects: CMakeProject[]) {
+    private static async checkBuildDirectories(projects: CMakeProject[], sourceDirectory: string[]) {
+        if (sourceDirectory.length <= 1) {
+            return;
+        }
         const buildDirectories: string[] = [];
         for (const project of projects) {
             const buildDirectory = await project.binaryDir;
@@ -357,7 +360,7 @@ export class ProjectController implements vscode.Disposable {
                 }
                 projects.push(cmakeProject);
             }
-            await ProjectController.checkBuildDirectories(projects);
+            await ProjectController.checkBuildDirectories(projects, sourceDirectories);
 
             if (activeProjectPath !== undefined) {
                 // Active project is no longer available. Pick a different one.
@@ -382,7 +385,9 @@ export class ProjectController implements vscode.Disposable {
                 const driver = await project.getCMakeDriverInstance();
                 await driver?.refreshSettings();
             }
-            await ProjectController.checkBuildDirectories(projects);
+            const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+            const sourceDirectory: string[] = workspaceContext.config.sourceDirectory;
+            await ProjectController.checkBuildDirectories(projects, sourceDirectory);
         }
     }
 
