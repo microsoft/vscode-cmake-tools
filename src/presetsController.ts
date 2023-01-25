@@ -1074,7 +1074,7 @@ export class PresetsController {
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);
         if (!is_valid) {
-            const showErrors = (logFunc: (...x: any[]) => void) => {
+            const showErrors = (logFunc: (x: string) => void) => {
                 const errors = validator.errors!;
                 logFunc(localize('unsupported.presets', 'Unsupported presets detected in {0}. Support is limited to features defined by version {1}.', file, maxSupportedVersion));
                 for (const err of errors) {
@@ -1086,10 +1086,10 @@ export class PresetsController {
                 }
             };
             if (validationErrorsAreWarnings) {
-                showErrors(log.warning);
+                showErrors(x => log.warning(x));
                 return presetsFile;
             } else {
-                showErrors(log.error);
+                showErrors(x => log.error(x));
                 log.error(localize('unsupported.presets.disable', 'Unknown properties and macros can be ignored by using the {0} setting.', "'cmake.allowUnsupportedPresetsVersions'"));
                 return undefined;
             }
