@@ -10,6 +10,7 @@ Bug Fixes:
 ## 1.13.42
 Bug Fixes:
 - Fix failed activation when using the `cmake.allowUnsupportedPresetsVersions` setting. [#2968](https://github.com/microsoft/vscode-cmake-tools/issues/2968)
+- Verify binary directories only if there are multiple sources. [#2963](https://github.com/microsoft/vscode-cmake-tools/issues/2963)
 
 ## 1.13.41
 Bug Fixes:
