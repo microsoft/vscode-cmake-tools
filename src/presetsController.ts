@@ -607,11 +607,14 @@ export class PresetsController {
         return chosenPresets?.preset;
     }
 
-    async selectConfigurePreset(): Promise<boolean> {
+    async getAllConfigPresets(): Promise<preset.ConfigurePreset[]> {
         preset.expandVendorForConfigurePresets(this.folderPath);
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
+        return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+    }
 
-        const allPresets = preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+    async selectConfigurePreset(): Promise<boolean> {
+        const allPresets: preset.ConfigurePreset[] = await this.getAllConfigPresets();
         const presets = allPresets.filter(
             _preset => {
                 const supportedHost = (_preset.vendor as preset.VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
