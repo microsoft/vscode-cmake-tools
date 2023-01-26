@@ -6,6 +6,7 @@ Improvements:
 
 Bug Fixes:
 - Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
+- Update quote function to fix path separator regression [#2974](https://github.com/microsoft/vscode-cmake-tools/pull/2974)
 
 ## 1.13.42
 Bug Fixes:
