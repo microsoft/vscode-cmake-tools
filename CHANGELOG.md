@@ -9,7 +9,7 @@ Bug Fixes:
 
 ## 1.13.43
 Bug Fixes:
-- Fix an issue causing the Add Presets commands not to appear.
+- Fix an issue causing the Add Presets commands not to appear. [PR #2977](https://github.com/microsoft/vscode-cmake-tools/pull/2977)
 
 ## 1.13.42
 Bug Fixes:
