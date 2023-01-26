@@ -74,13 +74,13 @@ export class ProjectController implements vscode.Disposable {
             if (openEditor) {
                 for (const project of projects) {
                     if (util.isFileInsideFolder(openEditor.document, project.folderPath)) {
-                        this.activeProject = project;
+                        this.setActiveProject(project);
                         break;
                     }
                 }
                 if (!this.activeProject) {
                     if (util.isFileInsideFolder(openEditor.document, projects[0].workspaceFolder.uri.fsPath)) {
-                        this.activeProject = projects[0];
+                        this.setActiveProject(projects[0]);
                     }
                 }
                 // If active project is found, return.
@@ -89,15 +89,16 @@ export class ProjectController implements vscode.Disposable {
                 }
             } else {
                 // Set a default active project.
-                this.activeProject = projects[0];
+                this.setActiveProject(projects[0]);
                 return;
             }
         }
-        this.activeProject = undefined;
+        this.setActiveProject(undefined);
     }
 
     setActiveProject(project?: CMakeProject): void {
         this.activeProject = project;
+        void this.updateUsePresetsState(this.activeProject);
     }
 
     public getActiveCMakeProject(): CMakeProject | undefined {
@@ -397,12 +398,16 @@ export class ProjectController implements vscode.Disposable {
             }
         }
         if (this.activeProject) {
-            const use: boolean = this.activeProject.useCMakePresets;
-            await util.setContextValue('useCMakePresets', use);
-            const statusBar: StatusBar | undefined = getStatusBar();
-            if (statusBar) {
-                statusBar.useCMakePresets(use);
-            }
+            await this.updateUsePresetsState(this.activeProject);
+        }
+    }
+
+    private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
+        const state: boolean = project?.useCMakePresets || false;
+        await util.setContextValue('useCMakePresets', state);
+        const statusBar: StatusBar | undefined = getStatusBar();
+        if (statusBar) {
+            statusBar.useCMakePresets(state);
         }
     }
 
