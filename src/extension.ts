@@ -1520,7 +1520,7 @@ export class ExtensionManager implements vscode.Disposable {
         const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
-        if (presetSelected) {
+        if (this.workspaceConfig.automaticReconfigure && presetSelected) {
             await this.configure(folder);
         }
 

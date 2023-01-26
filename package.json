@@ -2007,7 +2007,13 @@
           "default": true,
           "description": "%cmake-tools.configuration.cmake.loadCompileCommands.description%",
           "scope": "resource"
-        }
+        },
+		"cmake.automaticReconfigure": {
+			"type": "boolean",
+			"default": true,
+			"description": "%cmake-tools.configuration.cmake.automaticReconfigure.description%",
+			"scope": "resource"
+		}
       }
     },
     "keybindings": [

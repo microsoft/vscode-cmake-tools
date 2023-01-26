@@ -149,6 +149,7 @@
     "cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Enables the use of presets files that are using features from the versions that CMake Tools extension doesn't currently support. Unknown properties and macros will be ignored.",
     "cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": { "message": "If `true`, the extension will not ask the user to select a CMakeLists.txt file for configuration when one is found in the workspace but not in the root folder.", "comment": [ "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered." ] },
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
+    "cmake-tools.configuration.cmake.automaticReconfigure.description": "Controls whether to automatically reconfigure on selection of a different configuration preset.",
     "cmake-tools.taskDefinitions.properties.label.description": "The name of the task",
     "cmake-tools.taskDefinitions.properties.command.description": "CMake command",
     "cmake-tools.taskDefinitions.properties.targets.description": "CMake build targets",
