@@ -1,5 +1,4 @@
 # What's New?
-# What's New?
 
 ## 1.13.43
 Bug Fixes:
