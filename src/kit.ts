@@ -668,7 +668,9 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
 
     // split and trim env vars
     const vars = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Environment>((acc, line) => {
-        const match = /(\w+)=?(.*)/.exec(line);
+        // Exclude \n and ${variables}
+        const match = /(^([^\n].)*)(^((?!\$\{.+?\}).)*)(^(\w+)=?(.*))/.exec(line);
+        //   (^([^\n].)*)(^((?!\$\{.+?\}).)*)(^(\w+)=?(.*))
         if (match) {
             acc[match[1]] = match[2];
         } else {
