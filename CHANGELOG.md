@@ -9,10 +9,15 @@ Bug Fixes:
 - Update quote function to fix path separator regression [#2974](https://github.com/microsoft/vscode-cmake-tools/pull/2974)
 - Validate config preset in initialization. [#2976](https://github.com/microsoft/vscode-cmake-tools/issues/2976)
 
+## 1.13.43
+Bug Fixes:
+- Fix an issue causing the Add Presets commands not to appear. [PR #2977](https://github.com/microsoft/vscode-cmake-tools/pull/2977)
+
 ## 1.13.42
 Bug Fixes:
 - Fix failed activation when using the `cmake.allowUnsupportedPresetsVersions` setting. [#2968](https://github.com/microsoft/vscode-cmake-tools/issues/2968)
 - Verify binary directories only if there are multiple sources. [#2963](https://github.com/microsoft/vscode-cmake-tools/issues/2963)
+- Update quote function to fix path separator regression [#2974](https://github.com/microsoft/vscode-cmake-tools/pull/2974)
 
 ## 1.13.41
 Bug Fixes:
