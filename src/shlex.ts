@@ -77,7 +77,7 @@ export function quote(str: string, opt?: ShlexOptions): string {
     if (str === '') {
         return '""';
     }
-    if (/[^\w@%\-+=:,./|]/.test(str)) {
+    if (/[^\w@%\-+=:,./|><]/.test(str)) {
         str = str.replace(/"/g, '\\"');
         return `"${str}"`;
     } else {

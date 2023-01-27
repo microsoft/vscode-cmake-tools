@@ -7,7 +7,24 @@ Improvements:
 Bug Fixes:
 - Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
 
-## 1.13
+## 1.13.43
+Bug Fixes:
+- Fix an issue causing the Add Presets commands not to appear. [PR #2977](https://github.com/microsoft/vscode-cmake-tools/pull/2977)
+
+## 1.13.42
+Bug Fixes:
+- Fix failed activation when using the `cmake.allowUnsupportedPresetsVersions` setting. [#2968](https://github.com/microsoft/vscode-cmake-tools/issues/2968)
+- Verify binary directories only if there are multiple sources. [#2963](https://github.com/microsoft/vscode-cmake-tools/issues/2963)
+- Update quote function to fix path separator regression [#2974](https://github.com/microsoft/vscode-cmake-tools/pull/2974)
+
+## 1.13.41
+Bug Fixes:
+- Fix "No folder is open" error when running quick start. [#2951](https://github.com/microsoft/vscode-cmake-tools/issues/2951)
+- Add a control statement to the 'quote' function in shlex.ts to return the string without quotes. [#2955]
+(https://github.com/microsoft/vscode-cmake-tools/issues/2955)
+- CMake Tools fails to initialize the Active Project. [#2952](https://github.com/microsoft/vscode-cmake-tools/issues/2952)
+
+## 1.13.40
 Improvements:
 - Support multiple projects in a single workspace folder. `cmake.sourceDirectory` setting now allows setting multiple paths. [#1374](https://github.com/microsoft/vscode-cmake-tools/issues/1374)
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)

@@ -7,6 +7,7 @@
 	"schemas/kits-schema.json.": "CMake 工具包",
 	"schemas/kits-schema.json.items": "工具包",
 	"schemas/kits-schema.json.items.properties.name": "此工具包的名称",
+	"schemas/kits-schema.json.items.properties.description": "此工具包的说明",
 	"schemas/kits-schema.json.items.properties.vendor": "此工具包的供应商名称",
 	"schemas/kits-schema.json.items.properties.triple": "此工具包的目标三倍数",
 	"schemas/kits-schema.json.items.properties.version": "此工具包的版本",
