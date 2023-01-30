@@ -1493,8 +1493,8 @@ export class CMakeProject {
     }
 
     // Reconfigure if the saved file is a cmake file.
-    async doCMakeFileChangeReconfigure(textDocument: vscode.Uri) {
-        const filePath = util.platformNormalizePath(textDocument.fsPath);
+    async doCMakeFileChangeReconfigure(uri: vscode.Uri) {
+        const filePath = util.platformNormalizePath(uri.fsPath);
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // If we detect a change in the CMake cache file, refresh the webview
@@ -2593,8 +2593,8 @@ export class CMakeProject {
         return expandStrings(this.workspaceContext.config.additionalKits, opts);
     }
 
-    async sendFileTypeTelemetry(textDocument: vscode.Uri): Promise<void> {
-        const filePath =  util.platformNormalizePath(textDocument.fsPath);
+    async sendFileTypeTelemetry(uri: vscode.Uri): Promise<void> {
+        const filePath =  util.platformNormalizePath(uri.fsPath);
         const sourceDirectory = util.platformNormalizePath(this.sourceDir);
         // "outside" evaluates whether the modified cmake file belongs to the project.
         let outside: boolean = true;
