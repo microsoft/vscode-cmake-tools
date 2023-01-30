@@ -270,7 +270,6 @@ export class ProjectController implements vscode.Disposable {
         let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
-            return projects;
         } else {
             // Load for the workspace.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
@@ -283,8 +282,8 @@ export class ProjectController implements vscode.Disposable {
                 this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
                 this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
             }
-            this.afterAddFolderEmitter.fire({ folder: folder, projects: projects });
         }
+        this.afterAddFolderEmitter.fire({ folder: folder, projects: projects });
         return projects;
     }
 
@@ -430,9 +429,7 @@ export class ProjectController implements vscode.Disposable {
         }
         // Load a new CMake Tools instance for each folder that has been added.
         for (const folder of event.added) {
-            this.beforeAddFolderEmitter.fire(folder);
-            const cmakeProjects = await this.addFolder(folder);
-            this.afterAddFolderEmitter.fire({ folder: folder, projects: cmakeProjects });
+            await this.addFolder(folder);
         }
     }
 
