@@ -8,6 +8,11 @@ Bug Fixes:
 - Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
 
+## 1.13.44
+Bug Fixes:
+- Fix problems with updating the code model. [#2980](https://github.com/microsoft/vscode-cmake-tools/issues/2980)
+- Validate presets in initialization. [#2976](https://github.com/microsoft/vscode-cmake-tools/issues/2976)
+
 ## 1.13.43
 Bug Fixes:
 - Fix an issue causing the Add Presets commands not to appear. [PR #2977](https://github.com/microsoft/vscode-cmake-tools/pull/2977)

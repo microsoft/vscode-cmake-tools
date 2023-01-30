@@ -987,9 +987,14 @@ export class CMakeProject {
 
     async initializeKitOrPresets() {
         if (this.useCMakePresets) {
-            const configurePreset = this.workspaceContext.state.configurePresetName;
-            if (configurePreset) {
-                await this.presetsController.setConfigurePreset(configurePreset);
+            const latestConfigPresetName = this.workspaceContext.state.configurePresetName;
+            if (latestConfigPresetName) {
+                // Check if the latest configurePresetName from the previous session is still valid.
+                const presets = await this.presetsController.getAllConfigurePresets();
+                const latestConfigPreset: preset.ConfigurePreset | undefined = presets.find(preset => preset.name === latestConfigPresetName);
+                if (latestConfigPreset && !latestConfigPreset.hidden) {
+                    await this.presetsController.setConfigurePreset(latestConfigPresetName);
+                }
             }
         } else {
             // Check if the CMakeProject remembers what kit it was last using in this dir:
