@@ -197,7 +197,8 @@ export class ProjectController implements vscode.Disposable {
         this.folderToProjectsMap.clear();
         if (vscode.workspace.workspaceFolders) {
             for (const folder of vscode.workspace.workspaceFolders) {
-                await this.addFolder(folder);
+                const projects: CMakeProject[] = await this.addFolder(folder);
+                this.afterAddFolderEmitter.fire({ folder: folder, projects:  projects});
             }
         }
     }

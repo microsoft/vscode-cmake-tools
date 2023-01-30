@@ -197,7 +197,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
-        const api_path = this.getCMakeFileApiPath(configurePreset?.binaryDir);
+        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
+        const api_path = this.getCMakeFileApiPath(binaryDir);
         await createQueryFileForApi(api_path);
 
         // Dup args so we can modify them
@@ -208,7 +209,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 has_gen = true;
             }
         }
-        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
         args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
         args.push(`-B${util.lightNormalizePath(binaryDir)}`);
@@ -258,7 +258,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 if (!configurePreset) {
                     this._needsReconfigure = false;
                 }
-                await this.updateCodeModel(configurePreset?.binaryDir);
+                await this.updateCodeModel(binaryDir);
             }
             return result.retc === null ? -1 : result.retc;
         }
