@@ -197,8 +197,7 @@ export class ProjectController implements vscode.Disposable {
         this.folderToProjectsMap.clear();
         if (vscode.workspace.workspaceFolders) {
             for (const folder of vscode.workspace.workspaceFolders) {
-                const projects: CMakeProject[] = await this.addFolder(folder);
-                this.afterAddFolderEmitter.fire({ folder: folder, projects:  projects});
+                await this.addFolder(folder);
             }
         }
     }
@@ -267,23 +266,26 @@ export class ProjectController implements vscode.Disposable {
      * @returns The newly created CMakeProject backend for the given folder
      */
     private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
-        const existing = this.getProjectsForWorkspaceFolder(folder);
-        if (existing) {
+        this.beforeAddFolderEmitter.fire(folder);
+        let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
+        if (projects) {
             rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
-            return existing;
+            return projects;
+        } else {
+            // Load for the workspace.
+            const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+            projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext);
+            this.folderToProjectsMap.set(folder.uri.fsPath, projects);
+            const config: ConfigurationReader | undefined = workspaceContext.config;
+            if (config) {
+                this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
+                this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
+                this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
+                this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
+            }
+            this.afterAddFolderEmitter.fire({ folder: folder, projects: projects });
         }
-        // Load for the workspace.
-        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
-        const newProjects: CMakeProject[] = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext);
-        this.folderToProjectsMap.set(folder.uri.fsPath, newProjects);
-        const config: ConfigurationReader | undefined = workspaceContext.config;
-        if (config) {
-            this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
-            this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
-            this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
-            this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
-        }
-        return newProjects;
+        return projects;
     }
 
     /**
