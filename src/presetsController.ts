@@ -703,7 +703,7 @@ export class PresetsController {
             const buildPresets = preset.allBuildPresets(this.folderPath);
             for (const buildPreset of buildPresets) {
                 // Set active build preset as the first valid build preset matches the selected configure preset
-                if (buildPreset.configurePreset === selectedConfigurePreset) {
+                if (buildPreset.configurePreset === selectedConfigurePreset && !buildPreset.hidden) {
                     await this.setBuildPreset(buildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                     currentBuildPreset = this.project.buildPreset?.name;
                 }
@@ -836,22 +836,27 @@ export class PresetsController {
     private checkCompatibility(configurePreset: preset.ConfigurePreset | null, buildPreset?: preset.BuildPreset | null, testPreset?: preset.TestPreset | null): {buildPresetCompatible: boolean; testPresetCompatible: boolean} {
         let testPresetCompatible = true;
         let buildPresetCompatible = true;
+        // We only check compatibility when we are setting the build or test preset. So we need to exclude the hidden presets.
         if (testPreset) {
-            const configMatches = testPreset.configurePreset === configurePreset?.name;
-            let buildTypeMatches = buildPreset?.configuration === testPreset.configuration;
-            if (!buildTypeMatches) {
-                if (util.isMultiConfGeneratorFast(configurePreset?.generator)) {
-                    const buildType = buildPreset?.configuration || configurePreset?.cacheVariables?.['CMAKE_CONFIGURATION_TYPES']?.toString().split(';')?.[0] || 'Debug';
-                    buildTypeMatches = testPreset.configuration === buildType || testPreset.configuration === undefined;
-                } else {
-                    const buildType = configurePreset?.cacheVariables?.['CMAKE_BUILD_TYPE'] || 'Debug';
-                    buildTypeMatches = buildPreset === undefined || testPreset.configuration === buildType || testPreset.configuration === undefined;
+            if (testPreset.hidden) {
+                testPresetCompatible = false;
+            } else {
+                const configMatches = testPreset.configurePreset === configurePreset?.name;
+                let buildTypeMatches = buildPreset?.configuration === testPreset.configuration;
+                if (!buildTypeMatches) {
+                    if (util.isMultiConfGeneratorFast(configurePreset?.generator)) {
+                        const buildType = buildPreset?.configuration || configurePreset?.cacheVariables?.['CMAKE_CONFIGURATION_TYPES']?.toString().split(';')?.[0] || 'Debug';
+                        buildTypeMatches = testPreset.configuration === buildType || testPreset.configuration === undefined;
+                    } else {
+                        const buildType = configurePreset?.cacheVariables?.['CMAKE_BUILD_TYPE'] || 'Debug';
+                        buildTypeMatches = buildPreset === undefined || testPreset.configuration === buildType || testPreset.configuration === undefined;
+                    }
                 }
+                testPresetCompatible = configMatches && buildTypeMatches;
             }
-            testPresetCompatible = configMatches && buildTypeMatches;
         }
         if (buildPreset) {
-            buildPresetCompatible = configurePreset?.name === buildPreset.configurePreset;
+            buildPresetCompatible = (configurePreset?.name === buildPreset.configurePreset) && !buildPreset.hidden;
         }
         return {buildPresetCompatible, testPresetCompatible};
     }
