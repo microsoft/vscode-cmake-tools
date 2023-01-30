@@ -864,9 +864,9 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
     });
 }
 
-export function isFileInsideFolder(openEditor: vscode.Uri, folderPath: string): boolean {
+export function isFileInsideFolder(uri: vscode.Uri, folderPath: string): boolean {
     const parent = platformNormalizePath(folderPath);
-    const file = platformNormalizePath(openEditor.fsPath);
+    const file = platformNormalizePath(uri.fsPath);
     return file.startsWith(parent);
 }
 

@@ -454,14 +454,14 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
-    private async doCMakeFileChangeReconfigure(textDocument: vscode.Uri): Promise<void> {
+    private async doCMakeFileChangeReconfigure(uri: vscode.Uri): Promise<void> {
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         if (activeProject) {
-            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(textDocument, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
+            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(uri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
             if (isFileInsideActiveProject) {
-                await activeProject.doCMakeFileChangeReconfigure(textDocument);
+                await activeProject.doCMakeFileChangeReconfigure(uri);
             }
-            await activeProject.sendFileTypeTelemetry(textDocument);
+            await activeProject.sendFileTypeTelemetry(uri);
         }
     }
 
