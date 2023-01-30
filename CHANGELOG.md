@@ -7,6 +7,10 @@ Improvements:
 Bug Fixes:
 - Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
 
+## 1.13.44
+Bug Fixes:
+- Fix problems with updating the code model. [#2980](https://github.com/microsoft/vscode-cmake-tools/issues/2980)
+
 ## 1.13.43
 Bug Fixes:
 - Fix an issue causing the Add Presets commands not to appear. [PR #2977](https://github.com/microsoft/vscode-cmake-tools/pull/2977)
