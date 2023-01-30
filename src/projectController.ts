@@ -114,7 +114,7 @@ export class ProjectController implements vscode.Disposable {
         return this.getAllCMakeProjects().length;
     }
 
-    async getNumOfValidProjects(): Promise<number> {
+    getNumOfValidProjects(): number {
         let count: number = 0;
         for (const project of this.getAllCMakeProjects()) {
             count += project.hasCMakeLists() ? 1 : 0;
