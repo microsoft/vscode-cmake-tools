@@ -1522,7 +1522,6 @@ export class CMakeProject {
         if (isCmakeFile) {
             // CMakeLists.txt change event: its creation or deletion are relevant,
             // so update full/partial feature set view for this folder.
-            this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
             await updateFullFeatureSet();
             if (driver && !driver.configOrBuildInProgress()) {
                 if (driver.config.configureOnEdit) {
