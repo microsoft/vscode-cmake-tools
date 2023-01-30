@@ -9,6 +9,7 @@ Bug Fixes:
 
 ## 1.13.44
 Bug Fixes:
+- Fix problems with updating the code model. [#2980](https://github.com/microsoft/vscode-cmake-tools/issues/2980)
 - Validate presets in initialization. [#2976](https://github.com/microsoft/vscode-cmake-tools/issues/2976)
 
 ## 1.13.43
