@@ -25,7 +25,7 @@ import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { populateCollection } from './diagnostics/util';
-import { expandStrings, expandString, ExpansionOptions, KitContextVars } from './expand';
+import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import * as logging from './logging';
 import { fs } from './pr';
@@ -685,8 +685,8 @@ export class CMakeProject {
                     }
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
-                        void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", newSourceDirectory);
-                        this._sourceDir = newSourceDirectory;
+                        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+                        void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
                             // doesn't need to fire the settings change event (which would trigger unnecessarily
@@ -888,7 +888,7 @@ export class CMakeProject {
      */
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
-        this._sourceDir = await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath));
+        await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
 
         // Start up the variant manager
         await this.variantManager.initialize();
@@ -946,7 +946,7 @@ export class CMakeProject {
             if (usingCMakePresets) {
                 const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
                     const fileName = path.basename(document.uri.fsPath);
-                    if (util.isFileInsideFolder(document, this.folderPath) && fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+                    if (util.isFileInsideFolder(document.uri, this.folderPath) && fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
                         if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
                             // setTextDocumentLanguage will trigger onDidOpenTextDocument
                             void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
@@ -987,9 +987,14 @@ export class CMakeProject {
 
     async initializeKitOrPresets() {
         if (this.useCMakePresets) {
-            const configurePreset = this.workspaceContext.state.configurePresetName;
-            if (configurePreset) {
-                await this.presetsController.setConfigurePreset(configurePreset);
+            const latestConfigPresetName = this.workspaceContext.state.configurePresetName;
+            if (latestConfigPresetName) {
+                // Check if the latest configurePresetName from the previous session is still valid.
+                const presets = await this.presetsController.getAllConfigurePresets();
+                const latestConfigPreset: preset.ConfigurePreset | undefined = presets.find(preset => preset.name === latestConfigPresetName);
+                if (latestConfigPreset && !latestConfigPreset.hidden) {
+                    await this.presetsController.setConfigurePreset(latestConfigPresetName);
+                }
             }
         } else {
             // Check if the CMakeProject remembers what kit it was last using in this dir:
@@ -1493,8 +1498,8 @@ export class CMakeProject {
     }
 
     // Reconfigure if the saved file is a cmake file.
-    async doCMakeFileSaveReconfigure(textDocument: vscode.TextDocument) {
-        const filePath = util.platformNormalizePath(textDocument.uri.fsPath);
+    async doCMakeFileChangeReconfigure(uri: vscode.Uri) {
+        const filePath = util.platformNormalizePath(uri.fsPath);
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // If we detect a change in the CMake cache file, refresh the webview
@@ -2483,6 +2488,16 @@ export class CMakeProject {
         return this._sourceDir;
     }
 
+    async setSourceDir(sourceDir: string) {
+        this._sourceDir = sourceDir;
+        this.cmakeListsExists = await fs.exists(path.join(this._sourceDir, "CMakeLists.txt"));
+    }
+
+    private cmakeListsExists: boolean = false;
+    hasCMakeLists(): boolean {
+        return this.cmakeListsExists;
+    }
+
     get mainListFile() {
         const drv = this.getCMakeDriverInstance();
 
@@ -2583,8 +2598,8 @@ export class CMakeProject {
         return expandStrings(this.workspaceContext.config.additionalKits, opts);
     }
 
-    async sendFileTypeTelemetry(textDocument: vscode.TextDocument): Promise<void> {
-        const filePath =  util.platformNormalizePath(textDocument.uri.fsPath);
+    async sendFileTypeTelemetry(uri: vscode.Uri): Promise<void> {
+        const filePath =  util.platformNormalizePath(uri.fsPath);
         const sourceDirectory = util.platformNormalizePath(this.sourceDir);
         // "outside" evaluates whether the modified cmake file belongs to the project.
         let outside: boolean = true;
@@ -2662,37 +2677,6 @@ export class CMakeProject {
 
     get onUseCMakePresetsChanged() {
         return this.onUseCMakePresetsChangedEmitter.event;
-    }
-
-    async hasCMakeLists(): Promise<boolean> {
-        const optsVars: KitContextVars = {
-            // sourceDirectory cannot be defined based on any of the below variables.
-            buildKit: '${buildKit}',
-            buildType: '${buildType}',
-            buildKitVendor: '${buildKitVendor}',
-            buildKitTriple: '${buildKitTriple}',
-            buildKitVersion: '${buildKitVersion}',
-            buildKitHostOs: '${buildKitVendor}',
-            buildKitTargetOs: '${buildKitTargetOs}',
-            buildKitTargetArch: '${buildKitTargetArch}',
-            buildKitVersionMajor: '${buildKitVersionMajor}',
-            buildKitVersionMinor: '${buildKitVersionMinor}',
-            generator: '${generator}',
-            userHome: paths.userHome,
-            workspaceFolder: this.workspaceContext.folder.uri.fsPath,
-            workspaceFolderBasename: this.workspaceContext.folder.name,
-            workspaceHash: '${workspaceHash}',
-            workspaceRoot: this.workspaceContext.folder.uri.fsPath,
-            workspaceRootFolderName: this.workspaceContext.folder.name,
-            sourceDir: this.sourceDir
-        };
-
-        const sourceDirectory: string = this.sourceDir;
-        let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
-        if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
-            expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
-        }
-        return fs.exists(expandedSourceDirectory);
     }
 
 }

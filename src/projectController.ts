@@ -73,13 +73,13 @@ export class ProjectController implements vscode.Disposable {
         if (projects && projects.length > 0) {
             if (openEditor) {
                 for (const project of projects) {
-                    if (util.isFileInsideFolder(openEditor.document, project.folderPath)) {
+                    if (util.isFileInsideFolder(openEditor.document.uri, project.folderPath)) {
                         this.setActiveProject(project);
                         break;
                     }
                 }
                 if (!this.activeProject) {
-                    if (util.isFileInsideFolder(openEditor.document, projects[0].workspaceFolder.uri.fsPath)) {
+                    if (util.isFileInsideFolder(openEditor.document.uri, projects[0].workspaceFolder.uri.fsPath)) {
                         this.setActiveProject(projects[0]);
                     }
                 }
@@ -114,10 +114,10 @@ export class ProjectController implements vscode.Disposable {
         return this.getAllCMakeProjects().length;
     }
 
-    async getNumOfValidProjects(): Promise<number> {
+    getNumOfValidProjects(): number {
         let count: number = 0;
         for (const project of this.getAllCMakeProjects()) {
-            count += (await project.hasCMakeLists() ? 1 : 0);
+            count += project.hasCMakeLists() ? 1 : 0;
         }
         return count;
     }
@@ -144,7 +144,8 @@ export class ProjectController implements vscode.Disposable {
             vscode.workspace.onDidChangeWorkspaceFolders(
                 e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this.doWorkspaceFolderChange(e))),
             vscode.workspace.onDidOpenTextDocument((textDocument: vscode.TextDocument) => this.doOpenTextDocument(textDocument)),
-            vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => this.doSaveTextDocument(textDocument))
+            vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => this.doSaveTextDocument(textDocument)),
+            vscode.workspace.onDidRenameFiles(this.onDidRenameFiles, this)
         ];
     }
 
@@ -266,23 +267,25 @@ export class ProjectController implements vscode.Disposable {
      * @returns The newly created CMakeProject backend for the given folder
      */
     private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
-        const existing = this.getProjectsForWorkspaceFolder(folder);
-        if (existing) {
+        this.beforeAddFolderEmitter.fire(folder);
+        let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
+        if (projects) {
             rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
-            return existing;
+        } else {
+            // Load for the workspace.
+            const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+            projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext);
+            this.folderToProjectsMap.set(folder.uri.fsPath, projects);
+            const config: ConfigurationReader | undefined = workspaceContext.config;
+            if (config) {
+                this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
+                this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
+                this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
+                this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
+            }
         }
-        // Load for the workspace.
-        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
-        const newProjects: CMakeProject[] = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext);
-        this.folderToProjectsMap.set(folder.uri.fsPath, newProjects);
-        const config: ConfigurationReader | undefined = workspaceContext.config;
-        if (config) {
-            this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
-            this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
-            this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
-            this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
-        }
-        return newProjects;
+        this.afterAddFolderEmitter.fire({ folder: folder, projects: projects });
+        return projects;
     }
 
     /**
@@ -427,9 +430,7 @@ export class ProjectController implements vscode.Disposable {
         }
         // Load a new CMake Tools instance for each folder that has been added.
         for (const folder of event.added) {
-            this.beforeAddFolderEmitter.fire(folder);
-            const cmakeProjects = await this.addFolder(folder);
-            this.afterAddFolderEmitter.fire({ folder: folder, projects: cmakeProjects });
+            await this.addFolder(folder);
         }
     }
 
@@ -441,13 +442,26 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private async doSaveTextDocument(textDocument: vscode.TextDocument): Promise<void> {
+        await this.doCMakeFileChangeReconfigure(textDocument.uri);
+    }
+
+    private async onDidRenameFiles(renamedFileEvt: vscode.FileRenameEvent): Promise<void> {
+        for (const file of renamedFileEvt.files) {
+            const filePath = file.newUri.fsPath.toLowerCase();
+            if (filePath.endsWith("cmakelists.txt")) {
+                await this.doCMakeFileChangeReconfigure(file.newUri);
+            }
+        }
+    }
+
+    private async doCMakeFileChangeReconfigure(uri: vscode.Uri): Promise<void> {
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         if (activeProject) {
-            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(textDocument, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
+            const isFileInsideActiveProject: boolean = util.isFileInsideFolder(uri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
             if (isFileInsideActiveProject) {
-                await activeProject.doCMakeFileSaveReconfigure(textDocument);
+                await activeProject.doCMakeFileChangeReconfigure(uri);
             }
-            await activeProject.sendFileTypeTelemetry(textDocument);
+            await activeProject.sendFileTypeTelemetry(uri);
         }
     }
 

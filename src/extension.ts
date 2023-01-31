@@ -127,7 +127,7 @@ export class ExtensionManager implements vscode.Disposable {
                 await util.setContextValue(multiProjectModeKey, this.projectController.hasMultipleProjects);
                 // Update the full/partial view of the workspace by verifying if after the folder removal
                 // it still has at least one CMake project.
-                await enableFullFeatureSet(await this.workspaceHasAtLeastOneProject());
+                await enableFullFeatureSet(this.workspaceHasAtLeastOneProject());
             }
 
             this.projectOutlineProvider.removeFolder(folder);
@@ -177,7 +177,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             await this.initActiveProject();
         }
-        const isFullyActivated: boolean = await this.workspaceHasAtLeastOneProject();
+        const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject();
         await enableFullFeatureSet(isFullyActivated);
 
         const telemetryProperties: telemetry.Properties = {
@@ -464,7 +464,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
         }
         if (project) {
-            if (!await project.hasCMakeLists()) {
+            if (!project.hasCMakeLists()) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             } else {
                 if (shouldConfigure === true) {
@@ -1419,17 +1419,12 @@ export class ExtensionManager implements vscode.Disposable {
 
     // Answers whether the workspace contains at least one project folder that is CMake based,
     // without recalculating the valid states of CMakeLists.txt.
-    async workspaceHasAtLeastOneProject(): Promise<boolean> {
+    workspaceHasAtLeastOneProject(): boolean {
         const projects: CMakeProject[] | undefined = this.projectController.getAllCMakeProjects();
         if (!projects || projects.length === 0) {
             return false;
         }
-        for (const project of projects) {
-            if (await project.hasCMakeLists()) {
-                return true;
-            }
-        }
-        return false;
+        return projects.some(project => project.hasCMakeLists());
     }
 
     activeConfigurePresetName(): string {
@@ -1812,7 +1807,7 @@ export function getActiveProject(): CMakeProject | undefined {
 // sourceDirectory change, CMakeLists.txt creation/move/deletion.
 export async function updateFullFeatureSet() {
     if (extensionManager) {
-        await enableFullFeatureSet(await extensionManager.workspaceHasAtLeastOneProject());
+        await enableFullFeatureSet(extensionManager.workspaceHasAtLeastOneProject());
     } else {
         // This shouldn't normally happen (not finding a cmake project or not having a valid extension manager)
         // but just in case, disable full feature set.
