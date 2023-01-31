@@ -9,7 +9,7 @@ Bug Fixes:
 
 ## 1.13.45
 Bug Fixes:
-- unwanted warning "Configuration is already in progress" in multi-root projects. [#2989](https://github.com/microsoft/vscode-cmake-tools/issues/2989)
+- Remove unwanted warning "Configuration is already in progress" in multi-root projects. [#2989](https://github.com/microsoft/vscode-cmake-tools/issues/2989)
 
 ## 1.13.44
 Bug Fixes:
