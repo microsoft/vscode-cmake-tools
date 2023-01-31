@@ -1177,7 +1177,7 @@ export class CMakeProject {
             // recursively search the build directory for all
             const searchRoot = await this.binaryDir;
             if (await fs.exists(searchRoot)) {
-                (await fs.walk(searchRoot)).forEach(e => {
+                (await fs.walk(searchRoot)).forEach((e: any) => {
                     if (e.name === 'compile_commands.json') {
                         compdbPaths.push(e.path);
                     }
