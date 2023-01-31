@@ -2162,7 +2162,13 @@ export class CMakeProject {
 
         const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
         if (buildOnLaunch || isReconfigurationNeeded) {
-            const buildResult = await this.build([chosen.name]);
+            const buildTargets = await this.getDefaultBuildTargets() || [];
+            const allTargetName = await this.allTargetName;
+            if (!buildTargets.includes(allTargetName) && !buildTargets.includes(chosen.name)) {
+                buildTargets.push(chosen.name);
+            }
+
+            const buildResult = await this.build(buildTargets);
             if (buildResult !== 0) {
                 log.debug(localize('build.failed', 'Build failed'));
                 return null;

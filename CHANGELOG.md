@@ -3,6 +3,7 @@
 ## 1.14
 Improvements:
 - Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
+- When starting debugging, also build the selected build target. [PR #2987] [@Maddimax](https://github.com/Maddimax)
 
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
