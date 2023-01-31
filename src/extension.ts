@@ -172,9 +172,6 @@ export class ExtensionManager implements vscode.Disposable {
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
             }
-            for (const project of this.projectController.getAllCMakeProjects()) {
-                rollbar.takePromise('Post-folder-open', { folder: project.folderPath, project: project }, this.postWorkspaceOpen(project));
-            }
             await this.initActiveProject();
         }
         const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject();
