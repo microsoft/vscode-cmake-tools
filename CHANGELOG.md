@@ -7,6 +7,10 @@ Improvements:
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
 
+## 1.13.45
+Bug Fixes:
+- unwanted warning "Configuration is already in progress" in multi-root projects. [#2989](https://github.com/microsoft/vscode-cmake-tools/issues/2989)
+
 ## 1.13.44
 Bug Fixes:
 - Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
