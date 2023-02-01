@@ -895,12 +895,9 @@ export class ExtensionManager implements vscode.Disposable {
      * For backward compatibility, apply kitName to all folders if folder is undefined
      */
     async setKitByName(kitName: string, folder?: vscode.WorkspaceFolder) {
-        if (folder) {
-            await this.getActiveProject()?.kitsController.setKitByName(kitName);
-        } else {
-            for (const project of this.projectController.getAllCMakeProjects()) {
-                await project.kitsController.setKitByName(kitName);
-            }
+        const projects = folder ? this.projectController.getProjectsForWorkspaceFolder(folder) : this.projectController.getAllCMakeProjects();
+        for (const project of projects || []) {
+            await project.kitsController.setKitByName(kitName);
         }
 
         const activeKit = this.getActiveProject()?.activeKit;
