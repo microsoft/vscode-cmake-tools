@@ -9,6 +9,8 @@ Bug Fixes:
 - CMake kits fails when parsing exported functions after running environmentSetupScript. [#2676](https://github.com/microsoft/vscode-cmake-tools/issues/2686)
 
 ## 1.13.45
+Bug Fixes:
+- Remove unwanted warning "Configuration is already in progress" in multi-root projects. [#2989](https://github.com/microsoft/vscode-cmake-tools/issues/2989)
 - `setKitByName` command ignores the workspace folder argument. [PR #2991](https://github.com/microsoft/vscode-cmake-tools/pull/2991)
 
 ## 1.13.44
