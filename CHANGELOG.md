@@ -6,7 +6,7 @@ Improvements:
 
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
-- `setKitByName` command ignores the workspace folder argument.
+- `setKitByName` command ignores the workspace folder argument. [PR #2991](https://github.com/microsoft/vscode-cmake-tools/pull/2991)
 
 ## 1.13.44
 Bug Fixes:
