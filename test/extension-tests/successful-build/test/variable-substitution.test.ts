@@ -47,7 +47,8 @@ suite('Variable Substitution', () => {
                 test1: true,
                 test2: 123,
                 test3: ["1", "2", "3"],
-                test4: {"type": "PATH", "value": "/usr/bin"}
+                test4: {"type": "PATH", "value": "/usr/bin"},
+                pathListSep: '${pathListSep}'
             },
             installPrefix: '${workspaceFolder}/build/dist'
         });
@@ -137,6 +138,12 @@ suite('Variable Substitution', () => {
             .to.eq(platformNormalizePath(testEnv.projectFolder.buildDirectory.location.concat('/dist')),
                 '[cmakeInstallPrefix] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[cmakeInstallPrefix] unexpected cache entry value type');
+
+        // Check substitution for "pathListSep".
+        cacheEntry = cache.get('pathListSep') as CacheEntry;
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[pathListSep] unexpected cache entry type');
+        expect(cacheEntry.key).to.eq('pathListSep', '[pathListSep] unexpected cache entry key name');
+        expect(typeof cacheEntry.value).to.eq('string', '[pathListSep] unexpected cache entry value type');
 
         cacheEntry = cache.get('test1') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.Bool);
