@@ -12,7 +12,7 @@ import * as path from 'path';
 chai.use(chaiString);
 
 import { Kit } from '@cmt/kit';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
+import { CMakeDriver } from '@cmt/drivers/cmakeDriver';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 import { Uri, WorkspaceFolder } from 'vscode';
 
@@ -28,7 +28,7 @@ function cleanupBuildDir(build_dir: string): boolean {
 
 let driver: CMakeDriver | null = null;
 
-export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit, workspaceFolder: WorkspaceFolder, preconditionHandler?: CMakePreconditionProblemSolver) => Promise<CMakeDriver>) {
+export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit, workspaceFolder: WorkspaceFolder) => Promise<CMakeDriver>) {
     suite(`CMake CodeModel ${driverName} Driver tests`, () => {
         const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
         const workspacePath: string = 'test/unit-tests/driver/workspace';

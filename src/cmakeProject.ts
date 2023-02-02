@@ -17,7 +17,6 @@ import {
     CMakeFileApiDriver,
     CMakeLegacyDriver,
     CMakePreconditionProblems,
-    CMakePreconditionProblemSolver,
     CMakeServerDriver,
     ExecutableTarget,
     NoGeneratorError
@@ -1124,22 +1123,16 @@ export class CMakeProject {
     }
 
     // Create a CMake Project for testing the drivers.
-    static async createForTest(config: ConfigurationReader,
-        kit: Kit | null,
-        workspaceFolder: vscode.WorkspaceFolder,
-        preconditionHandler: CMakePreconditionProblemSolver | undefined){
-            const workspaceContext = new DirectoryContext(workspaceFolder, config, new StateManager(new DefaultExtensionContext(), workspaceFolder));
-            const inst = new CMakeProject(workspaceContext, false);
-            await inst.init(workspaceFolder.uri.fsPath);
-            inst.setUseCMakePresets(false);
-            inst.setConfigurePreset(null);
-            inst.setBuildPreset(null);
-            inst.setTestPreset(null);
-            inst.setKit(kit);
-            if (!preconditionHandler){
-                preconditionHandler = async () => {};
-            }
-            return inst;
+    static async createForTest(config: ConfigurationReader, kit: Kit | null, workspaceFolder: vscode.WorkspaceFolder) {
+        const workspaceContext = new DirectoryContext(workspaceFolder, config, new StateManager(new DefaultExtensionContext(), workspaceFolder));
+        const inst = new CMakeProject(workspaceContext, false);
+        await inst.init(workspaceFolder.uri.fsPath);
+        inst.setUseCMakePresets(false);
+        inst.setConfigurePreset(null);
+        inst.setBuildPreset(null);
+        inst.setTestPreset(null);
+        inst.setKit(kit);
+        return inst;
     }
 
     private _activeKit: Kit | null = null;
