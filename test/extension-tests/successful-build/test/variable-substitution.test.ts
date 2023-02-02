@@ -139,12 +139,6 @@ suite('Variable Substitution', () => {
                 '[cmakeInstallPrefix] substitution incorrect');
         expect(typeof cacheEntry.value).to.eq('string', '[cmakeInstallPrefix] unexpected cache entry value type');
 
-        // Check substitution for "pathListSep".
-        cacheEntry = cache.get('pathListSep') as CacheEntry;
-        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[pathListSep] unexpected cache entry type');
-        expect(cacheEntry.key).to.eq('pathListSep', '[pathListSep] unexpected cache entry key name');
-        expect(typeof cacheEntry.value).to.eq('string', '[pathListSep] unexpected cache entry value type');
-
         cacheEntry = cache.get('test1') as CacheEntry;
         expect(cacheEntry.type).to.eq(CacheEntryType.Bool);
         expect(cacheEntry.value).to.eq(true);

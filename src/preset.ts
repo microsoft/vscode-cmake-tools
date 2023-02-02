@@ -592,7 +592,7 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
         expansionOpts.vars['fileDir'] = path.dirname(preset.__file!.__path!);
     }
     if (preset.__file && preset.__file.version >= 5) {
-        expansionOpts.vars['pathListSep'] = '${pathListSep}';
+        expansionOpts.vars['pathListSep'] = path.delimiter;
     }
 
     return expansionOpts;
