@@ -11,9 +11,10 @@ import * as path from 'path';
 
 chai.use(chaiString);
 
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit } from '@cmt/kit';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
+import { Uri, WorkspaceFolder } from 'vscode';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
@@ -27,15 +28,26 @@ function cleanupBuildDir(build_dir: string): boolean {
 
 let driver: CMakeDriver | null = null;
 
-export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit, workspaceFolder: WorkspaceFolder, preconditionHandler?: CMakePreconditionProblemSolver) => Promise<CMakeDriver>) {
     suite(`CMake CodeModel ${driverName} Driver tests`, () => {
         const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
         const workspacePath: string = 'test/unit-tests/driver/workspace';
         const root = getTestRootFilePath(workspacePath);
-        const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/test_project');
-        const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/empty_project');
-        const sourceOutsideOfWorkspace
-            = getTestRootFilePath('test/unit-tests/driver/workspace/source_outside_of_workspace/workspace');
+        const defaultWorkspaceFolder: WorkspaceFolder = {
+            uri: Uri.file(getTestRootFilePath('test/unit-tests/driver/workspace/test_project')),
+            name: "test_project",
+            index: 0
+        };
+        const emptyWorkspaceFolder: WorkspaceFolder = {
+            uri: Uri.file(getTestRootFilePath('test/unit-tests/driver/workspace/empty_project')),
+            name: "empty_project",
+            index: 0
+        };
+        const sourceOutsideOfWorkspace: WorkspaceFolder = {
+            uri: Uri.file(getTestRootFilePath('test/unit-tests/driver/workspace/source_outside_of_workspace/workspace')),
+            name: "workspace",
+            index: 0
+        };
 
         let kitDefault: Kit;
         if (process.platform === 'win32') {
@@ -52,15 +64,15 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
         setup(async function (this: Mocha.Context, done) {
             driver = null;
 
-            if (!cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
+            if (!cleanupBuildDir(path.join(defaultWorkspaceFolder.uri.fsPath, 'build'))) {
                 done('Default build folder still exists');
             }
 
-            if (!cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
+            if (!cleanupBuildDir(path.join(emptyWorkspaceFolder.uri.fsPath, 'build'))) {
                 done('Empty project build folder still exists');
             }
 
-            if (!cleanupBuildDir(path.join(sourceOutsideOfWorkspace, 'build'))) {
+            if (!cleanupBuildDir(path.join(sourceOutsideOfWorkspace.uri.fsPath, 'build'))) {
                 done('Source-outside-of-workspace project build folder still exists');
             }
 
@@ -75,12 +87,12 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
         });
 
         async function generateCodeModelForConfiguredDriver(args: string[] = [],
-            workspaceFolder: string = defaultWorkspaceFolder):
+            workspaceFolder: WorkspaceFolder = defaultWorkspaceFolder):
             Promise<null | CodeModelContent> {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
+            driver = await driver_generator(executable, config, kitDefault, workspaceFolder);
             let code_model: null | CodeModelContent = null;
             if (driver && !(driver instanceof CMakeLegacyDriver)) {
                 driver.onCodeModelChanged(cm => {
