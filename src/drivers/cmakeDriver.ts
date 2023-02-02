@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
-import { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
+import CMakeProject, { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
@@ -180,16 +180,36 @@ export abstract class CMakeDriver implements vscode.Disposable {
     abstract asyncDispose(): Promise<void>;
 
     /**
+     * The source directory, where the root CMakeLists.txt lives.
+     *
+     * @note This is distinct from the config values, since we do variable
+     * substitution.
+     */
+    protected sourceDir = '';
+    readonly config: ConfigurationReader;
+    protected sourceDirUnexpanded: string; // The un-expanded original source directory path, where the CMakeLists.txt exists.
+    private readonly isMultiProject: boolean;
+    private readonly __workspaceFolder: string | null;
+    readonly preconditionHandler: CMakePreconditionProblemSolver;
+    // Subscribe to changes that affect the CMake configuration
+    private readonly _settingsSub;
+    private readonly _argsSub;
+    private readonly _envSub;
+
+    /**
      * Construct the driver. Concrete instances should provide their own creation
      * routines.
      */
-    protected constructor(public readonly cmake: CMakeExecutable,
-        readonly config: ConfigurationReader,
-        protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
-        private readonly isMultiProject: boolean,
-        private readonly __workspaceFolder: string | null,
-        readonly preconditionHandler: CMakePreconditionProblemSolver) {
+    protected constructor(public readonly cmake: CMakeExecutable, project: CMakeProject) {
+        this.config = project.workspaceContext.config;
+        this.sourceDirUnexpanded = project.sourceDir;
+        this.isMultiProject = project.isMultiProjectFolder;
+        this.__workspaceFolder = project.workspaceFolder.uri.fsPath;
+        this.preconditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => project.cmakePreConditionProblemHandler(e, true, config);
         this.sourceDir = this.sourceDirUnexpanded;
+        this._settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
+        this._argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
+        this._envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
         // We have a cache of file-compilation terminals. Wipe them out when the
         // user closes those terminals.
         vscode.window.onDidCloseTerminal(closed => {
@@ -202,14 +222,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
         });
     }
-
-    /**
-     * The source directory, where the root CMakeLists.txt lives.
-     *
-     * @note This is distinct from the config values, since we do variable
-     * substitution.
-     */
-    protected sourceDir = '';
 
     /**
      * Dispose the driver. This disposes some things synchronously, but also
@@ -1648,12 +1660,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     protected abstract doConfigureSettingsChange(): void;
 
-    /**
-     * Subscribe to changes that affect the CMake configuration
-     */
-    private readonly _settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
-    private readonly _argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
-    private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
     private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
     protected configureProcess: proc.Subprocess | null = null;
 
@@ -1808,27 +1814,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     abstract get cmakeCacheEntries(): Map<string, CacheEntry>;
 
-    private async _baseInit(useCMakePresets: boolean,
-        kit: Kit | null,
-        configurePreset: preset.ConfigurePreset | null,
-        buildPreset: preset.BuildPreset | null,
-        testPreset: preset.TestPreset | null,
-        preferredGenerators: CMakeGenerator[]) {
-        this._useCMakePresets = useCMakePresets;
-        log.debug(`Initializating base driver using ${useCMakePresets ? 'preset' : 'kit'}`);
+    private async _baseInit(project: CMakeProject) {
+        this._useCMakePresets = project.useCMakePresets;
+        log.debug(`Initializating base driver using ${project.useCMakePresets ? 'preset' : 'kit'}`);
         // Load up kit or presets before starting any drivers.
-        if (useCMakePresets) {
-            if (configurePreset) {
-                await this._setConfigurePreset(configurePreset);
+        if (project.useCMakePresets) {
+            if (project.configurePreset) {
+                await this._setConfigurePreset(project.configurePreset);
             }
-            if (buildPreset) {
-                await this._setBuildPreset(buildPreset);
+            if (project.buildPreset) {
+                await this._setBuildPreset(project.buildPreset);
             }
-            if (testPreset) {
-                await this._setTestPreset(testPreset);
+            if (project.testPreset) {
+                await this._setTestPreset(project.testPreset);
             }
-        } else if (kit) {
-            await this._setKit(kit, preferredGenerators);
+        } else if (project.activeKit) {
+            await this._setKit(project.activeKit, project.getPreferredGenerators());
         }
         await this._refreshExpansions();
         await this.doInit();
@@ -1839,14 +1840,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Asynchronous initialization. Should be called by base classes during
      * their initialization.
      */
-    static async createDerived<T extends CMakeDriver>(inst: T,
-        useCMakePresets: boolean,
-        kit: Kit | null,
-        configurePreset: preset.ConfigurePreset | null,
-        buildPreset: preset.BuildPreset | null,
-        testPreset: preset.TestPreset | null,
-        preferredGenerators: CMakeGenerator[]): Promise<T> {
-        await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators);
+    static async createDerived<T extends CMakeDriver>(inst: T, project: CMakeProject): Promise<T> {
+        await inst._baseInit(project);
         return inst;
     }
 

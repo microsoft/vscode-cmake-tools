@@ -1,6 +1,5 @@
 import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
-import { ConfigurationReader } from '@cmt/config';
 import {
     createQueryFileForApi,
     loadCacheContent,
@@ -10,7 +9,6 @@ import {
     loadIndexFile,
     loadToolchains,
     CMakeDriver,
-    CMakePreconditionProblemSolver,
     ExecutableTarget,
     Index,
     RichTarget,
@@ -18,7 +16,7 @@ import {
     NoGeneratorError
 } from '@cmt/drivers/drivers';
 import * as codeModel from '@cmt/drivers/codeModel';
-import { CMakeGenerator, Kit } from '@cmt/kit';
+import { CMakeGenerator } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
@@ -26,8 +24,9 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
+import { ConfigurePreset, getValue } from '@cmt/preset';
 import * as nls from 'vscode-nls';
+import CMakeProject from '@cmt/cmakeProject';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -42,35 +41,13 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return fs.existsSync(this.getCMakeFileApiPath());
     }
 
-    private constructor(cmake: CMakeExecutable,
-        readonly config: ConfigurationReader,
-        sourceDir: string,
-        isMultiProject: boolean,
-        workspaceRootPath: string | null,
-        preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler);
+    private constructor(cmake: CMakeExecutable, project: CMakeProject) {
+        super(cmake, project);
     }
 
-    static async create(cmake: CMakeExecutable,
-        config: ConfigurationReader,
-        sourceDir: string,
-        isMultiProject: boolean,
-        useCMakePresets: boolean,
-        kit: Kit | null,
-        configurePreset: ConfigurePreset | null,
-        buildPreset: BuildPreset | null,
-        testPreset: TestPreset | null,
-        workspaceRootPath: string | null,
-        preconditionHandler: CMakePreconditionProblemSolver,
-        preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
+    static async create(cmake: CMakeExecutable, project: CMakeProject): Promise<CMakeFileApiDriver> {
         log.debug('Creating instance of CMakeFileApiDriver');
-        return this.createDerived(new CMakeFileApiDriver(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler),
-            useCMakePresets,
-            kit,
-            configurePreset,
-            buildPreset,
-            testPreset,
-            preferredGenerators);
+        return this.createDerived(new CMakeFileApiDriver(cmake, project), project);
     }
 
     private _needsReconfigure = true;

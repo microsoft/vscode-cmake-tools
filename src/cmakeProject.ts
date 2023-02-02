@@ -594,7 +594,7 @@ export class CMakeProject {
         }
     }
 
-    private getPreferredGenerators(): CMakeGenerator[] {
+    public getPreferredGenerators(): CMakeGenerator[] {
         // User can override generator with a setting
         const userGenerator = this.workspaceContext.config.generator;
         if (userGenerator) {
@@ -730,11 +730,7 @@ export class CMakeProject {
         if (!cmake.isPresent) {
             throw new Error(localize('bad.cmake.executable', 'Bad CMake executable {0}.', `"${cmake.path}"`));
         }
-
-        const workspace: string = this.workspaceFolder.uri.fsPath;
         let drv: CMakeDriver;
-        const preferredGenerators = this.getPreferredGenerators();
-        const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, true, config);
         let communicationMode = this.workspaceContext.config.cmakeCommunicationMode.toLowerCase();
         const fileApi = 'fileapi';
         const serverApi = 'serverapi';
@@ -775,46 +771,13 @@ export class CMakeProject {
             }
             switch (communicationMode) {
                 case fileApi:
-                    drv = await CMakeFileApiDriver.create(cmake,
-                        this.workspaceContext.config,
-                        this.sourceDir,
-                        this.isMultiProjectFolder,
-                        this.useCMakePresets,
-                        this.activeKit,
-                        this.configurePreset,
-                        this.buildPreset,
-                        this.testPreset,
-                        workspace,
-                        preConditionHandler,
-                        preferredGenerators);
+                    drv = await CMakeFileApiDriver.create(cmake, this);
                     break;
                 case serverApi:
-                    drv = await CMakeServerDriver.create(cmake,
-                        this.workspaceContext.config,
-                        this.sourceDir,
-                        this.isMultiProjectFolder,
-                        this.useCMakePresets,
-                        this.activeKit,
-                        this.configurePreset,
-                        this.buildPreset,
-                        this.testPreset,
-                        workspace,
-                        preConditionHandler,
-                        preferredGenerators);
+                    drv = await CMakeServerDriver.create(cmake, this);
                     break;
                 default:
-                    drv = await CMakeLegacyDriver.create(cmake,
-                        this.workspaceContext.config,
-                        this.sourceDir,
-                        this.isMultiProjectFolder,
-                        this.useCMakePresets,
-                        this.activeKit,
-                        this.configurePreset,
-                        this.buildPreset,
-                        this.testPreset,
-                        workspace,
-                        preConditionHandler,
-                        preferredGenerators);
+                    drv = await CMakeLegacyDriver.create(cmake, this);
             }
         } finally {
             this.statusMessage.set(localize('ready.status', 'Ready'));

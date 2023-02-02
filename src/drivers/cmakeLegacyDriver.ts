@@ -7,17 +7,16 @@ import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as vscode from 'vscode';
 
 import { CMakeCache, CacheEntry } from '@cmt/cache';
-import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/drivers';
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { CMakeDriver } from '@cmt/drivers/drivers';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
-import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
+import { ConfigurePreset, getValue} from '@cmt/preset';
 import { CodeModelContent } from './codeModel';
+import CMakeProject from '@cmt/cmakeProject';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -37,8 +36,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
         throw new Error('Method not implemented.');
     }
 
-    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
+    private constructor(cmake: CMakeExecutable, project: CMakeProject) {
+        super(cmake, project);
     }
 
     private _needsReconfigure = true;
@@ -150,26 +149,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
         });
     }
 
-    static async create(cmake: CMakeExecutable,
-        config: ConfigurationReader,
-        sourceDir: string,
-        isMultiProject: boolean,
-        useCMakePresets: boolean,
-        kit: Kit | null,
-        configurePreset: ConfigurePreset | null,
-        buildPreset: BuildPreset | null,
-        testPreset: TestPreset | null,
-        workspaceFolder: string | null,
-        preconditionHandler: CMakePreconditionProblemSolver,
-        preferredGenerators: CMakeGenerator[]): Promise<CMakeLegacyDriver> {
+    static async create(cmake: CMakeExecutable, project: CMakeProject): Promise<CMakeLegacyDriver> {
         log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
-        return this.createDerived(new CMakeLegacyDriver(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler),
-            useCMakePresets,
-            kit,
-            configurePreset,
-            buildPreset,
-            testPreset,
-            preferredGenerators);
+        return this.createDerived(new CMakeLegacyDriver(cmake, project), project);
     }
 
     get targets() {

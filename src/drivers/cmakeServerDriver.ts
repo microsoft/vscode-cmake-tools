@@ -5,7 +5,6 @@ import * as vscode from 'vscode';
 import * as cache from '@cmt/cache';
 import {
     CMakeDriver,
-    CMakePreconditionProblemSolver,
     CMakeServerClient,
     ExecutableTarget,
     GlobalSettingsContent,
@@ -16,15 +15,14 @@ import {
     Target,
     NoGeneratorError
 } from '@cmt/drivers/drivers';
-import { Kit, CMakeGenerator } from '@cmt/kit';
 import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
-import { ConfigurationReader } from '@cmt/config';
 import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { ConfigurePreset } from '@cmt/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
+import CMakeProject from '@cmt/cmakeProject';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -41,8 +39,8 @@ export class CMakeServerDriver extends CMakeDriver {
         throw new Error('Method not implemented.');
     }
 
-    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
+    private constructor(cmake: CMakeExecutable, project: CMakeProject) {
+        super(cmake, project);
         this.config.onChange('environment', () => this._restartClient());
         this.config.onChange('configureEnvironment', () => this._restartClient());
     }
@@ -425,25 +423,8 @@ export class CMakeServerDriver extends CMakeDriver {
         return null;
     }
 
-    static async create(cmake: CMakeExecutable,
-        config: ConfigurationReader,
-        sourceDir: string,
-        isMultiProject: boolean,
-        useCMakePresets: boolean,
-        kit: Kit | null,
-        configurePreset: ConfigurePreset | null,
-        buildPreset: BuildPreset | null,
-        testPreset: TestPreset | null,
-        workspaceFolder: string | null,
-        preconditionHandler: CMakePreconditionProblemSolver,
-        preferredGenerators: CMakeGenerator[]): Promise<CMakeServerDriver> {
-        return this.createDerived(new CMakeServerDriver(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler),
-            useCMakePresets,
-            kit,
-            configurePreset,
-            buildPreset,
-            testPreset,
-            preferredGenerators);
+    static async create(cmake: CMakeExecutable, project: CMakeProject): Promise<CMakeServerDriver> {
+        return this.createDerived(new CMakeServerDriver(cmake, project), project);
     }
 
 }
