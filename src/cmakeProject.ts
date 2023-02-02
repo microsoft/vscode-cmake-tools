@@ -17,6 +17,7 @@ import {
     CMakeFileApiDriver,
     CMakeLegacyDriver,
     CMakePreconditionProblems,
+    CMakePreconditionProblemSolver,
     CMakeServerDriver,
     ExecutableTarget,
     NoGeneratorError
@@ -45,6 +46,8 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import { KitsController } from './kitsController';
 import { PresetsController } from './presetsController';
 import paths from './paths';
+import { StateManager } from './state';
+import { DefaultExtensionContext } from '@test/helpers/vscodefake/extensioncontext';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1118,6 +1121,25 @@ export class CMakeProject {
         await inst.init(sourceDirectory);
         log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
+    }
+
+    // Create a CMake Project for testing the drivers.
+    static async createForTest(config: ConfigurationReader,
+        kit: Kit | null,
+        workspaceFolder: vscode.WorkspaceFolder,
+        preconditionHandler: CMakePreconditionProblemSolver | undefined){
+            const workspaceContext = new DirectoryContext(workspaceFolder, config, new StateManager(new DefaultExtensionContext(), workspaceFolder));
+            const inst = new CMakeProject(workspaceContext, false);
+            await inst.init(workspaceFolder.uri.fsPath);
+            inst.setUseCMakePresets(false);
+            inst.setConfigurePreset(null);
+            inst.setBuildPreset(null);
+            inst.setTestPreset(null);
+            inst.setKit(kit);
+            if (!preconditionHandler){
+                preconditionHandler = async () => {};
+            }
+            return inst;
     }
 
     private _activeKit: Kit | null = null;
