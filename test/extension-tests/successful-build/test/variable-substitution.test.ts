@@ -47,8 +47,7 @@ suite('Variable Substitution', () => {
                 test1: true,
                 test2: 123,
                 test3: ["1", "2", "3"],
-                test4: {"type": "PATH", "value": "/usr/bin"},
-                pathListSep: '${pathListSep}'
+                test4: {"type": "PATH", "value": "/usr/bin"}
             },
             installPrefix: '${workspaceFolder}/build/dist'
         });
