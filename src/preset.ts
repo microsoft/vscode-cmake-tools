@@ -274,7 +274,7 @@ export interface OutputOptions {
     subprojectSummary?: boolean;
     maxPassedTestOutputSize?: number;
     maxFailedTestOutputSize?: number;
-    testOutputTruncation?: 'tail' | 'heads' | 'middle'
+    testOutputTruncation?: 'tail' | 'heads' | 'middle';
     maxTestNameWidth?: number;
 }
 
@@ -592,7 +592,7 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
         expansionOpts.vars['fileDir'] = path.dirname(preset.__file!.__path!);
     }
     if (preset.__file && preset.__file.version >= 5) {
-        expansionOpts.vars['pathListSep'] = '${pathListSep}'
+        expansionOpts.vars['pathListSep'] = '${pathListSep}';
     }
 
     return expansionOpts;
