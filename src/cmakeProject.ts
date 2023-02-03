@@ -1650,8 +1650,8 @@ export class CMakeProject {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir) : undefined;
-                        if (fileDiags) {
+                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir) : [];
+                        if (fileDiags && fileDiags.length >= 1) {
                             populateCollection(collections.build, fileDiags);
                         }
                         await this.refreshCompileDatabase(drv!.expansionOptions);
