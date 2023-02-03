@@ -46,7 +46,7 @@ import { KitsController } from './kitsController';
 import { PresetsController } from './presetsController';
 import paths from './paths';
 import { StateManager } from './state';
-import { DefaultExtensionContext } from '@test/helpers/vscodefake/extensioncontext';
+import { DefaultExtensionContext } from '../test/helpers/vscodefake/extensioncontext';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
