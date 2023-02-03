@@ -9,7 +9,7 @@ import { makeCodeModelDriverTestsuite } from './driver-codemodel-tests';
 import { makeDriverTestsuite } from './driver-test';
 
 async function cmakeFileApiDriverFactory(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit, workspaceFolder: WorkspaceFolder) {
-    let project: CMakeProject = await CMakeProject.createForTest(config, kit, workspaceFolder);
+    const project: CMakeProject = await CMakeProject.createForTest(config, kit, workspaceFolder);
     const driver: CMakeFileApiDriver = await CMakeFileApiDriver.create(cmake, project);
     return driver;
 }

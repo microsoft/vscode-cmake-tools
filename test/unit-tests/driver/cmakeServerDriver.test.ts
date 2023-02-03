@@ -8,7 +8,7 @@ import { makeCodeModelDriverTestsuite } from './driver-codemodel-tests';
 import { makeDriverTestsuite } from './driver-test';
 
 async function cmakeServerDriverFactory(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit, workspaceFolder: WorkspaceFolder) {
-    let project: CMakeProject = await CMakeProject.createForTest(config, kit, workspaceFolder);
+    const project: CMakeProject = await CMakeProject.createForTest(config, kit, workspaceFolder);
     const driver: CMakeServerDriver = await CMakeServerDriver.create(cmake, project);
     return driver;
 }
