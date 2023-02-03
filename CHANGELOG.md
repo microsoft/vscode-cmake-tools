@@ -4,6 +4,7 @@
 Improvements:
 - Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
 - Update documents on `cmake.mingwSearchDirs`. [#2996](https://github.com/microsoft/vscode-cmake-tools/issues/2996)
+- Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
 
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
