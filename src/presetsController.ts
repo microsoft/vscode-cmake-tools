@@ -1,9 +1,10 @@
+
 import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import { CMakeProject } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
@@ -641,13 +642,19 @@ export class PresetsController {
             return false;
         } else if (chosenPreset === this.project.configurePreset?.name) {
             return true;
-        } else if (chosenPreset === '__addPreset__') {
-            await this.addConfigurePreset();
-            return false;
         } else {
-            log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
-            await this.setConfigurePreset(chosenPreset);
-            return true;
+            const addPreset = chosenPreset === PresetsController._addPreset;
+            if (addPreset) {
+                await this.addConfigurePreset();
+            } else {
+                log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
+                await this.setConfigurePreset(chosenPreset);
+            }
+
+            if (this.project.workspaceContext.config.automaticReconfigure) {
+                await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
+            }
+            return !addPreset;
         }
     }
 
