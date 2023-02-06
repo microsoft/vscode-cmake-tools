@@ -191,6 +191,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly isMultiProject: boolean;
     private readonly __workspaceFolder: string | null;
     readonly preconditionHandler: CMakePreconditionProblemSolver;
+    public lastCMakePreconditionError: CMakePreconditionProblems | undefined;
     // Subscribe to changes that affect the CMake configuration
     private readonly _settingsSub;
     private readonly _argsSub;
@@ -205,7 +206,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this.sourceDirUnexpanded = project.sourceDir;
         this.isMultiProject = project.isMultiProjectFolder;
         this.__workspaceFolder = project.workspaceFolder.uri.fsPath;
-        this.preconditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => project.cmakePreConditionProblemHandler(e, true, config);
+        this.preconditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => {
+            this.lastCMakePreconditionError = e;
+            project.cmakePreConditionProblemHandler(e, true, config);
+        }
         this.sourceDir = this.sourceDirUnexpanded;
         this._settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
         this._argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());

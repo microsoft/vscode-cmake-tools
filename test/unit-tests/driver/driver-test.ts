@@ -203,172 +203,91 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
         test('Try build on empty dir', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-
-            let called = false;
-            let configure;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, emptyWorkspaceFolder);
-                configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.MissingCMakeListsFile);
-                called = true;
-            } finally {
-                expect(await configure).to.be.eq(-2);
-            }
-            expect(called).to.be.true;
-
+            driver = await driver_generator(executable, config, ninjaKitDefault, emptyWorkspaceFolder);
+            expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(-2);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.MissingCMakeListsFile);
         }).timeout(60000);
 
         test('No parallel configuration', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-
-            let called = false;
-            let configure1;
-            let configure2;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
-                configure1 = driver.configure(ConfigureTrigger.runTests, []);
-                configure2 = driver.configure(ConfigureTrigger.runTests, []);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-                called = true;
-            } finally {
-                expect(await configure1).to.be.equal(0);
-                expect(await configure2).to.be.equal(-1);
-            }
-            expect(called).to.be.true;
-
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
+            const configure1 = driver.configure(ConfigureTrigger.runTests, []);
+            const configure2 = driver.configure(ConfigureTrigger.runTests, []);
+            expect(await configure1).to.be.equal(0);
+            expect(await configure2).to.be.equal(-1);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
         }).timeout(90000);
 
         test('No parallel clean configuration', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-
-            let called = false;
-            let configure1;
-            let configure2;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
-                configure1 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
-                configure2 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-                called = true;
-            } finally {
-                expect(await configure1).to.be.equal(0);
-                expect(await configure2).to.be.equal(-1);
-            }
-            expect(called).to.be.true;
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
+            const configure1 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            const configure2 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            expect(await configure1).to.be.equal(0);
+            expect(await configure2).to.be.equal(-1);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
         }).timeout(90000);
 
         test('No parallel builds', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-
-            let called = false;
-            let build1;
-            let build2;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
-                expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
-                build1 = driver.build([driver.allTargetName]);
-                build2 = driver.build([driver.allTargetName]);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.BuildIsAlreadyRunning);
-                called = true;
-            } finally {
-                expect(await build1).to.be.equal(0);
-                expect(await build2).to.be.equal(-1);
-            }
-            expect(called).to.be.true;
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
+            expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
+            const build1 = driver.build([driver.allTargetName]);
+            const build2 = driver.build([driver.allTargetName]);
+            expect(await build1).to.be.equal(0);
+            expect(await build2).to.be.equal(-1);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.BuildIsAlreadyRunning);
         }).timeout(90000);
 
         test('No build parallel to configure', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-
-            let called = false;
-            let configure;
-            let build;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
-                expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
-                configure = driver.configure(ConfigureTrigger.runTests, []);
-                build = driver.build([driver.allTargetName]);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-                called = true;
-            } finally {
-                expect(await configure).to.be.equal(0);
-                expect(await build).to.be.equal(-1);
-            }
-            expect(called).to.be.true;
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
+            expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
+            const configure = driver.configure(ConfigureTrigger.runTests, []);
+            const build = driver.build([driver.allTargetName]);
+            expect(await configure).to.be.equal(0);
+            expect(await build).to.be.equal(-1);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
         }).timeout(90000);
 
         test('No configure parallel to build', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-
-            let called = false;
-            let configure;
-            let build;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
-                expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
-                build = driver.build([driver.allTargetName]);
-                configure = driver.configure(ConfigureTrigger.runTests, []);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.BuildIsAlreadyRunning);
-                called = true;
-            } finally {
-                expect(await build).to.be.equal(0);
-                expect(await configure).to.be.equal(-1);
-            }
-            expect(called).to.be.true;
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
+            expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
+            const build = driver.build([driver.allTargetName]);
+            const configure = driver.configure(ConfigureTrigger.runTests, []);
+            expect(await build).to.be.equal(0);
+            expect(await configure).to.be.equal(-1);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.BuildIsAlreadyRunning);
         }).timeout(90000);
 
         test('No build parallel to clean configuration', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
+            const configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            const build = driver.build([driver.allTargetName]);
 
-            let called = false;
-            let configure;
-            let build;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
-                configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
-                build = driver.build([driver.allTargetName]);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-                called = true;
-            } finally {
-                expect(await configure).to.be.equal(0);
-                expect(await build).to.be.equal(-1);
-            }
-            expect(called).to.be.true;
+            expect(await configure).to.be.equal(0);
+            expect(await build).to.be.equal(-1);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
         }).timeout(90000);
 
         test('No clean configuration parallel to build', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-
-            let called = false;
-            let configure;
-            let build;
-            try {
-                driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
-                expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
-                build = driver.build([driver.allTargetName]);
-                configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
-            } catch (e) {
-                expect(e).to.be.eq(CMakePreconditionProblems.BuildIsAlreadyRunning);
-                called = true;
-            } finally {
-                expect(await build).to.be.equal(0);
-                expect(await configure).to.be.equal(-1);
-            }
-            expect(called).to.be.true;
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder);
+            expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
+            const build = driver.build([driver.allTargetName]);
+            const configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            expect(await build).to.be.equal(0);
+            expect(await configure).to.be.equal(-1);
+            expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.BuildIsAlreadyRunning);
         }).timeout(90000);
 
         test('Test pre-configured workspace', async () => {
