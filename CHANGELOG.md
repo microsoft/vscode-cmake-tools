@@ -4,10 +4,12 @@
 Improvements:
 - Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
 - When starting debugging, also build the selected build target. [PR #2987] [@Maddimax](https://github.com/Maddimax)
+- Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
 
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
 - CMake kits fails when parsing exported functions after running environmentSetupScript. [#2676](https://github.com/microsoft/vscode-cmake-tools/issues/2686)
+- Implement cmake.parseBuildDiagnostics. [#1932](https://github.com/microsoft/vscode-cmake-tools/issues/1932)
 
 ## 1.13.45
 Bug Fixes:

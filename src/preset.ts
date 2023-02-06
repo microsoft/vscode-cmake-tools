@@ -274,6 +274,7 @@ export interface OutputOptions {
     subprojectSummary?: boolean;
     maxPassedTestOutputSize?: number;
     maxFailedTestOutputSize?: number;
+    testOutputTruncation?: 'tail' | 'heads' | 'middle';
     maxTestNameWidth?: number;
 }
 
@@ -589,6 +590,9 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
     }
     if (preset.__file && preset.__file.version >= 4) {
         expansionOpts.vars['fileDir'] = path.dirname(preset.__file!.__path!);
+    }
+    if (preset.__file && preset.__file.version >= 5) {
+        expansionOpts.vars['pathListSep'] = path.delimiter;
     }
 
     return expansionOpts;
@@ -1576,6 +1580,7 @@ export function testArgs(preset: TestPreset): string[] {
         preset.output.subprojectSummary === false && result.push('--no-subproject-summary');
         preset.output.maxPassedTestOutputSize && result.push('--test-output-size-passed', preset.output.maxPassedTestOutputSize.toString());
         preset.output.maxFailedTestOutputSize && result.push('--test-output-size-failed', preset.output.maxFailedTestOutputSize.toString());
+        preset.output.testOutputTruncation && result.push('--test-output-truncation', preset.output.testOutputTruncation.toString());
         preset.output.maxTestNameWidth && result.push('--max-width', preset.output.maxTestNameWidth.toString());
     }
 
