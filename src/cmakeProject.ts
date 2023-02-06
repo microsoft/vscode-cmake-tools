@@ -81,7 +81,8 @@ export enum ConfigureTrigger {
     commandConfigureAll = "commandConfigureAll",
     commandCleanConfigureAll = "commandCleanConfigureAll",
     taskProvider = "taskProvider",
-    selectConfigurePreset = "selectConfigurePreset"
+    selectConfigurePreset = "selectConfigurePreset",
+    selectKit = "selectKit"
 }
 
 export interface DiagnosticsConfiguration {
