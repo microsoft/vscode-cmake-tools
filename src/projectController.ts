@@ -210,11 +210,11 @@ export class ProjectController implements vscode.Disposable {
     public static async createCMakeProjectsForWorkspaceFolder(workspaceContext: DirectoryContext): Promise<CMakeProject[]> {
         const sourceDirectories: string[] = workspaceContext.config.sourceDirectory;
         const isMultiProjectFolder: boolean = (sourceDirectories.length > 1);
-        const unresolvedBuildDirectory: string = workspaceContext.config.buildDirectory(isMultiProjectFolder);
         const projects: CMakeProject[] = [];
         for (const source of sourceDirectories) {
             projects.push(await CMakeProject.create(workspaceContext, source, isMultiProjectFolder));
         }
+        const unresolvedBuildDirectory: string = workspaceContext.config.buildDirectory(isMultiProjectFolder);
         await ProjectController.checkBuildDirectories(projects, sourceDirectories, unresolvedBuildDirectory);
         return projects;
     }
@@ -224,7 +224,7 @@ export class ProjectController implements vscode.Disposable {
         if (sourceDirectories.length <= 1) {
             return;
         }
-        if (unresolvedBuildDirectory && (unresolvedBuildDirectory.includes("${sourceDirectory}") || unresolvedBuildDirectory.includes("${sourceDir}"))) {
+        if (unresolvedBuildDirectory.includes("${sourceDirectory}") || unresolvedBuildDirectory.includes("${sourceDir}")) {
             return;
         } else {
             const sameBinaryDir = localize('duplicate.build.directory.1', 'Multiple CMake projects in this folder are using the same CMAKE_BINARY_DIR.');
