@@ -210,27 +210,23 @@ export class ProjectController implements vscode.Disposable {
     public static async createCMakeProjectsForWorkspaceFolder(workspaceContext: DirectoryContext): Promise<CMakeProject[]> {
         const sourceDirectories: string[] = workspaceContext.config.sourceDirectory;
         const isMultiProjectFolder: boolean = (sourceDirectories.length > 1);
+        const unresolvedBuildDirectory: string = workspaceContext.config.buildDirectory(isMultiProjectFolder);
         const projects: CMakeProject[] = [];
         for (const source of sourceDirectories) {
             projects.push(await CMakeProject.create(workspaceContext, source, isMultiProjectFolder));
         }
-        await ProjectController.checkBuildDirectories(projects, sourceDirectories);
+        await ProjectController.checkBuildDirectories(projects, sourceDirectories, unresolvedBuildDirectory);
         return projects;
     }
 
     private static duplicateMessageShown = false;
-    private static async checkBuildDirectories(projects: CMakeProject[], sourceDirectories: string[]) {
+    private static async checkBuildDirectories(projects: CMakeProject[], sourceDirectories: string[], unresolvedBuildDirectory: string) {
         if (sourceDirectories.length <= 1) {
             return;
         }
-        const buildDirectories: string[] = [];
-        for (const project of projects) {
-            const buildDirectory = await project.binaryDir;
-            if (buildDirectories.indexOf(buildDirectory) < 0) {
-                buildDirectories.push(buildDirectory);
-            }
-        }
-        if (buildDirectories.length < projects.length) {
+        if (unresolvedBuildDirectory && (unresolvedBuildDirectory.includes("${sourceDirectory}") || unresolvedBuildDirectory.includes("${sourceDir}"))) {
+            return;
+        } else {
             const sameBinaryDir = localize('duplicate.build.directory.1', 'Multiple CMake projects in this folder are using the same CMAKE_BINARY_DIR.');
             const mayCauseProblems = localize('duplicate.build.directory.2', 'This may cause problems when attempting to configure your projects.');
             log.warning(sameBinaryDir);
@@ -279,8 +275,8 @@ export class ProjectController implements vscode.Disposable {
             const config: ConfigurationReader | undefined = workspaceContext.config;
             if (config) {
                 this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
-                this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
-                this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder, config.sourceDirectory)));
+                this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async (buildDirectory: string) => this.refreshDriverSettings(folder, config.sourceDirectory, buildDirectory)));
+                this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(folder, config.sourceDirectory, config.buildDirectory((projects && projects?.length > 1) || false))));
                 this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
             }
         }
@@ -364,7 +360,8 @@ export class ProjectController implements vscode.Disposable {
                 }
                 projects.push(cmakeProject);
             }
-            await ProjectController.checkBuildDirectories(projects, sourceDirectories);
+            const unresolvedBuildDirectory: string = workspaceContext.config.buildDirectory(sourceDirectories.length > 1);
+            await ProjectController.checkBuildDirectories(projects, sourceDirectories, unresolvedBuildDirectory);
 
             if (activeProjectPath !== undefined) {
                 // Active project is no longer available. Pick a different one.
@@ -382,14 +379,14 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
-    private async refreshDriverSettings(folder: vscode.WorkspaceFolder, sourceDirectories: string[]) {
+    private async refreshDriverSettings(folder: vscode.WorkspaceFolder, sourceDirectories: string[], unresolvedBuildDirectory: string) {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             for (const project of projects) {
                 const driver = await project.getCMakeDriverInstance();
                 await driver?.refreshSettings();
             }
-            await ProjectController.checkBuildDirectories(projects, sourceDirectories);
+            await ProjectController.checkBuildDirectories(projects, sourceDirectories, unresolvedBuildDirectory);
         }
     }
 
