@@ -24,7 +24,7 @@ import {
 import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
-import { populateCollection } from './diagnostics/util';
+import { FileDiagnostic, populateCollection } from './diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import * as logging from './logging';
@@ -1650,7 +1650,7 @@ export class CMakeProject {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        const fileDiags = consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir);
+                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir) : [];
                         if (fileDiags) {
                             populateCollection(collections.build, fileDiags);
                         }
