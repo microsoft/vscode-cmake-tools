@@ -7,6 +7,7 @@ Improvements:
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
 - CMake kits fails when parsing exported functions after running environmentSetupScript. [#2676](https://github.com/microsoft/vscode-cmake-tools/issues/2686)
+- CMake tools not fully loaded when opening multi-project folders. [#3000](https://github.com/microsoft/vscode-cmake-tools/issues/3000)
 
 ## 1.13.45
 Bug Fixes:
