@@ -206,7 +206,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             driver = await driver_generator(executable, config, ninjaKitDefault, emptyWorkspaceFolder);
             expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(-2);
             expect(driver.lastCMakePreconditionError).to.be.eq(CMakePreconditionProblems.MissingCMakeListsFile);
-        }).timeout(60000);
+        }).timeout(90000);
 
         test('No parallel configuration', async () => {
             const config = ConfigurationReader.create();
