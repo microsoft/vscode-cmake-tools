@@ -14,6 +14,7 @@ import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
+import * as expand from '@cmt/expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -189,15 +190,26 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     public static async findBuildTask(presetName?: string, targets?: string[]): Promise<CMakeTask | undefined> {
         // Fetch all CMake task from `tasks.json` files.
         const allTasks: vscode.Task[] = await vscode.tasks.fetchTasks({ type: CMakeTaskProvider.CMakeScriptType });
-        const tasks: (CMakeTask | undefined)[] = allTasks.map((task: any) => {
+
+        const project: CMakeProject | undefined = getActiveProject();
+        const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
+        const tasks: (CMakeTask | undefined)[] = await Promise.all(allTasks.map(async (task: any) => {
             if (!task.definition.label || !task.group || (task.group && task.group.id !== vscode.TaskGroup.Build.id)) {
                 return undefined;
             }
+
+            let taskTargets: string[];
+            if (cmakeDriver) {
+                taskTargets = await expand.expandStrings(task.definition.targets,  cmakeDriver.expansionOptions);
+            } else {
+                taskTargets = task.definition.targets;
+            }
+
             const definition: CMakeTaskDefinition = {
                 type: task.definition.type,
                 label: task.definition.label,
                 command: task.definition.command,
-                targets: task.definition.targets || targets,
+                targets: taskTargets || targets,
                 preset: task.definition.preset,
                 options: task.definition.options
             };
@@ -208,7 +220,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 buildTask.isDefault = true;
             }
             return buildTask;
-        });
+        }));
 
         const buildTasks: CMakeTask[] = tasks.filter((task) => task !== undefined) as CMakeTask[];
 
