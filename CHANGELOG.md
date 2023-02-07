@@ -2,7 +2,7 @@
 
 ## 1.14
 Improvements:
-- Automatically configure after a configuration preset has been selected. [#2765](https://github.com/microsoft/vscode-cmake-tools/issues/2958) [@maxmitti](https://github.com/maxmitti)
+- Automatically configure CMake project directories when the kit or the configuration preset is changed. [PR #2973](https://github.com/microsoft/vscode-cmake-tools/pull/2973) [@maxmitti](https://github.com/maxmitti)
 - Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
 - Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
 
