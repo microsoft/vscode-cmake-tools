@@ -1122,7 +1122,7 @@ export class CMakeProject {
     }
 
     // Create a CMake Project for testing the drivers.
-    static async createForTest(config: ConfigurationReader, kit: Kit | null, workspaceFolder: vscode.WorkspaceFolder, extensionContext: any): Promise<CMakeProject> {
+    static async createForTest(config: ConfigurationReader, kit: Kit | null, workspaceFolder: vscode.WorkspaceFolder, extensionContext: vscode.ExtensionContext): Promise<CMakeProject> {
         const workspaceContext = new DirectoryContext(workspaceFolder, config, new StateManager(extensionContext, workspaceFolder));
         const inst = new CMakeProject(workspaceContext, false);
         await inst.init(workspaceFolder.uri.fsPath);
