@@ -1763,10 +1763,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
 
-    // Load a new extension manager
-    extensionManager = await ExtensionManager.create(context);
-    await extensionManager.init();
-
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
     await enableFullFeatureSet(false);
 
@@ -1776,6 +1772,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
 
+    // Load a new extension manager
+    extensionManager = await ExtensionManager.create(context);
+    await extensionManager.init();
     return setup(context);
 }
 
