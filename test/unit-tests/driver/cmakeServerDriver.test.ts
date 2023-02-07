@@ -3,12 +3,13 @@ import CMakeProject from '@cmt/cmakeProject';
 import { ConfigurationReader } from '@cmt/config';
 import { CMakeServerDriver } from '@cmt/drivers/drivers';
 import { Kit } from '@cmt/kit';
+import { DefaultExtensionContext } from '@test/helpers/vscodefake/extensioncontext';
 import { WorkspaceFolder } from 'vscode';
 import { makeCodeModelDriverTestsuite } from './driver-codemodel-tests';
 import { makeDriverTestsuite } from './driver-test';
 
 async function cmakeServerDriverFactory(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit, workspaceFolder: WorkspaceFolder) {
-    const project: CMakeProject = await CMakeProject.createForTest(config, kit, workspaceFolder);
+    const project: CMakeProject = await CMakeProject.createForTest(config, kit, workspaceFolder, new DefaultExtensionContext());
     const driver: CMakeServerDriver = await CMakeServerDriver.create(cmake, project);
     return driver;
 }

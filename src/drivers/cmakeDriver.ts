@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
-import CMakeProject, { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
+import { CMakeProject, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';

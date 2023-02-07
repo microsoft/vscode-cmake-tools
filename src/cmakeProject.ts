@@ -46,7 +46,6 @@ import { KitsController } from './kitsController';
 import { PresetsController } from './presetsController';
 import paths from './paths';
 import { StateManager } from './state';
-import { DefaultExtensionContext } from '../test/helpers/vscodefake/extensioncontext';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1123,8 +1122,8 @@ export class CMakeProject {
     }
 
     // Create a CMake Project for testing the drivers.
-    static async createForTest(config: ConfigurationReader, kit: Kit | null, workspaceFolder: vscode.WorkspaceFolder): Promise<CMakeProject> {
-        const workspaceContext = new DirectoryContext(workspaceFolder, config, new StateManager(new DefaultExtensionContext(), workspaceFolder));
+    static async createForTest(config: ConfigurationReader, kit: Kit | null, workspaceFolder: vscode.WorkspaceFolder, extensionContext: DefaultExtensionContext): Promise<CMakeProject> {
+        const workspaceContext = new DirectoryContext(workspaceFolder, config, new StateManager(extensionContext, workspaceFolder));
         const inst = new CMakeProject(workspaceContext, false);
         await inst.init(workspaceFolder.uri.fsPath);
         await inst.setUseCMakePresets(false);
