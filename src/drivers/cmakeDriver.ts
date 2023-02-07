@@ -208,8 +208,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this.__workspaceFolder = project.workspaceFolder.uri.fsPath;
         this.preconditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => {
             this.lastCMakePreconditionError = e;
-            project.cmakePreConditionProblemHandler(e, true, config);
-        }
+            return project.cmakePreConditionProblemHandler(e, true, config);
+        };
         this.sourceDir = this.sourceDirUnexpanded;
         this._settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
         this._argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
