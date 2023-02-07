@@ -86,8 +86,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
-    //private onUseCMakePresetsChangedSub: vscode.Disposable = new DummyDisposable();
-
     private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
     private updateTouchBarVisibility(config: TouchBarConfig) {
@@ -1585,11 +1583,7 @@ export class ExtensionManager implements vscode.Disposable {
 
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
     reportProgress(localize('initial.setup', 'Initial setup'), progress);
-
-    // Load a new extension manager
-    const ext = extensionManager = await ExtensionManager.create(context);
-    await extensionManager.init();
-
+    const ext = extensionManager!;
     // A register function that helps us bind the commands to the extension
     function register<K extends keyof ExtensionManager>(name: K) {
         return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {
@@ -1768,6 +1762,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
+
+    // Load a new extension manager
+    extensionManager = await ExtensionManager.create(context);
+    await extensionManager.init();
 
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
     await enableFullFeatureSet(false);
