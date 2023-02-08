@@ -2008,12 +2008,12 @@
           "description": "%cmake-tools.configuration.cmake.loadCompileCommands.description%",
           "scope": "resource"
         },
-		"cmake.automaticReconfigure": {
-			"type": "boolean",
-			"default": false,
-			"description": "%cmake-tools.configuration.cmake.automaticReconfigure.description%",
-			"scope": "resource"
-		}
+        "cmake.automaticReconfigure": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.automaticReconfigure.description%",
+          "scope": "resource"
+        }
       }
     },
     "keybindings": [

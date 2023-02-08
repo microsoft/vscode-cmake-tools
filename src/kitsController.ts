@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import CMakeProject, { ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import {
     Kit,
     descriptionForKit,
