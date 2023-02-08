@@ -281,11 +281,12 @@ export class KitsController {
                 return false;
             } else {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
-                await this.setFolderActiveKit(chosen_kit.kit);
+                const kitChanged = chosen_kit.kit !== this.project.activeKit;
+                if (kitChanged) {
+                    await this.setFolderActiveKit(chosen_kit.kit);
+                }
 
-                if (chosen_kit.kit.name !== SpecialKits.Unspecified
-                     && chosen_kit.kit !== this.project.activeKit
-                     && this.project.workspaceContext.config.automaticReconfigure) {
+                if (chosen_kit.kit.name !== SpecialKits.Unspecified && kitChanged && this.project.workspaceContext.config.automaticReconfigure) {
                     await this.project.configureInternal(ConfigureTrigger.selectKit, [], ConfigureType.Normal);
                 }
                 return true;

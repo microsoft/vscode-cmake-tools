@@ -2010,7 +2010,7 @@
         },
         "cmake.automaticReconfigure": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "%cmake-tools.configuration.cmake.automaticReconfigure.description%",
           "scope": "resource"
         }
