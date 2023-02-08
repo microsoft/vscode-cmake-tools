@@ -19,7 +19,7 @@ suite('Build using Presets', () => {
         const exe_res = 'output.txt';
 
         // CMakePresets.json and CMakeUserPresets.json exist so will use presets by default
-        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
+        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/basic-single-root-tests/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
 
         await clearExistingKitConfigurationFile();

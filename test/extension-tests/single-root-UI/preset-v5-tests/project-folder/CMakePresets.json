@@ -1,0 +1,21 @@
+{
+  "version": 5,
+  "configurePresets": [
+    {
+      "name": "Linux1",
+      "description": "Invalid preset for < v5 presets using pathListSep macro",
+      "generator": "Ninja",
+      "binaryDir": "${workspaceFolder}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": {
+            "type": "FILEPATH",
+            "value": "${workspaceFolder}/test-toolchain.cmake"
+        }
+      },
+      "environment": {
+        "PATH": "$penv{PATH}${pathListSep}${workspaceFolder}/build"
+      }
+    }
+  ]
+}

@@ -12,7 +12,7 @@ async function main() {
         // Passed to --extensionTestsPath
         const extensionTestsPath = path.resolve(__dirname, './index');
 
-        const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/single-root-UI/project-folder');
+        const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/single-root-UI/preset-v5-tests/project-folder');
 
         const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
 

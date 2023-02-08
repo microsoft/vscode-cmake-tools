@@ -75,17 +75,17 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceFolder}/test/extension-tests/single-root-UI/project-folder",
+                "${workspaceFolder}/test/extension-tests/single-root-UI/basic-single-root-tests/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI/index"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI/basic-single-root-tests/index"
             ],
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/src/*",
                 "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/single-root-UI/*",
-                "${workspaceFolder}/out/test/extension-tests/single-root-UI/test/*"
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI/basic-single-root-tests/*",
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI/basic-single-root-tests/test/*"
             ],
             "preLaunchTask": "Pretest",
             "env": {

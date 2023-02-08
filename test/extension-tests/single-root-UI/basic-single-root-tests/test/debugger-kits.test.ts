@@ -1,7 +1,7 @@
-import { DefaultEnvironment, expect } from '@test/util';
+import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as vscode from 'vscode';
 
-suite('Debug/Launch interface using Presets', () => {
+suite('Debug/Launch interface using Kits and Variants', () => {
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
@@ -10,21 +10,20 @@ suite('Debug/Launch interface using Presets', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
-        testEnv.projectFolder.buildDirectory.clear();
+        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/basic-single-root-tests/project-folder', build_loc, exe_res);
 
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
         await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
-        await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'WindowsUser1' : 'LinuxUser1');
-        await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
-        await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
-
+        const kit = await getFirstSystemKit();
+        await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
+        testEnv.projectFolder.buildDirectory.clear();
         expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
     });
 
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
+
         testEnv.teardown();
     });
 

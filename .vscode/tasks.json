@@ -35,7 +35,12 @@
                     }
                 }
             ],
-            "isBackground": true
+            "isBackground": true,
+            "detail": "yarn install && webpack --mode development",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         },
         {
             "label": "Pretest",
@@ -61,6 +66,6 @@
                 "run",
                 "compile"
             ]
-        },
+        }
     ]
 }
