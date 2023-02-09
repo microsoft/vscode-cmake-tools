@@ -13,6 +13,7 @@ suite('Utils test', () => {
     test('Milliseconds to time span string', () => {
         const tests: [x: number, s: string][] = [
             [0, '00:00:00.000'],
+            [1, '00:00:00.001'],
             [10, '00:00:00.010'],
             [100, '00:00:00.100'],
             [1000, '00:00:01.000'],
