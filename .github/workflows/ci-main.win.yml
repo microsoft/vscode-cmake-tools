@@ -51,8 +51,11 @@ jobs:
       - name: Run successful-build test
         run: yarn extensionTestsSuccessfulBuild
 
-      - name: Run single root test
-        run: yarn extensionTestsSingleRoot
+      - name: Run basic single root test
+        run: yarn extensionTestsBasicSingleRoot
+
+      - name: Run basic single root test
+        run: yarn extensionTestsPresetV5SingleRoot
 
       - name: Run multi root test
         run: yarn extensionTestsMultiRoot

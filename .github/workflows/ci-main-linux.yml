@@ -55,10 +55,15 @@ jobs:
         with:
           run: yarn extensionTestsSuccessfulBuild
 
-      - name: Run single root test
+      - name: Run basic single root test
         uses: GabrielBB/xvfb-action@v1.6
         with:
-          run: yarn extensionTestsSingleRoot
+          run: yarn extensionTestsBasicSingleRoot
+
+      - name: Run preset v5 single root test
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn extensionTestsPresetV5SingleRoot
 
       - name: Run multi root test
         uses: GabrielBB/xvfb-action@v1.6
