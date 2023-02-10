@@ -2045,6 +2045,11 @@
     "views": {
       "cmake__viewContainer": [
         {
+          "id": "CMakeProjectExplorer",
+          "name": "%cmake-tools.configuration.views.cmake.explorer.description%",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
           "id": "cmake.outline",
           "name": "%cmake-tools.configuration.views.cmake.outline.description%",
           "when": "cmake:enableFullFeatureSet"
