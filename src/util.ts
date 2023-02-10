@@ -383,6 +383,20 @@ export function errorToString(e: any): string {
     return `\n\t${e.toString()}`;
 }
 
+/**
+ * Convert milliseconds into a friendly string like: 00:00:00.000
+ */
+export function msToString(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    return `${pad(hours)}:${pad(minutes % 60)}:${pad(seconds % 60)}.${pad(ms % 1000, 3)}`;
+}
+
+function pad(x: number, length?: number): string {
+    return ('000' + x).slice(-(length ?? 2));
+}
+
 export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<Out>): Iterable<Out> {
     for (const elem of rng) {
         const mapped = fn(elem);

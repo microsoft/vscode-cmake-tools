@@ -1566,11 +1566,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const timeStart: number = new Date().getTime();
         const child = await this._doCMakeBuild(targets, consumer, isBuildCommand);
         const timeEnd: number = new Date().getTime();
+        const duration: number = timeEnd - timeStart;
+        log.info(localize('build.duration', 'Build completed: {0}', util.msToString(duration)));
         const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
             ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
         };
         const telemetryMeasures: telemetry.Measures = {
-            Duration: timeEnd - timeStart
+            Duration: duration
         };
         if (child) {
             if (consumer) {
