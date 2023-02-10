@@ -2043,7 +2043,7 @@
         {
           "id": "cmake__viewContainer",
           "title": "CMake",
-          "icon": "res/cmake-view-icon.svg",
+          "icon": "res/cmake-view-icon2.svg",
           "when": "cmake:enableFullFeatureSet"
         }
       ]
