@@ -13,5 +13,4 @@
     "cmake.buildDirectory": "${workspaceFolder}/test/fakeOutputGenerator/build",
     "cmake.installPrefix": "${workspaceFolder}/test/fakebin",
     "cmake.generator": "Ninja",
-    "sarif-viewer.connectToGithubCodeScanning": "off",
 }
