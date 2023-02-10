@@ -187,20 +187,18 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         return task;
     }
 
-    public static async findBuildTask(presetName?: string, targets?: string[]): Promise<CMakeTask | undefined> {
+    public static async findBuildTask(presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
         // Fetch all CMake task from `tasks.json` files.
         const allTasks: vscode.Task[] = await vscode.tasks.fetchTasks({ type: CMakeTaskProvider.CMakeScriptType });
 
-        const project: CMakeProject | undefined = getActiveProject();
-        const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
         const tasks: (CMakeTask | undefined)[] = await Promise.all(allTasks.map(async (task: any) => {
             if (!task.definition.label || !task.group || (task.group && task.group.id !== vscode.TaskGroup.Build.id)) {
                 return undefined;
             }
 
             let taskTargets: string[];
-            if (cmakeDriver) {
-                taskTargets = await expand.expandStrings(task.definition.targets,  cmakeDriver.expansionOptions);
+            if (expansionOptions) {
+                taskTargets = await expand.expandStrings(task.definition.targets, expansionOptions);
             } else {
                 taskTargets = task.definition.targets;
             }
