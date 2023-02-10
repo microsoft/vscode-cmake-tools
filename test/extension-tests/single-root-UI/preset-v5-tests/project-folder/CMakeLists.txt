@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.2.0)
 project(TestBuildProcess VERSION 0.1.0)
 
 set(CMT_COOKIE passed-cookie CACHE STRING "Cookie to be written by the main executable")

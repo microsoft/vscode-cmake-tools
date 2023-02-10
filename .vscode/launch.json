@@ -70,7 +70,7 @@
             },
         },
         {
-            "name": "Run single-root-UI Tests",
+            "name": "Run basic single-root-UI Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
@@ -86,6 +86,31 @@
                 "${workspaceFolder}/out/test/*",
                 "${workspaceFolder}/out/test/extension-tests/single-root-UI/basic-single-root-tests/*",
                 "${workspaceFolder}/out/test/extension-tests/single-root-UI/basic-single-root-tests/test/*"
+            ],
+            "preLaunchTask": "Pretest",
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
+            },
+        },
+        {
+            "name": "Run presets-v5 single-root-UI Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceFolder}/test/extension-tests/single-root-UI/preset-v5-tests/project-folder",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI/preset-v5-tests/index"
+            ],
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI/preset-v5-tests/*",
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI/preset-v5-tests/test/*"
             ],
             "preLaunchTask": "Pretest",
             "env": {

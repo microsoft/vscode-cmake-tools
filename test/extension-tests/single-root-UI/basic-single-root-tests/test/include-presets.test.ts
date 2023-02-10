@@ -50,6 +50,9 @@ suite('Preset include functionality', () => {
         if (await fs.exists(compdb_cp_path)) {
             await fs.unlink(compdb_cp_path);
         }
+        if (await fs.exists(testEnv.projectFolder.buildDirectory.location)) {
+            testEnv.projectFolder.buildDirectory.clear();
+        }
     });
 
     test('Configure and build included preset 1', async function (this: Mocha.Context) {

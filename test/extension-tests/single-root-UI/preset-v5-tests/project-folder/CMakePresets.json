@@ -14,7 +14,46 @@
         }
       },
       "environment": {
-        "PATH": "$penv{PATH}${pathListSep}${workspaceFolder}/build"
+        "MY_ENV": "$penv{PATH}${pathListSep}${workspaceFolder}/build"
+      }
+    },
+    {
+      "name": "Linux2",
+      "description": "Invalid preset for < v5 presets using pathListSep macro",
+      "generator": "Ninja",
+      "binaryDir": "${workspaceFolder}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": {
+            "type": "FILEPATH",
+            "value": "${workspaceFolder}/test-toolchain.cmake"
+        }
+      },
+      "environment": {
+        "MY_ENV": "$penv{PATH}${pathListSep}${workspaceFolder}/build"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Linux1",
+      "configurePreset": "Linux1"
+    },
+    {
+      "name": "Linux2",
+      "configurePreset": "Linux2"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "Linux1",
+      "configurePreset": "Linux1"
+    },
+    {
+      "name": "Linux2",
+      "configurePreset": "Linux2",
+      "output": {
+        "testOutputTruncation": "tail"
       }
     }
   ]

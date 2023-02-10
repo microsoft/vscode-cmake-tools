@@ -1,5 +1,6 @@
 import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as vscode from 'vscode';
+import { fs } from '@cmt/pr';
 
 suite('Debug/Launch interface', () => {
     let testEnv: DefaultEnvironment;
@@ -21,6 +22,15 @@ suite('Debug/Launch interface', () => {
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
         testEnv.teardown();
+    });
+
+    suiteTeardown(async () => {
+        if (testEnv) {
+            testEnv.teardown();
+        }
+        if (await fs.exists(testEnv.projectFolder.buildDirectory.location)) {
+            testEnv.projectFolder.buildDirectory.clear();
+        }
     });
 
     test('Test call of debugger', async () => {

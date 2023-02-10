@@ -1,5 +1,6 @@
 import { DefaultEnvironment, expect } from '@test/util';
 import * as vscode from 'vscode';
+import { fs } from '@cmt/pr';
 
 suite('Debug/Launch interface using Presets', () => {
     let testEnv: DefaultEnvironment;
@@ -26,6 +27,18 @@ suite('Debug/Launch interface using Presets', () => {
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
         testEnv.teardown();
+    });
+
+    suiteTeardown(async () => {
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+
+        if (testEnv) {
+            testEnv.teardown();
+        }
+        if (await fs.exists(testEnv.projectFolder.buildDirectory.location)) {
+            testEnv.projectFolder.buildDirectory.clear();
+        }
     });
 
     test('Test call of debugger', async () => {

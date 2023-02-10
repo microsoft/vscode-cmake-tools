@@ -1,0 +1,5 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.useCMakePresets": "auto",
+    "cmake.configureOnOpen": false
+}

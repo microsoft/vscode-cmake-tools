@@ -48,6 +48,9 @@ suite('Build using Presets', () => {
         if (await fs.exists(compdb_cp_path)) {
             await fs.unlink(compdb_cp_path);
         }
+        if (await fs.exists(testEnv.projectFolder.buildDirectory.location)) {
+            testEnv.projectFolder.buildDirectory.clear();
+        }
     });
 
     test('Configure', async () => {
