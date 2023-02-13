@@ -63,7 +63,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         allowCommentsInPresetsFile: false,
         allowUnsupportedPresetsVersions: false,
         launchBehavior: 'reuseTerminal',
-        ignoreCMakeListsMissing: false
+        ignoreCMakeListsMissing: false,
+        automaticReconfigure: false
     });
     ret.updatePartial(conf);
     return ret;

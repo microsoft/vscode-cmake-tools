@@ -82,6 +82,26 @@ interface Diagnostics {
 export class ExtensionManager implements vscode.Disposable {
     constructor(public readonly extensionContext: vscode.ExtensionContext) {
         telemetry.activate(extensionContext);
+        this.api = new CMakeToolsApiImpl(this);
+    }
+
+    private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
+    private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
+
+    private updateTouchBarVisibility(config: TouchBarConfig) {
+        const touchBarVisible = config.visibility === "default";
+        void util.setContextValue("cmake:enableTouchBar", touchBarVisible);
+        void util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
+        void util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
+        void util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
+        void util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
+    }
+    /**
+     * Second-phase async init
+     */
+    public async init() {
+        this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
+        this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
         this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
 
@@ -140,29 +160,6 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setAutoSelectActiveProject(v);
         });
 
-        this.api = new CMakeToolsApiImpl(this);
-    }
-
-    private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
-    //private onUseCMakePresetsChangedSub: vscode.Disposable = new DummyDisposable();
-
-    private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
-
-    private updateTouchBarVisibility(config: TouchBarConfig) {
-        const touchBarVisible = config.visibility === "default";
-        void util.setContextValue("cmake:enableTouchBar", touchBarVisible);
-        void util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
-        void util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
-        void util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
-        void util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
-    }
-    /**
-     * Second-phase async init
-     */
-    private async init() {
-        this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
-        this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
-
         let isMultiProject = false;
         if (vscode.workspace.workspaceFolders) {
             await this.projectController.loadAllProjects();
@@ -206,7 +203,6 @@ export class ExtensionManager implements vscode.Disposable {
      */
     static async create(ctx: vscode.ExtensionContext) {
         const inst = new ExtensionManager(ctx);
-        await inst.init();
         return inst;
     }
 
@@ -1587,10 +1583,7 @@ export class ExtensionManager implements vscode.Disposable {
 
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
     reportProgress(localize('initial.setup', 'Initial setup'), progress);
-
-    // Load a new extension manager
-    const ext = extensionManager = await ExtensionManager.create(context);
-
+    const ext = extensionManager!;
     // A register function that helps us bind the commands to the extension
     function register<K extends keyof ExtensionManager>(name: K) {
         return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {
@@ -1779,6 +1772,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
 
+    // Load a new extension manager
+    extensionManager = await ExtensionManager.create(context);
+    await extensionManager.init();
     return setup(context);
 }
 
