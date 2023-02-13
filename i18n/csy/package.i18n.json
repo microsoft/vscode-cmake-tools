@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Povolí použití souborů předvoleb používajících funkce z verzí, které rozšíření CMake Tools aktuálně nepodporuje. Neznámé vlastnosti a makra se budou ignorovat.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Když se nastaví na true, rozšíření nebude uživatele žádat, aby vybral soubor CMakeLists.txt pro konfiguraci, když se nějaký najde v pracovním prostoru, ale ne v kořenové složce.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Určuje, co se stane se spouštěcím terminálem, když spustíte cíl.",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Automaticky nakonfigurujte adresáře projektu CMake při změně sady nebo předvolby konfigurace.",
 	"cmake-tools.taskDefinitions.properties.label.description": "Název úlohy",
 	"cmake-tools.taskDefinitions.properties.command.description": "Příkaz CMake",
 	"cmake-tools.taskDefinitions.properties.targets.description": "Cíle sestavení CMake",

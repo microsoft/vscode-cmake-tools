@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "CMake Araçları uzantısının şu anda desteklemediği sürümlerdeki özellikleri kullanan ön ayar dosyalarının kullanımını etkinleştirir. Bilinmeyen özellikler ve makrolar yoksayılır.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` ise; CMakeLists.txt, çalışma alanında bulunduğunda ama kök klasörde bulunmadığında, uzantı kullanıcıdan yapılandırma için bir CMakeLists.txt dosyası seçmesini istemez.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Bir hedefi başlattığınızda başlatma terminaline ne olacağını kontrol eder.",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Set veya yapılandırma ön ayarı değiştirildiğinde CMake proje dizinlerini otomatik olarak yapılandır.",
 	"cmake-tools.taskDefinitions.properties.label.description": "Görevin adı",
 	"cmake-tools.taskDefinitions.properties.command.description": "CMake komutu",
 	"cmake-tools.taskDefinitions.properties.targets.description": "CMake derleme hedefleri",

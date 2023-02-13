@@ -38,6 +38,7 @@
 	"using.compilers.in.for.configure": "Yapılandırma için {0} konumundaki derleyiciler kullanılıyor",
 	"using.cmake.toolchain.for.configure": "Yapılandırma için {0} CMake araç zinciri kullanılıyor",
 	"start.build": "Derlemeyi başlat",
+	"build.duration": "Build completed: {0}",
 	"running.pre-configure.checks": "Ön yapılandırma denetimleri ve adımları çalıştırılıyor",
 	"source.directory.not.set": "Kaynak dizin ayarlanmadı",
 	"not.configuring": "Yapılandırma yok: {0} yok",
