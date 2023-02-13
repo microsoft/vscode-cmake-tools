@@ -199,6 +199,9 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             let taskTargets: string[];
             if (expansionOptions) {
                 taskTargets = await expand.expandStrings(task.definition.targets, expansionOptions);
+                if (task.definition.options?.cwd){
+                    task.definition.options.cwd = await expand.expandString(task.definition.options.cwd, expansionOptions);
+                }
             } else {
                 taskTargets = task.definition.targets;
             }
@@ -247,12 +250,12 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             } else {
                 // Search for the matching default task.
                 const defaultTask: CMakeTask[] = matchingTargetTasks.filter(task => task.isDefault);
-                if (defaultTask.length === 1) {
+                if (defaultTask.length >= 1) {
                     return defaultTask[0];
                 } else {
                     // Search for the matching existing task.
                     const existingTask: CMakeTask[] = matchingTargetTasks.filter(task => !task.isTemplate);
-                    if (existingTask.length === 1) {
+                    if (existingTask.length >= 1) {
                         return existingTask[0];
                     }
                 }
