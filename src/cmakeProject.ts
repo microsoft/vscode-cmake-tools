@@ -81,7 +81,9 @@ export enum ConfigureTrigger {
     commandCleanConfigure = "commandCleanConfigure",
     commandConfigureAll = "commandConfigureAll",
     commandCleanConfigureAll = "commandCleanConfigureAll",
-    taskProvider = "taskProvider"
+    taskProvider = "taskProvider",
+    selectConfigurePreset = "selectConfigurePreset",
+    selectKit = "selectKit"
 }
 
 export interface DiagnosticsConfiguration {
@@ -1860,7 +1862,9 @@ export class CMakeProject {
     async setVariant(name?: string) {
         // Make this function compatibile with return code style...
         if (await this.variantManager.selectVariant(name)) {
-            await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+            if (this.workspaceContext.config.automaticReconfigure) {
+                await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+            }
             return 0; // succeeded
         }
         return 1; // failed
