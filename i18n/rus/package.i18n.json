@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Позволяет использовать предустановленные файлы, использующие функции из версий, которые сейчас не поддерживаются расширением CMake Tools. Неизвестные свойства и макросы будут игнорироваться.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Если установлено значение \"true\", расширение не будет просить пользователя выбрать файл CMakeLists.txt для конфигурации, если такой файл обнаружен в рабочей области, но не в корневой папке.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Управляет тем, что происходит с терминалом запуска при запуске целевого объекта.",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Автоматически настраивать каталоги проектов CMake при изменении набора или предустановки конфигурации.",
 	"cmake-tools.taskDefinitions.properties.label.description": "Имя задачи",
 	"cmake-tools.taskDefinitions.properties.command.description": "Команда CMake",
 	"cmake-tools.taskDefinitions.properties.targets.description": "Цели сборки CMake",

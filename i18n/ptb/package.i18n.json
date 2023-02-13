@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Habilita o uso de arquivos de predefinições que estão usando recursos das versões às quais a extensão CMake Tools não dá suporte no momento. Propriedades e macros desconhecidas serão ignoradas.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Se for 'true', a extensão não solicitará que o usuário selecione um arquivo CMakeLists.txt para configuração quando um for encontrado no espaço de trabalho, mas não na pasta raiz.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Controla o que acontece com o terminal de lançamento quando você lança um alvo.",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Configure automaticamente os diretórios do projeto CMake quando o kit ou a predefinição de configuração for alterada.",
 	"cmake-tools.taskDefinitions.properties.label.description": "O nome da tarefa",
 	"cmake-tools.taskDefinitions.properties.command.description": "Comando CMake",
 	"cmake-tools.taskDefinitions.properties.targets.description": "Alvos da compilação do CMake",

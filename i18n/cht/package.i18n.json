@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "啟用使用來自 CMake Tools 延伸模組目前不支援之功能的預設檔案。將忽略未知的屬性和巨集。",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "如果為 `true`，當工作區中找到某個檔案但卻不在根資料夾中時，延伸就不會要求使用者選取要設定的 CMakeLists.txt 檔案。",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "控制啟動終端機在您啟動目標時要執行的動作。",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "當套件或設定預設變更時，自動設定 CMake 專案目錄。",
 	"cmake-tools.taskDefinitions.properties.label.description": "工作的名稱",
 	"cmake-tools.taskDefinitions.properties.command.description": "CMake 命令",
 	"cmake-tools.taskDefinitions.properties.targets.description": "CMake 組建目標",

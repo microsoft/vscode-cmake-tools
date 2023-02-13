@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Consente di usare file di set di impostazioni che usano funzionalità delle versioni attualmente non supportate dall'estensione CMake Tools. Le proprietà e le macro sconosciute verranno ignorate.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Se è `true`, l'estensione non richiederà all'utente di selezionare un file CMakeLists.txt per la configurazione quando ne viene trovato uno nell'area di lavoro ma non nella cartella radice.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Controlla cosa accade al terminale di avvio quando si avvia una destinazione.",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Configurare automaticamente le directory del progetto CMake quando il kit o il set di impostazioni di configurazione viene modificato.",
 	"cmake-tools.taskDefinitions.properties.label.description": "Nome dell'attività",
 	"cmake-tools.taskDefinitions.properties.command.description": "Comando di CMake",
 	"cmake-tools.taskDefinitions.properties.targets.description": "Destinazioni di compilazione CMake",
