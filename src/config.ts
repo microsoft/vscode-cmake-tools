@@ -143,6 +143,7 @@ export interface ExtensionConfigurationSettings {
     allowUnsupportedPresetsVersions: boolean;
     launchBehavior: string;
     ignoreCMakeListsMissing: boolean;
+    automaticReconfigure: boolean;
 }
 
 type EmittersOf<T> = {
@@ -447,6 +448,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.launchBehavior;
     }
 
+    get automaticReconfigure(): boolean {
+        return this.configData.automaticReconfigure;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         cmakePath: new vscode.EventEmitter<string>(),
@@ -501,7 +506,8 @@ export class ConfigurationReader implements vscode.Disposable {
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
-        launchBehavior: new vscode.EventEmitter<string>()
+        launchBehavior: new vscode.EventEmitter<string>(),
+        automaticReconfigure: new vscode.EventEmitter<boolean>()
     };
 
     /**
