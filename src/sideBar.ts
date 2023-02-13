@@ -1,6 +1,15 @@
-
 import path = require('path');
-import * as vscode from 'vscode';
+import {
+    Command,
+    commands,
+    Event,
+    EventEmitter,
+    TreeDataProvider,
+    TreeItem,
+    TreeItemCollapsibleState,
+    TreeView,
+    window
+} from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import { thisExtension } from './util';
@@ -9,193 +18,238 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export class SideBar {
-    private sideBar: vscode.TreeView<NodeEntry>;
+    private sideBar: TreeView<Node>;
+    private sideBarTreeProvider: SideBarTreeProvider;
     constructor() {
-        const sideBarTreeProvider = new SideBarTreeProvider();
-        this.sideBar = vscode.window.createTreeView('CMakeProjectExplorer', { treeDataProvider: sideBarTreeProvider });
-        vscode.commands.registerCommand('CMakeProjectExplorer.changeProject', () => this.changeProject());
-        vscode.commands.registerCommand('CMakeProjectExplorer.refresh', () => sideBarTreeProvider.refresh());
+        this.sideBarTreeProvider = new SideBarTreeProvider();
+        this.sideBar = window.createTreeView('CMakeProjectExplorer', { treeDataProvider: this.sideBarTreeProvider });
+        commands.registerCommand('CMakeProjectExplorer.changeProject', () => this.updateActiveProject());
+        commands.registerCommand('CMakeProjectExplorer.refresh', () => this.sideBarTreeProvider.refresh());
         // register all commands
-        
+
     }
-    changeProject(): void {
-        // Change Active Project
+    updateActiveProject(cmakeProject?: CMakeProject): void {
+        // Update Active Project
+        this.sideBarTreeProvider.updateActiveProject(cmakeProject)
     }
     dispose(): void {
         this.sideBar.dispose;
     }
 }
 
-export class SideBarTreeProvider implements vscode.TreeDataProvider<NodeEntry>{
+export class SideBarTreeProvider implements TreeDataProvider<Node>{
 
-    /*private configSetting: SettingNode;
-    private buildSetting: SettingNode;
-    private testSetting: SettingNode;
-    private project: SettingNode;*/
+    private _onDidChangeTreeData: EventEmitter<any> = new EventEmitter<any>();
+    readonly onDidChangeTreeData: Event<any> = this._onDidChangeTreeData.event;
 
-    private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
-	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
-
-    constructor(){
+    constructor() {
     }
-    setProject (_project: CMakeProject): void {
+
+    updateActiveProject(cmakeProject?: CMakeProject): void {
         // Use project to create the tree
+        if (cmakeProject) {
+            Node.updateActiveProject(cmakeProject);
+            this.refresh();
+        }
     }
     public refresh(): any {
-		this._onDidChangeTreeData.fire(undefined);
-	}
-    getTreeItem(element: subNodeEntry): vscode.TreeItem {
-        if (element.nodeType === NodeType.Configure || element.nodeType === NodeType.Build || element.nodeType === NodeType.Test) {
-            return {
-                label: element.nodeType,
-                tooltip: "",
-                collapsibleState: vscode.TreeItemCollapsibleState.Expanded
-            };
-        } else {
-            if (element.kit) {
-                const lable = element.kit;
-                const item = new vscode.TreeItem(lable);
-                //item.command = ;
-                const icon = 'binary-icon.svg';
-                item.iconPath = {
-                    light: path.join(thisExtension().extensionPath, "res/light", icon),
-                    dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-                };
-                item.command = {
-                    title: localize('Change Kit', 'Change Kit'),
-                    command: 'cmake.selectKit',
-                    arguments: []
-                };
-                item.tooltip = "";
-                item.collapsibleState= vscode.TreeItemCollapsibleState.None;
-                return item;
-            } else if (element.variant) {
-                const lable = element.variant;
-                const item = new vscode.TreeItem(lable);
-                //item.command = ;
-                const icon = 'binary-icon.svg';
-                item.iconPath = {
-                    light: path.join(thisExtension().extensionPath, "res/light", icon),
-                    dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-                };
-                item.command = {
-                    title: localize('Change Build Type', 'Change Build Type'),
-                    command: 'cmake.buildType',
-                    arguments: []
-                };
-                item.tooltip = "";
-                item.collapsibleState= vscode.TreeItemCollapsibleState.None;
-                return item;
-            }
-            return {};
-        }
+        this._onDidChangeTreeData.fire(undefined);
     }
-    getChildren(element?: subNodeEntry | undefined): vscode.ProviderResult<subNodeEntry[]> {
+    getTreeItem(element: Node): TreeItem {
+        return element.getTreeItem();
+    }
+    getChildren(element?: Node | undefined): Node[] {
         // When initializing the tree
         if (!element) {
-            return [
-                {
-                    useCMakePresets: true,
-                    nodeType: NodeType.Configure
-                },
-                {
-                    useCMakePresets: true,
-                    nodeType: NodeType.Build
-                },
-                {
-                    useCMakePresets: true,
-                    nodeType: NodeType.Test
-                }
-        ];
+            return [new ConfigNode(), new BuildNode()];
         } else {
-            if (element.nodeType === NodeType.Configure) {
-                return [
-                    {
-                        useCMakePresets: element.useCMakePresets,
-                        nodeType: NodeType.subNode,
-                        kit: "kit1",
-                    },
-                    {
-                    useCMakePresets: element.useCMakePresets,
-                    nodeType: NodeType.subNode,
-                    variant: "Debug"
-                    }
-                ];
-            }
+            return element.getChildren();
         }
     }
-    getParent?(_element: NodeEntry): vscode.ProviderResult<NodeEntry> {
-        throw new Error('Method not implemented.');
-    }
-    resolveTreeItem?(_item: vscode.TreeItem, _element: NodeEntry, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
-        throw new Error('Method not implemented.');
-    }
-}
 
-interface NodeEntry {
-    useCMakePresets: boolean;
-    nodeType: NodeType;
-}
-
-interface subNodeEntry extends NodeEntry {
-    kit?: string;
-    preset?: string;
-    target?: string;
-    variant?: string;
 }
 
 enum NodeType {
     Configure = "Configure",
     Build = "Build",
     Test = "Test",
-    subNode = "subNode"
+    Preset = "Preset",
+    Kit = "Kit",
+    Variant = "Variant",
+    Target = "Target"
 }
 
-/*export class PresetConfigProvider extends SideBarTreeProvider{
+class Node extends TreeItem{
+
+    static cmakeProject?: CMakeProject;
+    static updateActiveProject(cmakeProject?: CMakeProject): void {
+        // Use project to create the tree
+        if (cmakeProject) {
+            Node.cmakeProject = cmakeProject;
+        }
+    }
+
+    getTreeItem(): TreeItem {
+        return this;
+    }
+
+    getChildren(): Node[] {
+        return [];
+    }
+
+    async initialize(nodeType: NodeType): Promise<void> {
+        let icon: string;
+        if (!Node.cmakeProject) {
+            return;
+        }
+        switch (nodeType) {
+            case NodeType.Configure:
+                this.label = NodeType.Configure;
+                icon = 'binary-icon.svg';
+                this.iconPath = {
+                    light: path.join(thisExtension().extensionPath, "res/light", icon),
+                    dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+                };
+                this.command = {
+                    title: localize('Configure', 'Configure'),
+                    command: 'cmake.configure',
+                    arguments: []
+                };
+                this.tooltip = "";
+                this.collapsibleState = TreeItemCollapsibleState.Expanded;
+                break;
+            case NodeType.Build:
+                    this.label = NodeType.Build;
+                    icon = 'binary-icon.svg';
+                    this.iconPath = {
+                        light: path.join(thisExtension().extensionPath, "res/light", icon),
+                        dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+                    };
+                    this.command = {
+                        title: localize('Build', 'Build'),
+                        command: 'cmake.build',
+                        arguments: []
+                    };
+                    this.tooltip = "";
+                    this.collapsibleState = TreeItemCollapsibleState.Expanded;
+                    break;
+            case NodeType.Kit:
+                this.label = Node.cmakeProject.activeKit?.name || "";
+                icon = 'binary-icon.svg';
+                this.iconPath = {
+                    light: path.join(thisExtension().extensionPath, "res/light", icon),
+                    dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+                };
+                this.command = {
+                    title: localize('Change Kit', 'Change Kit'),
+                    command: 'cmake.selectKit',
+                    arguments: []
+                };
+                this.tooltip = "";
+                this.collapsibleState = TreeItemCollapsibleState.None;
+                break;
+            case NodeType.Variant:
+                this.label = await Node.cmakeProject.currentBuildType() || "Debug";
+                icon = 'binary-icon.svg';
+                this.iconPath = {
+                    light: path.join(thisExtension().extensionPath, "res/light", icon),
+                    dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+                };
+                this.command = {
+                    title: localize('Change Build Type', 'Change Build Type'),
+                    command: 'cmake.buildType',
+                    arguments: []
+                };
+                this.tooltip = "";
+                this.collapsibleState = TreeItemCollapsibleState.None;
+                break;
+            case NodeType.Target:
+                this.label = await Node.cmakeProject.buildTargetName() || await Node.cmakeProject.allTargetName;
+                icon = 'binary-icon.svg';
+                this.iconPath = {
+                    light: path.join(thisExtension().extensionPath, "res/light", icon),
+                    dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+                };
+                this.command = {
+                    title: localize('Change Target', 'Change Target'),
+                    command: 'cmake.buildTargetName',
+                    arguments: []
+                };
+                this.tooltip = "";
+                this.collapsibleState = TreeItemCollapsibleState.None;
+        }
+    }
 }
 
-export class KitConfigProvider extends SideBarTreeProvider{
-}
+export class ConfigNode extends Node {
 
-export class SettingNode extends vscode.TreeItem {
+    private useCMakePresets?: boolean;
+    private kit?: Node;
+    private variant?: Node;
+    private preset?: Node;
+    
+    constructor() {
+        super(NodeType.Configure);
+        this.initialize(NodeType.Configure);
+        this.InitializeChildren(false);
+    }
 
-    constructor(
-        public readonly label: string,
-		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		public readonly command?: CMakeCommand
-    ){
-        super(label, collapsibleState);
-        this.tooltip = `${this.label}`;
+    InitializeChildren(useCMakePresets: boolean) {
+        this.useCMakePresets = useCMakePresets;
+        if (!this.useCMakePresets) {
+            this.kit = new Node(NodeType.Kit);
+            this.kit.initialize(NodeType.Kit);
+            this.variant = new Node("Debug");
+            this.variant.initialize(NodeType.Variant);
+        } else {
+            this.preset = new Node(NodeType.Preset);
+            this.preset.initialize(NodeType.Preset);     
+        }
+    }
+
+    getChildren(): Node[] {
+        if (this.useCMakePresets) {
+            return [this.preset!];
+        } else {
+            return [this.kit!, this.variant!];
+        }
     }
 
 }
 
-export class PresetNode extends SettingNode {
+export class BuildNode extends Node {
+
+    private useCMakePresets?: boolean;
+    private target?: Node;
+    private preset?: Node;
+    
+    constructor() {
+        super(NodeType.Build);
+        this.initialize(NodeType.Build);
+        this.InitializeChildren(false);
+    }
+
+    InitializeChildren(_useCMakePresets: boolean) {
+        this.useCMakePresets = false;
+        if (!this.useCMakePresets) {
+            this.target = new Node(NodeType.Target);
+            this.target.initialize(NodeType.Target);
+        } else {
+            this.preset = new Node(NodeType.Preset);
+            this.preset.initialize(NodeType.Preset);     
+        }
+    }
+
+    getChildren(): Node[] {
+        if (this.useCMakePresets) {
+            return [this.preset!];
+        } else {
+            return [this.target!];
+        }
+    }
 
 }
-
-export class KitNode extends SettingNode {
-
-}*/
-
-
-export class CMakeCommand implements vscode.Command {
+export class CMakeCommand implements Command {
 
     constructor(public title: string, public command: string, public aruments?: string[]) {}
-}
-
-export class FileSystemProvider implements vscode.TreeDataProvider<NodeEntry> {
-    onDidChangeTreeData?: vscode.Event<any> | undefined;
-    getTreeItem(_element: NodeEntry): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        throw new Error('Method not implemented.');
-    }
-    getChildren(_element?: any): vscode.ProviderResult<NodeEntry[]> {
-        throw new Error('Method not implemented.');
-    }
-    getParent?(_element: NodeEntry): vscode.ProviderResult<NodeEntry> {
-        throw new Error('Method not implemented.');
-    }
-    resolveTreeItem?(_item: vscode.TreeItem, _element: NodeEntry, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.TreeItem> {
-        throw new Error('Method not implemented.');
-    }
 }

@@ -47,6 +47,7 @@ import { SideBar } from './sideBar';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
+export let sideBar: SideBar;
 
 const log = logging.createLogger('extension');
 
@@ -1779,7 +1780,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await util.setContextValue("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
-    new SideBar();
+    sideBar = new SideBar();
 
     return setup(context);
 }

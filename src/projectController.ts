@@ -13,7 +13,7 @@ import { ConfigurationReader } from './config';
 import { CMakeDriver } from './drivers/drivers';
 import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
-import { getStatusBar } from './extension';
+import { getStatusBar, sideBar } from './extension';
 import * as telemetry from './telemetry';
 import { StatusBar } from './status';
 
@@ -99,6 +99,7 @@ export class ProjectController implements vscode.Disposable {
     setActiveProject(project?: CMakeProject): void {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
+        sideBar.updateActiveProject(this.activeProject);
     }
 
     public getActiveCMakeProject(): CMakeProject | undefined {
