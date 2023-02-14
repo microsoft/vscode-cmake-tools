@@ -235,6 +235,15 @@
         }
       },
       {
+        "command": "cmake.sideBar.build",
+        "title": "%cmake-tools.command.cmake.build.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "icon": {
+          "dark": "res/dark/build-icon.svg",
+          "light": "res/light/build-icon.svg"
+        }
+      },
+      {
         "command": "cmake.outline.buildTarget",
         "title": "%cmake-tools.command.cmake.build.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -265,13 +274,9 @@
         }
       },
       {
-        "command": "cmake.sideBar.build",
-        "title": "%cmake-tools.command.cmake.build.title%",
+        "command": "cmake.buildNamedTarget",
         "when": "cmake:enableFullFeatureSet",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "title": "%cmake-tools.command.cmake.buildNamedTarget.title%"
       },
       {
         "command": "cmake.compileFile",
@@ -535,21 +540,6 @@
         "command": "cmake.outline.runUtilityTarget",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.runUtilityTarget.title%"
-      },
-      {
-        "command": "cmake.outline.launchTarget",
-        "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.launchTarget.title%"
-      },
-      {
-        "command": "cmake.outline.setDefaultTarget",
-        "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.setDefaultTarget.title%"
-      },
-      {
-        "command": "cmake.outline.setLaunchTarget",
-        "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.setLaunchTarget.title%"
       },
       {
         "command": "cmake.outline.revealInCMakeLists",
