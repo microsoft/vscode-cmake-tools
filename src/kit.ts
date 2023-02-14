@@ -1026,7 +1026,7 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
         // Search them all in parallel
         let kit_promises = [] as Promise<Kit[]>[];
         if (isWin32 && kit_options.minGWSearchDirs) {
-            for (const dir of convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs)) {
+            for (const dir of kit_options.minGWSearchDirs) {
                 scan_paths.add(dir);
             }
         }
@@ -1206,10 +1206,6 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         expandedKits.push(kit);
     }
     return expandedKits;
-}
-
-function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
-    return mingwDirs.map(mingwDir => path.join(mingwDir, 'bin'));
 }
 
 /**

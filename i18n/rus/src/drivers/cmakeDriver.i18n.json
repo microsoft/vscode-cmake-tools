@@ -38,6 +38,7 @@
 	"using.compilers.in.for.configure": "Использование компиляторов в {0} для настройки.",
 	"using.cmake.toolchain.for.configure": "Использование цепочки инструментов CMake {0} для настройки.",
 	"start.build": "Запустить сборку",
+	"build.duration": "Сборка выполнена: {0}",
 	"running.pre-configure.checks": "Выполнение проверок и действий перед настройкой.",
 	"source.directory.not.set": "Исходный каталог не задан.",
 	"not.configuring": "Настройка не выполнена: отсутствует {0}",

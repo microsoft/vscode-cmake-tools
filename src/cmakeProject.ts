@@ -24,7 +24,7 @@ import {
 import { CTestDriver, BasicTestResults } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
-import { populateCollection } from './diagnostics/util';
+import { FileDiagnostic, populateCollection } from './diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit } from './kit';
 import * as logging from './logging';
@@ -80,7 +80,9 @@ export enum ConfigureTrigger {
     commandCleanConfigure = "commandCleanConfigure",
     commandConfigureAll = "commandConfigureAll",
     commandCleanConfigureAll = "commandCleanConfigureAll",
-    taskProvider = "taskProvider"
+    taskProvider = "taskProvider",
+    selectConfigurePreset = "selectConfigurePreset",
+    selectKit = "selectKit"
 }
 
 export interface DiagnosticsConfiguration {
@@ -1650,7 +1652,7 @@ export class CMakeProject {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        const fileDiags = consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir);
+                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir) : [];
                         if (fileDiags) {
                             populateCollection(collections.build, fileDiags);
                         }
@@ -1883,7 +1885,9 @@ export class CMakeProject {
     async setVariant(name?: string) {
         // Make this function compatibile with return code style...
         if (await this.variantManager.selectVariant(name)) {
-            await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+            if (this.workspaceContext.config.automaticReconfigure) {
+                await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+            }
             return 0; // succeeded
         }
         return 1; // failed
@@ -2162,7 +2166,13 @@ export class CMakeProject {
 
         const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
         if (buildOnLaunch || isReconfigurationNeeded) {
-            const buildResult = await this.build([chosen.name]);
+            const buildTargets = await this.getDefaultBuildTargets() || [];
+            const allTargetName = await this.allTargetName;
+            if (!buildTargets.includes(allTargetName) && !buildTargets.includes(chosen.name)) {
+                buildTargets.push(chosen.name);
+            }
+
+            const buildResult = await this.build(buildTargets);
             if (buildResult !== 0) {
                 log.debug(localize('build.failed', 'Build failed'));
                 return null;
