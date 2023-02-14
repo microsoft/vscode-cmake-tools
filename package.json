@@ -207,21 +207,8 @@
         "category": "CMake"
       },
       {
-        "command": "cmake.configureAll",
-        "title": "%cmake-tools.command.cmake.configureAll.title%",
-        "category": "CMake"
-      },
-      {
         "command": "cmake.outline.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
-        "icon": {
-          "dark": "res/dark/configure-icon.svg",
-          "light": "res/light/configure-icon.svg"
-        }
-      },
-      {
-        "command": "cmake.outline.configureAll",
-        "title": "%cmake-tools.command.cmake.configureAll.title%",
         "icon": {
           "dark": "res/dark/configure-icon.svg",
           "light": "res/light/configure-icon.svg"
@@ -236,6 +223,19 @@
         },
         "when": "never",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.configureAll",
+        "title": "%cmake-tools.command.cmake.configureAll.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.configureAll",
+        "title": "%cmake-tools.command.cmake.configureAll.title%",
+        "icon": {
+          "dark": "res/dark/configure-icon.svg",
+          "light": "res/light/configure-icon.svg"
+        }
       },
       {
         "command": "cmake.build",

@@ -561,7 +561,7 @@ export class ExtensionManager implements vscode.Disposable {
         await this.postUpdateActiveProject();
     }
 
-    async updateStatusBarForActiveProjectChange(): Promise<void> {
+    async updateSideBarForActiveProjectChange(): Promise<void> {
         await this.postUpdateActiveProject();
     }
 
@@ -579,6 +579,8 @@ export class ExtensionManager implements vscode.Disposable {
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
             const currentActiveFolderPath = this.activeFolderPath();
             await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
+            // Update sideBar
+            sideBar.updateActiveProject(activeProject);
         }
     }
 
@@ -1737,8 +1739,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
-        // Notification of active project change (e.g. when cmake.sourceDirectory changes)
-        vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange())
+        vscode.commands.registerCommand('cmake.sideBar.update', () => extensionManager?.updateSideBarForActiveProjectChange())
     ]);
 
     return { getApi: (_version) => ext.api };
