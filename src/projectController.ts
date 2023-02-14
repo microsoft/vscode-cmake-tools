@@ -13,7 +13,7 @@ import { ConfigurationReader } from './config';
 import { CMakeDriver } from './drivers/drivers';
 import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
-import { getStatusBar, sideBar } from './extension';
+import { getStatusBar } from './extension';
 import * as telemetry from './telemetry';
 import { StatusBar } from './status';
 
@@ -99,7 +99,7 @@ export class ProjectController implements vscode.Disposable {
     setActiveProject(project?: CMakeProject): void {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
-        sideBar.updateActiveProject(this.activeProject);
+        void vscode.commands.executeCommand('cmake.sideBar.update');
     }
 
     public getActiveCMakeProject(): CMakeProject | undefined {
@@ -376,9 +376,8 @@ export class ProjectController implements vscode.Disposable {
             this.folderToProjectsMap.set(folder.uri.fsPath, projects);
 
             if (multiProjectChange || activeProjectPath !== undefined) {
-                // There's no way to reach into the extension manager and update the status bar, so we exposed a hidden command
-                // to referesh it.
-                void vscode.commands.executeCommand('cmake.statusbar.update');
+                // Update the sideBar
+                void vscode.commands.executeCommand('cmake.sideBar.update');
             }
         }
     }
