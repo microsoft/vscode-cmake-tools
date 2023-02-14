@@ -23,14 +23,13 @@ export class SideBar {
     constructor() {
         this.sideBarTreeProvider = new SideBarTreeProvider();
         this.sideBar = window.createTreeView('CMakeProjectExplorer', { treeDataProvider: this.sideBarTreeProvider });
-        commands.registerCommand('CMakeProjectExplorer.changeProject', () => this.updateActiveProject());
-        commands.registerCommand('CMakeProjectExplorer.refresh', () => this.sideBarTreeProvider.refresh());
-        // register all commands
+        commands.registerCommand('cmake.sideBar.configure', () => {});
+        commands.registerCommand('cmake.sideBar.build', (node: Node) => {});
 
     }
     updateActiveProject(cmakeProject?: CMakeProject): void {
         // Update Active Project
-        this.sideBarTreeProvider.updateActiveProject(cmakeProject)
+        this.sideBarTreeProvider.updateActiveProject(cmakeProject);
     }
     dispose(): void {
         this.sideBar.dispose;
@@ -103,36 +102,6 @@ class Node extends TreeItem{
             return;
         }
         switch (nodeType) {
-            case NodeType.Configure:
-                this.label = NodeType.Configure;
-                icon = 'binary-icon.svg';
-                this.iconPath = {
-                    light: path.join(thisExtension().extensionPath, "res/light", icon),
-                    dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-                };
-                this.command = {
-                    title: localize('Configure', 'Configure'),
-                    command: 'cmake.configure',
-                    arguments: []
-                };
-                this.tooltip = "";
-                this.collapsibleState = TreeItemCollapsibleState.Expanded;
-                break;
-            case NodeType.Build:
-                    this.label = NodeType.Build;
-                    icon = 'binary-icon.svg';
-                    this.iconPath = {
-                        light: path.join(thisExtension().extensionPath, "res/light", icon),
-                        dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-                    };
-                    this.command = {
-                        title: localize('Build', 'Build'),
-                        command: 'cmake.build',
-                        arguments: []
-                    };
-                    this.tooltip = "";
-                    this.collapsibleState = TreeItemCollapsibleState.Expanded;
-                    break;
             case NodeType.Kit:
                 this.label = Node.cmakeProject.activeKit?.name || "";
                 icon = 'binary-icon.svg';
@@ -190,7 +159,19 @@ export class ConfigNode extends Node {
     
     constructor() {
         super(NodeType.Configure);
-        this.initialize(NodeType.Configure);
+        this.label = NodeType.Configure;
+        const icon = 'binary-icon.svg';
+        this.iconPath = {
+            light: path.join(thisExtension().extensionPath, "res/light", icon),
+            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+        };
+        this.command = {
+            title: localize('Configure', 'Configure'),
+            command: 'cmake.configure',
+            arguments: []
+        };
+        this.tooltip = "";
+        this.collapsibleState = TreeItemCollapsibleState.Expanded;
         this.InitializeChildren(false);
     }
 
@@ -225,6 +206,18 @@ export class BuildNode extends Node {
     
     constructor() {
         super(NodeType.Build);
+        const icon = 'binary-icon.svg';
+        this.iconPath = {
+            light: path.join(thisExtension().extensionPath, "res/light", icon),
+            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+        };
+        this.command = {
+            title: localize('Build', 'Build'),
+            command: 'cmake.build',
+            arguments: []
+        };
+        this.tooltip = "";
+        this.collapsibleState = TreeItemCollapsibleState.Expanded;
         this.initialize(NodeType.Build);
         this.InitializeChildren(false);
     }

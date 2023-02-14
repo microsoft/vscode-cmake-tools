@@ -152,7 +152,11 @@
         "command": "cmake.sideBar.selectKit",
         "title": "%cmake-tools.command.cmake.selectKit.title%",
         "when": "cmake:enableFullFeatureSet",
-        "category": "CMake"
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
       },
       {
         "command": "cmake.setVariant",
@@ -320,8 +324,12 @@
       {
         "command": "cmake.sideBar.setDefaultTarget",
         "title": "%cmake-tools.command.cmake.setDefaultTarget.title%",
-        "when": "never",
-        "category": "CMake"
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
       },
       {
         "command": "cmake.cleanConfigure",
@@ -482,7 +490,11 @@
       {
         "command": "cmake.sideBar.setLaunchTarget",
         "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.setLaunchTarget.title%"
+        "title": "%cmake-tools.command.cmake.outline.setLaunchTarget.title%",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
       },
       {
         "command": "cmake.stop",
