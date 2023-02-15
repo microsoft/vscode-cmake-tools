@@ -2114,7 +2114,7 @@
     "views": {
       "cmake__viewContainer": [
         {
-          "id": "CMakeProjectExplorer",
+          "id": "cmake.sideBar",
           "name": "%cmake-tools.configuration.views.cmake.explorer.description%",
           "when": "cmake:enableFullFeatureSet"
         },

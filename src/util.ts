@@ -11,6 +11,7 @@ import rollbar from '@cmt/rollbar';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
+import { ExtensionManager } from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -904,4 +905,9 @@ export function getHostArchitecture() {
         default:
             return 'x64';
     }
+}
+
+// Util for the special commands to forward to real commands
+export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
+    return vscode.commands.executeCommand(`cmake.${key}`, ...args);
 }

@@ -1,6 +1,5 @@
 import path = require('path');
 import {
-    Command,
     commands,
     Event,
     EventEmitter,
@@ -8,35 +7,53 @@ import {
     TreeItem,
     TreeItemCollapsibleState,
     TreeView,
-    window
+    window,
+    WorkspaceFolder
 } from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
-import { thisExtension } from './util';
+import { runCommand, thisExtension } from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export class SideBar {
-    private sideBar: TreeView<Node>;
-    private sideBarTreeProvider: SideBarTreeProvider;
+    private sideBarTreeView: TreeView<Node>;
+    private sideBarTreeDataProvider: SideBarTreeDataProvider;
     constructor() {
-        this.sideBarTreeProvider = new SideBarTreeProvider();
-        this.sideBar = window.createTreeView('CMakeProjectExplorer', { treeDataProvider: this.sideBarTreeProvider });
-        commands.registerCommand('cmake.sideBar.configure', () => {});
-        commands.registerCommand('cmake.sideBar.build', (node: Node) => {});
-
+        this.sideBarTreeDataProvider = new SideBarTreeDataProvider();
+        this.sideBarTreeView = window.createTreeView('cmake.sideBar', { treeDataProvider: this.sideBarTreeDataProvider });
+        commands.registerCommand('cmake.sideBar.selectKit', () => {}),
+        commands.registerCommand('cmake.sideBar.build', (node: Node) => { this.build(node); })
     }
+
     updateActiveProject(cmakeProject?: CMakeProject): void {
         // Update Active Project
-        this.sideBarTreeProvider.updateActiveProject(cmakeProject);
+        this.sideBarTreeDataProvider.updateActiveProject(cmakeProject);
     }
+
+    selectKit(node: Node) {
+        runCommand('selectKit', node.getWorkspaceFolder(), node.getBuildTargetName());
+        this.sideBarTreeDataProvider.refresh();
+    }
+
+    build(node: Node) {
+        if (!node) {
+            return;
+        }
+        runCommand('build', node.getWorkspaceFolder(), node.getBuildTargetName());
+    }
+
+    clear(){
+        this.sideBarTreeDataProvider.clear();
+    }
+
     dispose(): void {
-        this.sideBar.dispose;
+        this.sideBarTreeView.dispose;
     }
 }
 
-export class SideBarTreeProvider implements TreeDataProvider<Node>{
+export class SideBarTreeDataProvider implements TreeDataProvider<Node>{
 
     private _onDidChangeTreeData: EventEmitter<any> = new EventEmitter<any>();
     readonly onDidChangeTreeData: Event<any> = this._onDidChangeTreeData.event;
@@ -51,12 +68,21 @@ export class SideBarTreeProvider implements TreeDataProvider<Node>{
             this.refresh();
         }
     }
+
     public refresh(): any {
+        // Sig
         this._onDidChangeTreeData.fire(undefined);
     }
+
+    clear(): void {
+        Node.updateActiveProject(undefined);
+        this._onDidChangeTreeData.fire(undefined);
+    }
+
     getTreeItem(element: Node): TreeItem {
         return element.getTreeItem();
     }
+
     getChildren(element?: Node | undefined): Node[] {
         // When initializing the tree
         if (!element) {
@@ -68,17 +94,7 @@ export class SideBarTreeProvider implements TreeDataProvider<Node>{
 
 }
 
-enum NodeType {
-    Configure = "Configure",
-    Build = "Build",
-    Test = "Test",
-    Preset = "Preset",
-    Kit = "Kit",
-    Variant = "Variant",
-    Target = "Target"
-}
-
-class Node extends TreeItem{
+export class Node extends TreeItem{
 
     static cmakeProject?: CMakeProject;
     static updateActiveProject(cmakeProject?: CMakeProject): void {
@@ -96,6 +112,14 @@ class Node extends TreeItem{
         return [];
     }
 
+    getWorkspaceFolder(): WorkspaceFolder | undefined {
+        return Node.cmakeProject?.workspaceFolder;
+    }
+
+    async getBuildTargetName(): Promise<string | undefined>{
+        return await Node.cmakeProject?.buildTargetName() || Node.cmakeProject?.allTargetName || undefined;
+    }
+
     async initialize(nodeType: NodeType): Promise<void> {
         let icon: string;
         if (!Node.cmakeProject) {
@@ -111,7 +135,7 @@ class Node extends TreeItem{
                 };
                 this.command = {
                     title: localize('Change Kit', 'Change Kit'),
-                    command: 'cmake.selectKit',
+                    command: 'cmake.sideBar.selectKit',
                     arguments: []
                 };
                 this.tooltip = "";
@@ -213,8 +237,8 @@ export class BuildNode extends Node {
         };
         this.command = {
             title: localize('Build', 'Build'),
-            command: 'cmake.build',
-            arguments: []
+            command: 'cmake.sideBar.build',
+            arguments: [this]
         };
         this.tooltip = "";
         this.collapsibleState = TreeItemCollapsibleState.Expanded;
@@ -242,7 +266,13 @@ export class BuildNode extends Node {
     }
 
 }
-export class CMakeCommand implements Command {
 
-    constructor(public title: string, public command: string, public aruments?: string[]) {}
+enum NodeType {
+    Configure = "Configure",
+    Build = "Build",
+    Test = "Test",
+    Preset = "Preset",
+    Kit = "Kit",
+    Variant = "Variant",
+    Target = "Target"
 }

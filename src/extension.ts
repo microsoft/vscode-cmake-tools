@@ -33,7 +33,7 @@ import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutlineProvider';
 import * as util from '@cmt/util';
-import { ProgressHandle, DummyDisposable, reportProgress } from '@cmt/util';
+import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
@@ -47,7 +47,7 @@ import { SideBar } from './sideBar';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
-export let sideBar: SideBar;
+let sideBar: SideBar;
 
 const log = logging.createLogger('extension');
 
@@ -1708,11 +1708,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         context.subscriptions.push(vscode.commands.registerCommand('cmake.getSettingsChangePromise', () => getSettingsChangePromise()));
     }
 
-    // Util for the special commands to forward to real commands
-    function runCommand(key: keyof ExtensionManager, ...args: any[]) {
-        return vscode.commands.executeCommand(`cmake.${key}`, ...args);
-    }
-
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
@@ -1733,6 +1728,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
         vscode.commands.registerCommand('cmake.sideBar.update', () => extensionManager?.updateSideBarForActiveProjectChange()),
+
     ]);
 
     return { getApi: (_version) => ext.api };
@@ -1819,6 +1815,9 @@ export async function deactivate() {
     }
     if (taskProvider) {
         taskProvider.dispose();
+    }
+    if (sideBar) {
+        sideBar.dispose();
     }
 }
 
