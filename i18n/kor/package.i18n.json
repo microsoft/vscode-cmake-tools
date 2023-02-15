@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "CMake Tools 확장에서 현재 지원하지 않는 버전의 기능을 사용하는 사전 설정 파일을 사용하도록 설정합니다. 알 수 없는 속성 및 매크로는 무시됩니다.",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true`이면 확장에서 작업 영역에 있지만 루트 폴더에는 없는 경우 구성을 위해 CMakeLists.txt 파일을 선택하도록 사용자에게 요청하지 않습니다.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "대상을 시작할 때 시작 터미널에서 수행되는 작업을 제어합니다.",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "키트 또는 구성 사전 설정이 변경되면 CMake 프로젝트 디렉터리를 자동으로 구성합니다.",
 	"cmake-tools.taskDefinitions.properties.label.description": "작업의 이름",
 	"cmake-tools.taskDefinitions.properties.command.description": "CMake 명령",
 	"cmake-tools.taskDefinitions.properties.targets.description": "CMake 빌드 대상",

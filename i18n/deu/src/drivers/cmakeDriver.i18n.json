@@ -38,6 +38,7 @@
 	"using.compilers.in.for.configure": "Compiler in {0} werden zur Konfiguration verwendet",
 	"using.cmake.toolchain.for.configure": "CMake-Toolkette {0} wird zum Konfigurieren verwendet",
 	"start.build": "Build starten",
+	"build.duration": "Build abgeschlossen: {0}",
 	"running.pre-configure.checks": "Prüfungen und Schritte vor der Konfiguration werden ausgeführt",
 	"source.directory.not.set": "Das Quellverzeichnis wurde nicht festgelegt.",
 	"not.configuring": "Die Konfiguration wird nicht ausgeführt: {0} nicht vorhanden",
