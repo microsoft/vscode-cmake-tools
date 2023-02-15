@@ -935,6 +935,25 @@
       ],
       "view/item/context": [
         {
+          "command": "cmake.sideBar.selectKit",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'editable'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.configure",
+          "when": "never"
+        },
+        {
+          "command": "cmake.sideBar.build",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'build'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.setDefaultTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'defaultTarget'",
+          "group": "inline"
+        },
+        {
           "command": "cmake.outline.buildTarget",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canBuild=true|canRun=true/",
           "group": "inline"
@@ -2104,7 +2123,7 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "cmake__viewContainer",
+          "id": "cmake-view",
           "title": "CMake",
           "icon": "res/cmake-view-icon2.svg",
           "when": "cmake:enableFullFeatureSet"
@@ -2112,7 +2131,7 @@
       ]
     },
     "views": {
-      "cmake__viewContainer": [
+      "cmake-view": [
         {
           "id": "cmake.sideBar",
           "name": "%cmake-tools.configuration.views.cmake.explorer.description%",

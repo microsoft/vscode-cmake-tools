@@ -1717,7 +1717,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
-        // Commands for outline items:
+        // Commands for outline items
         vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name)),
         vscode.commands.registerCommand('cmake.outline.runUtilityTarget', (what: TargetNode) => runCommand('build', what.folder, what.name)),
         vscode.commands.registerCommand('cmake.outline.debugTarget', (what: TargetNode) => runCommand('debugTarget', what.folder, what.name)),
@@ -1727,8 +1727,17 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
+        // Commands for sideBar items
         vscode.commands.registerCommand('cmake.sideBar.update', () => extensionManager?.updateSideBarForActiveProjectChange()),
-
+        vscode.commands.registerCommand('cmake.sideBar.selectKit', () => {
+            runCommand('selectKit');
+            sideBar.refresh();
+        }),
+        vscode.commands.registerCommand('cmake.sideBar.build', async (folder: vscode.WorkspaceFolder, target: Promise<string>) => runCommand('build', folder, await target)),
+        vscode.commands.registerCommand('cmake.sideBar.setDefaultTarget', async (folder: vscode.WorkspaceFolder, target: Promise<string>) => {
+            runCommand('setDefaultTarget', folder, await target);
+            sideBar.refresh();
+        })
     ]);
 
     return { getApi: (_version) => ext.api };
