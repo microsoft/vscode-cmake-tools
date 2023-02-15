@@ -122,11 +122,6 @@ export class ConfigNode extends Node {
         if (!Node.cmakeProject) {
             return;
         }
-        const icon = 'binary-icon.svg';
-        this.iconPath = {
-            light: path.join(thisExtension().extensionPath, "res/light", icon),
-            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-        };
         this.command = {
             title: localize('Configure', 'Configure'),
             command: 'cmake.configure',
@@ -174,11 +169,6 @@ export class BuildNode extends Node {
         if (!Node.cmakeProject) {
             return;
         }
-        const icon = 'binary-icon.svg';
-        this.iconPath = {
-            light: path.join(thisExtension().extensionPath, "res/light", icon),
-            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-        };
         this.command = {
             title: localize('Build', 'Build'),
             command: 'cmake.sideBar.build',
@@ -222,11 +212,6 @@ export class PresetNode extends Node {
             return;
         }
         this.label = Node.cmakeProject.activeKit?.name || "";
-        const icon = 'binary-icon.svg';
-        this.iconPath = {
-            light: path.join(thisExtension().extensionPath, "res/light", icon),
-            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-        };
         this.command = {
             title: localize('Change Kit', 'Change Kit'),
             command: 'cmake.sideBar.selectKit',
@@ -249,11 +234,6 @@ export class KitNode extends Node {
             return;
         }
         this.label = Node.cmakeProject.activeKit?.name || "";
-        const icon = 'binary-icon.svg';
-        this.iconPath = {
-            light: path.join(thisExtension().extensionPath, "res/light", icon),
-            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-        };
         this.command = {
             title: localize('Change Kit', 'Change Kit'),
             command: 'cmake.sideBar.selectKit',
@@ -275,11 +255,6 @@ export class TargetNode extends Node {
             return;
         }
         this.label = await Node.cmakeProject.buildTargetName() || await Node.cmakeProject.allTargetName;
-        const icon = 'binary-icon.svg';
-        this.iconPath = {
-            light: path.join(thisExtension().extensionPath, "res/light", icon),
-            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-        };
         this.command = {
             title: localize('set.build.target', 'Set Build Target'),
             command: 'cmake.sideBar.setDefaultTarget',
@@ -302,11 +277,6 @@ export class VariantNode extends Node {
             return;
         }
         this.label = await Node.cmakeProject.currentBuildType() || "Debug";
-        const icon = 'binary-icon.svg';
-        this.iconPath = {
-            light: path.join(thisExtension().extensionPath, "res/light", icon),
-            dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-        };
         this.command = {
             title: localize('Change Build Type', 'Change Build Type'),
             command: 'cmake.buildType',
