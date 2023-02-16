@@ -38,7 +38,7 @@
 	"using.compilers.in.for.configure": "구성을 위해 {0}의 컴파일러를 사용하는 중",
 	"using.cmake.toolchain.for.configure": "구성을 위해 CMake 도구 체인 {0}을(를) 사용하는 중",
 	"start.build": "빌드 시작",
-	"build.duration": "Build completed: {0}",
+	"build.duration": "빌드 완료됨: {0}",
 	"running.pre-configure.checks": "사전 구성 검사 및 단계 실행 중",
 	"source.directory.not.set": "소스 디렉터리가 설정되지 않음",
 	"not.configuring": "구성하지 않음: {0}이(가) 없음",
