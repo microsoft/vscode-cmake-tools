@@ -95,6 +95,16 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.sideBar.selectBuildPreset",
+        "title": "%cmake-tools.command.cmake.selectBuildPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
+      },
+      {
         "command": "cmake.selectTestPreset",
         "title": "%cmake-tools.command.cmake.selectTestPreset.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",
@@ -884,6 +894,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.sideBar.selectBuildPreset",
+          "when": "never"
+        },
+        {
           "command": "cmake.sideBar.ctest",
           "when": "never"
         },
@@ -936,7 +950,7 @@
       "view/item/context": [
         {
           "command": "cmake.sideBar.selectKit",
-          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'editable'",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'kit'",
           "group": "inline"
         },
         {
@@ -951,6 +965,11 @@
         {
           "command": "cmake.sideBar.setDefaultTarget",
           "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'defaultTarget'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.selectBuildPreset",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'buildPreset'",
           "group": "inline"
         },
         {

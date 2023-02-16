@@ -1727,17 +1727,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
-        // Commands for sideBar items
         vscode.commands.registerCommand('cmake.sideBar.update', () => extensionManager?.updateSideBarForActiveProjectChange()),
-        vscode.commands.registerCommand('cmake.sideBar.selectKit', () => {
-            runCommand('selectKit');
-            sideBar.refresh();
-        }),
-        vscode.commands.registerCommand('cmake.sideBar.build', async (folder: vscode.WorkspaceFolder, target: Promise<string>) => runCommand('build', folder, await target)),
-        vscode.commands.registerCommand('cmake.sideBar.setDefaultTarget', async (folder: vscode.WorkspaceFolder, target: Promise<string>) => {
-            runCommand('setDefaultTarget', folder, await target);
-            sideBar.refresh();
-        })
     ]);
 
     return { getApi: (_version) => ext.api };
