@@ -89,6 +89,16 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.sideBar.selectConfigurePreset",
+        "title": "%cmake-tools.command.cmake.selectConfigurePreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
+      },
+      {
         "command": "cmake.selectBuildPreset",
         "title": "%cmake-tools.command.cmake.selectBuildPreset.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",
@@ -886,6 +896,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.sideBar.selectConfigurePreset",
+          "when": "never"
+        },
+        {
           "command": "cmake.sideBar.build",
           "when": "never"
         },
@@ -956,6 +970,11 @@
         {
           "command": "cmake.sideBar.configure",
           "when": "never"
+        },
+        {
+          "command": "cmake.sideBar.selectConfigurePreset",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'configPreset'",
+          "group": "inline"
         },
         {
           "command": "cmake.sideBar.build",
