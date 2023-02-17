@@ -59,9 +59,15 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
         this.disposables.push(...[
             this.sideBarTreeView,
             // Commands for sideBar items
-            commands.registerCommand('cmake.sideBar.selectKit', () => {
-                runCommand('selectKit');
+            commands.registerCommand('cmake.sideBar.selectKit', async (node: BaseNode) => {
+                await runCommand('selectKit');
+                await node.refresh();
                 this.refresh();
+            }),
+            commands.registerCommand('cmake.sideBar.selectConfigurePreset', async (node: BaseNode, folder: WorkspaceFolder) => {
+                await runCommand('selectConfigurePreset', folder);
+                await node.refresh();
+                this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.build', async (folder: WorkspaceFolder, target: Promise<string>) => runCommand('build', folder, await target)),
             commands.registerCommand('cmake.sideBar.setDefaultTarget', async (node: BaseNode, folder: WorkspaceFolder, target: Promise<string>) => {
@@ -150,10 +156,9 @@ export class BaseNode extends TreeItem{
 
 export class ConfigNode extends BaseNode {
 
-    private useCMakePresets?: boolean;
     private kit?: KitNode;
     private variant?: VariantNode;
-    private preset?: BaseNode;
+    private preset?: PresetNode;
     
     constructor() {
         super(NodeType.Configure);
@@ -173,9 +178,11 @@ export class ConfigNode extends BaseNode {
         await this.InitializeChildren(false);
     }
 
-    async InitializeChildren(useCMakePresets: boolean): Promise<void> {
-        this.useCMakePresets = useCMakePresets;
-        if (!this.useCMakePresets) {
+    async InitializeChildren(): Promise<void> {
+        if (!BaseNode.cmakeProject) {
+            return;
+        }
+        if (!BaseNode.cmakeProject.useCMakePresets) {
             this.kit = new KitNode();
             await this.kit.initialize();
             this.variant = new VariantNode();
@@ -187,10 +194,13 @@ export class ConfigNode extends BaseNode {
     }
 
     getChildren(): BaseNode[] {
-        if (this.useCMakePresets) {
-            return [this.preset!];
-        } else {
+        if (!BaseNode.cmakeProject) {
+            return [];
+        }
+        if (!BaseNode.cmakeProject.useCMakePresets) {
             return [this.kit!, this.variant!];
+        } else {
+            return [this.preset!];
         }
     }
 
@@ -260,12 +270,21 @@ export class PresetNode extends BaseNode {
             return;
         }
         switch (this.presetType) {
+            case PresetType.Configure: 
+                this.label = BaseNode.cmakeProject.buildPreset?.name;
+                this.command = {
+                    title: localize('Change Preset', 'Change Preset'),
+                    command: 'cmake.sideBar.selectConfigurePreset',
+                    arguments: [this]
+                };
+                this.contextValue = 'configPreset';
+                break;
             case PresetType.Build: 
                 this.label = BaseNode.cmakeProject.buildPreset?.name;
                 this.command = {
                     title: localize('Change Preset', 'Change Preset'),
                     command: 'cmake.sideBar.selectBuildPreset',
-                    arguments: []
+                    arguments: [this]
                 };
                 this.contextValue = 'buildPreset';
                 break;
