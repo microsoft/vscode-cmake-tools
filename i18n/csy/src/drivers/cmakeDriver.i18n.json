@@ -38,6 +38,7 @@
 	"using.compilers.in.for.configure": "Používají se kompilátory v místě {0} pro konfiguraci.",
 	"using.cmake.toolchain.for.configure": "Používá se sada nástrojů CMake {0} pro konfiguraci.",
 	"start.build": "Spustit sestavení",
+	"build.duration": "Sestavení bylo dokončeno: {0}.",
 	"running.pre-configure.checks": "Běží kontrola a kroky předběžné konfigurace",
 	"source.directory.not.set": "Zdrojový adresář není nastaven.",
 	"not.configuring": "Neprobíhá konfigurace: Není k dispozici žádná {0}.",

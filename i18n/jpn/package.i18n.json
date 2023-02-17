@@ -154,6 +154,7 @@
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "CMake Tools 拡張機能が現在サポートしていないバージョンの機能を使用しているプリセット ファイルの使用を有効にします。不明なプロパティとマクロは無視されます。",
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` の場合、拡張機能は、ワークスペース内で見つかったがルート フォルダーにない場合に、構成用の CMakeLists.txt ファイルを選択するようにユーザーに求めなくなります。",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "ターゲットを起動するときの起動ターミナルの動作を制御します。",
+	"cmake-tools.configuration.cmake.automaticReconfigure.description": "キットまたは構成プリセットが変更されたときに、CMake プロジェクト ディレクトリを自動的に構成します。",
 	"cmake-tools.taskDefinitions.properties.label.description": "タスクの名前",
 	"cmake-tools.taskDefinitions.properties.command.description": "CMake コマンド",
 	"cmake-tools.taskDefinitions.properties.targets.description": "CMake ビルド ターゲット",

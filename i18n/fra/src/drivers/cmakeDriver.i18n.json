@@ -38,6 +38,7 @@
 	"using.compilers.in.for.configure": "Utilisation de compilateurs dans {0} pour la configuration",
 	"using.cmake.toolchain.for.configure": "Utilisation de la chaîne d'outils CMake {0} pour la configuration",
 	"start.build": "Démarrer la build",
+	"build.duration": "Build terminée : {0}",
 	"running.pre-configure.checks": "Exécution des contrôles et des étapes de préconfiguration",
 	"source.directory.not.set": "Répertoire source non défini",
 	"not.configuring": "Aucune configuration : {0} n'existe pas",

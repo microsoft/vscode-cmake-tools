@@ -38,6 +38,7 @@
 	"using.compilers.in.for.configure": "正在使用 {0} 中的編譯器進行設定",
 	"using.cmake.toolchain.for.configure": "正在使用 CMake 工具鏈 {0} 進行設定",
 	"start.build": "啟動建置",
+	"build.duration": "建置已完成: {0}",
 	"running.pre-configure.checks": "正在執行預先設定的檢查及步驟",
 	"source.directory.not.set": "未設定來源目錄",
 	"not.configuring": "未設定: 沒有 {0}",

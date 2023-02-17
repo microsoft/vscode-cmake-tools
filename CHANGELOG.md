@@ -4,6 +4,7 @@
 Improvements:
 - Automatically configure CMake project directories when the kit or the configuration preset is changed. [PR #2973](https://github.com/microsoft/vscode-cmake-tools/pull/2973) [@maxmitti](https://github.com/maxmitti)
 - Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
+- Update documents on `cmake.mingwSearchDirs`. [#2996](https://github.com/microsoft/vscode-cmake-tools/issues/2996)
 - When starting debugging, also build the selected build target. [PR #2987](https://github.com/microsoft/vscode-cmake-tools/pull/2987) [@Maddimax](https://github.com/Maddimax)
 - Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
 - Print the build time in the output window. [#3008](https://github.com/microsoft/vscode-cmake-tools/issues/3008)

@@ -38,6 +38,7 @@
 	"using.compilers.in.for.configure": "{0} 内のコンパイラを使用して構成しています",
 	"using.cmake.toolchain.for.configure": "CMake ツールチェーン {0} を使用して構成しています",
 	"start.build": "ビルドの開始",
+	"build.duration": "ビルド完了: {0}",
 	"running.pre-configure.checks": "構成前のチェックとステップを実行しています",
 	"source.directory.not.set": "ソース ディレクトリが設定されていません",
 	"not.configuring": "構成されていません: {0} がありません",
