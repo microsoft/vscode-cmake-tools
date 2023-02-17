@@ -38,7 +38,7 @@
 	"using.compilers.in.for.configure": "正在使用 {0} 中的编译器进行配置",
 	"using.cmake.toolchain.for.configure": "正在使用 CMake 工具链 {0} 进行配置",
 	"start.build": "启动生成",
-	"build.duration": "Build completed: {0}",
+	"build.duration": "生成完毕: {0}",
 	"running.pre-configure.checks": "正在运行预配置检查和步骤",
 	"source.directory.not.set": "未设置源目录",
 	"not.configuring": "未配置: {0} 不存在",
