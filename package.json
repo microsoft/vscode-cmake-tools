@@ -476,7 +476,12 @@
       {
         "command": "cmake.sideBar.debugTarget",
         "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.debugTarget.title%"
+        "title": "%cmake-tools.command.cmake.debugTarget.title%",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
       },
       {
         "command": "cmake.debugTargetAll",
@@ -492,6 +497,11 @@
       },
       {
         "command": "cmake.outline.launchTarget",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.outline.launchTarget.title%"
+      },
+      {
+        "command": "cmake.sideBar.launchTarget",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.launchTarget.title%"
       },
@@ -983,7 +993,17 @@
         },
         {
           "command": "cmake.sideBar.setDefaultTarget",
-          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'defaultTarget'",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'buildTarget'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.debugTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'debugTarget'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.setlaunchTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'launchTarget'",
           "group": "inline"
         },
         {

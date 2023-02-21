@@ -79,7 +79,8 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
                 await runCommand('selectBuildPreset', folder);
                 await node.refresh();
                 this.refresh(node);
-            })
+            }),
+            
         ]);
     }
 
@@ -173,9 +174,9 @@ export class ConfigNode extends BaseNode {
             command: 'cmake.configure',
             arguments: []
         };
-        this.tooltip = "";
+        this.tooltip = "Configure";
         this.collapsibleState = TreeItemCollapsibleState.Expanded;
-        await this.InitializeChildren(false);
+        await this.InitializeChildren();
     }
 
     async InitializeChildren(): Promise<void> {
@@ -224,7 +225,7 @@ export class BuildNode extends BaseNode {
             command: 'cmake.sideBar.build',
             arguments: [BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.buildTargetName()]
         };
-        this.tooltip = "";
+        this.tooltip = 'Build';
         this.collapsibleState = TreeItemCollapsibleState.Expanded;
         this.contextValue = 'build';
         await this.InitializeChildren();
@@ -235,7 +236,7 @@ export class BuildNode extends BaseNode {
             return;
         }
         if (!BaseNode.cmakeProject.useCMakePresets) {
-            this.target = new TargetNode();
+            this.target = new TargetNode(TargetType.Build);
             await this.target.initialize();
         } else {
             this.preset = new PresetNode(PresetType.Build);
@@ -258,11 +259,8 @@ export class BuildNode extends BaseNode {
 
 export class PresetNode extends BaseNode {
 
-    presetType: PresetType;
-
-    constructor(presetType: PresetType) {
+    constructor(private presetType: PresetType) {
         super(NodeType.Kit);
-        this.presetType = presetType;
     }
 
     async initialize(): Promise<void> {
@@ -271,25 +269,36 @@ export class PresetNode extends BaseNode {
         }
         switch (this.presetType) {
             case PresetType.Configure: 
-                this.label = BaseNode.cmakeProject.buildPreset?.name;
+                this.label = BaseNode.cmakeProject.configurePreset?.name;
                 this.command = {
-                    title: localize('Change Preset', 'Change Preset'),
+                    title: localize('change.preset', 'Change Preset'),
                     command: 'cmake.sideBar.selectConfigurePreset',
                     arguments: [this]
                 };
+                this.tooltip = 'Change Configure Preset';
                 this.contextValue = 'configPreset';
                 break;
             case PresetType.Build: 
                 this.label = BaseNode.cmakeProject.buildPreset?.name;
                 this.command = {
-                    title: localize('Change Preset', 'Change Preset'),
+                    title: localize('change.preset', 'Change Preset'),
                     command: 'cmake.sideBar.selectBuildPreset',
                     arguments: [this]
                 };
+                this.tooltip = 'Change Build Preset';
                 this.contextValue = 'buildPreset';
                 break;
+            case PresetType.Test: 
+                this.label = BaseNode.cmakeProject.testPreset?.name;
+                this.command = {
+                    title: localize('change.preset', 'Change Preset'),
+                    command: 'cmake.sideBar.selectTestPreset',
+                    arguments: [this]
+                };
+                this.tooltip = 'Change Test Preset';
+                this.contextValue = 'testPreset';
+                break;
         }
-        this.tooltip = "";
         this.collapsibleState = TreeItemCollapsibleState.None;
     }
 
@@ -298,8 +307,15 @@ export class PresetNode extends BaseNode {
             return;
         }
         switch (this.presetType) {
+            case PresetType.Configure: 
+                this.label = BaseNode.cmakeProject.configurePreset?.name;
+                break;
             case PresetType.Build: 
-            this.label = BaseNode.cmakeProject.buildPreset?.name;
+                this.label = BaseNode.cmakeProject.buildPreset?.name;
+                break;
+            case PresetType.Test: 
+                this.label = BaseNode.cmakeProject.testPreset?.name;
+                break;
         }
     }
 }
@@ -316,11 +332,11 @@ export class KitNode extends BaseNode {
         }
         this.label = BaseNode.cmakeProject.activeKit?.name || "";
         this.command = {
-            title: localize('Change Kit', 'Change Kit'),
+            title: localize('change.kit', 'Change Kit'),
             command: 'cmake.sideBar.selectKit',
             arguments: []
         };
-        this.tooltip = "";
+        this.tooltip = "Change Kit";
         this.collapsibleState = TreeItemCollapsibleState.None;
         this.contextValue = 'kit';
     }
@@ -335,7 +351,7 @@ export class KitNode extends BaseNode {
 }
 export class TargetNode extends BaseNode {
 
-    constructor() {
+    constructor(private targetType: TargetType) {
         super(NodeType.Target);
     }
 
@@ -343,22 +359,58 @@ export class TargetNode extends BaseNode {
         if (!BaseNode.cmakeProject) {
             return;
         }
-        this.label = await BaseNode.cmakeProject.buildTargetName() || await BaseNode.cmakeProject.allTargetName;
-        this.command = {
-            title: localize('set.build.target', 'Set Build Target'),
-            command: 'cmake.sideBar.setDefaultTarget',
-            arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.buildTargetName()]
-        };
-        this.tooltip = "";
-        this.collapsibleState = TreeItemCollapsibleState.None;
-        this.contextValue = 'defaultTarget';
+        switch (this.targetType) {
+            case TargetType.Build:
+                this.label = await BaseNode.cmakeProject.buildTargetName() || await BaseNode.cmakeProject.allTargetName;
+                this.command = {
+                    title: localize('set.build.target', 'Set Build Target'),
+                    command: 'cmake.sideBar.setDefaultTarget',
+                    arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.buildTargetName()]
+                };
+                this.tooltip = "Set Build Target";
+                this.collapsibleState = TreeItemCollapsibleState.None;
+                this.contextValue = 'buildTarget';
+                break;
+            case TargetType.Debug:
+                this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
+                this.command = {
+                    title: localize('set.debug.target', 'Set Debug Target'),
+                    command: 'cmake.sideBar.debugTarget',
+                    arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.buildTargetName()]
+                };
+                this.tooltip = "Set Debug Target";
+                this.collapsibleState = TreeItemCollapsibleState.None;
+                this.contextValue = 'debugTarget';
+                break;
+            case TargetType.Launch:
+                    this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
+                    this.command = {
+                        title: localize('set.launch.target', 'Set Launch Target'),
+                        command: 'cmake.sideBar.launchTarget',
+                        arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.buildTargetName()]
+                    };
+                    this.tooltip = "Set Launch Target";
+                    this.collapsibleState = TreeItemCollapsibleState.None;
+                    this.contextValue = 'launchTarget';
+                    break;
+        }
     }
 
     async refresh() {
         if (!BaseNode.cmakeProject) {
             return;
         }
-        this.label = await BaseNode.cmakeProject.buildTargetName() || await BaseNode.cmakeProject.allTargetName;
+        switch (this.targetType) {
+            case TargetType.Build:
+                this.label = await BaseNode.cmakeProject.buildTargetName() || await BaseNode.cmakeProject.allTargetName;
+                break;
+            case TargetType.Debug:
+                this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
+                break;
+            case TargetType.Launch:
+                this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
+                break;
+        }
     }
 }
 
@@ -374,11 +426,11 @@ export class VariantNode extends BaseNode {
         }
         this.label = await BaseNode.cmakeProject.currentBuildType() || "Debug";
         this.command = {
-            title: localize('Change Build Type', 'Change Build Type'),
+            title: localize('Change.build.type', 'Change Build Type'),
             command: 'cmake.buildType',
             arguments: []
         };
-        this.tooltip = "";
+        this.tooltip = "Change Build Type";
         this.collapsibleState = TreeItemCollapsibleState.None;
     }
 }
@@ -397,4 +449,10 @@ enum PresetType {
     Configure = "Configure",
     Build = "Build",
     Test = "Test",    
+}
+
+enum TargetType {
+    Build = "Build",
+    Debug = "Debug",  
+    Launch = "Launch"  
 }
