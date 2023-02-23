@@ -2332,7 +2332,7 @@
       "cmake-view": [
         {
           "id": "cmake.sideBar",
-          "name": "%cmake-tools.configuration.views.cmake.explorer.description%",
+          "name": "%cmake-tools.configuration.views.cmake.sideBar.description%",
           "when": "cmake:enableFullFeatureSet"
         },
         {
