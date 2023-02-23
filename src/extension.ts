@@ -42,12 +42,10 @@ import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
-import { SideBar } from './sideBar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
-let sideBar: SideBar;
 
 const log = logging.createLogger('extension');
 
@@ -191,14 +189,6 @@ export class ExtensionManager implements vscode.Disposable {
         return new StateManager(this.extensionContext, folder);
     }
 
-    public showStatusBar(fullFeatureSet: boolean) {
-        this.statusBar.setVisible(fullFeatureSet);
-    }
-
-    public getStatusBar(): StatusBar {
-        return this.statusBar;
-    }
-
     /**
      * Create a new extension manager instance. There must only be one!
      * @param ctx The extension context
@@ -208,9 +198,7 @@ export class ExtensionManager implements vscode.Disposable {
         return inst;
     }
 
-    /**
-     * The folder controller manages multiple instances. One per folder.
-     */
+    // The project controller manages all the projects in the worksspace
     public readonly projectController = new ProjectController(this.extensionContext);
 
     /**
@@ -220,14 +208,7 @@ export class ExtensionManager implements vscode.Disposable {
     // Subscriptions for status bar items:
     private statusMessageSub: vscode.Disposable = new DummyDisposable();
     private targetNameSub: vscode.Disposable = new DummyDisposable();
-    private buildTypeSub: vscode.Disposable = new DummyDisposable();
     private launchTargetSub: vscode.Disposable = new DummyDisposable();
-    private ctestEnabledSub: vscode.Disposable = new DummyDisposable();
-    private testResultsSub: vscode.Disposable = new DummyDisposable();
-    private isBusySub: vscode.Disposable = new DummyDisposable();
-    private activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
-    private activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
-    private activeTestPresetSub: vscode.Disposable = new DummyDisposable();
 
     // Watch the code model so that we may update teh tree view
     // <fspath, sub>
@@ -503,10 +484,6 @@ export class ExtensionManager implements vscode.Disposable {
                 }
             } else if (!folder && !this.activeCMakeWorkspaceFolder() && vscode.workspace.workspaceFolders.length >= 1) {
                 await this.updateActiveProject(vscode.workspace.workspaceFolders[0], editor);
-            } else if (!folder) {
-                // When adding a folder but the focus is on somewhere else
-                // Do nothing but make sure we are showing the active folder correctly
-                this.statusBar.update();
             }
         }
     }
@@ -557,31 +534,19 @@ export class ExtensionManager implements vscode.Disposable {
         await this.postUpdateActiveProject();
     }
 
-    async updateSideBarForActiveProjectChange(): Promise<void> {
-        await this.postUpdateActiveProject();
-    }
-
     private async postUpdateActiveProject() {
         const activeProject: CMakeProject | undefined = this.getActiveProject();
         if (activeProject) {
-            this.statusBar.setActiveProjectName(activeProject.folderName, this.projectController.hasMultipleProjects);
-            const useCMakePresets = activeProject?.useCMakePresets || false;
-            this.statusBar.useCMakePresets(useCMakePresets);
-            if (!useCMakePresets) {
-                this.statusBar.setActiveKitName(activeProject.activeKit?.name || '');
-            }
             this.projectOutlineProvider.setActiveFolder(activeProject.folderPath);
             this.setupSubscriptions();
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
             const currentActiveFolderPath = this.activeFolderPath();
             await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
-            // Update sideBar
-            await sideBar.updateActiveProject(activeProject);
         }
     }
 
     private disposeSubs() {
-        for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.testResultsSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub]) {
+        for (const sub of [this.statusMessageSub, this.targetNameSub, this.launchTargetSub]) {
             sub.dispose();
         }
     }
@@ -695,34 +660,19 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setVisible(false);
             this.statusMessageSub = new DummyDisposable();
             this.targetNameSub = new DummyDisposable();
-            this.buildTypeSub = new DummyDisposable();
             this.launchTargetSub = new DummyDisposable();
-            this.ctestEnabledSub = new DummyDisposable();
-            this.testResultsSub = new DummyDisposable();
-            this.isBusySub = new DummyDisposable();
-            this.activeConfigurePresetSub = new DummyDisposable();
-            this.activeBuildPresetSub = new DummyDisposable();
-            this.activeTestPresetSub = new DummyDisposable();
-            this.statusBar.setActiveKitName('');
-            this.statusBar.setConfigurePresetName('');
-            this.statusBar.setBuildPresetName('');
-            this.statusBar.setTestPresetName('');
         } else {
-            this.statusBar.setVisible(true);
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
-                this.statusBar.setBuildTargetName(t);
                 this.onBuildTargetChangedEmitter.fire(t);
             });
-            this.buildTypeSub = cmakeProject.onActiveVariantNameChanged(FireNow, bt => this.statusBar.setVariantLabel(bt));
+            //this.buildTypeSub = cmakeProject.onActiveVariantNameChanged(FireNow, bt => this.statusBar.setVariantLabel(bt));
             this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, t => {
-                this.statusBar.setLaunchTargetName(t || '');
                 this.onLaunchTargetChangedEmitter.fire(t || '');
             });
-            this.ctestEnabledSub = cmakeProject.onCTestEnabledChanged(FireNow, e => this.statusBar.setCTestEnabled(e));
+            /*this.ctestEnabledSub = cmakeProject.onCTestEnabledChanged(FireNow, e => this.statusBar.setCTestEnabled(e));
             this.testResultsSub = cmakeProject.onTestResultsChanged(FireNow, r => this.statusBar.setTestResults(r));
             this.isBusySub = cmakeProject.onIsBusyChanged(FireNow, b => this.statusBar.setIsBusy(b));
-            this.statusBar.setActiveKitName(cmakeProject.activeKit ? cmakeProject.activeKit.name : '');
             this.activeConfigurePresetSub = cmakeProject.onActiveConfigurePresetChanged(FireNow, p => {
                 this.statusBar.setConfigurePresetName(p?.displayName || p?.name || '');
             });
@@ -731,7 +681,7 @@ export class ExtensionManager implements vscode.Disposable {
             });
             this.activeTestPresetSub = cmakeProject.onActiveTestPresetChanged(FireNow, p => {
                 this.statusBar.setTestPresetName(p?.displayName || p?.name || '');
-            });
+            });*/
         }
     }
 
@@ -858,8 +808,6 @@ export class ExtensionManager implements vscode.Disposable {
         let kitSelectionType;
         const activeKit = activeProject?.activeKit;
         if (activeKit) {
-            this.statusBar.setActiveKitName(activeKit.name);
-
             if (activeKit.name === "__unspec__") {
                 kitSelectionType = "unspecified";
             } else {
@@ -895,11 +843,6 @@ export class ExtensionManager implements vscode.Disposable {
         const projects = folder ? this.projectController.getProjectsForWorkspaceFolder(folder) : this.projectController.getAllCMakeProjects();
         for (const project of projects || []) {
             await project.kitsController.setKitByName(kitName);
-        }
-
-        const activeKit = this.getActiveProject()?.activeKit;
-        if (activeKit) {
-            this.statusBar.setActiveKitName(activeKit.name);
         }
     }
 
@@ -1396,18 +1339,18 @@ export class ExtensionManager implements vscode.Disposable {
 
     async hideLaunchCommand(shouldHide: boolean = true) {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
-        this.statusBar.hideLaunchButton(shouldHide);
+        this.projectController.hideLaunchButton(shouldHide);
         await util.setContextValue(hideLaunchCommandKey, shouldHide);
     }
 
     async hideDebugCommand(shouldHide: boolean = true) {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
-        this.statusBar.hideDebugButton(shouldHide);
+        this.projectController.hideDebugButton(shouldHide);
         await util.setContextValue(hideDebugCommandKey, shouldHide);
     }
 
     async hideBuildCommand(shouldHide: boolean = true) {
-        this.statusBar.hideBuildButton(shouldHide);
+        this.projectController.hideBuildButton(shouldHide);
         await util.setContextValue(hideBuildCommandKey, shouldHide);
     }
 
@@ -1510,16 +1453,6 @@ export class ExtensionManager implements vscode.Disposable {
         }
 
         const presetSelected = await project.presetsController.selectConfigurePreset();
-
-        const configurePreset = project.configurePreset;
-        this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
-
-        // Reset build and test presets since they might not be used with the selected configure preset
-        const buildPreset = project.buildPreset;
-        this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-        const testPreset = project.testPreset;
-        this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-
         return presetSelected;
     }
 
@@ -1538,10 +1471,6 @@ export class ExtensionManager implements vscode.Disposable {
         }
 
         const presetSelected = await project.presetsController.selectBuildPreset();
-
-        const buildPreset = project.buildPreset;
-        this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-
         return presetSelected;
     }
 
@@ -1560,10 +1489,6 @@ export class ExtensionManager implements vscode.Disposable {
         }
 
         const presetSelected = await project.presetsController.selectTestPreset();
-
-        const testPreset = project.testPreset;
-        this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-
         return presetSelected;
     }
 
@@ -1726,8 +1651,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.setLaunchTarget', (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name)),
         vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
-        vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
-        vscode.commands.registerCommand('cmake.sideBar.update', () => extensionManager?.updateSideBarForActiveProjectChange())
+        vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
     ]);
 
     return { getApi: (_version) => ext.api };
@@ -1769,7 +1693,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await util.setContextValue("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
-    sideBar = new SideBar();
 
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
@@ -1782,7 +1705,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 // The scope of this is the whole workspace.
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     await util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
-    extensionManager?.showStatusBar(fullFeatureSet);
 }
 
 export function getActiveProject(): CMakeProject | undefined {
@@ -1814,14 +1736,5 @@ export async function deactivate() {
     }
     if (taskProvider) {
         taskProvider.dispose();
-    }
-    if (sideBar) {
-        sideBar.dispose();
-    }
-}
-
-export function getStatusBar(): StatusBar | undefined {
-    if (extensionManager) {
-        return extensionManager.getStatusBar();
     }
 }

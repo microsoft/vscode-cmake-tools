@@ -45,6 +45,15 @@ export class SideBar {
         this.sideBarTreeDataProvider.dispose();
     }
 
+    hideBuildButton(){   
+    }
+
+    hideLaunchButton() {
+    }
+
+    hideDebugButton() {
+    }
+
 }
 
 export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disposable {
@@ -126,6 +135,9 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
             commands.registerCommand('cmake.sideBar.selectActiveProject', async () => {
                 await runCommand('selectActiveFolder');
                 await this.refresh();
+            }),
+            commands.registerCommand('cmake.sideBar.update', async () => {
+                await this.refresh();
             })
         ]);
     }
@@ -134,8 +146,8 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
         // Use project to create the tree
         if (cmakeProject) {
             BaseNode.updateActiveProject(cmakeProject);
-            await this.refresh();
         }
+        await this.refresh();
     }
 
     public async refresh(node?: BaseNode): Promise<any> {

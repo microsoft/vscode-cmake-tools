@@ -13,14 +13,15 @@ import { ConfigurationReader } from './config';
 import { CMakeDriver } from './drivers/drivers';
 import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
-import { getStatusBar } from './extension';
 import * as telemetry from './telemetry';
-import { StatusBar } from './status';
+import { FireNow } from './prop';
+import { SideBar } from './sideBar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('workspace');
+let sideBar: SideBar = new SideBar;
 
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
@@ -40,6 +41,9 @@ export class ProjectController implements vscode.Disposable {
         this.beforeRemoveFolderEmitter,
         this.afterRemoveFolderEmitter
     ];
+
+    // Subscription on active project
+    private projectSubscription: vscode.Disposable = new util.DummyDisposable();
 
     get onBeforeAddFolder() {
         return this.beforeAddFolderEmitter.event;
@@ -99,7 +103,19 @@ export class ProjectController implements vscode.Disposable {
     setActiveProject(project?: CMakeProject): void {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
-        void vscode.commands.executeCommand('cmake.sideBar.update');
+        sideBar.updateActiveProject(project);
+        this.setupProjectSubscriptions(project);
+    }
+
+    setupProjectSubscriptions(project?: CMakeProject): void {
+        this.projectSubscription.dispose();
+        if (!project) {
+            this.projectSubscription = new util.DummyDisposable();
+        } else {
+            this.projectSubscription = project.onAnyChange(FireNow, () => {
+                sideBar.refresh();
+            });
+        }
     }
 
     public getActiveCMakeProject(): CMakeProject | undefined {
@@ -152,9 +168,13 @@ export class ProjectController implements vscode.Disposable {
 
     async dispose() {
         disposeAll(this.subscriptions);
+        this.projectSubscription.dispose();
         // Dispose of each CMakeProject we have loaded.
         for (const project of this.getAllCMakeProjects()) {
             await project.asyncDispose();
+        }
+        if (sideBar) {
+            sideBar.dispose();
         }
     }
 
@@ -373,10 +393,6 @@ export class ProjectController implements vscode.Disposable {
             // Update the map.
             this.folderToProjectsMap.set(folder.uri.fsPath, projects);
 
-            if (multiProjectChange || activeProjectPath !== undefined) {
-                // Update the sideBar
-                void vscode.commands.executeCommand('cmake.sideBar.update');
-            }
         }
     }
 
@@ -406,10 +422,19 @@ export class ProjectController implements vscode.Disposable {
     private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
         const state: boolean = project?.useCMakePresets || false;
         await util.setContextValue('useCMakePresets', state);
-        const statusBar: StatusBar | undefined = getStatusBar();
-        if (statusBar) {
-            statusBar.useCMakePresets(state);
-        }
+        sideBar.refresh();
+    }
+
+    hideBuildButton(_shouldHide: boolean) {
+        sideBar.hideBuildButton();
+    }
+
+    hideLaunchButton(_shouldHide: boolean) {
+        sideBar.hideLaunchButton();
+    }
+
+    hideDebugButton(_shouldHide: boolean) {
+        sideBar.hideDebugButton();
     }
 
     /**
