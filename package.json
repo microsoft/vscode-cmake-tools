@@ -159,6 +159,16 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.sideBar.selectActiveProject",
+        "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
+      },
+      {
         "command": "cmake.outline.selectWorkspace",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
@@ -1016,6 +1026,10 @@
         {
           "command": "cmake.sideBar.setLaunchTarget",
           "when": "never"
+        },
+        {
+          "command": "cmake.sideBar.selectActiveProject",
+          "when": "never"
         }
       ],
       "view/title": [
@@ -1149,6 +1163,11 @@
         {
           "command": "cmake.sideBar.setTestTarget",
           "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'testTarget'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.selectActiveProject",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'activeProject'",
           "group": "inline"
         },
         {

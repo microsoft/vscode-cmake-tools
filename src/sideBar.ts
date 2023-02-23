@@ -16,6 +16,9 @@ import { runCommand } from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+const noConfigPresetSelected = localize('no.configure.preset.selected', 'No Configure Preset Selected');
+const noBuildPresetSelected = localize('no.build.preset.selected', 'No Build Preset Selected');
+const noTestPresetSelected = localize('no.test.preset.selected', 'No Test Preset Selected');
 
 export class SideBar {
 
@@ -119,6 +122,10 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
             commands.registerCommand('cmake.sideBar.setLaunchTarget', async (node: BaseNode, folder: WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('selectLaunchTarget', folder, target);
                 await this.refresh(node);
+            }),
+            commands.registerCommand('cmake.sideBar.selectActiveProject', async () => {
+                await runCommand('selectActiveFolder');
+                await this.refresh();
             })
         ]);
     }
@@ -483,7 +490,7 @@ export class PresetNode extends BaseNode {
         }
         switch (this.presetType) {
             case PresetType.Configure:
-                this.label = BaseNode.cmakeProject.configurePreset?.name;
+                this.label = BaseNode.cmakeProject.configurePreset?.name || noConfigPresetSelected;
                 this.command = {
                     title: localize('change.preset', 'Change Preset'),
                     command: 'cmake.sideBar.selectConfigurePreset',
@@ -493,7 +500,7 @@ export class PresetNode extends BaseNode {
                 this.contextValue = 'configPreset';
                 break;
             case PresetType.Build:
-                this.label = BaseNode.cmakeProject.buildPreset?.name;
+                this.label = BaseNode.cmakeProject.buildPreset?.name || noBuildPresetSelected;
                 this.command = {
                     title: localize('change.preset', 'Change Preset'),
                     command: 'cmake.sideBar.selectBuildPreset',
@@ -503,7 +510,7 @@ export class PresetNode extends BaseNode {
                 this.contextValue = 'buildPreset';
                 break;
             case PresetType.Test:
-                this.label = BaseNode.cmakeProject.testPreset?.name;
+                this.label = BaseNode.cmakeProject.testPreset?.name || noTestPresetSelected;
                 this.command = {
                     title: localize('change.preset', 'Change Preset'),
                     command: 'cmake.sideBar.selectTestPreset',
@@ -622,7 +629,7 @@ export class TargetNode extends BaseNode {
                 this.label = BaseNode.cmakeProject.folderName;
                 this.command = {
                     title: localize('set.active.project', 'Set active project'),
-                    command: "",
+                    command: "cmake.sideBar.selectActiveProject",
                     arguments: []
                 };
                 this.tooltip = "Set active project";
