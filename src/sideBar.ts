@@ -25,33 +25,33 @@ export class SideBar {
         this.sideBarTreeDataProvider = new SideBarTreeDataProvider();
     }
 
-    updateActiveProject(cmakeProject?: CMakeProject): void {
+    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
         // Update Active Project
-        this.sideBarTreeDataProvider.updateActiveProject(cmakeProject);
+        await this.sideBarTreeDataProvider.updateActiveProject(cmakeProject);
     }
 
-    refresh() {
-        this.sideBarTreeDataProvider.refresh();
+    refresh(): Promise<any> {
+        return this.sideBarTreeDataProvider.refresh();
     }
 
-    clear(){
-        this.sideBarTreeDataProvider.clear();
+    clear(): Promise<any> {
+        return this.sideBarTreeDataProvider.clear();
     }
 
-    dispose(){
+    dispose() {
         this.sideBarTreeDataProvider.dispose();
     }
 
 }
 
-export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disposable{
+export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disposable {
 
     private sideBarTreeView: TreeView<BaseNode>;
     protected disposables: Disposable[] = [];
     private _onDidChangeTreeData: EventEmitter<any> = new EventEmitter<any>();
     get onDidChangeTreeData(): Event<BaseNode | undefined> {
-		return this._onDidChangeTreeData.event;
-	}
+        return this._onDidChangeTreeData.event;
+    }
 
     constructor() {
         this.sideBarTreeView = window.createTreeView('cmake.sideBar', { treeDataProvider: this });
@@ -61,42 +61,42 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
             // Commands for sideBar items
             commands.registerCommand('cmake.sideBar.stop', async (node: BaseNode) => {
                 await runCommand('stop');
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.selectKit', async (node: BaseNode) => {
                 await runCommand('selectKit');
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.selectConfigurePreset', async (node: BaseNode, folder: WorkspaceFolder) => {
                 await runCommand('selectConfigurePreset', folder);
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.configure', async (node: BaseNode, folder: WorkspaceFolder) => {
                 node.changeToStop();
-                this.refresh(node);
+                await this.refresh(node);
                 // No await on configure
                 await runCommand('configure', folder);
                 node.changeBackToOriginal();
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.setVariant', async (node: BaseNode, folder: WorkspaceFolder, variant: Promise<string>) => {
                 await runCommand('setVariant', folder, await variant);
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.build', async (node: BaseNode, folder: WorkspaceFolder, target: Promise<string>) => {
                 node.changeToStop();
-                this.refresh(node);
+                await this.refresh(node);
                 await runCommand('build', folder, await target);
                 node.changeBackToOriginal();
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.setDefaultTarget', async (node: BaseNode, folder: WorkspaceFolder, target: Promise<string>) => {
                 await runCommand('setDefaultTarget', folder, await target);
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.selectBuildPreset', async (node: BaseNode, folder: WorkspaceFolder) => {
                 await runCommand('selectBuildPreset', folder);
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.ctest', async (folder: WorkspaceFolder) => runCommand('ctest', folder)),
             commands.registerCommand('cmake.sideBar.setTestTarget', async (_node: BaseNode, _folder: WorkspaceFolder, _test: Promise<string>) => {
@@ -104,30 +104,30 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
             }),
             commands.registerCommand('cmake.sideBar.selectTestPreset', async (node: BaseNode, folder: WorkspaceFolder) => {
                 await runCommand('selectTestPreset', folder);
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.debugTarget', async (folder: WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('debugTarget', folder, target);
             }),
             commands.registerCommand('cmake.sideBar.setDebugTarget', async (node: BaseNode, folder: WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('selectLaunchTarget', folder, target);
-                this.refresh(node);
+                await this.refresh(node);
             }),
             commands.registerCommand('cmake.sideBar.launchTarget', async (folder: WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('launchTarget', folder, target);
             }),
             commands.registerCommand('cmake.sideBar.setLaunchTarget', async (node: BaseNode, folder: WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('selectLaunchTarget', folder, target);
-                this.refresh(node);
-            }),
+                await this.refresh(node);
+            })
         ]);
     }
 
-    updateActiveProject(cmakeProject?: CMakeProject): void {
+    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
         // Use project to create the tree
         if (cmakeProject) {
             BaseNode.updateActiveProject(cmakeProject);
-            this.refresh();
+            await this.refresh();
         }
     }
 
@@ -140,9 +140,9 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
         }
     }
 
-    clear(): void {
+    clear(): Promise<any> {
         BaseNode.updateActiveProject(undefined);
-        this.refresh();
+        return this.refresh();
     }
 
     dispose(): void {
@@ -176,7 +176,7 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
 
 }
 
-export class BaseNode extends TreeItem{
+export class BaseNode extends TreeItem {
 
     static sideBarTreeView?: TreeView<BaseNode>;
     static cmakeProject?: CMakeProject;
@@ -218,7 +218,7 @@ export class ConfigNode extends BaseNode {
     private kit?: KitNode;
     private variant?: VariantNode;
     private preset?: PresetNode;
-    
+
     constructor() {
         super(NodeType.Configure);
     }
@@ -249,7 +249,7 @@ export class ConfigNode extends BaseNode {
             await this.variant.initialize();
         } else {
             this.preset = new PresetNode(PresetType.Configure);
-            await this.preset.initialize();     
+            await this.preset.initialize();
         }
     }
 
@@ -315,7 +315,7 @@ export class BuildNode extends BaseNode {
             await this.target.initialize();
         } else {
             this.preset = new PresetNode(PresetType.Build);
-            await this.preset.initialize();     
+            await this.preset.initialize();
         }
     }
 
@@ -381,7 +381,7 @@ export class TestNode extends BaseNode {
             await this.target.initialize();
         } else {
             this.preset = new PresetNode(PresetType.Test);
-            await this.preset.initialize();     
+            await this.preset.initialize();
         }
     }
 
@@ -431,12 +431,12 @@ export class SingleItemNode extends BaseNode {
                 this.tooltip = 'Launch';
                 this.collapsibleState = TreeItemCollapsibleState.Expanded;
                 this.contextValue = 'launch';
-                break;                
+                break;
             case TargetType.Project:
                 this.tooltip = 'Active project';
                 this.collapsibleState = TreeItemCollapsibleState.Expanded;
                 this.contextValue = 'activeProject';
-                break;    
+                break;
         }
 
         await this.InitializeChildren();
@@ -456,8 +456,10 @@ export class SingleItemNode extends BaseNode {
             case TargetType.Project:
                 this.target = new TargetNode(TargetType.Project);
                 break;
+            default:
+                throw Error('Not a valid type');
         }
-        this.target?.initialize();
+        await this.target!.initialize();
     }
 
     getChildren(): BaseNode[] {
@@ -480,7 +482,7 @@ export class PresetNode extends BaseNode {
             return;
         }
         switch (this.presetType) {
-            case PresetType.Configure: 
+            case PresetType.Configure:
                 this.label = BaseNode.cmakeProject.configurePreset?.name;
                 this.command = {
                     title: localize('change.preset', 'Change Preset'),
@@ -490,7 +492,7 @@ export class PresetNode extends BaseNode {
                 this.tooltip = 'Change Configure Preset';
                 this.contextValue = 'configPreset';
                 break;
-            case PresetType.Build: 
+            case PresetType.Build:
                 this.label = BaseNode.cmakeProject.buildPreset?.name;
                 this.command = {
                     title: localize('change.preset', 'Change Preset'),
@@ -500,7 +502,7 @@ export class PresetNode extends BaseNode {
                 this.tooltip = 'Change Build Preset';
                 this.contextValue = 'buildPreset';
                 break;
-            case PresetType.Test: 
+            case PresetType.Test:
                 this.label = BaseNode.cmakeProject.testPreset?.name;
                 this.command = {
                     title: localize('change.preset', 'Change Preset'),
@@ -519,13 +521,13 @@ export class PresetNode extends BaseNode {
             return;
         }
         switch (this.presetType) {
-            case PresetType.Configure: 
+            case PresetType.Configure:
                 this.label = BaseNode.cmakeProject.configurePreset?.name;
                 break;
-            case PresetType.Build: 
+            case PresetType.Build:
                 this.label = BaseNode.cmakeProject.buildPreset?.name;
                 break;
-            case PresetType.Test: 
+            case PresetType.Test:
                 this.label = BaseNode.cmakeProject.testPreset?.name;
                 break;
         }
@@ -661,7 +663,7 @@ export class VariantNode extends BaseNode {
         if (!BaseNode.cmakeProject) {
             return;
         }
-        this.label = await BaseNode.cmakeProject.activeVariantName || "Debug";
+        this.label = BaseNode.cmakeProject.activeVariantName || "Debug";
         this.command = {
             title: localize('set.variant', 'Set variant'),
             command: 'cmake.setVariant',
@@ -676,7 +678,7 @@ export class VariantNode extends BaseNode {
         if (!BaseNode.cmakeProject) {
             return;
         }
-        this.label = BaseNode.cmakeProject.activeVariantName || "Debug"; 
+        this.label = BaseNode.cmakeProject.activeVariantName || "Debug";
     }
 
 }
@@ -697,13 +699,13 @@ enum NodeType {
 enum PresetType {
     Configure = "Configure",
     Build = "Build",
-    Test = "Test",    
+    Test = "Test",
 }
 
 enum TargetType {
     Build = "Build",
     Test = "Test",
-    Debug = "Debug",  
+    Debug = "Debug",
     Launch = "Launch",
-    Project = "Project" 
+    Project = "Project"
 }

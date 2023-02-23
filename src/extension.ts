@@ -576,7 +576,7 @@ export class ExtensionManager implements vscode.Disposable {
             const currentActiveFolderPath = this.activeFolderPath();
             await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
             // Update sideBar
-            sideBar.updateActiveProject(activeProject);
+            await sideBar.updateActiveProject(activeProject);
         }
     }
 
@@ -1727,7 +1727,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
-        vscode.commands.registerCommand('cmake.sideBar.update', () => extensionManager?.updateSideBarForActiveProjectChange()),
+        vscode.commands.registerCommand('cmake.sideBar.update', () => extensionManager?.updateSideBarForActiveProjectChange())
     ]);
 
     return { getApi: (_version) => ext.api };
