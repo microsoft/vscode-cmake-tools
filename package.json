@@ -121,6 +121,26 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.sideBar.selectTestPreset",
+        "title": "%cmake-tools.command.cmake.selectTestPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
+      },
+      {
+        "command": "cmake.sideBar.setTestTarget",
+        "title": "%cmake-tools.command.cmake.sideBar.selectTestPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
+      },
+      {
         "command": "cmake.viewLog",
         "title": "%cmake-tools.command.cmake.viewLog.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -183,6 +203,16 @@
         "title": "%cmake-tools.command.cmake.setVariant.title%",
         "when": "cmake:enableFullFeatureSet && !useCMakePresets",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.sideBar.setVariant",
+        "title": "%cmake-tools.command.cmake.setVariant.title%",
+        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
       },
       {
         "command": "cmake.setVariantAll",
@@ -479,8 +509,8 @@
         "title": "%cmake-tools.command.cmake.debugTarget.title%",
         "category": "CMake",
         "icon": {
-          "dark": "res/dark/edit-icon.svg",
-          "light": "res/light/edit-icon.svg"
+          "dark": "res/dark/debug-icon.svg",
+          "light": "res/light/debug-icon.svg"
         }
       },
       {
@@ -496,6 +526,15 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.sideBar.setDebugTarget",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.selectLaunchTarget.title%",
+        "icon": {
+          "dark": "res/dark/edit-icon.svg",
+          "light": "res/light/edit-icon.svg"
+        }
+      },
+      {
         "command": "cmake.outline.launchTarget",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.launchTarget.title%"
@@ -503,7 +542,12 @@
       {
         "command": "cmake.sideBar.launchTarget",
         "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.launchTarget.title%"
+        "title": "%cmake-tools.command.cmake.outline.launchTarget.title%",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/launch-icon.svg",
+          "light": "res/light/launch-icon.svg"
+        }
       },
       {
         "command": "cmake.launchTargetAll",
@@ -536,6 +580,16 @@
         "title": "%cmake-tools.command.cmake.stop.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.sideBar.stop",
+        "title": "%cmake-tools.command.cmake.stop.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/stop-icon.svg",
+          "light": "res/light/stop-icon.svg"
+        }
       },
       {
         "command": "cmake.outline.stop",
@@ -575,6 +629,16 @@
         "command": "cmake.outline.revealInCMakeLists",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
+      },
+      {
+        "command": "cmake.sideBar.update",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.sideBar.update.title%",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/refresh-icon.svg",
+          "light": "res/light/refresh-icon.svg"
+        }        
       }
     ],
     "taskDefinitions": [
@@ -898,11 +962,23 @@
           "when": "never"
         },
         {
+          "command": "cmake.sideBar.update",
+          "when": "never"
+        },
+        {
+          "command": "cmake.sideBar.stop",
+          "when": "never"
+        },
+        {
           "command": "cmake.sideBar.selectKit",
           "when": "never"
         },
         {
           "command": "cmake.sideBar.configure",
+          "when": "never"
+        },
+        {
+          "command": "cmake.sideBar.setVariant",
           "when": "never"
         },
         {
@@ -930,11 +1006,34 @@
           "when": "never"
         },
         {
+          "command": "cmake.sideBar.launchTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.sideBar.setDebugTarget",
+          "when": "never"
+        },
+        {
           "command": "cmake.sideBar.setLaunchTarget",
           "when": "never"
         }
       ],
       "view/title": [
+        {
+          "command": "cmake.sideBar.update",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cmake.sideBar.debugTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet",
+          "group": "navigation@2"
+        },
+        {
+          "command": "cmake.sideBar.launchTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet",
+          "group": "navigation@2"
+        },
         {
           "command": "cmake.outline.configureAll",
           "when": "view == cmake.outline && !cmake:isBuilding",
@@ -973,13 +1072,24 @@
       ],
       "view/item/context": [
         {
+          "command": "cmake.sideBar.stop",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'stop'",
+          "group": "inline"
+        },
+        {
           "command": "cmake.sideBar.selectKit",
           "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'kit'",
           "group": "inline"
         },
         {
           "command": "cmake.sideBar.configure",
-          "when": "never"
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'configure'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.setVariant",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'variant'",
+          "group": "inline"
         },
         {
           "command": "cmake.sideBar.selectConfigurePreset",
@@ -997,18 +1107,48 @@
           "group": "inline"
         },
         {
+          "command": "cmake.sideBar.selectBuildPreset",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'buildPreset'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.ctest",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'test'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.setTestTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'testTarget'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.selectTestPreset",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'testPreset'",
+          "group": "inline"
+        },
+        {
           "command": "cmake.sideBar.debugTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'debug'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.setDebugTarget",
           "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'debugTarget'",
           "group": "inline"
         },
         {
-          "command": "cmake.sideBar.setlaunchTarget",
+          "command": "cmake.sideBar.launchTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'launch'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.sideBar.setLaunchTarget",
           "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'launchTarget'",
           "group": "inline"
         },
         {
-          "command": "cmake.sideBar.selectBuildPreset",
-          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'buildPreset'",
+          "command": "cmake.sideBar.setTestTarget",
+          "when": "view == cmake.sideBar && cmake:enableFullFeatureSet && viewItem == 'testTarget'",
           "group": "inline"
         },
         {
