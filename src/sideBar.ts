@@ -20,7 +20,7 @@ const noConfigPresetSelected = localize('no.configure.preset.selected', 'No Conf
 const noBuildPresetSelected = localize('no.build.preset.selected', 'No Build Preset Selected');
 const noTestPresetSelected = localize('no.test.preset.selected', 'No Test Preset Selected');
 
-export class SideBar {
+export class ProjectStatus {
 
     private sideBarTreeDataProvider: SideBarTreeDataProvider;
 

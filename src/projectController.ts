@@ -15,13 +15,13 @@ import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
 import * as telemetry from './telemetry';
 import { FireNow } from './prop';
-import { SideBar } from './sideBar';
+import { ProjectStatus } from './sideBar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('workspace');
-const sideBar: SideBar = new SideBar();
+const projectStatus: ProjectStatus = new ProjectStatus();
 
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
@@ -120,7 +120,7 @@ export class ProjectController implements vscode.Disposable {
     async setActiveProject(project?: CMakeProject): Promise<void> {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
-        await sideBar.updateActiveProject(project);
+        await projectStatus.updateActiveProject(project);
         this.setupProjectSubscriptions(project);
     }
 
@@ -136,14 +136,14 @@ export class ProjectController implements vscode.Disposable {
             this.activeTestPresetSub = new DummyDisposable();
             this.isBusySub = new DummyDisposable();
         } else {
-            this.targetNameSub = project.onTargetNameChanged(FireNow, () => void sideBar.refresh());
-            this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => void sideBar.refresh());
-            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, async () => void sideBar.refresh());
-            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, async () => void sideBar.refresh());
-            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void sideBar.refresh());
-            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void sideBar.refresh());
-            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, async () => void sideBar.refresh());
-            this.isBusySub = project.onIsBusyChanged(FireNow, isBusy => sideBar.setIsBusy(isBusy));
+            this.targetNameSub = project.onTargetNameChanged(FireNow, () => void projectStatus.refresh());
+            this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => void projectStatus.refresh());
+            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, async () => void projectStatus.refresh());
+            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, async () => void projectStatus.refresh());
+            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void projectStatus.refresh());
+            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void projectStatus.refresh());
+            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, async () => void projectStatus.refresh());
+            this.isBusySub = project.onIsBusyChanged(FireNow, isBusy => projectStatus.setIsBusy(isBusy));
         }
     }
 
@@ -202,8 +202,8 @@ export class ProjectController implements vscode.Disposable {
         for (const project of this.getAllCMakeProjects()) {
             await project.asyncDispose();
         }
-        if (sideBar) {
-            sideBar.dispose();
+        if (projectStatus) {
+            projectStatus.dispose();
         }
     }
 
@@ -451,19 +451,19 @@ export class ProjectController implements vscode.Disposable {
     private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
         const state: boolean = project?.useCMakePresets || false;
         await util.setContextValue('useCMakePresets', state);
-        await sideBar.refresh();
+        await projectStatus.refresh();
     }
 
     hideBuildButton(_shouldHide: boolean) {
-        sideBar.hideBuildButton();
+        projectStatus.hideBuildButton();
     }
 
     hideLaunchButton(_shouldHide: boolean) {
-        sideBar.hideLaunchButton();
+        projectStatus.hideLaunchButton();
     }
 
     hideDebugButton(_shouldHide: boolean) {
-        sideBar.hideDebugButton();
+        projectStatus.hideDebugButton();
     }
 
     /**
