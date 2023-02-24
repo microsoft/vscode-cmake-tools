@@ -157,7 +157,6 @@ export class ExtensionManager implements vscode.Disposable {
             if (this.projectController.hasMultipleProjects) {
                 telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
             }
-            this.statusBar.setAutoSelectActiveProject(v);
         });
 
         let isMultiProject = false;
@@ -166,9 +165,6 @@ export class ExtensionManager implements vscode.Disposable {
             isMultiProject = this.projectController.hasMultipleProjects;
             await util.setContextValue(multiProjectModeKey, isMultiProject);
             this.projectOutlineProvider.addAllCurrentFolders();
-            if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
-                this.statusBar.setAutoSelectActiveProject(true);
-            }
             await this.initActiveProject();
         }
         const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject();
@@ -663,25 +659,12 @@ export class ExtensionManager implements vscode.Disposable {
             this.launchTargetSub = new DummyDisposable();
         } else {
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
-            this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
-                this.onBuildTargetChangedEmitter.fire(t);
-            });
-            //this.buildTypeSub = cmakeProject.onActiveVariantNameChanged(FireNow, bt => this.statusBar.setVariantLabel(bt));
-            this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, t => {
-                this.onLaunchTargetChangedEmitter.fire(t || '');
-            });
-            /*this.ctestEnabledSub = cmakeProject.onCTestEnabledChanged(FireNow, e => this.statusBar.setCTestEnabled(e));
+            this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, target => this.onBuildTargetChangedEmitter.fire(target));
+            this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, target => this.onLaunchTargetChangedEmitter.fire(target || ''));
+            /*
             this.testResultsSub = cmakeProject.onTestResultsChanged(FireNow, r => this.statusBar.setTestResults(r));
             this.isBusySub = cmakeProject.onIsBusyChanged(FireNow, b => this.statusBar.setIsBusy(b));
-            this.activeConfigurePresetSub = cmakeProject.onActiveConfigurePresetChanged(FireNow, p => {
-                this.statusBar.setConfigurePresetName(p?.displayName || p?.name || '');
-            });
-            this.activeBuildPresetSub = cmakeProject.onActiveBuildPresetChanged(FireNow, p => {
-                this.statusBar.setBuildPresetName(p?.displayName || p?.name || '');
-            });
-            this.activeTestPresetSub = cmakeProject.onActiveTestPresetChanged(FireNow, p => {
-                this.statusBar.setTestPresetName(p?.displayName || p?.name || '');
-            });*/
+           */
         }
     }
 

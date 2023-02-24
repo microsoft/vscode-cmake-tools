@@ -8,7 +8,7 @@ import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
 import CMakeProject from '@cmt/cmakeProject';
 import rollbar from '@cmt/rollbar';
-import { disposeAll } from '@cmt/util';
+import { disposeAll, DummyDisposable } from '@cmt/util';
 import { ConfigurationReader } from './config';
 import { CMakeDriver } from './drivers/drivers';
 import { DirectoryContext } from './workspace';
@@ -43,7 +43,23 @@ export class ProjectController implements vscode.Disposable {
     ];
 
     // Subscription on active project
-    private projectSubscription: vscode.Disposable = new util.DummyDisposable();
+    private targetNameSub: vscode.Disposable = new DummyDisposable();
+    private variantNameSub: vscode.Disposable = new DummyDisposable();
+    private launchTargetSub: vscode.Disposable = new DummyDisposable();
+    private ctestEnabledSub: vscode.Disposable = new DummyDisposable();
+    private activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
+    private activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
+    private activeTestPresetSub: vscode.Disposable = new DummyDisposable();
+    private projectSubscriptions: vscode.Disposable[] = [
+        this.targetNameSub,
+        this.variantNameSub,
+        this.launchTargetSub,
+        this.ctestEnabledSub,
+        this.activeConfigurePresetSub,
+        this.activeBuildPresetSub,
+        this.activeTestPresetSub
+    ];
+
 
     get onBeforeAddFolder() {
         return this.beforeAddFolderEmitter.event;
@@ -108,13 +124,23 @@ export class ProjectController implements vscode.Disposable {
     }
 
     setupProjectSubscriptions(project?: CMakeProject): void {
-        this.projectSubscription.dispose();
+        disposeAll(this.projectSubscriptions);
         if (!project) {
-            this.projectSubscription = new util.DummyDisposable();
+            this.targetNameSub = new DummyDisposable();
+            this.variantNameSub = new DummyDisposable();
+            this.launchTargetSub = new DummyDisposable();
+            this.ctestEnabledSub = new DummyDisposable();
+            this.activeConfigurePresetSub = new DummyDisposable();
+            this.activeBuildPresetSub = new DummyDisposable();
+            this.activeTestPresetSub = new DummyDisposable();
         } else {
-            this.projectSubscription = project.onAnyChange(FireNow, () => {
-                sideBar.refresh();
-            });
+            this.targetNameSub = project.onTargetNameChanged(FireNow, () => sideBar.refresh());
+            this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => sideBar.refresh());
+            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, () => sideBar.refresh());
+            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, () => sideBar.refresh());
+            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, () => sideBar.refresh());
+            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, () => sideBar.refresh());
+            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => sideBar.refresh());
         }
     }
 
@@ -168,7 +194,7 @@ export class ProjectController implements vscode.Disposable {
 
     async dispose() {
         disposeAll(this.subscriptions);
-        this.projectSubscription.dispose();
+        disposeAll(this.projectSubscriptions);
         // Dispose of each CMakeProject we have loaded.
         for (const project of this.getAllCMakeProjects()) {
             await project.asyncDispose();
