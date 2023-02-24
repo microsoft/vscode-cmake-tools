@@ -50,6 +50,7 @@ export class ProjectController implements vscode.Disposable {
     private activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
     private activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
     private activeTestPresetSub: vscode.Disposable = new DummyDisposable();
+    private isBusySub = new DummyDisposable();
     private projectSubscriptions: vscode.Disposable[] = [
         this.targetNameSub,
         this.variantNameSub,
@@ -57,7 +58,8 @@ export class ProjectController implements vscode.Disposable {
         this.ctestEnabledSub,
         this.activeConfigurePresetSub,
         this.activeBuildPresetSub,
-        this.activeTestPresetSub
+        this.activeTestPresetSub,
+        this.isBusySub
     ];
 
 
@@ -133,6 +135,7 @@ export class ProjectController implements vscode.Disposable {
             this.activeConfigurePresetSub = new DummyDisposable();
             this.activeBuildPresetSub = new DummyDisposable();
             this.activeTestPresetSub = new DummyDisposable();
+            this.isBusySub = new DummyDisposable();
         } else {
             this.targetNameSub = project.onTargetNameChanged(FireNow, () => sideBar.refresh());
             this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => sideBar.refresh());
@@ -141,6 +144,7 @@ export class ProjectController implements vscode.Disposable {
             this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, () => sideBar.refresh());
             this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, () => sideBar.refresh());
             this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => sideBar.refresh());
+            this.isBusySub = project.onIsBusyChanged(FireNow, isBusy => sideBar.setIsBusy(isBusy));
         }
     }
 

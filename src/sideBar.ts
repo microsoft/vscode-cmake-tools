@@ -45,13 +45,20 @@ export class SideBar {
         this.sideBarTreeDataProvider.dispose();
     }
 
-    hideBuildButton(){   
+    hideBuildButton() {
+        // To be implemented
     }
 
     hideLaunchButton() {
+        // To be implemented
     }
 
     hideDebugButton() {
+        // To be implemented
+    }
+
+    setIsBusy(_isBusy: boolean) {
+        // To be implemented
     }
 
 }

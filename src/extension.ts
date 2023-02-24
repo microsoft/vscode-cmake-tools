@@ -185,6 +185,10 @@ export class ExtensionManager implements vscode.Disposable {
         return new StateManager(this.extensionContext, folder);
     }
 
+    public showStatusBar(fullFeatureSet: boolean) {
+        this.statusBar.setVisible(fullFeatureSet);
+    }
+
     /**
      * Create a new extension manager instance. There must only be one!
      * @param ctx The extension context
@@ -205,6 +209,15 @@ export class ExtensionManager implements vscode.Disposable {
     private statusMessageSub: vscode.Disposable = new DummyDisposable();
     private targetNameSub: vscode.Disposable = new DummyDisposable();
     private launchTargetSub: vscode.Disposable = new DummyDisposable();
+    private testResultsSub = new DummyDisposable();
+    private isBusySub = new DummyDisposable();
+    private projectSubscriptions: vscode.Disposable[] = [
+        this.statusMessageSub,
+        this.targetNameSub,
+        this.launchTargetSub,
+        this.testResultsSub,
+        this.isBusySub
+    ]
 
     // Watch the code model so that we may update teh tree view
     // <fspath, sub>
@@ -542,9 +555,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private disposeSubs() {
-        for (const sub of [this.statusMessageSub, this.targetNameSub, this.launchTargetSub]) {
-            sub.dispose();
-        }
+        util.disposeAll(this.projectSubscriptions);
     }
 
     private updateCodeModel(cmakeProject?: CMakeProject) {
@@ -657,14 +668,12 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusMessageSub = new DummyDisposable();
             this.targetNameSub = new DummyDisposable();
             this.launchTargetSub = new DummyDisposable();
+            this.testResultsSub = new DummyDisposable();
         } else {
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, target => this.onBuildTargetChangedEmitter.fire(target));
             this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, target => this.onLaunchTargetChangedEmitter.fire(target || ''));
-            /*
             this.testResultsSub = cmakeProject.onTestResultsChanged(FireNow, r => this.statusBar.setTestResults(r));
-            this.isBusySub = cmakeProject.onIsBusyChanged(FireNow, b => this.statusBar.setIsBusy(b));
-           */
         }
     }
 
@@ -1688,6 +1697,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 // The scope of this is the whole workspace.
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     await util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
+    extensionManager?.showStatusBar(fullFeatureSet);
 }
 
 export function getActiveProject(): CMakeProject | undefined {
