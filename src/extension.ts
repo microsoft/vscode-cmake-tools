@@ -217,7 +217,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.launchTargetSub,
         this.testResultsSub,
         this.isBusySub
-    ]
+    ];
 
     // Watch the code model so that we may update teh tree view
     // <fspath, sub>
@@ -533,13 +533,13 @@ export class ExtensionManager implements vscode.Disposable {
 
     // Update the active project
     private async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, editor?: vscode.TextEditor): Promise<void> {
-        this.projectController.updateActiveProject(workspaceFolder, editor);
+        await this.projectController.updateActiveProject(workspaceFolder, editor);
         await this.postUpdateActiveProject();
     }
 
     // Update the active project from the staus bar
     private async setActiveProject(project: CMakeProject): Promise<void> {
-        this.projectController.setActiveProject(project);
+        await this.projectController.setActiveProject(project);
         await this.postUpdateActiveProject();
     }
 

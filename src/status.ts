@@ -174,7 +174,6 @@ abstract class Button {
     }
 }
 
-
 class CMakeStatus extends Button {
     private _statusMessage: string = localize('loading.status', 'Loading...');
 
@@ -276,8 +275,6 @@ class CTestButton extends Button {
         return this.getTooltipShort();
     }
 }
-
-
 
 export class StatusBar implements vscode.Disposable {
     private readonly _cmakeToolsStatusItem = new CMakeStatus(this._config, 3.5);

@@ -21,7 +21,7 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('workspace');
-let sideBar: SideBar = new SideBar;
+const sideBar: SideBar = new SideBar();
 
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
@@ -62,7 +62,6 @@ export class ProjectController implements vscode.Disposable {
         this.isBusySub
     ];
 
-
     get onBeforeAddFolder() {
         return this.beforeAddFolderEmitter.event;
     }
@@ -90,19 +89,19 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private activeProject: CMakeProject | undefined;
-    updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): void {
+    async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): Promise<void> {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(workspaceFolder);
         if (projects && projects.length > 0) {
             if (openEditor) {
                 for (const project of projects) {
                     if (util.isFileInsideFolder(openEditor.document.uri, project.folderPath)) {
-                        this.setActiveProject(project);
+                        await this.setActiveProject(project);
                         break;
                     }
                 }
                 if (!this.activeProject) {
                     if (util.isFileInsideFolder(openEditor.document.uri, projects[0].workspaceFolder.uri.fsPath)) {
-                        this.setActiveProject(projects[0]);
+                        await this.setActiveProject(projects[0]);
                     }
                 }
                 // If active project is found, return.
@@ -111,17 +110,17 @@ export class ProjectController implements vscode.Disposable {
                 }
             } else {
                 // Set a default active project.
-                this.setActiveProject(projects[0]);
+                await this.setActiveProject(projects[0]);
                 return;
             }
         }
-        this.setActiveProject(undefined);
+        await this.setActiveProject(undefined);
     }
 
-    setActiveProject(project?: CMakeProject): void {
+    async setActiveProject(project?: CMakeProject): Promise<void> {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
-        sideBar.updateActiveProject(project);
+        await sideBar.updateActiveProject(project);
         this.setupProjectSubscriptions(project);
     }
 
@@ -137,13 +136,27 @@ export class ProjectController implements vscode.Disposable {
             this.activeTestPresetSub = new DummyDisposable();
             this.isBusySub = new DummyDisposable();
         } else {
-            this.targetNameSub = project.onTargetNameChanged(FireNow, () => sideBar.refresh());
-            this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => sideBar.refresh());
-            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, () => sideBar.refresh());
-            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, () => sideBar.refresh());
-            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, () => sideBar.refresh());
-            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, () => sideBar.refresh());
-            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => sideBar.refresh());
+            this.targetNameSub = project.onTargetNameChanged(FireNow, async () => {
+                await sideBar.refresh();
+            });
+            this.variantNameSub = project.onActiveVariantNameChanged(FireNow, async () => {
+                await sideBar.refresh();
+            });
+            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, async () => {
+                await sideBar.refresh();
+            });
+            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, async () => {
+                await sideBar.refresh();
+            });
+            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => {
+                await sideBar.refresh();
+            });
+            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => {
+                await sideBar.refresh();
+            });
+            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, async () => {
+                await sideBar.refresh();
+            });
             this.isBusySub = project.onIsBusyChanged(FireNow, isBusy => sideBar.setIsBusy(isBusy));
         }
     }
@@ -408,7 +421,7 @@ export class ProjectController implements vscode.Disposable {
             for (let i = 0; i < sourceDirectories.length; i++) {
                 const cmakeProject: CMakeProject = await CMakeProject.create(workspaceContext, sourceDirectories[i], sourceDirectories.length > 1);
                 if (activeProjectPath === cmakeProject.sourceDir) {
-                    this.setActiveProject(cmakeProject);
+                    await this.setActiveProject(cmakeProject);
                     activeProjectPath = undefined;
                 }
                 projects.push(cmakeProject);
@@ -417,7 +430,7 @@ export class ProjectController implements vscode.Disposable {
 
             if (activeProjectPath !== undefined) {
                 // Active project is no longer available. Pick a different one.
-                this.setActiveProject(projects.length > 0 ? projects[0] : undefined);
+                await this.setActiveProject(projects.length > 0 ? projects[0] : undefined);
             }
 
             // Update the map.
@@ -452,7 +465,7 @@ export class ProjectController implements vscode.Disposable {
     private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
         const state: boolean = project?.useCMakePresets || false;
         await util.setContextValue('useCMakePresets', state);
-        sideBar.refresh();
+        await sideBar.refresh();
     }
 
     hideBuildButton(_shouldHide: boolean) {
