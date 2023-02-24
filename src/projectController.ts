@@ -136,27 +136,13 @@ export class ProjectController implements vscode.Disposable {
             this.activeTestPresetSub = new DummyDisposable();
             this.isBusySub = new DummyDisposable();
         } else {
-            this.targetNameSub = project.onTargetNameChanged(FireNow, async () => {
-                await sideBar.refresh();
-            });
-            this.variantNameSub = project.onActiveVariantNameChanged(FireNow, async () => {
-                await sideBar.refresh();
-            });
-            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, async () => {
-                await sideBar.refresh();
-            });
-            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, async () => {
-                await sideBar.refresh();
-            });
-            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => {
-                await sideBar.refresh();
-            });
-            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => {
-                await sideBar.refresh();
-            });
-            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, async () => {
-                await sideBar.refresh();
-            });
+            this.targetNameSub = project.onTargetNameChanged(FireNow, () => void sideBar.refresh());
+            this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => void sideBar.refresh());
+            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, async () => void sideBar.refresh());
+            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, async () => void sideBar.refresh());
+            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void sideBar.refresh());
+            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void sideBar.refresh());
+            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, async () => void sideBar.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, isBusy => sideBar.setIsBusy(isBusy));
         }
     }
