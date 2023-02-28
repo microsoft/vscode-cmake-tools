@@ -554,10 +554,7 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.launchTarget.title%",
         "category": "CMake",
-        "icon": {
-          "dark": "res/dark/launch-icon.svg",
-          "light": "res/light/launch-icon.svg"
-        }
+        "icon": "$(run)"
       },
       {
         "command": "cmake.launchTargetAll",
@@ -645,10 +642,7 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.projectStatus.update.title%",
         "category": "CMake",
-        "icon": {
-          "dark": "res/dark/refresh-icon.svg",
-          "light": "res/light/refresh-icon.svg"
-        }        
+        "icon": "$(refresh)"      
       }
     ],
     "taskDefinitions": [
@@ -1158,11 +1152,6 @@
         {
           "command": "cmake.projectStatus.setLaunchTarget",
           "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'launchTarget'",
-          "group": "inline"
-        },
-        {
-          "command": "cmake.projectStatus.setTestTarget",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'testTarget'",
           "group": "inline"
         },
         {

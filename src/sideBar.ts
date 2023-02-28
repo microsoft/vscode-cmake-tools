@@ -1,15 +1,4 @@
-import {
-    commands,
-    Disposable,
-    Event,
-    EventEmitter,
-    TreeDataProvider,
-    TreeItem,
-    TreeItemCollapsibleState,
-    TreeView,
-    window,
-    WorkspaceFolder
-} from 'vscode';
+import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import { runCommand } from './util';
@@ -20,29 +9,29 @@ const noConfigPresetSelected = localize('no.configure.preset.selected', 'No Conf
 const noBuildPresetSelected = localize('no.build.preset.selected', 'No Build Preset Selected');
 const noTestPresetSelected = localize('no.test.preset.selected', 'No Test Preset Selected');
 
+let treeDataProvider: TreeDataProvider;
+
 export class ProjectStatus {
 
-    private sideBarTreeDataProvider: SideBarTreeDataProvider;
-
     constructor() {
-        this.sideBarTreeDataProvider = new SideBarTreeDataProvider();
+        treeDataProvider = new TreeDataProvider();
     }
 
     async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
         // Update Active Project
-        await this.sideBarTreeDataProvider.updateActiveProject(cmakeProject);
+        await treeDataProvider.updateActiveProject(cmakeProject);
     }
 
     refresh(): Promise<any> {
-        return this.sideBarTreeDataProvider.refresh();
+        return treeDataProvider.refresh();
     }
 
     clear(): Promise<any> {
-        return this.sideBarTreeDataProvider.clear();
+        return treeDataProvider.clear();
     }
 
     dispose() {
-        this.sideBarTreeDataProvider.dispose();
+        treeDataProvider.dispose();
     }
 
     hideBuildButton() {
@@ -63,101 +52,103 @@ export class ProjectStatus {
 
 }
 
-export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disposable {
+class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposable {
 
-    private sideBarTreeView: TreeView<BaseNode>;
-    protected disposables: Disposable[] = [];
-    private _onDidChangeTreeData: EventEmitter<any> = new EventEmitter<any>();
-    get onDidChangeTreeData(): Event<BaseNode | undefined> {
+    private treeView: vscode.TreeView<Node>;
+    protected disposables: vscode.Disposable[] = [];
+    private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
+    private activeCMakeProject?: CMakeProject;
+
+    get onDidChangeTreeData(): vscode.Event<Node | undefined> {
         return this._onDidChangeTreeData.event;
     }
 
     constructor() {
-        this.sideBarTreeView = window.createTreeView('cmake.sideBar', { treeDataProvider: this });
-        BaseNode.initializeTreeView(this.sideBarTreeView);
+        this.treeView = vscode.window.createTreeView('cmake.projectStatus', { treeDataProvider: this });
         this.disposables.push(...[
-            this.sideBarTreeView,
-            // Commands for sideBar items
-            commands.registerCommand('cmake.sideBar.stop', async (node: BaseNode) => {
+            this.treeView,
+            // Commands for projectStatus items
+            vscode.commands.registerCommand('cmake.projectStatus.stop', async (node: Node) => {
                 await runCommand('stop');
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.selectKit', async (node: BaseNode) => {
+            vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
                 await runCommand('selectKit');
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.selectConfigurePreset', async (node: BaseNode, folder: WorkspaceFolder) => {
+            vscode.commands.registerCommand('cmake.projectStatus.selectConfigurePreset', async (node: Node, folder: vscode.WorkspaceFolder) => {
                 await runCommand('selectConfigurePreset', folder);
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.configure', async (node: BaseNode, folder: WorkspaceFolder) => {
+            vscode.commands.registerCommand('cmake.projectStatus.configure', async (node: Node, folder: vscode.WorkspaceFolder) => {
                 node.changeToStop();
                 await this.refresh(node);
-                // No await on configure
                 await runCommand('configure', folder);
                 node.changeBackToOriginal();
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.setVariant', async (node: BaseNode, folder: WorkspaceFolder, variant: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node, folder: vscode.WorkspaceFolder, variant: Promise<string>) => {
                 await runCommand('setVariant', folder, await variant);
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.build', async (node: BaseNode, folder: WorkspaceFolder, target: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.build', async (node: Node, folder: vscode.WorkspaceFolder, target: Promise<string>) => {
                 node.changeToStop();
                 await this.refresh(node);
                 await runCommand('build', folder, await target);
                 node.changeBackToOriginal();
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.setDefaultTarget', async (node: BaseNode, folder: WorkspaceFolder, target: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node, folder: vscode.WorkspaceFolder, target: Promise<string>) => {
                 await runCommand('setDefaultTarget', folder, await target);
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.selectBuildPreset', async (node: BaseNode, folder: WorkspaceFolder) => {
+            vscode.commands.registerCommand('cmake.projectStatus.selectBuildPreset', async (node: Node, folder: vscode.WorkspaceFolder) => {
                 await runCommand('selectBuildPreset', folder);
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.ctest', async (folder: WorkspaceFolder) => runCommand('ctest', folder)),
-            commands.registerCommand('cmake.sideBar.setTestTarget', async (_node: BaseNode, _folder: WorkspaceFolder, _test: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.ctest', async (folder: vscode.WorkspaceFolder) => runCommand('ctest', folder)),
+            vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_node: Node, _folder: vscode.WorkspaceFolder, _test: Promise<string>) => {
                 // Do nothing
             }),
-            commands.registerCommand('cmake.sideBar.selectTestPreset', async (node: BaseNode, folder: WorkspaceFolder) => {
+            vscode.commands.registerCommand('cmake.projectStatus.selectTestPreset', async (node: Node, folder: vscode.WorkspaceFolder) => {
                 await runCommand('selectTestPreset', folder);
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.debugTarget', async (folder: WorkspaceFolder, target?: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.debugTarget', async (folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('debugTarget', folder, target);
             }),
-            commands.registerCommand('cmake.sideBar.setDebugTarget', async (node: BaseNode, folder: WorkspaceFolder, target?: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.setDebugTarget', async (node: Node, folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('selectLaunchTarget', folder, target);
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.launchTarget', async (folder: WorkspaceFolder, target?: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.launchTarget', async (folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('launchTarget', folder, target);
             }),
-            commands.registerCommand('cmake.sideBar.setLaunchTarget', async (node: BaseNode, folder: WorkspaceFolder, target?: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.setLaunchTarget', async (node: Node, folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
                 await runCommand('selectLaunchTarget', folder, target);
                 await this.refresh(node);
             }),
-            commands.registerCommand('cmake.sideBar.selectActiveProject', async () => {
+            vscode.commands.registerCommand('cmake.projectStatus.selectActiveProject', async () => {
                 await runCommand('selectActiveFolder');
                 await this.refresh();
             }),
-            commands.registerCommand('cmake.sideBar.update', async () => {
+            vscode.commands.registerCommand('cmake.projectStatus.update', async () => {
                 await this.refresh();
             })
         ]);
     }
 
+    get cmakeProject(): CMakeProject | undefined {
+        return this.activeCMakeProject;
+    }
+
     async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
         // Use project to create the tree
-        if (cmakeProject) {
-            BaseNode.updateActiveProject(cmakeProject);
-        }
+        this.activeCMakeProject = cmakeProject;
         await this.refresh();
     }
 
-    public async refresh(node?: BaseNode): Promise<any> {
+    public async refresh(node?: Node): Promise<any> {
         if (node) {
             await node.refresh();
             this._onDidChangeTreeData.fire(node);
@@ -167,62 +158,52 @@ export class SideBarTreeDataProvider implements TreeDataProvider<BaseNode>, Disp
     }
 
     clear(): Promise<any> {
-        BaseNode.updateActiveProject(undefined);
+        this.activeCMakeProject = undefined;
         return this.refresh();
     }
 
     dispose(): void {
-        Disposable.from(...this.disposables).dispose();
+        vscode.Disposable.from(...this.disposables).dispose();
     }
 
-    getTreeItem(node: BaseNode): TreeItem {
+    getTreeItem(node: Node): vscode.TreeItem {
         return node.getTreeItem();
     }
 
-    async getChildren(node?: BaseNode | undefined): Promise<BaseNode[]> {
-        // Initializing the tree for the first time
-        if (!node) {
+    async getChildren(node?: Node | undefined): Promise<Node[]> {
+        if (node) {
+            return node.getChildren();
+        } else {
+            // Initializing the tree for the first time
             const configNode = new ConfigNode();
             await configNode.initialize();
             const buildNode = new BuildNode();
             await buildNode.initialize();
             const testNode = new TestNode();
             await testNode.initialize();
-            const debugNode = new SingleItemNode(TargetType.Debug);
+            const debugNode = new DebugNode();
             await debugNode.initialize();
-            const launchNode = new SingleItemNode(TargetType.Launch);
+            const launchNode = new LaunchNode();
             await launchNode.initialize();
-            const projectNode = new SingleItemNode(TargetType.Project);
+            const projectNode = new ProjectNode();
             await projectNode.initialize();
             return [configNode, buildNode, testNode, debugNode, launchNode, projectNode];
-        } else {
-            return node.getChildren();
         }
     }
 
 }
 
-export class BaseNode extends TreeItem {
+class Node extends vscode.TreeItem {
 
-    static sideBarTreeView?: TreeView<BaseNode>;
-    static cmakeProject?: CMakeProject;
-
-    static initializeTreeView(sideBarTreeView: TreeView<BaseNode>) {
-        BaseNode.sideBarTreeView = sideBarTreeView;
+    constructor(label?: string | vscode.TreeItemLabel) {
+        super(label ? label : "");
     }
 
-    static updateActiveProject(cmakeProject?: CMakeProject): void {
-        // Use project to create the tree
-        if (cmakeProject) {
-            BaseNode.cmakeProject = cmakeProject;
-        }
-    }
-
-    getTreeItem(): TreeItem {
+    getTreeItem(): vscode.TreeItem {
         return this;
     }
 
-    getChildren(): BaseNode[] {
+    getChildren(): Node[] {
         return [];
     }
 
@@ -239,257 +220,212 @@ export class BaseNode extends TreeItem {
     }
 }
 
-export class ConfigNode extends BaseNode {
+class ConfigNode extends Node {
 
-    private kit?: KitNode;
-    private variant?: VariantNode;
-    private preset?: PresetNode;
-
-    constructor() {
-        super(NodeType.Configure);
-    }
+    private kit?: Kit;
+    private variant?: Variant;
+    private configPreset?: ConfigPreset;
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
+        this.label = localize('Configure', 'Configure');
         this.command = {
-            title: localize('Configure', 'Configure'),
-            command: 'cmake.sideBar.configure',
-            arguments: [this, BaseNode.cmakeProject.workspaceFolder]
+            title: this.label,
+            command: 'cmake.projectStatus.configure',
+            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder]
         };
-        this.tooltip = "Configure";
-        this.collapsibleState = TreeItemCollapsibleState.Expanded;
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = "configure";
         await this.InitializeChildren();
     }
 
     async InitializeChildren(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        if (!BaseNode.cmakeProject.useCMakePresets) {
-            this.kit = new KitNode();
+        if (!treeDataProvider.cmakeProject.useCMakePresets) {
+            this.kit = new Kit();
             await this.kit.initialize();
-            this.variant = new VariantNode();
+            this.variant = new Variant();
             await this.variant.initialize();
         } else {
-            this.preset = new PresetNode(PresetType.Configure);
-            await this.preset.initialize();
+            this.configPreset = new ConfigPreset();
+            await this.configPreset.initialize();
         }
     }
 
-    getChildren(): BaseNode[] {
-        if (!BaseNode.cmakeProject) {
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
             return [];
         }
-        if (!BaseNode.cmakeProject.useCMakePresets) {
+        if (!treeDataProvider.cmakeProject.useCMakePresets) {
             return [this.kit!, this.variant!];
         } else {
-            return [this.preset!];
+            return [this.configPreset!];
         }
     }
 
     changeToStop(): void {
-        this.label = NodeType.Configure + " (Running)";
+        this.label = localize("configure.running", "Configure (Running)");
+        const title: string = localize('Stop', 'Stop');
         this.command = {
-            title: localize('Stop', 'Stop'),
-            command: 'cmake.sideBar.stop',
+            title: title,
+            command: 'cmake.projectStatus.stop',
             arguments: []
         };
-        this.tooltip = "Stop";
+        this.tooltip = title;
         this.contextValue = "stop";
     }
 
     changeBackToOriginal(): Promise<void> {
-        this.label = NodeType.Configure;
         return this.initialize();
     }
 
 }
 
-export class BuildNode extends BaseNode {
+class BuildNode extends Node {
 
-    private target?: TargetNode;
-    private preset?: PresetNode;
-
-    constructor() {
-        super(NodeType.Build);
-    }
+    private buildTarget?: BuildTarget;
+    private buildPreset?: BuildPreset;
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
+        this.label = localize('Build', 'Build');
         this.command = {
-            title: localize('Build', 'Build'),
-            command: 'cmake.sideBar.build',
-            arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.buildTargetName()]
+            title: this.label,
+            command: 'cmake.projectStatus.build',
+            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.buildTargetName()]
         };
-        this.tooltip = 'Build';
-        this.collapsibleState = TreeItemCollapsibleState.Expanded;
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = 'build';
         await this.InitializeChildren();
     }
 
     async InitializeChildren(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        if (!BaseNode.cmakeProject.useCMakePresets) {
-            this.target = new TargetNode(TargetType.Build);
-            await this.target.initialize();
+        if (!treeDataProvider.cmakeProject.useCMakePresets) {
+            this.buildTarget = new BuildTarget();
+            await this.buildTarget.initialize();
         } else {
-            this.preset = new PresetNode(PresetType.Build);
-            await this.preset.initialize();
+            this.buildPreset = new BuildPreset();
+            await this.buildPreset.initialize();
         }
     }
 
-    getChildren(): BaseNode[] {
-        if (!BaseNode.cmakeProject) {
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
             return [];
         }
-        if (!BaseNode.cmakeProject.useCMakePresets) {
-            return [this.target!];
+        if (!treeDataProvider.cmakeProject.useCMakePresets) {
+            return [this.buildTarget!];
         } else {
-            return [this.preset!];
+            return [this.buildPreset!];
         }
     }
 
     changeToStop(): void {
-        this.label = NodeType.Build + " (Running)";
+        this.label = localize("build.running", "Build (Running)");
+        const title: string = localize('Stop', 'Stop');
         this.command = {
-            title: localize('Stop', 'Stop'),
-            command: 'cmake.sideBar.stop',
+            title: title,
+            command: 'cmake.projectStatus.stop',
             arguments: []
         };
-        this.tooltip = "Stop";
+        this.tooltip = title;
         this.contextValue = "stop";
     }
 
     changeBackToOriginal(): Promise<void> {
-        this.label = NodeType.Build;
         return this.initialize();
     }
 
 }
 
-export class TestNode extends BaseNode {
+class TestNode extends Node {
 
-    private target?: TargetNode;
-    private preset?: PresetNode;
-
-    constructor() {
-        super(NodeType.Test);
-    }
+    private testTarget?: TestTarget;
+    private testPreset?: TestPreset;
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
+        this.label = localize('Test', 'Test');
         this.command = {
-            title: localize('Test', 'Test'),
-            command: 'cmake.sideBar.test',
-            arguments: [BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.allTargetName]
+            title: this.label,
+            command: 'cmake.projectStatus.test',
+            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.allTargetName]
         };
-        this.tooltip = 'Test';
-        this.collapsibleState = TreeItemCollapsibleState.Expanded;
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = 'test';
         await this.InitializeChildren();
     }
 
     async InitializeChildren(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        if (!BaseNode.cmakeProject.useCMakePresets) {
-            this.target = new TargetNode(TargetType.Test);
-            await this.target.initialize();
+        if (!treeDataProvider.cmakeProject.useCMakePresets) {
+            this.testTarget = new TestTarget();
+            await this.testTarget.initialize();
         } else {
-            this.preset = new PresetNode(PresetType.Test);
-            await this.preset.initialize();
+            this.testPreset = new TestPreset();
+            await this.testPreset.initialize();
         }
     }
 
-    getChildren(): BaseNode[] {
-        if (!BaseNode.cmakeProject) {
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
             return [];
         }
-        if (!BaseNode.cmakeProject.useCMakePresets) {
-            return [this.target!];
+        if (!treeDataProvider.cmakeProject.useCMakePresets) {
+            return [this.testTarget!];
         } else {
-            return [this.preset!];
+            return [this.testPreset!];
         }
     }
 
 }
 
-// The Debug, Launch, and Project Node only have one child.
-export class SingleItemNode extends BaseNode {
+class DebugNode extends Node {
 
-    private target?: TargetNode;
-
-    constructor(private targetType: TargetType) {
-        super(targetType);
-    }
+    private target?: DebugTarget;
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        switch (this.targetType) {
-            case TargetType.Debug:
-                this.command = {
-                    title: localize('Debug', 'Debug'),
-                    command: 'cmake.sideBar.debugTarget',
-                    arguments: [BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName]
-                };
-                this.tooltip = 'Debug';
-                this.collapsibleState = TreeItemCollapsibleState.Expanded;
-                this.contextValue = 'debug';
-                break;
-            case TargetType.Launch:
-                this.command = {
-                    title: localize('Launch', 'Launch'),
-                    command: 'cmake.sideBar.launchTarget',
-                    arguments: [BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName]
-                };
-                this.tooltip = 'Launch';
-                this.collapsibleState = TreeItemCollapsibleState.Expanded;
-                this.contextValue = 'launch';
-                break;
-            case TargetType.Project:
-                this.tooltip = 'Active project';
-                this.collapsibleState = TreeItemCollapsibleState.Expanded;
-                this.contextValue = 'activeProject';
-                break;
-        }
-
+        this.label = localize('Debug', 'Debug');
+        this.command = {
+            title: this.label,
+            command: 'cmake.projectStatus.debugTarget',
+            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName]
+        };
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        this.contextValue = 'debug';
         await this.InitializeChildren();
     }
 
     async InitializeChildren(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        switch (this.targetType) {
-            case TargetType.Debug:
-                this.target = new TargetNode(TargetType.Debug);
-                break;
-            case TargetType.Launch:
-                this.target = new TargetNode(TargetType.Launch);
-                break;
-            case TargetType.Project:
-                this.target = new TargetNode(TargetType.Project);
-                break;
-            default:
-                throw Error('Not a valid type');
-        }
-        await this.target!.initialize();
+        this.target = new DebugTarget();
+        await this.target.initialize();
     }
 
-    getChildren(): BaseNode[] {
-        if (!BaseNode.cmakeProject) {
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
             return [];
         }
         return [this.target!];
@@ -497,241 +433,327 @@ export class SingleItemNode extends BaseNode {
 
 }
 
-export class PresetNode extends BaseNode {
+class LaunchNode extends Node {
 
-    constructor(private presetType: PresetType) {
-        super(NodeType.Kit);
-    }
+    private launchTarget?: LaunchTarget;
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject || !BaseNode.cmakeProject.useCMakePresets) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        switch (this.presetType) {
-            case PresetType.Configure:
-                this.label = BaseNode.cmakeProject.configurePreset?.name || noConfigPresetSelected;
-                this.command = {
-                    title: localize('change.preset', 'Change Preset'),
-                    command: 'cmake.sideBar.selectConfigurePreset',
-                    arguments: [this]
-                };
-                this.tooltip = 'Change Configure Preset';
-                this.contextValue = 'configPreset';
-                break;
-            case PresetType.Build:
-                this.label = BaseNode.cmakeProject.buildPreset?.name || noBuildPresetSelected;
-                this.command = {
-                    title: localize('change.preset', 'Change Preset'),
-                    command: 'cmake.sideBar.selectBuildPreset',
-                    arguments: [this]
-                };
-                this.tooltip = 'Change Build Preset';
-                this.contextValue = 'buildPreset';
-                break;
-            case PresetType.Test:
-                this.label = BaseNode.cmakeProject.testPreset?.name || noTestPresetSelected;
-                this.command = {
-                    title: localize('change.preset', 'Change Preset'),
-                    command: 'cmake.sideBar.selectTestPreset',
-                    arguments: [this]
-                };
-                this.tooltip = 'Change Test Preset';
-                this.contextValue = 'testPreset';
-                break;
+        this.label = localize('Launch', 'Launch');
+        this.command = {
+            title: this.label,
+            command: 'cmake.projectStatus.launchTarget',
+            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName]
+        };
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        this.contextValue = 'launch';
+        await this.InitializeChildren();
+    }
+
+    async InitializeChildren(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
         }
-        this.collapsibleState = TreeItemCollapsibleState.None;
+        this.launchTarget = new LaunchTarget();
+        await this.launchTarget.initialize();
+    }
+
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
+            return [];
+        }
+        return [this.launchTarget!];
+    }
+
+}
+
+class ProjectNode extends Node {
+
+    private project?: Project;
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = localize('Project', 'Project');
+        this.tooltip = localize('active.project', 'Active project');
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        await this.InitializeChildren();
+    }
+
+    async InitializeChildren(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.project = new Project();
+        await this.project!.initialize();
+    }
+
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
+            return [];
+        }
+        return [this.project!];
+    }
+
+}
+
+class ConfigPreset extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.configurePreset?.name || noConfigPresetSelected;
+        this.command = {
+            title: localize('change.preset', 'Change Preset'),
+            command: 'cmake.projectStatus.selectConfigurePreset',
+            arguments: [this]
+        };
+        this.tooltip = 'Change Configure Preset';
+        this.contextValue = 'configPreset';
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
     }
 
     async refresh() {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        switch (this.presetType) {
-            case PresetType.Configure:
-                this.label = BaseNode.cmakeProject.configurePreset?.name;
-                break;
-            case PresetType.Build:
-                this.label = BaseNode.cmakeProject.buildPreset?.name;
-                break;
-            case PresetType.Test:
-                this.label = BaseNode.cmakeProject.testPreset?.name;
-                break;
-        }
+        this.label = treeDataProvider.cmakeProject.configurePreset?.name || noConfigPresetSelected;
     }
 }
 
-export class KitNode extends BaseNode {
-
-    constructor() {
-        super(NodeType.Kit);
-    }
+class BuildPreset extends Node {
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = BaseNode.cmakeProject.activeKit?.name || "";
+        this.label = treeDataProvider.cmakeProject.buildPreset?.name || noBuildPresetSelected;
+        this.command = {
+            title: localize('change.preset', 'Change Preset'),
+            command: 'cmake.projectStatus.selectBuildPreset',
+            arguments: [this]
+        };
+        this.tooltip = 'Change Build Preset';
+        this.contextValue = 'buildPreset';
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.buildPreset?.name || noBuildPresetSelected;
+    }
+}
+
+class TestPreset extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.testPreset?.name || noTestPresetSelected;
+        this.command = {
+            title: localize('change.preset', 'Change Preset'),
+            command: 'cmake.projectStatus.selectTestPreset',
+            arguments: [this]
+        };
+        this.tooltip = 'Change Test Preset';
+        this.contextValue = 'testPreset';
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.testPreset?.name  || noTestPresetSelected;
+    }
+}
+
+class Kit extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.activeKit?.name || "";
         this.command = {
             title: localize('change.kit', 'Change Kit'),
-            command: 'cmake.sideBar.selectKit',
+            command: 'cmake.projectStatus.selectKit',
             arguments: []
         };
         this.tooltip = "Change Kit";
-        this.collapsibleState = TreeItemCollapsibleState.None;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'kit';
     }
 
-    getTreeItem(): TreeItem {
-        if (!BaseNode.cmakeProject) {
+    getTreeItem(): vscode.TreeItem {
+        if (!treeDataProvider.cmakeProject) {
             return this;
         }
-        this.label = BaseNode.cmakeProject.activeKit?.name || "";
+        this.label = treeDataProvider.cmakeProject.activeKit?.name || "";
         return this;
     }
 }
-export class TargetNode extends BaseNode {
 
-    constructor(private targetType: TargetType) {
-        super(NodeType.Target);
-    }
+class BuildTarget extends Node {
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        switch (this.targetType) {
-            case TargetType.Build:
-                this.label = await BaseNode.cmakeProject.buildTargetName() || await BaseNode.cmakeProject.allTargetName;
-                this.command = {
-                    title: localize('set.build.target', 'Set Build Target'),
-                    command: 'cmake.sideBar.setDefaultTarget',
-                    arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.buildTargetName()]
-                };
-                this.tooltip = "Set Build Target";
-                this.collapsibleState = TreeItemCollapsibleState.None;
-                this.contextValue = 'buildTarget';
-                break;
-            case TargetType.Test:
-                this.label = "All tests";
-                this.command = {
-                    title: localize('set.test.target', 'Set Test Target'),
-                    command: 'cmake.sideBar.setTestTarget',
-                    arguments: [this, BaseNode.cmakeProject.workspaceFolder, "All tests"]
-                };
-                this.tooltip = "Set Test Target";
-                this.collapsibleState = TreeItemCollapsibleState.None;
-                this.contextValue = 'testTarget';
-                break;
-            case TargetType.Debug:
-                this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
-                this.command = {
-                    title: localize('set.debug.target', 'Set debug target'),
-                    command: 'cmake.sideBar.setDebugTarget',
-                    arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.launchTargetName]
-                };
-                this.tooltip = "Set debug target";
-                this.collapsibleState = TreeItemCollapsibleState.None;
-                this.contextValue = 'debugTarget';
-                break;
-            case TargetType.Launch:
-                this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
-                this.command = {
-                    title: localize('set.launch.target', 'Set Launch Target'),
-                    command: 'cmake.sideBar.setLaunchTarget',
-                    arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.launchTargetName]
-                };
-                this.tooltip = "Set launch target";
-                this.collapsibleState = TreeItemCollapsibleState.None;
-                this.contextValue = 'launchTarget';
-                break;
-            case TargetType.Project:
-                this.label = BaseNode.cmakeProject.folderName;
-                this.command = {
-                    title: localize('set.active.project', 'Set active project'),
-                    command: "cmake.sideBar.selectActiveProject",
-                    arguments: []
-                };
-                this.tooltip = "Set active project";
-                this.collapsibleState = TreeItemCollapsibleState.None;
-                this.contextValue = 'activeProject';
-                break;
-        }
+        const title: string = localize('set.build.target', 'Set Build Target');
+        this.label = await treeDataProvider.cmakeProject.buildTargetName() || await treeDataProvider.cmakeProject.allTargetName;
+        this.command = {
+            title: title,
+            command: 'cmake.projectStatus.setDefaultTarget',
+            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.buildTargetName()]
+        };
+        this.tooltip = title;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        this.contextValue = 'buildTarget';
     }
 
     async refresh() {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        switch (this.targetType) {
-            case TargetType.Build:
-                this.label = await BaseNode.cmakeProject.buildTargetName() || await BaseNode.cmakeProject.allTargetName;
-                break;
-            case TargetType.Test:
-                this.label = "All tests";
-                break;
-            case TargetType.Debug:
-                this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
-                break;
-            case TargetType.Launch:
-                this.label = BaseNode.cmakeProject.launchTargetName || await BaseNode.cmakeProject.allTargetName;
-                break;
-        }
+        this.label = await treeDataProvider.cmakeProject.buildTargetName() || await treeDataProvider.cmakeProject.allTargetName;
     }
 }
 
-export class VariantNode extends BaseNode {
-
-    constructor() {
-        super(NodeType.Variant);
-    }
+class TestTarget extends Node {
 
     async initialize(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = BaseNode.cmakeProject.activeVariantName || "Debug";
+        this.label = "All tests";
+        const title: string = localize('set.test.target', 'Set Test Target');
+        this.command = {
+            title: title,
+            command: 'cmake.projectStatus.setTestTarget',
+            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, "All tests"]
+        };
+        this.tooltip = title;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        this.contextValue = 'testTarget';
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = "All tests";
+    }
+}
+
+class DebugTarget extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
+        const title: string = localize('set.debug.target', 'Set debug target');
+        this.command = {
+            title: title,
+            command: 'cmake.projectStatus.setDebugTarget',
+            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName]
+        };
+        this.tooltip = title;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        this.contextValue = 'debugTarget';
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
+    }
+}
+
+class LaunchTarget extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
+        const title: string = localize('set.launch.target', 'Set Launch Target');
+        this.command = {
+            title: title,
+            command: 'cmake.projectStatus.setLaunchTarget',
+            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName]
+        };
+        this.tooltip = title;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        this.contextValue = 'launchTarget';
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
+    }
+}
+
+class Project extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.folderName;
+        const title: string = localize('select.active.project', 'Select active project');
+        this.command = {
+            title: title,
+            command: "cmake.projectStatus.selectActiveProject",
+            arguments: []
+        };
+        this.tooltip = title;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        this.contextValue = 'activeProject';
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.folderName;
+    }
+}
+class Variant extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = treeDataProvider.cmakeProject.activeVariantName || "Debug";
         this.command = {
             title: localize('set.variant', 'Set variant'),
             command: 'cmake.setVariant',
-            arguments: [this, BaseNode.cmakeProject.workspaceFolder, BaseNode.cmakeProject.activeVariantName]
+            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.activeVariantName]
         };
         this.tooltip = "Set variant";
-        this.collapsibleState = TreeItemCollapsibleState.None;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'variant';
     }
 
     async refresh(): Promise<void> {
-        if (!BaseNode.cmakeProject) {
+        if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = BaseNode.cmakeProject.activeVariantName || "Debug";
+        this.label = treeDataProvider.cmakeProject.activeVariantName || "Debug";
     }
 
 }
 
-enum NodeType {
-    Configure = "Configure",
-    Build = "Build",
-    Test = "Test",
-    Debug = "Debug",
-    Launch = "Lauch",
-    Project = "Project",
-    Preset = "Preset",
-    Kit = "Kit",
-    Target = "Target",
-    Variant = "Variant"
-}
-
-enum PresetType {
-    Configure = "Configure",
-    Build = "Build",
-    Test = "Test",
-}
-
-enum TargetType {
-    Build = "Build",
-    Test = "Test",
-    Debug = "Debug",
-    Launch = "Launch",
-    Project = "Project"
-}

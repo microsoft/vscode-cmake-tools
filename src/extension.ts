@@ -28,7 +28,6 @@ import { fs } from '@cmt/pr';
 import { FireNow, FireLate } from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
-import { StatusBar } from '@cmt/status';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutlineProvider';
@@ -185,10 +184,6 @@ export class ExtensionManager implements vscode.Disposable {
         return new StateManager(this.extensionContext, folder);
     }
 
-    public showStatusBar(fullFeatureSet: boolean) {
-        this.statusBar.setVisible(fullFeatureSet);
-    }
-
     /**
      * Create a new extension manager instance. There must only be one!
      * @param ctx The extension context
@@ -198,25 +193,14 @@ export class ExtensionManager implements vscode.Disposable {
         return inst;
     }
 
-    // The project controller manages all the projects in the worksspace
+    // The project controller manages all the projects in the workspace
     public readonly projectController = new ProjectController(this.extensionContext);
 
-    /**
-     * The status bar controller
-     */
-    private readonly statusBar = new StatusBar(this.workspaceConfig);
-    // Subscriptions for status bar items:
-    private statusMessageSub: vscode.Disposable = new DummyDisposable();
     private targetNameSub: vscode.Disposable = new DummyDisposable();
     private launchTargetSub: vscode.Disposable = new DummyDisposable();
-    private testResultsSub = new DummyDisposable();
-    private isBusySub = new DummyDisposable();
     private projectSubscriptions: vscode.Disposable[] = [
-        this.statusMessageSub,
         this.targetNameSub,
-        this.launchTargetSub,
-        this.testResultsSub,
-        this.isBusySub
+        this.launchTargetSub
     ];
 
     // Watch the code model so that we may update teh tree view
@@ -664,16 +648,11 @@ export class ExtensionManager implements vscode.Disposable {
         this.disposeSubs();
         const cmakeProject = this.getActiveProject();
         if (!cmakeProject) {
-            this.statusBar.setVisible(false);
-            this.statusMessageSub = new DummyDisposable();
             this.targetNameSub = new DummyDisposable();
             this.launchTargetSub = new DummyDisposable();
-            this.testResultsSub = new DummyDisposable();
         } else {
-            this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, target => this.onBuildTargetChangedEmitter.fire(target));
             this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, target => this.onLaunchTargetChangedEmitter.fire(target || ''));
-            this.testResultsSub = cmakeProject.onTestResultsChanged(FireNow, r => this.statusBar.setTestResults(r));
         }
     }
 
@@ -1697,7 +1676,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 // The scope of this is the whole workspace.
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     await util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
-    extensionManager?.showStatusBar(fullFeatureSet);
 }
 
 export function getActiveProject(): CMakeProject | undefined {
