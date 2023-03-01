@@ -333,7 +333,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
      * `file://` scheme.
      */
-    protected get workspaceFolder() {
+    get workspaceFolder() {
         return this.__workspaceFolder;
     }
 

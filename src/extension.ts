@@ -42,6 +42,7 @@ import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
+import { testExplorerLoaded } from './ctest';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -221,7 +222,6 @@ export class ExtensionManager implements vscode.Disposable {
     private buildTypeSub: vscode.Disposable = new DummyDisposable();
     private launchTargetSub: vscode.Disposable = new DummyDisposable();
     private ctestEnabledSub: vscode.Disposable = new DummyDisposable();
-    private testResultsSub: vscode.Disposable = new DummyDisposable();
     private isBusySub: vscode.Disposable = new DummyDisposable();
     private activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
     private activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
@@ -570,6 +570,9 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.projectOutlineProvider.setActiveFolder(activeProject.folderPath);
             this.setupSubscriptions();
+            if (testExplorerLoaded()) {
+                await activeProject.refreshTests();
+            }
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
             const currentActiveFolderPath = this.activeFolderPath();
             await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
@@ -577,7 +580,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private disposeSubs() {
-        for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.testResultsSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub]) {
+        for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub]) {
             sub.dispose();
         }
     }
@@ -694,7 +697,6 @@ export class ExtensionManager implements vscode.Disposable {
             this.buildTypeSub = new DummyDisposable();
             this.launchTargetSub = new DummyDisposable();
             this.ctestEnabledSub = new DummyDisposable();
-            this.testResultsSub = new DummyDisposable();
             this.isBusySub = new DummyDisposable();
             this.activeConfigurePresetSub = new DummyDisposable();
             this.activeBuildPresetSub = new DummyDisposable();
@@ -716,7 +718,6 @@ export class ExtensionManager implements vscode.Disposable {
                 this.onLaunchTargetChangedEmitter.fire(t || '');
             });
             this.ctestEnabledSub = cmakeProject.onCTestEnabledChanged(FireNow, e => this.statusBar.setCTestEnabled(e));
-            this.testResultsSub = cmakeProject.onTestResultsChanged(FireNow, r => this.statusBar.setTestResults(r));
             this.isBusySub = cmakeProject.onIsBusyChanged(FireNow, b => this.statusBar.setIsBusy(b));
             this.statusBar.setActiveKitName(cmakeProject.activeKit ? cmakeProject.activeKit.name : '');
             this.activeConfigurePresetSub = cmakeProject.onActiveConfigurePresetChanged(FireNow, p => {
@@ -1230,6 +1231,14 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.ctest(), this.ensureActiveTestPreset);
     }
 
+    revealTestExplorer(folder?: vscode.WorkspaceFolder) {
+        return this.runCMakeCommand(cmakeProject => cmakeProject.revealTestExplorer(), folder, this.ensureActiveTestPreset);
+    }
+
+    refreshTests(folder?: vscode.WorkspaceFolder) {
+        return this.runCMakeCommand(cmakeProject => cmakeProject.refreshTests(), folder, this.ensureActiveTestPreset);
+    }
+
     stop(folder?: vscode.WorkspaceFolder) {
         return this.runCMakeCommand(cmakeProject => cmakeProject.stop(), folder);
     }
@@ -1659,6 +1668,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'editCacheUI',
         'ctest',
         'ctestAll',
+        'revealTestExplorer',
+        'refreshTests',
         'stop',
         'stopAll',
         'quickStart',

@@ -21,7 +21,7 @@ import {
     ExecutableTarget,
     NoGeneratorError
 } from '@cmt/drivers/drivers';
-import { CTestDriver, BasicTestResults } from './ctest';
+import { CTestDriver } from './ctest';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { FileDiagnostic, populateCollection } from './diagnostics/util';
@@ -483,17 +483,6 @@ export class CMakeProject {
     private readonly _ctestEnabled = new Property<boolean>(false);
 
     /**
-     * The current CTest results
-     */
-    get testResults() {
-        return this._testResults.value;
-    }
-    get onTestResultsChanged() {
-        return this._testResults.changeEvent;
-    }
-    private readonly _testResults = new Property<BasicTestResults | null>(null);
-
-    /**
      * Whether the backend is busy running some task
      */
     get onIsBusyChanged() {
@@ -591,7 +580,7 @@ export class CMakeProject {
         if (drv) {
             await drv.asyncDispose();
         }
-        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this._testResults, this.isBusy, this.variantManager, this.cTestController]) {
+        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this.isBusy, this.variantManager, this.cTestController]) {
             disp.dispose();
         }
     }
@@ -824,7 +813,7 @@ export class CMakeProject {
 
         await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
         this.targetName.set(this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
-        await this.cTestController.reloadTests(drv);
+        await this.cTestController.refreshTests(drv);
 
         // All set up. Fulfill the driver promise.
         return drv;
@@ -913,7 +902,6 @@ export class CMakeProject {
             });
         });
         this.cTestController.onTestingEnabledChanged(enabled => this._ctestEnabled.set(enabled));
-        this.cTestController.onResultsChanged(res => this._testResults.set(res));
 
         this.statusMessage.set(localize('ready.status', 'Ready'));
 
@@ -1272,7 +1260,7 @@ export class CMakeProject {
             if (result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
             }
-            await this.cTestController.reloadTests(drv);
+            await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
             return result;
         }
@@ -1340,7 +1328,7 @@ export class CMakeProject {
                                     await this.refreshCompileDatabase(drv.expansionOptions);
                                 }
 
-                                await this.cTestController.reloadTests(drv);
+                                await this.cTestController.refreshTests(drv);
                                 this.onReconfiguredEmitter.fire();
                                 return result;
                             } finally {
@@ -1828,10 +1816,8 @@ export class CMakeProject {
     }
 
     async ctest(): Promise<number> {
-
         const buildResult = await this.build(undefined, false, false);
         if (buildResult !== 0) {
-            this.cTestController.markAllCurrentTestsAsNotRun();
             return buildResult;
         }
 
@@ -1839,7 +1825,27 @@ export class CMakeProject {
         if (!drv) {
             throw new Error(localize('driver.died.after.build.succeeded', 'CMake driver died immediately after build succeeded.'));
         }
-        return await this.cTestController.runCTest(drv) || -1;
+        return (await this.cTestController.runCTest(drv)) ? 0 : -1;
+    }
+
+    async revealTestExplorer() {
+        if (!await this.cTestController.revealTestExplorer()) {
+            await this.refreshTests();
+            return this.cTestController.revealTestExplorer();
+        }
+    }
+
+    async refreshTests() {
+        const buildResult = await this.build(undefined, false, false);
+        if (buildResult !== 0) {
+            return [];
+        }
+
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            throw new Error(localize('driver.died.after.build.succeeded', 'CMake driver died immediately after build succeeded.'));
+        }
+        return this.cTestController.refreshTests(drv);
     }
 
     /**
