@@ -1034,12 +1034,12 @@
         },
         {
           "command": "cmake.projectStatus.debugTarget",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet",
+          "when": "view == cmake.projectStatus && !cmake:hideDebugCommand && cmake:enableFullFeatureSet",
           "group": "navigation@2"
         },
         {
           "command": "cmake.projectStatus.launchTarget",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet",
+          "when": "view == cmake.projectStatus && !cmake:hideLaunchCommand && cmake:enableFullFeatureSet",
           "group": "navigation@2"
         },
         {

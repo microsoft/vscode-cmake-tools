@@ -34,8 +34,8 @@ export class ProjectStatus {
         treeDataProvider.dispose();
     }
 
-    hideBuildButton() {
-        treeDataProvider.hideBuildButton();
+    hideBuildButton(isHidden: boolean) {
+        treeDataProvider.hideBuildButton(isHidden);
     }
 
     hideDebugButton(isHidden: boolean) {
@@ -58,6 +58,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     protected disposables: vscode.Disposable[] = [];
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     private activeCMakeProject?: CMakeProject;
+    private isBuildButtonHidden: boolean = false;
     private isDebugButtonHidden: boolean = false;
     private isLaunchButtonHidden: boolean = false;
     private isBusy: boolean = false;
@@ -178,19 +179,39 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             return node.getChildren();
         } else {
             // Initializing the tree for the first time
+            let nodes: Node[] = [];
             const configNode = new ConfigNode();
             await configNode.initialize();
-            const buildNode = new BuildNode();
-            await buildNode.initialize();
+            nodes.push(configNode);
+            if (!this.isBuildButtonHidden) {
+                const buildNode = new BuildNode();
+                await buildNode.initialize();
+                nodes.push(buildNode);
+            }
             const testNode = new TestNode();
             await testNode.initialize();
-            const debugNode = new DebugNode();
-            await debugNode.initialize();
-            const launchNode = new LaunchNode();
-            await launchNode.initialize();
+            nodes.push(testNode);
+            if (!this.isDebugButtonHidden) {
+                const debugNode = new DebugNode();
+                await debugNode.initialize();
+                nodes.push(debugNode);
+            }
+            if (!this.isDebugButtonHidden) {
+                const launchNode = new LaunchNode();
+                await launchNode.initialize();
+                nodes.push(launchNode);
+            }
             const projectNode = new ProjectNode();
             await projectNode.initialize();
-            return [configNode, buildNode, testNode, debugNode, launchNode, projectNode];
+            nodes.push(projectNode);
+            return nodes;
+        }
+    }
+
+    public hideBuildButton(isHidden: boolean) {
+        if (isHidden !== this.isBuildButtonHidden){
+            this.isBuildButtonHidden = isHidden;
+            this.refresh();
         }
     }
 

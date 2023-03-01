@@ -454,14 +454,17 @@ export class ProjectController implements vscode.Disposable {
         await projectStatus.refresh();
     }
 
-    hideLaunchButton(isHidden: boolean) {
-        projectStatus.hideLaunchButton(isHidden);
+    hideBuildButton(isHidden: boolean) {
+        projectStatus.hideBuildButton(isHidden);
     }
 
     hideDebugButton(isHidden: boolean) {
         projectStatus.hideDebugButton(isHidden);
     }
 
+    hideLaunchButton(isHidden: boolean) {
+        projectStatus.hideLaunchButton(isHidden);
+    }
     /**
      * Handle workspace change event.
      * @param event Workspace change event
