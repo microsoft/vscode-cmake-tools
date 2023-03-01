@@ -35,19 +35,19 @@ export class ProjectStatus {
     }
 
     hideBuildButton() {
-        // To be implemented
+        treeDataProvider.hideBuildButton();
     }
 
-    hideLaunchButton() {
-        // To be implemented
+    hideDebugButton(isHidden: boolean) {
+        treeDataProvider.hideDebugButton(isHidden);
     }
 
-    hideDebugButton() {
-        // To be implemented
+    hideLaunchButton(isHidden: boolean) {
+        treeDataProvider.hideLaunchButton(isHidden);
     }
 
-    setIsBusy(_isBusy: boolean) {
-        // To be implemented
+    setIsBusy(isBusy: boolean) {
+        treeDataProvider.setIsBusy(isBusy);
     }
 
 }
@@ -58,6 +58,9 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     protected disposables: vscode.Disposable[] = [];
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     private activeCMakeProject?: CMakeProject;
+    private isDebugButtonHidden: boolean = false;
+    private isLaunchButtonHidden: boolean = false;
+    private isBusy: boolean = false;
 
     get onDidChangeTreeData(): vscode.Event<Node | undefined> {
         return this._onDidChangeTreeData.event;
@@ -188,6 +191,32 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             const projectNode = new ProjectNode();
             await projectNode.initialize();
             return [configNode, buildNode, testNode, debugNode, launchNode, projectNode];
+        }
+    }
+
+    public hideDebugButton(isHidden: boolean) {
+        if (isHidden !== this.isDebugButtonHidden){
+            this.isDebugButtonHidden = isHidden;
+            this.refresh();
+        }
+    }
+
+    public hideLaunchButton(isHidden: boolean) {
+        if (isHidden !== this.isLaunchButtonHidden){
+            this.isLaunchButtonHidden = isHidden;
+            this.refresh();
+        }
+    }
+
+    setIsBusy(isBusy: boolean) {
+        if (this.isBusy != isBusy) {
+            this.isBusy = isBusy;
+            if (isBusy) {
+
+            } else {
+
+            }
+            this.refresh();
         }
     }
 
