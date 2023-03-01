@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
+import * as preset from './preset';
 import { runCommand } from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
-const noConfigPresetSelected = localize('no.configure.preset.selected', 'No Configure Preset Selected');
-const noBuildPresetSelected = localize('no.build.preset.selected', 'No Build Preset Selected');
-const noTestPresetSelected = localize('no.test.preset.selected', 'No Test Preset Selected');
+const noKitSelected = localize('no.kit.selected', '[No Kit Selected]')
+const noConfigPresetSelected = localize('no.configure.preset.selected', '[No Configure Preset Selected]');
+const noBuildPresetSelected = localize('no.build.preset.selected', '[No Build Preset Selected]');
+const noTestPresetSelected = localize('no.test.preset.selected', '[No Test Preset Selected]');
 
 let treeDataProvider: TreeDataProvider;
 
@@ -102,7 +104,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.ctest', async (folder: vscode.WorkspaceFolder) => runCommand('ctest', folder)),
-            vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_node: Node, _folder: vscode.WorkspaceFolder, _test: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_folder: vscode.WorkspaceFolder, _test: Promise<string>) => {
                 // Do nothing
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectTestPreset', async (node: Node, folder: vscode.WorkspaceFolder) => {
@@ -575,6 +577,9 @@ class BuildPreset extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.buildPreset?.name || noBuildPresetSelected;
+        if (this.label === preset.defaultBuildPreset.name) {
+            this.label = preset.defaultBuildPreset.displayName;
+        }
         this.command = {
             title: localize('change.preset', 'Change Preset'),
             command: 'cmake.projectStatus.selectBuildPreset',
@@ -600,6 +605,9 @@ class TestPreset extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.testPreset?.name || noTestPresetSelected;
+        if (this.label === preset.defaultTestPreset.name) {
+            this.label = preset.defaultTestPreset.displayName;
+        }
         this.command = {
             title: localize('change.preset', 'Change Preset'),
             command: 'cmake.projectStatus.selectTestPreset',
@@ -624,7 +632,7 @@ class Kit extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = treeDataProvider.cmakeProject.activeKit?.name || "";
+        this.label = treeDataProvider.cmakeProject.activeKit?.name || noKitSelected;
         this.command = {
             title: localize('change.kit', 'Change Kit'),
             command: 'cmake.projectStatus.selectKit',
@@ -639,7 +647,7 @@ class Kit extends Node {
         if (!treeDataProvider.cmakeProject) {
             return this;
         }
-        this.label = treeDataProvider.cmakeProject.activeKit?.name || "";
+        this.label = treeDataProvider.cmakeProject.activeKit?.name || noKitSelected;
         return this;
     }
 }
@@ -676,12 +684,12 @@ class TestTarget extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = "All tests";
+        this.label = "[All tests]";
         const title: string = localize('set.test.target', 'Set Test Target');
         this.command = {
             title: title,
             command: 'cmake.projectStatus.setTestTarget',
-            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, "All tests"]
+            arguments: [treeDataProvider.cmakeProject.workspaceFolder, "All tests"]
         };
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
