@@ -138,11 +138,11 @@ export class ProjectController implements vscode.Disposable {
         } else {
             this.targetNameSub = project.onTargetNameChanged(FireNow, () => void projectStatus.refresh());
             this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => void projectStatus.refresh());
-            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, async () => void projectStatus.refresh());
-            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, async () => void projectStatus.refresh());
-            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void projectStatus.refresh());
-            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, async () => void projectStatus.refresh());
-            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, async () => void projectStatus.refresh());
+            this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, () => void projectStatus.refresh());
+            this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, () => void projectStatus.refresh());
+            this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
+            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
+            this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => void projectStatus.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, isBusy => projectStatus.setIsBusy(isBusy));
         }
     }
@@ -454,16 +454,12 @@ export class ProjectController implements vscode.Disposable {
         await projectStatus.refresh();
     }
 
-    hideBuildButton(_shouldHide: boolean) {
-        projectStatus.hideBuildButton();
+    hideLaunchButton(isHidden: boolean) {
+        projectStatus.hideLaunchButton(isHidden);
     }
 
-    hideLaunchButton(_shouldHide: boolean) {
-        projectStatus.hideLaunchButton();
-    }
-
-    hideDebugButton(_shouldHide: boolean) {
-        projectStatus.hideDebugButton();
+    hideDebugButton(isHidden: boolean) {
+        projectStatus.hideDebugButton(isHidden);
     }
 
     /**
