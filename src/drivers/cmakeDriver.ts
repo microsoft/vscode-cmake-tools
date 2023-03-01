@@ -1496,13 +1496,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
 
         const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
-        const config = vscode.workspace.getConfiguration("cmake", configurationScope);
+        const configResourceScope = vscode.workspace.getConfiguration("cmake", configurationScope);
+        const config= vscode.workspace.getConfiguration("cmake");
         // Export compile_commands.json
         const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
         const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
         settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
 
-        const allowBuildTypeOnMultiConfig = config.get<boolean>("setBuildTypeOnMultiConfig") || false;
+        const allowBuildTypeOnMultiConfig = configResourceScope.get<boolean>("setBuildTypeOnMultiConfig") || false;
 
         if (!this.isMultiConfFast || (this.isMultiConfFast && allowBuildTypeOnMultiConfig)) {
             // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
