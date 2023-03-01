@@ -72,9 +72,8 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         this.disposables.push(...[
             this.treeView,
             // Commands for projectStatus items
-            vscode.commands.registerCommand('cmake.projectStatus.stop', async (node: Node) => {
-                await runCommand('stop');
-                await this.refresh(node);
+            vscode.commands.registerCommand('cmake.projectStatus.stop', async () => {
+                runCommand('stop');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
                 await runCommand('selectKit');
@@ -84,23 +83,15 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await runCommand('selectConfigurePreset', folder);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.configure', async (node: Node, folder: vscode.WorkspaceFolder) => {
-                node.changeToStop();
-                await this.refresh(node);
-                await runCommand('configure', folder);
-                node.changeBackToOriginal();
-                await this.refresh(node);
+            vscode.commands.registerCommand('cmake.projectStatus.configure', async (folder: vscode.WorkspaceFolder) => {
+                runCommand('configure', folder);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node, folder: vscode.WorkspaceFolder, variant: Promise<string>) => {
                 await runCommand('setVariant', folder, await variant);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.build', async (node: Node, folder: vscode.WorkspaceFolder, target: Promise<string>) => {
-                node.changeToStop();
-                await this.refresh(node);
-                await runCommand('build', folder, await target);
-                node.changeBackToOriginal();
-                await this.refresh(node);
+            vscode.commands.registerCommand('cmake.projectStatus.build', async (folder: vscode.WorkspaceFolder, target: Promise<string>) => {
+                runCommand('build', folder, await target);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node, folder: vscode.WorkspaceFolder, target: Promise<string>) => {
                 await runCommand('setDefaultTarget', folder, await target);
@@ -182,10 +173,16 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             let nodes: Node[] = [];
             const configNode = new ConfigNode();
             await configNode.initialize();
+            if (this.isBusy) {
+                configNode.convertToStopCommand();
+            }
             nodes.push(configNode);
             if (!this.isBuildButtonHidden) {
                 const buildNode = new BuildNode();
                 await buildNode.initialize();
+                if (this.isBusy) {
+                    buildNode.convertToStopCommand();
+                }
                 nodes.push(buildNode);
             }
             const testNode = new TestNode();
@@ -232,11 +229,6 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     setIsBusy(isBusy: boolean) {
         if (this.isBusy != isBusy) {
             this.isBusy = isBusy;
-            if (isBusy) {
-
-            } else {
-
-            }
             this.refresh();
         }
     }
@@ -263,10 +255,10 @@ class Node extends vscode.TreeItem {
     async refresh(): Promise<void> {
     }
 
-    changeToStop(): void {
+    convertToStopCommand(): void {
     }
 
-    changeBackToOriginal(): void {
+    convertToOriginalCommand(): void {
     }
 }
 
@@ -284,7 +276,7 @@ class ConfigNode extends Node {
         this.command = {
             title: this.label,
             command: 'cmake.projectStatus.configure',
-            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder]
+            arguments: [treeDataProvider.cmakeProject.workspaceFolder]
         };
         this.tooltip = this.label;
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
@@ -318,7 +310,7 @@ class ConfigNode extends Node {
         }
     }
 
-    changeToStop(): void {
+    convertToStopCommand(): void {
         this.label = localize("configure.running", "Configure (Running)");
         const title: string = localize('Stop', 'Stop');
         this.command = {
@@ -330,7 +322,7 @@ class ConfigNode extends Node {
         this.contextValue = "stop";
     }
 
-    changeBackToOriginal(): Promise<void> {
+    convertToOriginalCommand(): Promise<void> {
         return this.initialize();
     }
 
@@ -349,7 +341,7 @@ class BuildNode extends Node {
         this.command = {
             title: this.label,
             command: 'cmake.projectStatus.build',
-            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.buildTargetName()]
+            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.buildTargetName()]
         };
         this.tooltip = this.label;
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
@@ -381,7 +373,7 @@ class BuildNode extends Node {
         }
     }
 
-    changeToStop(): void {
+    convertToStopCommand(): void {
         this.label = localize("build.running", "Build (Running)");
         const title: string = localize('Stop', 'Stop');
         this.command = {
@@ -393,7 +385,7 @@ class BuildNode extends Node {
         this.contextValue = "stop";
     }
 
-    changeBackToOriginal(): Promise<void> {
+    convertToOriginalCommand(): Promise<void> {
         return this.initialize();
     }
 

@@ -1028,19 +1028,24 @@
       ],
       "view/title": [
         {
+          "command": "cmake.projectStatus.stop",
+          "when": "view == cmake.projectStatus && cmake:isBuilding && cmake:enableFullFeatureSet",
+          "group": "navigation@1"
+        },
+        {
           "command": "cmake.projectStatus.update",
           "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "cmake.projectStatus.debugTarget",
           "when": "view == cmake.projectStatus && !cmake:hideDebugCommand && cmake:enableFullFeatureSet",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "cmake.projectStatus.launchTarget",
           "when": "view == cmake.projectStatus && !cmake:hideLaunchCommand && cmake:enableFullFeatureSet",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "cmake.outline.configureAll",
