@@ -1920,7 +1920,8 @@
         "cmake.exportCompileCommandsFile": {
           "type": "boolean",
           "default": true,
-          "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%"
+          "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%",
+          "scope": "resource"
         },
         "cmake.useCMakePresets": {
           "type": "string",
