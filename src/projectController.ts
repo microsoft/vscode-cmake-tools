@@ -149,7 +149,6 @@ export class ProjectController implements vscode.Disposable {
             await util.setContextValue(ext.hideBuildCommandKey, project.hideBuildButton);
             await util.setContextValue(ext.hideDebugCommandKey, project.hideDebugButton);
             await util.setContextValue(ext.hideLaunchCommandKey, project.hideLaunchButton);
-    
         }
     }
 
