@@ -244,14 +244,6 @@
         }
       },
       {
-        "command": "cmake.outline.configure",
-        "title": "%cmake-tools.command.cmake.configure.title%",
-        "icon": {
-          "dark": "res/dark/configure-icon.svg",
-          "light": "res/light/configure-icon.svg"
-        }
-      },
-      {
         "command": "cmake.projectStatus.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
         "icon": {
