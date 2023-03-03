@@ -557,6 +557,11 @@ export class CTestDriver implements vscode.Disposable {
      * @returns 0 when successful
      */
     async refreshTests(driver: CMakeDriver): Promise<number> {
+        if (util.isTestMode()) {
+            // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
+            return 0;
+        }
+
         const initializedTestExplorer = this.ensureTestExplorerInitialized();
         const sourceDir = util.platformNormalizePath(driver.sourceDir);
         const testExplorerRoot = initializedTestExplorer.items.get(sourceDir);
