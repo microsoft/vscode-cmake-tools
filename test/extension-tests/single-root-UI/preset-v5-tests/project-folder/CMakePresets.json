@@ -11,10 +11,8 @@
         "CMAKE_TOOLCHAIN_FILE": {
             "type": "FILEPATH",
             "value": "${workspaceFolder}/test-toolchain.cmake"
-        }
-      },
-      "environment": {
-        "MY_ENV": "$penv{PATH}${pathListSep}${workspaceFolder}/build"
+        },
+        "MY_ENV": "test1${pathListSep}test2"
       }
     },
     {
@@ -27,10 +25,8 @@
         "CMAKE_TOOLCHAIN_FILE": {
             "type": "FILEPATH",
             "value": "${workspaceFolder}/test-toolchain.cmake"
-        }
-      },
-      "environment": {
-        "MY_ENV": "$penv{PATH}${pathListSep}${workspaceFolder}/build"
+        },
+        "MY_ENV": "$penv{PATH}${pathListSep}build"
       }
     }
   ],

@@ -17,6 +17,7 @@ add_custom_command(
 set(configureEnvironment "$ENV{_CONFIGURE_ENV}" CACHE STRING "configureEnvironment")
 set(buildEnvironment "$ENV{_BUILD_ENV}" CACHE STRING "buildEnvironment")
 set(environment "$ENV{_ENV}" CACHE STRING "environment")
+set(myEnvironment "${MY_ENV}")
 
 set(variantEnv "$ENV{TEST_VARIANT_ENV}" CACHE STRING "variantEnv")
 

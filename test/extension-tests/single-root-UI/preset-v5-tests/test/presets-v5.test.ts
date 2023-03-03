@@ -6,6 +6,7 @@ import {
 } from "@test/util";
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { CMakeCache, CacheEntryType } from '@cmt/cache';
 
 suite('Preset v5 functionality', () => {
     let testEnv: DefaultEnvironment;
@@ -56,6 +57,21 @@ suite('Preset v5 functionality', () => {
         await vscode.commands.executeCommand('cmake.setBuildPreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setTestPreset', 'Linux1');
         expect(await vscode.commands.executeCommand('cmake.configure')).to.eq(0, 'configure with path list separator macro failed');
+        expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+        const cache = await CMakeCache.fromPath(testEnv.projectFolder.buildDirectory.cmakeCachePath);
+
+        const cacheEntry_ = cache.get('MY_ENV');
+        expect(cacheEntry_).to.not.be.eq(null, '[MY_ENV] Cache entry was not present');
+        const cacheEntry = cacheEntry_!;
+        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[MY_ENV] unexpected cache entry type');
+        expect(cacheEntry.key).to.eq('MY_ENV', '[MY_ENV] unexpected cache entry key name');
+        expect(typeof cacheEntry.value).to.eq('string', '[MY_ENV] unexpected cache entry value type');
+        if (process.platform === 'win32') {
+            expect(cacheEntry.as<string>()).to.eq('test1;test2', '[MY_ENV] incorrect environment variable');
+        } else {
+            expect(cacheEntry.as<string>()).to.eq('test1:test2', '[MY_ENV] incorrect environment variable');
+        }
+
         await vscode.commands.executeCommand('cmake.build');
 
         const result = await testEnv.result.getResultAsJson();

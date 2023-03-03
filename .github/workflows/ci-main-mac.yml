@@ -52,7 +52,7 @@ jobs:
       - name: Run basic single root test
         run: yarn extensionTestsBasicSingleRoot
 
-      - name: Run basic single root test
+      - name: Run preset v5 single root test
         run: yarn extensionTestsPresetV5SingleRoot
 
       - name: Run multi root test
