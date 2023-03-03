@@ -151,7 +151,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             this.isDebugButtonHidden = cmakeProject.hideDebugButton;
             this.isLaunchButtonHidden = cmakeProject.hideLaunchButton;
         } else {
-            this.isBuildButtonHidden = false
+            this.isBuildButtonHidden = false;
             this.isDebugButtonHidden = false;
             this.isLaunchButtonHidden = false;
         }
