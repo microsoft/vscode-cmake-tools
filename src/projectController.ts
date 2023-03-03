@@ -123,10 +123,10 @@ export class ProjectController implements vscode.Disposable {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
         await projectStatus.updateActiveProject(project);
-        this.setupProjectSubscriptions(project);
+        await this.setupProjectSubscriptions(project);
     }
 
-    setupProjectSubscriptions(project?: CMakeProject): void {
+    async setupProjectSubscriptions(project?: CMakeProject): Promise<void> {
         disposeAll(this.projectSubscriptions);
         if (!project) {
             this.targetNameSub = new DummyDisposable();
@@ -146,6 +146,10 @@ export class ProjectController implements vscode.Disposable {
             this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
             this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => void projectStatus.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, (isBusy) => void projectStatus.setIsBusy(isBusy));
+            await util.setContextValue(ext.hideBuildCommandKey, project.hideBuildButton);
+            await util.setContextValue(ext.hideDebugCommandKey, project.hideDebugButton);
+            await util.setContextValue(ext.hideLaunchCommandKey, project.hideLaunchButton);
+    
         }
     }
 
