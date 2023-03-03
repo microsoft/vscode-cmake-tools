@@ -131,6 +131,12 @@ export class ExtensionManager implements vscode.Disposable {
             }
         });
 
+        this.projectController.onBeforeRemoveFolder(async projects => {
+            for (const project of projects) {
+                project.removeTestExplorerRoot(project.folderPath);
+            }
+        });
+
         this.projectController.onAfterRemoveFolder(async folder => {
             console.assert((vscode.workspace.workspaceFolders === undefined && this.projectController.numOfWorkspaceFolders === 0) ||
                 (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this.projectController.numOfWorkspaceFolders));
@@ -399,7 +405,8 @@ export class ExtensionManager implements vscode.Disposable {
         if (!project) {
             return;
         }
-        const rootFolder: vscode.WorkspaceFolder = project?.workspaceFolder;
+        const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
+        project.addTestExplorerRoot(project.folderPath);
         // Scan for kits even under presets mode, so we can create presets from compilers.
         // Silent re-scan when detecting a breaking change in the kits definition.
         // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.

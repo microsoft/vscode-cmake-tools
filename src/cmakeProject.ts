@@ -1848,6 +1848,14 @@ export class CMakeProject {
         return this.cTestController.refreshTests(drv);
     }
 
+    addTestExplorerRoot(folder: string) {
+        return this.cTestController.addTestExplorerRoot(folder);
+    }
+
+    removeTestExplorerRoot(folder: string) {
+        return this.cTestController.removeTestExplorerRoot(folder);
+    }
+
     /**
      * Implementation of `cmake.install`
      */

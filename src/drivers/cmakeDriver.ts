@@ -209,7 +209,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @note This is distinct from the config values, since we do variable
      * substitution.
      */
-    protected sourceDir = '';
+    protected __sourceDir = '';
+
+    get sourceDir(): string {
+        return this.__sourceDir;
+    }
+
+    protected set sourceDir(value: string) {
+        this.__sourceDir = value;
+    }
 
     /**
      * Dispose the driver. This disposes some things synchronously, but also

@@ -174,10 +174,11 @@ export class ProjectController implements vscode.Disposable {
     }
 
     async getProjectForFolder(folder: string): Promise<CMakeProject | undefined> {
-        const sourceDir = await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder));
+        const sourceDir = util.platformNormalizePath(await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder)));
         const allCMakeProjects: CMakeProject[] = this.getAllCMakeProjects();
         for (const project of allCMakeProjects) {
-            if (project.sourceDir === sourceDir || project.workspaceFolder.uri.fsPath === sourceDir) {
+            if (util.platformNormalizePath(project.sourceDir) === sourceDir ||
+                    util.platformNormalizePath(project.workspaceFolder.uri.fsPath) === sourceDir) {
                 return project;
             }
         }

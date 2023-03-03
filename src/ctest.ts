@@ -558,14 +558,13 @@ export class CTestDriver implements vscode.Disposable {
      */
     async refreshTests(driver: CMakeDriver): Promise<number> {
         const initializedTestExplorer = this.ensureTestExplorerInitialized();
-        let testExplorerRoot = initializedTestExplorer.items.get(driver.workspaceFolder);
+        const sourceDir = util.platformNormalizePath(driver.sourceDir);
+        const testExplorerRoot = initializedTestExplorer.items.get(sourceDir);
         if (!testExplorerRoot) {
-            testExplorerRoot = initializedTestExplorer.createTestItem(driver.workspaceFolder, driver.workspaceFolder);
-            initializedTestExplorer.items.add(testExplorerRoot);
-        } else if (testExplorerRoot.children.size > 0) {
-            // Clear all children and re-add later
-            testExplorerRoot.children.replace([]);
+            throw(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
         }
+        // Clear all children and re-add later
+        testExplorerRoot.children.replace([]);
 
         // TODO: There's no way to mark tests as outdated now.
         const ctestFile = path.join(driver.binaryDir, 'CTestTestfile.cmake');
@@ -657,6 +656,13 @@ export class CTestDriver implements vscode.Disposable {
             // Cast to any since this is not supported yet in the API we use.
             (testExplorer as any).refreshHandler = () => vscode.commands.executeCommand('cmake.refreshTestsAll');
 
+            if (this.projectController) {
+                for (const project of this.projectController.getAllCMakeProjects()) {
+                    const folderPath = util.platformNormalizePath(project.folderPath);
+                    testExplorer.items.add(testExplorer.createTestItem(folderPath, folderPath));
+                }
+            }
+
             testExplorer.createRunProfile(
                 'Run Tests',
                 vscode.TestRunProfileKind.Run,
@@ -667,6 +673,24 @@ export class CTestDriver implements vscode.Disposable {
             // testExplorer.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler);
         }
         return testExplorer;
+    }
+
+    addTestExplorerRoot(folder: string) {
+        if (!testExplorer) {
+            return;
+        }
+
+        const normalizedFolder = util.platformNormalizePath(folder);
+        testExplorer.items.add(testExplorer.createTestItem(normalizedFolder, normalizedFolder));
+    }
+
+    removeTestExplorerRoot(folder: string) {
+        if (!testExplorer) {
+            return;
+        }
+
+        const normalizedFolder = util.platformNormalizePath(folder);
+        testExplorer.items.delete(normalizedFolder);
     }
 
     /**
