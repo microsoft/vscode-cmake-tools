@@ -6,7 +6,7 @@ import { runCommand } from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
-const noKitSelected = localize('no.kit.selected', '[No Kit Selected]')
+const noKitSelected = localize('no.kit.selected', '[No Kit Selected]');
 const noConfigPresetSelected = localize('no.configure.preset.selected', '[No Configure Preset Selected]');
 const noBuildPresetSelected = localize('no.build.preset.selected', '[No Build Preset Selected]');
 const noTestPresetSelected = localize('no.test.preset.selected', '[No Test Preset Selected]');
@@ -36,20 +36,24 @@ export class ProjectStatus {
         treeDataProvider.dispose();
     }
 
-    hideBuildButton(isHidden: boolean) {
-        treeDataProvider.hideBuildButton(isHidden);
+    async hideBuildButton(isHidden: boolean) {
+        await treeDataProvider.hideBuildButton(isHidden);
     }
 
-    hideDebugButton(isHidden: boolean) {
-        treeDataProvider.hideDebugButton(isHidden);
+    async hideDebugButton(isHidden: boolean) {
+        await treeDataProvider.hideDebugButton(isHidden);
     }
 
-    hideLaunchButton(isHidden: boolean) {
-        treeDataProvider.hideLaunchButton(isHidden);
+    async hideLaunchButton(isHidden: boolean) {
+        await treeDataProvider.hideLaunchButton(isHidden);
     }
 
-    setIsBusy(isBusy: boolean) {
-        treeDataProvider.setIsBusy(isBusy);
+    async setIsBusy(isBusy: boolean) {
+        await treeDataProvider.setIsBusy(isBusy);
+    }
+
+    async doStatusBarChange() {
+        await treeDataProvider.doStatusBarChange();
     }
 
 }
@@ -75,7 +79,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             this.treeView,
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.projectStatus.stop', async () => {
-                runCommand('stop');
+                await runCommand('stop');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
                 await runCommand('selectKit');
@@ -86,14 +90,14 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.configure', async (folder: vscode.WorkspaceFolder) => {
-                runCommand('configure', folder);
+                void runCommand('configure', folder);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node, folder: vscode.WorkspaceFolder, variant: Promise<string>) => {
                 await runCommand('setVariant', folder, await variant);
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.build', async (folder: vscode.WorkspaceFolder, target: Promise<string>) => {
-                runCommand('build', folder, await target);
+                void runCommand('build', folder, await target);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node, folder: vscode.WorkspaceFolder, target: Promise<string>) => {
                 await runCommand('setDefaultTarget', folder, await target);
@@ -141,7 +145,16 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
 
     async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
         // Use project to create the tree
-        this.activeCMakeProject = cmakeProject;
+        if (cmakeProject) {
+            this.activeCMakeProject = cmakeProject;
+            this.isBuildButtonHidden = cmakeProject.hideBuildButton;
+            this.isDebugButtonHidden = cmakeProject.hideDebugButton;
+            this.isLaunchButtonHidden = cmakeProject.hideLaunchButton;
+        } else {
+            this.isBuildButtonHidden = false
+            this.isDebugButtonHidden = false;
+            this.isLaunchButtonHidden = false;
+        }
         await this.refresh();
     }
 
@@ -172,7 +185,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             return node.getChildren();
         } else {
             // Initializing the tree for the first time
-            let nodes: Node[] = [];
+            const nodes: Node[] = [];
             const configNode = new ConfigNode();
             await configNode.initialize();
             if (this.isBusy) {
@@ -195,7 +208,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await debugNode.initialize();
                 nodes.push(debugNode);
             }
-            if (!this.isDebugButtonHidden) {
+            if (!this.isLaunchButtonHidden) {
                 const launchNode = new LaunchNode();
                 await launchNode.initialize();
                 nodes.push(launchNode);
@@ -207,31 +220,61 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         }
     }
 
-    public hideBuildButton(isHidden: boolean) {
-        if (isHidden !== this.isBuildButtonHidden){
+    public async doStatusBarChange() {
+        let didChange: boolean = false;
+        if (this.activeCMakeProject) {
+            if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
+                didChange = true;
+                this.isBuildButtonHidden = this.activeCMakeProject.hideBuildButton;
+            }
+            if (this.isDebugButtonHidden !== this.activeCMakeProject.hideDebugButton) {
+                didChange = true;
+                this.isDebugButtonHidden = this.activeCMakeProject.hideDebugButton;
+            }
+            if (this.isLaunchButtonHidden !== this.activeCMakeProject.hideLaunchButton) {
+                didChange = true;
+                this.isLaunchButtonHidden = this.activeCMakeProject.hideLaunchButton;
+            }
+            if (didChange) {
+                await this.refresh();
+            }
+        }
+    }
+
+    public async hideBuildButton(isHidden: boolean) {
+        if (isHidden !== this.isBuildButtonHidden) {
+            if (this.activeCMakeProject) {
+                this.activeCMakeProject.hideBuildButton = isHidden;
+            }
             this.isBuildButtonHidden = isHidden;
-            this.refresh();
+            await this.refresh();
         }
     }
 
-    public hideDebugButton(isHidden: boolean) {
-        if (isHidden !== this.isDebugButtonHidden){
+    public async hideDebugButton(isHidden: boolean): Promise<void> {
+        if (isHidden !== this.isDebugButtonHidden) {
+            if (this.activeCMakeProject) {
+                this.activeCMakeProject.hideDebugButton = isHidden;
+            }
             this.isDebugButtonHidden = isHidden;
-            this.refresh();
+            await this.refresh();
         }
     }
 
-    public hideLaunchButton(isHidden: boolean) {
-        if (isHidden !== this.isLaunchButtonHidden){
+    public async hideLaunchButton(isHidden: boolean): Promise<void> {
+        if (isHidden !== this.isLaunchButtonHidden) {
+            if (this.activeCMakeProject) {
+                this.activeCMakeProject.hideLaunchButton = isHidden;
+            }
             this.isLaunchButtonHidden = isHidden;
-            this.refresh();
+            await this.refresh();
         }
     }
 
-    setIsBusy(isBusy: boolean) {
-        if (this.isBusy != isBusy) {
+    async setIsBusy(isBusy: boolean): Promise<void> {
+        if (this.isBusy !== isBusy) {
             this.isBusy = isBusy;
-            this.refresh();
+            await this.refresh();
         }
     }
 

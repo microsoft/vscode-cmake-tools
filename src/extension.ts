@@ -49,9 +49,9 @@ let taskProvider: vscode.Disposable;
 const log = logging.createLogger('extension');
 
 const multiProjectModeKey = 'cmake:multiProject';
-const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
-const hideDebugCommandKey = 'cmake:hideDebugCommand';
-const hideBuildCommandKey = 'cmake:hideBuildCommand';
+export const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
+export const hideDebugCommandKey = 'cmake:hideDebugCommand';
+export const hideBuildCommandKey = 'cmake:hideBuildCommand';
 
 /**
  * The global extension manager. There is only one of these, even if multiple
@@ -1310,19 +1310,16 @@ export class ExtensionManager implements vscode.Disposable {
 
     async hideLaunchCommand(shouldHide: boolean = true) {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
-        this.projectController.hideLaunchButton(shouldHide);
-        await util.setContextValue(hideLaunchCommandKey, shouldHide);
+        await this.projectController.hideLaunchButton(shouldHide);
     }
 
     async hideDebugCommand(shouldHide: boolean = true) {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
-        this.projectController.hideDebugButton(shouldHide);
-        await util.setContextValue(hideDebugCommandKey, shouldHide);
+        await this.projectController.hideDebugButton(shouldHide);
     }
 
     async hideBuildCommand(shouldHide: boolean = true) {
-        this.projectController.hideBuildButton(shouldHide);
-        await util.setContextValue(hideBuildCommandKey, shouldHide);
+        await this.projectController.hideBuildButton(shouldHide);
     }
 
     // Answers whether the workspace contains at least one project folder that is CMake based,

@@ -9,13 +9,14 @@ import * as logging from '@cmt/logging';
 import CMakeProject from '@cmt/cmakeProject';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, DummyDisposable } from '@cmt/util';
-import { ConfigurationReader } from './config';
+import { ConfigurationReader, StatusBarConfig } from './config';
 import { CMakeDriver } from './drivers/drivers';
 import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
 import * as telemetry from './telemetry';
 import { FireNow } from './prop';
 import { ProjectStatus } from './sideBar';
+import * as ext from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -30,6 +31,7 @@ export class ProjectController implements vscode.Disposable {
     private readonly buildDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly useCMakePresetsSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
+    private readonly hideDebugButtonSub  = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectType>();
@@ -143,7 +145,7 @@ export class ProjectController implements vscode.Disposable {
             this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
             this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
             this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => void projectStatus.refresh());
-            this.isBusySub = project.onIsBusyChanged(FireNow, isBusy => projectStatus.setIsBusy(isBusy));
+            this.isBusySub = project.onIsBusyChanged(FireNow, (isBusy) => void projectStatus.setIsBusy(isBusy));
         }
     }
 
@@ -330,6 +332,7 @@ export class ProjectController implements vscode.Disposable {
                 this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(config, folder)));
                 this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(config, folder)));
                 this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
+                this.hideDebugButtonSub.set(folder, config.onChange('statusbar', async (statusbar: StatusBarConfig) => this.doStatusBarChange(folder, statusbar)));
             }
         }
         this.afterAddFolderEmitter.fire({ folder: folder, projects: projects });
@@ -448,23 +451,40 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
+    private async doStatusBarChange(folder: vscode.WorkspaceFolder, statusbar: StatusBarConfig): Promise<void> {
+        const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
+        if (projects) {
+            for (const project of projects) {
+                project.doStatusBarChange(statusbar);
+            }
+        }
+        await projectStatus.doStatusBarChange();
+        await util.setContextValue(ext.hideBuildCommandKey, (statusbar.advanced?.build?.visibility === "hidden") ? true : false);
+        await util.setContextValue(ext.hideDebugCommandKey, (statusbar.advanced?.debug?.visibility === "hidden") ? true : false);
+        await util.setContextValue(ext.hideLaunchCommandKey, (statusbar.advanced?.launch?.visibility === "hidden") ? true : false);
+    }
+
+    async hideBuildButton(isHidden: boolean) {
+        await projectStatus.hideBuildButton(isHidden);
+        await util.setContextValue(ext.hideBuildCommandKey, isHidden);
+    }
+
+    async hideDebugButton(isHidden: boolean) {
+        await projectStatus.hideDebugButton(isHidden);
+        await util.setContextValue(ext.hideDebugCommandKey, isHidden);
+    }
+
+    async hideLaunchButton(isHidden: boolean) {
+        await projectStatus.hideLaunchButton(isHidden);
+        await util.setContextValue(ext.hideLaunchCommandKey, isHidden);
+    }
+
     private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
         const state: boolean = project?.useCMakePresets || false;
         await util.setContextValue('useCMakePresets', state);
         await projectStatus.refresh();
     }
 
-    hideBuildButton(isHidden: boolean) {
-        projectStatus.hideBuildButton(isHidden);
-    }
-
-    hideDebugButton(isHidden: boolean) {
-        projectStatus.hideDebugButton(isHidden);
-    }
-
-    hideLaunchButton(isHidden: boolean) {
-        projectStatus.hideLaunchButton(isHidden);
-    }
     /**
      * Handle workspace change event.
      * @param event Workspace change event
