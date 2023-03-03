@@ -13,6 +13,7 @@ import * as nls from 'vscode-nls';
 import { testArgs, TestPreset } from './preset';
 import { expandString } from './expand';
 import * as proc from '@cmt/proc';
+import { ProjectController } from './projectController';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -319,7 +320,10 @@ class CTestOutputLogger implements OutputConsumer {
 }
 
 export class CTestDriver implements vscode.Disposable {
-    constructor(readonly ws: DirectoryContext) {}
+    /**
+     * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
+     */
+    constructor(readonly ws: DirectoryContext, private readonly projectController?: ProjectController) {}
     private readonly decorationManager = new DecorationManager();
 
     private _testingEnabled: boolean = false;
@@ -333,9 +337,6 @@ export class CTestDriver implements vscode.Disposable {
 
     private readonly testingEnabledEmitter = new vscode.EventEmitter<boolean>();
     readonly onTestingEnabledChanged = this.testingEnabledEmitter.event;
-
-    // Each folder has its own root, so we need to keep track of the root name for each folder.
-    private testExplorerRootName: string | undefined;
 
     dispose() {
         this.testingEnabledEmitter.dispose();
@@ -412,61 +413,105 @@ export class CTestDriver implements vscode.Disposable {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-            const returnCode = await this.runCTestHelper(driver, ctestArgs, tests, run, undefined, customizedTask, consumer);
+            const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
             run.end();
             return returnCode;
         }
     }
 
-    private async runCTestHelper(driver: CMakeDriver, ctestArgs: string[], tests: vscode.TestItem[], run: vscode.TestRun, cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
-        let returnCode: number = 0;
+    private ctestErrored(test: vscode.TestItem, run: vscode.TestRun, message: vscode.TestMessage): void {
+        if (test.children.size > 0) {
+            const children = this.testItemCollectionToArray(test.children);
+            for (const child of children) {
+                this.ctestErrored(child, run, message);
+            }
+        } else {
+            run.errored(test, message);
+        }
+    }
 
-        if (tests.length > 0) {
-            const ctestPath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
-            if (ctestPath === null) {
-                log.info(localize('ctest.path.not.set', 'CTest path is not set'));
-                return -1;
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
+        let returnCode: number = 0;
+        for (const test of tests) {
+            if (cancellation && cancellation.isCancellationRequested) {
+                run.skipped(test);
+                continue;
             }
 
-            for (const test of tests) {
-                if (cancellation && cancellation.isCancellationRequested) {
-                    run.skipped(test);
+            let _driver: CMakeDriver | null;
+            if (driver) {
+                _driver = driver;
+            } else {
+                const folder = test.parent ? test.parent.id : test.id;
+                if (!this.projectController) {
+                    this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
                     continue;
                 }
+                const project = await this.projectController.getProjectForFolder(folder);
+                if (!project) {
+                    this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+                    continue;
+                }
+                _driver = await project.getCMakeDriverInstance();
+                if (!_driver) {
+                    this.ctestErrored(test, run, { message: localize('no.driver.found', 'No driver found for folder {0}', folder) });
+                    continue;
+                }
+            }
 
-                if (test.children.size > 0) {
-                    const children = this.testItemCollectionToArray(test.children);
-                    await this.runCTestHelper(driver, ctestArgs, children, run, cancellation, customizedTask, consumer);
-                } else {
-                    run.started(test);
+            let _ctestPath: string | null;
+            if (ctestPath) {
+                _ctestPath = ctestPath;
+            } else {
+                _ctestPath = await this.ws.getCTestPath(_driver.cmakePathFromPreset);
+                if (_ctestPath === null) {
+                    this.ctestErrored(test, run, { message: localize('ctest.path.not.set', 'CTest path is not set') });
+                    continue;
+                }
+            }
 
-                    const testResults = await this.runCTestImpl(driver, ctestPath, ctestArgs, customizedTask, consumer, test.id);
+            let _ctestArgs: string[] | undefined;
+            if (ctestArgs) {
+                _ctestArgs = ctestArgs;
+            } else {
+                _ctestArgs = await this.getCTestArgs(_driver, customizedTask);
+            }
 
-                    if (testResults) {
-                        if (testResults.site.testing.test.length === 1) {
-                            run.appendOutput(testResults.site.testing.test[0].output);
+            if (test.children.size > 0) {
+                // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
+                const children = this.testItemCollectionToArray(test.children);
+                if (await this.runCTestHelper(children, run, _driver, _ctestPath, _ctestArgs, cancellation, customizedTask, consumer)) {
+                    returnCode = -1;
+                }
+            } else {
+                run.started(test);
 
-                            const durationStr = testResults.site.testing.test[0].measurements.get("Execution Time")?.value;
-                            const duration = durationStr ? parseFloat(durationStr) * 1000 : undefined;
+                const testResults = await this.runCTestImpl(_driver, _ctestPath, _ctestArgs, customizedTask, consumer, test.id);
 
-                            if (testResults.site.testing.test[0].status === 'passed') {
-                                run.passed(test, duration);
-                            } else {
-                                run.failed(
-                                    test,
-                                    new vscode.TestMessage(localize('test.failed', 'Test failed with exit code {0}.', testResults.site.testing.test[0].measurements.get("Exit Value")?.value)),
-                                    duration
-                                );
-                                returnCode = -1;
-                            }
+                if (testResults) {
+                    if (testResults.site.testing.test.length === 1) {
+                        run.appendOutput(testResults.site.testing.test[0].output);
+
+                        const durationStr = testResults.site.testing.test[0].measurements.get("Execution Time")?.value;
+                        const duration = durationStr ? parseFloat(durationStr) * 1000 : undefined;
+
+                        if (testResults.site.testing.test[0].status === 'passed') {
+                            run.passed(test, duration);
                         } else {
-                            run.failed(test, new vscode.TestMessage(localize('expect.one.test.results', 'Expecting one test result.')));
+                            run.failed(
+                                test,
+                                new vscode.TestMessage(localize('test.failed', 'Test failed with exit code {0}.', testResults.site.testing.test[0].measurements.get("Exit Value")?.value)),
+                                duration
+                            );
                             returnCode = -1;
                         }
                     } else {
-                        run.failed(test, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
+                        run.failed(test, new vscode.TestMessage(localize('expect.one.test.results', 'Expecting one test result.')));
                         returnCode = -1;
                     }
+                } else {
+                    run.failed(test, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
+                    returnCode = -1;
                 }
             }
         }
@@ -509,26 +554,32 @@ export class CTestDriver implements vscode.Disposable {
 
     /**
      * @brief Refresh the list of CTest tests
+     * @returns 0 when successful
      */
-    async refreshTests(driver: CMakeDriver): Promise<CTest[]> {
+    async refreshTests(driver: CMakeDriver): Promise<number> {
+        const initializedTestExplorer = this.ensureTestExplorerInitialized();
+        let testExplorerRoot = initializedTestExplorer.items.get(driver.workspaceFolder);
+        if (!testExplorerRoot) {
+            testExplorerRoot = initializedTestExplorer.createTestItem(driver.workspaceFolder, driver.workspaceFolder);
+            initializedTestExplorer.items.add(testExplorerRoot);
+        } else if (testExplorerRoot.children.size > 0) {
+            // Clear all children and re-add later
+            testExplorerRoot.children.replace([]);
+        }
+
         // TODO: There's no way to mark tests as outdated now.
         const ctestFile = path.join(driver.binaryDir, 'CTestTestfile.cmake');
         if (!(await fs.exists(ctestFile))) {
             this.testingEnabled = false;
-            disposeTestExplorer();
-            this.testExplorerRootName = undefined;
-            return this.tests = [];
+            return -1;
         }
         this.decorationManager.binaryDir = driver.binaryDir;
         this.testingEnabled = true;
-        const initializedTestExplorer = this.ensureTestExplorerInitialized(driver);
-        // clear the test items
-        initializedTestExplorer.items.replace([]);
 
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
         if (ctestpath === null) {
             log.info(localize('ctest.path.not.set', 'CTest path is not set'));
-            return this.tests = [];
+            return -2;
         }
 
         const buildConfigArgs: string[] = [];
@@ -544,7 +595,7 @@ export class CTestDriver implements vscode.Disposable {
         if (result.retc !== 0) {
             // There was an error running CTest. Odd...
             log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
-            return this.tests = [];
+            return result.retc || -3;
         }
         this.tests = result.stdout?.split('\n')
             .map(l => l.trim())
@@ -553,14 +604,11 @@ export class CTestDriver implements vscode.Disposable {
             .map(([, id, tname]) => ({ id: parseInt(id!), name: tname! })) ?? [];
 
         // Add tests to the test explorer
-        this.testExplorerRootName = driver.workspaceFolder || localize('test.explorer.default.root.name', '[No Folder]');
-        const testExplorerRoot = initializedTestExplorer.createTestItem(this.testExplorerRootName, this.testExplorerRootName);
-        initializedTestExplorer.items.add(testExplorerRoot);
         for (const test of this.tests) {
             testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
         }
 
-        return this.tests;
+        return 0;
     }
 
     private async loadTestResults(testXml: string): Promise<CTestResults | undefined> {
@@ -573,64 +621,72 @@ export class CTestDriver implements vscode.Disposable {
         return testResults;
     }
 
+    private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
+        if (!testExplorer) {
+            return;
+        }
+
+        const requestedTests = request.include || this.testItemCollectionToArray(testExplorer.items);
+        // Filter out duplicate tests, i.e., both the parent and child are requested
+        const parents = new Set<string>();
+        requestedTests.forEach(t => {
+            if (!t.parent) {
+                parents.add(t.id);
+            }
+        });
+        const tests: vscode.TestItem[] = [];
+        requestedTests.forEach(t => {
+            if (!t.parent || !parents.has(t.parent.id)) {
+                tests.push(t);
+            }
+        });
+
+        const run = testExplorer.createTestRun(request);
+        await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+        run.end();
+    };
+
     /**
      * Initializes the VS Code Test Controller if it is not already initialized.
      * Should only be called by refreshTests since it adds tests to the controller.
      */
-    private ensureTestExplorerInitialized(driver: CMakeDriver): vscode.TestController {
+    private ensureTestExplorerInitialized(): vscode.TestController {
         if (!testExplorer) {
             testExplorer = vscode.tests.createTestController('cmakeToolsCTest', 'CTest');
 
-            // TODO: The current version of VS Code API has a TestController.refreshHandler. We should use it when updating the supported VS Code version.
+            // Cast to any since this is not supported yet in the API we use.
+            (testExplorer as any).refreshHandler = () => vscode.commands.executeCommand('cmake.refreshTestsAll');
 
-            const runHandler = async (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
-                if (!testExplorer) {
-                    return;
-                }
-
-                const tests = request.include || this.testItemCollectionToArray(testExplorer.items);
-                const run = testExplorer.createTestRun(request);
-                const ctestArgs = await this.getCTestArgs(driver);
-                await this.runCTestHelper(driver, ctestArgs, tests, run, cancellation);
-                run.end();
-            };
-
-            testExplorer.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, true);
-            testExplorer.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler);
+            testExplorer.createRunProfile(
+                'Run Tests',
+                vscode.TestRunProfileKind.Run,
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
+                true
+            );
+            // TODO
+            // testExplorer.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler);
         }
         return testExplorer;
     }
 
     /**
      * If returning false, the test explorer is not available, and refreshTests can be called to construct it.
+     * Since there's no way to reveal the explorer itself, this function reveals the first test in the test explorer.
      */
     async revealTestExplorer(): Promise<boolean> {
         if (!testExplorer) {
             return false;
         }
 
-        if (!this.testExplorerRootName) {
-            throw(localize('test.explorer.root.node.not.found', 'Test explorer root node not found'));
+        const tests = this.testItemCollectionToArray(testExplorer.items);
+        if (tests.length === 0) {
+            return false;
         }
 
-        const testExplorerRoot = testExplorer.items.get(this.testExplorerRootName);
-        if (!testExplorerRoot) {
-            throw(localize('test.explorer.root.node.not.found', 'Test explorer root node not found'));
-        }
-
-        await vscode.commands.executeCommand('vscode.revealTestInExplorer', testExplorerRoot);
+        await vscode.commands.executeCommand('vscode.revealTestInExplorer', tests[0]);
         return true;
     }
 }
 
 // Only have one instance of the test controller
 let testExplorer: vscode.TestController | undefined;
-
-export function testExplorerLoaded() {
-    return !!testExplorer;
-}
-
-export function disposeTestExplorer() {
-    testExplorer?.dispose();
-    testExplorer = undefined;
-}

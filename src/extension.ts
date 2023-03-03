@@ -42,7 +42,6 @@ import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
-import { testExplorerLoaded } from './ctest';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -570,9 +569,6 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.projectOutlineProvider.setActiveFolder(activeProject.folderPath);
             this.setupSubscriptions();
-            if (testExplorerLoaded()) {
-                await activeProject.refreshTests();
-            }
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
             const currentActiveFolderPath = this.activeFolderPath();
             await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
@@ -1236,7 +1232,11 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     refreshTests(folder?: vscode.WorkspaceFolder) {
-        return this.runCMakeCommand(cmakeProject => cmakeProject.refreshTests(), folder, this.ensureActiveTestPreset);
+        return this.runCMakeCommand(cmakeProject => cmakeProject.refreshTests(), folder);
+    }
+
+    refreshTestsAll() {
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.refreshTests());
     }
 
     stop(folder?: vscode.WorkspaceFolder) {
@@ -1670,6 +1670,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'ctestAll',
         'revealTestExplorer',
         'refreshTests',
+        'refreshTestsAll',
         'stop',
         'stopAll',
         'quickStart',

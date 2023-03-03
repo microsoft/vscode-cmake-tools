@@ -387,6 +387,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.refreshTestsAll",
+        "title": "%cmake-tools.command.cmake.refreshTestsAll.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.editCache",
         "title": "%cmake-tools.command.cmake.editCache.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -694,6 +700,10 @@
         },
         {
           "command": "cmake.refreshTests",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.refreshTestsAll",
           "when": "cmake:enableFullFeatureSet"
         },
         {

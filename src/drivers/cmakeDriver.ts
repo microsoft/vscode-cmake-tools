@@ -187,7 +187,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         readonly config: ConfigurationReader,
         protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
         private readonly isMultiProject: boolean,
-        private readonly __workspaceFolder: string | null,
+        private readonly __workspaceFolder: string,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
         this.sourceDir = this.sourceDirUnexpanded;
         // We have a cache of file-compilation terminals. Wipe them out when the

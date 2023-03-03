@@ -45,6 +45,7 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import { KitsController } from './kitsController';
 import { PresetsController } from './presetsController';
 import paths from './paths';
+import { ProjectController } from './projectController';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -119,18 +120,21 @@ export class CMakeProject {
     private wasUsingCMakePresets: boolean | undefined;
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
+    private readonly cTestController: CTestDriver;
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
     public kitsController!: KitsController;
     public presetsController!: PresetsController;
 
     /**
      * Construct a new instance. The instance isn't ready, and must be initalized.
+     * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
      *
      * This is private. You must call `create` to get an instance.
      */
-    private constructor(readonly workspaceContext: DirectoryContext, readonly isMultiProjectFolder: boolean = false) {
+    private constructor(readonly workspaceContext: DirectoryContext, projectController?: ProjectController, readonly isMultiProjectFolder: boolean = false) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
+        this.cTestController = new CTestDriver(workspaceContext, projectController);
         this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
     }
 
@@ -1135,13 +1139,14 @@ export class CMakeProject {
     /**
      * Create an instance asynchronously
      * @param extensionContext The extension context
+     * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
      *
      * The purpose of making this the only way to create an instance is to prevent
      * us from creating uninitialized instances of the CMake Tools extension.
      */
-    static async create(workspaceContext: DirectoryContext, sourceDirectory: string, isMultiProjectFolder?: boolean): Promise<CMakeProject> {
+    static async create(workspaceContext: DirectoryContext, sourceDirectory: string, projectController?: ProjectController, isMultiProjectFolder?: boolean): Promise<CMakeProject> {
         log.debug(localize('safely.constructing.cmakeproject', 'Safe constructing new CMakeProject instance'));
-        const inst = new CMakeProject(workspaceContext, isMultiProjectFolder);
+        const inst = new CMakeProject(workspaceContext, projectController, isMultiProjectFolder);
         await inst.init(sourceDirectory);
         log.debug(localize('initialization.complete', 'CMakeProject instance initialization complete.'));
         return inst;
@@ -1809,22 +1814,25 @@ export class CMakeProject {
         return this.build();
     }
 
-    private readonly cTestController = new CTestDriver(this.workspaceContext);
-
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
-    async ctest(): Promise<number> {
+    private async preTest(): Promise<CMakeDriver> {
         const buildResult = await this.build(undefined, false, false);
         if (buildResult !== 0) {
-            return buildResult;
+            throw new Error(localize('build.failed', 'Build failed.'));
         }
 
         const drv = await this.getCMakeDriverInstance();
         if (!drv) {
             throw new Error(localize('driver.died.after.build.succeeded', 'CMake driver died immediately after build succeeded.'));
         }
+        return drv;
+    }
+
+    async ctest(): Promise<number> {
+        const drv = await this.preTest();
         return (await this.cTestController.runCTest(drv)) ? 0 : -1;
     }
 
@@ -1835,16 +1843,8 @@ export class CMakeProject {
         }
     }
 
-    async refreshTests() {
-        const buildResult = await this.build(undefined, false, false);
-        if (buildResult !== 0) {
-            return [];
-        }
-
-        const drv = await this.getCMakeDriverInstance();
-        if (!drv) {
-            throw new Error(localize('driver.died.after.build.succeeded', 'CMake driver died immediately after build succeeded.'));
-        }
+    async refreshTests(): Promise<number> {
+        const drv = await this.preTest();
         return this.cTestController.refreshTests(drv);
     }
 

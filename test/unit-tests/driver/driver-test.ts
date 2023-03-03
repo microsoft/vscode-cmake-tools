@@ -25,7 +25,7 @@ function cleanupBuildDir(build_dir: string): boolean {
     return !fs.existsSync(build_dir);
 }
 
-export function makeDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+export function makeDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
     let driver: CMakeDriver | null = null;
 
     suite(`CMake ${driverName} driver tests`, () => {
