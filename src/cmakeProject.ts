@@ -209,12 +209,6 @@ export class CMakeProject {
         return this._configurePreset.value;
     }
 
-    get onAnyChange(): any {
-        return this._configurePreset.changeEvent || this._buildPreset.changeEvent || this._testPreset.changeEvent/* ||
-            this.targetName.changeEvent || this.activeVariant.changeEvent || this._launchTargetName.changeEvent ||
-            this._ctestEnabled.changeEvent*/;
-    }
-
     get onActiveConfigurePresetChanged() {
         return this._configurePreset.changeEvent;
     }
