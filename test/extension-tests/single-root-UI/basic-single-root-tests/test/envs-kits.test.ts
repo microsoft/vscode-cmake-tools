@@ -13,7 +13,7 @@ suite('Environment Variables in Variants', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
+        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/basic-single-root-tests/project-folder', build_loc, exe_res);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
         await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
@@ -41,6 +41,18 @@ suite('Environment Variables in Variants', () => {
         }
 
         testEnv.teardown();
+    });
+
+    suiteTeardown(async () => {
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+
+        if (testEnv) {
+            testEnv.teardown();
+        }
+        if (await fs.exists(testEnv.projectFolder.buildDirectory.location)) {
+            testEnv.projectFolder.buildDirectory.clear();
+        }
     });
 
     test('Check for environment variables being passed to configure', async () => {

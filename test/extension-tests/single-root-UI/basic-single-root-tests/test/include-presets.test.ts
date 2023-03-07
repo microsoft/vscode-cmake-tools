@@ -18,7 +18,7 @@ suite('Preset include functionality', () => {
         const exe_res = 'output.txt';
 
         // CMakePresets.json and CMakeUserPresets.json exist so will use presets by default
-        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
+        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/basic-single-root-tests/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
@@ -49,6 +49,9 @@ suite('Preset include functionality', () => {
         }
         if (await fs.exists(compdb_cp_path)) {
             await fs.unlink(compdb_cp_path);
+        }
+        if (await fs.exists(testEnv.projectFolder.buildDirectory.location)) {
+            testEnv.projectFolder.buildDirectory.clear();
         }
     });
 

@@ -37,6 +37,15 @@ suite('Environment Variables in Variants', () => {
         testEnv.teardown();
     });
 
+    suiteTeardown(async () => {
+        if (testEnv) {
+            testEnv.teardown();
+        }
+        if (await fs.exists(testEnv.projectFolder.buildDirectory.location)) {
+            testEnv.projectFolder.buildDirectory.clear();
+        }
+    });
+
     test('Check for environment variables being passed to configure', async () => {
         // Set fake settings
         // Configure

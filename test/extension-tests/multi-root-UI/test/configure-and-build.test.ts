@@ -52,6 +52,9 @@ suite('Build', () => {
         if (await fs.exists(compdb_cp_path)) {
             await fs.unlink(compdb_cp_path);
         }
+        if (await fs.exists(folder2.projectFolder.buildDirectory.location)) {
+            folder2.projectFolder.buildDirectory.clear();
+        }
     });
 
     test('Configure', async () => {
