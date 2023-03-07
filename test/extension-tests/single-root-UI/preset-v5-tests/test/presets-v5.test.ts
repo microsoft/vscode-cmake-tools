@@ -6,7 +6,7 @@ import {
 } from "@test/util";
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { CMakeCache, CacheEntryType } from '@cmt/cache';
+import { CMakeCache } from '@cmt/cache';
 
 suite('Preset v5 functionality', () => {
     let testEnv: DefaultEnvironment;
