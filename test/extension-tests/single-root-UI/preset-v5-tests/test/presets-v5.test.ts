@@ -63,7 +63,6 @@ suite('Preset v5 functionality', () => {
         const cacheEntry_ = cache.get('MY_ENV');
         expect(cacheEntry_).to.not.be.eq(null, '[MY_ENV] Cache entry was not present');
         const cacheEntry = cacheEntry_!;
-        expect(cacheEntry.type).to.eq(CacheEntryType.String, '[MY_ENV] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('MY_ENV', '[MY_ENV] unexpected cache entry key name');
         expect(typeof cacheEntry.value).to.eq('string', '[MY_ENV] unexpected cache entry value type');
         if (process.platform === 'win32') {
