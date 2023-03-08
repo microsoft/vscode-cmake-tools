@@ -94,7 +94,7 @@
 	"no.variant.abort": "Nenhuma variante selecionada. Anular configuração",
 	"cannot.configure.no.config.preset": "Não é possível configurar: Nenhuma predefinição de configuração está ativa para este Projeto do CMake",
 	"cmake.cache.dir.missing": "A pasta que contém o cache do CMake está ausente. O cache será regenerado.",
-	"warn.skip.configure.when.cache.present": "A extensão determinou que uma configuração é necessária neste momento, mas estamos ignorando porque a configuração cmake.skipConfigureWhenCachePresent está LIGADA. Certifique-se de que o cache CMake esteja em sincronia com as mais recentes mudanças de configuração.",
+	"warn.skip.configure.if.cache.present": "A extensão determinou que uma configuração é necessária neste momento, mas estamos ignorando porque a configuração cmake.skipConfigureIfCachePresent está LIGADA. Certifique-se de que o cache CMake esteja em sincronia com as mais recentes mudanças de configuração.",
 	"cmakelists.save.trigger.reconfigure": "Detectado o salvamento de CMakeLists.txt, tentando reconfigurar automaticamente...",
 	"cmakelists.save.could.not.reconfigure": "Foram detectadas alterações no CMakeLists.txt, mas não foi possível reconfigurar o projeto porque outra operação já está em andamento.",
 	"needs.reconfigure": "O projeto precisa ser reconfigurado para que as alterações salvas em CMakeLists.txt tenham efeito.",
