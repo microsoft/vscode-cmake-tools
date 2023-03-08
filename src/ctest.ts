@@ -384,12 +384,28 @@ export class CTestDriver implements vscode.Disposable {
                         if (testResults.site.testing.test[0].status === 'passed') {
                             run.passed(test, duration);
                         } else {
-                            this.ctestFailed(
-                                test,
-                                run,
-                                new vscode.TestMessage(localize('test.failed', 'Test failed with exit code {0}.', testResults.site.testing.test[0].measurements.get("Exit Value")?.value)),
-                                duration
-                            );
+                            const exitCode = testResults.site.testing.test[0].measurements.get("Exit Value")?.value;
+                            const completionStatus = testResults.site.testing.test[0].measurements.get("Completion Status")?.value;
+                            if (exitCode !== undefined) {
+                                this.ctestFailed(
+                                    test,
+                                    run,
+                                    new vscode.TestMessage(localize('test.failed.with.exit.code', 'Test failed with exit code {0}.', exitCode)),
+                                    duration
+                                );
+                            } else if (completionStatus !== undefined) {
+                                this.ctestErrored(
+                                    test,
+                                    run,
+                                    new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test failed with completion status "{0}".', completionStatus))
+                                );
+                            } else {
+                                this.ctestErrored(
+                                    test,
+                                    run,
+                                    new vscode.TestMessage(localize('test.failed', 'Test failed. Please check output for more information.'))
+                                );
+                            }
                             returnCode = -1;
                         }
                     } else {
