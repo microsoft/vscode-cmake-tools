@@ -90,14 +90,14 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.configure', async (_node: Node) => {
-                runCommand('configure', this.cmakeProject?.workspaceFolder);
+                void runCommand('configure', this.cmakeProject?.workspaceFolder);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node) => {
                 await runCommand('setVariant', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.build', async (_node: Node) => {
-                runCommand('build', this.cmakeProject?.workspaceFolder, await this.cmakeProject?.buildTargetName());
+                void runCommand('build', this.cmakeProject?.workspaceFolder, await this.cmakeProject?.buildTargetName());
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node) => {
                 await runCommand('setDefaultTarget', this.cmakeProject?.workspaceFolder);
@@ -108,7 +108,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.ctest', async (_node: Node) => {
-                runCommand('ctest', this.cmakeProject?.workspaceFolder);
+                void runCommand('ctest', this.cmakeProject?.workspaceFolder);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_node: Node) => {
                 // Do nothing
