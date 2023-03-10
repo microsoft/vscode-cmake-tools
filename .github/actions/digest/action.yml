@@ -1,0 +1,8 @@
+name: Create digest
+description: Creates a digest of recent activity in the repo
+outputs:
+  report:
+    description: HTML report of recent activity
+runs:
+  using: docker
+  image: Dockerfile
