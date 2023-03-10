@@ -35,8 +35,11 @@ export class StateManager {
     }
 
     async setIgnoreCMakeListsMissing(folderName: string, v: boolean) {
-        this.isMultiProject ? await this._update(`${folderName} ignoreCMakeListsMissing`, v) :
+        if (this.isMultiProject) {
+            await this._update(`${folderName} ignoreCMakeListsMissing`, v);
+        } else {
             await this._update('ignoreCMakeListsMissing', v);
+        }
     }
 
     /**
@@ -48,7 +51,11 @@ export class StateManager {
     }
 
     async setConfigurePresetName(folderName: string, v: string | null) {
-        this.isMultiProject ? await this._update(`${folderName} configurePresetName`, v) : await this._update('configurePresetName', v);
+        if (this.isMultiProject) {
+            await this._update(`${folderName} configurePresetName`, v);
+        } else {
+            await this._update('configurePresetName', v);
+        }
     }
 
     private getCachedConfigurePresets(folderName: string): string[] {
@@ -83,8 +90,11 @@ export class StateManager {
 
     async setBuildPresetName(folderName: string, configurePreset: string, v: string | null) {
         await this.addCachedConfigurePreset(folderName, configurePreset);
-        this.isMultiProject ? await this._update(`${folderName} buildPreset for ${configurePreset}`, v) :
-        await this._update(`buildPreset for ${configurePreset}`, v);
+        if (this.isMultiProject) {
+            await this._update(`${folderName} buildPreset for ${configurePreset}`, v);
+        } else {
+            await this._update(`buildPreset for ${configurePreset}`, v);
+        }
     }
 
     getTestPresetName(folderName: string, configurePreset: string): string | null {
@@ -94,8 +104,11 @@ export class StateManager {
 
     async setTestPresetName(folderName: string, configurePreset: string, v: string | null) {
         await this.addCachedConfigurePreset(folderName, configurePreset);
-        this.isMultiProject ? await this._update(`${folderName} testPreset for ${configurePreset}`, v) :
+        if (this.isMultiProject) {
+            await this._update(`${folderName} testPreset for ${configurePreset}`, v);
+        } else {
             await this._update(`testPreset for ${configurePreset}`, v);
+        }
     }
 
     /**
@@ -107,7 +120,11 @@ export class StateManager {
     }
 
     async setActiveKitName(folderName: string, v: string | null) {
-        this.isMultiProject ? await this._update(`${folderName} activeKitName`, v) : await this._update('activeKitName', v);
+        if (this.isMultiProject) {
+            await this._update(`${folderName} activeKitName`, v);
+        } else {
+            await this._update('activeKitName', v);
+        }
     }
 
     /**
@@ -119,7 +136,11 @@ export class StateManager {
     }
 
     async setDefaultBuildTarget(folderName: string, v: string | null) {
-        this.isMultiProject ? await this._update(`${folderName} activeBuildTarget`, v) : await this._update('activeBuildTarget', v);
+        if (this.isMultiProject) {
+            await this._update(`${folderName} activeBuildTarget`, v);
+        } else {
+            await this._update('activeBuildTarget', v);
+        }
     }
 
     getLaunchTargetName(folderName: string): string | null {
@@ -128,7 +149,11 @@ export class StateManager {
     }
 
     async setLaunchTargetName(folderName: string, t: string | null) {
-        this.isMultiProject ? await this._update(`${folderName} launchTargetName`, t) : await this._update('launchTargetName', t);
+        if (this.isMultiProject) {
+            await this._update(`${folderName} launchTargetName`, t);
+        } else {
+            await this._update('launchTargetName', t);
+        }
     }
 
     /**
@@ -147,11 +172,17 @@ export class StateManager {
     async setActiveVariantSettings(folderName: string, settings: Map<string, string> | null) {
         if (settings) {
             const pairs: [string, string][] = Array.from(settings.entries());
-            this.isMultiProject ? await this._update(`${folderName} activeVariantSettings`, pairs) :
+            if (this.isMultiProject) {
+                await this._update(`${folderName} activeVariantSettings`, pairs);
+            } else {
                 await this._update('activeVariantSettings', pairs);
+            }
         } else {
-            this.isMultiProject ? await this._update(`${folderName} activeVariantSettings`, null) :
+            if (this.isMultiProject) {
+                await this._update(`${folderName} activeVariantSettings`, null);
+            } else {
                 await this._update('activeVariantSettings', null);
+            }
         }
     }
 
