@@ -1,5 +1,9 @@
 name: Digest
 description: Creates digests of recent activity in the repository
+inputs:
+  token:
+    description: GitHub token with issue and comment read permissions
+    default: ${{ github.token }}
 runs:
   using: 'node16'
   main: '../lib/digest/index.js'
