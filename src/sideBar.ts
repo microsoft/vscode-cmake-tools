@@ -23,7 +23,7 @@ export class ProjectStatus {
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
                 await runCommand('stop');
-            }),
+            })
         ]);
     }
 
