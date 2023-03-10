@@ -4,9 +4,6 @@ inputs:
   token:
     description: GitHub token
     default: ${{ github.token }}
-outputs:
-  report:
-    description: HTML report of recent activity
 runs:
   using: docker
   image: Dockerfile
