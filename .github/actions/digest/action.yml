@@ -1,14 +1,14 @@
 name: Create digest
 description: Creates a digest of recent activity in the repo
+inputs:
+  token:
+    description: GitHub token
+    default: ${{ github.token }}
 outputs:
   report:
     description: HTML report of recent activity
 runs:
   using: docker
   image: Dockerfile
-  inputs:
-    token:
-      description: GitHub token
-      default: ${{ github.token }}
   args:
     - ${{ inputs.token }}
