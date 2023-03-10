@@ -6,5 +6,9 @@ outputs:
 runs:
   using: docker
   image: Dockerfile
+  inputs:
+    token:
+      description: GitHub token
+      default: ${{ github.token }}
   env:
-    GITHUB_TOKEN: ${{ github.token }}
+    GITHUB_TOKEN: ${{ inputs.token }}
