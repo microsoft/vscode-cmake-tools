@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
-import { lexicographicalCompare, splitPath, thisExtension } from '@cmt/util';
+import { lexicographicalCompare, splitPath } from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -103,15 +103,15 @@ function collapseTreeInplace<T>(tree: PathedTree<T>): void {
 function iconForTargetType(type: codeModel.TargetTypeString): string {
     switch (type) {
         case 'EXECUTABLE':
-            return 'binary-icon.svg';
+            return '$(file-binary)';
         case 'MODULE_LIBRARY':
         case 'SHARED_LIBRARY':
         case 'OBJECT_LIBRARY':
         case 'INTERFACE_LIBRARY':
         case 'STATIC_LIBRARY':
-            return 'library-icon.svg';
+            return '$(library)';
         case 'UTILITY':
-            return 'utility-icon.svg';
+            return '$(wrench)';
     }
 }
 
@@ -302,11 +302,7 @@ export class TargetNode extends BaseNode {
             if (this._isDefault) {
                 item.tooltip += ` [${localize('default.tooltip', 'default')}]`;
             }
-            const icon = iconForTargetType(this._type);
-            item.iconPath = {
-                light: path.join(thisExtension().extensionPath, "res/light", icon),
-                dark: path.join(thisExtension().extensionPath, "res/dark", icon)
-            };
+            item.iconPath = iconForTargetType(this._type);
             item.id = this.id;
             const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
             const canRun = this._type === 'UTILITY';

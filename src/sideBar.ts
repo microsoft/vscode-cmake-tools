@@ -89,15 +89,15 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await runCommand('selectConfigurePreset', folder);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.configure', async (folder: vscode.WorkspaceFolder) => {
-                void runCommand('configure', folder);
+            vscode.commands.registerCommand('cmake.projectStatus.configure', async (_node: Node) => {
+                void runCommand('configure', this.cmakeProject?.workspaceFolder);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node, folder: vscode.WorkspaceFolder, variant: Promise<string>) => {
                 await runCommand('setVariant', folder, await variant);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.build', async (folder: vscode.WorkspaceFolder, target: Promise<string>) => {
-                void runCommand('build', folder, await target);
+            vscode.commands.registerCommand('cmake.projectStatus.build', async (_node: Node) => {
+                void runCommand('build', this.cmakeProject?.workspaceFolder, await this.cmakeProject?.buildTargetName());
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node, folder: vscode.WorkspaceFolder, target: Promise<string>) => {
                 await runCommand('setDefaultTarget', folder, await target);
@@ -318,11 +318,6 @@ class ConfigNode extends Node {
             return;
         }
         this.label = localize('Configure', 'Configure');
-        this.command = {
-            title: this.label,
-            command: 'cmake.projectStatus.configure',
-            arguments: [treeDataProvider.cmakeProject.workspaceFolder]
-        };
         this.tooltip = this.label;
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = "configure";
@@ -383,11 +378,6 @@ class BuildNode extends Node {
             return;
         }
         this.label = localize('Build', 'Build');
-        this.command = {
-            title: this.label,
-            command: 'cmake.projectStatus.build',
-            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.buildTargetName()]
-        };
         this.tooltip = this.label;
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = 'build';
@@ -446,11 +436,6 @@ class TestNode extends Node {
             return;
         }
         this.label = localize('Test', 'Test');
-        this.command = {
-            title: this.label,
-            command: 'cmake.projectStatus.test',
-            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.allTargetName]
-        };
         this.tooltip = this.label;
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = 'test';
@@ -492,11 +477,6 @@ class DebugNode extends Node {
             return;
         }
         this.label = localize('Debug', 'Debug');
-        this.command = {
-            title: this.label,
-            command: 'cmake.projectStatus.debugTarget',
-            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName]
-        };
         this.tooltip = this.label;
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = 'debug';
@@ -529,11 +509,6 @@ class LaunchNode extends Node {
             return;
         }
         this.label = localize('Launch', 'Launch');
-        this.command = {
-            title: this.label,
-            command: 'cmake.projectStatus.launchTarget',
-            arguments: [treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName]
-        };
         this.tooltip = this.label;
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         this.contextValue = 'launch';
@@ -595,11 +570,6 @@ class ConfigPreset extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.configurePreset?.name || noConfigPresetSelected;
-        this.command = {
-            title: localize('change.preset', 'Change Preset'),
-            command: 'cmake.projectStatus.selectConfigurePreset',
-            arguments: [this]
-        };
         this.tooltip = 'Change Configure Preset';
         this.contextValue = 'configPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -623,11 +593,6 @@ class BuildPreset extends Node {
         if (this.label === preset.defaultBuildPreset.name) {
             this.label = preset.defaultBuildPreset.displayName;
         }
-        this.command = {
-            title: localize('change.preset', 'Change Preset'),
-            command: 'cmake.projectStatus.selectBuildPreset',
-            arguments: [this]
-        };
         this.tooltip = 'Change Build Preset';
         this.contextValue = 'buildPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -651,11 +616,6 @@ class TestPreset extends Node {
         if (this.label === preset.defaultTestPreset.name) {
             this.label = preset.defaultTestPreset.displayName;
         }
-        this.command = {
-            title: localize('change.preset', 'Change Preset'),
-            command: 'cmake.projectStatus.selectTestPreset',
-            arguments: [this]
-        };
         this.tooltip = 'Change Test Preset';
         this.contextValue = 'testPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -676,11 +636,6 @@ class Kit extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.activeKit?.name || noKitSelected;
-        this.command = {
-            title: localize('change.kit', 'Change Kit'),
-            command: 'cmake.projectStatus.selectKit',
-            arguments: []
-        };
         this.tooltip = "Change Kit";
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'kit';
@@ -703,11 +658,6 @@ class BuildTarget extends Node {
         }
         const title: string = localize('set.build.target', 'Set Build Target');
         this.label = await treeDataProvider.cmakeProject.buildTargetName() || await treeDataProvider.cmakeProject.allTargetName;
-        this.command = {
-            title: title,
-            command: 'cmake.projectStatus.setDefaultTarget',
-            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.buildTargetName()]
-        };
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'buildTarget';
@@ -728,22 +678,15 @@ class TestTarget extends Node {
             return;
         }
         this.label = "[All tests]";
-        const title: string = localize('set.test.target', 'Set Test Target');
-        this.command = {
-            title: title,
-            command: 'cmake.projectStatus.setTestTarget',
-            arguments: [treeDataProvider.cmakeProject.workspaceFolder, "All tests"]
-        };
-        this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
-        this.contextValue = 'testTarget';
+        // Set the contextValue to 'testTarget' when we implement setTestTarget to choose a target for a test.
     }
 
     async refresh() {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = "All tests";
+        this.label = "[All tests]";
     }
 }
 
@@ -755,11 +698,6 @@ class DebugTarget extends Node {
         }
         this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
         const title: string = localize('set.debug.target', 'Set debug target');
-        this.command = {
-            title: title,
-            command: 'cmake.projectStatus.setDebugTarget',
-            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName]
-        };
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'debugTarget';
@@ -781,11 +719,6 @@ class LaunchTarget extends Node {
         }
         this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
         const title: string = localize('set.launch.target', 'Set Launch Target');
-        this.command = {
-            title: title,
-            command: 'cmake.projectStatus.setLaunchTarget',
-            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.launchTargetName]
-        };
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'launchTarget';
@@ -807,11 +740,6 @@ class Project extends Node {
         }
         this.label = treeDataProvider.cmakeProject.folderName;
         const title: string = localize('select.active.project', 'Select active project');
-        this.command = {
-            title: title,
-            command: "cmake.projectStatus.selectActiveProject",
-            arguments: []
-        };
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'activeProject';
@@ -831,11 +759,6 @@ class Variant extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.activeVariantName || "Debug";
-        this.command = {
-            title: localize('set.variant', 'Set variant'),
-            command: 'cmake.setVariant',
-            arguments: [this, treeDataProvider.cmakeProject.workspaceFolder, treeDataProvider.cmakeProject.activeVariantName]
-        };
         this.tooltip = "Set variant";
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'variant';
