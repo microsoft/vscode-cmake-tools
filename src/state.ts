@@ -11,7 +11,7 @@ import * as vscode from 'vscode';
  * invalid states.
  */
 export class StateManager {
-    constructor(readonly extensionContext: vscode.ExtensionContext, readonly folder: vscode.WorkspaceFolder) {}
+    constructor(readonly extensionContext: vscode.ExtensionContext, readonly folder: vscode.WorkspaceFolder, private isMultiProject: boolean = false) {}
 
     private _get<T>(key: string): T | undefined {
         return this.extensionContext.globalState.get<T>(this.folder.uri.fsPath + key);
@@ -21,108 +21,122 @@ export class StateManager {
         return this.extensionContext.globalState.update(this.folder.uri.fsPath + key, value);
     }
 
+    setIsMultiProject(isMultiProject: boolean) {
+        this.isMultiProject = isMultiProject;
+    }
+
     /**
      * Whether the user chose to ignore the popup message about missing CMakeLists.txt
      * from the root folder, for a code base that is not fully activating CMake Tools.
      */
-    get ignoreCMakeListsMissing(): boolean {
-        return this._get<boolean>('ignoreCMakeListsMissing') || false;
+    getIgnoreCMakeListsMissing(folderName: string): boolean {
+        return this.isMultiProject ? (this._get<boolean>(`${folderName} ignoreCMakeListsMissing`) || false) :
+            (this._get<boolean>('ignoreCMakeListsMissing') || false);
     }
 
-    async setIgnoreCMakeListsMissing(v: boolean) {
-        await this._update('ignoreCMakeListsMissing', v);
+    async setIgnoreCMakeListsMissing(folderName: string, v: boolean) {
+        this.isMultiProject ? await this._update(`${folderName} ignoreCMakeListsMissing`, v) :
+            await this._update('ignoreCMakeListsMissing', v);
     }
 
     /**
      * The name of the workspace-local active configure preset
      */
-    get configurePresetName(): string | null {
-        const preset = this._get<string>('configurePresetName');
+    getConfigurePresetName(folderName: string): string | null {
+        const preset = this.isMultiProject ? this._get<string>(`${folderName} configurePresetName`) : this._get<string>('configurePresetName');
         return preset || null;
     }
 
-    async setConfigurePresetName(v: string | null) {
-        await this._update('configurePresetName', v);
+    async setConfigurePresetName(folderName: string, v: string | null) {
+        this.isMultiProject ? await this._update(`${folderName} configurePresetName`, v) : await this._update('configurePresetName', v);
     }
 
-    private get cachedConfigurePresets(): string[] {
-        return this._get<string[]>('cachedConfigurePresets') || [];
+    private getCachedConfigurePresets(folderName: string): string[] {
+        return this.isMultiProject ? (this._get<string[]>(`${folderName} cachedConfigurePresets`) || []) :
+            (this._get<string[]>('cachedConfigurePresets') || []);
     }
 
-    private async addCachedConfigurePreset(preset: string) {
-        const configurePresets = this.cachedConfigurePresets;
+    private async addCachedConfigurePreset(folderName: string, preset: string) {
+        const configurePresets = this.getCachedConfigurePresets(folderName);
         if (configurePresets.indexOf(preset) >= 0) {
             return;
         }
         configurePresets.push(preset);
-        return this._update('cachedConfigurePresets', configurePresets);
+        return this.isMultiProject ? this._update(`${folderName} cachedConfigurePresets`, configurePresets) :
+            this._update('cachedConfigurePresets', configurePresets);
     }
 
-    private async clearCachedConfigurePresets() {
-        const configurePresets = this.cachedConfigurePresets;
+    private async clearCachedConfigurePresets(folderName: string) {
+        const configurePresets = this.getCachedConfigurePresets(folderName);
         for (const preset of configurePresets) {
-            await this.setBuildPresetName(preset, null);
-            await this.setTestPresetName(preset, null);
+            await this.setBuildPresetName(folderName, preset, null);
+            await this.setTestPresetName(folderName, preset, null);
         }
-        return this._update('cachedConfigurePresets', null);
+        return this.isMultiProject ? this._update(`${folderName} cachedConfigurePresets`, null) :
+            this._update('cachedConfigurePresets', null);
     }
 
-    getBuildPresetName(configurePreset: string): string | null {
-        return this._get<string>(`buildPreset for ${configurePreset}`) || null;
+    getBuildPresetName(folderName: string, configurePreset: string): string | null {
+        return this.isMultiProject ? (this._get<string>(`${folderName} buildPreset for ${configurePreset}`) || null) :
+            (this._get<string>(`buildPreset for ${configurePreset}`) || null);
     }
 
-    async setBuildPresetName(configurePreset: string, v: string | null) {
-        await this.addCachedConfigurePreset(configurePreset);
+    async setBuildPresetName(folderName: string, configurePreset: string, v: string | null) {
+        await this.addCachedConfigurePreset(folderName, configurePreset);
+        this.isMultiProject ? await this._update(`${folderName} buildPreset for ${configurePreset}`, v) :
         await this._update(`buildPreset for ${configurePreset}`, v);
     }
 
-    getTestPresetName(configurePreset: string): string | null {
-        return this._get<string>(`testPreset for ${configurePreset}`) || null;
+    getTestPresetName(folderName: string, configurePreset: string): string | null {
+        return this.isMultiProject ? (this._get<string>(`${folderName} testPreset for ${configurePreset}`) || null) :
+            (this._get<string>(`testPreset for ${configurePreset}`) || null);
     }
 
-    async setTestPresetName(configurePreset: string, v: string | null) {
-        await this.addCachedConfigurePreset(configurePreset);
-        await this._update(`testPreset for ${configurePreset}`, v);
+    async setTestPresetName(folderName: string, configurePreset: string, v: string | null) {
+        await this.addCachedConfigurePreset(folderName, configurePreset);
+        this.isMultiProject ? await this._update(`${folderName} testPreset for ${configurePreset}`, v) :
+            await this._update(`testPreset for ${configurePreset}`, v);
     }
 
     /**
      * The name of the workspace-local active kit.
      */
-    get activeKitName(): string | null {
-        const kit = this._get<string>('activeKitName');
+    getActiveKitName(folderName: string): string | null {
+        const kit = this.isMultiProject ? this._get<string>(`${folderName} activeKitName`) : this._get<string>('activeKitName');
         return kit || null;
     }
 
-    async setActiveKitName(v: string | null) {
-        await this._update('activeKitName', v);
+    async setActiveKitName(folderName: string, v: string | null) {
+        this.isMultiProject ? await this._update(`${folderName} activeKitName`, v) : await this._update('activeKitName', v);
     }
 
     /**
      * The currently select build target
      */
-    get defaultBuildTarget(): string | null {
-        const target = this._get<string>('activeBuildTarget');
+    getDefaultBuildTarget(folderName: string): string | null {
+        const target = this.isMultiProject ? this._get<string>(`${folderName} activeBuildTarget`) : this._get<string>('activeBuildTarget');
         return target || null;
     }
 
-    async setDefaultBuildTarget(s: string | null) {
-        await this._update('activeBuildTarget', s);
+    async setDefaultBuildTarget(folderName: string, v: string | null) {
+        this.isMultiProject ? await this._update(`${folderName} activeBuildTarget`, v) : await this._update('activeBuildTarget', v);
     }
 
-    get launchTargetName(): string | null {
-        const name = this._get<string>('launchTargetName');
+    getLaunchTargetName(folderName: string): string | null {
+        const name = this.isMultiProject ? this._get<string>(`${folderName} launchTargetName`) : this._get<string>('launchTargetName');
         return name || null;
     }
 
-    async setLaunchTargetName(t: string | null) {
-        await this._update('launchTargetName', t);
+    async setLaunchTargetName(folderName: string, t: string | null) {
+        this.isMultiProject ? await this._update(`${folderName} launchTargetName`, t) : await this._update('launchTargetName', t);
     }
 
     /**
      * The keyword settings for the build variant
      */
-    get activeVariantSettings(): Map<string, string> | null {
-        const pairs = this._get<[string, string][]>('activeVariantSettings');
+    getActiveVariantSettings(folderName: string): Map<string, string> | null {
+        const pairs = this.isMultiProject ? this._get<[string, string][]>(`${folderName} activeVariantSettings`) :
+            this._get<[string, string][]>('activeVariantSettings');
         if (pairs) {
             return new Map<string, string>(pairs);
         } else {
@@ -130,25 +144,27 @@ export class StateManager {
         }
     }
 
-    async setActiveVariantSettings(settings: Map<string, string> | null) {
+    async setActiveVariantSettings(folderName: string, settings: Map<string, string> | null) {
         if (settings) {
             const pairs: [string, string][] = Array.from(settings.entries());
-            await this._update('activeVariantSettings', pairs);
+            this.isMultiProject ? await this._update(`${folderName} activeVariantSettings`, pairs) :
+                await this._update('activeVariantSettings', pairs);
         } else {
-            await this._update('activeVariantSettings', null);
+            this.isMultiProject ? await this._update(`${folderName} activeVariantSettings`, null) :
+                await this._update('activeVariantSettings', null);
         }
     }
 
     /**
      * Rest all current workspace state. Mostly for troubleshooting
      */
-    async reset() {
-        await this.setConfigurePresetName(null);
-        await this.clearCachedConfigurePresets();
-        await this.setActiveVariantSettings(null);
-        await this.setLaunchTargetName(null);
-        await this.setDefaultBuildTarget(null);
-        await this.setActiveKitName(null);
-        await this.setIgnoreCMakeListsMissing(false);
+    async reset(folderName: string) {
+        await this.setConfigurePresetName(folderName, null);
+        await this.clearCachedConfigurePresets(folderName);
+        await this.setActiveVariantSettings(folderName, null);
+        await this.setLaunchTargetName(folderName, null);
+        await this.setDefaultBuildTarget(folderName, null);
+        await this.setActiveKitName(folderName, null);
+        await this.setIgnoreCMakeListsMissing(folderName, false);
     }
 }

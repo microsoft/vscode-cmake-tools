@@ -35,6 +35,7 @@ export class DirectoryContext {
      */
     static createForDirectory(folder: vscode.WorkspaceFolder, state: StateManager): DirectoryContext {
         const config = ConfigurationReader.create(folder);
+        state.setIsMultiProject(config.sourceDirectory.length > 1);
         return new DirectoryContext(folder, config, state);
     }
 

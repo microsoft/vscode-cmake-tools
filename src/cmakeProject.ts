@@ -214,10 +214,10 @@ export class CMakeProject {
     private readonly _configurePreset = new Property<preset.ConfigurePreset | null>(null);
 
     private async resetPresets() {
-        await this.workspaceContext.state.setConfigurePresetName(null);
+        await this.workspaceContext.state.setConfigurePresetName(this.folderName, null);
         if (this.configurePreset) {
-            await this.workspaceContext.state.setBuildPresetName(this.configurePreset.name, null);
-            await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
+            await this.workspaceContext.state.setBuildPresetName(this.folderName, this.configurePreset.name, null);
+            await this.workspaceContext.state.setTestPresetName(this.folderName, this.configurePreset.name, null);
         }
         this._configurePreset.set(null);
         this._buildPreset.set(null);
@@ -274,7 +274,7 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setConfigurePreset(expandedConfigurePreset);
-                    await this.workspaceContext.state.setConfigurePresetName(configurePreset);
+                    await this.workspaceContext.state.setConfigurePresetName(this.folderName, configurePreset);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
                     void vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset {0}.', `"${error}"`));
@@ -284,7 +284,7 @@ export class CMakeProject {
                 }
             } else {
                 // Remember the selected configure preset for the next session.
-                await this.workspaceContext.state.setConfigurePresetName(configurePreset);
+                await this.workspaceContext.state.setConfigurePresetName(this.folderName, configurePreset);
             }
         } else {
             await this.resetPresets();
@@ -344,7 +344,7 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setBuildPreset(expandedBuildPreset);
-                    await this.workspaceContext.state.setBuildPresetName(expandedBuildPreset.configurePreset, buildPreset);
+                    await this.workspaceContext.state.setBuildPresetName(this.folderName, expandedBuildPreset.configurePreset, buildPreset);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
                     void vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset {0}.', `"${error}"`));
@@ -354,12 +354,12 @@ export class CMakeProject {
                 }
             } else {
                 // Remember the selected build preset for the next session.
-                await this.workspaceContext.state.setBuildPresetName(expandedBuildPreset.configurePreset, buildPreset);
+                await this.workspaceContext.state.setBuildPresetName(this.folderName, expandedBuildPreset.configurePreset, buildPreset);
             }
         } else {
             this._buildPreset.set(null);
             if (this.configurePreset) {
-                await this.workspaceContext.state.setBuildPresetName(this.configurePreset.name, null);
+                await this.workspaceContext.state.setBuildPresetName(this.folderName, this.configurePreset.name, null);
             }
         }
     }
@@ -417,7 +417,7 @@ export class CMakeProject {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setTestPreset(expandedTestPreset);
                     if (expandedTestPreset.configurePreset) {
-                        await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
+                        await this.workspaceContext.state.setTestPresetName(this.folderName, expandedTestPreset.configurePreset, testPreset);
                     }
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
@@ -429,13 +429,13 @@ export class CMakeProject {
             } else {
                 if (expandedTestPreset.configurePreset) {
                     // Remember the selected test preset for the next session.
-                    await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
+                    await this.workspaceContext.state.setTestPresetName(this.folderName, expandedTestPreset.configurePreset, testPreset);
                 }
             }
         } else {
             this._testPreset.set(null);
             if (this.configurePreset) {
-                await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
+                await this.workspaceContext.state.setTestPresetName(this.folderName, this.configurePreset.name, null);
             }
         }
     }
@@ -641,7 +641,7 @@ export class CMakeProject {
 
                 telemetry.logEvent('missingCMakeListsFile');  // Fire this event in case the notification is dismissed with the `ESC` key.
 
-                const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.ignoreCMakeListsMissing || this.workspaceContext.config.ignoreCMakeListsMissing;
+                const ignoreCMakeListsMissing: boolean = this.workspaceContext.state.getIgnoreCMakeListsMissing(this.folderName) || this.workspaceContext.config.ignoreCMakeListsMissing;
                 telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
 
                 if (!ignoreCMakeListsMissing && !this.isMultiProjectFolder) {
@@ -893,11 +893,11 @@ export class CMakeProject {
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
 
         // Start up the variant manager
-        await this.variantManager.initialize();
+        await this.variantManager.initialize(this.folderName);
         // Set the status bar message
         this.activeVariant.set(this.variantManager.activeVariantOptions.short);
         // Restore the debug target
-        this._launchTargetName.set(this.workspaceContext.state.launchTargetName || '');
+        this._launchTargetName.set(this.workspaceContext.state.getLaunchTargetName(this.folderName) || '');
 
         // Hook up event handlers
         // Listen for the variant to change
@@ -989,7 +989,7 @@ export class CMakeProject {
 
     async initializeKitOrPresets() {
         if (this.useCMakePresets) {
-            const latestConfigPresetName = this.workspaceContext.state.configurePresetName;
+            const latestConfigPresetName = this.workspaceContext.state.getConfigurePresetName(this.folderName);
             if (latestConfigPresetName) {
                 // Check if the latest configurePresetName from the previous session is still valid.
                 const presets = await this.presetsController.getAllConfigurePresets();
@@ -1000,7 +1000,7 @@ export class CMakeProject {
             }
         } else {
             // Check if the CMakeProject remembers what kit it was last using in this dir:
-            const kitName = this.workspaceContext.state.activeKitName;
+            const kitName = this.workspaceContext.state.getActiveKitName(this.folderName);
             if (kitName) {
                 // It remembers a kit. Find it in the kits avail in this dir:
                 const kit = this.kitsController.availableKits.find(k => k.name === kitName) || null;
@@ -1033,7 +1033,7 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setKit(kit, this.getPreferredGenerators());
-                    await this.workspaceContext.state.setActiveKitName(kit.name);
+                    await this.workspaceContext.state.setActiveKitName(this.folderName, kit.name);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
                     void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit {0}.', `"${error.message}"`));
@@ -1043,7 +1043,7 @@ export class CMakeProject {
                 }
             } else {
                 // Remember the selected kit for the next session.
-                await this.workspaceContext.state.setActiveKitName(kit.name);
+                await this.workspaceContext.state.setActiveKitName(this.folderName, kit.name);
             }
         }
     }
@@ -1897,10 +1897,10 @@ export class CMakeProject {
      * The target that will be built with a regular build invocation
      */
     public get defaultBuildTarget(): string | null {
-        return this.workspaceContext.state.defaultBuildTarget;
+        return this.workspaceContext.state.getDefaultBuildTarget(this.folderName);
     }
     private async setDefaultBuildTarget(v: string) {
-        await this.workspaceContext.state.setDefaultBuildTarget(v);
+        await this.workspaceContext.state.setDefaultBuildTarget(this.folderName, v);
         this.targetName.set(v);
     }
 
@@ -1962,7 +1962,7 @@ export class CMakeProject {
             return null;
         } if (executableTargets.length === 1) {
             const target = executableTargets[0];
-            await this.workspaceContext.state.setLaunchTargetName(target.name);
+            await this.workspaceContext.state.setLaunchTargetName(this.folderName, target.name);
             this._launchTargetName.set(target.name);
             return target.path;
         }
@@ -1981,13 +1981,13 @@ export class CMakeProject {
         if (!chosen) {
             return null;
         }
-        await this.workspaceContext.state.setLaunchTargetName(chosen.label);
+        await this.workspaceContext.state.setLaunchTargetName(this.folderName, chosen.label);
         this._launchTargetName.set(chosen.label);
         return chosen.detail;
     }
 
     async getCurrentLaunchTarget(): Promise<ExecutableTarget | null> {
-        const targetName = this.workspaceContext.state.launchTargetName;
+        const targetName = this.workspaceContext.state.getLaunchTargetName(this.folderName);
         const target = (await this.executableTargets).find(e => e.name === targetName);
 
         if (!target) {
@@ -2488,7 +2488,7 @@ export class CMakeProject {
      * Implementation of `cmake.resetState`
      */
     async resetState() {
-        await this.workspaceContext.state.reset();
+        await this.workspaceContext.state.reset(this.folderName);
     }
 
     // Don't get this from the driver. Source dir is required to evaluate presets.
