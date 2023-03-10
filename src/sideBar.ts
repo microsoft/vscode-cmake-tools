@@ -23,7 +23,11 @@ export class ProjectStatus {
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
                 await runCommand('stop');
-            })
+            }),            
+            vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
+                await runCommand('selectKit');
+                await this.refresh(node);
+            }),
         ]);
     }
 
@@ -32,8 +36,8 @@ export class ProjectStatus {
         await treeDataProvider.updateActiveProject(cmakeProject);
     }
 
-    refresh(): Promise<any> {
-        return treeDataProvider.refresh();
+    refresh(node?: Node): Promise<any> {
+        return treeDataProvider.refresh(node);
     }
 
     clear(): Promise<any> {
@@ -87,10 +91,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         this.disposables.push(...[
             this.treeView,
             // Commands for projectStatus items
-            vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
-                await runCommand('selectKit');
-                await this.refresh(node);
-            }),
+
             vscode.commands.registerCommand('cmake.projectStatus.selectConfigurePreset', async (node: Node) => {
                 await runCommand('selectConfigurePreset', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
