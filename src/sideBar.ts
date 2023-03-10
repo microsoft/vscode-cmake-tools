@@ -15,8 +15,16 @@ let treeDataProvider: TreeDataProvider;
 
 export class ProjectStatus {
 
+    protected disposables: vscode.Disposable[] = [];
+
     constructor() {
         treeDataProvider = new TreeDataProvider();
+        this.disposables.push(...[
+            // Commands for projectStatus items
+            vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
+                await runCommand('stop');
+            }),
+        ]);
     }
 
     async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
@@ -33,6 +41,7 @@ export class ProjectStatus {
     }
 
     dispose() {
+        vscode.Disposable.from(...this.disposables).dispose();
         treeDataProvider.dispose();
     }
 
