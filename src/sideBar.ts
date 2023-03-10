@@ -78,55 +78,57 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         this.disposables.push(...[
             this.treeView,
             // Commands for projectStatus items
-            vscode.commands.registerCommand('cmake.projectStatus.stop', async () => {
+            vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
                 await runCommand('stop');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
                 await runCommand('selectKit');
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.selectConfigurePreset', async (node: Node, folder: vscode.WorkspaceFolder) => {
-                await runCommand('selectConfigurePreset', folder);
+            vscode.commands.registerCommand('cmake.projectStatus.selectConfigurePreset', async (node: Node) => {
+                await runCommand('selectConfigurePreset', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.configure', async (_node: Node) => {
-                void runCommand('configure', this.cmakeProject?.workspaceFolder);
+                runCommand('configure', this.cmakeProject?.workspaceFolder);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node, folder: vscode.WorkspaceFolder, variant: Promise<string>) => {
-                await runCommand('setVariant', folder, await variant);
+            vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node) => {
+                await runCommand('setVariant', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.build', async (_node: Node) => {
-                void runCommand('build', this.cmakeProject?.workspaceFolder, await this.cmakeProject?.buildTargetName());
+                runCommand('build', this.cmakeProject?.workspaceFolder, await this.cmakeProject?.buildTargetName());
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node, folder: vscode.WorkspaceFolder, target: Promise<string>) => {
-                await runCommand('setDefaultTarget', folder, await target);
+            vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node) => {
+                await runCommand('setDefaultTarget', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.selectBuildPreset', async (node: Node, folder: vscode.WorkspaceFolder) => {
-                await runCommand('selectBuildPreset', folder);
+            vscode.commands.registerCommand('cmake.projectStatus.selectBuildPreset', async (node: Node) => {
+                await runCommand('selectBuildPreset', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.ctest', async (folder: vscode.WorkspaceFolder) => runCommand('ctest', folder)),
-            vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_folder: vscode.WorkspaceFolder, _test: Promise<string>) => {
+            vscode.commands.registerCommand('cmake.projectStatus.ctest', async (_node: Node) => {
+                runCommand('ctest', this.cmakeProject?.workspaceFolder);
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_node: Node) => {
                 // Do nothing
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.selectTestPreset', async (node: Node, folder: vscode.WorkspaceFolder) => {
-                await runCommand('selectTestPreset', folder);
+            vscode.commands.registerCommand('cmake.projectStatus.selectTestPreset', async (node: Node) => {
+                await runCommand('selectTestPreset', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.debugTarget', async (folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
-                await runCommand('debugTarget', folder, target);
+            vscode.commands.registerCommand('cmake.projectStatus.debugTarget', async (_node: Node) => {
+                await runCommand('debugTarget', this.cmakeProject?.workspaceFolder, this.cmakeProject?.launchTargetName);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.setDebugTarget', async (node: Node, folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
-                await runCommand('selectLaunchTarget', folder, target);
+            vscode.commands.registerCommand('cmake.projectStatus.setDebugTarget', async (node: Node) => {
+                await runCommand('selectLaunchTarget', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.launchTarget', async (folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
-                await runCommand('launchTarget', folder, target);
+            vscode.commands.registerCommand('cmake.projectStatus.launchTarget', async (_node: Node) => {
+                await runCommand('launchTarget', this.cmakeProject?.workspaceFolder, this.cmakeProject?.launchTargetName);
             }),
-            vscode.commands.registerCommand('cmake.projectStatus.setLaunchTarget', async (node: Node, folder: vscode.WorkspaceFolder, target?: Promise<string>) => {
-                await runCommand('selectLaunchTarget', folder, target);
+            vscode.commands.registerCommand('cmake.projectStatus.setLaunchTarget', async (node: Node) => {
+                await runCommand('selectLaunchTarget', this.cmakeProject?.workspaceFolder);
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectActiveProject', async () => {
@@ -353,11 +355,6 @@ class ConfigNode extends Node {
     convertToStopCommand(): void {
         this.label = localize("configure.running", "Configure (Running)");
         const title: string = localize('Stop', 'Stop');
-        this.command = {
-            title: title,
-            command: 'cmake.projectStatus.stop',
-            arguments: []
-        };
         this.tooltip = title;
         this.contextValue = "stop";
     }
@@ -411,11 +408,6 @@ class BuildNode extends Node {
     convertToStopCommand(): void {
         this.label = localize("build.running", "Build (Running)");
         const title: string = localize('Stop', 'Stop');
-        this.command = {
-            title: title,
-            command: 'cmake.projectStatus.stop',
-            arguments: []
-        };
         this.tooltip = title;
         this.contextValue = "stop";
     }
