@@ -1,6 +1,8 @@
 name: Create digest
 on:
   workflow_dispatch:
+  # TODO: remove later
+  pull_request:
 
 jobs:
   main:
