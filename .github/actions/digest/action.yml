@@ -10,5 +10,5 @@ runs:
     token:
       description: GitHub token
       default: ${{ github.token }}
-  env:
-    GITHUB_TOKEN: ${{ inputs.token }}
+  args:
+    - ${{ inputs.token }}
