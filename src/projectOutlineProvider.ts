@@ -111,7 +111,7 @@ function iconForTargetType(type: codeModel.TargetTypeString): string {
         case 'STATIC_LIBRARY':
             return '$(library)';
         case 'UTILITY':
-            return '$(wrench)';
+            return '$(tools)';
     }
 }
 
