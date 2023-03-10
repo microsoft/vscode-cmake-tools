@@ -1,0 +1,14 @@
+name: Create digest
+on:
+  workflow_dispatch:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+      - name: Install Actions
+        run: cd ./.github/actions && npm install --production && cd ../..
+      - name: Run Digest
+        uses: ./.github/actions/digest

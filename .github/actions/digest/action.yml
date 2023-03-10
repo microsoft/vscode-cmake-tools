@@ -1,0 +1,5 @@
+name: Digest
+description: Creates digests of recent activity in the repository
+runs:
+  using: 'node16'
+  main: '../lib/digest/index.js'
