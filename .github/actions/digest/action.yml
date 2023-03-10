@@ -10,5 +10,5 @@ outputs:
 runs:
   using: docker
   image: Dockerfile
-  args:
-    - ${{ inputs.token }}
+  env:
+    GITHUB_TOKEN: ${{ inputs.token }}
