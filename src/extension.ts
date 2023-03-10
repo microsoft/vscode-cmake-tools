@@ -41,6 +41,7 @@ import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
+import { ProjectStatus } from './sideBar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1478,9 +1479,12 @@ export class ExtensionManager implements vscode.Disposable {
     private readonly onActiveProjectChangedEmitter = new vscode.EventEmitter<vscode.Uri | undefined>();
 }
 
+export let projectStatus: ProjectStatus;
+
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
     reportProgress(localize('initial.setup', 'Initial setup'), progress);
     const ext = extensionManager!;
+    projectStatus = new ProjectStatus();
     // A register function that helps us bind the commands to the extension
     function register<K extends keyof ExtensionManager>(name: K) {
         return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {

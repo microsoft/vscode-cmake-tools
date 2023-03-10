@@ -15,14 +15,13 @@ import { DirectoryContext } from './workspace';
 import { StateManager } from './state';
 import * as telemetry from './telemetry';
 import { FireNow } from './prop';
-import { ProjectStatus } from './sideBar';
+import { projectStatus } from './extension';
 import * as ext from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('workspace');
-const projectStatus: ProjectStatus = new ProjectStatus();
 
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
