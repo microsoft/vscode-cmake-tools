@@ -87,9 +87,6 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         this.disposables.push(...[
             this.treeView,
             // Commands for projectStatus items
-            vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
-                await runCommand('stop');
-            }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
                 await runCommand('selectKit');
                 await this.refresh(node);
