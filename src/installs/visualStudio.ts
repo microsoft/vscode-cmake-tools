@@ -125,8 +125,7 @@ export const generatorPlatformFromVSArch: { [key: string]: string } = {
 
 // The reverse of generatorPlatformFromVSArch
 export const vsArchFromGeneratorPlatform: { [key: string]: string } = {
-    win32: 'x86',
-    Win32: 'x86'
+    win32: 'x86'
 };
 
 /**
