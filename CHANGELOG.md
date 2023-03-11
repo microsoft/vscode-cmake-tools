@@ -8,6 +8,7 @@ Improvements:
 - When starting debugging, also build the selected build target. [PR #2987](https://github.com/microsoft/vscode-cmake-tools/pull/2987) [@Maddimax](https://github.com/Maddimax)
 - Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
 - Print the build time in the output window. [#3008](https://github.com/microsoft/vscode-cmake-tools/issues/3008)
+- Add a new UI to show the project status in the side bar. This feature replaces the status bar. [PR #2993](https://github.com/microsoft/vscode-cmake-tools/pull/2993)
 
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
