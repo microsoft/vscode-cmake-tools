@@ -46,6 +46,7 @@ import { ProjectStatus } from './sideBar';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
+export let projectStatus: ProjectStatus;
 
 const log = logging.createLogger('extension');
 
@@ -1479,8 +1480,6 @@ export class ExtensionManager implements vscode.Disposable {
     private readonly onActiveProjectChangedEmitter = new vscode.EventEmitter<vscode.Uri | undefined>();
 }
 
-export let projectStatus: ProjectStatus;
-
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
     reportProgress(localize('initial.setup', 'Initial setup'), progress);
     const ext = extensionManager!;
@@ -1625,7 +1624,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
     ]);
 
-    projectStatus = new ProjectStatus();
     return { getApi: (_version) => ext.api };
 }
 
@@ -1665,6 +1663,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await util.setContextValue("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
+    projectStatus = new ProjectStatus();
 
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
