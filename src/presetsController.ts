@@ -681,8 +681,8 @@ export class PresetsController {
             },
             async () => {
                 const configurePreset = this.project.configurePreset?.name;
-                const buildPreset = configurePreset ? this.project.workspaceContext.state.getBuildPresetName(configurePreset) : undefined;
-                const testPreset = configurePreset ? this.project.workspaceContext.state.getTestPresetName(configurePreset) : undefined;
+                const buildPreset = configurePreset ? this.project.workspaceContext.state.getBuildPresetName(this.project.folderName, configurePreset) : undefined;
+                const testPreset = configurePreset ? this.project.workspaceContext.state.getTestPresetName(this.project.folderName, configurePreset) : undefined;
                 if (buildPreset) {
                     await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                 }
