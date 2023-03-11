@@ -1484,7 +1484,6 @@ export let projectStatus: ProjectStatus;
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
     reportProgress(localize('initial.setup', 'Initial setup'), progress);
     const ext = extensionManager!;
-    projectStatus = new ProjectStatus();
     // A register function that helps us bind the commands to the extension
     function register<K extends keyof ExtensionManager>(name: K) {
         return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {
@@ -1626,6 +1625,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
     ]);
 
+    projectStatus = new ProjectStatus();
     return { getApi: (_version) => ext.api };
 }
 
