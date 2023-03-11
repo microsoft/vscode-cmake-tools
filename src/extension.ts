@@ -1708,4 +1708,7 @@ export async function deactivate() {
     if (taskProvider) {
         taskProvider.dispose();
     }
+    if (projectStatus) {
+        projectStatus.dispose();
+    }
 }
