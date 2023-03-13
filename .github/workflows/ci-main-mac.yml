@@ -33,7 +33,7 @@ jobs:
           source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
           configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
           install-build: true
-
+ 
       - name: Delete NOTICE.txt
         run: rm ${{ github.workspace }}/NOTICE.txt
 
