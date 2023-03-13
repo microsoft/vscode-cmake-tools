@@ -33,7 +33,7 @@ jobs:
           source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
           configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
           install-build: true
- 
+
       - name: Delete NOTICE.txt
         run: rm ${{ github.workspace }}/NOTICE.txt
 
@@ -43,11 +43,11 @@ jobs:
       - name: Run smoke tests
         run: yarn smokeTests
 
-      - name: Run unit tests
-        run: yarn unitTests
-
       - name: Run successful-build test
         run: yarn extensionTestsSuccessfulBuild
+
+      - name: Run unit tests
+        run: yarn unitTests
 
       - name: Run single root test
         run: yarn extensionTestsSingleRoot
