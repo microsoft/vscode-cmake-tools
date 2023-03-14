@@ -94,7 +94,7 @@
 	"no.variant.abort": "未選取任何變化。中止設定",
 	"cannot.configure.no.config.preset": "無法設定: 此 CMake 專案沒有使用中的設定預設",
 	"cmake.cache.dir.missing": "缺少包含 CMake 快取的資料夾。快取將會重新產生。",
-	"warn.skip.configure.when.cache.present": "延伸模組判斷目前需要設定，但由於設定 cmake.skipConfigureWhenCachePresent 已開啟，我們即將跳過設定。請確定 CMake 快取與最新的設定變更同步。",
+	"warn.skip.configure.if.cache.present": "延伸模組判斷目前需要設定，但由於設定 cmake.skipConfigureIfCachePresent 已開啟，我們即將跳過設定。請確定 CMake 快取與最新的設定變更同步。",
 	"cmakelists.save.trigger.reconfigure": "偵測到儲存 CMakeLists.txt 的作業，正在嘗試自動重新設定...",
 	"cmakelists.save.could.not.reconfigure": "在 CMakeLists.txt 中偵測到變更，但因為另一個作業已在進行，所以無法重新設定專案。",
 	"needs.reconfigure": "必須重新設定專案，儲存在 CMakeLists.txt 中的變更才會生效。",
