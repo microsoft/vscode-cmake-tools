@@ -37,6 +37,9 @@ jobs:
       - name: Delete NOTICE.txt
         run: rm ${{ github.workspace }}/NOTICE.txt
 
+      - name: Run successful-build test
+        run: yarn extensionTestsSuccessfulBuild
+
       - name: Run backend tests
         run: yarn backendTests
 
@@ -45,9 +48,6 @@ jobs:
 
       - name: Run unit tests
         run: yarn unitTests
-
-      - name: Run successful-build test
-        run: yarn extensionTestsSuccessfulBuild
 
       - name: Run single root test
         run: yarn extensionTestsSingleRoot

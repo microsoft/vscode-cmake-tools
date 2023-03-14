@@ -94,7 +94,7 @@
 	"no.variant.abort": "バリアントが選択されていません。構成を中止します",
 	"cannot.configure.no.config.preset": "構成できません: この CMake プロジェクトではどの構成の事前設定もアクティブではありません",
 	"cmake.cache.dir.missing": "CMake キャッシュを含むフォルダーが見つかりません。キャッシュは再生成されます。",
-	"warn.skip.configure.when.cache.present": "拡張機能によって、現時点で構成が必要であると判断されましたが、設定 cmake.skipConfigureWhenCachePresent がオンになっているため、スキップしています。CMake キャッシュが最新の構成変更と同期していることをご確認ください。",
+	"warn.skip.configure.if.cache.present": "拡張機能によって、現時点で構成が必要であると判断されましたが、設定 cmake.skipConfigureIfCachePresent がオンになっているため、スキップしています。CMake キャッシュが最新の構成変更と同期していることをご確認ください。",
 	"cmakelists.save.trigger.reconfigure": "CMakeLists.txt の保存が検出されました。自動再構成を試行しています...",
 	"cmakelists.save.could.not.reconfigure": "CMakeLists.txt で変更が検出されましたが、別の操作が既に進行中のため、プロジェクトを再構成できませんでした。",
 	"needs.reconfigure": "CMakeLists.txt に保存された変更が有効になるように、プロジェクトを再構成する必要があります。",
