@@ -14,8 +14,7 @@ suite('MinGW Tests', () => {
 
     test('Test scan of mingw', async () => {
         const kits = await scanForKits(undefined, {
-            scanDirs: [],
-            minGWSearchDirs: mingw_dirs,
+            scanDirs: mingw_dirs,
             ignorePath: true
         });
         const is_kit_MinGW_present = kits.find(kit => kit.name.indexOf('GCC for i686-w64-mingw32 4.9.2') >= 0) ? true : false;

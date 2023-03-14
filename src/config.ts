@@ -119,7 +119,7 @@ export interface ExtensionConfigurationSettings {
     configureEnvironment: Environment;
     buildEnvironment: Environment;
     testEnvironment: Environment;
-    mingwSearchDirs: string[];
+    additionalCompilerSearchDirs: string[];
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
@@ -396,8 +396,8 @@ export class ConfigurationReader implements vscode.Disposable {
         return ctestJobs;
     }
 
-    get mingwSearchDirs(): string[] {
-        return this.configData.mingwSearchDirs;
+    get additionalCompilerSearchDirs(): string[] {
+        return this.configData.additionalCompilerSearchDirs;
     }
     get additionalKits(): string[] {
         return this.configData.additionalKits;
@@ -483,7 +483,7 @@ export class ConfigurationReader implements vscode.Disposable {
         configureEnvironment: new vscode.EventEmitter<Environment>(),
         buildEnvironment: new vscode.EventEmitter<Environment>(),
         testEnvironment: new vscode.EventEmitter<Environment>(),
-        mingwSearchDirs: new vscode.EventEmitter<string[]>(),
+        additionalCompilerSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
