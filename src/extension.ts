@@ -1082,9 +1082,9 @@ export class ExtensionManager implements vscode.Disposable {
 
     buildAll(name?: string | string[]) {
         telemetry.logEvent("build", { all: "true"});
-        return this.runCMakeCommandForAll(cmakeProject => {
+        return this.runCMakeCommandForAll(async cmakeProject => {
             const targets = util.isArrayOfString(name) ? name : util.isString(name) ? [name] : undefined;
-            return cmakeProject.build(targets);
+            return cmakeProject.build(targets || [await cmakeProject.allTargetName]);
         },
         this.ensureActiveBuildPreset,
         true);

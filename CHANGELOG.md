@@ -15,6 +15,7 @@ Bug Fixes:
 - Implement cmake.parseBuildDiagnostics. [#1932](https://github.com/microsoft/vscode-cmake-tools/issues/1932)
 - CMake tools not fully loaded when opening multi-project folders. [#3000](https://github.com/microsoft/vscode-cmake-tools/issues/3000)
 - Fix typo in `cmake.skipConfigureWhenCachePresent`. [#3040](https://github.com/microsoft/vscode-cmake-tools/issues/3040) [@Mlekow](https://github.com/Mlekow)
+- `cmake.buildAll` now builds all targets even if a default build target is selected. [#3048](https://github.com/microsoft/vscode-cmake-tools/issues/3048)
 
 ## 1.13.45
 Bug Fixes:
