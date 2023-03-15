@@ -94,7 +94,7 @@
 	"no.variant.abort": "未选择任何变量。中止配置",
 	"cannot.configure.no.config.preset": "无法配置: 没有为此 CMake 项目激活任何配置预设",
 	"cmake.cache.dir.missing": "缺少包含 CMake 缓存的文件夹。将重新生成缓存。",
-	"warn.skip.configure.when.cache.present": "扩展已确定目前需要配置，但由于已启用设置 cmake.skipConfigureWhenCachePresent，我们将跳过配置。请确保 CMake 缓存与最新的配置更改同步。",
+	"warn.skip.configure.if.cache.present": "扩展已确定目前需要配置，但由于已启用设置 cmake.skipConfigureIfCachePresent，我们将跳过配置。请确保 CMake 缓存与最新的配置更改同步。",
 	"cmakelists.save.trigger.reconfigure": "检测到正在保存 CMakeLists.txt，正在尝试自动重新配置…",
 	"cmakelists.save.could.not.reconfigure": "在 CMakeLists.txt 中检测到更改，但由于另一操作已在进行中，我们无法重新配置项目。",
 	"needs.reconfigure": "需要重新配置项目，以使 CMakeLists.txt 中保存的更改生效。",
