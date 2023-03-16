@@ -207,7 +207,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     if (install_dir_mat && vendor === 'Clang') {
         installedDir = install_dir_mat[1];
     }
-    var detectedName = `${vendor} ${version} ${target.triple}`;
+    let detectedName = `${vendor} ${version} ${target.triple}`;
     if (isMsys(binPath)) {
         // Add the MSYS environment to the name, so that we can distinguish between different MSYS environments
         const msysEnvDirName = path.dirname(path.dirname(binPath));
@@ -294,14 +294,14 @@ function isMingw(bin: string): boolean {
     const isMingw = isWin32 && (
         bin.toLowerCase().includes('mingw') ||
         isMsys(bin)
-    )
+    );
     return isMingw;
 }
 
 async function asMingwKit(bin: string, kit: Kit): Promise<Kit> {
     const binParentPath = path.dirname(bin);
     const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
-    const mingwMakeExists = await fs.exists(mingwMakePath)
+    const mingwMakeExists = await fs.exists(mingwMakePath);
 
     // During a scan, binParentPath must be a directory already in the PATH.
     // Therefore, we will assume that MinGW will remain in the user's PATH
@@ -389,7 +389,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         };
 
         if (isMingw(bin)) {
-            return await asMingwKit(bin, gccKit);
+            return asMingwKit(bin, gccKit);
         } else {
             return gccKit;
         }
@@ -452,7 +452,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
         };
 
         if (isMingw(bin)) {
-            return await asMingwKit(bin, clangKit);
+            return asMingwKit(bin, clangKit);
         } else {
             return clangKit;
         }

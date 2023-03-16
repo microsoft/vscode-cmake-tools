@@ -18,12 +18,14 @@ interface VSCMakePaths {
 }
 
 class WindowsDefaultCompilerPaths {
-    constructor(private readonly _env: WindowsEnvironment) { this._env = _env; }
+    constructor(private readonly _env: WindowsEnvironment) {
+        this._env = _env;
+    }
 
     get LLVM(): string[] {
         return [
             this._env.ProgramFiles! + "\\LLVM\\bin",
-            this._env.ProgramFilesX86! + "\\LLVM\\bin",
+            this._env.ProgramFilesX86! + "\\LLVM\\bin"
         ];
     }
 
@@ -34,7 +36,7 @@ class WindowsDefaultCompilerPaths {
             paths.windows.SystemDrive! + '\\msys64\\clang32\\bin',
             paths.windows.SystemDrive! + '\\msys64\\clang64\\bin',
             paths.windows.SystemDrive! + '\\msys64\\clangarm64\\bin',
-            paths.windows.SystemDrive! + '\\msys64\\ucrt64\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\ucrt64\\bin'
         ];
     }
 }
