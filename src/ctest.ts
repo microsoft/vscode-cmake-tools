@@ -20,6 +20,10 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('ctest');
 
+const magicKey = 'ctest.magic.key';
+// Used as magic value
+let sessionNum= 0;
+
 interface SiteAttributes {}
 
 type TestStatus = ('failed' | 'notrun' | 'passed');
@@ -517,28 +521,226 @@ export class CTestDriver implements vscode.Disposable {
         return 0;
     }
 
+    /**
+     * Filters out duplicate tests, i.e., both the parent and child are requested
+     */
+    private uniqueTests(tests: vscode.TestItem[]): vscode.TestItem[] {
+        const parents = new Set<string>();
+        tests.forEach(t => {
+            if (!t.parent) {
+                parents.add(t.id);
+            }
+        });
+        const uniqueTests: vscode.TestItem[] = [];
+        tests.forEach(t => {
+            if (!t.parent || !parents.has(t.parent.id)) {
+                uniqueTests.push(t);
+            }
+        });
+        return uniqueTests;
+    }
+
     private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
         if (!testExplorer) {
             return;
         }
 
         const requestedTests = request.include || this.testItemCollectionToArray(testExplorer.items);
-        // Filter out duplicate tests, i.e., both the parent and child are requested
-        const parents = new Set<string>();
-        requestedTests.forEach(t => {
-            if (!t.parent) {
-                parents.add(t.id);
-            }
-        });
-        const tests: vscode.TestItem[] = [];
-        requestedTests.forEach(t => {
-            if (!t.parent || !parents.has(t.parent.id)) {
-                tests.push(t);
-            }
-        });
+        const tests = this.uniqueTests(requestedTests);
 
         const run = testExplorer.createTestRun(request);
         await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+        run.end();
+    };
+
+    private async debugCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken): Promise<number> {
+        let returnCode: number = 0;
+        for (const test of tests) {
+            if (cancellation && cancellation.isCancellationRequested) {
+                run.skipped(test);
+                continue;
+            }
+
+            const folder = test.parent ? test.parent.id : test.id;
+            if (!this.projectController) {
+                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+                continue;
+            }
+            const project = await this.projectController.getProjectForFolder(folder);
+            if (!project) {
+                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+                continue;
+            }
+            const workspaceFolder = project.workspaceFolder;
+
+            if (test.children.size > 0) {
+                // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
+                const children = this.testItemCollectionToArray(test.children);
+                if (await this.debugCTestHelper(children, run, cancellation)) {
+                    returnCode = -1;
+                }
+            } else {
+                run.started(test);
+                await this.debugCTestImpl(workspaceFolder, test.id, cancellation);
+                // We have no way to get the result, so just mark it as skipped
+                run.skipped(test);
+            }
+        }
+        return returnCode;
+    }
+
+    private async debugCTestImpl(workspaceFolder: vscode.WorkspaceFolder, testName: string, cancellation: vscode.CancellationToken): Promise<void> {
+        const magicValue = sessionNum++;
+        const launchConfig = vscode.workspace.getConfiguration(
+            'launch',
+            workspaceFolder.uri
+        );
+        const configs = launchConfig.get<vscode.DebugConfiguration[]>('configurations');
+        if (!configs || configs.length === 0) {
+            throw(localize('no.launch.config', 'No launch configurations found.'));
+        }
+
+        let config: vscode.DebugConfiguration | undefined;
+        if (configs.length === 1) {
+            config = configs[0];
+        } else {
+            // TODO: we can remember the last choice once the CMake side panel work is done
+            const chosen = await vscode.window.showQuickPick(configs.map(c => c.name), { placeHolder: localize('choose.launch.config', 'Choose a launch configuration to debug the test with.') });
+            if (chosen) {
+                config = configs.find(c => c.name === chosen)!;
+            } else {
+                return;
+            }
+        }
+
+        // Commands can't be used to replace array (i.e., args); and both test program and test args requires folder and
+        // test name as parameters, which means one lauch config for each test. So replacing them here is a better way.
+        config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${cmake.testProgram}', this.testProgram(testName));
+        // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
+        // since we need to repalce the quotes as well.
+        config = this.replaceArrayItems(config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
+
+        // Identify the session we started
+        config[magicKey] = magicValue;
+        let onDidStartDebugSession: vscode.Disposable | undefined;
+        let onDidTerminateDebugSession: vscode.Disposable | undefined;
+        let sessionId: string | undefined;
+        const started = new Promise<vscode.DebugSession>(resolve => {
+            onDidStartDebugSession = vscode.debug.onDidStartDebugSession((session: vscode.DebugSession) => {
+                if (session.configuration[magicKey] === magicValue) {
+                    sessionId = session.id;
+                    resolve(session);
+                }
+            });
+        });
+
+        const terminated = new Promise<void>(resolve => {
+            onDidTerminateDebugSession = vscode.debug.onDidTerminateDebugSession((session: vscode.DebugSession) => {
+                if (session.id === sessionId) {
+                    resolve();
+                }
+            });
+        }).finally(() => {
+            log.info('debugSessionTerminated');
+        });
+
+        const debugStarted = await vscode.debug.startDebugging(workspaceFolder, config!);
+        if (debugStarted) {
+            const session = await started;
+            if (session) {
+                cancellation.onCancellationRequested(() => {
+                    void vscode.debug.stopDebugging(session);
+                });
+            }
+            await terminated;
+            onDidStartDebugSession?.dispose();
+            onDidTerminateDebugSession?.dispose();
+        }
+    }
+
+    private testProgram(testName: string): string {
+        if (this.tests) {
+            for (const test of this.tests.tests) {
+                if (test.name === testName) {
+                    return test.command[0];
+                }
+            }
+        }
+        return '';
+    }
+
+    private testArgs(testName: string): string[] {
+        if (this.tests) {
+            for (const test of this.tests.tests) {
+                if (test.name === testName) {
+                    return test.command.slice(1);
+                }
+            }
+        }
+        return [];
+    }
+
+    private replaceAllInObject<T>(obj: any, str: string, replace: string): T {
+        const regex = new RegExp(util.escapeStringForRegex(str), 'g');
+        if (util.isString(obj)) {
+            obj = obj.replace(regex, replace);
+        } else if (util.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+                obj[i] = this.replaceAllInObject(obj[i], str, replace);
+            }
+        } else if (typeof obj === 'object') {
+            for (const key of Object.keys(obj)) {
+                obj[key] = this.replaceAllInObject(obj[key], str, replace);
+            }
+        }
+        return obj;
+    }
+
+    private replaceArrayItems(obj: any, str: string, replace: string[]) {
+        if (util.isArray(obj) && obj.length !== 0) {
+            const result: any[] = [];
+            for (let i = 0; i < obj.length; i++) {
+                if (util.isArray(obj[i]) || typeof obj[i] === 'object') {
+                    result.push(this.replaceArrayItems(obj[i], str, replace));
+                } else if (util.isString(obj[i])) {
+                    const replacedItem = this.replaceArrayItemsHelper(obj[i] as string, str, replace);
+                    if (util.isArray(replacedItem)) {
+                        result.push(...replacedItem);
+                    } else {
+                        result.push(replacedItem);
+                    }
+                } else {
+                    result.push(obj[i]);
+                }
+            }
+            return result;
+        }
+        if (typeof obj === 'object') {
+            for (const key of Object.keys(obj)) {
+                obj[key] = this.replaceArrayItems(obj[key], str, replace);
+            }
+            return obj;
+        }
+        return obj;
+    }
+
+    private replaceArrayItemsHelper(orig: string, str: string, replace: string[]): string | string[] {
+        if (orig === str) {
+            return replace;
+        }
+        return orig;
+    }
+
+    private async debugTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
+        if (!testExplorer) {
+            return;
+        }
+
+        const requestedTests = request.include || this.testItemCollectionToArray(testExplorer.items);
+        const tests = this.uniqueTests(requestedTests);
+
+        const run = testExplorer.createTestRun(request);
+        await this.debugCTestHelper(tests, run, cancellation);
         run.end();
     };
 
@@ -566,8 +768,10 @@ export class CTestDriver implements vscode.Disposable {
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
                 true
             );
-            // TODO
-            // testExplorer.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler);
+            testExplorer.createRunProfile(
+                'Debug Tests',
+                vscode.TestRunProfileKind.Debug,
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.debugTestHandler(request, cancellation));
         }
         return testExplorer;
     }
