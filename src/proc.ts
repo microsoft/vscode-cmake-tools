@@ -142,7 +142,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             // and doesn't have to be 100% correct.
             localize('executing.command', 'Executing command: {0}', cmdstr));
         if (options.environment) {
-            //log.debug(localize('execution.environment', '  with environment: {0}', JSON.stringify(final_env)));
+            log.debug(localize('execution.environment', '  with environment: {0}', JSON.stringify(final_env)));
         }
     }
     const spawn_opts: proc.SpawnOptions = {
