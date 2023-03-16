@@ -199,7 +199,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             let taskTargets: string[];
             if (expansionOptions) {
                 taskTargets = await expand.expandStrings(task.definition.targets, expansionOptions);
-                if (task.definition.options?.cwd){
+                if (task.definition.options?.cwd) {
                     task.definition.options.cwd = await expand.expandString(task.definition.options.cwd, expansionOptions);
                 }
             } else {
@@ -257,7 +257,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                     // If there is only one task, that task is a template, so return the template.
                     // If there are only two tasks, the first one is always a template, and the second one is the defined task that we are searching for.
                     // But if there are more than two tasks, it means that there are multiple defiend tasks and none are set as default. So ask the user to choose one later. 
-                    if (matchingTargetTasks.length == 1 || matchingTargetTasks.length == 2) {
+                    if (matchingTargetTasks.length === 1 || matchingTargetTasks.length === 2) {
                         return matchingTargetTasks[matchingTargetTasks.length];
                     }
                 }
