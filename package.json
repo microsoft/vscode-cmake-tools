@@ -1920,7 +1920,8 @@
         "cmake.exportCompileCommandsFile": {
           "type": "boolean",
           "default": true,
-          "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%"
+          "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%",
+          "scope": "resource"
         },
         "cmake.useCMakePresets": {
           "type": "string",
@@ -2153,6 +2154,7 @@
     "**/minimist": "^1.2.5",
     "nanoid": "^3.1.31",
     "postcss": "^8.2.10",
+    "source-map": "^0.8.0-beta.0",
     "yargs-parser": "^20.2.4"
   },
   "extensionPack": [

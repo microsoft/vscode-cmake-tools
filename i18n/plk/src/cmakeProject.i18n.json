@@ -94,7 +94,7 @@
 	"no.variant.abort": "Nie wybrano wariantu. Przerwij konfigurowanie.",
 	"cannot.configure.no.config.preset": "Nie można skonfigurować: dla tego projektu narzędzia CMake nie jest aktywne żadne wstępne ustawienie konfiguracji",
 	"cmake.cache.dir.missing": "Brak folderu zawierającego pamięć podręczną narzędzia CMake. Pamięć podręczna zostanie ponownie wygenerowana.",
-	"warn.skip.configure.when.cache.present": "Rozszerzenie określiło, że w tym momencie jest wymagana konfiguracja, ale pominiemy ją, ponieważ ustawienie cmake.skipConfigureWhenCachePresent jest WŁĄCZONE. Upewnij się, że pamięć podręczna narzędzia CMake jest zsynchronizowana z najnowszymi zmianami konfiguracji.",
+	"warn.skip.configure.if.cache.present": "Rozszerzenie określiło, że w tym momencie jest wymagana konfiguracja, ale pominiemy ją, ponieważ ustawienie cmake.skipConfigureIfCachePresent jest WŁĄCZONE. Upewnij się, że pamięć podręczna narzędzia CMake jest zsynchronizowana z najnowszymi zmianami konfiguracji.",
 	"cmakelists.save.trigger.reconfigure": "Wykryto zapisanie pliku CMakeLists.txt. Trwa próba automatycznej zmiany konfiguracji...",
 	"cmakelists.save.could.not.reconfigure": "Wykryto zmiany w pliku CMakeLists.txt, ale nie można ponownie skonfigurować projektu, ponieważ inna operacja jest już w toku.",
 	"needs.reconfigure": "Należy zmienić konfigurację projektu tak, aby zostały wprowadzone zmiany w pliku CMakeLists.txt.",

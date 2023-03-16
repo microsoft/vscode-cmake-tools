@@ -94,7 +94,7 @@
 	"no.variant.abort": "Keine Variante ausgewählt. Konfiguration abbrechen",
 	"cannot.configure.no.config.preset": "Kann nicht konfiguriert werden: Für dieses CMake-Projekt ist keine Konfigurationsvoreinstellung aktiv.",
 	"cmake.cache.dir.missing": "Der Ordner, der den CMake-Cache enthält, fehlt. Der Cache wird neu generiert.",
-	"warn.skip.configure.when.cache.present": "Die Erweiterung hat festgestellt, dass zu diesem Zeitpunkt eine Konfiguration erforderlich ist, die wir aber überspringen, da die Einstellung cmake.skipConfigureWhenCachePresent aktiviert ist. Stellen Sie sicher, dass der CMake-Cache mit den neuesten Konfigurationsänderungen synchronisiert ist.",
+	"warn.skip.configure.if.cache.present": "Die Erweiterung hat festgestellt, dass zu diesem Zeitpunkt eine Konfiguration erforderlich ist, die wir aber überspringen, da die Einstellung cmake.skipConfigureIfCachePresent aktiviert ist. Stellen Sie sicher, dass der CMake-Cache mit den neuesten Konfigurationsänderungen synchronisiert ist.",
 	"cmakelists.save.trigger.reconfigure": "Speichern von CMakeLists.txt erkannt, automatische Neukonfiguration wird versucht...",
 	"cmakelists.save.could.not.reconfigure": "In CMakeLists.txt wurden Änderungen erkannt. Das Projekt konnte jedoch nicht neu konfiguriert werden, weil bereits ein anderer Vorgang ausgeführt wird.",
 	"needs.reconfigure": "Das Projekt muss neu konfiguriert werden, damit die in CMakeLists.txt gespeicherten Änderungen wirksam werden.",
