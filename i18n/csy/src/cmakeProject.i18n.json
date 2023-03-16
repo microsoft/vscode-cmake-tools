@@ -94,7 +94,7 @@
 	"no.variant.abort": "Není vybraná žádná varianta. Přerušte příkaz configure.",
 	"cannot.configure.no.config.preset": "Nejde nakonfigurovat: Pro tento projekt CMake není aktivní žádná předvolba konfigurace",
 	"cmake.cache.dir.missing": "Chybí složka obsahující mezipaměť CMake. Mezipaměť se znovu vygeneruje.",
-	"warn.skip.configure.when.cache.present": "Rozšíření zjistilo, že se momentálně vyžaduje konfigurace, ale přeskakujeme ji, protože je zapnuté nastavení cmake.skipConfigureWhenCachePresent. Zkontrolujte, jestli je mezipaměť CMake synchronizovaná s posledními změnami konfigurace.",
+	"warn.skip.configure.if.cache.present": "Rozšíření zjistilo, že se momentálně vyžaduje konfigurace, ale přeskakujeme ji, protože je zapnuté nastavení cmake.skipConfigureIfCachePresent. Zkontrolujte, jestli je mezipaměť CMake synchronizovaná s posledními změnami konfigurace.",
 	"cmakelists.save.trigger.reconfigure": "Zjistilo se uložení souboru CMakeLists.txt, probíhá pokus o automatickou změnu konfigurace...",
 	"cmakelists.save.could.not.reconfigure": "V souboru CMakeLists.txt se zjistily změny, ale konfiguraci projektu jsme nemohli změnit, protože už probíhá jiná operace.",
 	"needs.reconfigure": "Projekt se musí překonfigurovat tak, aby se mohly projevit změny uložené v souboru CMakeLists.txt.",
