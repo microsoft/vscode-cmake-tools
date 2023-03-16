@@ -607,19 +607,33 @@ export class CTestDriver implements vscode.Disposable {
             'launch',
             workspaceFolder.uri
         );
-        const configs = launchConfig.get<vscode.DebugConfiguration[]>('configurations');
-        if (!configs || configs.length === 0) {
+        const workspaceLaunchConfig = vscode.workspace.workspaceFile ? vscode.workspace.getConfiguration(
+            'launch',
+            vscode.workspace.workspaceFile
+        ) : undefined;
+        const configs = launchConfig.get<vscode.DebugConfiguration[]>('configurations') ?? [];
+        const workspaceConfigs = workspaceLaunchConfig?.get<vscode.DebugConfiguration[]>('configurations') ?? [];
+        if (configs.length === 0 && workspaceConfigs.length === 0) {
             throw(localize('no.launch.config', 'No launch configurations found.'));
         }
 
-        let config: vscode.DebugConfiguration | undefined;
-        if (configs.length === 1) {
-            config = configs[0];
+        interface ConfigItem extends vscode.QuickPickItem {
+            label: string;
+            config: vscode.DebugConfiguration;
+            detail: string;
+            // Undefined for workspace launch config
+            folder?: vscode.WorkspaceFolder;
+        }
+        let allConfigItems: ConfigItem[] = configs.map(config => ({ label: config.name, config, folder: workspaceFolder, detail: workspaceFolder.uri.fsPath }));
+        allConfigItems = allConfigItems.concat(workspaceConfigs.map(config => ({ label: config.name, config, detail: vscode.workspace.workspaceFile!.fsPath })));
+        let chosenConfig: ConfigItem | undefined;
+        if (allConfigItems.length === 1) {
+            chosenConfig = allConfigItems[0];
         } else {
             // TODO: we can remember the last choice once the CMake side panel work is done
-            const chosen = await vscode.window.showQuickPick(configs.map(c => c.name), { placeHolder: localize('choose.launch.config', 'Choose a launch configuration to debug the test with.') });
+            const chosen = await vscode.window.showQuickPick(allConfigItems, { placeHolder: localize('choose.launch.config', 'Choose a launch configuration to debug the test with.') });
             if (chosen) {
-                config = configs.find(c => c.name === chosen)!;
+                chosenConfig = chosen;
             } else {
                 return;
             }
@@ -627,13 +641,13 @@ export class CTestDriver implements vscode.Disposable {
 
         // Commands can't be used to replace array (i.e., args); and both test program and test args requires folder and
         // test name as parameters, which means one lauch config for each test. So replacing them here is a better way.
-        config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${cmake.testProgram}', this.testProgram(testName));
+        chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testProgram}', this.testProgram(testName));
         // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
         // since we need to repalce the quotes as well.
-        config = this.replaceArrayItems(config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
+        chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
 
         // Identify the session we started
-        config[magicKey] = magicValue;
+        chosenConfig.config[magicKey] = magicValue;
         let onDidStartDebugSession: vscode.Disposable | undefined;
         let onDidTerminateDebugSession: vscode.Disposable | undefined;
         let sessionId: string | undefined;
@@ -656,7 +670,7 @@ export class CTestDriver implements vscode.Disposable {
             log.info('debugSessionTerminated');
         });
 
-        const debugStarted = await vscode.debug.startDebugging(workspaceFolder, config!);
+        const debugStarted = await vscode.debug.startDebugging(chosenConfig.folder, chosenConfig.config!);
         if (debugStarted) {
             const session = await started;
             if (session) {
