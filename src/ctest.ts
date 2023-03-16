@@ -291,6 +291,17 @@ export class CTestDriver implements vscode.Disposable {
         }
     }
 
+    private ctestsEnqueued(tests: vscode.TestItem[], run: vscode.TestRun) {
+        for (const test of tests) {
+            if (test.children.size > 0) {
+                const children = this.testItemCollectionToArray(test.children);
+                this.ctestsEnqueued(children, run);
+            } else {
+                run.enqueued(test);
+            }
+        }
+    }
+
     private ctestErrored(test: vscode.TestItem, run: vscode.TestRun, message: vscode.TestMessage): void {
         if (test.children.size > 0) {
             const children = this.testItemCollectionToArray(test.children);
@@ -549,6 +560,7 @@ export class CTestDriver implements vscode.Disposable {
         const tests = this.uniqueTests(requestedTests);
 
         const run = testExplorer.createTestRun(request);
+        this.ctestsEnqueued(tests, run);
         await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
         run.end();
     };
@@ -740,6 +752,7 @@ export class CTestDriver implements vscode.Disposable {
         const tests = this.uniqueTests(requestedTests);
 
         const run = testExplorer.createTestRun(request);
+        this.ctestsEnqueued(tests, run);
         await this.debugCTestHelper(tests, run, cancellation);
         run.end();
     };
