@@ -312,7 +312,7 @@ export class CTestDriver implements vscode.Disposable {
             if (test.uri && test.range) {
                 message.location = new vscode.Location(test.uri, test.range);
             } else {
-                log.error(message);
+                log.error(message.message);
             }
             run.errored(test, message);
         }
@@ -340,11 +340,7 @@ export class CTestDriver implements vscode.Disposable {
                 _driver = driver;
             } else {
                 const folder = test.parent ? test.parent.id : test.id;
-                if (!this.projectController) {
-                    this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
-                    continue;
-                }
-                const project = await this.projectController.getProjectForFolder(folder);
+                const project = await this.projectController?.getProjectForFolder(folder);
                 if (!project) {
                     this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
                     continue;
@@ -561,6 +557,7 @@ export class CTestDriver implements vscode.Disposable {
 
         const run = testExplorer.createTestRun(request);
         this.ctestsEnqueued(tests, run);
+        await this.buildTests(tests, run);
         await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
         run.end();
     };
@@ -574,11 +571,7 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             const folder = test.parent ? test.parent.id : test.id;
-            if (!this.projectController) {
-                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
-                continue;
-            }
-            const project = await this.projectController.getProjectForFolder(folder);
+            const project = await this.projectController?.getProjectForFolder(folder);
             if (!project) {
                 this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
                 continue;
@@ -767,9 +760,40 @@ export class CTestDriver implements vscode.Disposable {
 
         const run = testExplorer.createTestRun(request);
         this.ctestsEnqueued(tests, run);
+        await this.buildTests(tests, run);
         await this.debugCTestHelper(tests, run, cancellation);
         run.end();
     };
+
+    private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun) {
+        // Folder => status
+        const builtFolder = new Map<string, number>();
+        let status: number = 0;
+        for (const test of tests) {
+            const folder = test.parent ? test.parent.id : test.id;
+            if (!builtFolder.has(folder)) {
+                const project = await this.projectController?.getProjectForFolder(folder);
+                if (!project) {
+                    status = 1;
+                } else {
+                    try {
+                        const buildResult = await project.build(undefined, false, false);
+                        if (buildResult !== 0) {
+                            status = 2;
+                        }
+                    } catch(e) {
+                        status = 2;
+                    }
+                }
+            }
+            builtFolder.set(folder, status);
+            if (status === 1) {
+                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+            } else if (status === 2) {
+                this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
+            }
+        }
+    }
 
     /**
      * Initializes the VS Code Test Controller if it is not already initialized.
