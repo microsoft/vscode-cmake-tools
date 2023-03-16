@@ -199,7 +199,7 @@ export class VariantManager implements vscode.Disposable {
      * Create a new VariantManager
      * @param stateManager The state manager for this instance
      */
-    constructor(readonly workspaceFolder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader, private isMultiProject: boolean ) {
+    constructor(readonly workspaceFolder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader, private isMultiProject: boolean) {
         log.debug(localize('constructing', 'Constructing {0}', 'VariantManager'));
         if (!vscode.workspace.workspaceFolders) {
             return;  // Nothing we can do. We have no directory open
