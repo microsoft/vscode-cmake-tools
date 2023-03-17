@@ -20,23 +20,9 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('ctest');
 
-/**
- * Information about a CTest test
- */
-export interface CTest {
-    id: number;
-    name: string;
-}
-
 interface SiteAttributes {}
 
 type TestStatus = ('failed' | 'notrun' | 'passed');
-
-export interface FailingTestDecoration {
-    fileName: string;
-    lineNumber: number;
-    hoverMessage: string;
-}
 
 export interface TestMeasurement {
     type: string;
@@ -94,6 +80,27 @@ interface MessyResults {
             }[];
         }[];
     };
+}
+
+interface CTestInfo {
+    backtraceGraph: {
+        commands: string[];
+        files: string[];
+        nodes: {
+            file: number;
+            command?: number;
+            line?: number;
+            parent?: number;
+        }[];
+    };
+    kind: string; // ctestInfo
+    tests: {
+        backtrace: number;
+        command: string[];
+        name: string;
+        properties: { name: string; value: string }[];
+    }[];
+    version: { major: number; minor: number };
 }
 
 function parseXmlString<T>(xml: string): Promise<T> {
@@ -174,142 +181,6 @@ export async function readTestResultsFile(testXml: string): Promise<CTestResults
     }
 }
 
-export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
-    const untrimmedLines = output.split('\n');
-    const lines = untrimmedLines.map(l => l.trim());
-    const decorations: FailingTestDecoration[] = [];
-    for (let cursor = 0; cursor < lines.length; ++cursor) {
-        const line = lines[cursor];
-        const regex = process.platform === 'win32' ? /^(.*)\((\d+)\): FAILED:/ : /^(.*):(\d+): FAILED:/;
-        const result = regex.exec(line);
-        if (result) {
-            const [, file, arg2] = result;
-            const lineNumber = parseInt(arg2) - 1;
-            let message = '~~~c++\n';
-            for (let i = 0; cursor + i < untrimmedLines.length; ++i) {
-                const untrimmedLine = untrimmedLines[cursor + i];
-                if (untrimmedLine.startsWith('======') || untrimmedLine.startsWith('------')) {
-                    break;
-                }
-                message += untrimmedLine + '\n';
-            }
-
-            decorations.push({
-                fileName: file,
-                lineNumber: lineNumber,
-                hoverMessage: `${message}\n~~~`
-            });
-        }
-    }
-    return decorations;
-}
-
-export async function parseTestOutput(output: string): Promise<FailingTestDecoration[]> {
-    if (/is a Catch .* host application\./.test(output)) {
-        return parseCatchTestOutput(output);
-    } else {
-        return [];
-    }
-}
-
-export class DecorationManager {
-    constructor() {
-        vscode.window.onDidChangeActiveTextEditor(_ => this.refreshActiveEditorDecorations());
-    }
-
-    private readonly failingTestDecorationType = vscode.window.createTextEditorDecorationType({
-        borderColor: 'rgba(255, 0, 0, 0.2)',
-        borderWidth: '1px',
-        borderRadius: '3px',
-        borderStyle: 'solid',
-        cursor: 'pointer',
-        backgroundColor: 'rgba(255, 0, 0, 0.1)',
-        overviewRulerColor: 'red',
-        overviewRulerLane: vscode.OverviewRulerLane.Center,
-        after: {
-            contentText: 'Failed',
-            backgroundColor: 'darkred',
-            margin: '10px'
-        }
-    });
-
-    private _binaryDir: string = '';
-    get binaryDir(): string {
-        return this._binaryDir;
-    }
-    set binaryDir(v: string) {
-        this._binaryDir = v;
-        this.refreshActiveEditorDecorations();
-    }
-
-    private _showCoverageData: boolean = false;
-    get showCoverageData(): boolean {
-        return this._showCoverageData;
-    }
-    set showCoverageData(v: boolean) {
-        this._showCoverageData = v;
-        this.refreshAllEditorDecorations();
-    }
-
-    private refreshAllEditorDecorations() {
-        for (const editor of vscode.window.visibleTextEditors) {
-            this.refreshEditorDecorations(editor);
-        }
-    }
-
-    private refreshActiveEditorDecorations() {
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            // Seems that sometimes the activeTextEditor is undefined. A VSCode bug?
-            this.refreshEditorDecorations(editor);
-        }
-    }
-
-    private refreshEditorDecorations(editor: vscode.TextEditor) {
-        const fails: vscode.DecorationOptions[] = [];
-        const editorFile = util.lightNormalizePath(editor.document.fileName);
-        for (const decor of this.failingTestDecorations) {
-            const decoratedFile = util.lightNormalizePath(path.isAbsolute(decor.fileName) ? decor.fileName : path.join(this.binaryDir, decor.fileName));
-            if (editorFile !== decoratedFile) {
-                continue;
-            }
-            try {
-                const fileLine = editor.document.lineAt(decor.lineNumber);
-                const range = new vscode.Range(decor.lineNumber, fileLine.firstNonWhitespaceCharacterIndex, decor.lineNumber, fileLine.range.end.character);
-                fails.push({ hoverMessage: decor.hoverMessage, range });
-            } catch {
-            }
-        }
-        editor.setDecorations(this.failingTestDecorationType, fails);
-    }
-
-    private _failingTestDecorations: FailingTestDecoration[] = [];
-    clearFailingTestDecorations() {
-        this.failingTestDecorations = [];
-    }
-    addFailingTestDecoration(dec: FailingTestDecoration) {
-        this._failingTestDecorations.push(dec);
-        this.refreshActiveEditorDecorations();
-    }
-    get failingTestDecorations(): FailingTestDecoration[] {
-        return this._failingTestDecorations;
-    }
-    set failingTestDecorations(v: FailingTestDecoration[]) {
-        this._failingTestDecorations = v;
-        this.refreshAllEditorDecorations();
-    }
-
-    // XXX: Revive coverage decorations?
-    // private _coverageDecorations : CoverageDecoration[] = [];
-    // get coverageDecorations() : CoverageDecoration[] {
-    //   return this._coverageDecorations;
-    // }
-    // set coverageDecorations(v : CoverageDecoration[]) {
-    //   this._coverageDecorations = v;
-    //   this._refreshAllEditorDecorations();
-    // }
-}
-
 class CTestOutputLogger implements OutputConsumer {
     output(line: string) {
         log.info(line);
@@ -324,7 +195,6 @@ export class CTestDriver implements vscode.Disposable {
      * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
      */
     constructor(readonly ws: DirectoryContext, private readonly projectController?: ProjectController) {}
-    private readonly decorationManager = new DecorationManager();
 
     private _testingEnabled: boolean = false;
     get testingEnabled(): boolean {
@@ -346,16 +216,16 @@ export class CTestDriver implements vscode.Disposable {
     /**
      * Holds the most recent test informations
      */
-    private _tests: CTest[] = [];
-    get tests(): CTest[] {
+    private _tests: CTestInfo | undefined;
+    get tests(): CTestInfo | undefined {
         return this._tests;
     }
-    set tests(v: CTest[]) {
+    set tests(v: CTestInfo | undefined) {
         this._tests = v;
         this.testsChangedEmitter.fire(v);
     }
 
-    private readonly testsChangedEmitter = new vscode.EventEmitter<CTest[]>();
+    private readonly testsChangedEmitter = new vscode.EventEmitter<CTestInfo | undefined>();
     readonly onTestsChanged = this.testsChangedEmitter.event;
 
     private testItemCollectionToArray(collection: vscode.TestItemCollection): vscode.TestItem[] {
@@ -408,8 +278,6 @@ export class CTestDriver implements vscode.Disposable {
             log.info(localize('no.tests.found', 'No tests found'));
             return -1;
         } else {
-            this.decorationManager.failingTestDecorations = [];
-
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
@@ -426,8 +294,22 @@ export class CTestDriver implements vscode.Disposable {
                 this.ctestErrored(child, run, message);
             }
         } else {
+            if (test.uri && test.range) {
+                message.location = new vscode.Location(test.uri, test.range);
+            } else {
+                log.error(message);
+            }
             run.errored(test, message);
         }
+    }
+
+    private ctestFailed(test: vscode.TestItem, run: vscode.TestRun, message: vscode.TestMessage, duration?: number): void {
+        if (test.uri && test.range) {
+            message.location = new vscode.Location(test.uri, test.range);
+        } else {
+            log.info(message);
+        }
+        run.failed(test, message, duration);
     }
 
     private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
@@ -490,7 +372,11 @@ export class CTestDriver implements vscode.Disposable {
 
                 if (testResults) {
                     if (testResults.site.testing.test.length === 1) {
-                        run.appendOutput(testResults.site.testing.test[0].output);
+                        let output = testResults.site.testing.test[0].output;
+                        if (process.platform === 'win32') {
+                            output = output.replace(/\r?\n/g, '\r\n');
+                        }
+                        run.appendOutput(output);
 
                         const durationStr = testResults.site.testing.test[0].measurements.get("Execution Time")?.value;
                         const duration = durationStr ? parseFloat(durationStr) * 1000 : undefined;
@@ -498,19 +384,36 @@ export class CTestDriver implements vscode.Disposable {
                         if (testResults.site.testing.test[0].status === 'passed') {
                             run.passed(test, duration);
                         } else {
-                            run.failed(
-                                test,
-                                new vscode.TestMessage(localize('test.failed', 'Test failed with exit code {0}.', testResults.site.testing.test[0].measurements.get("Exit Value")?.value)),
-                                duration
-                            );
+                            const exitCode = testResults.site.testing.test[0].measurements.get("Exit Value")?.value;
+                            const completionStatus = testResults.site.testing.test[0].measurements.get("Completion Status")?.value;
+                            if (exitCode !== undefined) {
+                                this.ctestFailed(
+                                    test,
+                                    run,
+                                    new vscode.TestMessage(localize('test.failed.with.exit.code', 'Test failed with exit code {0}.', exitCode)),
+                                    duration
+                                );
+                            } else if (completionStatus !== undefined) {
+                                this.ctestErrored(
+                                    test,
+                                    run,
+                                    new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test failed with completion status "{0}".', completionStatus))
+                                );
+                            } else {
+                                this.ctestErrored(
+                                    test,
+                                    run,
+                                    new vscode.TestMessage(localize('test.failed', 'Test failed. Please check output for more information.'))
+                                );
+                            }
                             returnCode = -1;
                         }
                     } else {
-                        run.failed(test, new vscode.TestMessage(localize('expect.one.test.results', 'Expecting one test result.')));
+                        this.ctestFailed(test, run, new vscode.TestMessage(localize('expect.one.test.results', 'Expecting one test result.')));
                         returnCode = -1;
                     }
                 } else {
-                    run.failed(test, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
+                    this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
                     returnCode = -1;
                 }
             }
@@ -520,8 +423,6 @@ export class CTestDriver implements vscode.Disposable {
     };
 
     private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, testName?: string): Promise<CTestResults | undefined> {
-        this.decorationManager.clearFailingTestDecorations();
-
         if (testName) {
             // Override the existing -R arguments
             ctestArgs.push('-R', testName);
@@ -546,7 +447,7 @@ export class CTestDriver implements vscode.Disposable {
         if (resultsFile && await fs.exists(resultsFile)) {
             // TODO: Should we handle the case where resultsFiles doesn't exist?
             console.assert(tagDir);
-            return this.loadTestResults(resultsFile);
+            return readTestResultsFile(resultsFile);
         }
 
         return undefined;
@@ -577,7 +478,6 @@ export class CTestDriver implements vscode.Disposable {
             this.testingEnabled = false;
             return -1;
         }
-        this.decorationManager.binaryDir = driver.binaryDir;
         this.testingEnabled = true;
 
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
@@ -595,34 +495,26 @@ export class CTestDriver implements vscode.Disposable {
         } else {
             buildConfigArgs.push('-C', driver.currentBuildType);
         }
-        const result = await driver.executeCommand(ctestpath, ['-N', ...buildConfigArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
+        const result = await driver.executeCommand(ctestpath, ['--show-only=json-v1', ...buildConfigArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
         if (result.retc !== 0) {
             // There was an error running CTest. Odd...
             log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
             return result.retc || -3;
         }
-        this.tests = result.stdout?.split('\n')
-            .map(l => l.trim())
-            .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
-            .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
-            .map(([, id, tname]) => ({ id: parseInt(id!), name: tname! })) ?? [];
-
-        // Add tests to the test explorer
-        for (const test of this.tests) {
-            testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
-        }
+        this.tests = JSON.parse(result.stdout) ?? undefined;
+        if (this.tests && this.tests.kind === 'ctestInfo') {
+            this.tests.tests.forEach(test => {
+                const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
+                const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
+                const testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
+                if (testDefLine !== undefined) {
+                    testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                }
+                testExplorerRoot.children.add(testItem);
+            });
+        };
 
         return 0;
-    }
-
-    private async loadTestResults(testXml: string): Promise<CTestResults | undefined> {
-        const testResults = await readTestResultsFile(testXml);
-        const failing = testResults?.site.testing.test.filter(t => t.status === 'failed') || [];
-        this.decorationManager.clearFailingTestDecorations();
-        for (const t of failing) {
-            this.decorationManager.failingTestDecorations.push(...await parseTestOutput(t.output));
-        }
-        return testResults;
     }
 
     private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
