@@ -672,8 +672,12 @@ export class CTestDriver implements vscode.Disposable {
                 });
             }
             await terminated;
-            onDidStartDebugSession?.dispose();
-            onDidTerminateDebugSession?.dispose();
+            if (onDidStartDebugSession) {
+                onDidStartDebugSession.dispose();
+            }
+            if (onDidTerminateDebugSession) {
+                onDidTerminateDebugSession.dispose();
+            }
         }
     }
 
@@ -781,7 +785,7 @@ export class CTestDriver implements vscode.Disposable {
                         if (buildResult !== 0) {
                             status = 2;
                         }
-                    } catch(e) {
+                    } catch (e) {
                         status = 2;
                     }
                 }
