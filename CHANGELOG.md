@@ -1,6 +1,15 @@
 # What's New?
 
 ## 1.14
+Features:
+- Test Explorer. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+- Add commands revealTestExplorer, refreshTests, and refreshTestsAll. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+
+Breaking changes:
+- The `Run CTest` button in the status bar now only reveals the test explorer, and test results are removed from its text. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+- All test starting method, such as command `CMake: Run Tests` and test task, now runs through the test explorer. Tests can't run in parallel for now. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+- Catch test framework support is removed. [PR #3043](https://github.com/microsoft/vscode-cmake-tools/pull/3043)
+
 Improvements:
 - Automatically configure CMake project directories when the kit or the configuration preset is changed. [PR #2973](https://github.com/microsoft/vscode-cmake-tools/pull/2973) [@maxmitti](https://github.com/maxmitti)
 - Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
