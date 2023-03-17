@@ -375,6 +375,24 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.revealTestExplorer",
+        "title": "%cmake-tools.command.cmake.revealTestExplorer.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.refreshTests",
+        "title": "%cmake-tools.command.cmake.refreshTests.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.refreshTestsAll",
+        "title": "%cmake-tools.command.cmake.refreshTestsAll.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.editCache",
         "title": "%cmake-tools.command.cmake.editCache.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -675,6 +693,18 @@
         {
           "command": "cmake.ctestAll",
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.revealTestExplorer",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.refreshTests",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.refreshTestsAll",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
