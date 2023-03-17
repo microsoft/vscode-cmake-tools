@@ -1468,8 +1468,8 @@ export class CMakeProject {
         const skipConfigureIfCachePresent = this.workspaceContext.config.skipConfigureIfCachePresent;
         if (skipConfigureIfCachePresent && needsReconfigure && await fs.exists(drv.cachePath)) {
             log.info(localize(
-                'warn.skip.configure.when.cache.present',
-                'The extension determined that a configuration is needed at this moment but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. Make sure the CMake cache is in sync with the latest configuration changes.'));
+                'warn.skip.configure.if.cache.present',
+                'The extension determined that a configuration is needed at this moment but we are skipping because the setting cmake.skipConfigureIfCachePresent is ON. Make sure the CMake cache is in sync with the latest configuration changes.'));
             return false;
         }
 
@@ -2623,7 +2623,7 @@ export class CMakeProject {
     }
 
     async sendFileTypeTelemetry(uri: vscode.Uri): Promise<void> {
-        const filePath =  util.platformNormalizePath(uri.fsPath);
+        const filePath = util.platformNormalizePath(uri.fsPath);
         const sourceDirectory = util.platformNormalizePath(this.sourceDir);
         // "outside" evaluates whether the modified cmake file belongs to the project.
         let outside: boolean = true;
