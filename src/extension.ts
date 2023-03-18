@@ -168,6 +168,9 @@ export class ExtensionManager implements vscode.Disposable {
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         });
+        this.workspaceConfig.onChange('mingwSearchDirs', async _ => { // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
+            KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
+        });
         KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
 
         let isMultiProject = false;
@@ -807,7 +810,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
-     * Get the current MinGW search directories
+     * Get the current additional compiler search directories, like MinGW directories
      */
     private async getAdditionalCompilerDirs(): Promise<string[]> {
         const optsVars: KitContextVars = {

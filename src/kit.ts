@@ -408,7 +408,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             return null;
         }
         if (version.target && version.target.triple.includes('msvc') && clang_cl_res && isMingw(bin)) {
-            // Skip clang-cl.exe from mingw, as it won't work (correct access to MSCV environment is not granted).
+            // Skip clang-cl.exe from mingw, as it won't work (correct access to MSVC environment is not granted).
             // TODO: handle this case correctly at some point.
             return null;
         }

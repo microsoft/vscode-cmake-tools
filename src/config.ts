@@ -119,6 +119,7 @@ export interface ExtensionConfigurationSettings {
     configureEnvironment: Environment;
     buildEnvironment: Environment;
     testEnvironment: Environment;
+    mingwSearchDirs: string[]; // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
     additionalCompilerSearchDirs: string[];
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
@@ -397,6 +398,11 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     get additionalCompilerSearchDirs(): string[] {
+        // mingwSearchDirs is deprecated, but we still use it if additionalCompilerSearchDirs is not set for backwards compatibility
+        if (this.configData.additionalCompilerSearchDirs.length == 0 && this.configData.mingwSearchDirs.length > 0) {
+            log.warning(localize('please.upgrade.configuration', 'The setting {0} is replaced by {1}. Please upgrade your configuration.', '"mingwSearchDirs"', '"additionalCompilerSearchDirs"'));
+            return this.configData.mingwSearchDirs;
+        }
         return this.configData.additionalCompilerSearchDirs;
     }
     get additionalKits(): string[] {
@@ -483,6 +489,7 @@ export class ConfigurationReader implements vscode.Disposable {
         configureEnvironment: new vscode.EventEmitter<Environment>(),
         buildEnvironment: new vscode.EventEmitter<Environment>(),
         testEnvironment: new vscode.EventEmitter<Environment>(),
+        mingwSearchDirs: new vscode.EventEmitter<string[]>(), // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),

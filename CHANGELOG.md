@@ -9,6 +9,7 @@ Breaking changes:
 - The `Run CTest` button in the status bar now only reveals the test explorer, and test results are removed from its text. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
 - All test starting method, such as command `CMake: Run Tests` and test task, now runs through the test explorer. Tests can't run in parallel for now. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
 - Catch test framework support is removed. [PR #3043](https://github.com/microsoft/vscode-cmake-tools/pull/3043)
+- Rename `cmake.mingwSearchDirs` to `cmake.additionalCompilerSearchDirs`, make it more general and fix quirks with it. [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
 
 Improvements:
 - Automatically configure CMake project directories when the kit or the configuration preset is changed. [PR #2973](https://github.com/microsoft/vscode-cmake-tools/pull/2973) [@maxmitti](https://github.com/maxmitti)
@@ -17,6 +18,7 @@ Improvements:
 - When starting debugging, also build the selected build target. [PR #2987](https://github.com/microsoft/vscode-cmake-tools/pull/2987) [@Maddimax](https://github.com/Maddimax)
 - Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
 - Print the build time in the output window. [#3008](https://github.com/microsoft/vscode-cmake-tools/issues/3008)
+- Allow using all of MSYS2 MinGW installations, which are also now found by default while scanning for kits if MSYS2 is installed at the default location (`C:\msys64\{wingw64|mingw32|clang64|clang32|clangarm64|ucrt64}\bin`). [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
 
 Bug Fixes:
 - Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
@@ -25,6 +27,7 @@ Bug Fixes:
 - CMake tools not fully loaded when opening multi-project folders. [#3000](https://github.com/microsoft/vscode-cmake-tools/issues/3000)
 - Expand variables in task's targets while searching matching taks. [#2970](https://github.com/microsoft/vscode-cmake-tools/issues/2970) [@piomis](https://github.com/piomis)
 - Fix typo in `cmake.skipConfigureWhenCachePresent`. [#3040](https://github.com/microsoft/vscode-cmake-tools/issues/3040) [@Mlekow](https://github.com/Mlekow)
+- Fix MinGW detection when not in PATH using `cmake.mingwSearchDirs` (now named `cmake.additionalCompilerSearchDirs`). [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
 
 ## 1.13.45
 Bug Fixes:
