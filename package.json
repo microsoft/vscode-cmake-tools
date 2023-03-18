@@ -1105,34 +1105,42 @@
           "default": {},
           "additionalProperties": {
             "oneOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "boolean"
-                },
-                {
-                    "type": "number"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": [ "", "BOOL", "STRING", "FILEPATH", "PATH"]
-                        },
-                        "value": {
-                        }
-                    },
-                    "additionalProperties": false,
-                    "required": ["type", "value"]
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
                 }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "",
+                      "BOOL",
+                      "STRING",
+                      "FILEPATH",
+                      "PATH"
+                    ]
+                  },
+                  "value": {}
+                },
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "value"
+                ]
+              }
             ]
           },
           "description": "%cmake-tools.configuration.cmake.configureSettings.description%",
@@ -1523,6 +1531,17 @@
           },
           "default": [],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
+          "scope": "window",
+          "markdownDeprecationMessage": "**Deprecated**: Please use `#cmake.additionalCompilerSearchDirs#` instead."
+        },
+        "cmake.additionalCompilerSearchDirs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.additionalCompilerSearchDirs.description%",
           "scope": "window"
         },
         "cmake.emscriptenSearchDirs": {

@@ -89,7 +89,7 @@ Use forward slashes (`/`) for paths in `CMakePresets.json` and `CMakeUserPresets
 
 ### Add new Configure Presets
 
-To add a new Configure Preset to `CMakePresets.json`, run the **CMake: Add Configure Preset** command. This command lists several Configure Preset templates, along with a **[Scan for Compilers]** option in the command palette. **[Scan for Compilers]** returns all of the GCC and Clang compilers on your `PATH`, all compilers found in `cmake.mingwSearchDir` and `cmake.emscriptenSearchDirs`, and the latest instances of `cl.exe` installed with Visual Studio.
+To add a new Configure Preset to `CMakePresets.json`, run the **CMake: Add Configure Preset** command. This command lists several Configure Preset templates, along with a **[Scan for Compilers]** option in the command palette. **[Scan for Compilers]** returns all of the GCC and Clang compilers on your `PATH`, all compilers found in `cmake.additionalCompilerSearchDirs` and `cmake.emscriptenSearchDirs`, and the latest instances of `cl.exe` installed with Visual Studio.
 
 ![Screenshot of the list of configure presets.](images/add-configure-preset-vscode.png)
 

@@ -165,6 +165,13 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
+        this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
+            KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
+        });
+        this.workspaceConfig.onChange('mingwSearchDirs', async _ => { // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
+            KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
+        });
+        KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
 
         let isMultiProject = false;
         if (vscode.workspace.workspaceFolders) {
@@ -781,7 +788,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     async scanForKits() {
-        KitsController.minGWSearchDirs = await this.getMinGWDirs();
+        KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length < 1) {
             return;
         }
@@ -803,9 +810,9 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
-     * Get the current MinGW search directories
+     * Get the current additional compiler search directories, like MinGW directories
      */
-    private async getMinGWDirs(): Promise<string[]> {
+    private async getAdditionalCompilerDirs(): Promise<string[]> {
         const optsVars: KitContextVars = {
             userHome: paths.userHome,
 
@@ -831,7 +838,7 @@ export class ExtensionManager implements vscode.Disposable {
             sourceDir: ""
         };
         const result = new Set<string>();
-        for (const dir of this.workspaceConfig.mingwSearchDirs) {
+        for (const dir of this.workspaceConfig.additionalCompilerSearchDirs) {
             const expandedDir: string = util.lightNormalizePath(await expandString(dir, { vars: optsVars }));
             result.add(expandedDir);
         }

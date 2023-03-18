@@ -17,7 +17,33 @@ interface VSCMakePaths {
     ninja?: string;
 }
 
+class WindowsDefaultCompilerPaths {
+    constructor(private readonly _env: WindowsEnvironment) {
+        this._env = _env;
+    }
+
+    get LLVM(): string[] {
+        return [
+            this._env.ProgramFiles! + "\\LLVM\\bin",
+            this._env.ProgramFilesX86! + "\\LLVM\\bin"
+        ];
+    }
+
+    get MSYS2(): string[] {
+        return [
+            paths.windows.SystemDrive! + '\\msys64\\mingw32\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\mingw64\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\clang32\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\clang64\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\clangarm64\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\ucrt64\\bin'
+        ];
+    }
+}
+
 class WindowsEnvironment {
+    readonly defaultCompilerPaths: WindowsDefaultCompilerPaths = new WindowsDefaultCompilerPaths(this);
+
     get AppData(): string | undefined {
         if (util.isTestMode()) {
             return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');

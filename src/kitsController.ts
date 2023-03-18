@@ -37,7 +37,7 @@ export enum KitsReadMode {
 
 // TODO: migrate all kit related things in extension.ts to this class.
 export class KitsController {
-    static minGWSearchDirs: string[] | undefined;
+    static additionalCompilerSearchDirs: string[] | undefined;
     /**
      * The kits available from the user-local kits file
      */
@@ -215,11 +215,7 @@ export class KitsController {
         // We don't have any kits defined. Scan for kits
         if (!KitsController.checkingHaveKits) {
             KitsController.checkingHaveKits = true;
-            if (!KitsController.minGWSearchDirs) {
-                await KitsController.scanForKits(await this.project.getCMakePathofProject());
-            } else {
-                await vscode.commands.executeCommand('cmake.scanForKits');
-            }
+            await KitsController.scanForKits(await this.project.getCMakePathofProject());
             KitsController.checkingHaveKits = false;
             return true;
         } else {
@@ -495,7 +491,7 @@ export class KitsController {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
 
         // Do the scan:
-        const discovered_kits = await scanForKits(cmakePath, { minGWSearchDirs: KitsController.minGWSearchDirs });
+        const discovered_kits = await scanForKits(cmakePath, { scanDirs: KitsController.additionalCompilerSearchDirs });
 
         // The list with the new definition user kits starts with the non VS ones,
         // which do not have any variations in the way they can be defined.
