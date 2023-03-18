@@ -399,7 +399,7 @@ export class ConfigurationReader implements vscode.Disposable {
 
     get additionalCompilerSearchDirs(): string[] {
         // mingwSearchDirs is deprecated, but we still use it if additionalCompilerSearchDirs is not set for backwards compatibility
-        if (this.configData.additionalCompilerSearchDirs.length == 0 && this.configData.mingwSearchDirs.length > 0) {
+        if (this.configData.additionalCompilerSearchDirs.length === 0 && this.configData.mingwSearchDirs.length > 0) {
             log.warning(localize('please.upgrade.configuration', 'The setting {0} is replaced by {1}. Please upgrade your configuration.', '"mingwSearchDirs"', '"additionalCompilerSearchDirs"'));
             return this.configData.mingwSearchDirs;
         }
