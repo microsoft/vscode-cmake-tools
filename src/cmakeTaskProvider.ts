@@ -14,6 +14,7 @@ import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
+import * as expand from '@cmt/expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -186,18 +187,30 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         return task;
     }
 
-    public static async findBuildTask(presetName?: string, targets?: string[]): Promise<CMakeTask | undefined> {
+    public static async findBuildTask(presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
         // Fetch all CMake task from `tasks.json` files.
         const allTasks: vscode.Task[] = await vscode.tasks.fetchTasks({ type: CMakeTaskProvider.CMakeScriptType });
-        const tasks: (CMakeTask | undefined)[] = allTasks.map((task: any) => {
+
+        const tasks: (CMakeTask | undefined)[] = await Promise.all(allTasks.map(async (task: any) => {
             if (!task.definition.label || !task.group || (task.group && task.group.id !== vscode.TaskGroup.Build.id)) {
                 return undefined;
             }
+
+            let taskTargets: string[];
+            if (expansionOptions) {
+                taskTargets = await expand.expandStrings(task.definition.targets, expansionOptions);
+                if (task.definition.options?.cwd) {
+                    task.definition.options.cwd = await expand.expandString(task.definition.options.cwd, expansionOptions);
+                }
+            } else {
+                taskTargets = task.definition.targets;
+            }
+
             const definition: CMakeTaskDefinition = {
                 type: task.definition.type,
                 label: task.definition.label,
                 command: task.definition.command,
-                targets: task.definition.targets || targets,
+                targets: taskTargets || targets,
                 preset: task.definition.preset,
                 options: task.definition.options
             };
@@ -208,7 +221,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 buildTask.isDefault = true;
             }
             return buildTask;
-        });
+        }));
 
         const buildTasks: CMakeTask[] = tasks.filter((task) => task !== undefined) as CMakeTask[];
 
@@ -237,13 +250,15 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             } else {
                 // Search for the matching default task.
                 const defaultTask: CMakeTask[] = matchingTargetTasks.filter(task => task.isDefault);
-                if (defaultTask.length === 1) {
+                if (defaultTask.length >= 1) {
                     return defaultTask[0];
                 } else {
-                    // Search for the matching existing task.
-                    const existingTask: CMakeTask[] = matchingTargetTasks.filter(task => !task.isTemplate);
-                    if (existingTask.length === 1) {
-                        return existingTask[0];
+                    // If there is no default task, matchingTargetTasks is a mixture of template and defined tasks.
+                    // If there is only one task, that task is a template, so return the template.
+                    // If there are only two tasks, the first one is always a template, and the second one is the defined task that we are searching for.
+                    // But if there are more than two tasks, it means that there are multiple defiend tasks and none are set as default. So ask the user to choose one later.
+                    if (matchingTargetTasks.length === 1 || matchingTargetTasks.length === 2) {
+                        return matchingTargetTasks[matchingTargetTasks.length - 1];
                     }
                 }
             }
@@ -518,13 +533,13 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                     return;
                 }
             }
-            const result: number | null | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
-            if (result === undefined || result === null) {
+            const result: number | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
+            if (result === undefined) {
                 this.writeEmitter.fire(localize('ctest.run.terminated', 'CTest run was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
             } else {
-                this.writeEmitter.fire(localize('ctest.finished.with.code', 'CTest finished with return code {0}', result) + endOfLine);
-                this.closeEmitter.fire(result);
+                this.writeEmitter.fire(localize('ctest.finished', 'CTest finished') + endOfLine);
+                this.closeEmitter.fire(0);
             }
         }  else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));

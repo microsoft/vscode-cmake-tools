@@ -457,6 +457,24 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.revealTestExplorer",
+        "title": "%cmake-tools.command.cmake.revealTestExplorer.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.refreshTests",
+        "title": "%cmake-tools.command.cmake.refreshTests.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.refreshTestsAll",
+        "title": "%cmake-tools.command.cmake.refreshTestsAll.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.editCache",
         "title": "%cmake-tools.command.cmake.editCache.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -791,6 +809,18 @@
         {
           "command": "cmake.ctestAll",
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.revealTestExplorer",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.refreshTests",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.refreshTestsAll",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -1351,34 +1381,42 @@
           "default": {},
           "additionalProperties": {
             "oneOf": [
-                {
-                    "type": "string"
-                },
-                {
-                    "type": "boolean"
-                },
-                {
-                    "type": "number"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": [ "", "BOOL", "STRING", "FILEPATH", "PATH"]
-                        },
-                        "value": {
-                        }
-                    },
-                    "additionalProperties": false,
-                    "required": ["type", "value"]
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
                 }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "",
+                      "BOOL",
+                      "STRING",
+                      "FILEPATH",
+                      "PATH"
+                    ]
+                  },
+                  "value": {}
+                },
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "value"
+                ]
+              }
             ]
           },
           "description": "%cmake-tools.configuration.cmake.configureSettings.description%",
@@ -1769,6 +1807,17 @@
           },
           "default": [],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
+          "scope": "window",
+          "markdownDeprecationMessage": "**Deprecated**: Please use `#cmake.additionalCompilerSearchDirs#` instead."
+        },
+        "cmake.additionalCompilerSearchDirs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.additionalCompilerSearchDirs.description%",
           "scope": "window"
         },
         "cmake.emscriptenSearchDirs": {
@@ -2404,7 +2453,7 @@
     "vsce": "^2.7.0",
     "vscode-cmake-tools": "^1.0.0",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^5.38.1",
+    "webpack": "^5.76.0",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {

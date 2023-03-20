@@ -132,6 +132,12 @@ export class ExtensionManager implements vscode.Disposable {
             }
         });
 
+        this.projectController.onBeforeRemoveFolder(async projects => {
+            for (const project of projects) {
+                project.removeTestExplorerRoot(project.folderPath);
+            }
+        });
+
         this.projectController.onAfterRemoveFolder(async folder => {
             console.assert((vscode.workspace.workspaceFolders === undefined && this.projectController.numOfWorkspaceFolders === 0) ||
                 (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this.projectController.numOfWorkspaceFolders));
@@ -159,6 +165,13 @@ export class ExtensionManager implements vscode.Disposable {
                 telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
             }
         });
+        this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
+            KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
+        });
+        this.workspaceConfig.onChange('mingwSearchDirs', async _ => { // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
+            KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
+        });
+        KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
 
         let isMultiProject = false;
         if (vscode.workspace.workspaceFolders) {
@@ -378,7 +391,8 @@ export class ExtensionManager implements vscode.Disposable {
         if (!project) {
             return;
         }
-        const rootFolder: vscode.WorkspaceFolder = project?.workspaceFolder;
+        const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
+        project.addTestExplorerRoot(project.folderPath);
         // Scan for kits even under presets mode, so we can create presets from compilers.
         // Silent re-scan when detecting a breaking change in the kits definition.
         // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
@@ -704,7 +718,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     async scanForKits() {
-        KitsController.minGWSearchDirs = await this.getMinGWDirs();
+        KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length < 1) {
             return;
         }
@@ -726,9 +740,9 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
-     * Get the current MinGW search directories
+     * Get the current additional compiler search directories, like MinGW directories
      */
-    private async getMinGWDirs(): Promise<string[]> {
+    private async getAdditionalCompilerDirs(): Promise<string[]> {
         const optsVars: KitContextVars = {
             userHome: paths.userHome,
 
@@ -754,7 +768,7 @@ export class ExtensionManager implements vscode.Disposable {
             sourceDir: ""
         };
         const result = new Set<string>();
-        for (const dir of this.workspaceConfig.mingwSearchDirs) {
+        for (const dir of this.workspaceConfig.additionalCompilerSearchDirs) {
             const expandedDir: string = util.lightNormalizePath(await expandString(dir, { vars: optsVars }));
             result.add(expandedDir);
         }
@@ -1148,6 +1162,18 @@ export class ExtensionManager implements vscode.Disposable {
     ctestAll() {
         telemetry.logEvent("runTests", { all: "true"});
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.ctest(), this.ensureActiveTestPreset);
+    }
+
+    revealTestExplorer(folder?: vscode.WorkspaceFolder) {
+        return this.runCMakeCommand(cmakeProject => cmakeProject.revealTestExplorer(), folder, this.ensureActiveTestPreset);
+    }
+
+    refreshTests(folder?: vscode.WorkspaceFolder) {
+        return this.runCMakeCommand(cmakeProject => cmakeProject.refreshTests(), folder);
+    }
+
+    refreshTestsAll() {
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.refreshTests());
     }
 
     stop(folder?: vscode.WorkspaceFolder) {
@@ -1558,6 +1584,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'editCacheUI',
         'ctest',
         'ctestAll',
+        'revealTestExplorer',
+        'refreshTests',
+        'refreshTestsAll',
         'stop',
         'stopAll',
         'quickStart',

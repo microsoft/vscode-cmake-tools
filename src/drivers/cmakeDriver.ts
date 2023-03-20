@@ -187,7 +187,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         readonly config: ConfigurationReader,
         protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
         private readonly isMultiProject: boolean,
-        private readonly __workspaceFolder: string | null,
+        private readonly __workspaceFolder: string,
         readonly preconditionHandler: CMakePreconditionProblemSolver) {
         this.sourceDir = this.sourceDirUnexpanded;
         // We have a cache of file-compilation terminals. Wipe them out when the
@@ -209,7 +209,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @note This is distinct from the config values, since we do variable
      * substitution.
      */
-    protected sourceDir = '';
+    protected __sourceDir = '';
+
+    get sourceDir(): string {
+        return this.__sourceDir;
+    }
+
+    protected set sourceDir(value: string) {
+        this.__sourceDir = value;
+    }
 
     /**
      * Dispose the driver. This disposes some things synchronously, but also
@@ -333,7 +341,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
      * `file://` scheme.
      */
-    protected get workspaceFolder() {
+    get workspaceFolder() {
         return this.__workspaceFolder;
     }
 
@@ -1763,7 +1771,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
             if (useBuildTask) {
-                const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this._buildPreset?.name, targets);
+                const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this._buildPreset?.name, targets, this.expansionOptions);
                 if (task) {
                     const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
                     if (resolvedTask) {
