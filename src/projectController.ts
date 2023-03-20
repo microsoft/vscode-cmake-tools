@@ -174,10 +174,11 @@ export class ProjectController implements vscode.Disposable {
     }
 
     async getProjectForFolder(folder: string): Promise<CMakeProject | undefined> {
-        const sourceDir = await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder));
+        const sourceDir = util.platformNormalizePath(await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder)));
         const allCMakeProjects: CMakeProject[] = this.getAllCMakeProjects();
         for (const project of allCMakeProjects) {
-            if (project.sourceDir === sourceDir || project.workspaceFolder.uri.fsPath === sourceDir) {
+            if (util.platformNormalizePath(project.sourceDir) === sourceDir ||
+                    util.platformNormalizePath(project.workspaceFolder.uri.fsPath) === sourceDir) {
                 return project;
             }
         }
@@ -206,13 +207,14 @@ export class ProjectController implements vscode.Disposable {
     /**
      * Load a new CMakeProject for the given workspace folder and remember it.
      * @param folder The workspace folder to load for
+     * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
      */
-    public static async createCMakeProjectsForWorkspaceFolder(workspaceContext: DirectoryContext): Promise<CMakeProject[]> {
+    public static async createCMakeProjectsForWorkspaceFolder(workspaceContext: DirectoryContext, projectController?: ProjectController): Promise<CMakeProject[]> {
         const sourceDirectories: string[] = workspaceContext.config.sourceDirectory;
         const isMultiProjectFolder: boolean = (sourceDirectories.length > 1);
         const projects: CMakeProject[] = [];
         for (const source of sourceDirectories) {
-            projects.push(await CMakeProject.create(workspaceContext, source, isMultiProjectFolder));
+            projects.push(await CMakeProject.create(workspaceContext, source, projectController, isMultiProjectFolder));
         }
         await ProjectController.checkBuildDirectories(workspaceContext.config, workspaceContext.folder);
         return projects;
@@ -272,7 +274,7 @@ export class ProjectController implements vscode.Disposable {
         } else {
             // Load for the workspace.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
-            projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext);
+            projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext, this);
             this.folderToProjectsMap.set(folder.uri.fsPath, projects);
             const config: ConfigurationReader | undefined = workspaceContext.config;
             if (config) {
@@ -355,7 +357,7 @@ export class ProjectController implements vscode.Disposable {
             // Add projects.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
             for (let i = 0; i < sourceDirectories.length; i++) {
-                const cmakeProject: CMakeProject = await CMakeProject.create(workspaceContext, sourceDirectories[i], sourceDirectories.length > 1);
+                const cmakeProject: CMakeProject = await CMakeProject.create(workspaceContext, sourceDirectories[i], this, sourceDirectories.length > 1);
                 if (activeProjectPath === cmakeProject.sourceDir) {
                     this.setActiveProject(cmakeProject);
                     activeProjectPath = undefined;

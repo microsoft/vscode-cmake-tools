@@ -533,13 +533,13 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                     return;
                 }
             }
-            const result: number | null | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
-            if (result === undefined || result === null) {
+            const result: number | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
+            if (result === undefined) {
                 this.writeEmitter.fire(localize('ctest.run.terminated', 'CTest run was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
             } else {
-                this.writeEmitter.fire(localize('ctest.finished.with.code', 'CTest finished with return code {0}', result) + endOfLine);
-                this.closeEmitter.fire(result);
+                this.writeEmitter.fire(localize('ctest.finished', 'CTest finished') + endOfLine);
+                this.closeEmitter.fire(0);
             }
         }  else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));

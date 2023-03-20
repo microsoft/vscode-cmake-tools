@@ -207,7 +207,12 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     if (install_dir_mat && vendor === 'Clang') {
         installedDir = install_dir_mat[1];
     }
-    const detectedName = `${vendor} ${version} ${target.triple}`;
+    let detectedName = `${vendor} ${version} ${target.triple}`;
+    if (isMsys(binPath)) {
+        // Add the MSYS environment to the name, so that we can distinguish between different MSYS environments
+        const msysEnvDirName = path.dirname(path.dirname(binPath));
+        detectedName += ` (${path.basename(msysEnvDirName)})`;
+    }
     log.debug(localize('detected.compiler', 'Detected {0} compiler: {1}', vendor, binPath));
     return {
         vendor,
@@ -278,6 +283,52 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
     }
 }
 
+function isMsys(bin: string): boolean {
+    const isWin32 = process.platform === 'win32';
+    const isMsys = isWin32 && bin.toLowerCase().includes('msys');
+    return isMsys;
+}
+
+function isMingw(bin: string): boolean {
+    const isWin32 = process.platform === 'win32';
+    const isMingw = isWin32 && (
+        bin.toLowerCase().includes('mingw') ||
+        isMsys(bin)
+    );
+    return isMingw;
+}
+
+async function asMingwKit(bin: string, kit: Kit): Promise<Kit> {
+    const binParentPath = path.dirname(bin);
+    const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
+    const mingwMakeExists = await fs.exists(mingwMakePath);
+
+    // During a scan, binParentPath must be a directory already in the PATH.
+    // Therefore, we will assume that MinGW will remain in the user's PATH
+    // and do not need to record the current state of PATH (leave it to the
+    // user to rescan later or specify an explicit path to MinGW if this
+    // changes).  Additionally, caching the current state of PATH can cause
+    // complications on later invocation when using the kit environment
+    // because its PATH will take precedence.  If a user makes changes to
+    // their PATH later without rescanning for kits, then the kit's cached
+    // PATH will clobber the actual current PATH.  We will, however, record
+    // the MinGW path in case we want to use it later.
+    const ENV_PATH = `${binParentPath}`;
+    kit.environmentVariables = { CMT_MINGW_PATH: ENV_PATH };
+
+    if (mingwMakeExists) {
+        // Check for working mingw32-make
+        const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH }, timeout: 30000 }).result;
+        if (execMake.retc !== 0) {
+            log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ({0} returns non-zero): {1}', "\"-v\"", bin));
+        } else {
+            kit.preferredGenerator = { name: 'MinGW Makefiles' };
+        }
+    }
+
+    return kit;
+}
+
 /**
  * Convert a binary (by path) to a CompilerKit. This checks if the named binary
  * is a GCC or Clang compiler and gets its version. If it is not a compiler,
@@ -294,6 +345,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     const gcc_res = gcc_regex.exec(fname);
     const clang_res = clang_regex.exec(fname);
     const clang_cl_res = clang_cl_regex.exec(fname);
+
     if (gcc_res) {
         const version = await getCompilerVersion('GCC', bin, pr);
         if (version === null) {
@@ -336,45 +388,11 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             compilers: gccCompilers
         };
 
-        const isWin32 = process.platform === 'win32';
-        if (isWin32 && bin.toLowerCase().includes('mingw')) {
-            const binParentPath = path.dirname(bin);
-            const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
-            if (await fs.exists(mingwMakePath)) {
-                // During a scan, binParentPath must be a directory already in the PATH.
-                // Therefore, we will assume that MinGW will remain in the user's PATH
-                // and do not need to record the current state of PATH (leave it to the
-                // user to rescan later or specify an explicit path to MinGW if this
-                // changes).  Additionally, caching the current state of PATH can cause
-                // complications on later invocation when using the kit environment
-                // because its PATH will take precedence.  If a user makes changes to
-                // their PATH later without rescanning for kits, then the kit's cached
-                // PATH will clobber the actual current PATH.  We will, however, record
-                // the MinGW path in case we want to use it later.
-                const ENV_PATH = `${binParentPath}`;
-                // Check for working mingw32-make
-                const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH }, timeout: 30000 }).result;
-                if (execMake.retc !== 0) {
-                    log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ({0} returns non-zero): {1}', "\"-v\"", bin));
-                } else {
-                    let make_version_output = execMake.stdout;
-                    if (make_version_output.length === 0) {
-                        make_version_output = execMake.stderr;
-                    }
-                    const output_line_sep = make_version_output.trim().split('\n');
-                    const isMake = output_line_sep[0].includes('Make');
-                    const isMingwTool = output_line_sep[1].includes('mingw32');
-
-                    if (isMake && isMingwTool) {
-                        gccKit.preferredGenerator = { name: 'MinGW Makefiles' };
-                        // save the ENV_PATH as a benign name unlikely to already exist in
-                        // the user's environment, like CMT_MINGW_PATH
-                        gccKit.environmentVariables = { CMT_MINGW_PATH: ENV_PATH };
-                    }
-                }
-            }
+        if (isMingw(bin)) {
+            return asMingwKit(bin, gccKit);
+        } else {
+            return gccKit;
         }
-        return gccKit;
 
     } else if (clang_res || clang_cl_res) {
         const version = await getCompilerVersion('Clang', bin, pr);
@@ -387,6 +405,11 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             // Skip MSVC ABI compatible Clang installations (bundled within VS), which will be handled in 'scanForClangForMSVCKits()' later.
             // But still process any Clang installations outside VS (right in Program Files for example), even if their version
             // mentions msvc.
+            return null;
+        }
+        if (version.target && version.target.triple.includes('msvc') && clang_cl_res && isMingw(bin)) {
+            // Skip clang-cl.exe from mingw, as it won't work (correct access to MSVC environment is not granted).
+            // TODO: handle this case correctly at some point.
             return null;
         }
 
@@ -423,10 +446,16 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
                 clangCompilers.CXX = clangxx_bin2;
             }
         }
-        return {
+        const clangKit: Kit = {
             name: clang_cl_res ? version.detectedName.replace(/^Clang/, 'Clang-cl') : version.detectedName,
             compilers: clangCompilers
         };
+
+        if (isMingw(bin)) {
+            return asMingwKit(bin, clangKit);
+        } else {
+            return clangKit;
+        }
     } else {
         return null;
     }
@@ -945,7 +974,10 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
                 path_list.push(mingwPath);
             }
             if (env.hasOwnProperty('PATH')) {
-                path_list.unshift(env['PATH'] ?? '');
+                // Remove other mingw from PATH as it will cause conflict
+                const current_path_list = (env['PATH']?.split(';') ?? []);
+                const current_path_list_without_mingw = current_path_list.filter(p => !isMingw(p));
+                path_list.unshift(current_path_list_without_mingw.join(';'));
                 env['PATH'] = path_list.join(';');
             }
         }
@@ -982,7 +1014,6 @@ export async function findCLCompilerPath(env?: Environment): Promise<string | nu
 export interface KitScanOptions {
     ignorePath?: boolean;
     scanDirs?: string[];
-    minGWSearchDirs?: string[];
 }
 
 /**
@@ -990,8 +1021,6 @@ export interface KitScanOptions {
  * @returns A list of Kits.
  */
 export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
-    const kit_options = opt || {};
-
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
     const prog = {
         location: vscode.ProgressLocation.Notification,
@@ -1025,15 +1054,11 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
 
         // Search them all in parallel
         let kit_promises = [] as Promise<Kit[]>[];
-        if (isWin32 && kit_options.minGWSearchDirs) {
-            for (const dir of kit_options.minGWSearchDirs) {
-                scan_paths.add(dir);
-            }
-        }
 
         // Default installation locations
-        scan_paths.add(paths.windows.ProgramFilesX86! + '\\LLVM\\bin');
-        scan_paths.add(paths.windows.ProgramFiles! + '\\LLVM\\bin');
+        paths.windows.defaultCompilerPaths.LLVM.forEach(scan_paths.add, scan_paths);
+        paths.windows.defaultCompilerPaths.MSYS2.forEach(scan_paths.add, scan_paths);
+
         const compiler_kits = Array.from(scan_paths).map(path_el => scanDirForCompilerKits(path_el, pr));
         kit_promises = kit_promises.concat(compiler_kits);
 
@@ -1046,10 +1071,6 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
                 const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
                 clang_paths.add(llvm_root);
             }
-
-            // Default installation locations
-            clang_paths.add(paths.windows.ProgramFiles! + '\\LLVM\\bin');
-            clang_paths.add(paths.windows.ProgramFilesX86! + '\\LLVM\\bin');
 
             // PATH environment variable locations
             scan_paths.forEach(path_el => clang_paths.add(path_el));

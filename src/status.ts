@@ -1,5 +1,4 @@
 import { ConfigurationReader, StatusBarButtonVisibility as ButtonVisibility } from '@cmt/config';
-import { BasicTestResults } from '@cmt/ctest';
 import { SpecialKits } from '@cmt/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -378,35 +377,20 @@ class CTestButton extends Button {
     settingsName = 'ctest';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
         super(config, priority);
-        this.command = 'cmake.ctest';
+        this.command = 'cmake.revealTestExplorer';
         this.tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
     }
 
     private _enabled: boolean = false;
-    private _results: BasicTestResults | null = null;
     private _color: string = '';
 
     set enabled(v: boolean) {
         this._enabled = v;
         this.update();
     }
-    set results(v: BasicTestResults | null) {
-        this._results = v;
-        if (!v) {
-            this._color = '';
-        } else {
-            this._color = v.passing === v.total ? 'lightgreen' : 'yellow';
-        }
-        this.update();
-    }
 
     update(): void {
-        if (this._results) {
-            const { passing, total } = this._results;
-            this.icon = passing === total ? 'check' : 'x';
-        } else {
-            this.icon = 'beaker';
-        }
+        this.icon = 'beaker';
         if (this.config.statusbar.advanced?.ctest?.color === true) {
             this.button.color = this._color;
         } else {
@@ -420,32 +404,18 @@ class CTestButton extends Button {
     }
 
     protected getTextNormal(): string {
-        if (!this._results) {
-            this.button.color = '';
-            return localize('run.ctest', 'Run CTest');
-        }
-        const { passing, total } = this._results;
-        if (total === 1) {
-            return localize('test.passing', '{0}/{1} test passing', passing, total);
-        }
-        return localize('tests.passing', '{0}/{1} tests passing', passing, total);
+        this.button.color = '';
+        return localize('run.ctest', 'Run CTest');
     }
 
     protected getTextShort(): string {
-        if (!this._results) {
-            return '';
-        }
-        const { passing, total } = this._results;
-        return `${passing}/${total}`;
+        return '';
     }
 
     protected getTooltipShort(): string | null {
         return this.prependCMake(this.getTooltipNormal());
     }
     protected getTooltipIcon() {
-        if (!!this._results) {
-            return this.prependCMake(`${this.getTextNormal()}\n${this.getTooltipNormal()}`);
-        }
         return this.getTooltipShort();
     }
 }
@@ -702,9 +672,6 @@ export class StatusBar implements vscode.Disposable {
     }
     setCTestEnabled(v: boolean): void {
         this._testButton.enabled = v;
-    }
-    setTestResults(v: BasicTestResults | null): void {
-        this._testButton.results = v;
     }
     setIsBusy(v: boolean): void {
         this._buildButton.isBusy = v;
