@@ -1133,11 +1133,14 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
 
     const untrustedKits = result.filter(kit => !kit.isTrusted);
     if (untrustedKits.length > 0) {
-        void vscode.window.showWarningMessage<{ action: 'trust' | 'ignore'; title: string }>(
-            localize('untrusted.kits.found', 'Kits were found in untrusted paths: {0}. Add these paths to "cmake.additionalCompilerSearchDirs" to trust them.', Array.from(untrusted_paths).toString()),
-            { action: 'trust', title: localize('trust', 'Trust') },
-            { action: 'ignore', title: localize('ignore', 'Ignore') }).then(async action => {
-            if (action?.action === 'trust') {
+        void vscode.window.showWarningMessage<{ action: 'yes' | 'no'; title: string }>(
+            localize(
+                'untrusted.kits.found',
+                'Compiler kits may be present in these directories: {0}. Would you like to scan and execute potential compilers in these directories by adding them to "cmake.additionalCompilerSearchDirs"?',
+                Array.from(untrusted_paths).toString()),
+            { action: 'yes', title: localize('yes', 'Yes') },
+            { action: 'no', title: localize('no', 'No') }).then(async action => {
+            if (action?.action === 'yes') {
                 const settings = vscode.workspace.getConfiguration('cmake');
                 const additionalCompilerSearchDirs = settings.get<string[]>('additionalCompilerSearchDirs', []);
                 additionalCompilerSearchDirs.push(...Array.from(untrusted_paths));
