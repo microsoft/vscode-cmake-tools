@@ -117,9 +117,9 @@ export class KitsController {
         // Special kits - include order is important
         KitsController.specialKits = [
             // Spcial __scanforkits__ kit used for invoking the "Scan for kits"
-            { name: SpecialKits.ScanForKits },
+            { name: SpecialKits.ScanForKits, isTrusted: true },
             // Special __unspec__ kit for opting-out of kits
-            { name: SpecialKits.Unspecified }
+            { name: SpecialKits.Unspecified, isTrusted: true }
         ];
 
         // Load user-kits
