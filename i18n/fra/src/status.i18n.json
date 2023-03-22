@@ -17,8 +17,6 @@
 	"launch.tooltip": "Lancer la cible sélectionnée dans la fenêtre de terminal",
 	"run.ctest.tests.tooltip": "Exécuter les tests CTest",
 	"run.ctest": "Exécuter CTest",
-	"test.passing": "Réussite du test : {0}/{1}",
-	"tests.passing": "Réussite des tests : {0}/{1}",
 	"build.tooltip": "Générer la cible sélectionnée",
 	"build": "Version",
 	"stop": "Arrêter",

@@ -36,6 +36,6 @@
 	"test.preset.not.found": "Test ön ayarı bulunamadı.",
 	"ctest.failed": "Test ön ayarı {0} bulunamadı. Test başarısız oldu.",
 	"ctest.run.terminated": "CTest çalıştırması sonlandırıldı",
-	"ctest.finished.with.code": "CTest, {0} dönüş koduyla tamamlandı",
+	"ctest.finished": "CTest tamamlandı",
 	"test.failed": "CTest çalıştırması başarısız oldu."
 }

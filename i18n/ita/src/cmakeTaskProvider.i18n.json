@@ -36,6 +36,6 @@
 	"test.preset.not.found": "Set di impostazioni di test non trovato.",
 	"ctest.failed": "Impossibile trovare il set di impostazioni di test {0}. Test non riuscito.",
 	"ctest.run.terminated": "L'esecuzione di CTest è stata terminata",
-	"ctest.finished.with.code": "CTest terminato. Codice restituito: {0}",
+	"ctest.finished": "CTest completato",
 	"test.failed": "Esecuzione dei test non riuscita."
 }

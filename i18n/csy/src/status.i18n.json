@@ -17,8 +17,6 @@
 	"launch.tooltip": "Spustit vybraný cíl v okně terminálu",
 	"run.ctest.tests.tooltip": "Spustí testy CTest.",
 	"run.ctest": "Spustit CTest",
-	"test.passing": "Počet testů, které prošly: {0}/{1}",
-	"tests.passing": "Počet testů, které prošly: {0}/{1}",
 	"build.tooltip": "Sestavit vybraný cíl",
 	"build": "Build",
 	"stop": "Zastavit",

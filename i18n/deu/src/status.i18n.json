@@ -17,8 +17,6 @@
 	"launch.tooltip": "Ausgewähltes Ziel im Terminalfenster starten",
 	"run.ctest.tests.tooltip": "CTest-Tests ausführen",
 	"run.ctest": "CTest ausführen",
-	"test.passing": "{0}/{1} Test erfolgreich",
-	"tests.passing": "{0}/{1} Tests erfolgreich",
 	"build.tooltip": "Ausgewähltes Ziel erstellen",
 	"build": "Build",
 	"stop": "Beenden",

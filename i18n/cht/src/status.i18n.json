@@ -17,8 +17,6 @@
 	"launch.tooltip": "在終端視窗中啟動選取的目標",
 	"run.ctest.tests.tooltip": "執行 CTest 測試",
 	"run.ctest": "執行 CTest",
-	"test.passing": "{0}/{1} 個測試通過",
-	"tests.passing": "{0}/{1} 個測試通過",
 	"build.tooltip": "建置選取的目標",
 	"build": "建置",
 	"stop": "停止",
