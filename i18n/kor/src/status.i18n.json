@@ -17,8 +17,6 @@
 	"launch.tooltip": "터미널 창에서 선택한 대상 시작",
 	"run.ctest.tests.tooltip": "CTest 테스트 실행",
 	"run.ctest": "CTest 실행",
-	"test.passing": "{0}/{1}개 테스트 통과",
-	"tests.passing": "{0}/{1}개 테스트 통과",
 	"build.tooltip": "선택한 대상 빌드",
 	"build": "빌드",
 	"stop": "중지",

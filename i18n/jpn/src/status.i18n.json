@@ -17,8 +17,6 @@
 	"launch.tooltip": "選択したターゲットをターミナル ウィンドウで起動します",
 	"run.ctest.tests.tooltip": "CTest テストを実行します",
 	"run.ctest": "CTest の実行",
-	"test.passing": "{0}/{1} 件のテストが成功",
-	"tests.passing": "{0}/{1} 件のテストが成功",
 	"build.tooltip": "選択したターゲットをビルドします",
 	"build": "ビルド",
 	"stop": "停止",

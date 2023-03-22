@@ -17,8 +17,6 @@
 	"launch.tooltip": "Iniciar o destino selecionado na janela do terminal",
 	"run.ctest.tests.tooltip": "Executar testes do CTest",
 	"run.ctest": "Executar CTest",
-	"test.passing": "{0}/{1} aprovação no teste",
-	"tests.passing": "{0}/{1} aprovações no teste",
 	"build.tooltip": "Criar o destino selecionado",
 	"build": "Compilar",
 	"stop": "Parar",
