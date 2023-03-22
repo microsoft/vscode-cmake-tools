@@ -17,8 +17,6 @@
 	"launch.tooltip": "Seçili hedefi terminal penceresinde başlatın",
 	"run.ctest.tests.tooltip": "CTest testlerini çalıştır",
 	"run.ctest": "CTest'i çalıştır",
-	"test.passing": "{0}/{1} test geçiriliyor",
-	"tests.passing": "{0}/{1} test geçiriliyor",
 	"build.tooltip": "Seçili hedefi derleyin",
 	"build": "Derleme",
 	"stop": "Durdur",

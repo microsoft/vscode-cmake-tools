@@ -36,6 +36,6 @@
 	"test.preset.not.found": "テスト プリセットが見つかりません。",
 	"ctest.failed": "テスト プリセット {0} が見つかりません。テストに失敗しました。",
 	"ctest.run.terminated": "CTest の実行が終了しました",
-	"ctest.finished.with.code": "CTest がリターン コード {0} で終了しました",
+	"ctest.finished": "CTest が終了しました",
 	"test.failed": "CTest の実行に失敗しました。"
 }

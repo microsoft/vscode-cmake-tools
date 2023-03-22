@@ -17,8 +17,6 @@
 	"launch.tooltip": "Uruchom wybrany element docelowy w oknie terminalu",
 	"run.ctest.tests.tooltip": "Uruchom testy narzędzia CTest",
 	"run.ctest": "Uruchom narzędzie CTest",
-	"test.passing": "{0}/{1} testu zakończono powodzeniem",
-	"tests.passing": "{0}/{1} testów zakończono powodzeniem",
 	"build.tooltip": "Utwórz wybrany element docelowy",
 	"build": "Kompilacja",
 	"stop": "Zatrzymaj",
