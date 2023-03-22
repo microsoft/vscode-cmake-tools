@@ -46,7 +46,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 preferredGenerator: {name: 'Visual Studio 16 2019', platform: 'x64', toolset: 'host=x64'}
             } as Kit;
         } else {
-            kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' } } as Kit;
+            kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;
         }
 
         setup(async function (this: Mocha.Context, done) {
