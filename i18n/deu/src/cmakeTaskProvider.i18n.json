@@ -36,6 +36,6 @@
 	"test.preset.not.found": "Die Testvoreinstellung wurde nicht gefunden.",
 	"ctest.failed": "Testvoreinstellung {0} nicht gefunden. Fehler beim Test.",
 	"ctest.run.terminated": "Der CTest-Testlauf wurde beendet.",
-	"ctest.finished.with.code": "CTest wurde mit Rückgabecode {0} abgeschlossen.",
+	"ctest.finished": "CTest abgeschlossen",
 	"test.failed": "Fehler beim Ausführen von CTest."
 }

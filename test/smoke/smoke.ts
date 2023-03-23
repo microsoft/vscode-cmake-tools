@@ -23,7 +23,7 @@ export class SmokeContext {
         const cmakeProject = cmakeProjects[0];
         if (opts.kit) {
             if (opts.kit === SpecialKits.Unspecified) {
-                await cmakeProject.setKit({ name: SpecialKits.Unspecified });
+                await cmakeProject.setKit({ name: SpecialKits.Unspecified, isTrusted: true });
             } else {
                 await cmakeProject.setKit(opts.kit);
             }

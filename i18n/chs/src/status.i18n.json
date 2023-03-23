@@ -17,8 +17,6 @@
 	"launch.tooltip": "在终端窗口中启动所选目标",
 	"run.ctest.tests.tooltip": "运行 CTest 测试",
 	"run.ctest": "运行 CTest",
-	"test.passing": "{0} 项测试通过/共 {1} 项",
-	"tests.passing": "{0} 项测试通过/共 {1} 项",
 	"build.tooltip": "生成所选目标",
 	"build": "生成",
 	"stop": "停止",

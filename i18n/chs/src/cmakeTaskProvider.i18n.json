@@ -36,6 +36,6 @@
 	"test.preset.not.found": "找不到测试预设。",
 	"ctest.failed": "未找到测试预设 {0}。测试失败。",
 	"ctest.run.terminated": "CTest 运行已终止",
-	"ctest.finished.with.code": "CTest 已完成，返回代码 {0}",
+	"ctest.finished": "CTest 已完成",
 	"test.failed": "CTest 运行失败。"
 }
