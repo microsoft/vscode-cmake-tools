@@ -29,49 +29,49 @@ export class ProjectStatus {
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectConfigurePreset', async (node: Node) => {
-                await runCommand('selectConfigurePreset', treeDataProvider.cmakeProject?.workspaceFolder);
+                await runCommand('selectConfigurePreset');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.configure', async (_node: Node) => {
-                void runCommand('configure', treeDataProvider.cmakeProject?.workspaceFolder);
+                void runCommand('configure');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setVariant', async (node: Node) => {
-                await runCommand('setVariant', treeDataProvider.cmakeProject?.workspaceFolder);
+                await runCommand('setVariant');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.build', async (_node: Node) => {
-                void runCommand('build', treeDataProvider.cmakeProject?.workspaceFolder, await treeDataProvider.cmakeProject?.buildTargetName());
+                void runCommand('build');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setDefaultTarget', async (node: Node) => {
-                await runCommand('setDefaultTarget', treeDataProvider.cmakeProject?.workspaceFolder);
+                await runCommand('setDefaultTarget');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectBuildPreset', async (node: Node) => {
-                await runCommand('selectBuildPreset', treeDataProvider.cmakeProject?.workspaceFolder);
+                await runCommand('selectBuildPreset');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.ctest', async (_node: Node) => {
-                void runCommand('ctest', treeDataProvider.cmakeProject?.workspaceFolder);
+                void runCommand('ctest');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_node: Node) => {
                 // Do nothing
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectTestPreset', async (node: Node) => {
-                await runCommand('selectTestPreset', treeDataProvider.cmakeProject?.workspaceFolder);
+                await runCommand('selectTestPreset');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.debugTarget', async (_node: Node) => {
-                await runCommand('debugTarget', treeDataProvider.cmakeProject?.workspaceFolder, treeDataProvider.cmakeProject?.launchTargetName);
+                await runCommand('debugTarget');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setDebugTarget', async (node: Node) => {
-                await runCommand('selectLaunchTarget', treeDataProvider.cmakeProject?.workspaceFolder);
+                await runCommand('selectLaunchTarget');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.launchTarget', async (_node: Node) => {
-                await runCommand('launchTarget', treeDataProvider.cmakeProject?.workspaceFolder, treeDataProvider.cmakeProject?.launchTargetName);
+                await runCommand('launchTarget');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setLaunchTarget', async (node: Node) => {
-                await runCommand('selectLaunchTarget', treeDataProvider.cmakeProject?.workspaceFolder);
+                await runCommand('selectLaunchTarget');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectActiveProject', async () => {
