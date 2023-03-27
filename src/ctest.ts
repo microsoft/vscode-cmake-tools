@@ -380,7 +380,7 @@ export class CTestDriver implements vscode.Disposable {
             } else {
                 run.started(test);
 
-                const testResults = await this.runCTestImpl(_driver, _ctestPath, _ctestArgs, customizedTask, consumer, test.id);
+                const testResults = await this.runCTestImpl(_driver, _ctestPath, _ctestArgs, test.id, customizedTask, consumer);
 
                 if (testResults) {
                     if (testResults.site.testing.test.length === 1) {
@@ -434,15 +434,10 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     };
 
-    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, testName?: string): Promise<CTestResults | undefined> {
-        if (testName) {
-            // Override the existing -R arguments
-            ctestArgs.push('-R', testName);
-        }
-
+    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], testName: string, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
             ctestPath,
-            ctestArgs,
+            ctestArgs.concat('-R', testName),
             ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
@@ -507,24 +502,49 @@ export class CTestDriver implements vscode.Disposable {
         } else {
             buildConfigArgs.push('-C', driver.currentBuildType);
         }
-        const result = await driver.executeCommand(ctestpath, ['--show-only=json-v1', ...buildConfigArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
-        if (result.retc !== 0) {
-            // There was an error running CTest. Odd...
-            log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
-            return result.retc || -3;
+        if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
+            // ctest --show-only=json-v1 was added in CMake 3.14
+            const result = await driver.executeCommand(ctestpath, ['-N', ...buildConfigArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
+            if (result.retc !== 0) {
+                // There was an error running CTest. Odd...
+                log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
+                return result.retc || -3;
+            }
+            const tests = result.stdout?.split('\n')
+                .map(l => l.trim())
+                .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
+                .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
+                .map(([, id, tname]) => ({ id: parseInt(id!), name: tname! })) ?? [];
+
+            // Add tests to the test explorer
+            for (const test of tests) {
+                testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
+            }
+        } else {
+            const result = await driver.executeCommand(ctestpath, ['--show-only=json-v1', ...buildConfigArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
+            if (result.retc !== 0) {
+                // There was an error running CTest. Odd...
+                log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
+                return result.retc || -3;
+            }
+            this.tests = JSON.parse(result.stdout) ?? undefined;
+            if (this.tests && this.tests.kind === 'ctestInfo') {
+                this.tests.tests.forEach(test => {
+                    if (test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
+                        const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
+                        const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
+                        const testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
+                        if (testDefLine !== undefined) {
+                            testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                        }
+                        testExplorerRoot.children.add(testItem);
+                    } else {
+                        const testItem = initializedTestExplorer.createTestItem(test.name, test.name);
+                        testExplorerRoot.children.add(testItem);
+                    }
+                });
+            };
         }
-        this.tests = JSON.parse(result.stdout) ?? undefined;
-        if (this.tests && this.tests.kind === 'ctestInfo') {
-            this.tests.tests.forEach(test => {
-                const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
-                const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
-                const testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
-                if (testDefLine !== undefined) {
-                    testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
-                }
-                testExplorerRoot.children.add(testItem);
-            });
-        };
 
         return 0;
     }
