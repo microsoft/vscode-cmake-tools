@@ -562,7 +562,7 @@ class ConfigPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = treeDataProvider.cmakeProject.configurePreset?.name || noConfigPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName ?? treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
         this.tooltip = 'Change Configure Preset';
         this.contextValue = 'configPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -572,7 +572,7 @@ class ConfigPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = treeDataProvider.cmakeProject.configurePreset?.name || noConfigPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName ?? treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
     }
 }
 
