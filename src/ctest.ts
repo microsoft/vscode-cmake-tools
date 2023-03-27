@@ -379,7 +379,7 @@ export class CTestDriver implements vscode.Disposable {
             } else {
                 run.started(test);
 
-                const testResults = await this.runCTestImpl(_driver, _ctestPath, _ctestArgs, customizedTask, consumer, test.id);
+                const testResults = await this.runCTestImpl(_driver, _ctestPath, _ctestArgs, test.id, customizedTask, consumer);
 
                 if (testResults) {
                     if (testResults.site.testing.test.length === 1) {
@@ -433,15 +433,10 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     };
 
-    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, testName?: string): Promise<CTestResults | undefined> {
-        if (testName) {
-            // Override the existing -R arguments
-            ctestArgs.push('-R', testName);
-        }
-
+    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], testName: string, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
             ctestPath,
-            ctestArgs,
+            ctestArgs.concat('-R', testName),
             ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
