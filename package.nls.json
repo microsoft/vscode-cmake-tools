@@ -156,6 +156,7 @@
     "cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Enables a change in color for this button depending on test results.",
     "cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configures the maximum length of visible text in 'compact' mode.",
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
+    "cmake-tools.configuration.views.cmake.projectStatus.description": "Project Status",
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
     "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files",
     "cmake-tools.configuration.cmake.revealLog.description": "Configures the settings for showing the log and focusing on the output channel.",
@@ -195,5 +196,7 @@
         ]
     },
     "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
-    "cmake-tools.configuration.cmake.loadCompileCommands.description": "Controls whether the extension reads compile_commands.json to enable single file compilation."
+    "cmake-tools.configuration.cmake.loadCompileCommands.description": "Controls whether the extension reads compile_commands.json to enable single file compilation.",
+    "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
+    "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set test target"
 }

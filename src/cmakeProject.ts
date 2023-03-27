@@ -38,7 +38,7 @@ import { VariantManager } from './variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
 import { enableFullFeatureSet, updateFullFeatureSet } from './extension';
-import { CMakeCommunicationMode, ConfigurationReader, UseCMakePresets } from './config';
+import { CMakeCommunicationMode, ConfigurationReader, StatusBarConfig, UseCMakePresets } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -212,6 +212,7 @@ export class CMakeProject {
     get configurePreset() {
         return this._configurePreset.value;
     }
+
     get onActiveConfigurePresetChanged() {
         return this._configurePreset.changeEvent;
     }
@@ -817,7 +818,7 @@ export class CMakeProject {
 
         await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
         this.targetName.set(this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
-        await this.cTestController.refreshTests(drv);
+        await this.cTestController.refreshTests(drv, this.useCMakePresets);
 
         // All set up. Fulfill the driver promise.
         return drv;
@@ -884,6 +885,10 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+
+        this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
+        this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
+        this.hideLaunchButton = (this.workspaceContext.config.statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
 
         // Start up the variant manager
         await this.variantManager.initialize();
@@ -1265,7 +1270,7 @@ export class CMakeProject {
             if (result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
             }
-            await this.cTestController.refreshTests(drv);
+            await this.cTestController.refreshTests(drv, this.useCMakePresets);
             this.onReconfiguredEmitter.fire();
             return result;
         }
@@ -1333,7 +1338,7 @@ export class CMakeProject {
                                     await this.refreshCompileDatabase(drv.expansionOptions);
                                 }
 
-                                await this.cTestController.refreshTests(drv);
+                                await this.cTestController.refreshTests(drv, this.useCMakePresets);
                                 this.onReconfiguredEmitter.fire();
                                 return result;
                             } finally {
@@ -1815,7 +1820,7 @@ export class CMakeProject {
     }
 
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
-        return this.cTestController.runCTest(driver, true, testPreset, consumer);
+        return this.cTestController.runCTest(driver, this.useCMakePresets, true, testPreset, consumer);
     }
 
     private async preTest(): Promise<CMakeDriver> {
@@ -1833,7 +1838,7 @@ export class CMakeProject {
 
     async ctest(): Promise<number> {
         const drv = await this.preTest();
-        return (await this.cTestController.runCTest(drv)) ? 0 : -1;
+        return (await this.cTestController.runCTest(drv, this.useCMakePresets)) ? 0 : -1;
     }
 
     async revealTestExplorer() {
@@ -1845,7 +1850,7 @@ export class CMakeProject {
 
     async refreshTests(): Promise<number> {
         const drv = await this.preTest();
-        return this.cTestController.refreshTests(drv);
+        return this.cTestController.refreshTests(drv, this.useCMakePresets);
     }
 
     addTestExplorerRoot(folder: string) {
@@ -2701,6 +2706,21 @@ export class CMakeProject {
 
     get onUseCMakePresetsChanged() {
         return this.onUseCMakePresetsChangedEmitter.event;
+    }
+
+    public hideBuildButton: boolean = false;
+    public hideDebugButton: boolean = false;
+    public hideLaunchButton: boolean = false;
+    doStatusBarChange(statusbar: StatusBarConfig) {
+        if (statusbar.visibility === "hidden") {
+            this.hideBuildButton = true;
+            this.hideDebugButton = true;
+            this.hideLaunchButton = true;
+            return;
+        }
+        this.hideBuildButton = (statusbar.advanced?.build?.visibility === "hidden") ? true : false;
+        this.hideDebugButton = (statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
+        this.hideLaunchButton = (statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
     }
 
 }
