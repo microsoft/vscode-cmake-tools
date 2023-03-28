@@ -241,11 +241,12 @@ export class CTestDriver implements vscode.Disposable {
         return items;
     };
 
-    private async getCTestArgs(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[]> {
+    private async getCTestArgs(driver: CMakeDriver, useCMakePresets: boolean, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[]> {
         let ctestArgs: string[];
         if (customizedTask && testPreset) {
             ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
-        } else if (!customizedTask && driver.useCMakePresets) {
+        } else if (!customizedTask && useCMakePresets) {
+            // The drv.useCMakePresets is not updated here yet.
             if (!driver.testPreset) {
                 throw(localize('test.preset.not.set', 'Test preset is not set'));
             }
@@ -268,14 +269,14 @@ export class CTestDriver implements vscode.Disposable {
         return ctestArgs;
     }
 
-    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
+    public async runCTest(driver: CMakeDriver, useCMakePresets: boolean, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
             log.showChannel();
         }
 
         if (!testExplorer) {
-            await this.refreshTests(driver);
+            await this.refreshTests(driver, useCMakePresets);
         }
 
         if (!testExplorer) {
@@ -284,8 +285,8 @@ export class CTestDriver implements vscode.Disposable {
         } else {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
-            const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-            const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
+            const ctestArgs = await this.getCTestArgs(driver, useCMakePresets, customizedTask, testPreset);
+            const returnCode = await this.runCTestHelper(tests, run, useCMakePresets, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
             run.end();
             return returnCode;
         }
@@ -327,7 +328,7 @@ export class CTestDriver implements vscode.Disposable {
         run.failed(test, message, duration);
     }
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, useCMakePresets: boolean, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
         let returnCode: number = 0;
         for (const test of tests) {
             if (cancellation && cancellation.isCancellationRequested) {
@@ -367,13 +368,13 @@ export class CTestDriver implements vscode.Disposable {
             if (ctestArgs) {
                 _ctestArgs = ctestArgs;
             } else {
-                _ctestArgs = await this.getCTestArgs(_driver, customizedTask);
+                _ctestArgs = await this.getCTestArgs(_driver, useCMakePresets, customizedTask);
             }
 
             if (test.children.size > 0) {
                 // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
                 const children = this.testItemCollectionToArray(test.children);
-                if (await this.runCTestHelper(children, run, _driver, _ctestPath, _ctestArgs, cancellation, customizedTask, consumer)) {
+                if (await this.runCTestHelper(children, run, useCMakePresets, _driver, _ctestPath, _ctestArgs, cancellation, customizedTask, consumer)) {
                     returnCode = -1;
                 }
             } else {
@@ -463,13 +464,13 @@ export class CTestDriver implements vscode.Disposable {
      * @brief Refresh the list of CTest tests
      * @returns 0 when successful
      */
-    async refreshTests(driver: CMakeDriver): Promise<number> {
+    async refreshTests(driver: CMakeDriver, useCMakePresets: boolean): Promise<number> {
         if (util.isTestMode()) {
             // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
             return 0;
         }
 
-        const initializedTestExplorer = this.ensureTestExplorerInitialized();
+        const initializedTestExplorer = this.ensureTestExplorerInitialized(useCMakePresets);
         const sourceDir = util.platformNormalizePath(driver.sourceDir);
         const testExplorerRoot = initializedTestExplorer.items.get(sourceDir);
         if (!testExplorerRoot) {
@@ -567,7 +568,7 @@ export class CTestDriver implements vscode.Disposable {
         return uniqueTests;
     }
 
-    private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
+    private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken, useCMakePresets: boolean) {
         if (!testExplorer) {
             return;
         }
@@ -578,7 +579,7 @@ export class CTestDriver implements vscode.Disposable {
         const run = testExplorer.createTestRun(request);
         this.ctestsEnqueued(tests, run);
         await this.buildTests(tests, run);
-        await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+        await this.runCTestHelper(tests, run, useCMakePresets, undefined, undefined, undefined, cancellation);
         run.end();
     };
 
@@ -823,7 +824,7 @@ export class CTestDriver implements vscode.Disposable {
      * Initializes the VS Code Test Controller if it is not already initialized.
      * Should only be called by refreshTests since it adds tests to the controller.
      */
-    private ensureTestExplorerInitialized(): vscode.TestController {
+    private ensureTestExplorerInitialized(useCMakePresets: boolean): vscode.TestController {
         if (!testExplorer) {
             testExplorer = vscode.tests.createTestController('cmakeToolsCTest', 'CTest');
 
@@ -840,7 +841,7 @@ export class CTestDriver implements vscode.Disposable {
             testExplorer.createRunProfile(
                 'Run Tests',
                 vscode.TestRunProfileKind.Run,
-                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation, useCMakePresets),
                 true
             );
             testExplorer.createRunProfile(
