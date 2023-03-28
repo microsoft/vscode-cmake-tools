@@ -436,7 +436,7 @@ export class CTestDriver implements vscode.Disposable {
     private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], testName: string, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
             ctestPath,
-            ctestArgs.concat('-R', testName),
+            ctestArgs.concat('-R', `^${util.escapeStringForRegex(testName)}\$`),
             ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
