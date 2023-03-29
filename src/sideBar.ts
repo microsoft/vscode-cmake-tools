@@ -392,6 +392,8 @@ class BuildNode extends Node {
         } else {
             this.buildPreset = new BuildPreset();
             await this.buildPreset.initialize();
+            this.buildTarget = new BuildTarget();
+            await this.buildTarget.initialize();
         }
     }
 
@@ -402,7 +404,7 @@ class BuildNode extends Node {
         if (!treeDataProvider.cmakeProject.useCMakePresets) {
             return [this.buildTarget!];
         } else {
-            return [this.buildPreset!];
+            return [this.buildPreset!, this.buildTarget!];
         }
     }
 
@@ -650,7 +652,7 @@ class BuildTarget extends Node {
             return;
         }
         const title: string = localize('set.build.target', 'Set Build Target');
-        this.label = await treeDataProvider.cmakeProject.buildTargetName() || await treeDataProvider.cmakeProject.allTargetName;
+        this.label = await this.getLabel();
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'buildTarget';
@@ -660,7 +662,12 @@ class BuildTarget extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = await treeDataProvider.cmakeProject.buildTargetName() || await treeDataProvider.cmakeProject.allTargetName;
+        this.label = await this.getLabel();
+    }
+
+    async getLabel(): Promise<string> {
+        const targetName = await treeDataProvider.cmakeProject!.buildTargetName();
+        return targetName || treeDataProvider.cmakeProject!.allTargetName;
     }
 }
 
