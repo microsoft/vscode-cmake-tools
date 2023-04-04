@@ -23,5 +23,6 @@
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "設定此套件的慣用 CMake 產生器",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.name": "要使用之產生器的名稱",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.platform": "-A 引數的 CMake 平台",
-	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "-T 引數的 CMake 工具組"
+	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "-T 引數的 CMake 工具組",
+	"schemas/kits-schema.json.items.properties.isTrusted": "如果此套件來自信任的路徑，則為 True"
 }

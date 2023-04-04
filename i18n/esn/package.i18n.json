@@ -146,6 +146,7 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Habilita un cambio de color para este botón en función de los resultados de pruebas.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configura la longitud máxima del texto visible en el modo \"compacto\".",
 	"cmake-tools.configuration.views.cmake.folders.description": "Carpetas",
+	"cmake-tools.configuration.views.cmake.projectStatus.description": "Estado del proyecto",
 	"cmake-tools.configuration.views.cmake.outline.description": "Esquema del proyecto",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Matriz de rutas de acceso a los archivos de kit personalizados",
 	"cmake-tools.configuration.cmake.revealLog.description": "Establecer la configuración para mostrar el registro y centrarse en el canal de salida.",
@@ -170,5 +171,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "La instancia del terminal de inicio se reutiliza y el destino se iniciará en cuanto el terminal esté inactivo.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "La instancia de terminal de inicio se reutiliza y se envía un comando `break` para finalizar cualquier proceso en primer plano activo antes de iniciar el destino.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente.",
-	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controla si la extensión lee compile_commands.json para habilitar la compilación de un solo archivo."
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controla si la extensión lee compile_commands.json para habilitar la compilación de un solo archivo.",
+	"cmake-tools.command.cmake.projectStatus.update.title": "Actualizar el estado del proyecto",
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Establecer destino de prueba"
 }

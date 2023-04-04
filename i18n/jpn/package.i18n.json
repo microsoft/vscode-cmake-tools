@@ -146,6 +146,7 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "テスト結果に応じてこのボタンの色を変更することを有効にします。",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'compact' モードで表示されるテキストの最大長を構成します。",
 	"cmake-tools.configuration.views.cmake.folders.description": "フォルダー",
+	"cmake-tools.configuration.views.cmake.projectStatus.description": "プロジェクトの状態",
 	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要",
 	"cmake-tools.configuration.cmake.additionalKits.description": "カスタム キット ファイルへのパスの配列",
 	"cmake-tools.configuration.cmake.revealLog.description": "ログを表示し、出力チャネルにフォーカスするための設定を構成します。",
@@ -168,7 +169,9 @@
 	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "\"name\": \"value\" の形式での環境変数。",
 	"cmake-tools.taskDefinitions.properties.details.description": "タスクのその他の詳細",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターミナルがアイドル状態になるとすぐにターゲットが起動します。",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターゲットを起動する前にアクティブなフォアグラウンド プロセスを終了するために 'break' コマンドが送信されます。",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターゲットを起動する前にアクティブなフォアグラウンド プロセスを終了するために `break` コマンドが送信されます。",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。",
-	"cmake-tools.configuration.cmake.loadCompileCommands.description": "拡張子が単一ファイルのコンパイルを有効にするために compile_commands.json を読み取るかどうかを制御します。"
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "拡張子が単一ファイルのコンパイルを有効にするために compile_commands.json を読み取るかどうかを制御します。",
+	"cmake-tools.command.cmake.projectStatus.update.title": "プロジェクトの状態を最新の情報に更新",
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "テストの対象の設定"
 }

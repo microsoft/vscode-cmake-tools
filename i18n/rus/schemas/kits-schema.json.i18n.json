@@ -12,7 +12,7 @@
 	"schemas/kits-schema.json.items.properties.triple": "Целевая тройка для этого пакета",
 	"schemas/kits-schema.json.items.properties.version": "Версия этого пакета",
 	"schemas/kits-schema.json.items.properties.versionRuntime": "Версия среды выполнения C для пакета",
-	"schemas/kits-schema.json.items.properties.keep": "Если этот параметр имеет значение \"true\", то этот набор будет храниться даже в том случае, если он кажется устаревшим.",
+	"schemas/kits-schema.json.items.properties.keep": "Если этот параметр имеет значение `true`, то этот набор будет храниться даже в том случае, если он кажется устаревшим.",
 	"schemas/kits-schema.json.items.properties.compilers.patternProperties.\\w+": "Путь к компилятору для этого языка",
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Путь к файлу цепочки инструментов",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Идентификатор экземпляра продукта Visual Studio",
@@ -23,5 +23,6 @@
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Установить предпочтительный генератор CMake для этого набора",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.name": "Имя используемого генератора",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.platform": "Платформа CMake для аргумента -A",
-	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "Набор инструментов CMake для аргумента -T"
+	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "Набор инструментов CMake для аргумента -T",
+	"schemas/kits-schema.json.items.properties.isTrusted": "Значение true, если этот набор получен из надежного пути"
 }

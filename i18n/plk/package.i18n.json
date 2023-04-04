@@ -146,6 +146,7 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Umożliwia zmianę koloru tego przycisku w zależności od wyników testu.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Konfiguruje maksymalną długość widocznego tekstu w trybie „kompaktowym”.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Foldery",
+	"cmake-tools.configuration.views.cmake.projectStatus.description": "Stan projektu",
 	"cmake-tools.configuration.views.cmake.outline.description": "Konspekt projektu",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Tablica ścieżek do plików zestawów niestandardowych",
 	"cmake-tools.configuration.cmake.revealLog.description": "Konfiguruje ustawienia wyświetlania dziennika i skupiania się na kanale wyjściowym.",
@@ -170,5 +171,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Wystąpienie terminalu uruchamiania zostanie ponownie uruchomione, a obiekt docelowy zostanie uruchomiony, gdy tylko terminal będzie bezczynny.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Wystąpienie terminalu uruchamiania jest ponownie uruchamiane, a polecenie `break` jest wysyłane w celu zakończenia wszelkich aktywnych procesów pierwszego planu przed uruchomieniem elementu docelowego.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone.",
-	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku."
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku.",
+	"cmake-tools.command.cmake.projectStatus.update.title": "Odśwież stan projektu",
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Ustaw docelowy element testowy"
 }
