@@ -146,6 +146,7 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Hiermit wird die Farbänderung für diese Schaltfläche je nach Testergebnis aktiviert.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Hiermit wird die maximale Länge des sichtbaren Texts im Compact-Modus konfiguriert.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Ordner",
+	"cmake-tools.configuration.views.cmake.projectStatus.description": "Projektstatus",
 	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Array aus Pfaden zu benutzerdefinierten Kit-Dateien",
 	"cmake-tools.configuration.cmake.revealLog.description": "Konfiguriert die Einstellungen für die Anzeige des Protokolls und die Fokussierung auf den Ausgabekanal.",
@@ -170,5 +171,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Die Instanz des Startterminals wird wiederverwendet, und das Ziel wird gestartet, sobald sich das Terminal im Leerlauf befindet.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Die Startterminalinstanz wird wiederverwendet, und ein `break`-Befehl wird gesendet, um jeden aktiven Vordergrundprozess vor dem Starten des Ziels zu beenden.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Eine neue Terminalinstanz wird erstellt, und das Ziel wird darin gestartet. Vorhandene Terminals werden nicht automatisch bereinigt.",
-	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Steuert, ob die Erweiterung compile_commands.json liest, um die Kompilierung einzelner Dateien zu ermöglichen."
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Steuert, ob die Erweiterung compile_commands.json liest, um die Kompilierung einzelner Dateien zu ermöglichen.",
+	"cmake-tools.command.cmake.projectStatus.update.title": "Projektstatus aktualisieren",
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Testziel festlegen"
 }

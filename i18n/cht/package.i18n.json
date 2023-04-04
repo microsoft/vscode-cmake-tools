@@ -146,6 +146,7 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "允許根據測試結果變更此按鈕的色彩。",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "在「精簡」模式中設定顯示文字的最大長度。",
 	"cmake-tools.configuration.views.cmake.folders.description": "資料夾",
+	"cmake-tools.configuration.views.cmake.projectStatus.description": "專案狀態",
 	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱",
 	"cmake-tools.configuration.cmake.additionalKits.description": "自訂套件檔案的路徑陣列",
 	"cmake-tools.configuration.cmake.revealLog.description": "設定顯示記錄與專注於輸出通道的設定。",
@@ -170,5 +171,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "已重複使用啟動終端機執行個體，當終端機閒置時，目標就會立即啟動。",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "已重複使用啟動終端機執行個體，並在啟動目標之前傳送 `break` 命令以終止任何使用中的前景進程。",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已建立新的終端機執行個體，並在其中啟動目標。不會自動清除現有的終端機。",
-	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制延伸模組是否要讀取 compile_commands.json 以啟用單一檔案編譯。"
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制延伸模組是否要讀取 compile_commands.json 以啟用單一檔案編譯。",
+	"cmake-tools.command.cmake.projectStatus.update.title": "重新整理專案狀態",
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "設定測試目標"
 }

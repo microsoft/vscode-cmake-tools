@@ -137,7 +137,7 @@
 	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.environment.additionalProperties.anyOf.0": "Nastavení proměnné na hodnotu null způsobí, že nebude nastavená, i když byla hodnota zděděna z jiné předvolby.",
 	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.environment.additionalProperties.anyOf.1": "Řetězec představující hodnotu proměnné",
 	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.configuration": "Nepovinný řetězec. Ekvivalent k předání parametru --build-config na příkazovém řádku.",
-	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.overwriteConfigurationFile": "Nepoviné pole možností konfigurace, které mají přepsat možnosti zadané v konfiguračním souboru CTest. Ekvivalent k předání parametru --overwrite pro každou hodnotu v poli.",
+	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.overwriteConfigurationFile": "Nepoviné pole možností konfigurace, které mají přepsat možnosti zadané v konfiguračním souboru CTest. Ekvivalent k předání parametru ``--overwrite`` pro každou hodnotu v poli.",
 	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.overwriteConfigurationFile.items": "Možnost přepsaná jako pár klíč-hodnota ve tvaru klíč=hodnota",
 	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.output": "Nepovinný objekt, který určuje možnosti výstupu.",
 	"schemas/CMakePresets-v5-schema.json.properties.testPresets.items.properties.output.properties.shortProgress": "Nepovinná logická hodnota. Pokud se nastaví na true, bude to ekvivalent k předání parametru -progress na příkazovém řádku.",

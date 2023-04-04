@@ -23,5 +23,6 @@
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "このキットの優先 CMake ジェネレーターを設定します",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.name": "使用するジェネレーターの名前",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.platform": "-A 引数に指定する CMake プラットフォーム",
-	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "-T 引数に指定する CMake ツールセット"
+	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "-T 引数に指定する CMake ツールセット",
+	"schemas/kits-schema.json.items.properties.isTrusted": "このキットが信頼できるパスからのものである場合は true"
 }
