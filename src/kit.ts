@@ -505,7 +505,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
         bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
     } catch (ce) {
         const e = ce as NodeJS.ErrnoException;
-        if (e.code === 'EACCESS' || e.code === 'EPERM') {
+        if (e.code === 'EACCES' || e.code === 'EPERM') {
             return [];
         }
         console.log('unexpected file system error');
