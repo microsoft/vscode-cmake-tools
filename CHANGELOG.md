@@ -29,6 +29,7 @@ Bug Fixes:
 - Expand variables in task's targets while searching matching taks. [#2970](https://github.com/microsoft/vscode-cmake-tools/issues/2970) [@piomis](https://github.com/piomis)
 - Fix typo in `cmake.skipConfigureWhenCachePresent`. [#3040](https://github.com/microsoft/vscode-cmake-tools/issues/3040) [@Mlekow](https://github.com/Mlekow)
 - Fix MinGW detection when not in PATH using `cmake.mingwSearchDirs` (now named `cmake.additionalCompilerSearchDirs`). [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
+- Fix check for `EACCES` error code [#3097](https://github.com/microsoft/vscode-cmake-tools/pull/3097)
 
 ## 1.13.45
 Bug Fixes:
