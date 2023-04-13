@@ -38,8 +38,8 @@ export class PresetsController {
 
     private static readonly _addPreset = '__addPreset__';
 
-    static async init(project: CMakeProject, kitsController: KitsController): Promise<PresetsController> {
-        const presetsController = new PresetsController(project, kitsController);
+    static async init(project: CMakeProject, kitsController: KitsController, isMultiProject: boolean): Promise<PresetsController> {
+        const presetsController = new PresetsController(project, kitsController, isMultiProject);
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = project.workspaceFolder.uri.fsPath;
             const expansionOpts: ExpansionOptions = {
@@ -90,7 +90,7 @@ export class PresetsController {
         return presetsController;
     }
 
-    private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController) {}
+    private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController, private isMultiProject: boolean) {}
 
     get presetsPath() {
         return path.join(this._sourceDir, 'CMakePresets.json');
@@ -681,8 +681,8 @@ export class PresetsController {
             },
             async () => {
                 const configurePreset = this.project.configurePreset?.name;
-                const buildPreset = configurePreset ? this.project.workspaceContext.state.getBuildPresetName(configurePreset) : undefined;
-                const testPreset = configurePreset ? this.project.workspaceContext.state.getTestPresetName(configurePreset) : undefined;
+                const buildPreset = configurePreset ? this.project.workspaceContext.state.getBuildPresetName(this.project.folderName, configurePreset, this.isMultiProject) : undefined;
+                const testPreset = configurePreset ? this.project.workspaceContext.state.getTestPresetName(this.project.folderName, configurePreset, this.isMultiProject) : undefined;
                 if (buildPreset) {
                     await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                 }
