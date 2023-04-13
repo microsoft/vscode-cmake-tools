@@ -17,19 +17,24 @@ interface VSCMakePaths {
     ninja?: string;
 }
 
+export interface PathWithTrust {
+    path: string;
+    isTrusted: boolean;
+}
+
 class WindowsDefaultCompilerPaths {
     constructor(private readonly _env: WindowsEnvironment) {
         this._env = _env;
     }
 
-    get LLVM(): string[] {
+    get LLVM(): PathWithTrust[] {
         return [
             this._env.ProgramFiles! + "\\LLVM\\bin",
             this._env.ProgramFilesX86! + "\\LLVM\\bin"
-        ];
+        ].map(p => ({ path: p, isTrusted: true }));
     }
 
-    get MSYS2(): string[] {
+    get MSYS2(): PathWithTrust[] {
         return [
             paths.windows.SystemDrive! + '\\msys64\\mingw32\\bin',
             paths.windows.SystemDrive! + '\\msys64\\mingw64\\bin',
@@ -37,7 +42,7 @@ class WindowsDefaultCompilerPaths {
             paths.windows.SystemDrive! + '\\msys64\\clang64\\bin',
             paths.windows.SystemDrive! + '\\msys64\\clangarm64\\bin',
             paths.windows.SystemDrive! + '\\msys64\\ucrt64\\bin'
-        ];
+        ].map(p => ({ path: p, isTrusted: false }));
     }
 }
 

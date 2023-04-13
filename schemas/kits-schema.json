@@ -96,6 +96,10 @@
                 "required": [
                     "name"
                 ]
+            },
+            "isTrusted": {
+                "type": "boolean",
+                "description": "True if this kit comes from a trusted path"
             }
         }
     }

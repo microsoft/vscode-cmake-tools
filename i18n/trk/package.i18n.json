@@ -43,6 +43,9 @@
 	"cmake-tools.command.cmake.cleanRebuildAll.title": "Tüm Projeleri Temiz Olarak Yeniden Derle",
 	"cmake-tools.command.cmake.ctest.title": "Testleri Çalıştır",
 	"cmake-tools.command.cmake.ctestAll.title": "Tüm Projeler için Testleri Çalıştır",
+	"cmake-tools.command.cmake.revealTestExplorer.title": "Test Gezgini’ni Göster",
+	"cmake-tools.command.cmake.refreshTests.title": "Testleri Yenile",
+	"cmake-tools.command.cmake.refreshTestsAll.title": "Tüm Projeler için Testleri Yenile",
 	"cmake-tools.command.cmake.editCache.title": "CMake Önbelleğini Düzenle",
 	"cmake-tools.command.cmake.quickStart.title": "Hızlı Başlangıç",
 	"cmake-tools.command.cmake.debugTarget.title": "Hata Ayıkla",
@@ -118,6 +121,7 @@
 	"cmake-tools.configuration.cmake.buildEnvironment.description": "Derleme sırasında CMake'e geçirilecek ortam değişkenleri.",
 	"cmake-tools.configuration.cmake.testEnvironment.description": "CTest'e geçirilecek ortam değişkenleri.",
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "MinGW'nin yüklü olabileceği dizinler.",
+	"cmake-tools.configuration.cmake.additionalCompilerSearchDirs.description": "Derleyicileri aramak için ek dizinler.",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "Dizin yolu.",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten'in yüklü olabileceği dizinler.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory içinde tüm compile_commands.json dosyalarını özyinelemeli olarak topla ve birleştir.",
@@ -142,6 +146,7 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Test sonuçlarına bağlı olarak bu düğmenin renginde bir değişikliğe neden olur.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'Sıkıştırılmış' modda görünen metnin maksimum uzunluğunu yapılandırır.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Klasörler",
+	"cmake-tools.configuration.views.cmake.projectStatus.description": "Proje Durumu",
 	"cmake-tools.configuration.views.cmake.outline.description": "Proje Ana Hattı",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Özel set dosyalarına yönelik yollar dizisi",
 	"cmake-tools.configuration.cmake.revealLog.description": "Günlüğü gösterme ve çıkış kanalına odaklanma ayarlarını yapılandırır.",
@@ -164,7 +169,9 @@
 	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "\"name\": \"value\" biçimindeki ortam değişkenleri.",
 	"cmake-tools.taskDefinitions.properties.details.description": "Görevin ek ayrıntıları",
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedef, terminal boşta kalır kalmaz başlatılır.",
-	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedefi başlatmadan önce herhangi bir etkin ön plan sürecini sonlandırmak için bir kesme komutu gönderilir.",
+	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedefi başlatmadan önce herhangi bir etkin ön plan sürecini sonlandırmak için bir `break` komutu gönderilir.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez.",
-	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Tek dosya derlemesini etkinleştirmek için uzantının compile_commands.json dosyasını okuyup okumadığını denetler."
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Tek dosya derlemesini etkinleştirmek için uzantının compile_commands.json dosyasını okuyup okumadığını denetler.",
+	"cmake-tools.command.cmake.projectStatus.update.title": "Proje durumunu yenileyin",
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Test hedefi ayarla"
 }

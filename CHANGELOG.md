@@ -18,6 +18,7 @@ Improvements:
 - When starting debugging, also build the selected build target. [PR #2987](https://github.com/microsoft/vscode-cmake-tools/pull/2987) [@Maddimax](https://github.com/Maddimax)
 - Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
 - Print the build time in the output window. [#3008](https://github.com/microsoft/vscode-cmake-tools/issues/3008)
+- Add a new UI to show the project status in the side bar. This feature replaces the status bar. [PR #2993](https://github.com/microsoft/vscode-cmake-tools/pull/2993)
 - Allow using all of MSYS2 MinGW installations, which are also now found by default while scanning for kits if MSYS2 is installed at the default location (`C:\msys64\{wingw64|mingw32|clang64|clang32|clangarm64|ucrt64}\bin`). [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
 
 Bug Fixes:
@@ -29,6 +30,7 @@ Bug Fixes:
 - Expand variables in task's targets while searching matching taks. [#2970](https://github.com/microsoft/vscode-cmake-tools/issues/2970) [@piomis](https://github.com/piomis)
 - Fix typo in `cmake.skipConfigureWhenCachePresent`. [#3040](https://github.com/microsoft/vscode-cmake-tools/issues/3040) [@Mlekow](https://github.com/Mlekow)
 - Fix MinGW detection when not in PATH using `cmake.mingwSearchDirs` (now named `cmake.additionalCompilerSearchDirs`). [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
+- Fix check for `EACCES` error code [#3097](https://github.com/microsoft/vscode-cmake-tools/pull/3097)
 
 ## 1.13.45
 Bug Fixes:

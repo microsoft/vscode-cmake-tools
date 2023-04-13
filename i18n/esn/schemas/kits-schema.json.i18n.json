@@ -12,7 +12,7 @@
 	"schemas/kits-schema.json.items.properties.triple": "El triple de destino de este kit",
 	"schemas/kits-schema.json.items.properties.version": "La versión de este kit",
 	"schemas/kits-schema.json.items.properties.versionRuntime": "Versión del runtime de C para el kit",
-	"schemas/kits-schema.json.items.properties.keep": "Si es \"true\", el kit se conserva aunque aparezca como expirado.",
+	"schemas/kits-schema.json.items.properties.keep": "Si es `true`, el kit se conserva aunque aparezca como expirado.",
 	"schemas/kits-schema.json.items.properties.compilers.patternProperties.\\w+": "Ruta de acceso a un compilador de este lenguaje",
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Ruta de acceso a un archivo de cadena de herramientas",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Id. de instancia del producto de Visual Studio",
@@ -23,5 +23,6 @@
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Establecer un generador de CMake preferido para el kit",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.name": "Nombre del generador que se va a usar",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.platform": "Plataforma de CMake para el argumento -A",
-	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "Conjunto de herramientas de CMake para el argumento -T"
+	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "Conjunto de herramientas de CMake para el argumento -T",
+	"schemas/kits-schema.json.items.properties.isTrusted": "Verdadero si este kit procede de una ruta de acceso de confianza"
 }

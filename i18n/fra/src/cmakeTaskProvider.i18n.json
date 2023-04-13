@@ -36,6 +36,6 @@
 	"test.preset.not.found": "Présélection de test introuvable.",
 	"ctest.failed": "Présélection de test {0} introuvable. Échec du test.",
 	"ctest.run.terminated": "Exécution de CTest terminée",
-	"ctest.finished.with.code": "CTest s'est achevé avec le code de retour {0}",
+	"ctest.finished": "CTest terminé",
 	"test.failed": "Échec de CTest."
 }

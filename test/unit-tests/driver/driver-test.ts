@@ -43,7 +43,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 preferredGenerator: { name: 'Ninja' }
             } as Kit;
         } else {
-            ninjaKitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Ninja' } } as Kit;
+            ninjaKitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Ninja' }, isTrusted: true } as Kit;
         }
         let secondaryKit: Kit;
         if (process.platform === 'win32') {
@@ -54,7 +54,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 preferredGenerator: {name: 'Visual Studio 16 2019', platform: 'x64'}
             } as Kit;
         } else {
-            secondaryKit = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' } } as Kit;
+            secondaryKit = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;
         }
 
         setup(async function (this: Mocha.Context, done) {
@@ -175,12 +175,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
 
             // Set kit without a preferred generator
-            await driver.setKit({ name: 'GCC' }, []);
+            await driver.setKit({ name: 'GCC', isTrusted: true }, []);
             expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(0);
             const kit1 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 
             // Set kit with a list of two default preferred generators, for comparison
-            await driver.setKit({ name: 'GCC' }, [{ name: 'Ninja' }, { name: 'Unix Makefiles' }]);
+            await driver.setKit({ name: 'GCC', isTrusted: true }, [{ name: 'Ninja' }, { name: 'Unix Makefiles' }]);
             expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
             const kit2 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 

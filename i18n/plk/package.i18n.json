@@ -43,6 +43,9 @@
 	"cmake-tools.command.cmake.cleanRebuildAll.title": "Wyczyść ponowną kompilację wszystkich projektów",
 	"cmake-tools.command.cmake.ctest.title": "Uruchom testy",
 	"cmake-tools.command.cmake.ctestAll.title": "Uruchom testy dla wszystkich projektów",
+	"cmake-tools.command.cmake.revealTestExplorer.title": "Pokaż Eksploratora testów",
+	"cmake-tools.command.cmake.refreshTests.title": "Odśwież testy",
+	"cmake-tools.command.cmake.refreshTestsAll.title": "Odśwież testy dla wszystkich projektów",
 	"cmake-tools.command.cmake.editCache.title": "Edytuj pamięć podręczną narzędzia CMake",
 	"cmake-tools.command.cmake.quickStart.title": "Szybki start",
 	"cmake-tools.command.cmake.debugTarget.title": "Debuguj",
@@ -118,6 +121,7 @@
 	"cmake-tools.configuration.cmake.buildEnvironment.description": "Zmienne środowiskowe do przekazania do narzędzia CMake podczas kompilowania.",
 	"cmake-tools.configuration.cmake.testEnvironment.description": "Zmienne środowiskowe do przekazania do narzędzia CTest.",
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "Katalogi, w których można zainstalować środowisko MinGW.",
+	"cmake-tools.configuration.cmake.additionalCompilerSearchDirs.description": "Dodatkowe katalogi do wyszukania kompilatorów.",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "Ścieżka do katalogu.",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Katalogi, w których można zainstalować program Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Cyklicznie zbieraj i scalaj wszystkie compile_commands.json znalezione w katalogu cmake.buildDirectory.",
@@ -142,6 +146,7 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Umożliwia zmianę koloru tego przycisku w zależności od wyników testu.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Konfiguruje maksymalną długość widocznego tekstu w trybie „kompaktowym”.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Foldery",
+	"cmake-tools.configuration.views.cmake.projectStatus.description": "Stan projektu",
 	"cmake-tools.configuration.views.cmake.outline.description": "Konspekt projektu",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Tablica ścieżek do plików zestawów niestandardowych",
 	"cmake-tools.configuration.cmake.revealLog.description": "Konfiguruje ustawienia wyświetlania dziennika i skupiania się na kanale wyjściowym.",
@@ -166,5 +171,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.reuseTerminal.markdownDescriptions": "Wystąpienie terminalu uruchamiania zostanie ponownie uruchomione, a obiekt docelowy zostanie uruchomiony, gdy tylko terminal będzie bezczynny.",
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Wystąpienie terminalu uruchamiania jest ponownie uruchamiane, a polecenie `break` jest wysyłane w celu zakończenia wszelkich aktywnych procesów pierwszego planu przed uruchomieniem elementu docelowego.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone.",
-	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku."
+	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku.",
+	"cmake-tools.command.cmake.projectStatus.update.title": "Odśwież stan projektu",
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Ustaw docelowy element testowy"
 }

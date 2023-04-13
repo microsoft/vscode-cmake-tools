@@ -136,7 +136,7 @@
 	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.environment.additionalProperties.anyOf.0": "L'affectation d'une valeur null à une variable entraîne sa non-définition, même si une valeur a été héritée d'une autre option prédéfinie.",
 	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.environment.additionalProperties.anyOf.1": "Chaîne représentant la valeur de la variable.",
 	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.configuration": "Chaîne facultative. Équivaut à passer --build-config sur la ligne de commande.",
-	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.overwriteConfigurationFile": "Tableau facultatif d'options de configuration permettant de remplacer les options spécifiées dans le fichier config de CTest. Équivaut à passer --overwrite pour chaque valeur du tableau.",
+	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.overwriteConfigurationFile": "Tableau facultatif d'options de configuration permettant de remplacer les options spécifiées dans le fichier config de CTest. Équivaut à passer ``--overwrite`` pour chaque valeur du tableau.",
 	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.overwriteConfigurationFile.items": "Option écrite en tant que paire clé-valeur sous la forme \"clé=valeur\".",
 	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.output": "Objet facultatif spécifiant les options de sortie.",
 	"schemas/CMakePresets-v3-schema.json.properties.testPresets.items.properties.output.properties.shortProgress": "Booléen facultatif. Si la valeur est true, équivaut à passer --progress sur la ligne de commande.",
