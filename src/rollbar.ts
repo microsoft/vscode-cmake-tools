@@ -73,7 +73,7 @@ class RollbarController {
         const message = cleanString(exception.message);
         logEvent('exception2', { message, callstack });
         console.error(exception);
-        debugger;
+        // debugger;
     }
 
     /**
