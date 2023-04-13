@@ -199,7 +199,7 @@ export class VariantManager implements vscode.Disposable {
      * Create a new VariantManager
      * @param stateManager The state manager for this instance
      */
-    constructor(readonly workspaceFolder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader) {
+    constructor(readonly workspaceFolder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader, private isMultiProject: boolean) {
         log.debug(localize('constructing', 'Constructing {0}', 'VariantManager'));
         if (!vscode.workspace.workspaceFolders) {
             return;  // Nothing we can do. We have no directory open
@@ -282,7 +282,7 @@ export class VariantManager implements vscode.Disposable {
     }
 
     get haveVariant(): boolean {
-        return !!this.stateManager.activeVariantSettings;
+        return !!this.stateManager.getActiveVariantSettings(this.folderName, this.isMultiProject);
     }
 
     variantConfigurationOptionsForKWs(keywordSetting: Map<string, string>): VariantOption[] | string {
@@ -331,7 +331,7 @@ export class VariantManager implements vscode.Disposable {
             short: 'Unknown',
             long: 'Unknwon'
         };
-        const kws = this.stateManager.activeVariantSettings;
+        const kws = this.stateManager.getActiveVariantSettings(this.folderName, this.isMultiProject);
         if (!kws) {
             return invalid_variant;
         }
@@ -403,12 +403,12 @@ export class VariantManager implements vscode.Disposable {
     }
 
     async publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
-        await this.stateManager.setActiveVariantSettings(keywordSettings);
+        await this.stateManager.setActiveVariantSettings(this.folderName, keywordSettings, this.isMultiProject);
         this._activeVariantChanged.fire();
     }
 
     public get activeKeywordSetting(): Map<string, string> | null {
-        return this.stateManager.activeVariantSettings;
+        return this.stateManager.getActiveVariantSettings(this.folderName, this.isMultiProject);
     }
 
     transformChoiceCombinationToKeywordSettings(choiceCombination: { settingKey: string; settingValue: string }[]): Map<string, string> {
@@ -425,10 +425,11 @@ export class VariantManager implements vscode.Disposable {
         return this.transformChoiceCombinationToKeywordSettings(Array.from(defaults));
     }
 
-    async initialize() {
+    private folderName: string = "";
+    async initialize(folderName: string) {
         await this._reloadVariantsFile();
-
-        if (this.stateManager.activeVariantSettings === null) {
+        this.folderName = folderName;
+        if (this.stateManager.getActiveVariantSettings(this.folderName, this.isMultiProject) === null) {
             const defaultChoices = this.findDefaultChoiceCombination();
             await this.publishActiveKeywordSettings(defaultChoices);
         }
