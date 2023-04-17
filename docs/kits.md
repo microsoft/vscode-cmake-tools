@@ -73,7 +73,7 @@ To specify a compiler, list the path to the compiler in the `cmake-tools-kits.js
 
 The most common CMake languages are `C` and `CXX`, and CMake Tools has built-in support for finding these. However, any language can be specified:
 
-```xml
+```json
 [
     {
         "name": "My Compiler Kit",
@@ -90,7 +90,7 @@ The most common CMake languages are `C` and `CXX`, and CMake Tools has built-in 
 
 CMake Tools doesn't automatically detect toolchains, but you can specify a CMake toolchain file in a kit, like this:
 
-```xml
+```json
 [
     {
         "name": "Emscripten",
@@ -105,7 +105,7 @@ CMake Tools will pass this path for `CMAKE_TOOLCHAIN_FILE` during configuration.
 
 CMake Tools automatically sets up the environment for working with Visual C++. It is best to let CMake Tools generate the kits first, then duplicate and modify them:
 
-```xml
+```json
 [
     {
         "name": "A Visual Studio",
