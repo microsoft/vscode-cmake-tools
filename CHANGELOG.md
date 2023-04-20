@@ -2,7 +2,7 @@
 
 ## 1.14.30
 Bug Fixes:
-- Extension crashes when `cmake.sourceDir` is a subfolder. [#3121](https://github.com/microsoft/vscode-cmake-tools/issues/3121)
+- Fix extension crashes in the test explorer when `cmake.sourceDir` is a subfolder of `${workspaceFolder}`. [#3121](https://github.com/microsoft/vscode-cmake-tools/issues/3121)
 
 ## 1.14.29
 Features:
