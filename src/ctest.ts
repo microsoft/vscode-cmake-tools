@@ -474,7 +474,8 @@ export class CTestDriver implements vscode.Disposable {
         const sourceDir = util.platformNormalizePath(driver.sourceDir);
         const testExplorerRoot = initializedTestExplorer.items.get(sourceDir);
         if (!testExplorerRoot) {
-            throw(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
+            log.error(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
+            return -1;
         }
         // Clear all children and re-add later
         testExplorerRoot.children.replace([]);
@@ -833,7 +834,7 @@ export class CTestDriver implements vscode.Disposable {
 
             if (this.projectController) {
                 for (const project of this.projectController.getAllCMakeProjects()) {
-                    const folderPath = util.platformNormalizePath(project.folderPath);
+                    const folderPath = util.platformNormalizePath(project.sourceDir);
                     const folderName = path.basename(project.folderPath);
                     const testItem = testExplorer.createTestItem(folderPath, folderName);
                     testItem.description = folderPath;
