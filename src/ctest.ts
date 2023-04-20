@@ -835,7 +835,7 @@ export class CTestDriver implements vscode.Disposable {
             if (this.projectController) {
                 for (const project of this.projectController.getAllCMakeProjects()) {
                     const folderPath = util.platformNormalizePath(project.sourceDir);
-                    const folderName = path.basename(project.folderPath);
+                    const folderName = path.basename(project.sourceDir);
                     const testItem = testExplorer.createTestItem(folderPath, folderName);
                     testItem.description = folderPath;
                     testExplorer.items.add(testItem);
