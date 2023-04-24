@@ -1,6 +1,10 @@
 # What's New?
 
-## 1.14
+## 1.14.30
+Bug Fixes:
+- Fix extension crashes in the test explorer when `cmake.sourceDir` is a subfolder of `${workspaceFolder}`. [#3121](https://github.com/microsoft/vscode-cmake-tools/issues/3121)
+
+## 1.14.29
 Features:
 - Test Explorer. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
 - Add commands revealTestExplorer, refreshTests, and refreshTestsAll. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
