@@ -231,7 +231,7 @@ export class VariantManager implements vscode.Disposable {
 
     private async _reloadVariantsFile(filepath?: string) {
         this.customVariantsFileExists = false;
-        const validate = await loadSchema('schemas/variants-schema.json');
+        const validate = await loadSchema('./schemas/variants-schema.json');
 
         if (!filepath || !await fs.exists(filepath)) {
             const workspaceFolder: string = this.workspaceFolder.uri.fsPath;
