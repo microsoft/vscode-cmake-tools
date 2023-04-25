@@ -13,10 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Yarn environment
-        uses: DerYeger/yarn-setup-action@v1.0.1
+      - name: Setup Node environment
+        uses: actions/setup-node@v3
         with:
           node-version: 16
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: yarn install
 
       - name: Build the extension
         run: yarn compile-production
