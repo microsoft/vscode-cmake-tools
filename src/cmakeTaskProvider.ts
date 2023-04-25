@@ -197,7 +197,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             }
 
             let taskTargets: string[];
-            if (expansionOptions) {
+            if (expansionOptions && task.definition.targets) {
                 taskTargets = await expand.expandStrings(task.definition.targets, expansionOptions);
                 if (task.definition.options?.cwd) {
                     task.definition.options.cwd = await expand.expandString(task.definition.options.cwd, expansionOptions);
