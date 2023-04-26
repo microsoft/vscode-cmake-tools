@@ -989,10 +989,12 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
                 path_list.push(mingwPath);
             }
             if (env.hasOwnProperty('PATH')) {
-                // Remove other mingw from PATH as it will cause conflict
-                const current_path_list = (env['PATH']?.split(';') ?? []);
-                const current_path_list_without_mingw = current_path_list.filter(p => !isMingw(p));
-                path_list.unshift(current_path_list_without_mingw.join(';'));
+                let current_path_list = (env['PATH']?.split(';') ?? []);
+                if (mingwPath) {
+                    // Remove other mingw from PATH as it will cause conflict
+                    current_path_list = current_path_list.filter(p => !isMingw(p));
+                }
+                path_list.unshift(current_path_list.join(';'));
                 env['PATH'] = path_list.join(';');
             }
         }
