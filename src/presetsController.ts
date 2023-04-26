@@ -1079,13 +1079,13 @@ export class PresetsController {
             await this.showPresetsFileVersionError(file);
             return undefined;
         } else if (presetsFile.version === 2) {
-            schemaFile = 'schemas/CMakePresets-schema.json';
+            schemaFile = './schemas/CMakePresets-schema.json';
         } else if (presetsFile.version === 3) {
-            schemaFile = 'schemas/CMakePresets-v3-schema.json';
+            schemaFile = './schemas/CMakePresets-v3-schema.json';
         } else if (presetsFile.version === 4) {
-            schemaFile = 'schemas/CMakePresets-v4-schema.json';
+            schemaFile = './schemas/CMakePresets-v4-schema.json';
         } else {
-            schemaFile = 'schemas/CMakePresets-v5-schema.json';
+            schemaFile = './schemas/CMakePresets-v5-schema.json';
         }
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);

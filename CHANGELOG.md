@@ -1,11 +1,11 @@
 # What's New?
 
 ## 1.15
-
 Bug Fixes:
 - When `cmake.buildTasks` is `true`, CMake tasks in `tasks.json` that do not specify `targets` will no longer cause the build to fail. [#3123](https://github.com/microsoft/vscode-cmake-tools/issues/3123)
 - Paths containing `mingw` are no longer removed from the `PATH` environment variable when configuring a project without specifying a kit. [#3136](https://github.com/microsoft/vscode-cmake-tools/issues/3136)
 - Warning messages are no longer triggered by targets containing "warning" in the file path when running `Tasks: Run Build Task`. [#3118](https://github.com/microsoft/vscode-cmake-tools/issues/3118)
+- Unable to resolve `cmake-tools-schema:/schemas/CMakePresets*.json`. [#2587](https://github.com/microsoft/vscode-cmake-tools/issues/2587) [#3108](https://github.com/microsoft/vscode-cmake-tools/issues/3108)
 
 ## 1.14.30
 Bug Fixes:

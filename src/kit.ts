@@ -1233,7 +1233,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filePath), util.errorToString(e)));
         return [];
     }
-    const validator = await loadSchema('schemas/kits-schema.json');
+    const validator = await loadSchema('./schemas/kits-schema.json');
     const is_valid = validator(kits_raw);
     if (!is_valid) {
         const errors = validator.errors!;
