@@ -1086,6 +1086,10 @@ export class ExtensionManager implements vscode.Disposable {
             folder, undefined, true);
     }
 
+    configureWithDebugger() {
+        return vscode.window.showInformationMessage("Starting configure with Cmake debugger");
+    }
+
     showConfigureCommand(folder?: vscode.WorkspaceFolder) {
         return this.configure(folder, true);
     }
@@ -1093,6 +1097,10 @@ export class ExtensionManager implements vscode.Disposable {
     configureAll() {
         telemetry.logEvent("configure", { all: "true"});
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true);
+    }
+
+    configureAllWithDebugger() {
+        return vscode.window.showInformationMessage("Starting configure all with CMake Debugger");
     }
 
     editCacheUI() {
@@ -1692,8 +1700,10 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'cleanRebuild',
         'cleanRebuildAll',
         'configure',
+        'configureWithDebugger',
         'showConfigureCommand',
         'configureAll',
+        'configureAllWithDebugger',
         'editCacheUI',
         'ctest',
         'ctestAll',
@@ -1748,6 +1758,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
+        vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger')),
         vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
         vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
         vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),

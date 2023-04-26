@@ -46,6 +46,7 @@ import { KitsController } from './kitsController';
 import { PresetsController } from './presetsController';
 import paths from './paths';
 import { ProjectController } from './projectController';
+import { MessageItem } from 'vscode';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1334,7 +1335,23 @@ export class CMakeProject {
                                 if (result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
+                                } else {
+                                    // TODO: Modify this to have better typed choices than `MessageItem` and call configure with debugger.
+                                    void vscode.window.showErrorMessage<MessageItem>(
+                                        "Configure failed. Would you like to attempt to configure with the CMake Debugger?",
+                                        {},
+                                        {title: "Yes"},
+                                        {title: "No"})
+                                        .then(choice => {
+                                            if (choice && choice.title === "Yes") {
+                                                void vscode.window.showInformationMessage("Starting Configure CMake with CMake Debugger");
+                                            } else {
+                                                void vscode.window.showInformationMessage("NO");
+                                            }
+                                        });
                                 }
+                                // TODO: possibly put a condition here that checks for failure. If it fails, pop a UI that has a handler that can
+                                // invoke the CMake Configure with Debugger.
 
                                 await this.cTestController.refreshTests(drv, this.useCMakePresets);
                                 this.onReconfiguredEmitter.fire();
