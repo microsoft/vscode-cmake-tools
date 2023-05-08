@@ -23,6 +23,5 @@
     "exclude": [
         "node_modules",
         ".vscode-test",
-        "src/sideBar.ts"
     ]
 }

@@ -32,8 +32,8 @@ import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutlineProvider';
 import * as util from '@cmt/util';
-// import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
-import { ProgressHandle, DummyDisposable, reportProgress } from '@cmt/util';
+import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util'; // re-added
+// import { ProgressHandle, DummyDisposable, reportProgress } from '@cmt/util'; // re-removed
 import { DEFAULT_VARIANTS } from '@cmt/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
@@ -42,23 +42,24 @@ import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
-// import { ProjectStatus } from './sideBar';
+import { ProjectStatus } from './sideBar'; // readded
 import { StatusBar } from '@cmt/status';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
-// export let projectStatus: ProjectStatus;
+export let projectStatus: ProjectStatus; // readded
 
 const log = logging.createLogger('extension');
 
 const multiProjectModeKey = 'cmake:multiProject';
-// export const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
-// export const hideDebugCommandKey = 'cmake:hideDebugCommand';
-// export const hideBuildCommandKey = 'cmake:hideBuildCommand';
-const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
-const hideDebugCommandKey = 'cmake:hideDebugCommand';
-const hideBuildCommandKey = 'cmake:hideBuildCommand';
+export const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
+export const hideDebugCommandKey = 'cmake:hideDebugCommand';
+export const hideBuildCommandKey = 'cmake:hideBuildCommand';
+// re-removed
+// const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
+// const hideDebugCommandKey = 'cmake:hideDebugCommand';
+// const hideBuildCommandKey = 'cmake:hideBuildCommand';
 
 /**
  * The global extension manager. There is only one of these, even if multiple
@@ -169,7 +170,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (this.projectController.hasMultipleProjects) {
                 telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
             }
-            this.statusBar.setAutoSelectActiveProject(v);
+            this.statusBar.setAutoSelectActiveProject(v); //  leave for both?
         });
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
@@ -209,7 +210,9 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     public showStatusBar(fullFeatureSet: boolean) {
-        this.statusBar.setVisible(fullFeatureSet);
+        if (true) { // TODO: set some variable to see what setting they have
+            this.statusBar.setVisible(fullFeatureSet);
+        }
     }
 
     public getStatusBar(): StatusBar {
@@ -234,16 +237,17 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * The status bar controller
      */
-    private readonly statusBar = new StatusBar(this.workspaceConfig);
+    private readonly statusBar = new StatusBar(this.workspaceConfig);       //st
     // Subscriptions for status bar items:
-    private statusMessageSub: vscode.Disposable = new DummyDisposable();
-    private targetNameSub: vscode.Disposable = new DummyDisposable();
-    private buildTypeSub: vscode.Disposable = new DummyDisposable();
-    private launchTargetSub: vscode.Disposable = new DummyDisposable();
-    // private projectSubscriptions: vscode.Disposable[] = [
-    //     this.targetNameSub,
-    //     this.launchTargetSub
-    // ];
+    private statusMessageSub: vscode.Disposable = new DummyDisposable();    //st
+    private targetNameSub: vscode.Disposable = new DummyDisposable();       //both
+    private buildTypeSub: vscode.Disposable = new DummyDisposable();        //st
+    private launchTargetSub: vscode.Disposable = new DummyDisposable();     //both
+    // SideBar
+    private projectSubscriptions: vscode.Disposable[] = [                   //sb
+        this.targetNameSub,
+        this.launchTargetSub
+    ];
     private ctestEnabledSub: vscode.Disposable = new DummyDisposable();
     private isBusySub: vscode.Disposable = new DummyDisposable();
     private activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
@@ -528,7 +532,7 @@ export class ExtensionManager implements vscode.Disposable {
             } else if (!folder) {
                 // When adding a folder but the focus is on somewhere else
                 // Do nothing but make sure we are showing the active folder correctly
-                this.statusBar.update();
+                this.statusBar.update(); //st
             }
         }
     }
@@ -540,7 +544,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (vscode.workspace.workspaceFolders?.length) {
             const selection: CMakeProject | undefined = await this.pickCMakeProject();
             if (selection) {
-                // Ingore if user cancelled
+                // Ignore if user cancelled
                 await this.setActiveProject(selection);
                 telemetry.logEvent("selectactivefolder");
                 const currentActiveFolderPath = this.activeFolderPath();
@@ -569,15 +573,15 @@ export class ExtensionManager implements vscode.Disposable {
 
     // Update the active project
     private async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, editor?: vscode.TextEditor): Promise<void> {
-        // await this.projectController.updateActiveProject(workspaceFolder, editor);
-        this.projectController.updateActiveProject(workspaceFolder, editor);
+        await this.projectController.updateActiveProject(workspaceFolder, editor);
+        // this.projectController.updateActiveProject(workspaceFolder, editor);
         await this.postUpdateActiveProject();
     }
 
     // Update the active project from the staus bar
     private async setActiveProject(project: CMakeProject): Promise<void> {
-        // await this.projectController.setActiveProject(project);
-        this.projectController.setActiveProject(project);
+        await this.projectController.setActiveProject(project);
+        // this.projectController.setActiveProject(project);
         await this.postUpdateActiveProject();
     }
 
@@ -603,7 +607,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private disposeSubs() {
-        // util.disposeAll(this.projectSubscriptions);
+        util.disposeAll(this.projectSubscriptions);
         for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub]) {
             sub.dispose();
         }
@@ -1742,9 +1746,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     }
 
     // Util for the special commands to forward to real commands
-    function runCommand(key: keyof ExtensionManager, ...args: any[]) {
-        return vscode.commands.executeCommand(`cmake.${key}`, ...args);
-    }
+    // function runCommand(key: keyof ExtensionManager, ...args: any[]) {
+    //     return vscode.commands.executeCommand(`cmake.${key}`, ...args);
+    // }
 
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
@@ -1809,7 +1813,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await util.setContextValue("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
-    // projectStatus = new ProjectStatus();
+    projectStatus = new ProjectStatus();
 
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
@@ -1855,8 +1859,9 @@ export async function deactivate() {
     if (taskProvider) {
         taskProvider.dispose();
     }
-    // if (projectStatus) {
-    //     projectStatus.dispose();
+    if (projectStatus) {
+        projectStatus.dispose();
+    }
 }
 
 export function getStatusBar(): StatusBar | undefined {
