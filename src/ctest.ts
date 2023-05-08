@@ -241,14 +241,17 @@ export class CTestDriver implements vscode.Disposable {
         return items;
     };
 
-    private async getCTestArgs(driver: CMakeDriver, useCMakePresets: boolean, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[]> {
+    private async getCTestArgs(driver: CMakeDriver, useCMakePresets: boolean, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[] | undefined> {
         let ctestArgs: string[];
         if (customizedTask && testPreset) {
             ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
         } else if (!customizedTask && useCMakePresets) {
-            // The drv.useCMakePresets is not updated here yet.
             if (!driver.testPreset) {
-                throw(localize('test.preset.not.set', 'Test preset is not set'));
+                await vscode.commands.executeCommand('cmake.selectTestPreset', (await this.projectController?.getProjectForFolder(driver.workspaceFolder))?.workspaceFolder);
+            }
+            if (!driver.testPreset) {
+                // Test explorer doesn't handle errors well, so we need to deal with them ourselves
+                return undefined;
             }
             // Add a few more args so we can show the result in status bar
             ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
@@ -269,6 +272,7 @@ export class CTestDriver implements vscode.Disposable {
         return ctestArgs;
     }
 
+    // The drv.useCMakePresets may not be updated here yet, so we need to pass it in.
     public async runCTest(driver: CMakeDriver, useCMakePresets: boolean, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
@@ -369,6 +373,11 @@ export class CTestDriver implements vscode.Disposable {
                 _ctestArgs = ctestArgs;
             } else {
                 _ctestArgs = await this.getCTestArgs(_driver, useCMakePresets, customizedTask);
+            }
+
+            if (!_ctestArgs) {
+                this.ctestErrored(test, run, { message: localize('ctest.args.not.found', 'Could not get test arguments') });
+                continue;
             }
 
             if (test.children.size > 0) {
@@ -509,18 +518,14 @@ export class CTestDriver implements vscode.Disposable {
             return -2;
         }
 
-        const buildConfigArgs: string[] = [];
-        if (driver.useCMakePresets) {
-            const buildConfig = driver.testPreset?.configuration;
-            if (buildConfig) {
-                buildConfigArgs.push('-C', buildConfig);
-            }
-        } else {
-            buildConfigArgs.push('-C', driver.currentBuildType);
+        const ctestArgs = await this.getCTestArgs(driver, useCMakePresets);
+        if (!ctestArgs) {
+            log.info(localize('ctest.args.not.found', 'Could not get CTest arguments'));
+            return -3;
         }
         if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
             // ctest --show-only=json-v1 was added in CMake 3.14
-            const result = await driver.executeCommand(ctestpath, ['-N', ...buildConfigArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
+            const result = await driver.executeCommand(ctestpath, ['-N', ...ctestArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
             if (result.retc !== 0) {
                 // There was an error running CTest. Odd...
                 log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
@@ -537,7 +542,7 @@ export class CTestDriver implements vscode.Disposable {
                 testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
             }
         } else {
-            const result = await driver.executeCommand(ctestpath, ['--show-only=json-v1', ...buildConfigArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
+            const result = await driver.executeCommand(ctestpath, ['--show-only=json-v1', ...ctestArgs], undefined, { cwd: driver.binaryDir, silent: true }).result;
             if (result.retc !== 0) {
                 // There was an error running CTest. Odd...
                 log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
@@ -644,7 +649,8 @@ export class CTestDriver implements vscode.Disposable {
         const configs = launchConfig.get<vscode.DebugConfiguration[]>('configurations') ?? [];
         const workspaceConfigs = workspaceLaunchConfig?.get<vscode.DebugConfiguration[]>('configurations') ?? [];
         if (configs.length === 0 && workspaceConfigs.length === 0) {
-            throw(localize('no.launch.config', 'No launch configurations found.'));
+            log.error(localize('no.launch.config', 'No launch configurations found.'));
+            return;
         }
 
         interface ConfigItem extends vscode.QuickPickItem {
