@@ -33,7 +33,6 @@ import * as telemetry from '@cmt/telemetry';
 import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutlineProvider';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util'; // re-added
-// import { ProgressHandle, DummyDisposable, reportProgress } from '@cmt/util'; // re-removed
 import { DEFAULT_VARIANTS } from '@cmt/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
@@ -56,10 +55,6 @@ const multiProjectModeKey = 'cmake:multiProject';
 export const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
 export const hideDebugCommandKey = 'cmake:hideDebugCommand';
 export const hideBuildCommandKey = 'cmake:hideBuildCommand';
-// re-removed
-// const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
-// const hideDebugCommandKey = 'cmake:hideDebugCommand';
-// const hideBuildCommandKey = 'cmake:hideBuildCommand';
 
 /**
  * The global extension manager. There is only one of these, even if multiple
@@ -532,7 +527,7 @@ export class ExtensionManager implements vscode.Disposable {
             } else if (!folder) {
                 // When adding a folder but the focus is on somewhere else
                 // Do nothing but make sure we are showing the active folder correctly
-                this.statusBar.update(); //st
+                this.statusBar.update();
             }
         }
     }
@@ -574,14 +569,12 @@ export class ExtensionManager implements vscode.Disposable {
     // Update the active project
     private async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, editor?: vscode.TextEditor): Promise<void> {
         await this.projectController.updateActiveProject(workspaceFolder, editor);
-        // this.projectController.updateActiveProject(workspaceFolder, editor);
         await this.postUpdateActiveProject();
     }
 
     // Update the active project from the staus bar
     private async setActiveProject(project: CMakeProject): Promise<void> {
         await this.projectController.setActiveProject(project);
-        // this.projectController.setActiveProject(project);
         await this.postUpdateActiveProject();
     }
 
@@ -1748,11 +1741,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         log.trace(localize('register.command', 'Register CMakeTools extension command cmake.getSettingsChangePromise'));
         context.subscriptions.push(vscode.commands.registerCommand('cmake.getSettingsChangePromise', () => getSettingsChangePromise()));
     }
-
-    // Util for the special commands to forward to real commands
-    // function runCommand(key: keyof ExtensionManager, ...args: any[]) {
-    //     return vscode.commands.executeCommand(`cmake.${key}`, ...args);
-    // }
 
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling

@@ -94,7 +94,6 @@ export class ProjectController implements vscode.Disposable {
 
     private activeProject: CMakeProject | undefined;
     async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): Promise<void> {
-    // updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): void {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(workspaceFolder);
         if (projects && projects.length > 0) {
             if (openEditor) {
@@ -108,7 +107,6 @@ export class ProjectController implements vscode.Disposable {
                 if (!this.activeProject) {
                     if (util.isFileInsideFolder(openEditor.document.uri, projects[0].workspaceFolder.uri.fsPath)) {
                         await this.setActiveProject(projects[0]);
-                        // this.setActiveProject(projects[0]);
                     }
                 }
                 // If active project is found, return.
@@ -118,16 +116,13 @@ export class ProjectController implements vscode.Disposable {
             } else {
                 // Set a default active project.
                 await this.setActiveProject(projects[0]);
-                // this.setActiveProject(projects[0]);
                 return;
             }
         }
         await this.setActiveProject(undefined);
-        // this.setActiveProject(undefined);
     }
 
     async setActiveProject(project?: CMakeProject): Promise<void> {
-    // setActiveProject(project?: CMakeProject): void {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
         await projectStatus.updateActiveProject(project);
@@ -425,7 +420,6 @@ export class ProjectController implements vscode.Disposable {
                 const cmakeProject: CMakeProject = await CMakeProject.create(workspaceContext, sourceDirectories[i], this, sourceDirectories.length > 1);
                 if (activeProjectPath === cmakeProject.sourceDir) {
                     await this.setActiveProject(cmakeProject);
-                    // this.setActiveProject(cmakeProject);
 
                     activeProjectPath = undefined;
                 }
@@ -436,7 +430,6 @@ export class ProjectController implements vscode.Disposable {
             if (activeProjectPath !== undefined) {
                 // Active project is no longer available. Pick a different one.
                 await this.setActiveProject(projects.length > 0 ? projects[0] : undefined);
-                // this.setActiveProject(projects.length > 0 ? projects[0] : undefined);
 
             }
 
