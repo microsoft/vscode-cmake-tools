@@ -32,7 +32,7 @@ import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline';
 import * as util from '@cmt/util';
-import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util'; // re-added
+import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
@@ -41,13 +41,13 @@ import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
-import { ProjectStatus } from './projectStatus'; // readded
+import { ProjectStatus } from './projectStatus';
 import { StatusBar } from '@cmt/status';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
-export let projectStatus: ProjectStatus; // readded
+export let projectStatus: ProjectStatus;
 
 const log = logging.createLogger('extension');
 

@@ -7,6 +7,9 @@ Bug Fixes:
 - Warning messages are no longer triggered by targets containing "warning" in the file path when running `Tasks: Run Build Task`. [#3118](https://github.com/microsoft/vscode-cmake-tools/issues/3118)
 - Unable to resolve `cmake-tools-schema:/schemas/CMakePresets*.json`. [#2587](https://github.com/microsoft/vscode-cmake-tools/issues/2587) [#3108](https://github.com/microsoft/vscode-cmake-tools/issues/3108)
 
+Features:
+- Add a new UI to show the project status in the side bar. This feature appears and replaces the status bar when `Cmake: Use Project Status View` is toggled `true`. This will be used for A/B testing the views. [PR #3167](https://github.com/microsoft/vscode-cmake-tools/pull/3167)
+
 ## 1.14.30
 Bug Fixes:
 - Fix extension crashes in the test explorer when `cmake.sourceDir` is a subfolder of `${workspaceFolder}`. [#3121](https://github.com/microsoft/vscode-cmake-tools/issues/3121)
