@@ -249,7 +249,7 @@
       },
       {
         "command": "cmake.configureAllWithDebugger",
-        "title": "Configure all with debugger",
+        "title": "%cmake-tools.command.cmake.configureAllWithDebugger.title%",
         "category": "CMake"
       },
       {
@@ -262,7 +262,7 @@
       },
       {
         "command": "cmake.outline.configureAllWithDebugger",
-        "title": "Configure All with Debugger",
+        "title": "%cmake-tools.command.cmake.configureAllWithDebugger.title%",
         "icon": {
           "dark": "res/dark/configure-icon.svg",
           "light": "res/light/configure-icon.svg"
@@ -682,6 +682,17 @@
           }
         }
       }
+    ],
+    "breakpoints": [
+        {
+            "language": "cmake"
+        }
+    ],
+    "debuggers": [
+        {
+            "type": "CMake",
+            "label": "CMake Debugger"
+        }
     ],
     "menus": {
       "commandPalette": [

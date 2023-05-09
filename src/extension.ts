@@ -43,6 +43,7 @@ import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
 import { ProjectStatus } from './projectStatus';
 import { StatusBar } from '@cmt/status';
+import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1080,14 +1081,17 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
-        telemetry.logEvent("configure", { all: "false"});
+        telemetry.logEvent("configure", { all: "false", debug: "false"});
         return this.runCMakeCommand(
             cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
             folder, undefined, true);
     }
 
-    configureWithDebugger() {
-        return vscode.window.showInformationMessage("Starting configure with Cmake debugger");
+    configureWithDebugger(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
+        telemetry.logEvent("configureWithDebugger", { all: "false", debug: "true"});
+        return this.runCMakeCommand(
+            cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureWithDebugging, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugging),
+            folder, undefined, true);
     }
 
     showConfigureCommand(folder?: vscode.WorkspaceFolder) {
@@ -1095,12 +1099,13 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAll() {
-        telemetry.logEvent("configure", { all: "true"});
+        telemetry.logEvent("configure", { all: "true", debug: "false"});
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true);
     }
 
     configureAllWithDebugger() {
-        return vscode.window.showInformationMessage("Starting configure all with CMake Debugger");
+        telemetry.logEvent("configure", { all: "true", debug: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureAllWithDebugging, [], ConfigureType.NormalWithDebugging), undefined, true);
     }
 
     editCacheUI() {
@@ -1659,6 +1664,13 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             return pr;
         });
     }
+
+    context.subscriptions.push(
+        vscode.debug.registerDebugAdapterDescriptorFactory(
+            "CMake",
+            new DebugAdapterNamedPipeServerDescriptorFactory()
+        )
+    );
 
     // List of functions that will be bound commands
     const funs: (keyof ExtensionManager)[] = [

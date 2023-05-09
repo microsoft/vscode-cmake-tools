@@ -111,7 +111,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * @returns The exit code from CMake
      */
-    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: preset.ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number>;
+    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: preset.ConfigurePreset | null, options?: proc.ExecutionOptions, withDebugging?: boolean): Promise<number>;
     protected abstract doCacheConfigure(): Promise<number>;
 
     private _isConfiguredAtLeastOnce = false;
@@ -1282,7 +1282,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<number> {
+    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withDebugging: boolean = false, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<number> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
@@ -1342,7 +1342,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 this._isConfiguredAtLeastOnce = true;
                 return retc;
             } else {
-                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, presetOverride, options);
+                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, presetOverride, options, withDebugging);
                 this._isConfiguredAtLeastOnce = true;
             }
             const timeEnd: number = new Date().getTime();

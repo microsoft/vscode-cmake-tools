@@ -28,6 +28,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import * as nls from 'vscode-nls';
+import { debuggerPipeName, startConfigureDebugger } from '@cmt/debug/debuggerConfigureDriver';
+import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -196,7 +198,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, withDebugging?: boolean): Promise<number> {
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         const api_path = this.getCMakeFileApiPath(binaryDir);
         await createQueryFileForApi(api_path);
@@ -237,6 +239,12 @@ export class CMakeFileApiDriver extends CMakeDriver {
         }
 
         const cmake = this.cmake.path;
+        if (withDebugging) {
+            args.push("--debugger");
+            args.push("--debugger-pipe");
+            args.push(`${debuggerPipeName}`);
+        }
+
         if (showCommandOnly) {
             log.showChannel();
             log.info(proc.buildCmdStr(this.cmake.path, args));
@@ -245,11 +253,19 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
             const env = await this.getConfigureEnvironment(configurePreset, options?.environment);
+
             const child = this.executeCommand(cmake, args, outputConsumer, {
                 environment: env,
                 cwd: options?.cwd ?? binaryDir
             });
             this.configureProcess = child;
+
+            if (withDebugging) {
+                if (outputConsumer instanceof CMakeOutputConsumer) {
+                    await startConfigureDebugger(outputConsumer);
+                }
+            }
+
             const result = await child.result;
             this.configureProcess = null;
             log.trace(result.stderr);

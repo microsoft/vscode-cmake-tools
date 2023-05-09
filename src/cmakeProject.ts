@@ -61,7 +61,8 @@ export enum ConfigureType {
     Normal,
     Clean,
     Cache,
-    ShowCommandOnly
+    ShowCommandOnly,
+    NormalWithDebugging
 }
 
 export enum ConfigureTrigger {
@@ -79,8 +80,10 @@ export enum ConfigureTrigger {
     launch = "launch",
     commandEditCacheUI = "commandEditCacheUI",
     commandConfigure = "commandConfigure",
+    commandConfigureWithDebugging = "commandConfigureWithDebugging",
     commandCleanConfigure = "commandCleanConfigure",
     commandConfigureAll = "commandConfigureAll",
+    commandConfigureAllWithDebugging = "commandConfigureAllWithDebugging",
     commandCleanConfigureAll = "commandCleanConfigureAll",
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
@@ -1319,6 +1322,9 @@ export class CMakeProject {
                                         case ConfigureType.Normal:
                                             result = await drv.configure(trigger, extraArgs, consumer);
                                             break;
+                                        case ConfigureType.NormalWithDebugging:
+                                            result = await drv.configure(trigger, extraArgs, consumer, true);
+                                            break;
                                         case ConfigureType.Clean:
                                             result = await drv.cleanConfigure(trigger, extraArgs, consumer);
                                             break;
@@ -1335,18 +1341,16 @@ export class CMakeProject {
                                 if (result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else {
+                                } else if (result !== 0 && type === ConfigureType.Normal || type === ConfigureType.NormalWithDebugging) {
                                     // TODO: Modify this to have better typed choices than `MessageItem` and call configure with debugger.
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         "Configure failed. Would you like to attempt to configure with the CMake Debugger?",
                                         {},
                                         {title: "Yes"},
                                         {title: "No"})
-                                        .then(choice => {
+                                        .then(async choice => {
                                             if (choice && choice.title === "Yes") {
-                                                void vscode.window.showInformationMessage("Starting Configure CMake with CMake Debugger");
-                                            } else {
-                                                void vscode.window.showInformationMessage("NO");
+                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugging);
                                             }
                                         });
                                 }

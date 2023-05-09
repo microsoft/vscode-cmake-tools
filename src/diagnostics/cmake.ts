@@ -28,6 +28,17 @@ export class CMakeOutputConsumer implements OutputConsumer {
     private readonly _diagnostics = [] as FileDiagnostic[];
 
     /**
+     * The stateful messages that this consumer has accumulated. It will be populated
+     * during calls to `output()` and `error()`.
+     * An example of a "stateful" message is the message that indicates that it is
+     * waiting for a debugger client to connect.
+     */
+    get stateMessages() {
+        return this._stateMessages;
+    }
+    private readonly _stateMessages = [] as string[];
+
+    /**
      * Simply writes the line of output to the log
      * @param line Line of output
      */
@@ -36,6 +47,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
             this.logger.info(line);
         }
         this._parseDiags(line);
+        this._parseStateMessages(line);
     }
 
     /**
@@ -71,6 +83,12 @@ export class CMakeOutputConsumer implements OutputConsumer {
             this.logger.error(line);
         }
         this._parseDiags(line);
+    }
+
+    private _parseStateMessages(line: string) {
+        if (line.includes("Waiting for debugger client to connect...")) {
+            this.stateMessages.push(line);
+        }
     }
 
     private _parseDiags(line: string) {
