@@ -210,7 +210,8 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     public showStatusBar(fullFeatureSet: boolean) {
-        if (true) { // TODO: set some variable to see what setting they have
+        const useProjectStatusView = vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true);
+        if (!useProjectStatusView) {
             this.statusBar.setVisible(fullFeatureSet);
         }
     }
@@ -237,14 +238,13 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * The status bar controller
      */
-    private readonly statusBar = new StatusBar(this.workspaceConfig);       //st
+    private readonly statusBar = new StatusBar(this.workspaceConfig);
     // Subscriptions for status bar items:
-    private statusMessageSub: vscode.Disposable = new DummyDisposable();    //st
-    private targetNameSub: vscode.Disposable = new DummyDisposable();       //both
-    private buildTypeSub: vscode.Disposable = new DummyDisposable();        //st
-    private launchTargetSub: vscode.Disposable = new DummyDisposable();     //both
-    // SideBar
-    private projectSubscriptions: vscode.Disposable[] = [                   //sb
+    private statusMessageSub: vscode.Disposable = new DummyDisposable();
+    private targetNameSub: vscode.Disposable = new DummyDisposable();
+    private buildTypeSub: vscode.Disposable = new DummyDisposable();
+    private launchTargetSub: vscode.Disposable = new DummyDisposable();
+    private projectSubscriptions: vscode.Disposable[] = [
         this.targetNameSub,
         this.launchTargetSub
     ];
@@ -254,7 +254,7 @@ export class ExtensionManager implements vscode.Disposable {
     private activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
     private activeTestPresetSub: vscode.Disposable = new DummyDisposable();
 
-    // Watch the code model so that we may update teh tree view
+    // Watch the code model so that we may update the tree view
     // <fspath, sub>
     private readonly codeModelUpdateSubs = new Map<string, vscode.Disposable[]>();
 
@@ -736,7 +736,11 @@ export class ExtensionManager implements vscode.Disposable {
         } else {
             // this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, target => this.onBuildTargetChangedEmitter.fire(target));
             // this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, target => this.onLaunchTargetChangedEmitter.fire(target || ''));
-            this.statusBar.setVisible(true);
+            if (vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true)) {
+                this.statusBar.setVisible(false);
+            } else {
+                this.statusBar.setVisible(true);
+            }
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
                 this.statusBar.setBuildTargetName(t);

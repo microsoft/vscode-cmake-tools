@@ -2712,15 +2712,17 @@ export class CMakeProject {
     public hideDebugButton: boolean = false;
     public hideLaunchButton: boolean = false;
     doStatusBarChange(statusbar: StatusBarConfig) {
-        if (statusbar.visibility === "hidden") {
-            this.hideBuildButton = true;
-            this.hideDebugButton = true;
-            this.hideLaunchButton = true;
-            return;
+        if (!vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true)) {
+            if (statusbar.visibility === "hidden") {
+                this.hideBuildButton = true;
+                this.hideDebugButton = true;
+                this.hideLaunchButton = true;
+                return;
+            }
+            this.hideBuildButton = (statusbar.advanced?.build?.visibility === "hidden") ? true : false;
+            this.hideDebugButton = (statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
+            this.hideLaunchButton = (statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
         }
-        this.hideBuildButton = (statusbar.advanced?.build?.visibility === "hidden") ? true : false;
-        this.hideDebugButton = (statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
-        this.hideLaunchButton = (statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
     }
 
 }

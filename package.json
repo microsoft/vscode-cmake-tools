@@ -1998,6 +1998,7 @@
           "type": "string",
           "default": "default",
           "description": "%cmake-tools.configuration.cmake.statusbar.visibility.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.markdownDescription%",
           "enum": [
             "default",
             "compact",
@@ -2218,6 +2219,12 @@
             }
           }
         },
+        "cmake.useProjectStatusView": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.useProjectStatusView.description%",
+          "scope": "window"
+        },
         "cmake.additionalKits": {
           "type": "array",
           "default": [],
@@ -2343,7 +2350,7 @@
         {
           "id": "cmake.projectStatus",
           "name": "%cmake-tools.configuration.views.cmake.projectStatus.description%",
-          "when": "cmake:enableFullFeatureSet"
+          "when": "cmake:enableFullFeatureSet && config.cmake.useProjectStatusView != false"
         },
         {
           "id": "cmake.outline",

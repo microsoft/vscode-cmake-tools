@@ -189,6 +189,9 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         } else {
             // Initializing the tree for the first time
             const nodes: Node[] = [];
+            const projectNode = new ProjectNode();
+            await projectNode.initialize();
+            nodes.push(projectNode);
             const configNode = new ConfigNode();
             await configNode.initialize();
             if (this.isBusy) {
@@ -216,9 +219,6 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 await launchNode.initialize();
                 nodes.push(launchNode);
             }
-            const projectNode = new ProjectNode();
-            await projectNode.initialize();
-            nodes.push(projectNode);
             return nodes;
         }
     }
