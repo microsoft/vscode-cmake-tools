@@ -30,7 +30,7 @@ import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutlineProvider';
+import { ProjectOutline, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util'; // re-added
 import { DEFAULT_VARIANTS } from '@cmt/variant';
@@ -41,7 +41,7 @@ import { platform } from 'os';
 import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
-import { ProjectStatus } from './sideBar'; // readded
+import { ProjectStatus } from './projectStatus'; // readded
 import { StatusBar } from '@cmt/status';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -117,7 +117,7 @@ export class ExtensionManager implements vscode.Disposable {
                 await this.initActiveProject();
             }
             await util.setContextValue(multiProjectModeKey, this.projectController.hasMultipleProjects);
-            this.projectOutlineProvider.addFolder(folder);
+            this.projectOutline.addFolder(folder);
             if (this.codeModelUpdateSubs.get(folder.uri.fsPath)) {
                 this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
                 this.codeModelUpdateSubs.delete(folder.uri.fsPath);
@@ -158,7 +158,7 @@ export class ExtensionManager implements vscode.Disposable {
                 await enableFullFeatureSet(this.workspaceHasAtLeastOneProject());
             }
 
-            this.projectOutlineProvider.removeFolder(folder);
+            this.projectOutline.removeFolder(folder);
         });
 
         this.workspaceConfig.onChange('autoSelectActiveFolder', v => {
@@ -180,7 +180,7 @@ export class ExtensionManager implements vscode.Disposable {
             await this.projectController.loadAllProjects();
             isMultiProject = this.projectController.hasMultipleProjects;
             await util.setContextValue(multiProjectModeKey, isMultiProject);
-            this.projectOutlineProvider.addAllCurrentFolders();
+            this.projectOutline.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
             }
@@ -256,9 +256,9 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * The project outline tree data provider
      */
-    private readonly projectOutlineProvider = new ProjectOutlineProvider();
+    private readonly projectOutline = new ProjectOutline();
     private readonly projectOutlineTreeView = vscode.window.createTreeView('cmake.outline', {
-        treeDataProvider: this.projectOutlineProvider,
+        treeDataProvider: this.projectOutline,
         showCollapseAll: true
     });
 
@@ -591,7 +591,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (!useCMakePresets) {
                 this.statusBar.setActiveKitName(activeProject.activeKit?.name || '');
             }
-            this.projectOutlineProvider.setActiveFolder(activeProject.folderPath);
+            this.projectOutline.setActiveFolder(activeProject.folderPath);
             this.setupSubscriptions();
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
             const currentActiveFolderPath = this.activeFolderPath();
@@ -611,7 +611,7 @@ export class ExtensionManager implements vscode.Disposable {
             return;
         }
         const folder: vscode.WorkspaceFolder = cmakeProject.workspaceFolder;
-        this.projectOutlineProvider.updateCodeModel(
+        this.projectOutline.updateCodeModel(
             cmakeProject.workspaceContext.folder,
             cmakeProject.codeModelContent,
             {
@@ -679,7 +679,7 @@ export class ExtensionManager implements vscode.Disposable {
                 } else if (drv && drv.codeModelContent) {
                     codeModelContent = drv.codeModelContent;
                     this.configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmakeProject.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmakeProject.folderPath });
-                    this.projectOutlineProvider.updateCodeModel(
+                    this.projectOutline.updateCodeModel(
                         cmakeProject.workspaceContext.folder,
                         codeModelContent,
                         {
