@@ -161,7 +161,7 @@
     },
     "cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Enables a change in color for this button depending on test results.",
     "cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configures the maximum length of visible text in 'compact' mode.",
-    "cmake-tools.configuration.cmake.useProjectStatusView.description": "Enables the Project Status view in the side bar and hides the status bar buttons.",
+    "cmake-tools.configuration.cmake.useProjectStatusView.description": "Enables the Project Status view in the CMake side panel and hides the status bar buttons.",
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.projectStatus.description": "Project Status",
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
