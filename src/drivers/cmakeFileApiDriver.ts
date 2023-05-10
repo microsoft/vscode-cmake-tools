@@ -198,7 +198,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, withDebugging?: boolean): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, withDebugger?: boolean): Promise<number> {
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         const api_path = this.getCMakeFileApiPath(binaryDir);
         await createQueryFileForApi(api_path);
@@ -239,7 +239,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         }
 
         const cmake = this.cmake.path;
-        if (withDebugging) {
+        if (withDebugger) {
             args.push("--debugger");
             args.push("--debugger-pipe");
             args.push(`${debuggerPipeName}`);
@@ -260,7 +260,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             });
             this.configureProcess = child;
 
-            if (withDebugging) {
+            if (withDebugger) {
                 if (outputConsumer instanceof CMakeOutputConsumer) {
                     await startConfigureDebugger(outputConsumer);
                 }

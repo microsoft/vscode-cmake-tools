@@ -62,7 +62,8 @@ export enum ConfigureType {
     Clean,
     Cache,
     ShowCommandOnly,
-    NormalWithDebugging
+    NormalWithDebugger,
+    CleanWithDebugger
 }
 
 export enum ConfigureTrigger {
@@ -80,11 +81,13 @@ export enum ConfigureTrigger {
     launch = "launch",
     commandEditCacheUI = "commandEditCacheUI",
     commandConfigure = "commandConfigure",
-    commandConfigureWithDebugging = "commandConfigureWithDebugging",
+    commandConfigureWithDebugger = "commandConfigureWithDebugger",
     commandCleanConfigure = "commandCleanConfigure",
+    commandCleanConfigureWithDebugger = "commandCleanConfigureWithDebugger",
     commandConfigureAll = "commandConfigureAll",
-    commandConfigureAllWithDebugging = "commandConfigureAllWithDebugging",
+    commandConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
     commandCleanConfigureAll = "commandCleanConfigureAll",
+    commandCleanConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
     selectKit = "selectKit"
@@ -1322,11 +1325,14 @@ export class CMakeProject {
                                         case ConfigureType.Normal:
                                             result = await drv.configure(trigger, extraArgs, consumer);
                                             break;
-                                        case ConfigureType.NormalWithDebugging:
+                                        case ConfigureType.NormalWithDebugger:
                                             result = await drv.configure(trigger, extraArgs, consumer, true);
                                             break;
                                         case ConfigureType.Clean:
                                             result = await drv.cleanConfigure(trigger, extraArgs, consumer);
+                                            break;
+                                        case ConfigureType.CleanWithDebugger:
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, true);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
                                             result = await drv.configure(trigger, extraArgs, consumer, undefined, true);
@@ -1341,7 +1347,7 @@ export class CMakeProject {
                                 if (result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result !== 0 && type === ConfigureType.Normal || type === ConfigureType.NormalWithDebugging) {
+                                } else if (result !== 0) {
                                     // TODO: Modify this to have better typed choices than `MessageItem` and call configure with debugger.
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         "Configure failed. Would you like to attempt to configure with the CMake Debugger?",
@@ -1350,7 +1356,7 @@ export class CMakeProject {
                                         {title: "No"})
                                         .then(async choice => {
                                             if (choice && choice.title === "Yes") {
-                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugging);
+                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugger);
                                             }
                                         });
                                 }
@@ -1380,7 +1386,7 @@ export class CMakeProject {
     }
 
     /**
-     * Implementation of `cmake.cleanConfigure()
+     * Implementation of `cmake.cleanConfigure()`
      * trigger: describes the circumstance that caused this configure to be run.
      *          In order to avoid a breaking change in the CMake Tools API,
      *          this parameter can default to that scenario.
@@ -1389,6 +1395,18 @@ export class CMakeProject {
      */
     cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) {
         return this.configureInternal(trigger, [], ConfigureType.Clean);
+    }
+
+    /**
+     * Implementation of `cmake.cleanConfigureWithDebugger()`
+     * trigger: describes the circumstance that caused this configure to be run.
+     *          In order to avoid a breaking change in the CMake Tools API,
+     *          this parameter can default to that scenario.
+     *          All other configure calls in this extension are able to provide
+     *          proper trigger information.
+     */
+    cleanConfigureWithDebugger(trigger: ConfigureTrigger = ConfigureTrigger.api) {
+        return this.configureInternal(trigger, [], ConfigureType.CleanWithDebugger);
     }
 
     /**

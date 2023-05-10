@@ -216,7 +216,7 @@
       },
       {
         "command": "cmake.configureWithDebugger",
-        "title": "Configure with CMake Debugger",
+        "title": "%cmake-tools.command.cmake.configureWithDebugger.title%",
         "category": "CMake"
       },
       {
@@ -228,6 +228,7 @@
         }
       },
       {
+
         "command": "cmake.projectStatus.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
         "icon": {
@@ -236,6 +237,11 @@
         },
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.configureWithDebugger",
+        "title": "%cmake-tools.command.cmake.configureWithDebugger.title%",
+        "icon": "$(debug)"
       },
       {
         "command": "cmake.showConfigureCommand",
@@ -389,6 +395,15 @@
         "title": "%cmake-tools.command.cmake.outline.cleanConfigure.title%"
       },
       {
+        "command": "cmake.cleanConfigureWithDebugger",
+        "title": "%cmake-tools.command.cmake.cleanConfigureWithDebugger.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.cleanConfigureWithDebugger",
+        "title": "%cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title%"
+      },
+      {
         "command": "cmake.cleanConfigureAll",
         "title": "%cmake-tools.command.cmake.cleanConfigureAll.title%",
         "category": "CMake"
@@ -396,6 +411,15 @@
       {
         "command": "cmake.outline.cleanConfigureAll",
         "title": "%cmake-tools.command.cmake.outline.cleanConfigureAll.title%"
+      },
+      {
+        "command": "cmake.cleanConfigureAllWithDebugger",
+        "title": "%cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.cleanConfigureAllWithDebugger",
+        "title": "%cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title%"
       },
       {
         "command": "cmake.clean",
@@ -729,6 +753,9 @@
           "command": "cmake.configure"
         },
         {
+            "command": "cmake.configureWithDebugger"
+        },
+        {
           "command": "cmake.showConfigureCommand"
         },
         {
@@ -759,6 +786,10 @@
         },
         {
           "command": "cmake.configureAll",
+          "when": "cmake:multiProject"
+        },
+        {
+          "command": "cmake.configureAllWithDebugger",
           "when": "cmake:multiProject"
         },
         {
@@ -806,6 +837,13 @@
         },
         {
           "command": "cmake.cleanConfigureAll",
+          "when": "cmake:multiProject"
+        },
+        {
+          "command": "cmake.cleanConfigureWithDebugger"
+        },
+        {
+          "command": "cmake.cleanConfigureAllWithDebugger",
           "when": "cmake:multiProject"
         },
         {
@@ -889,6 +927,14 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.configureWithDebugger",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.configureAllWithDebugger",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.build",
           "when": "never"
         },
@@ -910,6 +956,14 @@
         },
         {
           "command": "cmake.outline.cleanConfigureAll",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureWithDebugger",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
           "when": "never"
         },
         {
@@ -1081,6 +1135,11 @@
           "group": "1_cmakeOutline"
         },
         {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
+          "when": "view == cmake.outline",
+          "group": "1_cmakeOutline"
+        },
+        {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet",
           "group": "1_cmakeOutline"
@@ -1238,6 +1297,11 @@
           "group": "1_fileActions@5"
         },
         {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@5"
+        },
+        {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
           "group": "1_fileActions@6"
@@ -1317,6 +1381,10 @@
         },
         {
           "command": "cmake.outline.cleanConfigureAll",
+          "when": "resourceFilename == CMakeLists.txt"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
           "when": "resourceFilename == CMakeLists.txt"
         },
         {
