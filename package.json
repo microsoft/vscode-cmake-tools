@@ -263,10 +263,7 @@
       {
         "command": "cmake.outline.configureAllWithDebugger",
         "title": "%cmake-tools.command.cmake.configureAllWithDebugger.title%",
-        "icon": {
-          "dark": "res/dark/configure-icon.svg",
-          "light": "res/light/configure-icon.svg"
-        }
+        "icon": "$(debug)"
       },
       {
         "command": "cmake.build",
