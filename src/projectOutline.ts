@@ -103,15 +103,15 @@ function collapseTreeInplace<T>(tree: PathedTree<T>): void {
 function iconForTargetType(type: codeModel.TargetTypeString): string {
     switch (type) {
         case 'EXECUTABLE':
-            return '$(file-binary)';
+            return 'file-binary';
         case 'MODULE_LIBRARY':
         case 'SHARED_LIBRARY':
         case 'OBJECT_LIBRARY':
         case 'INTERFACE_LIBRARY':
         case 'STATIC_LIBRARY':
-            return '$(library)';
+            return 'library';
         case 'UTILITY':
-            return '$(tools)';
+            return 'tools';
     }
 }
 
@@ -302,7 +302,7 @@ export class TargetNode extends BaseNode {
             if (this._isDefault) {
                 item.tooltip += ` [${localize('default.tooltip', 'default')}]`;
             }
-            item.iconPath = iconForTargetType(this._type);
+            item.iconPath = new vscode.ThemeIcon(iconForTargetType(this._type));
             item.id = this.id;
             const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
             const canRun = this._type === 'UTILITY';
