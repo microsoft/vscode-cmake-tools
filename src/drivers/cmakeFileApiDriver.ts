@@ -260,6 +260,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
             });
             this.configureProcess = child;
 
+            // TODO: Before PR'ing and merging, I should add implementation to invoke cmake under the hood with the "-E capabilities" flag
+            // in order to test whether the debugger capabilities are available in their version of cmake.
             if (withDebugger) {
                 if (outputConsumer instanceof CMakeOutputConsumer) {
                     await startConfigureDebugger(outputConsumer);
