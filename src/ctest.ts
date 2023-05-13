@@ -570,6 +570,20 @@ export class CTestDriver implements vscode.Disposable {
         return 0;
     }
 
+    clearTests(driver: CMakeDriver) {
+        if (!testExplorer) {
+            return;
+        }
+        const sourceDir = util.platformNormalizePath(driver.sourceDir);
+        const testExplorerRoot = testExplorer.items.get(sourceDir);
+        if (!testExplorerRoot) {
+            log.error(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
+            return;
+        }
+        // Clear all children and re-add later
+        testExplorerRoot.children.replace([]);
+    }
+
     /**
      * Filters out duplicate tests, i.e., both the parent and child are requested
      */

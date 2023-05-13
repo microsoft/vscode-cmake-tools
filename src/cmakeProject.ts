@@ -818,7 +818,7 @@ export class CMakeProject {
 
         await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
         this.targetName.set(this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
-        await this.cTestController.refreshTests(drv, this.useCMakePresets);
+        this.cTestController.clearTests(drv);
 
         // All set up. Fulfill the driver promise.
         return drv;
