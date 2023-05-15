@@ -580,7 +580,6 @@ export class CTestDriver implements vscode.Disposable {
             log.error(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
             return;
         }
-        // Clear all children and re-add later
         testExplorerRoot.children.replace([]);
     }
 
