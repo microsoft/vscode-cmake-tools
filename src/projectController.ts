@@ -467,9 +467,9 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private async doProjectStatusChange(useProjectStatusView: boolean): Promise<void> {
-        const statusBar: StatusBar | undefined = getStatusBar();
-        if (statusBar) {
-            statusBar.setVisible(!useProjectStatusView);
+        const statusbar: StatusBar | undefined = getStatusBar();
+        if (statusbar) {
+            statusbar.setVisible(!useProjectStatusView);
         }
     }
 

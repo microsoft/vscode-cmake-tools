@@ -150,9 +150,13 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         // Use project to create the tree
         if (cmakeProject) {
             this.activeCMakeProject = cmakeProject;
-            this.isBuildButtonHidden = cmakeProject.hideBuildButton;
-            this.isDebugButtonHidden = cmakeProject.hideDebugButton;
-            this.isLaunchButtonHidden = cmakeProject.hideLaunchButton;
+            // this.isBuildButtonHidden = cmakeProject.hideBuildButton;
+            // this.isDebugButtonHidden = cmakeProject.hideDebugButton;
+            // this.isLaunchButtonHidden = cmakeProject.hideLaunchButton;
+            // temporary to not allow status bar settings to affect side bar view
+            this.isBuildButtonHidden = false;
+            this.isDebugButtonHidden = false;
+            this.isLaunchButtonHidden = false;
         } else {
             this.isBuildButtonHidden = false;
             this.isDebugButtonHidden = false;
@@ -224,24 +228,25 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     }
 
     public async doStatusBarChange() {
-        let didChange: boolean = false;
-        if (this.activeCMakeProject) {
-            if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
-                didChange = true;
-                this.isBuildButtonHidden = this.activeCMakeProject.hideBuildButton;
-            }
-            if (this.isDebugButtonHidden !== this.activeCMakeProject.hideDebugButton) {
-                didChange = true;
-                this.isDebugButtonHidden = this.activeCMakeProject.hideDebugButton;
-            }
-            if (this.isLaunchButtonHidden !== this.activeCMakeProject.hideLaunchButton) {
-                didChange = true;
-                this.isLaunchButtonHidden = this.activeCMakeProject.hideLaunchButton;
-            }
-            if (didChange) {
-                await this.refresh();
-            }
-        }
+        // temporary change to prevent status bar settings from affecting side bar
+        // let didChange: boolean = false;
+        // if (this.activeCMakeProject) {
+        //     if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
+        //         didChange = true;
+        //         this.isBuildButtonHidden = this.activeCMakeProject.hideBuildButton;
+        //     }
+        //     if (this.isDebugButtonHidden !== this.activeCMakeProject.hideDebugButton) {
+        //         didChange = true;
+        //         this.isDebugButtonHidden = this.activeCMakeProject.hideDebugButton;
+        //     }
+        //     if (this.isLaunchButtonHidden !== this.activeCMakeProject.hideLaunchButton) {
+        //         didChange = true;
+        //         this.isLaunchButtonHidden = this.activeCMakeProject.hideLaunchButton;
+        //     }
+        //     if (didChange) {
+        //         await this.refresh();
+        //     }
+        // }
     }
 
     public async hideBuildButton(isHidden: boolean) {
@@ -582,7 +587,7 @@ class BuildPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = treeDataProvider.cmakeProject.buildPreset?.name || noBuildPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName ?? treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
         if (this.label === preset.defaultBuildPreset.name) {
             this.label = preset.defaultBuildPreset.displayName;
         }
@@ -595,7 +600,7 @@ class BuildPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = treeDataProvider.cmakeProject.buildPreset?.name || noBuildPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName ?? treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
     }
 }
 
@@ -605,7 +610,7 @@ class TestPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = treeDataProvider.cmakeProject.testPreset?.name || noTestPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName ?? treeDataProvider.cmakeProject.testPreset?.name) || noTestPresetSelected;
         if (this.label === preset.defaultTestPreset.name) {
             this.label = preset.defaultTestPreset.displayName;
         }
@@ -618,7 +623,7 @@ class TestPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = treeDataProvider.cmakeProject.testPreset?.name  || noTestPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName ?? treeDataProvider.cmakeProject.testPreset?.name)  || noTestPresetSelected;
     }
 }
 

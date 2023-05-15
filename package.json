@@ -1998,7 +1998,7 @@
           "type": "string",
           "default": "default",
           "description": "%cmake-tools.configuration.cmake.statusbar.visibility.description%",
-          "markdownDescription": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.markdownDescription%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.statusbar.visibility.markdownDescription%",
           "enum": [
             "default",
             "compact",
@@ -2011,6 +2011,7 @@
           "type": "object",
           "default": {},
           "description": "%cmake-tools.configuration.cmake.statusbar.advanced.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.statusbar.advanced.markdownDescription%",
           "properties": {
             "configurePreset": {
               "type": "object",
