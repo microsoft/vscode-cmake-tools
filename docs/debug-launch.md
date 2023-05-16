@@ -154,6 +154,10 @@ The value of the `program` attribute is expanded by CMake Tools to be the absolu
 ## Debugging tests
 
 You can also construct launch.json configurations that allow you to debug tests in the Test Explorer.
+
+> **Note:**
+> These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
+
 The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, and `cmake.testArgs` for 
 the `args` field.
 
