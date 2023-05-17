@@ -534,6 +534,11 @@ export class CMakeProject {
         await this.reloadCMakeDriver();
     });
 
+    private readonly cmakePathSub = this.workspaceContext.config.onChange('cmakePath', async () => {
+        // Force re-reading of cmake exe, this will ensure that the debugger capabilities are updated.
+        await this.getCMakeExecutable();
+    });
+
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
      */
@@ -573,7 +578,12 @@ export class CMakeProject {
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
-        for (const sub of [this.generatorSub, this.preferredGeneratorsSub, this.communicationModeSub]) {
+        for (const sub of [
+            this.generatorSub,
+            this.preferredGeneratorsSub,
+            this.communicationModeSub,
+            this.cmakePathSub
+        ]) {
             sub.dispose();
         }
         this.kitsController.dispose();
@@ -1347,7 +1357,7 @@ export class CMakeProject {
                                 if (result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result !== 0) {
+                                } else if (result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported) {
                                     // TODO: Modify this to have better typed choices than `MessageItem` and call configure with debugger.
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         "Configure failed. Would you like to attempt to configure with the CMake Debugger?",

@@ -1,11 +1,13 @@
 import * as proc from '../proc';
 import * as util from '../util';
+import * as vscode from "vscode";
 
 export interface CMakeExecutable {
     path: string;
     isPresent: boolean;
     isServerModeSupported?: boolean;
     isFileApiModeSupported?: boolean;
+    isDebuggerSupported?: boolean;
     version?: util.Version;
     minimalServerModeVersion: util.Version;
     minimalFileApiModeVersion: util.Version;
@@ -43,6 +45,17 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
                 // Support for new file based API, it replace the server mode
                 cmake.isFileApiModeSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalFileApiModeVersion);
                 cmake.isPresent = true;
+            }
+            const debuggerPresent = await proc.execute(path, ['-E', 'capabilities']).result;
+            if (debuggerPresent.retc === 0 && debuggerPresent.stdout) {
+                console.assert(debuggerPresent.stdout);
+                const stdoutJson = JSON.parse(debuggerPresent.stdout);
+                cmake.isDebuggerSupported = stdoutJson["debugger"];
+                await vscode.commands.executeCommand(
+                    "setContext",
+                    "vscode-cmake-tools.cmakeDebuggerAvailable",
+                    String(cmake.isDebuggerSupported?.valueOf()) ?? "false"
+                );
             }
         } catch {
         }
