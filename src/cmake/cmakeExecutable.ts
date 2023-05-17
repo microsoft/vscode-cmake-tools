@@ -28,7 +28,13 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     if (path && path.length !== 0) {
         const normalizedPath = util.platformNormalizePath(path);
         if (cmakeInfo.has(normalizedPath)) {
-            return cmakeInfo.get(normalizedPath)!;
+            const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
+            await vscode.commands.executeCommand(
+                "setContext",
+                "vscode-cmake-tools.cmakeDebuggerAvailable",
+                String(cmakeExe.isDebuggerSupported?.valueOf()) ?? "false"
+            );
+            return cmakeExe;
         }
 
         try {

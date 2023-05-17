@@ -719,7 +719,7 @@
     ],
     "debuggers": [
         {
-            "type": "CMake",
+            "type": "cmake",
             "label": "CMake Debugger"
         }
     ],

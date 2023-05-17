@@ -1677,7 +1677,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
 
     context.subscriptions.push(
         vscode.debug.registerDebugAdapterDescriptorFactory(
-            "CMake",
+            "cmake",
             new DebugAdapterNamedPipeServerDescriptorFactory()
         )
     );

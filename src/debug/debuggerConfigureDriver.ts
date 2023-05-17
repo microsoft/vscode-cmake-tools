@@ -21,6 +21,6 @@ export async function startConfigureDebugger(outputConsumer: CMakeOutputConsumer
     await vscode.debug.startDebugging(undefined, {
         name: "Test CMake Debugger",
         request: "launch",
-        type: "CMake"
+        type: "cmake"
     });
 }
