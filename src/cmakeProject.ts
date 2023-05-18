@@ -2468,7 +2468,7 @@ export class CMakeProject {
 
         const type = targetType.label;
         const lang = targetLang.label;
-        const langName = lang === "C++" ? "CXX" : "C";
+        const langName = lang === "C++" ? "C CXX" : "C";
         const langExt  = lang === "C++" ? "cpp" : "c";
 
         const init = [
