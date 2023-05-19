@@ -2439,6 +2439,21 @@ export class CMakeProject {
             return -1;
         }
 
+        const targetLang = (await vscode.window.showQuickPick([
+            {
+                label: 'C++',
+                description: localize('create.cpp', 'Create a C++ project')
+            },
+            {
+                label: 'C',
+                description: localize('create.c', 'Create a C project')
+            }
+        ]));
+
+        if (!targetLang) {
+            return -1;
+        }
+
         const targetType = (await vscode.window.showQuickPick([
             {
                 label: 'Library',
@@ -2452,16 +2467,19 @@ export class CMakeProject {
         }
 
         const type = targetType.label;
+        const lang = targetLang.label;
+        const langName = lang === "C++" ? "C CXX" : "C";
+        const langExt  = lang === "C++" ? "cpp" : "c";
 
         const init = [
             'cmake_minimum_required(VERSION 3.0.0)',
-            `project(${projectName} VERSION 0.1.0)`,
+            `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
             '',
             'include(CTest)',
             'enable_testing()',
             '',
-            type === 'Library' ? `add_library(${projectName} ${projectName}.cpp)`
-                : `add_executable(${projectName} main.cpp)`,
+            type === 'Library' ? `add_library(${projectName} ${projectName}.${langExt})`
+                : `add_executable(${projectName} main.${langExt})`,
             '',
             'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
             'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
@@ -2470,26 +2488,47 @@ export class CMakeProject {
         ].join('\n');
 
         if (type === 'Library') {
-            if (!(await fs.exists(path.join(this.sourceDir, projectName + '.cpp')))) {
-                await fs.writeFile(path.join(this.sourceDir, projectName + '.cpp'), [
-                    '#include <iostream>',
-                    '',
-                    'void say_hello(){',
-                    `    std::cout << "Hello, from ${projectName}!\\n";`,
-                    '}',
-                    ''
-                ].join('\n'));
+            if (!(await fs.exists(path.join(this.sourceDir, `${projectName}.${langExt}`)))) {
+                await fs.writeFile(path.join(this.sourceDir, `${projectName}.${langExt}`),
+                    (lang === "C++" ?
+                        ([
+                            '#include <iostream>',
+                            '',
+                            'void say_hello(){',
+                            `    std::cout << "Hello, from ${projectName}!\\n";`,
+                            '}',
+                            ''
+                        ]) :
+                        ([
+                            '#include <stdio.h>',
+                            '',
+                            'void say_hello(){',
+                            `    printf("Hello, from ${projectName}!\\n");`,
+                            '}',
+                            ''
+                        ])).join('\n'));
             }
         } else {
-            if (!(await fs.exists(path.join(this.sourceDir, 'main.cpp')))) {
-                await fs.writeFile(path.join(this.sourceDir, 'main.cpp'), [
-                    '#include <iostream>',
-                    '',
-                    'int main(int, char**) {',
-                    '    std::cout << "Hello, world!\\n";',
-                    '}',
-                    ''
-                ].join('\n'));
+            if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
+                await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
+                    (lang === "C++" ?
+                        ([
+                            '#include <iostream>',
+                            '',
+                            'int main(int, char**){',
+                            `    std::cout << "Hello, from ${projectName}!\\n";`,
+                            '}',
+                            ''
+                        ]) :
+                        ([
+                            '#include <stdio.h>',
+                            '',
+                            'int main(int, char**){',
+                            `    printf("Hello, from ${projectName}!\\n");`,
+                            '}',
+                            ''
+                        ])
+                    ).join('\n'));
             }
         }
         await fs.writeFile(mainListFile, init);
