@@ -26,7 +26,7 @@ export class ProjectStatus {
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (node: Node) => {
                 await runCommand('selectKit');
-                await this.refresh(node);
+                await this.refresh();
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectConfigurePreset', async (node: Node) => {
                 await runCommand('selectConfigurePreset');
@@ -229,7 +229,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
 
     public async doStatusBarChange() {
         // temporary change to prevent status bar settings from affecting side bar
-        const didChange: boolean = false;
+        // let didChange: boolean = false;
         // if (this.activeCMakeProject) {
         //     if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
         //         didChange = true;
