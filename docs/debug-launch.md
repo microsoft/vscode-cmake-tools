@@ -113,13 +113,81 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
 }
 
 ```
+### ctest
+```jsonc
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(ctest) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            // Resolved by CMake Tools:
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    // add the directory where our target was built to the PATHs
+                    // it gets resolved by CMake Tools:
+                    "name": "PATH",
+                    "value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
+                },
+                {
+                    "name": "OTHER_VALUE",
+                    "value": "Something something"
+                }
+            ],
+            "console": "externalTerminal"
+        }
+    ]
+}
 
-
+```
 
 The value of the `program` attribute is expanded by CMake Tools to be the absolute path of the program to run.
 
 > **Note:**
 > You must successfully [configure](configure.md) before `cmake.launchTargetPath` and `cmake.getLaunchTargetDirectory` will resolve correctly.
+
+## Debugging tests
+
+You can also construct launch.json configurations that allow you to debug tests in the Test Explorer.
+
+> **Note:**
+> These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
+
+The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, and `cmake.testArgs` for 
+the `args` field.
+
+A couple of examples:
+
+### gdb
+```jsonc
+{
+    "name": "(ctest) Launch",
+    "type": "cppdbg",
+    "cwd": "${workspaceFolder}",
+    "request": "launch",
+    // Resolved by CMake Tools:
+    "program": "${cmake.testProgram}",
+    "args": [ "${cmake.testArgs}"],
+}
+```
+### msvc
+```jsonc
+{
+    "name": "(ctest) Launch",
+    "type": "cppvsdbg",
+    "request": "launch",
+    // Resolved by CMake Tools:
+    "program": "${cmake.testProgram}",
+    "args": [ "${cmake.testArgs}"],
+}
+```
+
+Depending on your configuration or your settings, there may need to be additional configuration options set.
 
 ## Run without debugging
 
