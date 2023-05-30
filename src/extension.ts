@@ -165,7 +165,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (this.projectController.hasMultipleProjects) {
                 telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
             }
-            this.statusBar.setAutoSelectActiveProject(v); //  leave for both?
+            this.statusBar.setAutoSelectActiveProject(v);
         });
         this.workspaceConfig.onChange('useProjectStatusView', v => {
             telemetry.logEvent('configChanged.useProjectStatusView', { useProjectStatusView: `${v}`});

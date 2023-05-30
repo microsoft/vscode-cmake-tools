@@ -100,7 +100,6 @@ export class ProjectController implements vscode.Disposable {
                 for (const project of projects) {
                     if (util.isFileInsideFolder(openEditor.document.uri, project.folderPath)) {
                         await this.setActiveProject(project);
-                        // this.setActiveProject(project);
                         break;
                     }
                 }

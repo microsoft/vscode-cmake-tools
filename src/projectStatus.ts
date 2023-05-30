@@ -229,7 +229,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
 
     public async doStatusBarChange() {
         // temporary change to prevent status bar settings from affecting side bar
-        // let didChange: boolean = false;
+        const didChange: boolean = false;
         // if (this.activeCMakeProject) {
         //     if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
         //         didChange = true;
@@ -243,9 +243,9 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         //         didChange = true;
         //         this.isLaunchButtonHidden = this.activeCMakeProject.hideLaunchButton;
         //     }
-        //     if (didChange) {
-        //         await this.refresh();
-        //     }
+        // if (didChange) {
+        //     await this.refresh();
+        // }
         // }
     }
 

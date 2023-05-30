@@ -1450,7 +1450,7 @@ export class CMakeProject {
             return drv.allTargetName;
         } else {
             if (!this.useCMakePresets && !this.activeKit) {
-                return localize('building.status', '[N/A - Select Kit]');
+                return localize('targets.status', '[N/A - Select Kit]');
             }
             return '';
         }
