@@ -138,6 +138,8 @@
 	"cmakelists.already.configured": "已設定 CMakeLists.txt！",
 	"new.project.name": "輸入新專案的名稱",
 	"project.name.required": "專案名稱為必要項",
+	"create.cpp": "建立 C++ 專案",
+	"create.c": "建立 C 專案",
 	"create.library": "建立程式庫",
 	"create.executable": "建立可執行檔"
 }

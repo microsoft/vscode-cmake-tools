@@ -138,6 +138,8 @@
 	"cmakelists.already.configured": "CMakeLists.txt dosyası zaten yapılandırılmış!",
 	"new.project.name": "Yeni proje için bir ad girin",
 	"project.name.required": "Bir proje adı gereklidir",
+	"create.cpp": "C++ projesi oluşturun",
+	"create.c": "C projesi oluşturun",
 	"create.library": "Kitaplık oluştur",
 	"create.executable": "Yürütülebilir dosya oluştur"
 }

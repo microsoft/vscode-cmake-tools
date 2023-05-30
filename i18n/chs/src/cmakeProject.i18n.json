@@ -138,6 +138,8 @@
 	"cmakelists.already.configured": "已配置 CMakeLists.txt！",
 	"new.project.name": "输入新项目的名称",
 	"project.name.required": "必须提供项目名称",
+	"create.cpp": "创建 C++ 项目",
+	"create.c": "创建 C 项目",
 	"create.library": "创建库",
 	"create.executable": "创建可执行文件"
 }
