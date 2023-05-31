@@ -138,6 +138,8 @@
 	"cmakelists.already.configured": "Um CMakeLists.txt já está configurado!",
 	"new.project.name": "Inserir um nome para o novo projeto",
 	"project.name.required": "Um nome de projeto é necessário",
+	"create.cpp": "Criar um projeto C++",
+	"create.c": "Criar um projeto C",
 	"create.library": "Criar uma biblioteca",
 	"create.executable": "Criar um executável"
 }
