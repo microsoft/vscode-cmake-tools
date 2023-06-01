@@ -1,6 +1,6 @@
 # What's New?
 
-## 1.15.0
+## 1.14.32
 Features:
 - Add a new UI to show the project status in the side bar. This feature appears and replaces the status bar when `Cmake: Use Project Status View` is toggled `true`. This will be used for A/B testing the views. [PR #3167](https://github.com/microsoft/vscode-cmake-tools/pull/3167)
 
