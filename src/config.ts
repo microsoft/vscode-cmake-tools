@@ -139,6 +139,7 @@ export interface ExtensionConfigurationSettings {
     additionalKits: string[];
     touchbar: TouchBarConfig;
     statusbar: StatusBarConfig;
+    useProjectStatusView: boolean;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
     allowUnsupportedPresetsVersions: boolean;
@@ -446,8 +447,13 @@ export class ConfigurationReader implements vscode.Disposable {
     get touchbar(): TouchBarConfig {
         return this.configData.touchbar;
     }
+
     get statusbar() {
         return this.configData.statusbar;
+    }
+
+    get useProjectStatusView(): boolean {
+        return this.configData.useProjectStatusView;
     }
 
     get launchBehavior(): string {
@@ -509,6 +515,7 @@ export class ConfigurationReader implements vscode.Disposable {
         additionalKits: new vscode.EventEmitter<string[]>(),
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
         statusbar: new vscode.EventEmitter<StatusBarConfig>(),
+        useProjectStatusView: new vscode.EventEmitter<boolean>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),

@@ -511,7 +511,7 @@ export class WorkspaceFolderNode extends BaseNode {
     }
 }
 
-export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode> {
+export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
     private readonly _changeEvent = new vscode.EventEmitter<BaseNode | null>();
     get onDidChangeTreeData() {
         return this._changeEvent.event;

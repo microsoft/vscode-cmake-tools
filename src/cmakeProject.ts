@@ -885,11 +885,9 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
-
         this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
         this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
         this.hideLaunchButton = (this.workspaceContext.config.statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
-
         // Start up the variant manager
         await this.variantManager.initialize(this.folderName);
         // Set the status bar message
@@ -1451,6 +1449,9 @@ export class CMakeProject {
         if (drv) {
             return drv.allTargetName;
         } else {
+            if (!this.useCMakePresets && !this.activeKit) {
+                return localize('targets.status', '[N/A - Select Kit]');
+            }
             return '';
         }
     }
@@ -2761,7 +2762,6 @@ export class CMakeProject {
         this.hideDebugButton = (statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
         this.hideLaunchButton = (statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
     }
-
 }
 
 export default CMakeProject;

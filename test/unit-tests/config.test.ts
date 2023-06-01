@@ -60,6 +60,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             advanced: {},
             visibility: "default"
         },
+        useProjectStatusView: true,
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
         allowUnsupportedPresetsVersions: false,
