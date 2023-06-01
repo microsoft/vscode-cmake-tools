@@ -208,7 +208,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     public showStatusBar(fullFeatureSet: boolean) {
-        const useProjectStatusView = vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true);
+        const useProjectStatusView = this.workspaceConfig.useProjectStatusView;
         if (!useProjectStatusView) {
             this.statusBar.setVisible(fullFeatureSet);
         }

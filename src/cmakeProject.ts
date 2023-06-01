@@ -2748,9 +2748,9 @@ export class CMakeProject {
         return this.onUseCMakePresetsChangedEmitter.event;
     }
 
-    public hideBuildButton: boolean = vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true) ? true : false;
-    public hideDebugButton: boolean = vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true) ? true : false;
-    public hideLaunchButton: boolean = vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true) ? true : false;
+    public hideBuildButton: boolean = false;
+    public hideDebugButton: boolean = false;
+    public hideLaunchButton: boolean = false;
     doStatusBarChange(statusbar: StatusBarConfig) {
         if (statusbar.visibility === "hidden") {
             this.hideBuildButton = true;
