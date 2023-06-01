@@ -138,6 +138,8 @@
 	"cmakelists.already.configured": "Файл CMakeLists.txt уже настроен.",
 	"new.project.name": "Введите имя для нового проекта.",
 	"project.name.required": "Укажите имя проекта",
+	"create.cpp": "Создать проект C++",
+	"create.c": "Создать проект C",
 	"create.library": "Создать библиотеку",
 	"create.executable": "Создать исполняемый файл"
 }
