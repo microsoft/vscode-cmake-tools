@@ -2222,7 +2222,7 @@
         },
         "cmake.useProjectStatusView": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "%cmake-tools.configuration.cmake.useProjectStatusView.description%",
           "scope": "window"
         },
