@@ -138,6 +138,8 @@
 	"cmakelists.already.configured": "CMakeLists.txt je už nakonfigurované!",
 	"new.project.name": "Zadejte název nového projektu.",
 	"project.name.required": "Název projektu je povinný údaj",
+	"create.cpp": "Vytvořit projekt jazyka C++",
+	"create.c": "Vytvořit projekt jazyka C",
 	"create.library": "Vytvořit knihovnu",
 	"create.executable": "Vytvořit spustitelný soubor"
 }

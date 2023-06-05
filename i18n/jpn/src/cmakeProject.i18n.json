@@ -138,6 +138,8 @@
 	"cmakelists.already.configured": "CMakeLists.txt が既に構成されています。",
 	"new.project.name": "新しいプロジェクトの名前を入力してください",
 	"project.name.required": "プロジェクト名が必要です",
+	"create.cpp": "C++ プロジェクトの作成",
+	"create.c": "C プロジェクトの作成",
 	"create.library": "ライブラリの作成",
 	"create.executable": "実行可能ファイルの作成"
 }
