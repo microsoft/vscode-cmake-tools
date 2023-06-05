@@ -2,7 +2,7 @@
 
 ## 1.14.33
 Bug Fixes:
-- Set `Cmake: Use Project Status View` to `false` by default. [PR #]
+- Set `Cmake: Use Project Status View` to `false` by default. [PR #3199](https://github.com/microsoft/vscode-cmake-tools/pull/3199/)
 
 ## 1.14.32
 Features:
