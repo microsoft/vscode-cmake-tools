@@ -523,7 +523,7 @@ export class CTestDriver implements vscode.Disposable {
             // Happens when testPreset is not selected
             const testItem = initializedTestExplorer.createTestItem(testPresetRequired, localize('test.preset.required', 'Select a test preset to discover tests'));
             testExplorerRoot.children.add(testItem);
-            return 0
+            return 0;
         }
         if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
             // ctest --show-only=json-v1 was added in CMake 3.14
@@ -617,7 +617,6 @@ export class CTestDriver implements vscode.Disposable {
                 }
                 await vscode.commands.executeCommand('cmake.selectTestPreset', project.workspaceFolder);
                 presetMayChange = true;
-                
             }
         }
 
@@ -940,10 +939,6 @@ export class CTestDriver implements vscode.Disposable {
 
         const normalizedFolder = util.platformNormalizePath(folder);
         testExplorer.items.delete(normalizedFolder);
-    }
-
-    testExplorerInitialized(): boolean {
-        return !!testExplorer;
     }
 
     /**

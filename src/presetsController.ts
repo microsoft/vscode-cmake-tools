@@ -699,6 +699,8 @@ export class PresetsController {
         );
 
         this._isChangingPresets = false;
+
+        // await vscode.commands.executeCommand('cmake.refreshTests', this.workspaceFolder);
     }
 
     private async guessBuildPreset(): Promise<void> {

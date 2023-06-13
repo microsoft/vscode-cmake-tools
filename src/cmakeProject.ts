@@ -120,8 +120,8 @@ export class CMakeProject {
     private wasUsingCMakePresets: boolean | undefined;
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
-    private readonly cTestController: CTestDriver;
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
+    public readonly cTestController: CTestDriver;
     public kitsController!: KitsController;
     public presetsController!: PresetsController;
 
@@ -218,7 +218,7 @@ export class CMakeProject {
     }
     private readonly _configurePreset = new Property<preset.ConfigurePreset | null>(null);
 
-    private async resetPresets() {
+    private async resetPresets(driver: CMakeDriver | null) {
         await this.workspaceContext.state.setConfigurePresetName(this.folderName, null, this.isMultiProjectFolder);
         if (this.configurePreset) {
             await this.workspaceContext.state.setBuildPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
@@ -227,6 +227,9 @@ export class CMakeProject {
         this._configurePreset.set(null);
         this._buildPreset.set(null);
         this._testPreset.set(null);
+        await driver?.setConfigurePreset(null);
+        await driver?.setBuildPreset(null);
+        await driver?.setTestPreset(null);
     }
 
     async expandConfigPresetbyName(configurePreset: string | null | undefined): Promise<preset.ConfigurePreset | undefined> {
@@ -262,11 +265,12 @@ export class CMakeProject {
      */
     async setConfigurePreset(configurePreset: string | null) {
         const previousGenerator = this.configurePreset?.generator;
+        const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
 
         if (configurePreset) {
             const expandedConfigurePreset: preset.ConfigurePreset | undefined = await this.expandConfigPresetbyName(configurePreset);
             if (!expandedConfigurePreset) {
-                await this.resetPresets();
+                await this.resetPresets(drv);
                 return;
             }
             this._configurePreset.set(expandedConfigurePreset);
@@ -274,7 +278,6 @@ export class CMakeProject {
                 await this.shutDownCMakeDriver();
             }
             log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
-            const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
             if (drv) {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
@@ -285,14 +288,14 @@ export class CMakeProject {
                     void vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset {0}.', `"${error}"`));
                     this.statusMessage.set(localize('error.on.switch.config.preset', 'Error on switch of configure preset ({0})', error.message));
                     this.cmakeDriver = Promise.resolve(null);
-                    await this.resetPresets();
+                    await this.resetPresets(drv);
                 }
             } else {
                 // Remember the selected configure preset for the next session.
                 await this.workspaceContext.state.setConfigurePresetName(this.folderName, configurePreset, this.isMultiProjectFolder);
             }
         } else {
-            await this.resetPresets();
+            await this.resetPresets(drv);
         }
     }
 
@@ -331,6 +334,7 @@ export class CMakeProject {
      * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
      */
     async setBuildPreset(buildPreset: string | null) {
+        const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
         if (buildPreset) {
             const expandedBuildPreset = await this.expandBuildPresetbyName(buildPreset);
             if (!expandedBuildPreset) {
@@ -344,7 +348,6 @@ export class CMakeProject {
                 return;
             }
             log.debug(localize('loading.new.build.preset', 'Loading new build preset into CMake driver'));
-            const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
             if (drv) {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
@@ -363,6 +366,7 @@ export class CMakeProject {
             }
         } else {
             this._buildPreset.set(null);
+            await drv?.setBuildPreset(null);
             if (this.configurePreset) {
                 await this.workspaceContext.state.setBuildPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
             }
@@ -407,6 +411,7 @@ export class CMakeProject {
      * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
      */
     async setTestPreset(testPreset: string | null) {
+        const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
         if (testPreset) {
             log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
             const expandedTestPreset = await this.expandTestPresetbyName(testPreset);
@@ -416,7 +421,6 @@ export class CMakeProject {
             }
             this._testPreset.set(expandedTestPreset);
             log.debug(localize('loading.new.test.preset', 'Loading new test preset into CMake driver'));
-            const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
             if (drv) {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
@@ -439,6 +443,7 @@ export class CMakeProject {
             }
         } else {
             this._testPreset.set(null);
+            await drv?.setTestPreset(null);
             if (this.configurePreset) {
                 await this.workspaceContext.state.setTestPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
             }
