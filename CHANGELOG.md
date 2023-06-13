@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.15
+Features:
+- Added support for the CMake Debugger! [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
+
 ## 1.14.33
 Bug Fixes:
 - Set `Cmake: Use Project Status View` to `false` by default. This setting may be subject to A/B experimentation in 1.14 releases. To opt-out of experimentation, set the `cmake.useProjectStatusView` setting explicitly in `settings.json`. [PR #3199](https://github.com/microsoft/vscode-cmake-tools/pull/3199/)
