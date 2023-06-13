@@ -2500,5 +2500,6 @@
   },
   "extensionPack": [
     "twxs.cmake"
-  ]
+  ],
+  "packageManager": "yarn@1.22.19"
 }
