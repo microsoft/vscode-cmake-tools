@@ -2,7 +2,7 @@
 
 ## 1.15
 Features:
-- Added support for the CMake Debugger! [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
+- Added support for the CMake Debugger. [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
 
 ## 1.14.33
 Bug Fixes:
