@@ -28,7 +28,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import * as nls from 'vscode-nls';
-import { debuggerPipeName, startConfigureDebugger } from '@cmt/debug/debuggerConfigureDriver';
+import { getDebuggerPipeName, startConfigureDebugger } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -239,6 +239,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         }
 
         const cmake = this.cmake.path;
+        const debuggerPipeName = getDebuggerPipeName();
         if (withDebugger) {
             args.push("--debugger");
             args.push("--debugger-pipe");
@@ -262,7 +263,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
             if (withDebugger) {
                 if (outputConsumer instanceof CMakeOutputConsumer) {
-                    await startConfigureDebugger(outputConsumer);
+                    await startConfigureDebugger(outputConsumer, debuggerPipeName);
                 }
             }
 
