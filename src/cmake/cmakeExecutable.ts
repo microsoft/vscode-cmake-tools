@@ -1,6 +1,5 @@
 import * as proc from '../proc';
 import * as util from '../util';
-import * as vscode from "vscode";
 
 export interface CMakeExecutable {
     path: string;
@@ -29,10 +28,8 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         const normalizedPath = util.platformNormalizePath(path);
         if (cmakeInfo.has(normalizedPath)) {
             const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
-            await vscode.commands.executeCommand(
-                "setContext",
-                "vscode-cmake-tools.cmakeDebuggerAvailable",
-                String(cmakeExe.isDebuggerSupported?.valueOf()) ?? "false"
+            await setCMakeDebuggerAvailableContext(
+                cmakeExe.isDebuggerSupported?.valueOf() ?? false
             );
             return cmakeExe;
         }
@@ -57,10 +54,8 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
                 console.assert(debuggerPresent.stdout);
                 const stdoutJson = JSON.parse(debuggerPresent.stdout);
                 cmake.isDebuggerSupported = stdoutJson["debugger"];
-                await vscode.commands.executeCommand(
-                    "setContext",
-                    "vscode-cmake-tools.cmakeDebuggerAvailable",
-                    String(cmake.isDebuggerSupported?.valueOf()) ?? "false"
+                await setCMakeDebuggerAvailableContext(
+                    cmake.isDebuggerSupported?.valueOf() ?? false
                 );
             }
         } catch {
@@ -68,4 +63,8 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         cmakeInfo.set(normalizedPath, cmake);
     }
     return cmake;
+}
+
+export async function setCMakeDebuggerAvailableContext(value: boolean): Promise<void> {
+    await util.setContextValue("vscode-cmake-tools.cmakeDebuggerAvailable", value);
 }

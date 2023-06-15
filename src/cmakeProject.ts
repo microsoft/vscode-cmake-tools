@@ -1360,13 +1360,13 @@ export class CMakeProject {
                                 } else if (result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported) {
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
-                                        "Yes"
+                                        "Debug"
                                     );
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         localize('configure.failed.tryWithDebugger', 'Configure failed. Would you like to attempt to configure with the CMake Debugger?'),
                                         {},
                                         {title: yesButtonTitle},
-                                        {title: localize('no.configureWithDebugger.button', 'No')})
+                                        {title: localize('no.configureWithDebugger.button', 'Cancel')})
                                         .then(async chosen => {
                                             if (chosen && chosen.title === yesButtonTitle) {
                                                 await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugger);

@@ -9,6 +9,10 @@ import * as vscode from 'vscode';
 
 import { FileDiagnostic, oneLess } from './util';
 
+export enum StateMessage {
+    WaitingForDebuggerClient = "Waiting for debugger client to connect...",
+}
+
 /**
  * Class which consumes output from CMake.
  *
@@ -36,7 +40,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
     get stateMessages() {
         return this._stateMessages;
     }
-    private readonly _stateMessages = [] as string[];
+    private readonly _stateMessages: StateMessage[] = [];
 
     /**
      * Simply writes the line of output to the log
@@ -87,7 +91,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
 
     private _parseStateMessages(line: string) {
         if (line.includes("Waiting for debugger client to connect...")) {
-            this.stateMessages.push(line);
+            this.stateMessages.push(StateMessage.WaitingForDebuggerClient);
         }
     }
 

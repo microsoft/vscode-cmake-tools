@@ -44,6 +44,7 @@ import { DirectoryContext } from './workspace';
 import { ProjectStatus } from './projectStatus';
 import { StatusBar } from '@cmt/status';
 import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
+import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -105,6 +106,9 @@ export class ExtensionManager implements vscode.Disposable {
     public async init() {
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
+
+        // initialize the state of the cmake exe
+        await getCMakeExecutableInformation(this.workspaceConfig.rawCMakePath);
 
         this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
 
