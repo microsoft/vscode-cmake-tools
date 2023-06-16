@@ -28,8 +28,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import * as nls from 'vscode-nls';
-import { getDebuggerPipeName, startConfigureDebugger } from '@cmt/debug/debuggerConfigureDriver';
-import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
+import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -198,7 +198,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, withDebugger?: boolean): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number> {
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         const api_path = this.getCMakeFileApiPath(binaryDir);
         await createQueryFileForApi(api_path);
@@ -239,11 +239,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
         }
 
         const cmake = this.cmake.path;
-        const debuggerPipeName = getDebuggerPipeName();
-        if (withDebugger) {
+        if (debuggerInformation) {
             args.push("--debugger");
             args.push("--debugger-pipe");
-            args.push(`${debuggerPipeName}`);
+            args.push(`${debuggerInformation.debuggerPipeName}`);
         }
 
         if (showCommandOnly) {
@@ -261,9 +260,25 @@ export class CMakeFileApiDriver extends CMakeDriver {
             });
             this.configureProcess = child;
 
-            if (withDebugger) {
+            if (debuggerInformation) {
                 if (outputConsumer instanceof CMakeOutputConsumer) {
-                    await startConfigureDebugger(outputConsumer, debuggerPipeName);
+                    while (!outputConsumer.stateMessages.includes(StateMessage.WaitingForDebuggerClient)) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+
+                    // if there isn't a `debuggerIsReady` callback provided, this means that this invocation was
+                    // started by a command, rather than by a launch configuration, and the debug session will start from here.
+                    if (debuggerInformation.debuggerIsReady) {
+                        debuggerInformation.debuggerIsReady();
+                    } else {
+                        await vscode.debug.startDebugging(undefined, {
+                            name: localize("cmake.debug.name", "CMake Debugger"),
+                            request: "launch",
+                            type: "cmake",
+                            debuggerPipeName: debuggerInformation.debuggerPipeName,
+                            fromCommand: true
+                        });
+                    }
                 }
             }
 

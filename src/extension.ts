@@ -45,6 +45,7 @@ import { ProjectStatus } from './projectStatus';
 import { StatusBar } from '@cmt/status';
 import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
 import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
+import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -62,7 +63,7 @@ export const hideBuildCommandKey = 'cmake:hideBuildCommand';
  * The global extension manager. There is only one of these, even if multiple
  * backends.
  */
-let extensionManager: ExtensionManager | null = null;
+export let extensionManager: ExtensionManager | null = null;
 
 type RunCMakeCommand = (project: CMakeProject) => Thenable<any>;
 type QueryCMakeProject = (project: CMakeProject) => Thenable<string | string[] | null>;
@@ -1080,8 +1081,12 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureWithDebugger(folder?: vscode.WorkspaceFolder) {
+        return this.cleanConfigureWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()}, folder);
+    }
+
+    cleanConfigureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
-        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureWithDebugger), folder, undefined, true);
+        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureWithDebugger, debuggerInformation), folder, undefined, true);
     }
 
     cleanConfigureAll() {
@@ -1090,8 +1095,12 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureAllWithDebugger() {
+        return this.cleanConfigureAllWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()});
+    }
+
+    cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
         telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureAllWithDebugger), undefined, true);
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureAllWithDebugger, debuggerInformation), undefined, true);
     }
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
@@ -1101,10 +1110,14 @@ export class ExtensionManager implements vscode.Disposable {
             folder, undefined, true);
     }
 
-    configureWithDebugger(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
+    configureWithDebugger(folder?: vscode.WorkspaceFolder) {
+        return this.configureWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()}, folder);
+    }
+
+    configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
         telemetry.logEvent("configureWithDebugger", { all: "false", debug: "true"});
         return this.runCMakeCommand(
-            cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger),
+            cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation),
             folder, undefined, true);
     }
 
@@ -1118,8 +1131,12 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAllWithDebugger() {
+        return this.configureAllWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()});
+    }
+
+    configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
         telemetry.logEvent("configure", { all: "true", debug: "true"});
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger), undefined, true);
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation), undefined, true);
     }
 
     editCacheUI() {

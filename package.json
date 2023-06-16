@@ -719,7 +719,35 @@
     "debuggers": [
         {
             "type": "cmake",
-            "label": "%cmake-tools.debugger.label%"
+            "label": "%cmake-tools.debugger.label%",
+            "configurationAttributes": {
+                "launch": {
+                    "required": [
+                        "debuggerPipeName"
+                    ],
+                    "properties": {
+                        "debuggerPipeName": {
+                            "type": "string",
+                            "description": "Name of the named piped that the debugger will communicate with CMake over"
+                        },
+                        "cleanConfigure": {
+                            "type": "boolean",
+                            "description": "Clean prior to configuring",
+                            "default": false
+                        },
+                        "configureAll": {
+                            "type": "boolean",
+                            "description": "Define whether we configure for all projects",
+                            "default": false
+                        },
+                        "debuggerDapLog": {
+                            "type": "string",
+                            "description": "File to log dap log to",
+                            "default": ""
+                        } 
+                    }
+                }
+            }
         }
     ],
     "menus": {

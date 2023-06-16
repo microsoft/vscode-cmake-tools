@@ -47,6 +47,7 @@ import { PresetsController } from './presetsController';
 import paths from './paths';
 import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
+import { DebuggerInformation } from './debug/debuggerConfigureDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1276,7 +1277,7 @@ export class CMakeProject {
         return this.configureInternal(ConfigureTrigger.api, extraArgs, ConfigureType.Normal);
     }
 
-    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal): Promise<number> {
+    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<number> {
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
@@ -1329,20 +1330,20 @@ export class CMakeProject {
                                 let result: number;
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
-                                    result = await drv.configure(trigger, [], consumer, true);
+                                    result = await drv.configure(trigger, [], consumer, debuggerInformation);
                                 } else {
                                     switch (type) {
                                         case ConfigureType.Normal:
                                             result = await drv.configure(trigger, extraArgs, consumer);
                                             break;
                                         case ConfigureType.NormalWithDebugger:
-                                            result = await drv.configure(trigger, extraArgs, consumer, true);
+                                            result = await drv.configure(trigger, extraArgs, consumer, debuggerInformation);
                                             break;
                                         case ConfigureType.Clean:
                                             result = await drv.cleanConfigure(trigger, extraArgs, consumer);
                                             break;
                                         case ConfigureType.CleanWithDebugger:
-                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, true);
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, debuggerInformation);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
                                             result = await drv.configure(trigger, extraArgs, consumer, undefined, true);
@@ -1416,8 +1417,8 @@ export class CMakeProject {
      *          All other configure calls in this extension are able to provide
      *          proper trigger information.
      */
-    cleanConfigureWithDebugger(trigger: ConfigureTrigger = ConfigureTrigger.api) {
-        return this.configureInternal(trigger, [], ConfigureType.CleanWithDebugger);
+    cleanConfigureWithDebugger(trigger: ConfigureTrigger = ConfigureTrigger.api, debuggerInformation?: DebuggerInformation) {
+        return this.configureInternal(trigger, [], ConfigureType.CleanWithDebugger, debuggerInformation);
     }
 
     /**
