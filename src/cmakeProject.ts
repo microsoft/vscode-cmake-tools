@@ -1273,7 +1273,7 @@ export class CMakeProject {
             if (result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
             }
-            await this.cTestController.refreshTests(drv, this.useCMakePresets);
+            await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
             return result;
         }
@@ -1341,7 +1341,7 @@ export class CMakeProject {
                                     await this.refreshCompileDatabase(drv.expansionOptions);
                                 }
 
-                                await this.cTestController.refreshTests(drv, this.useCMakePresets);
+                                await this.cTestController.refreshTests(drv);
                                 this.onReconfiguredEmitter.fire();
                                 return result;
                             } finally {
@@ -1826,7 +1826,7 @@ export class CMakeProject {
     }
 
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
-        return this.cTestController.runCTest(driver, this.useCMakePresets, true, testPreset, consumer);
+        return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
     private async preTest(): Promise<CMakeDriver> {
@@ -1844,7 +1844,7 @@ export class CMakeProject {
 
     async ctest(): Promise<number> {
         const drv = await this.preTest();
-        return (await this.cTestController.runCTest(drv, this.useCMakePresets)) ? 0 : -1;
+        return (await this.cTestController.runCTest(drv)) ? 0 : -1;
     }
 
     async revealTestExplorer() {
@@ -1856,7 +1856,7 @@ export class CMakeProject {
 
     async refreshTests(): Promise<number> {
         const drv = await this.preTest();
-        return this.cTestController.refreshTests(drv, this.useCMakePresets);
+        return this.cTestController.refreshTests(drv);
     }
 
     addTestExplorerRoot(folder: string) {

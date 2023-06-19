@@ -934,9 +934,17 @@ export class ExtensionManager implements vscode.Disposable {
      */
     async setConfigurePreset(presetName: string, folder?: vscode.WorkspaceFolder) {
         if (folder) {
+            if (!this.useCMakePresets(folder)) {
+                log.info(localize('skip.set.config.preset', 'Using kits, skip setting configure preset: {0}', presetName));
+                return;
+            }
             await this.getActiveProject()?.presetsController.setConfigurePreset(presetName);
         } else {
             for (const project of this.projectController.getAllCMakeProjects()) {
+                if (!project.useCMakePresets) {
+                    log.info(localize('skip.set.config.preset', 'Using kits, skip setting configure preset: {0}', presetName));
+                    return;
+                }
                 await project.presetsController.setConfigurePreset(presetName);
             }
         }
@@ -944,9 +952,17 @@ export class ExtensionManager implements vscode.Disposable {
 
     async setBuildPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
         if (folder) {
+            if (!this.useCMakePresets(folder)) {
+                log.info(localize('skip.set.build.preset', 'Using kits, skip setting build preset: {0}', presetName));
+                return;
+            }
             await this.getActiveProject()?.presetsController.setBuildPreset(presetName);
         } else {
             for (const project of this.projectController.getAllCMakeProjects()) {
+                if (!project.useCMakePresets) {
+                    log.info(localize('skip.set.build.preset', 'Using kits, skip setting build preset: {0}', presetName));
+                    return;
+                }
                 await project.presetsController.setBuildPreset(presetName);
             }
         }
@@ -954,9 +970,17 @@ export class ExtensionManager implements vscode.Disposable {
 
     async setTestPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
         if (folder) {
+            if (!this.useCMakePresets(folder)) {
+                log.info(localize('skip.set.test.preset', 'Using kits, skip setting test preset: {0}', presetName));
+                return;
+            }
             await this.getActiveProject()?.presetsController.setTestPreset(presetName);
         } else {
             for (const project of this.projectController.getAllCMakeProjects()) {
+                if (!project.useCMakePresets) {
+                    log.info(localize('skip.set.test.preset', 'Using kits, skip setting test preset: {0}', presetName));
+                    return;
+                }
                 await project.presetsController.setTestPreset(presetName);
             }
         }
@@ -1549,6 +1573,11 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
+        if (!project.useCMakePresets) {
+            log.info(localize('skip.set.configure.preset', 'Using kits, skip selecting configure preset'));
+            return false;
+        }
+
         const presetSelected = await project.presetsController.selectConfigurePreset();
         const configurePreset = project.configurePreset;
         this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
@@ -1575,6 +1604,11 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
+        if (!project.useCMakePresets) {
+            log.info(localize('skip.set.build.preset', 'Using kits, skip selecting build preset'));
+            return false;
+        }
+
         const presetSelected = await project.presetsController.selectBuildPreset();
         const buildPreset = project.buildPreset;
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
@@ -1592,6 +1626,11 @@ export class ExtensionManager implements vscode.Disposable {
 
         const project = this.getProjectFromFolder(folder);
         if (!project) {
+            return false;
+        }
+
+        if (!project.useCMakePresets) {
+            log.info(localize('skip.set.test.preset', 'Using kits, skip selecting test preset'));
             return false;
         }
 

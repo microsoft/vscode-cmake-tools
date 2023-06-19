@@ -487,11 +487,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async setConfigurePreset(configurePreset: preset.ConfigurePreset | null): Promise<void> {
         if (configurePreset) {
-            if (!this.useCMakePresets) {
-                log.info(localize('skip.set.config.preset', 'Using kits, skip setting configure preset: {0}', configurePreset.name));
-                return;
-            }
-
             log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
 
             const newBinaryDir = configurePreset.binaryDir;
@@ -500,11 +495,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 await this._setConfigurePreset(configurePreset);
             });
         } else {
-            if (!this.useCMakePresets) {
-                log.info(localize('skip.unset.config.preset', 'Using kits, skip unsetting configure preset'));
-                return;
-            }
-
             log.info(localize('unsetting.config.preset', 'Unsetting configure preset'));
 
             await this.doSetConfigurePreset(false, async () => {
@@ -539,15 +529,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @param buildPreset The new build preset
      */
     async setBuildPreset(buildPreset: preset.BuildPreset | null): Promise<void> {
-        if (!this.useCMakePresets) {
-            if (buildPreset) {
-                log.info(localize('skip.set.build.preset', 'Using kits, skip setting build preset: {0}', buildPreset.name));
-            } else {
-                log.info(localize('skip.unset.build.preset', 'Using kits, skip unsetting build preset'));
-            }
-            return;
-        }
-
         if (buildPreset) {
             log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset.name));
         } else {
@@ -569,15 +550,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * @param testPreset The new test preset
      */
     async setTestPreset(testPreset: preset.TestPreset | null): Promise<void> {
-        if (!this.useCMakePresets) {
-            if (testPreset) {
-                log.info(localize('skip.set.test.preset', 'Using kits, skip setting test preset: {0}', testPreset.name));
-            } else {
-                log.info(localize('skip.unset.test.preset', 'Using kits, skip unsetting test preset'));
-            }
-            return;
-        }
-
         if (testPreset) {
             log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset.name));
         } else {
