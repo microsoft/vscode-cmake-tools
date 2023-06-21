@@ -93,6 +93,7 @@
 	"waiting.on.variant": "Warten auf Variantenauswahl",
 	"no.variant.abort": "Keine Variante ausgewählt. Konfiguration abbrechen",
 	"cannot.configure.no.config.preset": "Kann nicht konfiguriert werden: Für dieses CMake-Projekt ist keine Konfigurationsvoreinstellung aktiv.",
+	"targets.status": "[n. v. – Kit auswählen]",
 	"cmake.cache.dir.missing": "Der Ordner, der den CMake-Cache enthält, fehlt. Der Cache wird neu generiert.",
 	"warn.skip.configure.if.cache.present": "Die Erweiterung hat festgestellt, dass zu diesem Zeitpunkt eine Konfiguration erforderlich ist, die wir aber überspringen, da die Einstellung cmake.skipConfigureIfCachePresent aktiviert ist. Stellen Sie sicher, dass der CMake-Cache mit den neuesten Konfigurationsänderungen synchronisiert ist.",
 	"cmakelists.save.trigger.reconfigure": "Speichern von CMakeLists.txt erkannt, automatische Neukonfiguration wird versucht...",

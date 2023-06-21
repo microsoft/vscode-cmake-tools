@@ -93,6 +93,7 @@
 	"waiting.on.variant": "variant 선택을 기다리는 중",
 	"no.variant.abort": "선택한 variant가 없으므로 구성을 중단합니다.",
 	"cannot.configure.no.config.preset": "구성할 수 없음: 이 CMake 프로젝트에 대해 활성 상태인 구성 미리 설정이 없습니다.",
+	"targets.status": "[해당 없음 - 키트 선택]",
 	"cmake.cache.dir.missing": "CMake 캐시가 포함된 폴더가 없습니다. 캐시가 다시 생성됩니다.",
 	"warn.skip.configure.if.cache.present": "확장에서 지금 구성이 필요한 것으로 확인했지만, cmake.skipConfigureIfCachePresent 설정이 활성화 상태이므로 건너뜁니다. CMake 캐시가 최신 구성 변경 내용과 동기화된 상태인지 확인하세요.",
 	"cmakelists.save.trigger.reconfigure": "CMakeLists.txt 저장이 검색되어 자동 다시 구성을 시도하는 중...",

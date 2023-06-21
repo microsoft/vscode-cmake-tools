@@ -93,6 +93,7 @@
 	"waiting.on.variant": "En attente de la sélection de variante",
 	"no.variant.abort": "Aucune variante sélectionnée. Abandon de la configuration",
 	"cannot.configure.no.config.preset": "Nous n’avons pas pu effectuer la configuration : aucune présélection de configuration n’est active pour cette version de CMake Project.",
+	"targets.status": "[N/A – Sélectionner un kit]",
 	"cmake.cache.dir.missing": "Le dossier contenant le cache CMake est manquant. Le cache est régénéré.",
 	"warn.skip.configure.if.cache.present": "L’extension a déterminé qu’une configuration est nécessaire pour le moment, mais nous l’avons ignorée, car le paramètre cmake.skipConfigureIfCachePresent est ACTIVÉ. Assurez-vous que le cache CMake est synchronisé avec les dernières modifications de configuration.",
 	"cmakelists.save.trigger.reconfigure": "Enregistrement de CMakeLists.txt détecté, tentative de reconfiguration automatique...",
