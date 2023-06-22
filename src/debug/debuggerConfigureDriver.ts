@@ -9,6 +9,6 @@ export function getDebuggerPipeName(): string {
     if (process.platform === 'win32') {
         return `\\\\.\\\\pipe\\\\cmake-debugger-pipe\\\\${uuidv4()}`;
     } else {
-        return `cmake_debugger_${uuidv4()}`;
+        return `/tmp/cmake-debugger-pipe-${uuidv4()}`;
     }
 }
