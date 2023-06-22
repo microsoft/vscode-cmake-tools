@@ -7,6 +7,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         // invoke internal methods that call into and maybe have a handler once we've got the debugger is ready
         const debuggerInformation: DebuggerInformation = {
             debuggerPipeName: session.configuration.debuggerPipeName,
+            debuggerDapLog: session.configuration.debuggerDapLog,
             debuggerIsReady: () => undefined
         };
 

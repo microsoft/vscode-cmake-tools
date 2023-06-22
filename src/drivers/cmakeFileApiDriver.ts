@@ -30,6 +30,7 @@ import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset'
 import * as nls from 'vscode-nls';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
+import { debug } from 'console';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -243,6 +244,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
             args.push("--debugger");
             args.push("--debugger-pipe");
             args.push(`${debuggerInformation.debuggerPipeName}`);
+            if (debuggerInformation.debuggerDapLog) {
+                args.push("--debugger-dap-log");
+                args.push(debuggerInformation.debuggerDapLog);
+            }
         }
 
         if (showCommandOnly) {
