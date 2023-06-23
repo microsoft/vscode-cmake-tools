@@ -47,7 +47,7 @@ import { PresetsController } from './presetsController';
 import paths from './paths';
 import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
-import { DebuggerInformation } from './debug/debuggerConfigureDriver';
+import { DebugTrackerFactor, DebuggerInformation } from './debug/debuggerConfigureDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1308,6 +1308,17 @@ export class CMakeProject {
                     rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
                 });
 
+                let forciblyCanceled: boolean = false;
+
+                // if there is a debugger information, we are debugging. Set up a listener for stopping a cmake debug session.
+                if (debuggerInformation) {
+                    const trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactor(async () => {
+                        forciblyCanceled = true;
+                        await this.cancelConfiguration();
+                        trackerFactoryDisposable.dispose();
+                    }));
+                }
+
                 if (type !== ConfigureType.ShowCommandOnly) {
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
@@ -1358,7 +1369,7 @@ export class CMakeProject {
                                 if (result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported) {
+                                } else if (result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && !forciblyCanceled) {
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
                                         "Debug"
