@@ -215,6 +215,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.configureWithDebugger",
+        "title": "%cmake-tools.command.cmake.configureWithDebugger.title%",
+        "category": "CMake",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
+      },
+      {
         "command": "cmake.outline.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
         "icon": {
@@ -233,6 +239,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.outline.configureWithDebugger",
+        "title": "%cmake-tools.command.cmake.configureWithDebugger.title%",
+        "icon": "$(debug)",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
+      },
+      {
         "command": "cmake.showConfigureCommand",
         "title": "%cmake-tools.command.cmake.showConfigureCommand.title%",
         "category": "CMake"
@@ -243,12 +255,24 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.configureAllWithDebugger",
+        "title": "%cmake-tools.command.cmake.configureAllWithDebugger.title%",
+        "category": "CMake",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
+      },
+      {
         "command": "cmake.outline.configureAll",
         "title": "%cmake-tools.command.cmake.configureAll.title%",
         "icon": {
           "dark": "res/dark/configure-icon.svg",
           "light": "res/light/configure-icon.svg"
         }
+      },
+      {
+        "command": "cmake.outline.configureAllWithDebugger",
+        "title": "%cmake-tools.command.cmake.configureAllWithDebugger.title%",
+        "icon": "$(debug)",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
       },
       {
         "command": "cmake.build",
@@ -374,6 +398,17 @@
         "title": "%cmake-tools.command.cmake.outline.cleanConfigure.title%"
       },
       {
+        "command": "cmake.cleanConfigureWithDebugger",
+        "title": "%cmake-tools.command.cmake.cleanConfigureWithDebugger.title%",
+        "category": "CMake",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
+      },
+      {
+        "command": "cmake.outline.cleanConfigureWithDebugger",
+        "title": "%cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title%",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
+      },
+      {
         "command": "cmake.cleanConfigureAll",
         "title": "%cmake-tools.command.cmake.cleanConfigureAll.title%",
         "category": "CMake"
@@ -381,6 +416,17 @@
       {
         "command": "cmake.outline.cleanConfigureAll",
         "title": "%cmake-tools.command.cmake.outline.cleanConfigureAll.title%"
+      },
+      {
+        "command": "cmake.cleanConfigureAllWithDebugger",
+        "title": "%cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title%",
+        "category": "CMake",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
+      },
+      {
+        "command": "cmake.outline.cleanConfigureAllWithDebugger",
+        "title": "%cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title%",
+        "enablement": "vscode-cmake-tools.cmakeDebuggerAvailable"
       },
       {
         "command": "cmake.clean",
@@ -665,6 +711,45 @@
         }
       }
     ],
+    "breakpoints": [
+        {
+            "language": "cmake"
+        }
+    ],
+    "debuggers": [
+        {
+            "type": "cmake",
+            "label": "%cmake-tools.debugger.label%",
+            "configurationAttributes": {
+                "launch": {
+                    "required": [
+                        "debuggerPipeName"
+                    ],
+                    "properties": {
+                        "debuggerPipeName": {
+                            "type": "string",
+                            "description": "Name of the named piped that the debugger will communicate with CMake over"
+                        },
+                        "cleanConfigure": {
+                            "type": "boolean",
+                            "description": "Clean prior to configuring",
+                            "default": false
+                        },
+                        "configureAll": {
+                            "type": "boolean",
+                            "description": "Define whether we configure for all projects",
+                            "default": false
+                        },
+                        "debuggerDapLog": {
+                            "type": "string",
+                            "description": "File to log dap log to",
+                            "default": ""
+                        } 
+                    }
+                }
+            }
+        }
+    ],
     "menus": {
       "commandPalette": [
         {
@@ -703,6 +788,10 @@
           "command": "cmake.configure"
         },
         {
+          "command": "cmake.configureWithDebugger",
+          "when": "vscode-cmake-tools.cmakeDebuggerAvailable"
+        },
+        {
           "command": "cmake.showConfigureCommand"
         },
         {
@@ -734,6 +823,10 @@
         {
           "command": "cmake.configureAll",
           "when": "cmake:multiProject"
+        },
+        {
+          "command": "cmake.configureAllWithDebugger",
+          "when": "cmake:multiProject && vscode-cmake-tools.cmakeDebuggerAvailable == 'true'"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -781,6 +874,14 @@
         {
           "command": "cmake.cleanConfigureAll",
           "when": "cmake:multiProject"
+        },
+        {
+          "command": "cmake.cleanConfigureWithDebugger", 
+          "when": "vscode-cmake-tools.cmakeDebuggerAvailable"
+        },
+        {
+          "command": "cmake.cleanConfigureAllWithDebugger",
+          "when": "cmake:multiProject && vscode-cmake-tools.cmakeDebuggerAvailable"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -863,6 +964,14 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.configureWithDebugger",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.configureAllWithDebugger",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.build",
           "when": "never"
         },
@@ -884,6 +993,14 @@
         },
         {
           "command": "cmake.outline.cleanConfigureAll",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureWithDebugger",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
           "when": "never"
         },
         {
@@ -1030,14 +1147,19 @@
           "group": "navigation@1"
         },
         {
+          "command": "cmake.outline.configureAllWithDebugger",
+          "when": "view == cmake.outline && !cmake:isBuilding && vscode-cmake-tools.cmakeDebuggerAvailable",
+          "group": "navigation@2"
+        },
+        {
           "command": "cmake.outline.buildAll",
           "when": "view == cmake.outline && !cmake:isBuilding && cmake:enableFullFeatureSet",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "cmake.outline.stopAll",
           "when": "view == cmake.outline && cmake:isBuilding && cmake:enableFullFeatureSet",
-          "group": "navigation@3"
+          "group": "navigation@4"
         },
         {
           "command": "cmake.outline.cleanAll",
@@ -1047,6 +1169,11 @@
         {
           "command": "cmake.outline.cleanConfigureAll",
           "when": "view == cmake.outline",
+          "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
+          "when": "view == cmake.outline && vscode-cmake-tools.cmakeDebuggerAvailable",
           "group": "1_cmakeOutline"
         },
         {
@@ -1187,29 +1314,39 @@
           "group": "1_fileActions@1"
         },
         {
-          "command": "cmake.outline.buildAll",
-          "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "command": "cmake.outline.configureAllWithDebugger",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/ && vscode-cmake-tools.cmakeDebuggerAvailable",
           "group": "1_fileActions@2"
         },
         {
-          "command": "cmake.outline.cleanAll",
+          "command": "cmake.outline.buildAll",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
           "group": "1_fileActions@3"
         },
         {
+          "command": "cmake.outline.cleanAll",
+          "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@4"
+        },
+        {
           "command": "cmake.outline.cleanConfigureAll",
           "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
-          "group": "1_fileActions@4"
+          "group": "1_fileActions@5"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/ && vscode-cmake-tools.cmakeDebuggerAvailable",
+          "group": "1_fileActions@5"
         },
         {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
-          "group": "1_fileActions@5"
+          "group": "1_fileActions@6"
         },
         {
           "command": "cmake.outline.compileFile",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /compilable=true/",
-          "group": "1_fileActions@6"
+          "group": "1_fileActions@7"
         },
         {
           "command": "cmake.outline.compileFile",
@@ -1219,6 +1356,11 @@
         {
           "command": "cmake.outline.configureAll",
           "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.configureAllWithDebugger",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/ && vscode-cmake-tools.cmakeDebuggerAvailable",
           "group": "inline"
         },
         {
@@ -1263,6 +1405,10 @@
           "when": "resourceFilename == CMakeLists.txt"
         },
         {
+          "command": "cmake.outline.configureAllWithDebugger",
+          "when": "resourceFilename == CMakeLists.txt && vscode-cmake-tools.cmakeDebuggerAvailable"
+        },
+        {
           "command": "cmake.outline.buildAll",
           "when": "resourceFilename == CMakeLists.txt && cmake:enableFullFeatureSet"
         },
@@ -1273,6 +1419,10 @@
         {
           "command": "cmake.outline.cleanConfigureAll",
           "when": "resourceFilename == CMakeLists.txt"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAllWithDebugger",
+          "when": "resourceFilename == CMakeLists.txt && vscode-cmake-tools.cmakeDebuggerAvailable"
         },
         {
           "command": "cmake.outline.cleanRebuildAll",
@@ -2427,6 +2577,7 @@
     "@types/vscode": "1.60.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
+    "@types/uuid": "~8.3.3",
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.25.0",
     "@typescript-eslint/parser": "^5.25.0",
@@ -2481,7 +2632,8 @@
     "vscode-nls": "^5.0.0",
     "vscode-tas-client": "^0.1.22",
     "which": "~2.0.2",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.4.23",
+    "uuid": "~8.3.2"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",

@@ -15,7 +15,9 @@
     "cmake-tools.command.cmake.setVariant.title": "Select Variant",
     "cmake-tools.command.cmake.setVariantAll.title": "Select Variant for All Projects",
     "cmake-tools.command.cmake.configure.title": "Configure",
+    "cmake-tools.command.cmake.configureWithDebugger.title": "Configure with CMake Debugger",
     "cmake-tools.command.cmake.configureAll.title": "Configure All Projects",
+    "cmake-tools.command.cmake.configureAllWithDebugger.title": "Configure All Projects with CMake Debugger",
     "cmake-tools.command.cmake.showConfigureCommand.title": "Show Configure Command",
     "cmake-tools.command.cmake.build.title": "Build",
     "cmake-tools.command.cmake.buildAll.title": "Build All Projects",
@@ -28,10 +30,14 @@
     "cmake-tools.command.cmake.buildWithTarget.title": "Build Target",
     "cmake-tools.command.cmake.setDefaultTarget.title": "Set Build Target",
     "cmake-tools.command.cmake.cleanConfigure.title": "Delete Cache and Reconfigure",
+    "cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "Delete Cache and Reconfigure with CMake Debugger",
     "cmake-tools.command.cmake.cleanConfigureAll.title": "Delete Cache and Reconfigure All Projects",
+    "cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "Delete Cache and Reconfigure All Projects with CMake Debugger",
     "cmake-tools.command.cmake.editCacheUI.title": "Edit CMake Cache (UI)",
     "cmake-tools.command.cmake.outline.cleanConfigure.title": "Clean Reconfigure",
+    "cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "Clean Reconfigure with CMake Debugger",
     "cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Clean Reconfigure All Projects",
+    "cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title": "Clean Reconfigure All Projects with CMake Debugger",
     "cmake-tools.command.cmake.clean.title": "Clean",
     "cmake-tools.command.cmake.cleanAll.title": "Clean All Projects",
     "cmake-tools.command.cmake.cleanRebuild.title": "Clean Rebuild",
@@ -211,5 +217,6 @@
     "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
     "cmake-tools.configuration.cmake.loadCompileCommands.description": "Controls whether the extension reads compile_commands.json to enable single file compilation.",
     "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
-    "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set test target"
+    "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set test target",
+    "cmake-tools.debugger.label": "CMake Debugger"
 }
