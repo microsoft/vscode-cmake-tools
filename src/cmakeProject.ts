@@ -47,7 +47,7 @@ import { PresetsController } from './presetsController';
 import paths from './paths';
 import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
-import { DebugTrackerFactor, DebuggerInformation } from './debug/debuggerConfigureDriver';
+import { DebugTrackerFactory, DebuggerInformation } from './debug/debuggerConfigureDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1312,7 +1312,7 @@ export class CMakeProject {
 
                 // if there is a debugger information, we are debugging. Set up a listener for stopping a cmake debug session.
                 if (debuggerInformation) {
-                    const trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactor(async () => {
+                    const trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactory(async () => {
                         forciblyCanceled = true;
                         await this.cancelConfiguration();
                         trackerFactoryDisposable.dispose();
