@@ -611,7 +611,7 @@ export class CTestDriver implements vscode.Disposable {
      * test explorer refresh.
      *
      * Returns false if any test preset wasn't selected already. This means either test explorer is going to be refreshed,
-     * or user cancelled the selectoin. So we shouldn't proceed in most cases.
+     * or user cancelled the selection. So we shouldn't proceed in most cases.
      */
     private async checkTestPreset(tests: vscode.TestItem[]): Promise<boolean> {
         let presetMayChange = false;
