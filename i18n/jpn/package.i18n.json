@@ -20,7 +20,9 @@
 	"cmake-tools.command.cmake.setVariant.title": "バリアントの選択",
 	"cmake-tools.command.cmake.setVariantAll.title": "すべてのプロジェクトのバリエーションの選択",
 	"cmake-tools.command.cmake.configure.title": "構成",
+	"cmake-tools.command.cmake.configureWithDebugger.title": "CMake デバッガーを使用して構成する",
 	"cmake-tools.command.cmake.configureAll.title": "すべてのプロジェクトの構成",
+	"cmake-tools.command.cmake.configureAllWithDebugger.title": "CMake デバッガーを使用してすべてのプロジェクトを構成する",
 	"cmake-tools.command.cmake.showConfigureCommand.title": "構成コマンドの表示",
 	"cmake-tools.command.cmake.build.title": "ビルド",
 	"cmake-tools.command.cmake.buildAll.title": "すべてのプロジェクトのビルド",
@@ -33,10 +35,14 @@
 	"cmake-tools.command.cmake.buildWithTarget.title": "ターゲットのビルド",
 	"cmake-tools.command.cmake.setDefaultTarget.title": "ビルド ターゲットの設定",
 	"cmake-tools.command.cmake.cleanConfigure.title": "キャッシュの削除と再構成",
+	"cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "キャッシュを削除し、CMake デバッガーを使用して再構成する",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "キャッシュの削除およびすべてのプロジェクトの再構成",
+	"cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "キャッシュを削除し、CMake デバッガーを使用してすべてのプロジェクトをクリーンして再構成する",
 	"cmake-tools.command.cmake.editCacheUI.title": "CMake キャッシュ (UI) の編集",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "クリーンして再構成",
+	"cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "CMake デバッガーを使用してクリーンして再構成する",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "すべてのプロジェクトをクリーンして再構成",
+	"cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title": "CMake デバッガーを使用してすべてのプロジェクトをクリーンして再構成する",
 	"cmake-tools.command.cmake.clean.title": "クリーンする",
 	"cmake-tools.command.cmake.cleanAll.title": "すべてのプロジェクトをクリーンする",
 	"cmake-tools.command.cmake.cleanRebuild.title": "クリーンしてリビルド",
@@ -176,5 +182,6 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "拡張子が単一ファイルのコンパイルを有効にするために compile_commands.json を読み取るかどうかを制御します。",
 	"cmake-tools.command.cmake.projectStatus.update.title": "プロジェクトの状態を最新の情報に更新",
-	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "テストの対象の設定"
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "テストの対象の設定",
+	"cmake-tools.debugger.label": "CMake デバッガー"
 }

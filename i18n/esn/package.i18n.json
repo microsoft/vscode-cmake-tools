@@ -20,7 +20,9 @@
 	"cmake-tools.command.cmake.setVariant.title": "Seleccionar una variante",
 	"cmake-tools.command.cmake.setVariantAll.title": "Seleccionar una variante para todos los proyectos",
 	"cmake-tools.command.cmake.configure.title": "Configurar",
+	"cmake-tools.command.cmake.configureWithDebugger.title": "Configuración con el depurador de CMake",
 	"cmake-tools.command.cmake.configureAll.title": "Configurar todos los proyectos",
+	"cmake-tools.command.cmake.configureAllWithDebugger.title": "Configurar todos los proyectos con el depurador de CMake",
 	"cmake-tools.command.cmake.showConfigureCommand.title": "Mostrar comando Configurar",
 	"cmake-tools.command.cmake.build.title": "Versión de compilación",
 	"cmake-tools.command.cmake.buildAll.title": "Compilar todos los proyectos",
@@ -33,10 +35,14 @@
 	"cmake-tools.command.cmake.buildWithTarget.title": "Destino de compilación",
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Establecer el destino de compilación",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Eliminar la memoria caché y volver a configurar",
+	"cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "Eliminación de caché y reconfiguración con el depurador de CMake",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Eliminar la memoria caché y reconfigurar todos los proyectos",
+	"cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "Eliminar caché y volver a configurar todos los proyectos con el depurador de CMake",
 	"cmake-tools.command.cmake.editCacheUI.title": "Editar la memoria caché de CMake (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Limpiar reconfiguración",
+	"cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "Limpiar reconfiguración con el depurador de CMake",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Limpiar reconfigurar todos los proyectos",
+	"cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title": "Limpiar reconfiguración de todos los proyectos con el depurador de CMake",
 	"cmake-tools.command.cmake.clean.title": "Limpiar",
 	"cmake-tools.command.cmake.cleanAll.title": "Limpiar todos los proyectos",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Recompilación limpia",
@@ -176,5 +182,6 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controla si la extensión lee compile_commands.json para habilitar la compilación de un solo archivo.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Actualizar el estado del proyecto",
-	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Establecer destino de prueba"
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Establecer destino de prueba",
+	"cmake-tools.debugger.label": "Depurador de CMake"
 }

@@ -20,7 +20,9 @@
 	"cmake-tools.command.cmake.setVariant.title": "Varyant Seç",
 	"cmake-tools.command.cmake.setVariantAll.title": "Tüm Projeler için Varyant Seç",
 	"cmake-tools.command.cmake.configure.title": "Yapılandır",
+	"cmake-tools.command.cmake.configureWithDebugger.title": "CMake Hata Ayıklayıcısı ile Yapılandır",
 	"cmake-tools.command.cmake.configureAll.title": "Tüm Projeleri Yapılandır",
+	"cmake-tools.command.cmake.configureAllWithDebugger.title": "CMake Hata Ayıklayıcısı ile Tüm Projeleri Yeniden Yapılandır",
 	"cmake-tools.command.cmake.showConfigureCommand.title": "Yapılandır Komutunu Göster",
 	"cmake-tools.command.cmake.build.title": "Derleme",
 	"cmake-tools.command.cmake.buildAll.title": "Tüm Projeleri Derle",
@@ -33,10 +35,14 @@
 	"cmake-tools.command.cmake.buildWithTarget.title": "Hedefi Derle",
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Derleme Hedefini Ayarla",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Önbelleği Sil ve Yeniden Yapılandır",
+	"cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "CMake Hata Ayıklayıcısı ile Önbelleği Sil ve Yeniden Yapılandır",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Önbelleği Sil ve Tüm Projeleri Yeniden Yapılandır",
+	"cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "CMake Hata Ayıklayıcısı ile Önbelleği Sil ve Tüm Projeleri Yeniden Yapılandır",
 	"cmake-tools.command.cmake.editCacheUI.title": "CMake Önbelleğini Düzenle (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Yeniden Yapılandırmayı Temizle",
+	"cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "CMake Hata Ayıklayıcısı ile Yeniden Yapılandırmayı Temizle",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Tüm Projeleri Temiz Olarak Yeniden Yapılandır",
+	"cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title": "CMake Hata Ayıklayıcısı ile Tüm Projeleri Yeniden Yapılandırmayı Temizle",
 	"cmake-tools.command.cmake.clean.title": "Temizle",
 	"cmake-tools.command.cmake.cleanAll.title": "Tüm Projeleri Temizle",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Yeniden Derlemeyi Temizle",
@@ -176,5 +182,6 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Tek dosya derlemesini etkinleştirmek için uzantının compile_commands.json dosyasını okuyup okumadığını denetler.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Proje durumunu yenileyin",
-	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Test hedefi ayarla"
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Test hedefi ayarla",
+	"cmake-tools.debugger.label": "CMake Hata Ayıklayıcısı"
 }
