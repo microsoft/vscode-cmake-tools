@@ -20,7 +20,9 @@
 	"cmake-tools.command.cmake.setVariant.title": "Sélectionner un variant",
 	"cmake-tools.command.cmake.setVariantAll.title": "Sélectionner une variante pour tous les projets",
 	"cmake-tools.command.cmake.configure.title": "Configurer",
+	"cmake-tools.command.cmake.configureWithDebugger.title": "Configurer avec le débogueur CMake",
 	"cmake-tools.command.cmake.configureAll.title": "Configurer tous les projets",
+	"cmake-tools.command.cmake.configureAllWithDebugger.title": "Configurer tous les projets avec le débogueur CMake",
 	"cmake-tools.command.cmake.showConfigureCommand.title": "Afficher la commande de configuration",
 	"cmake-tools.command.cmake.build.title": "Générer un build",
 	"cmake-tools.command.cmake.buildAll.title": "Générer tous les projets",
@@ -33,10 +35,14 @@
 	"cmake-tools.command.cmake.buildWithTarget.title": "Générer une cible",
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Définir la cible de build",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Supprimer le cache et reconfigurer",
+	"cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "Supprimer le cache et reconfigurer avec le débogueur CMake",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Supprimer le cache et la reconfiguration de tous les projets",
+	"cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "Supprimer le cache et reconfigurer tous les projets avec le débogueur CMake",
 	"cmake-tools.command.cmake.editCacheUI.title": "Modifier le cache de CMake (IU)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Nouvelle reconfiguration",
+	"cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "Nettoyer la reconfiguration avec le débogueur CMake",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Nouvelle reconfiguration de tous les projets",
+	"cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title": "Nettoyer Reconfigurer tous les projets avec le débogueur CMake",
 	"cmake-tools.command.cmake.clean.title": "Nettoyer",
 	"cmake-tools.command.cmake.cleanAll.title": "Nettoyer tous les projets",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Nouvelle regénération",
@@ -176,5 +182,6 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Une instance de terminal est créée et la cible y est lancée. Les terminaux existants ne sont pas nettoyés automatiquement.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Contrôle si l’extension lit compile_commands.json pour activer la compilation de fichiers uniques.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Actualiser le statut du projet",
-	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Définir la cible de test"
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Définir la cible de test",
+	"cmake-tools.debugger.label": "Débogueur CMake"
 }

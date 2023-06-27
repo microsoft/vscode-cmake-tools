@@ -20,7 +20,9 @@
 	"cmake-tools.command.cmake.setVariant.title": "Wybierz wariant",
 	"cmake-tools.command.cmake.setVariantAll.title": "Wybierz wariant dla wszystkich projektów",
 	"cmake-tools.command.cmake.configure.title": "Konfiguruj",
+	"cmake-tools.command.cmake.configureWithDebugger.title": "Konfiguruj przy użyciu debugera CMake",
 	"cmake-tools.command.cmake.configureAll.title": "Konfiguruj wszystkie projekty",
+	"cmake-tools.command.cmake.configureAllWithDebugger.title": "Konfiguruj wszystkie projekty przy użyciu debugera CMake",
 	"cmake-tools.command.cmake.showConfigureCommand.title": "Pokaż polecenie Konfiguruj",
 	"cmake-tools.command.cmake.build.title": "Kompilacja",
 	"cmake-tools.command.cmake.buildAll.title": "Kompiluj wszystkie projekty",
@@ -33,10 +35,14 @@
 	"cmake-tools.command.cmake.buildWithTarget.title": "Kompiluj element docelowy",
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Ustaw element docelowy kompilowania",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Usuń pamięć podręczną i skonfiguruj ponownie",
+	"cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "Usuń pamięć podręczną i ponownie skonfiguruj za pomocą debugera CMake",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Usuń pamięć podręczną i skonfiguruj ponownie wszystkie projekty",
+	"cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "Usuń pamięć podręczną i ponownie skonfiguruj wszystkie projekty przy użyciu debugera CMake",
 	"cmake-tools.command.cmake.editCacheUI.title": "Edycja pamięci podręcznej narzędzia CMake (interfejs użytkownika)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Wyczyść i skonfiguruj ponownie",
+	"cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "Wyczyść i ponownie skonfiguruj przy użyciu debugera CMake",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Wyczyść ponowne konfigurowanie wszystkich projektów",
+	"cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title": "Wyczyść i ponownie skonfiguruj wszystkie projekty przy użyciu debugera CMake",
 	"cmake-tools.command.cmake.clean.title": "Wyczyść",
 	"cmake-tools.command.cmake.cleanAll.title": "Wyczyść wszystkie projekty",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Wyczyść i skompiluj ponownie",
@@ -176,5 +182,6 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Odśwież stan projektu",
-	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Ustaw docelowy element testowy"
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Ustaw docelowy element testowy",
+	"cmake-tools.debugger.label": "Debuger CMake"
 }

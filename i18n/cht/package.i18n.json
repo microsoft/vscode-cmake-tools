@@ -20,7 +20,9 @@
 	"cmake-tools.command.cmake.setVariant.title": "選取 Variant",
 	"cmake-tools.command.cmake.setVariantAll.title": "選取所有專案的變化",
 	"cmake-tools.command.cmake.configure.title": "設定",
+	"cmake-tools.command.cmake.configureWithDebugger.title": "使用 CMake 偵錯工具設定",
 	"cmake-tools.command.cmake.configureAll.title": "設定所有專案",
+	"cmake-tools.command.cmake.configureAllWithDebugger.title": "使用 CMake 偵錯工具設定所有專案",
 	"cmake-tools.command.cmake.showConfigureCommand.title": "顯示設定命令",
 	"cmake-tools.command.cmake.build.title": "建置",
 	"cmake-tools.command.cmake.buildAll.title": "建置所有專案",
@@ -33,10 +35,14 @@
 	"cmake-tools.command.cmake.buildWithTarget.title": "建置目標",
 	"cmake-tools.command.cmake.setDefaultTarget.title": "設定建置目標",
 	"cmake-tools.command.cmake.cleanConfigure.title": "刪除快取並重新設定",
+	"cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "使用 CMake 偵錯工具刪除快取並重新設定",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "刪除快取並重新設定所有專案",
+	"cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "刪除快取並使用 CMake 偵錯工具重新設定所有專案",
 	"cmake-tools.command.cmake.editCacheUI.title": "編輯 CMake 快取 (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "清除重新設定",
+	"cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "使用 CMake 偵錯工具進行清除重新設定",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "清除 [重新設定所有專案]",
+	"cmake-tools.command.cmake.outline.cleanConfigureAllWithDebugger.title": "使用 CMake 偵錯工具清除重新設定所有專案",
 	"cmake-tools.command.cmake.clean.title": "清除",
 	"cmake-tools.command.cmake.cleanAll.title": "清除所有專案",
 	"cmake-tools.command.cmake.cleanRebuild.title": "清除重建",
@@ -176,5 +182,6 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已建立新的終端機執行個體，並在其中啟動目標。不會自動清除現有的終端機。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制延伸模組是否要讀取 compile_commands.json 以啟用單一檔案編譯。",
 	"cmake-tools.command.cmake.projectStatus.update.title": "重新整理專案狀態",
-	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "設定測試目標"
+	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "設定測試目標",
+	"cmake-tools.debugger.label": "CMake 偵錯工具"
 }
