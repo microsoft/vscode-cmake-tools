@@ -2374,7 +2374,10 @@
           "type": "boolean",
           "default": false,
           "description": "%cmake-tools.configuration.cmake.useProjectStatusView.description%",
-          "scope": "window"
+          "scope": "window",
+          "tags": [
+                "experimental"
+          ]
         },
         "cmake.additionalKits": {
           "type": "array",
