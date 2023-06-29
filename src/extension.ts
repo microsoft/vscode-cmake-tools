@@ -43,6 +43,9 @@ import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
 import { ProjectStatus } from './projectStatus';
 import { StatusBar } from '@cmt/status';
+import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
+import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
+import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -60,7 +63,7 @@ export const hideBuildCommandKey = 'cmake:hideBuildCommand';
  * The global extension manager. There is only one of these, even if multiple
  * backends.
  */
-let extensionManager: ExtensionManager | null = null;
+export let extensionManager: ExtensionManager | null = null;
 
 type RunCMakeCommand = (project: CMakeProject) => Thenable<any>;
 type QueryCMakeProject = (project: CMakeProject) => Thenable<string | string[] | null>;
@@ -104,6 +107,9 @@ export class ExtensionManager implements vscode.Disposable {
     public async init() {
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
+
+        // initialize the state of the cmake exe
+        await getCMakeExecutableInformation(this.workspaceConfig.rawCMakePath);
 
         this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
 
@@ -1098,15 +1104,44 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigure), folder, undefined, true);
     }
 
+    cleanConfigureWithDebugger(folder?: vscode.WorkspaceFolder) {
+        return this.cleanConfigureWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()}, folder);
+    }
+
+    cleanConfigureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
+        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureWithDebugger, debuggerInformation), folder, undefined, true);
+    }
+
     cleanConfigureAll() {
         telemetry.logEvent("deleteCacheAndReconfigure");
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
     }
 
+    cleanConfigureAllWithDebugger() {
+        return this.cleanConfigureAllWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()});
+    }
+
+    cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
+        telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureAllWithDebugger, debuggerInformation), undefined, true);
+    }
+
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
-        telemetry.logEvent("configure", { all: "false"});
+        telemetry.logEvent("configure", { all: "false", debug: "false"});
         return this.runCMakeCommand(
             cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
+            folder, undefined, true);
+    }
+
+    configureWithDebugger(folder?: vscode.WorkspaceFolder) {
+        return this.configureWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()}, folder);
+    }
+
+    configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
+        telemetry.logEvent("configureWithDebugger", { all: "false", debug: "true"});
+        return this.runCMakeCommand(
+            cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation),
             folder, undefined, true);
     }
 
@@ -1115,8 +1150,17 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAll() {
-        telemetry.logEvent("configure", { all: "true"});
+        telemetry.logEvent("configure", { all: "true", debug: "false"});
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true);
+    }
+
+    configureAllWithDebugger() {
+        return this.configureAllWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()});
+    }
+
+    configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
+        telemetry.logEvent("configure", { all: "true", debug: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation), undefined, true);
     }
 
     editCacheUI() {
@@ -1691,6 +1735,13 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         });
     }
 
+    context.subscriptions.push(
+        vscode.debug.registerDebugAdapterDescriptorFactory(
+            "cmake",
+            new DebugAdapterNamedPipeServerDescriptorFactory()
+        )
+    );
+
     // List of functions that will be bound commands
     const funs: (keyof ExtensionManager)[] = [
         'activeFolderName',
@@ -1727,12 +1778,16 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'clean',
         'cleanAll',
         'cleanConfigure',
+        'cleanConfigureWithDebugger',
         'cleanConfigureAll',
+        'cleanConfigureAllWithDebugger',
         'cleanRebuild',
         'cleanRebuildAll',
         'configure',
+        'configureWithDebugger',
         'showConfigureCommand',
         'configureAll',
+        'configureAllWithDebugger',
         'editCacheUI',
         'ctest',
         'ctestAll',
@@ -1787,10 +1842,12 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
+        vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger')),
         vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
         vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
         vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
+        vscode.commands.registerCommand('cmake.outline.cleanConfigureAllWithDebugger', () => runCommand('cleanConfigureAllWithDebugger')),
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items

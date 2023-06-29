@@ -46,6 +46,8 @@ import { KitsController } from './kitsController';
 import { PresetsController } from './presetsController';
 import paths from './paths';
 import { ProjectController } from './projectController';
+import { MessageItem } from 'vscode';
+import { DebugTrackerFactory, DebuggerInformation } from './debug/debuggerConfigureDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -60,7 +62,9 @@ export enum ConfigureType {
     Normal,
     Clean,
     Cache,
-    ShowCommandOnly
+    ShowCommandOnly,
+    NormalWithDebugger,
+    CleanWithDebugger
 }
 
 export enum ConfigureTrigger {
@@ -78,9 +82,13 @@ export enum ConfigureTrigger {
     launch = "launch",
     commandEditCacheUI = "commandEditCacheUI",
     commandConfigure = "commandConfigure",
+    commandConfigureWithDebugger = "commandConfigureWithDebugger",
     commandCleanConfigure = "commandCleanConfigure",
+    commandCleanConfigureWithDebugger = "commandCleanConfigureWithDebugger",
     commandConfigureAll = "commandConfigureAll",
+    commandConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
     commandCleanConfigureAll = "commandCleanConfigureAll",
+    commandCleanConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
     selectKit = "selectKit"
@@ -532,6 +540,11 @@ export class CMakeProject {
         await this.reloadCMakeDriver();
     });
 
+    private readonly cmakePathSub = this.workspaceContext.config.onChange('cmakePath', async () => {
+        // Force re-reading of cmake exe, this will ensure that the debugger capabilities are updated.
+        await this.getCMakeExecutable();
+    });
+
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
      */
@@ -571,7 +584,12 @@ export class CMakeProject {
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
-        for (const sub of [this.generatorSub, this.preferredGeneratorsSub, this.communicationModeSub]) {
+        for (const sub of [
+            this.generatorSub,
+            this.preferredGeneratorsSub,
+            this.communicationModeSub,
+            this.cmakePathSub
+        ]) {
             sub.dispose();
         }
         this.kitsController.dispose();
@@ -1264,7 +1282,7 @@ export class CMakeProject {
         return this.configureInternal(ConfigureTrigger.api, extraArgs, ConfigureType.Normal);
     }
 
-    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal): Promise<number> {
+    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<number> {
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
@@ -1295,6 +1313,17 @@ export class CMakeProject {
                     rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
                 });
 
+                let forciblyCanceled: boolean = false;
+
+                // if there is a debugger information, we are debugging. Set up a listener for stopping a cmake debug session.
+                if (debuggerInformation) {
+                    const trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactory(async () => {
+                        forciblyCanceled = true;
+                        await this.cancelConfiguration();
+                        trackerFactoryDisposable.dispose();
+                    }));
+                }
+
                 if (type !== ConfigureType.ShowCommandOnly) {
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
@@ -1317,14 +1346,20 @@ export class CMakeProject {
                                 let result: number;
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
-                                    result = await drv.configure(trigger, [], consumer, true);
+                                    result = await drv.configure(trigger, [], consumer, debuggerInformation);
                                 } else {
                                     switch (type) {
                                         case ConfigureType.Normal:
                                             result = await drv.configure(trigger, extraArgs, consumer);
                                             break;
+                                        case ConfigureType.NormalWithDebugger:
+                                            result = await drv.configure(trigger, extraArgs, consumer, debuggerInformation);
+                                            break;
                                         case ConfigureType.Clean:
                                             result = await drv.cleanConfigure(trigger, extraArgs, consumer);
+                                            break;
+                                        case ConfigureType.CleanWithDebugger:
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, debuggerInformation);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
                                             result = await drv.configure(trigger, extraArgs, consumer, undefined, true);
@@ -1339,6 +1374,21 @@ export class CMakeProject {
                                 if (result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
+                                } else if (result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && !forciblyCanceled) {
+                                    const yesButtonTitle: string = localize(
+                                        "yes.configureWithDebugger.button",
+                                        "Debug"
+                                    );
+                                    void vscode.window.showErrorMessage<MessageItem>(
+                                        localize('configure.failed.tryWithDebugger', 'Configure failed. Would you like to attempt to configure with the CMake Debugger?'),
+                                        {},
+                                        {title: yesButtonTitle},
+                                        {title: localize('no.configureWithDebugger.button', 'Cancel')})
+                                        .then(async chosen => {
+                                            if (chosen && chosen.title === yesButtonTitle) {
+                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugger);
+                                            }
+                                        });
                                 }
 
                                 await this.cTestController.refreshTests(drv);
@@ -1364,7 +1414,7 @@ export class CMakeProject {
     }
 
     /**
-     * Implementation of `cmake.cleanConfigure()
+     * Implementation of `cmake.cleanConfigure()`
      * trigger: describes the circumstance that caused this configure to be run.
      *          In order to avoid a breaking change in the CMake Tools API,
      *          this parameter can default to that scenario.
@@ -1373,6 +1423,18 @@ export class CMakeProject {
      */
     cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) {
         return this.configureInternal(trigger, [], ConfigureType.Clean);
+    }
+
+    /**
+     * Implementation of `cmake.cleanConfigureWithDebugger()`
+     * trigger: describes the circumstance that caused this configure to be run.
+     *          In order to avoid a breaking change in the CMake Tools API,
+     *          this parameter can default to that scenario.
+     *          All other configure calls in this extension are able to provide
+     *          proper trigger information.
+     */
+    cleanConfigureWithDebugger(trigger: ConfigureTrigger = ConfigureTrigger.api, debuggerInformation?: DebuggerInformation) {
+        return this.configureInternal(trigger, [], ConfigureType.CleanWithDebugger, debuggerInformation);
     }
 
     /**

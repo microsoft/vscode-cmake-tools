@@ -6,5 +6,6 @@
 {
 	"removing": "{0} kaldırılıyor",
 	"unlink.failed": "Önbellek dosyası {0} kaldırılamadı",
+	"cmake.debug.name": "CMake Hata Ayıklayıcısı",
 	"toolchains.object.unsupported": "CMake'in bu sürümü \"toolchains\" nesne türünü desteklemiyor. Derleyici yolları CMakeCache.txt okunarak belirlenecek."
 }
