@@ -899,6 +899,7 @@ export class PresetsController {
         } else {
             log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosenPreset)));
             await this.setTestPreset(chosenPreset, false);
+            await vscode.commands.executeCommand('cmake.refreshTests', this.workspaceFolder);
             return true;
         }
     }

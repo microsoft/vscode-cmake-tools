@@ -145,7 +145,7 @@ export class ProjectController implements vscode.Disposable {
             this.launchTargetSub = project.onLaunchTargetNameChanged(FireNow, () => void projectStatus.refresh());
             this.ctestEnabledSub = project.onCTestEnabledChanged(FireNow, () => void projectStatus.refresh());
             this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
-            this.activeBuildPresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
+            this.activeBuildPresetSub = project.onActiveBuildPresetChanged(FireNow, () => void projectStatus.refresh());
             this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => void projectStatus.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, (isBusy) => void projectStatus.setIsBusy(isBusy));
             await util.setContextValue(ext.hideBuildCommandKey, project.hideBuildButton);

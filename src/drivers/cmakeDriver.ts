@@ -486,35 +486,42 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Change the current configure preset. This lets the driver reload, if necessary.
      * @param configurePreset The new configure preset
      */
-    async setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
-        if (!this.useCMakePresets) {
-            log.info(localize('skip.set.config.preset', 'Using kits, skip setting configure preset: {0}', configurePreset.name));
-            return;
+    async setConfigurePreset(configurePreset: preset.ConfigurePreset | null): Promise<void> {
+        if (configurePreset) {
+            log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
+
+            const newBinaryDir = configurePreset.binaryDir;
+            const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
+            await this.doSetConfigurePreset(needs_clean, async () => {
+                await this._setConfigurePreset(configurePreset);
+            });
+        } else {
+            log.info(localize('unsetting.config.preset', 'Unsetting configure preset'));
+
+            await this.doSetConfigurePreset(false, async () => {
+                await this._setConfigurePreset(configurePreset);
+            });
         }
-
-        log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
-
-        const newBinaryDir = configurePreset.binaryDir;
-        const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
-        await this.doSetConfigurePreset(needs_clean, async () => {
-            await this._setConfigurePreset(configurePreset);
-        });
     }
 
-    private async _setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
+    private async _setConfigurePreset(configurePreset: preset.ConfigurePreset | null): Promise<void> {
         this._configurePreset = configurePreset;
-        log.debug(localize('cmakedriver.config.preset.set.to', 'CMakeDriver configure preset set to {0}', configurePreset.name));
+        log.debug(localize('cmakedriver.config.preset.set.to', 'CMakeDriver configure preset set to {0}', configurePreset?.name || null));
 
-        this._binaryDir = configurePreset.binaryDir || '';
+        this._binaryDir = configurePreset?.binaryDir || '';
 
-        if (configurePreset.generator) {
-            this._generator = {
-                name: configurePreset.generator,
-                platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
-                toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
-            };
+        if (configurePreset) {
+            if (configurePreset.generator) {
+                this._generator = {
+                    name: configurePreset.generator,
+                    platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
+                    toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
+                };
+            } else {
+                log.debug(localize('no.generator', 'No generator specified'));
+            }
         } else {
-            log.debug(localize('no.generator', 'No generator specified'));
+            this._generator = null;
         }
     }
 
@@ -522,42 +529,42 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Change the current build preset
      * @param buildPreset The new build preset
      */
-    async setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
-        if (!this.useCMakePresets) {
-            log.info(localize('skip.set.build.preset', 'Using kits, skip setting build preset: {0}', buildPreset.name));
-            return;
+    async setBuildPreset(buildPreset: preset.BuildPreset | null): Promise<void> {
+        if (buildPreset) {
+            log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset.name));
+        } else {
+            log.info(localize('unsetting.build.preset', 'Unsetting build preset'));
         }
 
-        log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset.name));
         await this.doSetBuildPreset(async () => {
             await this._setBuildPreset(buildPreset);
         });
     }
 
-    private async _setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
+    private async _setBuildPreset(buildPreset: preset.BuildPreset | null): Promise<void> {
         this._buildPreset = buildPreset;
-        log.debug(localize('cmakedriver.build.preset.set.to', 'CMakeDriver build preset set to {0}', buildPreset.name));
+        log.debug(localize('cmakedriver.build.preset.set.to', 'CMakeDriver build preset set to {0}', buildPreset?.name || null));
     }
 
     /**
      * Change the current test preset
      * @param testPreset The new test preset
      */
-    async setTestPreset(testPreset: preset.TestPreset): Promise<void> {
-        if (!this.useCMakePresets) {
-            log.info(localize('skip.set.test.preset', 'Using kits, skip setting test preset: {0}', testPreset.name));
-            return;
+    async setTestPreset(testPreset: preset.TestPreset | null): Promise<void> {
+        if (testPreset) {
+            log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset.name));
+        } else {
+            log.info(localize('unsetting.test.preset', 'Unsetting test preset'));
         }
 
-        log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset.name));
         await this.doSetTestPreset(async () => {
             await this._setTestPreset(testPreset);
         });
     }
 
-    private async _setTestPreset(testPreset: preset.TestPreset): Promise<void> {
+    private async _setTestPreset(testPreset: preset.TestPreset | null): Promise<void> {
         this._testPreset = testPreset;
-        log.debug(localize('cmakedriver.test.preset.set.to', 'CMakeDriver test preset set to {0}', testPreset.name));
+        log.debug(localize('cmakedriver.test.preset.set.to', 'CMakeDriver test preset set to {0}', testPreset?.name || null));
     }
 
     /**
