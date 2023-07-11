@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "CTest çalıştırması sonlandırıldı",
 	"ctest.finished.with.code": "CTest, {0} dönüş koduyla tamamlandı",
 	"folder.not.found.in.test.explorer": "Klasör Test Gezgini'nde bulunamadı: {0}",
+	"test.preset.required": "Testleri keşfetmek için bir test ön ayarı seçin",
 	"ctest.error": "Kullanılabilir test yürütülebilir dosyalarını belirlemek için ctest çalıştırılırken bir hata oluştu",
 	"no.launch.config": "Başlatma yapılandırması bulunamadı.",
 	"choose.launch.config": "Testte hata ayıklamak için bir başlatma yapılandırması seçin.",

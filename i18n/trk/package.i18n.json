@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Yapılandırma sırasında CMake'e geçirilecek ek bağımsız değişkenler.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Derleme sırasında CMake'e geçirilecek ek bağımsız değişkenler.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Derleme sırasında temel alınan derleme aracına geçirilecek ek bağımsız değişkenler.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Paralel derleme işlerinin sayısı. CPU sayısını otomatik olarak algılamak için sıfır kullanın. Bunu 1 olarak ayarlamak paralel derlemeyi devre dışı bırakır.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Paralel derleme işlerinin sayısı. CPU sayısını otomatik olarak algılamak için sıfır kullanın. Bunun 1 olarak ayarlanması, derleme paralelliği üzerinde oluşturucuya bağımlı bir etkisi olan temel alınan derleme komutundan paralellik bayrağını (-j) atlar.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest yürütülebilir dosyasının yolu. Değer null ise cmake.cmakePath değerinden çıkarsanır. (null olarak bırakılması önerilir.)",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Paralel test işlerinin sayısı. cmake.parallelJobs değerini kullanmak için sıfır kullanın.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Uyarılar ve hatalar için derleyici çıkışını ayrıştır.",

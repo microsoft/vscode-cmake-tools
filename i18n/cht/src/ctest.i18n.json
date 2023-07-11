@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "已終止 CTest 執行",
 	"ctest.finished.with.code": "CTest 已完成。傳回碼: {0}",
 	"folder.not.found.in.test.explorer": "在測試總管中找不到資料夾: {0}",
+	"test.preset.required": "選取測試預設以探索測試",
 	"ctest.error": "執行 ctest 以判斷可用的測試可執行檔時發生錯誤",
 	"no.launch.config": "找不到啟動設定。",
 	"choose.launch.config": "選擇要對測試進行偵錯的啟動設定。",
