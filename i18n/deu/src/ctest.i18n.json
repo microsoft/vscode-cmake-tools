@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "Der CTest-Testlauf wurde beendet.",
 	"ctest.finished.with.code": "CTest wurde mit Rückgabecode {0} abgeschlossen.",
 	"folder.not.found.in.test.explorer": "Der Ordner wurde im Test-Explorer nicht gefunden: {0}",
+	"test.preset.required": "Eine Testvoreinstellung zum Ermitteln von Tests auswählen",
 	"ctest.error": "Fehler beim Ausführen von CTest zum Ermitteln verfügbarer ausführbarer Testdateien.",
 	"no.launch.config": "Keine Startkonfigurationen gefunden.",
 	"choose.launch.config": "Wählen Sie eine Startkonfiguration aus, mit der der Test gedebuggt werden soll.",

@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Arguments supplémentaires à passer à CMake au moment de la configuration.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Arguments supplémentaires à passer à CMake au moment de la génération.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Arguments supplémentaires à passer à l'outil de génération sous-jacent au moment de la génération.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Nombre de travaux de build parallèles. Utilisez zéro pour détecter automatiquement le nombre d’UC. Si la valeur est 1, le parallélisme de build est désactivé.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Nombre de travaux de build parallèles. Utilisez zéro pour détecter automatiquement le nombre d’UC. Si la valeur est 1, l’indicateur de parallélisme (-j) est omis dans la commande de génération sous-jacente, qui a un effet dépendant du générateur sur le parallélisme de build.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Chemin de l'exécutable CTest. Si la valeur est null, le chemin est déduit à partir de cmake.cmakePath (il est recommandé de laisser une valeur null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Nombre de travaux de test parallèles. Utilisez zéro pour utiliser la valeur de cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analyse la sortie du compilateur à la recherche d'avertissements et d'erreurs.",

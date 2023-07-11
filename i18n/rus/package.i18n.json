@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Дополнительные аргументы для передачи CMake при настройке.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Дополнительные аргументы для передачи CMake при сборке.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Дополнительные аргументы для передачи инструменту сборки при сборке.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Количество параллельных заданий сборки. Установите значение 0, чтобы автоматически определить количество ЦП. Если установить значение 1, параллельные сборки будут отключены.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Количество параллельных заданий сборки. Используйте ноль для автоматического определения числа ЦП. Если задано значение 1, флаг параллелизма (-j) будет пропущен в базовой команде сборки, что оказывает зависимый от генератора эффект на параллелизм сборки.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Путь к исполняемому файлу CTest. Если он равен NULL, значение будет выводиться из cmake.cmakePath (рекомендуется оставить NULL).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Число параллельных тестовых заданий. Укажите нуль, чтобы использовать значение cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Анализ вывода компилятора на наличие предупреждений и ошибок.",

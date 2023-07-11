@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "要在配置时传递给 CMake 的其他参数。",
 	"cmake-tools.configuration.cmake.buildArgs.description": "要在生成时传递给 CMake 的其他参数。",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "要在生成时传递给基础生成工具的其他参数。",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "并行生成作业的数目。使用零来自动检测 CPU 数。将此值设为 1 则将禁用生成并行度。",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "并行生成作业的数目。使用 0 以自动检测 CPU 数。将此值设置为 1 将省略底层构建命令中的并行性标志 (-j)，这会对构建并行性产生生成器依赖影响。",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可执行文件的路径。如果为 null，则从 cmake.cmakePath 推理(建议保留为 null)。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "并行测试作业的数量。使用零即可利用 cmake.parallelJobs 的值。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "分析编译器输出以查找警告和错误。",

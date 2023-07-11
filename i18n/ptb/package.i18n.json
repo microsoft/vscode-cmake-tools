@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Os argumentos adicionais a serem passados para o CMake durante a configuração.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Os argumentos adicionais a serem passados para o CMake durante o build.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Os argumentos adicionais a serem passados para a ferramenta de build subjacente durante o build.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "O número de trabalhos de construção paralela. Use zero para detectar automaticamente o número de CPUs. Definir como 1 desabilitará o paralelismo de construção.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "O número de trabalhos de construção paralelos. Use zero para detectar automaticamente o número de CPUs. Definir isso como 1 omitirá o sinalizador de paralelismo (-j) do comando de construção subjacente, que tem um efeito dependente do gerador no paralelismo de construção.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "O caminho para o executável do CTest. Se for nulo, será deduzido por meio do cmake.cmakePath (recomenda-se deixar nulo).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "O número de trabalhos de teste paralelos. Use zero para aplicar o valor de cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analisar os avisos e erros da saída do compilador.",

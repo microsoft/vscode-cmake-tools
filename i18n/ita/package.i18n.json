@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Argomenti aggiuntivi da passare a CMake durante la configurazione.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Argomenti aggiuntivi da passare a CMake durante la compilazione.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Argomenti aggiuntivi da passare allo strumento di compilazione sottostante durante la compilazione.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Numero di processi di compilazione paralleli. Usare zero per rilevare automaticamente il numero di CPU. L'impostazione su 1 disabiliterà il parallelismo di compilazione.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Numero di processi di compilazione paralleli. Utilizzare zero per rilevare automaticamente il numero di CPU. Se si imposta questa opzione su 1, il flag di parallelismo (-j) verrà omesso dal comando di compilazione sottostante, che ha un effetto dipendente dal generatore sul parallelismo di compilazione.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Percorso dell'eseguibile di CTest. Se è Null, verrà dedotto da cmake.cmakePath (è consigliabile lasciare Null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Numero di processi di test in parallelo. Specificare zero per usare il valore di cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analizza l'output del compilatore per individuare avvisi ed errori.",
