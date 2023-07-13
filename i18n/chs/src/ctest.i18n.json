@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "CTest 运行已终止",
 	"ctest.finished.with.code": "CTest 已完成，返回代码 {0}",
 	"folder.not.found.in.test.explorer": "在测试资源管理器中找不到文件夹: {0}",
+	"test.preset.required": "选择测试预设以发现测试",
 	"ctest.error": "运行 ctest 来确定可用的测试可执行文件时出错",
 	"no.launch.config": "未找到启动配置。",
 	"choose.launch.config": "选择要调试测试的启动配置。",

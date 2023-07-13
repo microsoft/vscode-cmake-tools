@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "進行組態時會傳遞到 CMake 的其他引數。",
 	"cmake-tools.configuration.cmake.buildArgs.description": "建置時會傳遞到 CMake 的其他引數。",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "建置時會傳遞到基礎建置工具的其他引數。",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "平行建置工作的數目。使用零自動偵測 CPU 數目。將此設定為 1 將會停用建置平行處理原則。",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "平行建置工作數目。使用零以自動偵測 CPU 數目。將此值設定為 1 會從基礎建置命令省略平行處理原則旗標 (-j)，其對建置平行處理原則有產生器相依的效果。",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可執行檔的路徑。若為 null，將會從 cmake.cmakePath 推斷 (建議保留 null)。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "平行測試作業的數目。使用零就會使用 cmake.parallelJobs 的值。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "剖析警告與錯誤的編譯器輸出。",

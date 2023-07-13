@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "구성할 때 CMake에 전달할 추가 인수입니다.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "빌드할 때 CMake에 전달할 추가 인수입니다.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "빌드할 때 기본 빌드 도구에 전달할 추가 인수입니다.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "병렬 빌드 작업의 수입니다. CPU 수를 자동으로 검색하려면 0을 사용합니다. 이를 1로 설정하면 빌드 병렬 처리가 비활성화됩니다.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "병렬 빌드 작업의 수입니다. CPU 수를 자동으로 검색하려면 0을 사용합니다. 이 값을 1로 설정하면 기본 빌드 명령에서 병렬 처리 플래그(-j)가 생략되며, 이는 빌드 병렬 처리에 대한 생성기 종속 효과가 있습니다.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 실행 파일의 경로입니다. Null인 경우 cmake.cmakePath에서 유추됩니다(null을 유지하는 것이 좋음).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "병렬 테스트 작업의 수입니다. cmake.parallelJobs 값을 사용하려면 0을 사용합니다.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "경고 및 오류에 대한 컴파일러 출력을 구문 분석합니다.",

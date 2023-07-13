@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Dodatkowe argumenty do przekazania do narzędzia CMake podczas konfigurowania.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Dodatkowe argumenty do przekazania do narzędzia CMake podczas kompilowania.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Dodatkowe argumenty do przekazania do bazowego narzędzia kompilacji podczas kompilowania.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Liczba równoległych zadań kompilacji. Użyj zera, aby automatycznie wykryć liczbę procesorów CPU. Ustawienie wartości 1 spowoduje wyłączenie równoległości kompilacji.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Liczba równoległych zadań kompilacji. Użyj zera, aby automatycznie wykryć liczbę procesorów. Ustawienie wartości 1 spowoduje pominięcie flagi równoległości (-j) z bazowego polecenia kompilacji, które ma wpływ zależny od generatora na równoległość kompilacji.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Ścieżka do pliku wykonywalnego narzędzia CTest. Jeśli wartość jest równa null, zostanie określona na podstawie parametru cmake.cmakePath (zaleca się pozostawienie wartości null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Liczba równoległych zadań testowych. Użyj wartości zero, aby użyć wartości parametru cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analizuj dane wyjściowe kompilatora pod kątem ostrzeżeń i błędów.",

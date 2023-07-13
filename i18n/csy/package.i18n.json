@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Další argumenty, které se mají předat nástrojům CMake při konfigurování",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Další argumenty, které se mají předat nástrojům CMake při sestavování",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Další argumenty, které se mají předat základnímu nástroji pro sestavení při sestavování",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Počet paralelních úloh buildu. Pokud chcete automaticky zjistit počet procesorů, použijte nulu. Nastavením na 1 paralelismus buildu zakážete.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Počet paralelních úloh sestavení. Pokud chcete automaticky zjistit počet procesorů, použijte nulu. Nastavení na hodnotu 1 vynechá příznak paralelismu (-j) z podkladového příkazu sestavení, který má vliv na paralelismus sestavení, který je závislý na generátoru.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Cesta ke spustitelnému souboru CTest. Pokud je hodnota null, bude odvozena z parametru cmake.cmakePath (doporučeno ponechat hodnotu null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Počet paralelních testovacích úloh. Pokud chcete použít hodnotu cmake.parallelJobs, použijte nulu.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analyzovat výstup kompilátoru z hlediska upozornění a chyb",

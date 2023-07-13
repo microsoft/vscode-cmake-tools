@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "A execução do CTest foi terminada",
 	"ctest.finished.with.code": "CTest concluído com código de retorno {0}",
 	"folder.not.found.in.test.explorer": "A pasta não foi encontrada no Gerenciador de Testes: {0}",
+	"test.preset.required": "Selecione uma predefinição de teste para descobrir testes",
 	"ctest.error": "Houve um erro ao executar o CTest para determinar os executáveis de teste disponíveis",
 	"no.launch.config": "Nenhuma configuração de inicialização encontrada.",
 	"choose.launch.config": "Escolha uma configuração de inicialização para depurar o teste.",

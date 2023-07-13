@@ -89,7 +89,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "構成時に CMake に渡す追加の引数です。",
 	"cmake-tools.configuration.cmake.buildArgs.description": "ビルド時に CMake に渡す追加の引数です。",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "ビルド時に基になるビルド ツールに渡す追加の引数です。",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "並列ビルド ジョブの数。CPU の数を自動的に検出するには、ゼロを使用します。これを 1 に設定すると、ビルドの並列処理が無効になります。",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "並列ビルド ジョブの数。CPU 数を自動的に検出するには、0 を使用します。これを 1 に設定すると、基になるビルド コマンドから並列処理フラグ (-j) が省略されます。このコマンドは、ビルドの並列処理に対してジェネレーターに依存する影響を与えます。",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 実行可能ファイルへのパス。null の場合、cmake.cmakePath から推論されます (null のままにすることをお勧めします)。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "並列テスト ジョブの数。cmake.parallelJobs の値を使用するには、0 を指定します。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "コンパイラ出力の警告とエラーを解析します。",

@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "CTest の実行が終了しました",
 	"ctest.finished.with.code": "CTest がリターン コード {0} で終了しました",
 	"folder.not.found.in.test.explorer": "フォルダーがテスト エクスプローラーに見つかりません: {0}",
+	"test.preset.required": "テストプリセットを選択してテストを選択する",
 	"ctest.error": "使用可能なテスト実行可能ファイルを特定するための ctest の実行でエラーが発生しました",
 	"no.launch.config": "起動構成が見つかりません。",
 	"choose.launch.config": "テストをデバッグする起動構成を選択します。",

@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "Praca narzędzia CTest została przerwana",
 	"ctest.finished.with.code": "Narzędzie CTest zakończyło pracę z kodem powrotnym {0}",
 	"folder.not.found.in.test.explorer": "Nie znaleziono folderu w Eksploratorze testów: {0}",
+	"test.preset.required": "Wybierz ustawienie wstępne testu, aby odnaleźć testy",
 	"ctest.error": "Wystąpił błąd podczas uruchamiania narzędzia ctest w celu określenia dostępnych plików wykonywalnych testu",
 	"no.launch.config": "Nie znaleziono konfiguracji uruchamiania.",
 	"choose.launch.config": "Wybierz konfigurację uruchamiania do debugowania testu.",
