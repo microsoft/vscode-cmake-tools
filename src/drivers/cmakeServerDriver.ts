@@ -157,7 +157,7 @@ export class CMakeServerDriver extends CMakeDriver {
         })();
     }
 
-    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, _options?: proc.ExecutionOptions) {
+    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, _defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, _options?: proc.ExecutionOptions) {
         await this._clientChangeInProgress;
         const cl = await this.getClient();
         const sub = this.onMessage(msg => {

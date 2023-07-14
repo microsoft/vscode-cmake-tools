@@ -112,7 +112,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * @returns The exit code from CMake
      */
-    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: preset.ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number>;
+    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: preset.ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number>;
     protected abstract doCacheConfigure(): Promise<number>;
 
     private _isConfiguredAtLeastOnce = false;
@@ -1325,7 +1325,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             let expanded_flags: string[];
+            let defaultPresetName: string | undefined;
             if (this.useCMakePresets) {
+                defaultPresetName = this._configurePreset?.name;
                 const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? presetOverride : this._configurePreset;
                 if (!configurePreset) {
                     log.debug(localize('no.config.Preset', 'No configure preset selected'));
@@ -1350,7 +1352,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 this._isConfiguredAtLeastOnce = true;
                 return retc;
             } else {
-                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, presetOverride, options, debuggerInformation);
+                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, defaultPresetName, presetOverride, options, debuggerInformation);
                 this._isConfiguredAtLeastOnce = true;
             }
             const timeEnd: number = new Date().getTime();
