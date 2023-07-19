@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "Konfiguracja narzędzi CMake Tools",
 	"cmake-tools.configuration.cmake.cmakePath.description": "Nazwa/ścieżka pliku wykonywalnego narzędzia CMake do użycia.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Katalog, w którym zostaną umieszczone pliki kompilacji narzędzia CMake.",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "Nazwa zestawu, który zostanie wybrany automatycznie",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Katalog, w którym zostaną umieszczone zainstalowane pliki narzędzia CMake.",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "Ścieżka lub tablica ścieżek do katalogu głównego/katalogów CMakeLists.txt.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Zapisz otwarte pliki przed kompilowaniem.",

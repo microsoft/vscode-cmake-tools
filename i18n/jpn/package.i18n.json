@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "CMake Tools の構成",
 	"cmake-tools.configuration.cmake.cmakePath.description": "使用する CMake 実行可能ファイルの名前またはパスです。",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "CMake のビルド ファイルが格納されるディレクトリです。",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "自動的に選択されるセットの名前。",
 	"cmake-tools.configuration.cmake.installPrefix.description": "CMake でインストールされるファイルが格納されるディレクトリ。",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "CMakeLists.txt ルート/ディレクトリへのパスまたはパスの配列。",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "ビルドの前に、開いているファイルを保存します。",

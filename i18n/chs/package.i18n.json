@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "CMake 工具配置",
 	"cmake-tools.configuration.cmake.cmakePath.description": "要使用的 CMake 可执行文件的名称/路径。",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "CMake 生成文件将转到其中的目录。",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "将自动选择的套件的名称。",
 	"cmake-tools.configuration.cmake.installPrefix.description": "CMake 安装文件将转到其中的目录。",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "指向 CMakeLists.txt 根目录/目录的路径或路径数组。",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "在生成前保存打开的文件。",

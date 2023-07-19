@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "CMake Tools-Konfiguration",
 	"cmake-tools.configuration.cmake.cmakePath.description": "Name/Pfad der zu verwendenden ausführbaren CMake-Datei.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Das Verzeichnis, in dem CMake-Builddateien abgelegt werden.",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "Der Name des Satzes, der automatisch ausgewählt wird.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Das Verzeichnis, in dem installierte CMake-Dateien abgelegt werden.",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "Pfad oder Array von Pfaden zu dem/den Stammverzeichnis(en) \"CMakeLists.txt\".",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Hiermit werden geöffnete Dateien vor dem Erstellen gespeichert.",

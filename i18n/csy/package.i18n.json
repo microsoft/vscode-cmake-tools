@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "Konfigurace nástrojů CMake Tools",
 	"cmake-tools.configuration.cmake.cmakePath.description": "Název nebo cesta ke spustitelnému souboru CMake, který se má použít",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Adresář, do kterého se budou ukládat soubory pro sestavení CMake",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "Název sady, která bude automaticky vybrána.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Adresář, do kterého se nainstalují soubory CMake",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "Cesta nebo pole cest ke kořenovému adresáři/adresářům CMakeLists.txt.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Uložit otevřené soubory před sestavením",

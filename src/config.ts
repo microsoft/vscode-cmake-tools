@@ -477,7 +477,7 @@ export class ConfigurationReader implements vscode.Disposable {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         cmakePath: new vscode.EventEmitter<string>(),
         buildDirectory: new vscode.EventEmitter<string>(),
-        defaultKitName: new vscode.EventEmitter<string|null>(),
+        defaultKitName: new vscode.EventEmitter<string| null>(),
         installPrefix: new vscode.EventEmitter<string | null>(),
         sourceDirectory: new vscode.EventEmitter<string|string[]>(),
         saveBeforeBuild: new vscode.EventEmitter<boolean>(),

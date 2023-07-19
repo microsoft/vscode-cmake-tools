@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "CMake Araçları yapılandırması",
 	"cmake-tools.configuration.cmake.cmakePath.description": "Kullanılacak CMake yürütülebilir dosyasının adı/yolu.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "CMake derleme dosyalarının yerleştirileceği dizin.",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "Otomatik olarak seçilecek setin adı",
 	"cmake-tools.configuration.cmake.installPrefix.description": "CMake yüklü dosyaların gönderileceği dizin.",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "CMakeLists.txt kök dizinine/dizinlerine giden yol veya yollar dizisi.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Derlemeden önce açık dosyaları kaydet.",

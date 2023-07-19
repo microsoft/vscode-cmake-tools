@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "CMake 工具組態",
 	"cmake-tools.configuration.cmake.cmakePath.description": "要使用的 CMake 可執行檔名稱/路徑。",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "接收 CMake 建置檔案的目錄。",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "將自動選擇的套件的名稱。",
 	"cmake-tools.configuration.cmake.installPrefix.description": "接收 CMake 已安裝檔案的目錄。",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "一或多個 CMakeLists.txt 根目錄的路徑或路徑陣列。",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "先儲存開啟的檔案，然後再建置。",

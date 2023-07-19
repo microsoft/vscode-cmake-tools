@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "Configuration de CMake Tools",
 	"cmake-tools.configuration.cmake.cmakePath.description": "Nom/chemin de l'exécutable CMake à utiliser.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Répertoire de destination des fichiers de build CMake.",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "Le nom de l'ensemble qui sera automatiquement sélectionné.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Répertoire de destination des fichiers installés de CMake.",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "Chemin d'accès ou tableau de chemins d'accès au(x) répertoire(s) racine(s) de CMakeLists.txt.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Enregistre les fichiers ouverts avant la génération.",

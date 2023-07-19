@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "Configuración de Herramientas de CMake",
 	"cmake-tools.configuration.cmake.cmakePath.description": "Nombre o ruta de acceso del ejecutable de CMake que se va a usar.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "El directorio en el que se incluirán los archivos de compilación de CMake.",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "El nombre del conjunto que se seleccionará automáticamente.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "El directorio en el que se incluirán los archivos de CMake instalados.",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "Ruta de acceso o matriz de rutas de acceso al directorio o los directorios raíz de CMakeLists.txt.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Guarda los archivos abiertos antes de compilar.",
