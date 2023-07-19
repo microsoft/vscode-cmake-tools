@@ -1715,7 +1715,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
         const parallelJobsSetting = vscode.workspace.getConfiguration("cmake", configurationScope).inspect<number | undefined>('parallelJobs');
-        let numJobs: number | undefined = (parallelJobsSetting?.globalValue || parallelJobsSetting?.workspaceValue || parallelJobsSetting?.workspaceFolderValue);
+        let numJobs: number | undefined = (parallelJobsSetting?.workspaceFolderLanguageValue || parallelJobsSetting?.workspaceFolderValue || parallelJobsSetting?.globalValue);
         // for Ninja generator, don't '-j' argument if user didn't define number of jobs
         // let numJobs: number | undefined = this.config.numJobs;
         if (numJobs === undefined && gen && !/Ninja/.test(gen)) {

@@ -10,6 +10,7 @@ Bug Fixes:
 Improvements:
 - Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath` [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
 - Fix our checking for invalid settings when CMakeUserPresets version is different than CMakePresets [#2897](https://github.com/microsoft/vscode-cmake-tools/issues/2897)
+- Fix the precendence order that we evaluate the `cmake.parallelJobs` setting. [#3206](https://github.com/microsoft/vscode-cmake-tools/issues/3206)
 
 ## 1.14.33
 Bug Fixes:
