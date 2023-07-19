@@ -6,6 +6,7 @@ Features:
 
 Bug Fixes:
 - When using CMake presets, the Project Status View now shows the build target along with the build preset. [PR #3241](https://github.com/microsoft/vscode-cmake-tools/pull/3241)
+- IntelliSense resolves headers coming from MacOS frameworks. CMake 3.27 or later is required. [#2324](https://github.com/microsoft/vscode-cmake-tools/issues/2324)
 
 Improvements:
 - Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath` [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
