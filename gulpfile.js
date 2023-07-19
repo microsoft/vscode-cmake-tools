@@ -142,7 +142,7 @@ gulp.task("translations-export", (done) => {
     .pipe(filter(['**/*.nls.json', '**/*.nls.metadata.json']))
 
     // Consoldate them into nls.metadata.json, which the xlf is built from.
-    .pipe(nls.bundleMetaDataFiles('ms-vscode.cmake-tools', '.'))
+    .pipe(nls.bundleMetaDataFiles('netkiss.cmake-tools', '.'))
 
     // filter down to just the resulting metadata files
     .pipe(filter(['**/nls.metadata.header.json', '**/nls.metadata.json']))
@@ -208,7 +208,7 @@ const generatedSrcLocBundle = () => {
         .pipe(tsProject()).js
         .pipe(nls.createMetaDataFiles())
         .pipe(nls.createAdditionalLanguageFiles(languages, "i18n"))
-        .pipe(nls.bundleMetaDataFiles('ms-vscode.cmake-tools', 'dist'))
+        .pipe(nls.bundleMetaDataFiles('netkiss.cmake-tools', 'dist'))
         .pipe(nls.bundleLanguageFiles())
         .pipe(filter(['**/nls.bundle.*.json', '**/nls.metadata.header.json', '**/nls.metadata.json']))
         .pipe(gulp.dest('dist'));

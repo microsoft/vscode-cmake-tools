@@ -322,9 +322,9 @@ export function getIntelliSenseMode(cptVersion: cpptools.Version, compilerPath: 
  */
 export class CppConfigurationProvider implements cpptools.CustomConfigurationProvider {
     /** Our name visible to cpptools */
-    readonly name = 'CMake Tools';
+    readonly name = 'CMake Tools Fork';
     /** Our extension ID, visible to cpptools */
-    readonly extensionId = 'ms-vscode.cmake-tools';
+    readonly extensionId = 'netkiss.cmake-tools';
     /**
      * This value determines if we need to show the user an error message about missing compilers. When an update succeeds
      * without missing any compilers, we set this to `true`, otherwise `false`.

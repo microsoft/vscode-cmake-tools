@@ -41,7 +41,7 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
     extension: vscode.Extension<any>;
 
     constructor() {
-        this.extension = vscode.extensions.getExtension("ms-vscode.cmake-tools")!;
+        this.extension = vscode.extensions.getExtension("netkiss.cmake-tools")!;
     }
     public clean() {
         (this.workspaceState as TestMemento).clear();
@@ -89,7 +89,7 @@ export class SmokeTestExtensionContext implements vscode.ExtensionContext {
     extension: vscode.Extension<any>;
 
     constructor(public readonly extensionPath: string) {
-        this.extension = vscode.extensions.getExtension("ms-vscode.cmake-tools")!;
+        this.extension = vscode.extensions.getExtension("netkiss.cmake-tools")!;
     }
     public clean() {
         (this.workspaceState as TestMemento).clear();

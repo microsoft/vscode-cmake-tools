@@ -24,7 +24,7 @@ export async function clearExistingKitConfigurationFile() {
 }
 
 export function getExtension() {
-    const extension = vscode.extensions.getExtension('ms-vscode.cmake-tools');
+    const extension = vscode.extensions.getExtension('netkiss.cmake-tools');
     if (!extension) {
         throw new Error('Extension is undefined!');
     }

@@ -1,6 +1,6 @@
 {
-  "name": "cmake-tools-fork",
-  "displayName": "CMake Tools",
+  "name": "cmake-tools",
+  "displayName": "CMake Tools Fork",
   "description": "Extended CMake support in Visual Studio Code",
   "version": "1.13.0",
   "publisher": "netkiss",
@@ -1467,7 +1467,7 @@
     },
     "configuration": {
       "type": "object",
-      "title": "CMake Tools",
+      "title": "CMake Tools Fork",
       "properties": {
         "cmake.autoSelectActiveFolder": {
           "type": "boolean",
