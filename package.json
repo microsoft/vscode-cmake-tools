@@ -1,18 +1,18 @@
 {
-  "name": "cmake-tools",
+  "name": "cmake-tools-fork",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
   "version": "1.13.0",
-  "publisher": "ms-vscode",
+  "publisher": "netkiss",
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/vscode-cmake-tools"
+    "url": "https://github.com/netkiss/vscode-cmake-tools"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/microsoft/vscode-cmake-tools/issues"
+    "url": "https://github.com/netkiss/vscode-cmake-tools/issues"
   },
-  "homepage": "https://github.com/microsoft/vscode-cmake-tools",
+  "homepage": "https://github.com/netkiss/vscode-cmake-tools",
   "keywords": [
     "cmake",
     "tools",
