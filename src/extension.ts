@@ -20,7 +20,8 @@ import { ProjectController, FolderProjectType} from '@cmt/projectController';
 import {
     USER_KITS_FILEPATH,
     findCLCompilerPath,
-    scanForKitsIfNeeded
+    scanForKitsIfNeeded,
+    Kit
 } from '@cmt/kit';
 import { KitsController } from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
@@ -325,61 +326,26 @@ export class ExtensionManager implements vscode.Disposable {
             }
             return !!cmakeProject.configurePreset;
         } else {
-            
-
-
-            const rocker = logging.createLogger('rock');
-            rocker.info(localize('Do.you.know.who.I.am?','Hello my name is Dr Greenthomb'));
-
-            //const rootFolder: vscode.WorkspaceFolder = cmakeProject.workspaceFolder;
-            //const config = vscode.workspace.getConfiguration(undefined, rootFolder.uri);            
-            
-            const str = vscode.workspace.getConfiguration('cmake').get<string>('buildDirectory', 'default');
-
-            // if (str === 'default') 
-            // {
-                vscode.window.showInformationMessage('I am rap superstar:' + str);
-                rocker.info(str);
-            // }
-            // else vscode.window.showInformationMessage('I am rock superstar');
-
-
-
-
-
             if (cmakeProject.activeKit) {
                 // We have an active kit. We're good.
                 return true;
             }
 
-
-
-
-
-
-
-
-
-
+            // Get the name of kit name from settings.json
+            const default_kit_name = vscode.workspace.getConfiguration('cmake').get<string | null>('defaultKitName', null);
             
-            //Try to set kit with name "default"
-            //Todo check settings.json to defined default kit name
-            await this.setKitByName('default',cmakeProject.workspaceFolder);
-            if(cmakeProject.activeKit) 
+            // Tro to use this kit
+            if (default_kit_name) 
             {
-                vscode.window.showInformationMessage('CMake Tools: default kit has been setted');
-                return true;
+                // Check for existing compilers for "defaultKitName" kit
+                const newKit: Kit | undefined = cmakeProject.kitsController.availableKits.find(kit => kit.name === default_kit_name)
+                if(newKit?.compilers)
+                {
+                    // Set active kit
+                    await this.setKitByName(default_kit_name,cmakeProject.workspaceFolder);
+                    return true;
+                }
             }
-
-
-
-
-
-
-
-
-
-
 
             // No kit? Ask the user what they want.
             const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
@@ -1454,11 +1420,6 @@ export class ExtensionManager implements vscode.Disposable {
         return this.queryCMakeProject(cmakeProject => cmakeProject.buildKit(), folder);
     }
 
-    // defaultKitName(folder?: vscode.WorkspaceFolder | string) {
-    //     telemetry.logEvent("substitution", { command: "defaultKitName" });
-    //     return this.queryCMakeProject(cmakeProject => cmakeProject.defaultKitName(), folder);
-    // }
-
     executableTargets(folder?: vscode.WorkspaceFolder | string) {
         telemetry.logEvent("substitution", { command: "executableTargets" });
         return this.queryCMakeProject(async cmakeProject => (await cmakeProject.executableTargets).map(target => target.name), folder);
@@ -1864,7 +1825,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'buildKit',
         'buildType',
         'buildDirectory',
-        // 'defaultKitName',
         'executableTargets',
         'debugTarget',
         'debugTargetAll',

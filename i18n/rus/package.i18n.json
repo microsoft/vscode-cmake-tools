@@ -73,6 +73,7 @@
 	"cmake-tools.configuration.title": "Конфигурация Средств CMake",
 	"cmake-tools.configuration.cmake.cmakePath.description": "Имя используемого исполняемого файла CMake и путь к нему.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Каталог, в который помещаются файлы сборки CMake.",
+	"cmake-tools.configuration.cmake.defaultKitName.description": "Имя набора, который будет выбран автоматически",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Каталог, в котором будут размещены установленные файлы CMake.",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "Путь или массив путей к корневому каталогу или корневым каталогам CMakeLists.txt.",
 	"cmake-tools.configuration.cmake.saveBeforeBuild.description": "Сохранение открытых файлов перед сборкой.",

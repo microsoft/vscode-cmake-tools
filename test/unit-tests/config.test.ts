@@ -6,6 +6,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         autoSelectActiveFolder: false,
         cmakePath: '',
         buildDirectory: '',
+        defaultKitName: null,
         installPrefix: null,
         sourceDirectory: '',
         saveBeforeBuild: true,

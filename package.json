@@ -46,6 +46,7 @@
     "onCommand:cmake.getLaunchTargetFilename",
     "onCommand:cmake.buildType",
     "onCommand:cmake.buildDirectory",
+    "onCommand:cmake.defaultKitName",
     "onCommand:cmake.executableTargets",
     "onCommand:cmake.buildKit",
     "onCommand:cmake.tasksBuildCommand",
@@ -1484,6 +1485,12 @@
           "type": "string",
           "default": "${workspaceFolder}/build",
           "description": "%cmake-tools.configuration.cmake.buildDirectory.description%",
+          "scope": "resource"
+        },
+        "cmake.defaultKitName": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.defaultKitName.description%",
           "scope": "resource"
         },
         "cmake.installPrefix": {

@@ -68,6 +68,7 @@
     "cmake-tools.configuration.title": "CMake Tools configuration",
     "cmake-tools.configuration.cmake.cmakePath.description": "Name/path of the CMake executable to use.",
     "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go.",
+    "cmake-tools.configuration.cmake.defaultKitName.description": "The name of the kit that will be selected automatically",
     "cmake-tools.configuration.cmake.installPrefix.description": "The directory where CMake installed files will go.",
     "cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
     "cmake-tools.configuration.cmake.saveBeforeBuild.description": "Save open files before building.",
