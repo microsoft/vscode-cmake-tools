@@ -6,6 +6,7 @@ Features:
 
 Bug Fixes:
 - When using CMake presets, the Project Status View now shows the build target along with the build preset. [PR #3241](https://github.com/microsoft/vscode-cmake-tools/pull/3241)
+- Fix per-folder browse configurations returning incorrect information [#3155](https://github.com/microsoft/vscode-cmake-tools/issues/3155)
 
 Improvements:
 - Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath` [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
