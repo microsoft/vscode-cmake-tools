@@ -474,7 +474,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             defines = defines.concat(extraDefinitions);
             intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch);
         }
-        const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath || [];
+        const frameworkPaths = Array.from(new Set<string>((fileGroup.frameworks ?? []).map(f => path.dirname(f.path))));
+        const includePath = (fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath || []).concat(frameworkPaths);
         const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
 
         const newBrowsePath = this.workspaceBrowseConfiguration.browsePath;
