@@ -401,8 +401,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         return true;
     }
 
-    async provideFolderBrowseConfiguration(uri: vscode.Uri): Promise<cpptools.WorkspaceBrowseConfiguration> {
-        return this.workspaceBrowseConfigurations.get(util.platformNormalizePath(uri.fsPath)) ?? this.workspaceBrowseConfiguration;
+    async provideFolderBrowseConfiguration(uri: vscode.Uri): Promise<cpptools.WorkspaceBrowseConfiguration | null> {
+        return this.workspaceBrowseConfigurations.get(util.platformNormalizePath(uri.fsPath)) ?? null;
     }
 
     /** No-op */
