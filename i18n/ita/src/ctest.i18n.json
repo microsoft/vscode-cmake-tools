@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "L'esecuzione di CTest è stata terminata",
 	"ctest.finished.with.code": "CTest terminato. Codice restituito: {0}",
 	"folder.not.found.in.test.explorer": "Cartella non trovata in Esplora test: {0}",
+	"test.preset.required": "Selezionare un set di impostazioni di test per individuare i test",
 	"ctest.error": "Si è verificato un errore durante l'esecuzione di CTest per determinare gli eseguibili di test disponibili",
 	"no.launch.config": "Non sono state trovate configurazioni di avvio.",
 	"choose.launch.config": "Scegliere una configurazione di avvio con cui eseguire il debug del test.",

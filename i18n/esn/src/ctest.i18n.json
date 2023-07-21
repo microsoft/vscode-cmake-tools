@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "La ejecución de CTest ha finalizado.",
 	"ctest.finished.with.code": "CTest finalizó con el código de retorno {0}",
 	"folder.not.found.in.test.explorer": "No se ha encontrado la carpeta en el Explorador de pruebas: {0}",
+	"test.preset.required": "Seleccionar un valor preestablecido de prueba para detectar pruebas",
 	"ctest.error": "Error al ejecutar ctest para determinar los ejecutables de pruebas disponibles",
 	"no.launch.config": "No se encontraron configuraciones de inicio.",
 	"choose.launch.config": "Elija una configuración de inicio con la que depurar la prueba.",

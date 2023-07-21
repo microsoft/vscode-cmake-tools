@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "CTest 실행이 종료됨",
 	"ctest.finished.with.code": "CTest 완료(반환 코드: {0})",
 	"folder.not.found.in.test.explorer": "테스트 탐색기에서 폴더를 찾을 수 없습니다. {0}",
+	"test.preset.required": "테스트 사전 설정을 선택하여 테스트 검색",
 	"ctest.error": "사용 가능한 테스트 실행 파일을 확인하기 위해 ctest를 실행하는 동안 오류 발생",
 	"no.launch.config": "시작 구성을 찾을 수 없습니다.",
 	"choose.launch.config": "테스트를 디버그할 시작 구성을 선택합니다.",

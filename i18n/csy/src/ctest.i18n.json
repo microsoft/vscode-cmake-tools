@@ -16,6 +16,7 @@
 	"ctest.run.terminated": "Běh CTestu se ukončil.",
 	"ctest.finished.with.code": "CTest skončil s návratovým kódem {0}.",
 	"folder.not.found.in.test.explorer": "Složka se nenašla v Průzkumníkovi testů: {0}",
+	"test.preset.required": "Výběrem předvolby testu zjistíte testy.",
 	"ctest.error": "Při spouštění nástroje ctest došlo k chybě při zjišťování dostupných spustitelných souborů testů.",
 	"no.launch.config": "Nenašly se žádné konfigurace spuštění.",
 	"choose.launch.config": "Zvolte konfiguraci spuštění, se kterou chcete test ladit.",

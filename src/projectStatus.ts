@@ -391,13 +391,12 @@ class BuildNode extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        if (!treeDataProvider.cmakeProject.useCMakePresets) {
-            this.buildTarget = new BuildTarget();
-            await this.buildTarget.initialize();
-        } else {
+        if (treeDataProvider.cmakeProject.useCMakePresets) {
             this.buildPreset = new BuildPreset();
             await this.buildPreset.initialize();
         }
+        this.buildTarget = new BuildTarget();
+        await this.buildTarget.initialize();
     }
 
     getChildren(): Node[] {
@@ -407,7 +406,7 @@ class BuildNode extends Node {
         if (!treeDataProvider.cmakeProject.useCMakePresets) {
             return [this.buildTarget!];
         } else {
-            return [this.buildPreset!];
+            return [this.buildPreset!, this.buildTarget!];
         }
     }
 
