@@ -3,6 +3,7 @@
 ## 1.15
 Features:
 - Added support for the CMake Debugger. [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
+- Added kit selection by name from settings.json [#1496](https://github.com/microsoft/vscode-cmake-tools/issues/1496)
 
 ## 1.14.33
 Bug Fixes:
