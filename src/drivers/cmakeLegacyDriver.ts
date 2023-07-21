@@ -75,7 +75,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         this._cacheWatcher.dispose();
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
         // Ensure the binary directory exists
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         await fs.mkdir_p(binaryDir);
@@ -121,7 +121,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
             this.configureProcess = null;
             log.trace(result.stderr);
             log.trace(result.stdout);
-            if (result.retc === 0 && !configurePreset) {
+            if (result.retc === 0 && (!configurePreset || (configurePreset && defaultConfigurePresetName && configurePreset.name === defaultConfigurePresetName))) {
                 this._needsReconfigure = false;
             }
             if (!configurePreset) {
