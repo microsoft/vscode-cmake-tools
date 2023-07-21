@@ -1105,7 +1105,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureWithDebugger(folder?: vscode.WorkspaceFolder) {
-        return this.cleanConfigureWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()}, folder);
+        return this.cleanConfigureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder);
     }
 
     cleanConfigureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder) {
@@ -1119,7 +1119,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureAllWithDebugger() {
-        return this.cleanConfigureAllWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()});
+        return this.cleanConfigureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()});
     }
 
     cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
@@ -1135,7 +1135,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureWithDebugger(folder?: vscode.WorkspaceFolder) {
-        return this.configureWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()}, folder);
+        return this.configureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder);
     }
 
     configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
@@ -1155,7 +1155,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAllWithDebugger() {
-        return this.configureAllWithDebuggerInternal({debuggerPipeName: getDebuggerPipeName()});
+        return this.configureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()});
     }
 
     configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
