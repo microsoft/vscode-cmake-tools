@@ -741,7 +741,22 @@
                             "type": "string",
                             "description": "%cmake-tools.debugger.dapLog.description%",
                             "default": ""
-                        } 
+                        },
+                        "script": {
+                            "type": "string",
+                            "descripttion": "The script to debug"
+                        }
+                    }
+                },
+                "attach": {
+                    "required": [
+                        "debuggerPipeName"
+                    ],
+                    "properties": {
+                        "debuggerPipeName": {
+                            "type": "string",
+                            "description": "Name of the named piped that the debugger will communicate with CMake over"
+                        }
                     }
                 }
             }

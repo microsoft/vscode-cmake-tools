@@ -15,33 +15,34 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         // undocumented configuration field that lets us know if the session is being invoked from a command
         // This should only be used from inside the extension from a command that invokes the debugger.
         if (!session.configuration.fromCommand) {
-            const promise = new Promise<void>((resolve) => {
-                debuggerInformation.debuggerIsReady = resolve;
-            });
+            if (session.configuration.request === "launch") {
+                const promise = new Promise<void>((resolve) => {
+                    debuggerInformation.debuggerIsReady = resolve;
+                });
 
-            if (session.configuration.clean) {
-                if (session.configuration.configureAll) {
-                    void extensionManager?.cleanConfigureAllWithDebuggerInternal(
-                        debuggerInformation
-                    );
+                if (session.configuration.clean) {
+                    if (session.configuration.configureAll) {
+                        void extensionManager?.cleanConfigureAllWithDebuggerInternal(
+                            debuggerInformation
+                        );
+                    } else {
+                        void extensionManager?.cleanConfigureWithDebuggerInternal(
+                            debuggerInformation
+                        );
+                    }
                 } else {
-                    void extensionManager?.cleanConfigureWithDebuggerInternal(
-                        debuggerInformation
-                    );
+                    if (session.configuration.configureAll) {
+                        void extensionManager?.configureAllWithDebuggerInternal(
+                            debuggerInformation
+                        );
+                    } else {
+                        void extensionManager?.configureWithDebuggerInternal(
+                            debuggerInformation
+                        );
+                    }
                 }
-            } else {
-                if (session.configuration.configureAll) {
-                    void extensionManager?.configureAllWithDebuggerInternal(
-                        debuggerInformation
-                    );
-                } else {
-                    void extensionManager?.configureWithDebuggerInternal(
-                        debuggerInformation
-                    );
-                }
+                await promise;
             }
-
-            await promise;
         }
 
         return new vscode.DebugAdapterNamedPipeServer(pipeName);
