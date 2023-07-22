@@ -32,9 +32,9 @@ You can manually edit this file to define new global kits, however the contents 
 
 ### Project kits
 
-Default user-local kits are available for all projects that use CMake Tools. To define a project-local kit, create a `.vscode/cmake-kits.json` file in the project directory. You manage the contents of this file manually, but CMake Tools will automatically reload and refresh when it sees this file added, removed, or changed. When changing kits, you can select from both user-local and project-local kits.
+Default user-local kits are available for all projects that use CMake Tools. To define a project-local kit, create a `.vscode/cmake-tools-kits.json` file in the project directory. You manage the contents of this file manually, but CMake Tools will automatically reload and refresh when it sees this file added, removed, or changed. When changing kits, you can select from both user-local and project-local kits.
 
-An example of when a project-local kit is useful is when the project defines its own CMake toolchain file(s). A [toolchain kit](#specify-a-toolchain) can be defined that specifies this file to be loaded. You can commit the `.vscode/cmake-kits.json` to source control and share it with other developers for easier collaboration using the named toolchain.
+An example of when a project-local kit is useful is when the project defines its own CMake toolchain file(s). A [toolchain kit](#specify-a-toolchain) can be defined that specifies this file to be loaded. You can commit the `.vscode/cmake-tools-kits.json` to source control and share it with other developers for easier collaboration using the named toolchain.
 
 ### Scan for kits
 
@@ -63,13 +63,13 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 
 ## Kit options
 
-CMake defines different options that can be specified for each kit in their definition in `cmake-tools-kits.json` (user-local) or `.vscode/cmake-kits.json` (project-level), and these options can be mixed-and-matched as needed. For example, a single kit may request a Visual Studio environment, while specifying `clang-cl` as a compiler.
+CMake defines different options that can be specified for each kit in their definition in `cmake-tools-kits.json` (user-local) or `.vscode/cmake-tools-kits.json` (project-level), and these options can be mixed-and-matched as needed. For example, a single kit may request a Visual Studio environment, while specifying `clang-cl` as a compiler.
 
 See [Configure CMake](configure.md) for more information about how kits are applied during configuration.
 
 ### Specify a compiler
 
-To specify a compiler, list the path to the compiler in the `cmake-tools-kits.json` or `.vscode/cmake-kits.json` file.
+To specify a compiler, list the path to the compiler in the `cmake-tools-kits.json` or `.vscode/cmake-tools-kits.json` file.
 
 The most common CMake languages are `C` and `CXX`, and CMake Tools has built-in support for finding these. However, any language can be specified:
 
