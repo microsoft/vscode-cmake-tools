@@ -723,9 +723,15 @@
             "configurationAttributes": {
                 "launch": {
                     "properties": {
+                        "externalCMakeLaunch": {
+                            "type": "boolean",
+                            "description": "Whether the cmake debuggee was externally launched",
+                            "default": false
+                        },
                         "pipeName": {
                             "type": "string",
-                            "description": "%cmake-tools.debugger.pipeName.description%"
+                            "description": "%cmake-tools.debugger.pipeName.description%",
+                            "default": ""
                         },
                         "clean": {
                             "type": "boolean",
@@ -742,22 +748,130 @@
                             "description": "%cmake-tools.debugger.dapLog.description%",
                             "default": ""
                         },
-                        "script": {
+                        "scriptPath": {
                             "type": "string",
-                            "descripttion": "The script to debug"
+                            "descripttion": "The path to the script to debug",
+                            "default": ""
+                        },
+                        "scriptArgs": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string[]"
+                                }
+                            ],
+                            "description": "Arguments for the script to debug"
+                        },
+                        "scriptEnv": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string[]"
+                                }
+                            ],
+                            "description": "Env for the script to debug"
                         }
-                    }
-                },
-                "attach": {
-                    "required": [
-                        "debuggerPipeName"
-                    ],
-                    "properties": {
-                        "debuggerPipeName": {
-                            "type": "string",
-                            "description": "Name of the named piped that the debugger will communicate with CMake over"
+                    },
+                    "allOf": [
+                        {
+                            "anyOf": [
+                                { "not": { 
+                                    "properties": {
+                                        "externalCMakeLaunch": { "enum": [true]}
+                                    },
+                                    "required": ["externalCMakeLaunch"]
+                                }},
+                                { 
+                                    "required": ["pipeName"],
+                                    "properties": {
+                                        "externalCMakeLaunch": {
+                                            "type": "boolean",
+                                            "description": "Whether the cmake debuggee was externally launched",
+                                            "default": false
+                                        },
+                                        "pipeName": {
+                                            "type": "string",
+                                            "description": "%cmake-tools.debugger.pipeName.description%",
+                                            "default": ""
+                                        }
+                                    },
+                                    "not": {
+                                        "anyOf": [
+                                            { "required": ["configureAll"]},
+                                            { "required": ["clean"]},
+                                            { "required": ["scriptPath"]},
+                                            { "required": ["scriptArgs"]},
+                                            { "required": ["scriptEnv"]}
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "anyOf": [
+                                {
+                                    "not": {
+                                        "properties": {
+                                            "scriptPath": { "enum": [""]}
+                                        },
+                                        "required": ["scriptPath"]
+                                    }
+                                },
+                                {
+                                    "required": ["scriptPath"],
+                                    "properties": {
+                                        "scriptPath": {
+                                            "type": "string",
+                                            "descripttion": "The path to the script to debug",
+                                            "default": ""
+                                        },
+                                        "scriptArgs": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "string[]"
+                                                }
+                                            ],
+                                            "description": "Arguments for the script to debug"
+                                        },
+                                        "scriptEnv": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "string[]"
+                                                }
+                                            ],
+                                            "description": "Env for the script to debug"
+                                        },
+                                        "pipeName": {
+                                            "type": "string",
+                                            "description": "%cmake-tools.debugger.pipeName.description%",
+                                            "default": ""
+                                        },
+                                        "dapLog": {
+                                            "type": "string",
+                                            "description": "%cmake-tools.debugger.dapLog.description%",
+                                            "default": ""
+                                        }
+                                    },
+                                    "not": {
+                                        "anyOf": [
+                                            { "required": ["configureAll"]},
+                                            { "required": ["clean"]}
+                                        ]
+                                    }
+                                }
+                            ]
                         }
-                    }
+                    ]
                 }
             }
         }
