@@ -544,9 +544,21 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active project
      */
-    async selectActiveFolder() {
+    async selectActiveFolder(project?: CMakeProject | string[]) {
+        let selection: CMakeProject | undefined;
+        if (project instanceof CMakeProject) {
+            selection = project;
+        } else if (Array.isArray(project) && project.length > 0) {
+            const projects: CMakeProject[] = this.projectController.getAllCMakeProjects();
+            if (projects.length !== 0) {
+                selection = projects.find(proj => proj.folderName === project[0]);
+            }
+        } else {
         if (vscode.workspace.workspaceFolders?.length) {
-            const selection: CMakeProject | undefined = await this.pickCMakeProject();
+                selection = await this.pickCMakeProject();
+            }
+        }
+
             if (selection) {
                 // Ignore if user cancelled
                 await this.setActiveProject(selection);
@@ -555,7 +567,6 @@ export class ExtensionManager implements vscode.Disposable {
                 await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
             }
         }
-    }
 
     private async initActiveProject(): Promise<CMakeProject | undefined> {
         let folder: vscode.WorkspaceFolder | undefined;
