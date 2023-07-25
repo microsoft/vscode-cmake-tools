@@ -548,16 +548,14 @@ export class ExtensionManager implements vscode.Disposable {
         let selection: CMakeProject | undefined;
         if (project instanceof CMakeProject) {
             selection = project;
-        } else if (Array.isArray(project) && project.length > 0) {
+        } else if (Array.isArray(project) && project.length > 0 && typeof project[0] === "string") {
             const projects: CMakeProject[] = this.projectController.getAllCMakeProjects();
             if (projects.length !== 0) {
                 selection = projects.find(proj => proj.folderName === project[0]);
             }
-        } else {
-        if (vscode.workspace.workspaceFolders?.length) {
+        } else if (vscode.workspace.workspaceFolders?.length) {
                 selection = await this.pickCMakeProject();
             }
-        }
 
             if (selection) {
                 // Ignore if user cancelled
