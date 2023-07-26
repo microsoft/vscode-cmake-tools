@@ -544,16 +544,25 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active project
      */
-    async selectActiveFolder() {
-        if (vscode.workspace.workspaceFolders?.length) {
-            const selection: CMakeProject | undefined = await this.pickCMakeProject();
-            if (selection) {
-                // Ignore if user cancelled
-                await this.setActiveProject(selection);
-                telemetry.logEvent("selectactivefolder");
-                const currentActiveFolderPath = this.activeFolderPath();
-                await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
+    async selectActiveFolder(project?: CMakeProject | string[]) {
+        let selection: CMakeProject | undefined;
+        if (project instanceof CMakeProject) {
+            selection = project;
+        } else if (Array.isArray(project) && project.length > 0 && typeof project[0] === "string") {
+            const projects: CMakeProject[] = this.projectController.getAllCMakeProjects();
+            if (projects.length !== 0) {
+                selection = projects.find(proj => proj.folderName === project[0]);
             }
+        } else if (vscode.workspace.workspaceFolders?.length) {
+            selection = await this.pickCMakeProject();
+        }
+
+        if (selection) {
+            // Ignore if user cancelled
+            await this.setActiveProject(selection);
+            telemetry.logEvent("selectactivefolder");
+            const currentActiveFolderPath = this.activeFolderPath();
+            await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
         }
     }
 
