@@ -723,9 +723,9 @@
             "configurationAttributes": {
                 "launch": {
                     "properties": {
-                        "externalCMakeLaunch": {
+                        "externalLaunch": {
                             "type": "boolean",
-                            "description": "Whether the cmake debuggee was externally launched",
+                            "description": "%cmake-tools.debugger.externalLaunch.description",
                             "default": false
                         },
                         "pipeName": {
@@ -750,30 +750,16 @@
                         },
                         "scriptPath": {
                             "type": "string",
-                            "descripttion": "The path to the script to debug",
+                            "descripttion": "%cmake-tools.debugger.scriptPath.description",
                             "default": ""
                         },
                         "scriptArgs": {
-                            "oneOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "string[]"
-                                }
-                            ],
-                            "description": "Arguments for the script to debug"
+                            "type": "string[]",
+                            "description": "%cmake-tools.debugger.scriptArgs.description"
                         },
                         "scriptEnv": {
-                            "oneOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "string[]"
-                                }
-                            ],
-                            "description": "Env for the script to debug"
+                            "type": "string[]",
+                            "description": "%cmake-tools.debugger.scriptEnv.description"
                         }
                     },
                     "allOf": [
@@ -781,14 +767,14 @@
                             "anyOf": [
                                 { "not": { 
                                     "properties": {
-                                        "externalCMakeLaunch": { "enum": [true]}
+                                        "externalLaunch": { "enum": [true]}
                                     },
-                                    "required": ["externalCMakeLaunch"]
+                                    "required": ["externalLaunch"]
                                 }},
                                 { 
                                     "required": ["pipeName"],
                                     "properties": {
-                                        "externalCMakeLaunch": {
+                                        "externalLaunch": {
                                             "type": "boolean",
                                             "description": "Whether the cmake debuggee was externally launched",
                                             "default": false
@@ -805,7 +791,8 @@
                                             { "required": ["clean"]},
                                             { "required": ["scriptPath"]},
                                             { "required": ["scriptArgs"]},
-                                            { "required": ["scriptEnv"]}
+                                            { "required": ["scriptEnv"]},
+                                            { "required": ["dapLog"]}
                                         ]
                                     }
                                 }
