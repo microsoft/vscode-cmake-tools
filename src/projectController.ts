@@ -563,6 +563,7 @@ export class ProjectController implements vscode.Disposable {
             // Very soon cmakePath is going to be updated and all will work correctly but until then,
             // one example of annoying and incorrect behavior is to display the "not found cmake" error message again,
             // (it is called eventually below) after the user corrects its setting value.
+            // There is no need to call doCMakeFileChangeReconfigure for a settings.json file, safe to skip.
             if (isFileInsideActiveProject && !uri.fsPath.endsWith("settings.json")) {
                await activeProject.doCMakeFileChangeReconfigure(uri);
             }
