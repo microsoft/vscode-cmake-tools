@@ -265,7 +265,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * The project outline tree data provider
      */
-    private readonly projectOutline = new ProjectOutline();
+    private readonly projectOutline = new ProjectOutline(this.projectController);
     private readonly projectOutlineTreeView = vscode.window.createTreeView('cmake.outline', {
         treeDataProvider: this.projectOutline,
         showCollapseAll: true
@@ -1064,7 +1064,7 @@ export class ExtensionManager implements vscode.Disposable {
         return 0;
     }
 
-    private getProjectFromFolder(folder?: vscode.WorkspaceFolder | string) {
+    private getProjectFromFolder(folder?: vscode.WorkspaceFolder | string, sourceDir?: string) {
         const workspaceFolder: vscode.WorkspaceFolder | undefined = this.getWorkspaceFolder(folder);
         if (workspaceFolder) {
             const activeProject: CMakeProject | undefined = this.getActiveProject();
@@ -1072,6 +1072,14 @@ export class ExtensionManager implements vscode.Disposable {
             if (!projects || projects.length === 0) {
                 return activeProject;
             } else {
+                if (sourceDir) {
+                    for (const project of projects) {
+                        // Choose the active project.
+                        if (path.normalize(sourceDir) === path.normalize(project.folderPath)) {
+                            return project;
+                        }
+                    }
+                }
                 for (const project of projects) {
                     // Choose the active project.
                     if (activeProject?.folderPath === project.folderPath) {
@@ -1085,11 +1093,11 @@ export class ExtensionManager implements vscode.Disposable {
         return undefined;
     }
 
-    runCMakeCommand(command: RunCMakeCommand, folder?: vscode.WorkspaceFolder, precheck?: (cmakeProject: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean): Promise<any> {
+    runCMakeCommand(command: RunCMakeCommand, folder?: vscode.WorkspaceFolder, precheck?: (cmakeProject: CMakeProject) => Promise<boolean>, cleanOutputChannel?: boolean, sourceDir?: string): Promise<any> {
         if (cleanOutputChannel) {
             this.cleanOutputChannel();
         }
-        const project = this.getProjectFromFolder(folder);
+        const project = this.getProjectFromFolder(folder, sourceDir);
         if (project) {
             return this.runCMakeCommandForProject(command, project, precheck);
         }
@@ -1177,13 +1185,17 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommand(cmakeProject => cmakeProject.editCacheUI());
     }
 
-    build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean, isBuildCommand?: boolean) {
+    build(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string, showCommandOnly?: boolean, isBuildCommand?: boolean) {
         telemetry.logEvent("build", { all: "false"});
-        return this.runCMakeCommand(cmakeProject => cmakeProject.build(name ? [name] : undefined, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand), folder, this.ensureActiveBuildPreset, true);
+        return this.runCMakeCommand(cmakeProject => cmakeProject.build(name ? [name] : undefined, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand),
+            folder,
+            this.ensureActiveBuildPreset,
+            true,
+            sourceDir);
     }
 
     showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) {
-        return this.build(folder, name, true, false);
+        return this.build(folder, name, undefined, true, false);
     }
 
     buildAll(name?: string | string[]) {
@@ -1238,7 +1250,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     clean(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("clean", { all: "false"});
-        return this.build(folder, 'clean', undefined, false);
+        return this.build(folder, 'clean', undefined, undefined, false);
     }
 
     cleanAll() {
@@ -1860,7 +1872,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items
-        vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name)),
+        vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.runUtilityTarget', (what: TargetNode) => runCommand('build', what.folder, what.name)),
         vscode.commands.registerCommand('cmake.outline.debugTarget', (what: TargetNode) => runCommand('debugTarget', what.folder, what.name)),
         vscode.commands.registerCommand('cmake.outline.launchTarget', (what: TargetNode) => runCommand('launchTarget', what.folder, what.name)),

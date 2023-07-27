@@ -4,6 +4,8 @@ import * as nls from 'vscode-nls';
 import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath } from '@cmt/util';
+import { ProjectController} from '@cmt/projectController';
+import CMakeProject from '@cmt/cmakeProject';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -489,19 +491,31 @@ export class WorkspaceFolderNode extends BaseNode {
     get codeModel() {
         return this._codeModel;
     }
-    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
+    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext, projects: CMakeProject[] | undefined) {
         if (!model || model.configurations.length < 1) {
             this._children = [];
             ctx.nodesToUpdate.push(this);
             return;
         }
         this._codeModel = model;
-        const config = model.configurations[0];
+        // const config = model.configurations[0];
         const new_children: BaseNode[] = [];
-        for (const pr of config.projects) {
-            const item = new ProjectNode(pr.name, ctx.folder, pr.sourceDirectory);
-            item.update(pr, ctx);
-            new_children.push(item);
+        if (projects) {
+            for (const cmakeProj of projects) {
+                const amodel: codeModel.CodeModelContent | null = cmakeProj.codeModelContent;
+                if (amodel) {
+                    for (const modelProj of amodel.configurations[0].projects) {
+                        const item = new ProjectNode(modelProj.name, ctx.folder, cmakeProj.folderPath);
+                        item.update(modelProj,
+                            {
+                                ...ctx,
+                                defaultTarget: cmakeProj.defaultBuildTarget || undefined,
+                                launchTargetName: cmakeProj.launchTargetName
+                            });
+                        new_children.push(item);
+                    }
+                }
+            }
         }
         this._children = new_children;
     }
@@ -512,6 +526,9 @@ export class WorkspaceFolderNode extends BaseNode {
 }
 
 export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
+    constructor(readonly projectController: ProjectController) {
+
+    }
     private readonly _changeEvent = new vscode.EventEmitter<BaseNode | null>();
     get onDidChangeTreeData() {
         return this._changeEvent.event;
@@ -546,7 +563,7 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         }
 
         const updates: BaseNode[] = [];
-        existing.updateCodeModel(model, { ...ctx, nodesToUpdate: updates, folder });
+        existing.updateCodeModel(model, { ...ctx, nodesToUpdate: updates, folder }, this.projectController.getProjectsForWorkspaceFolder(folder));
 
         this._changeEvent.fire(null);
     }
