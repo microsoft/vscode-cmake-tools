@@ -145,7 +145,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         if (key !== 'dollar') {
             // Replace dollar sign at the very end of the expanding process
             const replacement = replacements[key];
-            if (!replacement) {
+            if (replacement === undefined) {
                 log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input));
             } else {
                 subs.set(full, replacement);

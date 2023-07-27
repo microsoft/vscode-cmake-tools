@@ -231,7 +231,8 @@ export class ProjectController implements vscode.Disposable {
     }
 
     async getProjectForFolder(folder: string): Promise<CMakeProject | undefined> {
-        const sourceDir = util.platformNormalizePath(await util.normalizeAndVerifySourceDir(folder, CMakeDriver.sourceDirExpansionOptions(folder)));
+        let kit = this.activeProject?.activeKit;
+        const sourceDir = util.platformNormalizePath(await util.normalizeAndVerifySourceDir(folder, await CMakeDriver.sourceDirExpansionOptions(folder, kit)));
         const allCMakeProjects: CMakeProject[] = this.getAllCMakeProjects();
         for (const project of allCMakeProjects) {
             if (util.platformNormalizePath(project.sourceDir) === sourceDir ||
@@ -390,7 +391,8 @@ export class ProjectController implements vscode.Disposable {
         }
         // Normalize the paths.
         for (let i = 0; i < sourceDirectories.length; i++) {
-            sourceDirectories[i] = await util.normalizeAndVerifySourceDir(sourceDirectories[i], CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath));
+            let kit = this.activeProject?.activeKit;
+            sourceDirectories[i] = await util.normalizeAndVerifySourceDir(sourceDirectories[i], await CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath, kit));
         }
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
 

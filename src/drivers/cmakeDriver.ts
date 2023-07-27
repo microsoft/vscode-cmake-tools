@@ -34,6 +34,7 @@ import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { getActiveProject } from '@cmt/extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -320,6 +321,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private _kitDetect: KitDetect | null = null;
 
+    public getKit(): Kit | null { return this._kit; }
+    public getKitDetect(): KitDetect | null { return this._kitDetect; }
+
     private _useCMakePresets: boolean = true;
 
     get useCMakePresets(): boolean {
@@ -390,12 +394,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return { vars, variantVars };
     }
 
-    static sourceDirExpansionOptions(workspaceFolderFspath: string | null): expand.ExpansionOptions {
+    static async sourceDirExpansionOptions(workspaceFolderFspath: string | null, kit?: Kit | null): Promise<expand.ExpansionOptions> {
         const ws_root = util.lightNormalizePath(workspaceFolderFspath || '.');
 
         // Fill in default replacements
+        const prj = getActiveProject();
+        if (!kit) {
+            kit = prj ? prj.getActiveKit() : undefined;
+        }
+        const kitName: string = kit ? kit.name : '';
+        const kitDetect = kit ? await getKitDetect(kit) : undefined;
+        const kitVendor: string = kitDetect ? kitDetect.vendor || '' : '';        
+
         const vars: expand.MinimalPresetContextVars = {
             generator: 'generator',
+            buildKit: kitName,
+            buildKitVendor: kitVendor,
             workspaceFolder: ws_root,
             workspaceFolderBasename: path.basename(ws_root),
             sourceDir: '${sourceDir}',
@@ -680,7 +694,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
-            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder));
+            let kit = this._kit;
+            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded, await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder, kit));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);

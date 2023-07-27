@@ -704,7 +704,8 @@ export class CMakeProject {
                     }
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
-                        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+                        let kit = this.getActiveKit();
+                        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, kit)));
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -907,7 +908,9 @@ export class CMakeProject {
      */
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
-        await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+        this.kitsController = await KitsController.init(this);
+        let kit = this.getActiveKit();
+        await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, kit)));
         this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
         this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
         this.hideLaunchButton = (this.workspaceContext.config.statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
@@ -935,7 +938,6 @@ export class CMakeProject {
 
         this.statusMessage.set(localize('ready.status', 'Ready'));
 
-        this.kitsController = await KitsController.init(this);
         this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
 
         await this.doUseCMakePresetsChange();
@@ -1005,6 +1007,20 @@ export class CMakeProject {
         return this.presetsController.onUserPresetsChanged(listener);
     }
 
+    public getActiveKit(): Kit | null {
+        if (this.activeKit) {
+            return this.activeKit;
+        }
+
+        const kitName: string | null = this.workspaceContext.state.getActiveKitName(this.folderName, this.isMultiProjectFolder);
+        if (kitName) {
+            // It remembers a kit. Find it in the kits avail in this dir:
+            return this.kitsController.availableKits.find(k => k.name === kitName) || null;
+        }
+
+        return null;
+    }
+
     async initializeKitOrPresets() {
         if (this.useCMakePresets) {
             const latestConfigPresetName = this.workspaceContext.state.getConfigurePresetName(this.folderName, this.isMultiProjectFolder);
@@ -1018,10 +1034,8 @@ export class CMakeProject {
             }
         } else {
             // Check if the CMakeProject remembers what kit it was last using in this dir:
-            const kitName = this.workspaceContext.state.getActiveKitName(this.folderName, this.isMultiProjectFolder);
-            if (kitName) {
-                // It remembers a kit. Find it in the kits avail in this dir:
-                const kit = this.kitsController.availableKits.find(k => k.name === kitName) || null;
+            const kit = this.getActiveKit();
+            if (kit) {
                 // Set the kit: (May do nothing if no kit was found)
                 await this.setKit(kit);
             }

@@ -12,7 +12,7 @@ import rollbar from '@cmt/rollbar';
 import { ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
-import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
+import { descriptionForKit, Kit, getKitDetect, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
@@ -42,12 +42,19 @@ export class PresetsController {
         const presetsController = new PresetsController(project, kitsController, isMultiProject);
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = project.workspaceFolder.uri.fsPath;
+            let kit = project.getActiveKit();
+            const kitName: string = kit ? kit.name : '';
+            const kitDetect = kit ? await getKitDetect(kit) : undefined;
+            const kitVendor: string = kitDetect ? kitDetect.vendor || '' : '';        
+        
             const expansionOpts: ExpansionOptions = {
                 vars: {
                     workspaceFolder,
                     workspaceFolderBasename: path.basename(workspaceFolder),
                     workspaceHash: util.makeHashString(workspaceFolder),
                     workspaceRoot: workspaceFolder,
+                    buildKit: kitName,
+                    buildKitVendor: kitVendor,
                     workspaceRootFolderName: path.dirname(workspaceFolder),
                     userHome: paths.userHome,
                     // Following fields are not supported for sourceDir expansion
