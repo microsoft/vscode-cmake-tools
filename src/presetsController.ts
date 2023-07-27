@@ -42,11 +42,11 @@ export class PresetsController {
         const presetsController = new PresetsController(project, kitsController, isMultiProject);
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = project.workspaceFolder.uri.fsPath;
-            let kit = project.getActiveKit();
+            const kit = project.getActiveKit();
             const kitName: string = kit ? kit.name : '';
             const kitDetect = kit ? await getKitDetect(kit) : undefined;
-            const kitVendor: string = kitDetect ? kitDetect.vendor || '' : '';        
-        
+            const kitVendor: string = kitDetect ? kitDetect.vendor || '' : '';
+
             const expansionOpts: ExpansionOptions = {
                 vars: {
                     workspaceFolder,

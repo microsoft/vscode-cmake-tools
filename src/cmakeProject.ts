@@ -704,7 +704,7 @@ export class CMakeProject {
                     }
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
-                        let kit = this.getActiveKit();
+                        const kit = this.getActiveKit();
                         await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, kit)));
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
@@ -909,7 +909,7 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         this.kitsController = await KitsController.init(this);
-        let kit = this.getActiveKit();
+        const kit = this.getActiveKit();
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, kit)));
         this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
         this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;

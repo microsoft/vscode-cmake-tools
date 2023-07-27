@@ -321,8 +321,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private _kitDetect: KitDetect | null = null;
 
-    public getKit(): Kit | null { return this._kit; }
-    public getKitDetect(): KitDetect | null { return this._kitDetect; }
+    public getKit(): Kit | null {
+        return this._kit;
+    }
+    public getKitDetect(): KitDetect | null {
+        return this._kitDetect;
+    }
 
     private _useCMakePresets: boolean = true;
 
@@ -404,7 +408,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
         const kitName: string = kit ? kit.name : '';
         const kitDetect = kit ? await getKitDetect(kit) : undefined;
-        const kitVendor: string = kitDetect ? kitDetect.vendor || '' : '';        
+        const kitVendor: string = kitDetect ? kitDetect.vendor || '' : '';
 
         const vars: expand.MinimalPresetContextVars = {
             generator: 'generator',
@@ -694,7 +698,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
-            let kit = this._kit;
+            const kit = this._kit;
             this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded, await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder, kit));
 
             const opts = this.expansionOptions;
