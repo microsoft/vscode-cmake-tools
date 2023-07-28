@@ -253,16 +253,16 @@ suite('CppTools tests', () => {
         const canProvideBrowseConfigPerFolder: boolean = await provider.canProvideBrowseConfigurationsPerFolder();
         expect(canProvideBrowseConfigPerFolder).to.eq(true);
         const browseConfig = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(here));
-        expect(browseConfig.browsePath.length).to.eq(1);
-        expect(browseConfig.browsePath[0]).to.eq(util.platformNormalizePath(here));
+        expect(browseConfig?.browsePath.length).to.eq(1);
+        expect(browseConfig?.browsePath[0]).to.eq(util.platformNormalizePath(here));
 
         // Verify the browsePath with a different folder.
         const configurations2 = await provider.provideConfigurations([uri3]);
         expect(configurations2.length).to.eq(1);
         expect(configurations2[0].configuration.defines).to.contain('FLAG3');
         const browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
-        expect(browseConfig2.browsePath.length).to.eq(1);
-        expect(browseConfig2.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
+        expect(browseConfig2?.browsePath.length).to.eq(1);
+        expect(browseConfig2?.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
     });
 
     // Validate codeModel using cppTools API V6
@@ -362,8 +362,8 @@ suite('CppTools tests', () => {
         const canProvideBrowseConfigPerFolder: boolean = await provider.canProvideBrowseConfigurationsPerFolder();
         expect(canProvideBrowseConfigPerFolder).to.eq(true);
         const browseConfig = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(here));
-        expect(browseConfig.browsePath.length).to.eq(1);
-        expect(browseConfig.browsePath[0]).to.eq(util.platformNormalizePath(here));
+        expect(browseConfig?.browsePath.length).to.eq(1);
+        expect(browseConfig?.browsePath[0]).to.eq(util.platformNormalizePath(here));
 
         // Verify the browsePath with a different folder.
         const configurations2 = await provider.provideConfigurations([uri3]);
@@ -371,7 +371,7 @@ suite('CppTools tests', () => {
         expect(configurations2[0].configuration.defines).to.be.empty;
         expect(configurations2[0].configuration.compilerFragments).to.contain('-DFRAGMENT3');
         const browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
-        expect(browseConfig2.browsePath.length).to.eq(1);
-        expect(browseConfig2.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
+        expect(browseConfig2?.browsePath.length).to.eq(1);
+        expect(browseConfig2?.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
     });
 });

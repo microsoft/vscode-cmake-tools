@@ -198,7 +198,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number> {
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         const api_path = this.getCMakeFileApiPath(binaryDir);
         await createQueryFileForApi(api_path);
@@ -242,10 +242,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
         if (debuggerInformation) {
             args.push("--debugger");
             args.push("--debugger-pipe");
-            args.push(`${debuggerInformation.debuggerPipeName}`);
-            if (debuggerInformation.debuggerDapLog) {
+            args.push(`${debuggerInformation.pipeName}`);
+            if (debuggerInformation.dapLog) {
                 args.push("--debugger-dap-log");
-                args.push(debuggerInformation.debuggerDapLog);
+                args.push(debuggerInformation.dapLog);
             }
         }
 
@@ -279,7 +279,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                             name: localize("cmake.debug.name", "CMake Debugger"),
                             request: "launch",
                             type: "cmake",
-                            debuggerPipeName: debuggerInformation.debuggerPipeName,
+                            pipeName: debuggerInformation.pipeName,
                             fromCommand: true
                         });
                     }
@@ -291,7 +291,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.trace(result.stderr);
             log.trace(result.stdout);
             if (result.retc === 0) {
-                if (!configurePreset) {
+                if (!configurePreset || (configurePreset && defaultConfigurePresetName && configurePreset.name === defaultConfigurePresetName)) {
                     this._needsReconfigure = false;
                 }
                 await this.updateCodeModel(binaryDir);

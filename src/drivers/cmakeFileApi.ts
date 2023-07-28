@@ -122,6 +122,11 @@ export namespace CodeModelKind {
         fragment: string;
     }
 
+    export interface FrameworkMetadata {
+        isSystem?: boolean;
+        path: string;
+    }
+
     export interface CompileGroup {
         language: string;
         includes: IncludeMetadata[];
@@ -129,6 +134,9 @@ export namespace CodeModelKind {
         compileCommandFragments: CompileCommandFragments[];
         sourceIndexes: number[];
         sysroot: SysRoot;
+
+        // Added in CMake 3.27, codemodel version 2.6.
+        frameworks?: FrameworkMetadata[];
     }
 
     export interface ArtifactPath {
@@ -433,7 +441,8 @@ function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject
             language: group.language,
             includePath: group.includes ? group.includes : [],
             compileCommandFragments,
-            defines: group.defines ? group.defines.map(define => define.define) : []
+            defines: group.defines ? group.defines.map(define => define.define) : [],
+            frameworks: group.frameworks
         };
     });
     // Collection all without compilegroup like headers

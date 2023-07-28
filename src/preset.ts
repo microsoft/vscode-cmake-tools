@@ -703,18 +703,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         }
     }
 
-    if (preset.__file && preset.__file.version <= 2) {
-        // toolchainFile and installDir added in presets v3
-        if (preset.toolchainFile) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
-            return null;
-        }
-        if (preset.installDir) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
-            return null;
-        }
-    }
-
     // Expand other fields
     if (preset.binaryDir) {
         expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
@@ -869,6 +857,18 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
 async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
+    }
+
+    if (preset.__file && preset.__file.version <= 2) {
+        // toolchainFile and installDir added in presets v3
+        if (preset.toolchainFile) {
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
+            return null;
+        }
+        if (preset.installDir) {
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
+            return null;
+        }
     }
 
     const refs = referencedConfigurePresets.get(folder)!;

@@ -1,13 +1,14 @@
 import { extensionManager } from "@cmt/extension";
 import * as vscode from "vscode";
-import { DebuggerInformation } from "./debuggerConfigureDriver";
+import { DebuggerInformation, getDebuggerPipeName } from "./debuggerConfigureDriver";
 export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
     async createDebugAdapterDescriptor(session: vscode.DebugSession, _executable: vscode.DebugAdapterExecutable | undefined): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
         // first invoke cmake
         // invoke internal methods that call into and maybe have a handler once we've got the debugger is ready
+        const pipeName = session.configuration.pipeName ?? getDebuggerPipeName();
         const debuggerInformation: DebuggerInformation = {
-            debuggerPipeName: session.configuration.debuggerPipeName,
-            debuggerDapLog: session.configuration.debuggerDapLog,
+            pipeName,
+            dapLog: session.configuration.dapLog,
             debuggerIsReady: () => undefined
         };
 
@@ -18,7 +19,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 debuggerInformation.debuggerIsReady = resolve;
             });
 
-            if (session.configuration.cleanConfigure) {
+            if (session.configuration.clean) {
                 if (session.configuration.configureAll) {
                     void extensionManager?.cleanConfigureAllWithDebuggerInternal(
                         debuggerInformation
@@ -43,8 +44,6 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
             await promise;
         }
 
-        return new vscode.DebugAdapterNamedPipeServer(
-            session.configuration.debuggerPipeName
-        );
+        return new vscode.DebugAdapterNamedPipeServer(pipeName);
     }
 }

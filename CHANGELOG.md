@@ -3,6 +3,17 @@
 ## 1.15
 Features:
 - Added support for the CMake Debugger. [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
+- Added support for passing a folder parameter to the `cmake.selectActiveFolder` command. [#3256](https://github.com/microsoft/vscode-cmake-tools/issues/3256) [@cvanbeek](https://github.com/cvanbeek13)
+
+Bug Fixes:
+- When using CMake presets, the Project Status View now shows the build target along with the build preset. [PR #3241](https://github.com/microsoft/vscode-cmake-tools/pull/3241)
+- Fix per-folder browse configurations returning incorrect information. [#3155](https://github.com/microsoft/vscode-cmake-tools/issues/3155)
+- IntelliSense resolves headers coming from MacOS frameworks. CMake 3.27 or later is required. [#2324](https://github.com/microsoft/vscode-cmake-tools/issues/2324)
+
+Improvements:
+- Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath`. [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
+- Fix our checking for invalid settings when CMakeUserPresets version is different than CMakePresets. [#2897](https://github.com/microsoft/vscode-cmake-tools/issues/2897)
+- Fix the precendence order that we evaluate the `cmake.parallelJobs` setting. [#3206](https://github.com/microsoft/vscode-cmake-tools/issues/3206)
 
 ## 1.14.33
 Bug Fixes:
