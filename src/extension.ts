@@ -1072,22 +1072,12 @@ export class ExtensionManager implements vscode.Disposable {
             if (!projects || projects.length === 0) {
                 return activeProject;
             } else {
-                if (sourceDir) {
-                    for (const project of projects) {
-                        // Choose the active project.
-                        if (path.normalize(sourceDir) === path.normalize(project.folderPath)) {
-                            return project;
-                        }
-                    }
-                }
-                for (const project of projects) {
-                    // Choose the active project.
-                    if (activeProject?.folderPath === project.folderPath) {
-                        return project;
-                    }
-                }
-                // Choose the first project folder.
-                return projects[0];
+                // Choose project by corresponding source directory
+                return projects.find(project => sourceDir && (path.normalize(sourceDir) === path.normalize(project.folderPath))) ??
+                // Choose project by folder of active project
+                projects.find(project => activeProject?.folderPath === project.folderPath) ??
+                // Fallback to first project
+                projects[0];
             }
         }
         return undefined;
