@@ -630,6 +630,7 @@ export class ExtensionManager implements vscode.Disposable {
         }
         const folder: vscode.WorkspaceFolder = cmakeProject.workspaceFolder;
         this.projectOutline.updateCodeModel(
+            cmakeProject,
             cmakeProject.workspaceContext.folder,
             cmakeProject.codeModelContent,
             {
@@ -698,6 +699,7 @@ export class ExtensionManager implements vscode.Disposable {
                     codeModelContent = drv.codeModelContent;
                     this.configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmakeProject.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmakeProject.folderPath });
                     this.projectOutline.updateCodeModel(
+                        cmakeProject,
                         cmakeProject.workspaceContext.folder,
                         codeModelContent,
                         {
