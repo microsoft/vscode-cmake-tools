@@ -4,7 +4,6 @@ import * as nls from 'vscode-nls';
 import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath } from '@cmt/util';
-import { ProjectController} from '@cmt/projectController';
 import CMakeProject from '@cmt/cmakeProject';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -452,11 +451,6 @@ class ProjectNode extends BaseNode {
     }
 }
 
-interface ExternalUpdateContext {
-    launchTargetName: string | null;
-    defaultTarget?: string;
-}
-
 export class WorkspaceFolderNode extends BaseNode {
     constructor(readonly wsFolder: vscode.WorkspaceFolder) {
         super(`wsf/${wsFolder.uri.fsPath}`);
@@ -518,7 +512,7 @@ export class WorkspaceFolderNode extends BaseNode {
                 item = new ProjectNode(modelProj.name, this.wsFolder, cmakeProject.folderPath);
                 this.setNode(cmakeProject, modelProj.name, item);
             }
-            item?.update(modelProj, ctx);
+            item.update(modelProj, ctx);
         }
     }
 
@@ -532,8 +526,6 @@ export class WorkspaceFolderNode extends BaseNode {
 }
 
 export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
-    constructor(readonly projectController: ProjectController) {
-    }
     private readonly _changeEvent = new vscode.EventEmitter<BaseNode | null>();
     get onDidChangeTreeData() {
         return this._changeEvent.event;

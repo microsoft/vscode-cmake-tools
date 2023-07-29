@@ -265,7 +265,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * The project outline tree data provider
      */
-    private readonly projectOutline = new ProjectOutline(this.projectController);
+    private readonly projectOutline = new ProjectOutline();
     private readonly projectOutlineTreeView = vscode.window.createTreeView('cmake.outline', {
         treeDataProvider: this.projectOutline,
         showCollapseAll: true
