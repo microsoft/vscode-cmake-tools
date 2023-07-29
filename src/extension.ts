@@ -1177,11 +1177,14 @@ export class ExtensionManager implements vscode.Disposable {
 
     build(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string, showCommandOnly?: boolean, isBuildCommand?: boolean) {
         telemetry.logEvent("build", { all: "false"});
-        return this.runCMakeCommand(cmakeProject => cmakeProject.build(name ? [name] : undefined, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand),
-            folder,
-            this.ensureActiveBuildPreset,
-            true,
-            sourceDir);
+        return this.runCMakeCommand(cmakeProject => {
+            const targets = name ? [name] : undefined;
+            return cmakeProject.build(targets, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand);
+        },
+        folder,
+        this.ensureActiveBuildPreset,
+        true,
+        sourceDir);
     }
 
     showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) {
