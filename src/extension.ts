@@ -629,15 +629,7 @@ export class ExtensionManager implements vscode.Disposable {
             return;
         }
         const folder: vscode.WorkspaceFolder = cmakeProject.workspaceFolder;
-        this.projectOutline.updateCodeModel(
-            cmakeProject,
-            cmakeProject.workspaceContext.folder,
-            cmakeProject.codeModelContent,
-            {
-                defaultTarget: cmakeProject.defaultBuildTarget || undefined,
-                launchTargetName: cmakeProject.launchTargetName
-            }
-        );
+        this.projectOutline.updateCodeModel(cmakeProject, cmakeProject.codeModelContent);
         rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
             if (vscode.workspace.getConfiguration('C_Cpp', folder.uri).get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
                 log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because {0} is set to {1}', '"C_Cpp.intelliSenseEngine"', '"Disabled"'));
@@ -698,15 +690,7 @@ export class ExtensionManager implements vscode.Disposable {
                 } else if (drv && drv.codeModelContent) {
                     codeModelContent = drv.codeModelContent;
                     this.configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmakeProject.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmakeProject.folderPath });
-                    this.projectOutline.updateCodeModel(
-                        cmakeProject,
-                        cmakeProject.workspaceContext.folder,
-                        codeModelContent,
-                        {
-                            defaultTarget: cmakeProject.defaultBuildTarget || undefined,
-                            launchTargetName: cmakeProject.launchTargetName
-                        }
-                    );
+                    this.projectOutline.updateCodeModel(cmakeProject, codeModelContent);
                 }
                 // Inform cpptools that custom CppConfigurationProvider will be able to service the current workspace.
                 this.ensureCppToolsProviderRegistered();

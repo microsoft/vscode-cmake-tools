@@ -505,7 +505,7 @@ export class WorkspaceFolderNode extends BaseNode {
         this._projects.delete(cmakeProject.folderPath);
     }
 
-    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext, cmakeProject: CMakeProject) {
+    updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
         if (!model || model.configurations.length < 1) {
             this.removeNodes(cmakeProject);
             ctx.nodesToUpdate.push(this);
@@ -558,7 +558,8 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         this._changeEvent.fire(null);
     }
 
-    updateCodeModel(cmakeProject: CMakeProject, folder: vscode.WorkspaceFolder, model: codeModel.CodeModelContent | null, ctx: ExternalUpdateContext) {
+    updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null) {
+        const folder = cmakeProject.workspaceContext.folder;
         let existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {
             rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that has not yet been loaded.'));
@@ -568,7 +569,15 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         }
 
         const updates: BaseNode[] = [];
-        existing.updateCodeModel(model, { ...ctx, nodesToUpdate: updates, folder }, cmakeProject);
+        existing.updateCodeModel(
+            cmakeProject,
+            model,
+            {
+                defaultTarget: cmakeProject.defaultBuildTarget || undefined,
+                launchTargetName: cmakeProject.launchTargetName,
+                nodesToUpdate: updates,
+                folder
+            });
 
         this._changeEvent.fire(null);
     }
