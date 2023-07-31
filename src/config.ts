@@ -107,7 +107,6 @@ export interface ExtensionConfigurationSettings {
     buildArgs: string[];
     buildToolArgs: string[];
     parallelJobs: number | undefined;
-    allowParallelJobs: boolean;
     ctestPath: string;
     ctest: { parallelJobs: number; allowParallelJobs: boolean };
     parseBuildDiagnostics: boolean;
@@ -487,7 +486,6 @@ export class ConfigurationReader implements vscode.Disposable {
         buildArgs: new vscode.EventEmitter<string[]>(),
         buildToolArgs: new vscode.EventEmitter<string[]>(),
         parallelJobs: new vscode.EventEmitter<number>(),
-        allowParallelJobs: new vscode.EventEmitter<boolean>(),
         ctestPath: new vscode.EventEmitter<string>(),
         ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
