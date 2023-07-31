@@ -21,9 +21,11 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         buildArgs: [],
         buildToolArgs: [],
         parallelJobs: 0,
+        allowParallelJobs: false,
         ctestPath: '',
         ctest: {
-            parallelJobs: 0
+            parallelJobs: 0,
+            allowParallelJobs: false
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],

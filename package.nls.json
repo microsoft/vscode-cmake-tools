@@ -86,7 +86,11 @@
     "cmake-tools.configuration.cmake.buildToolArgs.description": "Additional arguments to pass to the underlying build tool when building.",
     "cmake-tools.configuration.cmake.parallelJobs.description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs. Setting this to 1 will omit the parallelism flag (-j) from the underlying build command, which has a generator-dependent effect on build parallelism.",
     "cmake-tools.configuration.cmake.ctestPath.description": "Path to CTest executable. If null, will be inferred from cmake.cmakePath (recommended to leave null).",
-    "cmake-tools.configuration.cmake.ctest.parallelJobs.description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs.",
+    "cmake-tools.configuration.cmake.ctest.parallelJobs.description": {
+        "message": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs. This only works when `#cmake.ctest.allowParallelJobs` is set to `true`.",
+        "comment": "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+    },
+    "cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
     "cmake-tools.configuration.cmake.enabledOutputParsers.description": {
         "message": "Output parsers to use. Supported parsers `cmake`, `gcc`, `gnuld` for GNULD-style linker output, `msvc` for Microsoft Visual C++, `ghs` for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics, and `diab` for the Wind River Diab compiler.",

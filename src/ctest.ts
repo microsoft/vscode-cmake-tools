@@ -285,13 +285,61 @@ export class CTestDriver implements vscode.Disposable {
         if (!testExplorer) {
             log.info(localize('no.tests.found', 'No tests found'));
             return -1;
-        } else {
+        } else if (!this.ws.config.ctestAllowParallelJobs) {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
             const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
             run.end();
             return returnCode;
+        } else {
+            // below code taken from #3032 PR (before changes in how tests are run)
+            const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
+            if (ctestpath === null) {
+                log.info(localize('ctest.path.not.set', 'CTest path is not set'));
+                return -2;
+            }
+
+            let ctestArgs: string[];
+            if (customizedTask && testPreset) {
+                ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
+            } else if (!customizedTask && driver.useCMakePresets) {
+                if (!driver.testPreset) {
+                    log.error(localize('test.preset.not.set', 'Test preset is not set'));
+                    return -3;
+                }
+                // Add a few more args so we can show the result in status bar
+                ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
+            } else {
+                const configuration = driver.currentBuildType;
+                const opts = driver.expansionOptions;
+                const jobs = await expandString(this.ws.config.numCTestJobs, opts);
+                const defaultArgs = [];
+                for (const value of this.ws.config.ctestDefaultArgs) {
+                    defaultArgs.push(await expandString(value, opts));
+                }
+                const args = [];
+                for (const value of this.ws.config.ctestArgs) {
+                    args.push(await expandString(value, opts));
+                }
+                ctestArgs = [`-j${jobs}`, '-C', configuration].concat(defaultArgs, args);
+            }
+
+            const child = driver.executeCommand(
+                ctestpath,
+                ctestArgs,
+                ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
+                { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
+            const res = await child.result;
+            // not sure if direct comparison can be made to replace reloadTests with refreshTests
+            await this.refreshTests(driver);
+            if (res.retc === null) {
+                log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
+                return -1;
+            } else {
+                log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
+            }
+            return res.retc;
         }
     }
 
