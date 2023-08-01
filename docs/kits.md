@@ -56,7 +56,7 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 
 **3. Save results to the user-local kits file**
 
-- The [user-local kit](#user-local-kits) `cmake-tooks-kits.json` file is updated with the new kit information.
+- The [user-local kit](#user-local-kits) `cmake-tools-kits.json` file is updated with the new kit information.
 
 > **Warning:**
 > The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-tools-kits.json`. It only adds and updates existing ones.
