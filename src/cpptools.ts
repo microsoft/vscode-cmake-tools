@@ -322,7 +322,7 @@ export function getIntelliSenseMode(cptVersion: cpptools.Version, compilerPath: 
  */
 export class CppConfigurationProvider implements cpptools.CustomConfigurationProvider {
     /** Our name visible to cpptools */
-    readonly name = 'CMake Tools Fork';
+    readonly name = 'CMake Tools';
     /** Our extension ID, visible to cpptools */
     readonly extensionId = 'ms-vscode.cmake-tools';
     /**

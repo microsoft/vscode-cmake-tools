@@ -457,7 +457,7 @@ export function parseCompileDefinition(str: string): [string, string | null] {
 }
 
 export function thisExtension() {
-    const extension = vscode.extensions.getExtension('netkiss.cmake-tools');
+    const extension = vscode.extensions.getExtension('ms-vscode.cmake-tools');
     if (!extension) {
         throw new Error(localize('extension.is.undefined', 'Extension is undefined!'));
     }
