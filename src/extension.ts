@@ -332,16 +332,14 @@ export class ExtensionManager implements vscode.Disposable {
 
             // Get the name of kit name from settings.json
             const default_kit_name = vscode.workspace.getConfiguration('cmake').get<string | null>('defaultKitName', null);
-            
+
             // Tro to use this kit
-            if (default_kit_name) 
-            {
+            if (default_kit_name) {
                 // Check for existing compilers for "defaultKitName" kit
-                const newKit: Kit | undefined = cmakeProject.kitsController.availableKits.find(kit => kit.name === default_kit_name)
-                if(newKit?.compilers)
-                {
+                const newKit: Kit | undefined = cmakeProject.kitsController.availableKits.find(kit => kit.name === default_kit_name);
+                if (newKit?.compilers) {
                     // Set active kit
-                    await this.setKitByName(default_kit_name,cmakeProject.workspaceFolder);
+                    await this.setKitByName(default_kit_name, cmakeProject.workspaceFolder);
                     return true;
                 }
             }
