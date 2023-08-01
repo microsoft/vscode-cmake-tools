@@ -2577,7 +2577,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.60.0",
+    "@types/vscode": "1.63.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@types/uuid": "~8.3.3",

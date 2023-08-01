@@ -105,7 +105,7 @@ interface CTestInfo {
         backtrace: number;
         command: string[];
         name: string;
-        properties: { name: string; value: string }[];
+        properties: { name: string; value: string | string[] }[];
     }[];
     version: { major: number; minor: number };
 }
@@ -600,18 +600,36 @@ export class CTestDriver implements vscode.Disposable {
             this.tests = JSON.parse(result.stdout) ?? undefined;
             if (this.tests && this.tests.kind === 'ctestInfo') {
                 this.tests.tests.forEach(test => {
+                    let testItem: vscode.TestItem;
                     if (test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
                         const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
                         const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
-                        const testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
+                        testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
                         if (testDefLine !== undefined) {
                             testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
                         }
-                        testExplorerRoot.children.add(testItem);
                     } else {
-                        const testItem = initializedTestExplorer.createTestItem(test.name, test.name);
-                        testExplorerRoot.children.add(testItem);
+                        testItem = initializedTestExplorer.createTestItem(test.name, test.name);
                     }
+
+                    const testTags: vscode.TestTag[] = [];
+                    if (test.properties) {
+                        for (const property of test.properties) {
+                            if (property.name === "LABELS") {
+                                if (util.isString(property.value)) {
+                                    testTags.push(new vscode.TestTag(property.value));
+                                } else {
+                                    testTags.push(...property.value.map(v => new vscode.TestTag(v)));
+                                }
+                            }
+                        }
+                    }
+
+                    if (testTags.length !== 0) {
+                        testItem.tags = [...testItem.tags, ...testTags];
+                    }
+
+                    testExplorerRoot.children.add(testItem);
                 });
             };
         }
@@ -635,7 +653,7 @@ export class CTestDriver implements vscode.Disposable {
     /**
      * Filters out duplicate tests, i.e., both the parent and child are requested
      */
-    private uniqueTests(tests: vscode.TestItem[]): vscode.TestItem[] {
+    private uniqueTests(tests: readonly vscode.TestItem[]): vscode.TestItem[] {
         const parents = new Set<string>();
         tests.forEach(t => {
             if (!t.parent) {
@@ -950,7 +968,7 @@ export class CTestDriver implements vscode.Disposable {
      */
     private ensureTestExplorerInitialized(): vscode.TestController {
         if (!testExplorer) {
-            testExplorer = vscode.tests.createTestController('cmakeToolsCTest', 'CTest');
+            testExplorer = vscode.tests.createTestController('cmake-tools.CTest', 'CTest');
 
             // Cast to any since this is not supported yet in the API we use.
             (testExplorer as any).refreshHandler = () => vscode.commands.executeCommand('cmake.refreshTestsAll');
