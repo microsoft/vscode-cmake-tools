@@ -729,7 +729,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
             const cacheVar = preset.cacheVariables[cacheVarName];
             if (typeof cacheVar === 'boolean') {
                 expandedPreset.cacheVariables[cacheVarName] = cacheVar;
-            } else if (cacheVar) {
+            } else if (cacheVar || cacheVar === "") {
                 if (util.isString(cacheVar)) {
                     expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
                 } else if (util.isString(cacheVar.value)) {
