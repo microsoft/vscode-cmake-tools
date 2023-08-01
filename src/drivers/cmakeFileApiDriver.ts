@@ -242,10 +242,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
         if (debuggerInformation) {
             args.push("--debugger");
             args.push("--debugger-pipe");
-            args.push(`${debuggerInformation.debuggerPipeName}`);
-            if (debuggerInformation.debuggerDapLog) {
+            args.push(`${debuggerInformation.pipeName}`);
+            if (debuggerInformation.dapLog) {
                 args.push("--debugger-dap-log");
-                args.push(debuggerInformation.debuggerDapLog);
+                args.push(debuggerInformation.dapLog);
             }
         }
 
@@ -279,7 +279,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                             name: localize("cmake.debug.name", "CMake Debugger"),
                             request: "launch",
                             type: "cmake",
-                            debuggerPipeName: debuggerInformation.debuggerPipeName,
+                            pipeName: debuggerInformation.pipeName,
                             fromCommand: true
                         });
                     }

@@ -543,7 +543,13 @@ export class CMakeProject {
 
     private readonly cmakePathSub = this.workspaceContext.config.onChange('cmakePath', async () => {
         // Force re-reading of cmake exe, this will ensure that the debugger capabilities are updated.
-        await this.getCMakeExecutable();
+        const cmakeInfo = await this.getCMakeExecutable();
+        if (!cmakeInfo.isPresent) {
+            void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmakeInfo.path}"`, '"cmake.cmakePath"'));
+            telemetry.logEvent('CMakeExecutableNotFound');
+        }
+
+        await this.reloadCMakeDriver();
     });
 
     /**
