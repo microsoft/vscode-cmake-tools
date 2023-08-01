@@ -10,6 +10,10 @@ Bug Fixes:
 - Fix per-folder browse configurations returning incorrect information. [#3155](https://github.com/microsoft/vscode-cmake-tools/issues/3155)
 - IntelliSense resolves headers coming from MacOS frameworks. CMake 3.27 or later is required. [#2324](https://github.com/microsoft/vscode-cmake-tools/issues/2324)
 - Support variable expansion in sourceDirectory setting related to various kit info. [#1914](https://github.com/microsoft/vscode-cmake-tools/issues/1914)
+- Allow configure settings to override the usual arguments the extension is usually passing to cmake. Don't have unremovable options. [#1639](https://github.com/microsoft/vscode-cmake-tools/issues/1639)
+- Fix triggers of "Bad CMake Executable" error message. [#2368](https://github.com/microsoft/vscode-cmake-tools/issues/2368)
+- Don't ignore empty cache string variables when configuring from presets. [#1842](https://github.com/microsoft/vscode-cmake-tools/issues/1842)
+- Fix active build configuration warning coming from CppTools. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
 
 Improvements:
 - Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath`. [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)

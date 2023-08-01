@@ -1520,23 +1520,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private generateCMakeSettingsFlags(): string[] {
         const settingMap: { [key: string]: util.CMakeValue } = {};
 
-        try {
-            util.objectPairs(this.config.configureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value));
-        } catch (e: any) {
-            log.error(e.message);
-            throw e;
-        }
-        util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
         if (this._variantLinkage !== null) {
             settingMap.BUILD_SHARED_LIBS = util.cmakeify(this._variantLinkage === 'shared');
         }
 
         const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
         const config = vscode.workspace.getConfiguration("cmake", configurationScope);
-        // Export compile_commands.json
-        const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
-        const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
-        settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
 
         const allowBuildTypeOnMultiConfig = config.get<boolean>("setBuildTypeOnMultiConfig") || false;
 
@@ -1550,6 +1539,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (!settingMap.CMAKE_INSTALL_PREFIX && this.installDir) {
             settingMap.CMAKE_INSTALL_PREFIX = util.cmakeify(this.installDir);
         }
+
+        try {
+            util.objectPairs(this.config.configureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value));
+        } catch (e: any) {
+            log.error(e.message);
+            throw e;
+        }
+        util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+
+        // Export compile_commands.json
+        const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
+        const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
+        settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
 
         console.assert(!!this._kit);
         if (!this._kit) {

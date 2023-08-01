@@ -562,7 +562,14 @@ export class ProjectController implements vscode.Disposable {
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         if (activeProject) {
             const isFileInsideActiveProject: boolean = util.isFileInsideFolder(uri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
-            if (isFileInsideActiveProject) {
+            // A save of settings.json triggers the doSave event (doSaveTextDocument or onDidRenameFile)
+            // before the settings update event (onDidChangeConfiguration).
+            // If the user updates cmakePath, the below doCMakeFileChangeReconfigure will operate on the old value.
+            // Very soon cmakePath is going to be updated and all will work correctly but until then,
+            // one example of annoying and incorrect behavior is to display the "not found cmake" error message again,
+            // (it is called eventually below) after the user corrects its setting value.
+            // There is no need to call doCMakeFileChangeReconfigure for a settings.json file, safe to skip.
+            if (isFileInsideActiveProject && !uri.fsPath.endsWith("settings.json")) {
                 await activeProject.doCMakeFileChangeReconfigure(uri);
             }
             await activeProject.sendFileTypeTelemetry(uri);
