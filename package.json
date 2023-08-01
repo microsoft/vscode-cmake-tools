@@ -1653,7 +1653,13 @@
         "cmake.ctest.parallelJobs": {
           "type": "number",
           "default": 0,
-          "description": "%cmake-tools.configuration.cmake.ctest.parallelJobs.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription%",
+          "scope": "resource"
+        },
+        "cmake.ctest.allowParallelJobs": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.ctest.allowParallelJobs.description%",
           "scope": "resource"
         },
         "cmake.parseBuildDiagnostics": {
