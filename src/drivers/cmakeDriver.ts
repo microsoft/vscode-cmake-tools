@@ -321,13 +321,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private _kitDetect: KitDetect | null = null;
 
-    public getKit(): Kit | null {
-        return this._kit;
-    }
-    public getKitDetect(): KitDetect | null {
-        return this._kitDetect;
-    }
-
     private _useCMakePresets: boolean = true;
 
     get useCMakePresets(): boolean {
@@ -366,7 +359,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         // Fill in default replacements
         const vars: expand.KitContextVars = {
-            buildKit: this._kit ? this._kit.name : '__unknownkit__',
             buildType: this.currentBuildType,
             generator: this.generatorName || 'null',
             workspaceFolder: ws_root,
@@ -375,6 +367,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             workspaceRoot: ws_root,
             workspaceRootFolderName: path.basename(ws_root),
             userHome: paths.userHome,
+            buildKit: this._kit?.name ?? '__unknownkit__',
             buildKitVendor: this._kitDetect?.vendor ?? '__unknow_vendor__',
             buildKitTriple: this._kitDetect?.triple ?? '__unknow_triple__',
             buildKitVersion: version,
@@ -398,22 +391,28 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return { vars, variantVars };
     }
 
-    static async sourceDirExpansionOptions(workspaceFolderFspath: string | null, kit?: Kit | null): Promise<expand.ExpansionOptions> {
+    static async sourceDirExpansionOptions(workspaceFolderFspath: string | null, kit?: Kit | null, generatorName?: string | null): Promise<expand.ExpansionOptions> {
         const ws_root = util.lightNormalizePath(workspaceFolderFspath || '.');
 
         // Fill in default replacements
-        const prj = getActiveProject();
         if (!kit) {
-            kit = prj ? prj.getActiveKit() : undefined;
+            kit = getActiveProject()?.getActiveKit();
         }
-        const kitName: string = kit ? kit.name : '';
-        const kitDetect = kit ? await getKitDetect(kit) : undefined;
-        const kitVendor: string = kitDetect ? kitDetect.vendor || '' : '';
+        const kitDetect: KitDetect | undefined = kit ? await getKitDetect(kit) : undefined;
+        const target: Partial<TargetTriple> = parseTargetTriple(kitDetect?.triple ?? '') ?? {};
+        const version = kitDetect?.version ?? '0.0';
 
         const vars: expand.MinimalPresetContextVars = {
-            generator: 'generator',
-            buildKit: kitName,
-            buildKitVendor: kitVendor,
+            generator: generatorName ?? 'generator',
+            buildKit: kit?.name ?? '__unknownkit__',
+            buildKitVendor: kitDetect?.vendor ?? '__unknow_vendor__',
+            buildKitTriple: kitDetect?.triple ?? '__unknow_triple__',
+            buildKitVersion: version,
+            buildKitHostOs: process.platform,
+            buildKitTargetOs: target.targetOs ?? '__unknow_target_os__',
+            buildKitTargetArch: target.targetArch ?? '__unknow_target_arch__',
+            buildKitVersionMajor: majorVersionSemver(version),
+            buildKitVersionMinor: minorVersionSemver(version),
             workspaceFolder: ws_root,
             workspaceFolderBasename: path.basename(ws_root),
             sourceDir: '${sourceDir}',
@@ -698,8 +697,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
-            const kit = this._kit;
-            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded, await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder, kit));
+            this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded,
+                                   await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder,
+                                         this._kit, this._generator?.name));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);

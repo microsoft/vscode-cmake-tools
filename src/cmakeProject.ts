@@ -704,8 +704,10 @@ export class CMakeProject {
                     }
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
-                        const kit = this.getActiveKit();
-                        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, kit)));
+                        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory,
+                                                      await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath,
+                                                            this.getActiveKit(),
+                                                            (await this.getCMakeDriverInstance())?.generatorName)));
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -909,8 +911,10 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         this.kitsController = await KitsController.init(this);
-        const kit = this.getActiveKit();
-        await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, kit)));
+        await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory,
+                                      await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath,
+                                            this.getActiveKit(),
+                                            (await this.getCMakeDriverInstance())?.generatorName)));
         this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
         this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
         this.hideLaunchButton = (this.workspaceContext.config.statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
@@ -1007,6 +1011,13 @@ export class CMakeProject {
         return this.presetsController.onUserPresetsChanged(listener);
     }
 
+    /**
+     * Calculate which kit object should be used for variable exapansion.
+     * Obviously, the active kit if set but otherwise, since variable expansion may need kit information before the active kit is determined
+     * (like very early during project load) then deduce from previous user selection which was saved in the workspace state.
+     * Do not change any flow related to how and when this.activeKit is set. When it is null, this method just returns a kit (if we find one)
+     * but without setting it as active here.
+     */
     public getActiveKit(): Kit | null {
         if (this.activeKit) {
             return this.activeKit;
