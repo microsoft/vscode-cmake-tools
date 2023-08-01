@@ -698,8 +698,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
             this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded,
-                                   await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder,
-                                         this._kit, this._generator?.name));
+                await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder, this._kit, this._generator?.name));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);

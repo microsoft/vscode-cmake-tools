@@ -705,9 +705,8 @@ export class CMakeProject {
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
                         await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory,
-                                                      await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath,
-                                                            this.getActiveKit(),
-                                                            (await this.getCMakeDriverInstance())?.generatorName)));
+                            await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, this.getActiveKit(),
+                                (await this.getCMakeDriverInstance())?.generatorName)));
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -912,9 +911,8 @@ export class CMakeProject {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         this.kitsController = await KitsController.init(this);
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory,
-                                      await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath,
-                                            this.getActiveKit(),
-                                            (await this.getCMakeDriverInstance())?.generatorName)));
+            await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, this.getActiveKit(),
+                (await this.getCMakeDriverInstance())?.generatorName)));
         this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
         this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
         this.hideLaunchButton = (this.workspaceContext.config.statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
