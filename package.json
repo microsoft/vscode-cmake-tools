@@ -769,11 +769,11 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "description": "Name"
+                                        "description": "%cmake-tools.debugger.name%"
                                     },
                                     "value": {
                                         "type": "string",
-                                        "description": "Value"
+                                        "description": "%cmake-tools.debugger.value%"
                                     }
                                 }
                             },
@@ -794,7 +794,7 @@
                                     "properties": {
                                         "externalLaunch": {
                                             "type": "boolean",
-                                            "description": "Whether the cmake debuggee was externally launched",
+                                            "description": "%cmake-tools.debugger.externalLaunch.description",
                                             "default": false
                                         },
                                         "pipeName": {
@@ -830,7 +830,7 @@
                                     "properties": {
                                         "scriptPath": {
                                             "type": "string",
-                                            "descripttion": "The path to the script to debug",
+                                            "descripttion": "%cmake-tools.debugger.scriptPath.description",
                                             "default": ""
                                         },
                                         "scriptArgs": {
@@ -839,7 +839,7 @@
                                                 "type": "string"
                                             },
                                             "default": [],
-                                            "description": "Arguments for the script to debug"
+                                            "description": "%cmake-tools.debugger.scriptArgs.description"
                                         },
                                         "scriptEnv": {
                                             "type": "array",
@@ -848,15 +848,15 @@
                                                 "properties": {
                                                     "name": {
                                                         "type": "string",
-                                                        "description": "Name"
+                                                        "description": "%cmake-tools.debugger.name%"
                                                     },
                                                     "value": {
                                                         "type": "string",
-                                                        "description": "Value"
+                                                        "description": "%cmake-tools.debugger.value%"
                                                     }
                                                 }
                                             },
-                                            "description": "Env for the script to debug"
+                                            "description": "%cmake-tools.debugger.scriptEnv.description"
                                         },
                                         "pipeName": {
                                             "type": "string",
