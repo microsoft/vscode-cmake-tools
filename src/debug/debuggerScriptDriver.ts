@@ -29,7 +29,9 @@ export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: 
         }
 
         cmakeLogger.info(localize('run.script', "Executing CMake script: \"{0}\"", scriptPath));
-        // do some .then stuff to be able to show results?
+
+        // TODO: Make sure args and environment are handled correctly.
+        // TODO: Possibly concatenate env with process.env, similar to how the CMake driver does it.
         const child = proc.execute(cmakeExe.path, concreteArgs.concat(scriptArgs), outputConsumer);
 
         while (
