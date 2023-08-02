@@ -765,9 +765,18 @@
                         "scriptEnv": {
                             "type": "array",
                             "items": {
-                                "type": "string"
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Name"
+                                    },
+                                    "value": {
+                                        "type": "string",
+                                        "description": "Value"
+                                    }
+                                }
                             },
-                            "default": [],
                             "description": "%cmake-tools.debugger.scriptEnv.description"
                         }
                     },
@@ -818,7 +827,6 @@
                                     }
                                 },
                                 {
-                                    "required": ["scriptPath"],
                                     "properties": {
                                         "scriptPath": {
                                             "type": "string",
@@ -836,9 +844,18 @@
                                         "scriptEnv": {
                                             "type": "array",
                                             "items": {
-                                                "type": "string"
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string",
+                                                        "description": "Name"
+                                                    },
+                                                    "value": {
+                                                        "type": "string",
+                                                        "description": "Value"
+                                                    }
+                                                }
                                             },
-                                            "default": [],
                                             "description": "Env for the script to debug"
                                         },
                                         "pipeName": {
