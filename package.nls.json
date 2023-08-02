@@ -202,6 +202,8 @@
     "cmake-tools.debugger.scriptPath.description": "The path to the script to debug",
     "cmake-tools.debugger.scriptArgs.description": "Arguments for the script to debug",
     "cmake-tools.debugger.scriptEnv.description": "Environment for the script to use",
+    "cmake-tools.debugger.name": "Name",
+    "cmake-tools.debugger.value": "Value",
     "cmake-tools.taskDefinitions.properties.label.description": "The name of the task",
     "cmake-tools.taskDefinitions.properties.command.description": "CMake command",
     "cmake-tools.taskDefinitions.properties.targets.description": "CMake build targets",

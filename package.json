@@ -726,7 +726,7 @@
                     "properties": {
                         "externalLaunch": {
                             "type": "boolean",
-                            "description": "%cmake-tools.debugger.externalLaunch.description",
+                            "description": "%cmake-tools.debugger.externalLaunch.description%",
                             "default": false
                         },
                         "pipeName": {
@@ -751,7 +751,7 @@
                         },
                         "scriptPath": {
                             "type": "string",
-                            "descripttion": "%cmake-tools.debugger.scriptPath.description",
+                            "descripttion": "%cmake-tools.debugger.scriptPath.description%",
                             "default": ""
                         },
                         "scriptArgs": {
@@ -760,7 +760,7 @@
                                 "type": "string"
                             },
                             "default": [],
-                            "description": "%cmake-tools.debugger.scriptArgs.description"
+                            "description": "%cmake-tools.debugger.scriptArgs.description%"
                         },
                         "scriptEnv": {
                             "type": "array",
@@ -777,7 +777,7 @@
                                     }
                                 }
                             },
-                            "description": "%cmake-tools.debugger.scriptEnv.description"
+                            "description": "%cmake-tools.debugger.scriptEnv.description%"
                         }
                     },
                     "allOf": [
@@ -790,11 +790,11 @@
                                     "required": ["externalLaunch"]
                                 }},
                                 { 
-                                    "required": ["pipeName"],
+                                    "required": ["externalLaunch", "pipeName"],
                                     "properties": {
                                         "externalLaunch": {
                                             "type": "boolean",
-                                            "description": "%cmake-tools.debugger.externalLaunch.description",
+                                            "description": "%cmake-tools.debugger.externalLaunch.description%",
                                             "default": false
                                         },
                                         "pipeName": {
@@ -827,10 +827,11 @@
                                     }
                                 },
                                 {
+                                    "required": ["scriptPath"],
                                     "properties": {
                                         "scriptPath": {
                                             "type": "string",
-                                            "descripttion": "%cmake-tools.debugger.scriptPath.description",
+                                            "descripttion": "%cmake-tools.debugger.scriptPath.description%",
                                             "default": ""
                                         },
                                         "scriptArgs": {
@@ -839,7 +840,7 @@
                                                 "type": "string"
                                             },
                                             "default": [],
-                                            "description": "%cmake-tools.debugger.scriptArgs.description"
+                                            "description": "%cmake-tools.debugger.scriptArgs.description%"
                                         },
                                         "scriptEnv": {
                                             "type": "array",
@@ -856,7 +857,7 @@
                                                     }
                                                 }
                                             },
-                                            "description": "%cmake-tools.debugger.scriptEnv.description"
+                                            "description": "%cmake-tools.debugger.scriptEnv.description%"
                                         },
                                         "pipeName": {
                                             "type": "string",
@@ -878,7 +879,15 @@
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    "dependencies": {
+                        "scriptEnv": [
+                            "scriptPath"
+                        ],
+                        "scriptArgs": [
+                            "scriptPath"
+                        ]
+                    }
                 }
             }
         }
