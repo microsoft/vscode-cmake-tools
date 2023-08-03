@@ -13,17 +13,6 @@ const logger = logging.createLogger('debugger');
 
 export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
     async createDebugAdapterDescriptor(session: vscode.DebugSession, _executable: vscode.DebugAdapterExecutable | undefined): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
-        // first invoke cmake
-        // invoke internal methods that call into and maybe have a handler once we've got the debugger is ready
-        const pipeName = session.configuration.pipeName ?? getDebuggerPipeName();
-
-        // we can only set up the dapLog from this end if it's not launched external
-        const debuggerInformation: DebuggerInformation = {
-            pipeName,
-            dapLog: session.configuration.externalLaunch ? undefined : session.configuration.dapLog,
-            debuggerIsReady: () => undefined
-        };
-
         if (session.configuration.request !== "launch") {
             throw new Error(localize("cmake.debug.only.launch.supported", "The \"cmake\" debug type only supports the \"launch\" request."));
         }
@@ -31,6 +20,13 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         if (session.configuration.cmakeDebugType === undefined) {
             throw new Error(localize("cmake.debug.must.define.debugType", "The \"cmake\" debug type requires you to define the \"cmakeDebugType\". Available options are \"configure\", \"external\", and \"script\"."));
         }
+
+        const pipeName = session.configuration.pipeName ?? getDebuggerPipeName();
+        const debuggerInformation: DebuggerInformation = {
+            pipeName,
+            dapLog: session.configuration.dapLog,
+            debuggerIsReady: () => undefined
+        };
 
         // undocumented configuration field that lets us know if the session is being invoked from a command
         // This should only be used from inside the extension from a command that invokes the debugger.

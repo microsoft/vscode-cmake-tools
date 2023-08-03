@@ -778,7 +778,7 @@
                         "cmakeDebugType": {
                             "type": "string",
                             "enum": ["configure", "external", "script"],
-                            "description": "%cmake-tools.debugger.debugType"
+                            "description": "%cmake-tools.debugger.debugType.description%"
                         }
                     },
                     "required": [
