@@ -25,19 +25,16 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         };
 
         if (session.configuration.request !== "launch") {
-            throw new Error("TODO: Only launch request is supported");
+            throw new Error(localize("cmake.debug.only.launch.supported", "'cmake' debug type only supports the 'launch' request."));
         }
 
         if (session.configuration.cmakeDebugType === undefined) {
-            throw new Error("TODO: Must define the cmake debug type");
+            throw new Error(localize("cmake.debug.must.define.debugType", "The 'cmake' debug type requires you to define the 'cmakeDebugType'. Available options are 'configure', 'external', and 'script'."));
         }
 
         // undocumented configuration field that lets us know if the session is being invoked from a command
         // This should only be used from inside the extension from a command that invokes the debugger.
         if (!session.configuration.fromCommand) {
-
-            // TODO: Check for conflicting types of requests from launch.json
-
             const cmakeDebugType: "configure" | "script" | "external" = session.configuration.cmakeDebugType;
             if (cmakeDebugType === "configure" || cmakeDebugType === "script") {
                 const promise = new Promise<void>((resolve) => {
@@ -46,7 +43,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
 
                 if (cmakeDebugType === "script") {
                     if (session.configuration.scriptPath === undefined) {
-                        throw new Error("TODO: In cmake debug type script, script path must be defined");
+                        throw new Error(localize("cmake.debug.script.requires.scriptPath", "The 'cmake' debug type with 'cmakeDebugType' set to 'script' requires you to define 'scriptPath'."));
                     }
 
                     const script = session.configuration.scriptPath;
@@ -80,7 +77,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 await promise;
             } else if (cmakeDebugType === "external") {
                 if (session.configuration.pipeName === undefined) {
-                    throw new Error("TODO: In CMake Debug type external, pipeName must be defined");
+                    throw new Error(localize("cmake.debug.external.requires.pipeName", "The 'cmake' debug type with 'cmakeDebugType' set to 'external' requires you to define 'pipeName'."));
                 }
             }
         }
