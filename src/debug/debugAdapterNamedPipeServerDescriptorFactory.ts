@@ -24,15 +24,31 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
             debuggerIsReady: () => undefined
         };
 
+        if (session.configuration.request !== "launch") {
+            throw new Error("TODO: Only launch request is supported");
+        }
+
+        if (session.configuration.cmakeDebugType === undefined) {
+            throw new Error("TODO: Must define the cmake debug type");
+        }
+
         // undocumented configuration field that lets us know if the session is being invoked from a command
         // This should only be used from inside the extension from a command that invokes the debugger.
         if (!session.configuration.fromCommand) {
-            if (session.configuration.request === "launch" && !session.configuration.externalLaunch) {
+
+            // TODO: Check for conflicting types of requests from launch.json
+
+            const cmakeDebugType: "configure" | "script" | "external" = session.configuration.cmakeDebugType;
+            if (cmakeDebugType === "configure" || cmakeDebugType === "script") {
                 const promise = new Promise<void>((resolve) => {
                     debuggerInformation.debuggerIsReady = resolve;
                 });
 
-                if (session.configuration.scriptPath) {
+                if (cmakeDebugType === "script") {
+                    if (session.configuration.scriptPath === undefined) {
+                        throw new Error("TODO: In cmake debug type script, script path must be defined");
+                    }
+
                     const script = session.configuration.scriptPath;
                     const args: string[] = session.configuration.scriptArgs ?? [];
                     const env = new Map<string, string>(session.configuration.scriptEnv.map((e: {name: string; value: string}) => [e.name, e.value])) ?? new Map();
@@ -62,6 +78,10 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 }
 
                 await promise;
+            } else if (cmakeDebugType === "external") {
+                if (session.configuration.pipeName === undefined) {
+                    throw new Error("TODO: In CMake Debug type external, pipeName must be defined");
+                }
             }
         }
 
