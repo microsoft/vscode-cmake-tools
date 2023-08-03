@@ -25,7 +25,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         };
 
         if (session.configuration.request !== "launch") {
-            throw new Error(localize("cmake.debug.only.launch.supported", "'cmake' debug type only supports the 'launch' request."));
+            throw new Error(localize("cmake.debug.only.launch.supported", "The 'cmake' debug type only supports the 'launch' request."));
         }
 
         if (session.configuration.cmakeDebugType === undefined) {
