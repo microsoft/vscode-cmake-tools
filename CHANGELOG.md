@@ -13,9 +13,10 @@ Bug Fixes:
 - Fix triggers of "Bad CMake Executable" error message. [#2368](https://github.com/microsoft/vscode-cmake-tools/issues/2368)
 - Don't ignore empty cache string variables when configuring from presets. [#1842](https://github.com/microsoft/vscode-cmake-tools/issues/1842)
 - Fix active build configuration warning coming from CppTools. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
-- Allow a way to run ctests in parallel by setting `cmake.ctest.allowParallelJobs` to `true`. [#3091](https://github.com/microsoft/vscode-cmake-tools/issues/3091)
+- Allow a way to run CTests in parallel by setting `cmake.ctest.allowParallelJobs` to `true`. [#3091](https://github.com/microsoft/vscode-cmake-tools/issues/3091)
+- When clicking `Run CTests` from the status bar view, it now will bypass the Test Explorer and directly run the CTests. [#3151](https://github.com/microsoft/vscode-cmake-tools/issues/3151)
 
-Improvements:
+Improvements
 - Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath`. [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
 - Fix our checking for invalid settings when CMakeUserPresets version is different than CMakePresets. [#2897](https://github.com/microsoft/vscode-cmake-tools/issues/2897)
 - Fix the precendence order that we evaluate the `cmake.parallelJobs` setting. [#3206](https://github.com/microsoft/vscode-cmake-tools/issues/3206)
