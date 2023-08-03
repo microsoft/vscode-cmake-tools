@@ -25,11 +25,11 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         };
 
         if (session.configuration.request !== "launch") {
-            throw new Error(localize("cmake.debug.only.launch.supported", "The 'cmake' debug type only supports the 'launch' request."));
+            throw new Error(localize("cmake.debug.only.launch.supported", "The \"cmake\" debug type only supports the \"launch\" request."));
         }
 
         if (session.configuration.cmakeDebugType === undefined) {
-            throw new Error(localize("cmake.debug.must.define.debugType", "The 'cmake' debug type requires you to define the 'cmakeDebugType'. Available options are 'configure', 'external', and 'script'."));
+            throw new Error(localize("cmake.debug.must.define.debugType", "The \"cmake\" debug type requires you to define the \"cmakeDebugType\". Available options are \"configure\", \"external\", and \"script\"."));
         }
 
         // undocumented configuration field that lets us know if the session is being invoked from a command
@@ -43,7 +43,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
 
                 if (cmakeDebugType === "script") {
                     if (session.configuration.scriptPath === undefined) {
-                        throw new Error(localize("cmake.debug.script.requires.scriptPath", "The 'cmake' debug type with 'cmakeDebugType' set to 'script' requires you to define 'scriptPath'."));
+                        throw new Error(localize("cmake.debug.script.requires.scriptPath", "The \"cmake\" debug type with \"cmakeDebugType\" set to \"script\" requires you to define \"scriptPath\"."));
                     }
 
                     const script = session.configuration.scriptPath;
@@ -77,7 +77,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 await promise;
             } else if (cmakeDebugType === "external") {
                 if (session.configuration.pipeName === undefined) {
-                    throw new Error(localize("cmake.debug.external.requires.pipeName", "The 'cmake' debug type with 'cmakeDebugType' set to 'external' requires you to define 'pipeName'."));
+                    throw new Error(localize("cmake.debug.external.requires.pipeName", "The \"cmake\" debug type with \"cmakeDebugType\" set to \"external\" requires you to define \"pipeName\"."));
                 }
             }
         }
