@@ -44,7 +44,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
 
                     const script = session.configuration.scriptPath;
                     const args: string[] = session.configuration.scriptArgs ?? [];
-                    const env = new Map<string, string>(session.configuration.scriptEnv.map((e: {name: string; value: string}) => [e.name, e.value])) ?? new Map();
+                    const env = new Map<string, string>(session.configuration.scriptEnv?.map((e: {name: string; value: string}) => [e.name, e.value])) ?? new Map();
                     void executeScriptWithDebugger(script, args, env, debuggerInformation);
                 } else {
                     if (session.configuration.clean) {
