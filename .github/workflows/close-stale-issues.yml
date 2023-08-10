@@ -1,0 +1,30 @@
+name: Close Stale Issues
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      readonly:
+        description: "readonly: Specify true or 1 to prevent changes from being commited to GitHub"
+        default: false
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    env:
+      stale-days: 60
+      close-days: 7
+      stale-label: stale
+    steps:
+    - uses: actions/stale@v4.1.1
+      with:
+        stale-pr-label: $stale-label
+        exempt-issue-labels: stale-exempt
+        days-before-pr-stale: -1
+        days-before-pr-close: -1
+        days-before-stale: $stale-days
+        stale-issue-message: "This issue is now marked as '$stale-label' due to there being no activity on it for the past $stale-days days. Unless the '$stale-label' label is removed or the issue is commented on, this will be closed in $close-days days."
+        days-before-close: $close-days
+        close-issue-reason: not_planned
+        close-issue-message: "This issue is now closed due to there being no activity on it for the past $close-days days since being marked as 'stale'."
+        operations-per-run: 50
+
