@@ -5,6 +5,7 @@ import { executeScriptWithDebugger } from "./debuggerScriptDriver";
 
 import * as logging from '../logging';
 import * as nls from "vscode-nls";
+import { fs } from "../pr";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -13,14 +14,6 @@ const logger = logging.createLogger('debugger');
 
 export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
     async createDebugAdapterDescriptor(session: vscode.DebugSession, _executable: vscode.DebugAdapterExecutable | undefined): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
-        if (session.configuration.request !== "launch") {
-            throw new Error(localize("cmake.debug.only.launch.supported", "The \"cmake\" debug type only supports the \"launch\" request."));
-        }
-
-        if (session.configuration.cmakeDebugType === undefined) {
-            throw new Error(localize("cmake.debug.must.define.debugType", "The \"cmake\" debug type requires you to define the \"cmakeDebugType\". Available options are \"configure\", \"external\", and \"script\"."));
-        }
-
         const pipeName = session.configuration.pipeName ?? getDebuggerPipeName();
         const debuggerInformation: DebuggerInformation = {
             pipeName,
@@ -38,11 +31,10 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 });
 
                 if (cmakeDebugType === "script") {
-                    if (session.configuration.scriptPath === undefined) {
-                        throw new Error(localize("cmake.debug.script.requires.scriptPath", "The \"cmake\" debug type with \"cmakeDebugType\" set to \"script\" requires you to define \"scriptPath\"."));
-                    }
-
                     const script = session.configuration.scriptPath;
+                    if (!fs.existsSync(script)) {
+                        throw new Error(localize("cmake.debug.scriptPath.does.not.exist", "The script path, \"{0}\", could not be found.", script));
+                    }
                     const args: string[] = session.configuration.scriptArgs ?? [];
                     const env = new Map<string, string>(session.configuration.scriptEnv?.map((e: {name: string; value: string}) => [e.name, e.value])) ?? new Map();
                     void executeScriptWithDebugger(script, args, env, debuggerInformation);
@@ -71,10 +63,6 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 }
 
                 await promise;
-            } else if (cmakeDebugType === "external") {
-                if (session.configuration.pipeName === undefined) {
-                    throw new Error(localize("cmake.debug.external.requires.pipeName", "The \"cmake\" debug type with \"cmakeDebugType\" set to \"external\" requires you to define \"pipeName\"."));
-                }
             }
         }
 

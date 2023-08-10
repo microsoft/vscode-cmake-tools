@@ -55,6 +55,7 @@ export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: 
                 cmakeLogger.info(localize('run.script.successful', "CMake script: \"{0}\" completed successfully.", scriptPath));
             } else {
                 cmakeLogger.info(localize('run.script.failed', "CMake script: \"{0}\" completed unsuccessfully.", scriptPath));
+                throw new Error("HEY");
             }
         } else {
             cmakeLogger.error(localize('run.script.cmakeDebugger.not.supported', "Cannot debug a script with this version of CMake, ensure your version of CMake supports debugging"));
