@@ -377,7 +377,7 @@ class CTestButton extends Button {
     settingsName = 'ctest';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
         super(config, priority);
-        this.command = 'cmake.revealTestExplorer';
+        this.command = 'cmake.ctest';
         this.tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
     }
 

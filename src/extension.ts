@@ -38,7 +38,6 @@ import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
-import { defaultBuildPreset } from './preset';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
 import { ProjectStatus } from './projectStatus';
@@ -545,16 +544,25 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active project
      */
-    async selectActiveFolder() {
-        if (vscode.workspace.workspaceFolders?.length) {
-            const selection: CMakeProject | undefined = await this.pickCMakeProject();
-            if (selection) {
-                // Ignore if user cancelled
-                await this.setActiveProject(selection);
-                telemetry.logEvent("selectactivefolder");
-                const currentActiveFolderPath = this.activeFolderPath();
-                await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
+    async selectActiveFolder(project?: CMakeProject | string[]) {
+        let selection: CMakeProject | undefined;
+        if (project instanceof CMakeProject) {
+            selection = project;
+        } else if (Array.isArray(project) && project.length > 0 && typeof project[0] === "string") {
+            const projects: CMakeProject[] = this.projectController.getAllCMakeProjects();
+            if (projects.length !== 0) {
+                selection = projects.find(proj => proj.folderName === project[0]);
             }
+        } else if (vscode.workspace.workspaceFolders?.length) {
+            selection = await this.pickCMakeProject();
+        }
+
+        if (selection) {
+            // Ignore if user cancelled
+            await this.setActiveProject(selection);
+            telemetry.logEvent("selectactivefolder");
+            const currentActiveFolderPath = this.activeFolderPath();
+            await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
         }
     }
 
@@ -659,26 +667,7 @@ export class ExtensionManager implements vscode.Disposable {
                 if (drv) {
                     drv.isMultiConfig = isMultiConfig;
                 }
-                const actualBuildType = await (async () => {
-                    if (cmakeProject.useCMakePresets) {
-                        if (isMultiConfig) {
-                            // The `configuration` is not set on the default build preset because it is optional for single-config generators.
-                            // If we have a multi-config generator we need to select the first value from CMAKE_CONFIGURATION_TYPES to match CMake's behavior.
-                            if (cmakeProject.buildPreset?.name === defaultBuildPreset.name) {
-                                const buildTypes = configurationTypes.as<string>().split(';');
-                                if (buildTypes.length > 0) {
-                                    return buildTypes[0];
-                                }
-                            }
-                            return cmakeProject.buildPreset?.configuration || null;
-                        } else {
-                            const buildType = cache.get('CMAKE_BUILD_TYPE');
-                            return buildType ? buildType.as<string>() : null; // Single config generators set the build type during config, not build.
-                        }
-                    } else {
-                        return cmakeProject.currentBuildType();
-                    }
-                })();
+                const actualBuildType = await cmakeProject.currentBuildType();
 
                 const clCompilerPath = await findCLCompilerPath(configureEnv);
                 this.configProvider.cpptoolsVersion = cpptools.getVersion();

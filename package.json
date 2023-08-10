@@ -1819,7 +1819,13 @@
         "cmake.ctest.parallelJobs": {
           "type": "number",
           "default": 0,
-          "description": "%cmake-tools.configuration.cmake.ctest.parallelJobs.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription%",
+          "scope": "resource"
+        },
+        "cmake.ctest.allowParallelJobs": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.ctest.allowParallelJobs.description%",
           "scope": "resource"
         },
         "cmake.parseBuildDiagnostics": {
@@ -2737,7 +2743,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.60.0",
+    "@types/vscode": "1.63.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@types/uuid": "~8.3.3",
@@ -2807,7 +2813,6 @@
     "**/minimist": "^1.2.5",
     "nanoid": "^3.1.31",
     "postcss": "^8.2.10",
-    "source-map": "^0.8.0-beta.0",
     "yargs-parser": "^20.2.4",
     "xml2js": "^0.5.0",
     "tsconfig-paths*/json5": "^1.0.2",
