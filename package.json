@@ -24,7 +24,8 @@
     "vscode": "^1.63.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Debuggers"
   ],
   "galleryBanner": {
     "color": "#13578c",
@@ -50,6 +51,7 @@
     "onCommand:cmake.buildKit",
     "onCommand:cmake.tasksBuildCommand",
     "onDebugResolve:cmake",
+    "onDebugInitialConfigurations",
     "workspaceContains:CMakeLists.txt",
     "workspaceContains:*/CMakeLists.txt",
     "workspaceContains:*/*/CMakeLists.txt",
@@ -871,7 +873,43 @@
                         }
                     ]
                 }
-            }
+            },
+            "configurationSnippets": [
+                {
+                    "label": "%cmake-tools.debugger.configure.snippet.label%",
+                    "description": "%cmake-tools.debugger.configure.snippet.description%",
+                    "body": {
+                        "type": "cmake",
+                        "request": "launch",
+                        "name": "%cmake-tools.debugger.configure.snippet.body.name%",
+                        "cmakeDebugType": "configure",
+                        "clean": false,
+                        "configureAll": false
+                    }
+                },
+                {
+                    "label": "%cmake-tools.debugger.script.snippet.label%",
+                    "description": "%cmake-tools.debugger.script.snippet.description%",
+                    "body": {
+                        "type": "cmake",
+                        "request": "launch",
+                        "name": "%cmake-tools.debugger.script.snippet.body.name%",
+                        "cmakeDebugType": "script",
+                        "scriptPath": "^\"\\${workspaceFolder}/<...>\""
+                    }
+                },
+                {
+                    "label": "%cmake-tools.debugger.external.snippet.label%",
+                    "description": "%cmake-tools.debugger.external.snippet.description%",
+                    "body": {
+                        "type": "cmake",
+                        "request": "launch",
+                        "name": "%cmake-tools.debugger.external.snippet.body.name%",
+                        "cmakeDebugType": "external",
+                        "pipeName": "<...>"
+                    }
+                }
+            ]
         }
     ],
     "menus": {
