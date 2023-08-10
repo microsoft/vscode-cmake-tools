@@ -874,6 +874,7 @@
                     ]
                 }
             },
+            "initialConfigurations": [],
             "configurationSnippets": [
                 {
                     "label": "%cmake-tools.debugger.configure.snippet.label%",
