@@ -108,7 +108,7 @@ export interface ExtensionConfigurationSettings {
     buildToolArgs: string[];
     parallelJobs: number | undefined;
     ctestPath: string;
-    ctest: { parallelJobs: number };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -119,7 +119,8 @@ export interface ExtensionConfigurationSettings {
     configureEnvironment: Environment;
     buildEnvironment: Environment;
     testEnvironment: Environment;
-    mingwSearchDirs: string[];
+    mingwSearchDirs: string[]; // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
+    additionalCompilerSearchDirs: string[];
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
@@ -138,10 +139,13 @@ export interface ExtensionConfigurationSettings {
     additionalKits: string[];
     touchbar: TouchBarConfig;
     statusbar: StatusBarConfig;
+    useProjectStatusView: boolean;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
+    allowUnsupportedPresetsVersions: boolean;
     launchBehavior: string;
     ignoreCMakeListsMissing: boolean;
+    automaticReconfigure: boolean;
 }
 
 type EmittersOf<T> = {
@@ -297,6 +301,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get ctestParallelJobs(): number | null {
         return this.configData.ctest.parallelJobs;
     }
+    get ctestAllowParallelJobs(): boolean {
+        return this.configData.ctest.allowParallelJobs;
+    }
     get parseBuildDiagnostics(): boolean {
         return !!this.configData.parseBuildDiagnostics;
     }
@@ -359,6 +366,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.allowCommentsInPresetsFile;
     }
 
+    get allowUnsupportedPresetsVersions(): boolean {
+        return this.configData.allowUnsupportedPresetsVersions;
+    }
+
     get ignoreCMakeListsMissing(): boolean {
         return this.configData.ignoreCMakeListsMissing;
     }
@@ -390,8 +401,13 @@ export class ConfigurationReader implements vscode.Disposable {
         return ctestJobs;
     }
 
-    get mingwSearchDirs(): string[] {
-        return this.configData.mingwSearchDirs;
+    get additionalCompilerSearchDirs(): string[] {
+        // mingwSearchDirs is deprecated, but we still use it if additionalCompilerSearchDirs is not set for backwards compatibility
+        if (this.configData.additionalCompilerSearchDirs.length === 0 && this.configData.mingwSearchDirs.length > 0) {
+            log.warning(localize('please.upgrade.configuration', 'The setting {0} is replaced by {1}. Please upgrade your configuration.', '"mingwSearchDirs"', '"additionalCompilerSearchDirs"'));
+            return this.configData.mingwSearchDirs;
+        }
+        return this.configData.additionalCompilerSearchDirs;
     }
     get additionalKits(): string[] {
         return this.configData.additionalKits;
@@ -434,12 +450,21 @@ export class ConfigurationReader implements vscode.Disposable {
     get touchbar(): TouchBarConfig {
         return this.configData.touchbar;
     }
+
     get statusbar() {
         return this.configData.statusbar;
     }
 
+    get useProjectStatusView(): boolean {
+        return this.configData.useProjectStatusView;
+    }
+
     get launchBehavior(): string {
         return this.configData.launchBehavior;
+    }
+
+    get automaticReconfigure(): boolean {
+        return this.configData.automaticReconfigure;
     }
 
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
@@ -462,7 +487,7 @@ export class ConfigurationReader implements vscode.Disposable {
         buildToolArgs: new vscode.EventEmitter<string[]>(),
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
@@ -473,7 +498,8 @@ export class ConfigurationReader implements vscode.Disposable {
         configureEnvironment: new vscode.EventEmitter<Environment>(),
         buildEnvironment: new vscode.EventEmitter<Environment>(),
         testEnvironment: new vscode.EventEmitter<Environment>(),
-        mingwSearchDirs: new vscode.EventEmitter<string[]>(),
+        mingwSearchDirs: new vscode.EventEmitter<string[]>(), // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
+        additionalCompilerSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
@@ -492,10 +518,13 @@ export class ConfigurationReader implements vscode.Disposable {
         additionalKits: new vscode.EventEmitter<string[]>(),
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
         statusbar: new vscode.EventEmitter<StatusBarConfig>(),
+        useProjectStatusView: new vscode.EventEmitter<boolean>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
+        allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
-        launchBehavior: new vscode.EventEmitter<string>()
+        launchBehavior: new vscode.EventEmitter<string>(),
+        automaticReconfigure: new vscode.EventEmitter<boolean>()
     };
 
     /**

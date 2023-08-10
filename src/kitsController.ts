@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import CMakeProject from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import {
     Kit,
     descriptionForKit,
@@ -37,7 +37,7 @@ export enum KitsReadMode {
 
 // TODO: migrate all kit related things in extension.ts to this class.
 export class KitsController {
-    static minGWSearchDirs: string[] | undefined;
+    static additionalCompilerSearchDirs: string[] | undefined;
     /**
      * The kits available from the user-local kits file
      */
@@ -117,9 +117,9 @@ export class KitsController {
         // Special kits - include order is important
         KitsController.specialKits = [
             // Spcial __scanforkits__ kit used for invoking the "Scan for kits"
-            { name: SpecialKits.ScanForKits },
+            { name: SpecialKits.ScanForKits, isTrusted: true },
             // Special __unspec__ kit for opting-out of kits
-            { name: SpecialKits.Unspecified }
+            { name: SpecialKits.Unspecified, isTrusted: true }
         ];
 
         // Load user-kits
@@ -215,11 +215,7 @@ export class KitsController {
         // We don't have any kits defined. Scan for kits
         if (!KitsController.checkingHaveKits) {
             KitsController.checkingHaveKits = true;
-            if (!KitsController.minGWSearchDirs) {
-                await KitsController.scanForKits(await this.project.getCMakePathofProject());
-            } else {
-                await vscode.commands.executeCommand('cmake.scanForKits');
-            }
+            await KitsController.scanForKits(await this.project.getCMakePathofProject());
             KitsController.checkingHaveKits = false;
             return true;
         } else {
@@ -281,7 +277,14 @@ export class KitsController {
                 return false;
             } else {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
-                await this.setFolderActiveKit(chosen_kit.kit);
+                const kitChanged = chosen_kit.kit !== this.project.activeKit;
+                if (kitChanged) {
+                    await this.setFolderActiveKit(chosen_kit.kit);
+                }
+
+                if (chosen_kit.kit.name !== SpecialKits.Unspecified && kitChanged && this.project.workspaceContext.config.automaticReconfigure) {
+                    await this.project.configureInternal(ConfigureTrigger.selectKit, [], ConfigureType.Normal);
+                }
                 return true;
             }
         }
@@ -488,7 +491,7 @@ export class KitsController {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
 
         // Do the scan:
-        const discovered_kits = await scanForKits(cmakePath, { minGWSearchDirs: KitsController.minGWSearchDirs });
+        const discovered_kits = await scanForKits(cmakePath, { scanDirs: KitsController.additionalCompilerSearchDirs });
 
         // The list with the new definition user kits starts with the non VS ones,
         // which do not have any variations in the way they can be defined.

@@ -10,6 +10,10 @@
                 "type": "string",
                 "description": "Name of this kit"
             },
+            "description": {
+                "type": "string",
+                "description": "The description of this kit"
+            },
             "vendor": {
                 "type": "string",
                 "description": "The vendor name of this kit"
@@ -92,6 +96,10 @@
                 "required": [
                     "name"
                 ]
+            },
+            "isTrusted": {
+                "type": "boolean",
+                "description": "True if this kit comes from a trusted path"
             }
         }
     }

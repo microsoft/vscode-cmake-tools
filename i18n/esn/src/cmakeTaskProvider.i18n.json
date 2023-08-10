@@ -11,6 +11,7 @@
 	"clean": "limpiar",
 	"clean.rebuild": "recompilación limpia",
 	"cmake.template.task": "Tarea {0} plantilla de CMake",
+	"select.build.task": "Seleccionar una tarea de compilación",
 	"command.not.recognized": "{0} no es un comando reconocido.",
 	"target.is.ignored": "Los objetivos definidos en esta tarea se están ignorando.",
 	"enable.cmake.presets": "Habilitar CMakePresets",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "No se ha encontrado el ajuste preestablecido de prueba.",
 	"ctest.failed": "El valor preestablecido de prueba {0} No se ha encontrado. Error en la prueba.",
 	"ctest.run.terminated": "La ejecución de CTest ha finalizado.",
-	"ctest.finished.with.code": "CTest finalizó con el código de retorno {0}",
+	"ctest.finished": "CTest finalizado",
 	"test.failed": "Error en la ejecución de CTest."
 }

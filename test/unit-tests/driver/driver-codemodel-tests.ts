@@ -27,7 +27,7 @@ function cleanupBuildDir(build_dir: string): boolean {
 
 let driver: CMakeDriver | null = null;
 
-export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
     suite(`CMake CodeModel ${driverName} Driver tests`, () => {
         const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
         const workspacePath: string = 'test/unit-tests/driver/workspace';
@@ -46,7 +46,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 preferredGenerator: {name: 'Visual Studio 16 2019', platform: 'x64', toolset: 'host=x64'}
             } as Kit;
         } else {
-            kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' } } as Kit;
+            kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;
         }
 
         setup(async function (this: Mocha.Context, done) {

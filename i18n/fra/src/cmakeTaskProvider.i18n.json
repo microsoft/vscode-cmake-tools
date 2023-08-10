@@ -11,6 +11,7 @@
 	"clean": "nettoyer",
 	"clean.rebuild": "Nouvelle regénération",
 	"cmake.template.task": "Tâche {0} de modèle CMake",
+	"select.build.task": "Sélectionner une tâche de build",
 	"command.not.recognized": "{0} n’est pas une commande reconnue.",
 	"target.is.ignored": "Les cibles définies dans cette tâche sont ignorées.",
 	"enable.cmake.presets": "Activer CMakePresets",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "Présélection de test introuvable.",
 	"ctest.failed": "Présélection de test {0} introuvable. Échec du test.",
 	"ctest.run.terminated": "Exécution de CTest terminée",
-	"ctest.finished.with.code": "CTest s'est achevé avec le code de retour {0}",
+	"ctest.finished": "CTest terminé",
 	"test.failed": "Échec de CTest."
 }

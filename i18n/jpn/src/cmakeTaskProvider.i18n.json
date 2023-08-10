@@ -11,6 +11,7 @@
 	"clean": "クリーン",
 	"clean.rebuild": "クリーンしてリビルド",
 	"cmake.template.task": "CMake テンプレート {0} タスク",
+	"select.build.task": "ビルド タスクの選択",
 	"command.not.recognized": "{0} は認識されたコマンドではありません。",
 	"target.is.ignored": "このタスクで定義されたターゲットは無視されます。",
 	"enable.cmake.presets": "CMakePresets を有効にする",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "テスト プリセットが見つかりません。",
 	"ctest.failed": "テスト プリセット {0} が見つかりません。テストに失敗しました。",
 	"ctest.run.terminated": "CTest の実行が終了しました",
-	"ctest.finished.with.code": "CTest がリターン コード {0} で終了しました",
+	"ctest.finished": "CTest が終了しました",
 	"test.failed": "CTest の実行に失敗しました。"
 }

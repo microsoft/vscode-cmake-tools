@@ -11,6 +11,7 @@
 	"clean": "очистить",
 	"clean.rebuild": "очистка перестроения",
 	"cmake.template.task": "Задача шаблона CMake {0}",
+	"select.build.task": "Выберите задание сборки",
 	"command.not.recognized": "{0} не является распознаваемой командой.",
 	"target.is.ignored": "Определенные целевые объекты в этой задаче игнорируются.",
 	"enable.cmake.presets": "Включить CMakePresets",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "Предустановка теста не найдена.",
 	"ctest.failed": "Предустановка проверки {0} не найдена. Сбой проверки.",
 	"ctest.run.terminated": "Запуск CTest был прерван.",
-	"ctest.finished.with.code": "CTest завершила работу с кодом возврата {0}.",
+	"ctest.finished": "CTest завершен",
 	"test.failed": "Сбой тестового запуска."
 }

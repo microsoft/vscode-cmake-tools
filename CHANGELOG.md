@@ -1,7 +1,118 @@
 # What's New?
 
-## 1.13
+## 1.16
+Features:
+- Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
+
+## 1.15
+Features:
+- Added support for the CMake Debugger. [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
+- Added support for passing a folder parameter to the `cmake.selectActiveFolder` command. [#3256](https://github.com/microsoft/vscode-cmake-tools/issues/3256) [@cvanbeek](https://github.com/cvanbeek13)
+
 Improvements:
+- When using CMake presets, the Project Status View now shows the build target along with the build preset. [PR #3241](https://github.com/microsoft/vscode-cmake-tools/pull/3241)
+- IntelliSense resolves headers coming from MacOS frameworks. CMake 3.27 or later is required. [#2324](https://github.com/microsoft/vscode-cmake-tools/issues/2324)
+- Allow configure settings to override the usual arguments the extension is usually passing to cmake. Don't have unremovable options. [#1639](https://github.com/microsoft/vscode-cmake-tools/issues/1639)
+- Allow a way to run CTests in parallel by setting `cmake.ctest.allowParallelJobs` to `true`. [#3091](https://github.com/microsoft/vscode-cmake-tools/issues/3091)
+- When clicking `Run CTests` from the status bar view, it now will bypass the Test Explorer and directly run the CTests. [#3151](https://github.com/microsoft/vscode-cmake-tools/issues/3151)
+
+Bug Fixes:
+- Fix per-folder browse configurations returning incorrect information. [#3155](https://github.com/microsoft/vscode-cmake-tools/issues/3155)
+- Fix triggers of "Bad CMake Executable" error message. [#2368](https://github.com/microsoft/vscode-cmake-tools/issues/2368)
+- Don't ignore empty cache string variables when configuring from presets. [#1842](https://github.com/microsoft/vscode-cmake-tools/issues/1842)
+- Fix active build configuration warning coming from CppTools. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
+- Fix our checking for invalid settings when CMakeUserPresets version is different than CMakePresets. [#2897](https://github.com/microsoft/vscode-cmake-tools/issues/2897)
+- Fix the precendence order that we evaluate the `cmake.parallelJobs` setting. [#3206](https://github.com/microsoft/vscode-cmake-tools/issues/3206)
+- Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath`. [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
+
+## 1.14.33
+Bug Fixes:
+- Set `Cmake: Use Project Status View` to `false` by default. This setting may be subject to A/B experimentation in 1.14 releases. To opt-out of experimentation, set the `cmake.useProjectStatusView` setting explicitly in `settings.json`. [PR #3199](https://github.com/microsoft/vscode-cmake-tools/pull/3199/)
+
+## 1.14.32
+Features:
+- Add a new UI to show the project status in the side bar. This feature appears and replaces the status bar when `Cmake: Use Project Status View` is toggled `true`. This will be used for A/B testing the views. [PR #3167](https://github.com/microsoft/vscode-cmake-tools/pull/3167)
+
+Improvements:
+- Added ability to select either C or C++ with the Quick Start commmand. [#3183](https://github.com/microsoft/vscode-cmake-tools/pull/3183)
+
+Bug Fixes:
+- Handle multiple test results in one test run. [#3160](https://github.com/microsoft/vscode-cmake-tools/pull/3160)
+- When starting test and test preset is not selected, prompt for test preset selection. [#3163](https://github.com/microsoft/vscode-cmake-tools/pull/3163)
+
+## 1.14.31
+Bug Fixes:
+- When `cmake.buildTasks` is `true`, CMake tasks in `tasks.json` that do not specify `targets` will no longer cause the build to fail. [#3123](https://github.com/microsoft/vscode-cmake-tools/issues/3123)
+- Paths containing `mingw` are no longer removed from the `PATH` environment variable when configuring a project without specifying a kit. [#3136](https://github.com/microsoft/vscode-cmake-tools/issues/3136)
+- Warning messages are no longer triggered by targets containing "warning" in the file path when running `Tasks: Run Build Task`. [#3118](https://github.com/microsoft/vscode-cmake-tools/issues/3118)
+- Unable to resolve `cmake-tools-schema:/schemas/CMakePresets*.json`. [#2587](https://github.com/microsoft/vscode-cmake-tools/issues/2587) [#3108](https://github.com/microsoft/vscode-cmake-tools/issues/3108)
+
+## 1.14.30
+Bug Fixes:
+- Fix extension crashes in the test explorer when `cmake.sourceDir` is a subfolder of `${workspaceFolder}`. [#3121](https://github.com/microsoft/vscode-cmake-tools/issues/3121)
+
+## 1.14.29
+Features:
+- Test Explorer. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+- Add commands revealTestExplorer, refreshTests, and refreshTestsAll. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+
+Breaking changes:
+- The `Run CTest` button in the status bar now only reveals the test explorer, and test results are removed from its text. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+- All test starting method, such as command `CMake: Run Tests` and test task, now runs through the test explorer. Tests can't run in parallel for now. [PR #3032](https://github.com/microsoft/vscode-cmake-tools/pull/3032)
+- Catch test framework support is removed. [PR #3043](https://github.com/microsoft/vscode-cmake-tools/pull/3043)
+- Rename `cmake.mingwSearchDirs` to `cmake.additionalCompilerSearchDirs`, make it more general and fix quirks with it. [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
+
+Improvements:
+- Automatically configure CMake project directories when the kit or the configuration preset is changed. [PR #2973](https://github.com/microsoft/vscode-cmake-tools/pull/2973) [@maxmitti](https://github.com/maxmitti)
+- Add an optional description field to kits. [PR #2944](https://github.com/microsoft/vscode-cmake-tools/pull/2944) [@TisziV](https://github.com/TisziV)
+- Update documents on `cmake.mingwSearchDirs`. [#2996](https://github.com/microsoft/vscode-cmake-tools/issues/2996)
+- When starting debugging, also build the selected build target. [PR #2987](https://github.com/microsoft/vscode-cmake-tools/pull/2987) [@Maddimax](https://github.com/Maddimax)
+- Add support for CMake Presets V5. [#2979](https://github.com/microsoft/vscode-cmake-tools/issues/2979)
+- Print the build time in the output window. [#3008](https://github.com/microsoft/vscode-cmake-tools/issues/3008)
+- Allow using all of MSYS2 MinGW installations, which are also now found by default while scanning for kits if MSYS2 is installed at the default location (`C:\msys64\{wingw64|mingw32|clang64|clang32|clangarm64|ucrt64}\bin`). [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
+
+Bug Fixes:
+- Check if "CMakeLists.txt" exists after renaming. [#2986](https://github.com/microsoft/vscode-cmake-tools/issues/2986)
+- CMake kits fails when parsing exported functions after running environmentSetupScript. [#2676](https://github.com/microsoft/vscode-cmake-tools/issues/2686)
+- Implement cmake.parseBuildDiagnostics. [#1932](https://github.com/microsoft/vscode-cmake-tools/issues/1932)
+- CMake tools not fully loaded when opening multi-project folders. [#3000](https://github.com/microsoft/vscode-cmake-tools/issues/3000)
+- Save the state of multiple projects in the same folder. [PR #3051](https://github.com/microsoft/vscode-cmake-tools/pull/3051)
+- Expand variables in task's targets while searching matching taks. [#2970](https://github.com/microsoft/vscode-cmake-tools/issues/2970) [@piomis](https://github.com/piomis)
+- Fix typo in `cmake.skipConfigureWhenCachePresent`. [#3040](https://github.com/microsoft/vscode-cmake-tools/issues/3040) [@Mlekow](https://github.com/Mlekow)
+- Fix MinGW detection when not in PATH using `cmake.mingwSearchDirs` (now named `cmake.additionalCompilerSearchDirs`). [PR #3056](https://github.com/microsoft/vscode-cmake-tools/pull/3056) [@philippewarren](https://github.com/philippewarren)
+- Fix check for `EACCES` error code [#3097](https://github.com/microsoft/vscode-cmake-tools/pull/3097)
+
+## 1.13.45
+Bug Fixes:
+- Remove unwanted warning "Configuration is already in progress" in multi-root projects. [#2989](https://github.com/microsoft/vscode-cmake-tools/issues/2989)
+- `setKitByName` command ignores the workspace folder argument. [PR #2991](https://github.com/microsoft/vscode-cmake-tools/pull/2991)
+
+## 1.13.44
+Bug Fixes:
+- Compatibility between test and build presets was not enforced. [#2904](https://github.com/microsoft/vscode-cmake-tools/issues/2904)
+- Fix problems with updating the code model. [#2980](https://github.com/microsoft/vscode-cmake-tools/issues/2980)
+- Validate presets in initialization. [#2976](https://github.com/microsoft/vscode-cmake-tools/issues/2976)
+
+## 1.13.43
+Bug Fixes:
+- Fix an issue causing the Add Presets commands not to appear. [PR #2977](https://github.com/microsoft/vscode-cmake-tools/pull/2977)
+
+## 1.13.42
+Bug Fixes:
+- Fix failed activation when using the `cmake.allowUnsupportedPresetsVersions` setting. [#2968](https://github.com/microsoft/vscode-cmake-tools/issues/2968)
+- Verify binary directories only if there are multiple sources. [#2963](https://github.com/microsoft/vscode-cmake-tools/issues/2963)
+- Update quote function to fix path separator regression [#2974](https://github.com/microsoft/vscode-cmake-tools/pull/2974)
+
+## 1.13.41
+Bug Fixes:
+- Fix "No folder is open" error when running quick start. [#2951](https://github.com/microsoft/vscode-cmake-tools/issues/2951)
+- Add a control statement to the 'quote' function in shlex.ts to return the string without quotes. [#2955]
+(https://github.com/microsoft/vscode-cmake-tools/issues/2955)
+- CMake Tools fails to initialize the Active Project. [#2952](https://github.com/microsoft/vscode-cmake-tools/issues/2952)
+
+## 1.13.40
+Improvements:
+- Support multiple projects in a single workspace folder. `cmake.sourceDirectory` setting now allows setting multiple paths. [#1374](https://github.com/microsoft/vscode-cmake-tools/issues/1374)
 - Add a setting to disable reading `compile_commands.json`. [#2586](https://github.com/microsoft/vscode-cmake-tools/issues/2586) [@xiaoyun94](https://github.com/xiaoyun94)
 - Preset in CMakeUserPresets.json using "condition" does not appear in configure preset selection. [#2749](https://github.com/microsoft/vscode-cmake-tools/issues/2749)
 - Resolve workspace variables in `cmake-kits.json`. [#2737](https://github.com/microsoft/vscode-cmake-tools/issues/2737)
@@ -11,7 +122,10 @@ Improvements:
 - Add a public API for extension authors that depend on CMake Tools. [#494](https://github.com/microsoft/vscode-cmake-tools/issues/494)
 - Support explicit typing in `cmake.configureSettings`. [#1457](https://github.com/microsoft/vscode-cmake-tools/issues/1457)
 - Scan for kits will now add ARM64 hosts for MSVC. [PR #2887](https://github.com/microsoft/vscode-cmake-tools/pull/2887) [@scaryrawr](https://github.com/scaryrawr)
-- Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
+- Support canceling configuration [#2436](https://github.com/microsoft/vscode-cmake-tools/issues/2436) [@Danielmelody](https://github.com/Danielmelody)
+- Pop up "Choose CMakeLists.txt" when user goes to configure while feature set is partially activated. [#2746](https://github.com/microsoft/vscode-cmake-tools/issues/2746)
+- Adhere to the setting entry "Parallel Jobs" (`cmake.parallelJobs`) when generating the default build preset. [#2765](https://github.com/microsoft/vscode-cmake-tools/issues/2765) [@maxmitti](https://github.com/maxmitti)
+- Add a setting to ignore unknown presets features from the versions that CMake Tools doesn't support yet. [#1963](https://github.com/microsoft/vscode-cmake-tools/issues/1963)
 
 Bug Fixes:
 - Fix warning message that appears when using a default build preset with a multi-config generator. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
@@ -25,6 +139,12 @@ Bug Fixes:
 - ctest -N does not work with custom cmake path from preset. [#2842](https://github.com/microsoft/vscode-cmake-tools/issues/2842)
 - Resolve variables in args before passing them to the terminal. [#2846](https://github.com/microsoft/vscode-cmake-tools/issues/2846)
 - Quote launch arguments sent to the terminal if they have special characters. [#2898](https://github.com/microsoft/vscode-cmake-tools/issues/2898)
+- CMake Tools should choose cmake.exe from the newest VS when it's not found in the PATH. [#2753](https://github.com/microsoft/vscode-cmake-tools/issues/2753)
+- Calling build targets from CMake Project Outline always builds default target if useTasks option is set. [#2778](https://github.com/microsoft/vscode-cmake-tools/issues/2768) [@piomis](https://github.com/piomis)
+- Fix `${command:cmake.buildType}` so that it returns the right value when using CMake Presets. [#2894](https://github.com/microsoft/vscode-cmake-tools/issues/2894)
+- Fix a problem with multi-root projects not activating the configuration provider. [#2915](https://github.com/microsoft/vscode-cmake-tools/issues/2915)
+- Remove the default path for `cmake.mingwSearchDirs` since the path is world-writable. [PR #2942](https://github.com/microsoft/vscode-cmake-tools/pull/2942)
+- Build command is not able to properly pick-up tasks from tasks.json file if configured with isDefault option and cancellation of running build task is not working. [#2935](https://github.com/microsoft/vscode-cmake-tools/issues/2935) [@piomis](https://github.com/piomis)
 
 ## 1.12.27
 Bug Fixes:
@@ -55,7 +175,7 @@ Bug Fixes:
 - Revert back to the previous CMake language server extension dependency. [PR #2599](https://github.com/microsoft/vscode-cmake-tools/pull/2599)
 
 Bug Fixes:
-- Ninja is used as a default generator. [#2598](https://github.com/microsoft/vscode-cmake-tools/issues/2598) 
+- Ninja is used as a default generator. [#2598](https://github.com/microsoft/vscode-cmake-tools/issues/2598)
 
 ## 1.11.25
 Improvements:

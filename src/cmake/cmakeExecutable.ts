@@ -6,6 +6,7 @@ export interface CMakeExecutable {
     isPresent: boolean;
     isServerModeSupported?: boolean;
     isFileApiModeSupported?: boolean;
+    isDebuggerSupported?: boolean;
     version?: util.Version;
     minimalServerModeVersion: util.Version;
     minimalFileApiModeVersion: util.Version;
@@ -26,7 +27,11 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     if (path && path.length !== 0) {
         const normalizedPath = util.platformNormalizePath(path);
         if (cmakeInfo.has(normalizedPath)) {
-            return cmakeInfo.get(normalizedPath)!;
+            const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
+            await setCMakeDebuggerAvailableContext(
+                cmakeExe.isDebuggerSupported?.valueOf() ?? false
+            );
+            return cmakeExe;
         }
 
         try {
@@ -44,9 +49,22 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
                 cmake.isFileApiModeSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalFileApiModeVersion);
                 cmake.isPresent = true;
             }
+            const debuggerPresent = await proc.execute(path, ['-E', 'capabilities']).result;
+            if (debuggerPresent.retc === 0 && debuggerPresent.stdout) {
+                console.assert(debuggerPresent.stdout);
+                const stdoutJson = JSON.parse(debuggerPresent.stdout);
+                cmake.isDebuggerSupported = stdoutJson["debugger"];
+                await setCMakeDebuggerAvailableContext(
+                    cmake.isDebuggerSupported?.valueOf() ?? false
+                );
+            }
         } catch {
         }
         cmakeInfo.set(normalizedPath, cmake);
     }
     return cmake;
+}
+
+export async function setCMakeDebuggerAvailableContext(value: boolean): Promise<void> {
+    await util.setContextValue("vscode-cmake-tools.cmakeDebuggerAvailable", value);
 }

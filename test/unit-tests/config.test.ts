@@ -23,7 +23,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         parallelJobs: 0,
         ctestPath: '',
         ctest: {
-            parallelJobs: 0
+            parallelJobs: 0,
+            allowParallelJobs: false
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
@@ -35,7 +36,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         configureEnvironment: {},
         buildEnvironment: {},
         testEnvironment: {},
-        mingwSearchDirs: [],
+        mingwSearchDirs: [], // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
+        additionalCompilerSearchDirs: [],
         emscriptenSearchDirs: [],
         mergedCompileCommands: null,
         copyCompileCommands: null,
@@ -59,10 +61,13 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             advanced: {},
             visibility: "default"
         },
+        useProjectStatusView: true,
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
+        allowUnsupportedPresetsVersions: false,
         launchBehavior: 'reuseTerminal',
-        ignoreCMakeListsMissing: false
+        ignoreCMakeListsMissing: false,
+        automaticReconfigure: false
     });
     ret.updatePartial(conf);
     return ret;

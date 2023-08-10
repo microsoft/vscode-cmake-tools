@@ -37,7 +37,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         throw new Error('Method not implemented.');
     }
 
-    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver) {
         super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
     }
 
@@ -75,7 +75,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         this._cacheWatcher.dispose();
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
         // Ensure the binary directory exists
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         await fs.mkdir_p(binaryDir);
@@ -89,7 +89,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
             platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
             toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
 
-        } : this.generator ;
+        } : this.generator;
         if (generator) {
             if (generator.name) {
                 args.push('-G');
@@ -112,13 +112,16 @@ export class CMakeLegacyDriver extends CMakeDriver {
             return 0;
         } else {
             log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
-            const result = await this.executeCommand(cmake, args, outputConsumer, {
+            const child = this.executeCommand(cmake, args, outputConsumer, {
                 environment: await this.getConfigureEnvironment(configurePreset, options?.environment),
                 cwd: options?.cwd ?? binaryDir
-            }).result;
+            });
+            this.configureProcess = child;
+            const result = await child.result;
+            this.configureProcess = null;
             log.trace(result.stderr);
             log.trace(result.stdout);
-            if (result.retc === 0 && !configurePreset) {
+            if (result.retc === 0 && (!configurePreset || (configurePreset && defaultConfigurePresetName && configurePreset.name === defaultConfigurePresetName))) {
                 this._needsReconfigure = false;
             }
             if (!configurePreset) {
@@ -156,7 +159,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
         testPreset: TestPreset | null,
-        workspaceFolder: string | null,
+        workspaceFolder: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeLegacyDriver> {
         log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));

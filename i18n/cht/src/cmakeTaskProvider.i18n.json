@@ -11,6 +11,7 @@
 	"clean": "清除",
 	"clean.rebuild": "清除重建",
 	"cmake.template.task": "CMake 範本 {0} 工作",
+	"select.build.task": "選取組建工作",
 	"command.not.recognized": "{0} 為無法辨識的命令。",
 	"target.is.ignored": "正在忽略此工作中定義的目標。",
 	"enable.cmake.presets": "啟用 CMakePresets",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "找不到測試預設。",
 	"ctest.failed": "找不到測試預設 {0}。測試失敗。",
 	"ctest.run.terminated": "已終止 CTest 執行",
-	"ctest.finished.with.code": "CTest 已完成。傳回碼: {0}",
+	"ctest.finished": "CTest 已完成",
 	"test.failed": "CTest 執行失敗。"
 }

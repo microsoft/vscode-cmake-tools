@@ -6,6 +6,6 @@
 {
 	"removing": "Usuwanie elementu {0}",
 	"unlink.failed": "Nie można usunąć {0} pliku pamięci podręcznej",
-	"cmakelists.save.trigger.reconfigure": "Wykryto {0} aktualizację ustawienia, trwa próba automatycznej ponownej konfiguracji...",
+	"cmake.debug.name": "Debuger CMake",
 	"toolchains.object.unsupported": "Ta wersja narzędzia CMake nie obsługuje rodzaju obiektu „toolchains”. Ścieżki kompilatora będą określane przez odczytanie pliku CMakeCache.txt."
 }

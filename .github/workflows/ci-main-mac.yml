@@ -13,10 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Yarn environment
-        uses: DerYeger/yarn-setup-action@v1.0.1
+      - name: Setup Node environment
+        uses: actions/setup-node@v3
         with:
           node-version: 16
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: yarn install
 
       - name: Build the extension
         run: yarn compile-production
@@ -37,6 +43,9 @@ jobs:
       - name: Delete NOTICE.txt
         run: rm ${{ github.workspace }}/NOTICE.txt
 
+      - name: Run successful-build test
+        run: yarn extensionTestsSuccessfulBuild
+
       - name: Run backend tests
         run: yarn backendTests
 
@@ -45,9 +54,6 @@ jobs:
 
       - name: Run unit tests
         run: yarn unitTests
-
-      - name: Run successful-build test
-        run: yarn extensionTestsSuccessfulBuild
 
       - name: Run single root test
         run: yarn extensionTestsSingleRoot

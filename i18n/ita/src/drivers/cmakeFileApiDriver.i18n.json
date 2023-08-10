@@ -6,6 +6,6 @@
 {
 	"removing": "Rimozione di {0}",
 	"unlink.failed": "Non è stato possibile rimuovere il file di cache {0}",
-	"cmakelists.save.trigger.reconfigure": "È stato rilevato un aggiornamento dell'impostazione {0}. Verrà effettuato un tentativo di riconfigurazione automatica...",
+	"cmake.debug.name": "CMake Debugger",
 	"toolchains.object.unsupported": "Questa versione di CMake non supporta il tipo di oggetto \"toolchains\". Per determinare i percorsi del compilatore, verrà letto il file CMakeCache.txt."
 }

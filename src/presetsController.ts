@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import { CMakeProject } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
@@ -38,8 +38,8 @@ export class PresetsController {
 
     private static readonly _addPreset = '__addPreset__';
 
-    static async init(project: CMakeProject, kitsController: KitsController): Promise<PresetsController> {
-        const presetsController = new PresetsController(project, kitsController);
+    static async init(project: CMakeProject, kitsController: KitsController, isMultiProject: boolean): Promise<PresetsController> {
+        const presetsController = new PresetsController(project, kitsController, isMultiProject);
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = project.workspaceFolder.uri.fsPath;
             const expansionOpts: ExpansionOptions = {
@@ -83,10 +83,14 @@ export class PresetsController {
             });
         });
 
+        project.workspaceContext.config.onChange('allowUnsupportedPresetsVersions', async () => {
+            await presetsController.reapplyPresets();
+        });
+
         return presetsController;
     }
 
-    private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController) {}
+    private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController, private isMultiProject: boolean) {}
 
     get presetsPath() {
         return path.join(this._sourceDir, 'CMakePresets.json');
@@ -319,7 +323,7 @@ export class PresetsController {
                                 CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined),
                                 CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined)
                             };
-                            isMultiConfigGenerator = util.isMultiConfGeneratorFast(generator || '');
+                            isMultiConfigGenerator = util.isMultiConfGeneratorFast(generator);
                             if (!isMultiConfigGenerator) {
                                 cacheVariables['CMAKE_BUILD_TYPE'] = 'Debug';
                             }
@@ -603,11 +607,14 @@ export class PresetsController {
         return chosenPresets?.preset;
     }
 
-    async selectConfigurePreset(): Promise<boolean> {
+    async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
         preset.expandVendorForConfigurePresets(this.folderPath);
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
+        return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+    }
 
-        const allPresets = preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+    async selectConfigurePreset(): Promise<boolean> {
+        const allPresets: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
         const presets = allPresets.filter(
             _preset => {
                 const supportedHost = (_preset.vendor as preset.VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
@@ -634,13 +641,19 @@ export class PresetsController {
             return false;
         } else if (chosenPreset === this.project.configurePreset?.name) {
             return true;
-        } else if (chosenPreset === '__addPreset__') {
-            await this.addConfigurePreset();
-            return false;
         } else {
-            log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
-            await this.setConfigurePreset(chosenPreset);
-            return true;
+            const addPreset = chosenPreset === PresetsController._addPreset;
+            if (addPreset) {
+                await this.addConfigurePreset();
+            } else {
+                log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
+                await this.setConfigurePreset(chosenPreset);
+            }
+
+            if (this.project.workspaceContext.config.automaticReconfigure) {
+                await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
+            }
+            return !addPreset;
         }
     }
 
@@ -668,8 +681,8 @@ export class PresetsController {
             },
             async () => {
                 const configurePreset = this.project.configurePreset?.name;
-                const buildPreset = configurePreset ? this.project.workspaceContext.state.getBuildPresetName(configurePreset) : undefined;
-                const testPreset = configurePreset ? this.project.workspaceContext.state.getTestPresetName(configurePreset) : undefined;
+                const buildPreset = configurePreset ? this.project.workspaceContext.state.getBuildPresetName(this.project.folderName, configurePreset, this.isMultiProject) : undefined;
+                const testPreset = configurePreset ? this.project.workspaceContext.state.getTestPresetName(this.project.folderName, configurePreset, this.isMultiProject) : undefined;
                 if (buildPreset) {
                     await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                 }
@@ -696,7 +709,7 @@ export class PresetsController {
             const buildPresets = preset.allBuildPresets(this.folderPath);
             for (const buildPreset of buildPresets) {
                 // Set active build preset as the first valid build preset matches the selected configure preset
-                if (buildPreset.configurePreset === selectedConfigurePreset) {
+                if (buildPreset.configurePreset === selectedConfigurePreset && !buildPreset.hidden) {
                     await this.setBuildPreset(buildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
                     currentBuildPreset = this.project.buildPreset?.name;
                 }
@@ -726,6 +739,20 @@ export class PresetsController {
         return selectedConfigurePreset;
     }
 
+    private async checkBuildPreset(): Promise<preset.BuildPreset | null> {
+        const selectedBuildPreset = this.project.buildPreset;
+        if (!selectedBuildPreset) {
+            const message_noBuildPreset = localize('build.preset.required', 'A build preset needs to be selected. How would you like to proceed?');
+            const option_selectBuildPreset = localize('select.build.preset', 'Select build preset');
+            const option_later = localize('later', 'later');
+            const result = await vscode.window.showErrorMessage(message_noBuildPreset, option_selectBuildPreset, option_later);
+            if (result === option_selectBuildPreset && await vscode.commands.executeCommand('cmake.selectBuildPreset')) {
+                return this.project.buildPreset;
+            }
+        }
+        return selectedBuildPreset;
+    }
+
     async selectBuildPreset(): Promise<boolean> {
         // configure preset required
         const selectedConfigurePreset = await this.checkConfigurePreset();
@@ -737,7 +764,7 @@ export class PresetsController {
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
-        const presets = allPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
+        const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, _preset).buildPresetCompatible);
         presets.push(preset.defaultBuildPreset);
 
         log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
@@ -771,8 +798,9 @@ export class PresetsController {
         if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'build');
             const _preset = preset.getPresetByName(preset.allBuildPresets(this.folderPath), presetName);
-            if (_preset?.configurePreset !== this.project.configurePreset?.name) {
-                log.error(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not match the selected configure preset', presetName));
+            const compatibility = this.checkCompatibility(this.project.configurePreset, _preset, this.project.testPreset);
+            if (!compatibility.buildPresetCompatible) {
+                log.warning(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not match the active configure preset', presetName));
                 await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Notification,
@@ -786,6 +814,15 @@ export class PresetsController {
                 }
 
                 return;
+            }
+            if (!compatibility.testPresetCompatible) {
+                await vscode.window.withProgress(
+                    {
+                        location: vscode.ProgressLocation.Notification,
+                        title: localize('unloading.test.preset', 'Unloading test preset')
+                    },
+                    () => this.project.setTestPreset(null)
+                );
             }
         }
         // Load the build preset into the backend
@@ -802,10 +839,42 @@ export class PresetsController {
         }
     }
 
+    private checkCompatibility(configurePreset: preset.ConfigurePreset | null, buildPreset?: preset.BuildPreset | null, testPreset?: preset.TestPreset | null): {buildPresetCompatible: boolean; testPresetCompatible: boolean} {
+        let testPresetCompatible = true;
+        let buildPresetCompatible = true;
+        // We only check compatibility when we are setting the build or test preset. So we need to exclude the hidden presets.
+        if (testPreset) {
+            if (testPreset.hidden) {
+                testPresetCompatible = false;
+            } else {
+                const configMatches = testPreset.configurePreset === configurePreset?.name;
+                let buildTypeMatches = buildPreset?.configuration === testPreset.configuration;
+                if (!buildTypeMatches) {
+                    if (util.isMultiConfGeneratorFast(configurePreset?.generator)) {
+                        const buildType = buildPreset?.configuration || configurePreset?.cacheVariables?.['CMAKE_CONFIGURATION_TYPES']?.toString().split(';')?.[0] || 'Debug';
+                        buildTypeMatches = testPreset.configuration === buildType || testPreset.configuration === undefined;
+                    } else {
+                        const buildType = configurePreset?.cacheVariables?.['CMAKE_BUILD_TYPE'] || 'Debug';
+                        buildTypeMatches = buildPreset === undefined || testPreset.configuration === buildType || testPreset.configuration === undefined;
+                    }
+                }
+                testPresetCompatible = configMatches && buildTypeMatches;
+            }
+        }
+        if (buildPreset) {
+            buildPresetCompatible = (configurePreset?.name === buildPreset.configurePreset) && !buildPreset.hidden;
+        }
+        return {buildPresetCompatible, testPresetCompatible};
+    }
+
     async selectTestPreset(): Promise<boolean> {
         // configure preset required
         const selectedConfigurePreset = await this.checkConfigurePreset();
         if (!selectedConfigurePreset) {
+            return false;
+        }
+        const selectedBuildPreset = await this.checkBuildPreset();
+        if (!selectedBuildPreset) {
             return false;
         }
 
@@ -813,7 +882,7 @@ export class PresetsController {
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
-        const presets = allPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
+        const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, _preset).testPresetCompatible);
         presets.push(preset.defaultTestPreset);
 
         log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
@@ -830,6 +899,7 @@ export class PresetsController {
         } else {
             log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosenPreset)));
             await this.setTestPreset(chosenPreset, false);
+            await vscode.commands.executeCommand('cmake.refreshTests', this.workspaceFolder);
             return true;
         }
     }
@@ -846,8 +916,9 @@ export class PresetsController {
             if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
                 preset.expandConfigurePresetForPresets(this.folderPath, 'test');
                 const _preset = preset.getPresetByName(preset.allTestPresets(this.folderPath), presetName);
-                if (_preset?.configurePreset !== this.project.configurePreset?.name) {
-                    log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not match the selected configure preset', presetName));
+                const compatibility = this.checkCompatibility(this.project.configurePreset, this.project.buildPreset, _preset);
+                if (!compatibility.testPresetCompatible) {
+                    log.warning(localize('test.preset.configure.preset.not.match', 'Test preset {0} is not compatible with the active configure or build presets', `'${presetName}'`));
                     await vscode.window.withProgress(
                         {
                             location: vscode.ProgressLocation.Notification,
@@ -1003,29 +1074,42 @@ export class PresetsController {
             return undefined;
         }
         let schemaFile;
+        const maxSupportedVersion = 4;
+        const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
             return undefined;
         } else if (presetsFile.version === 2) {
-            schemaFile = 'schemas/CMakePresets-schema.json';
+            schemaFile = './schemas/CMakePresets-schema.json';
         } else if (presetsFile.version === 3) {
-            schemaFile = 'schemas/CMakePresets-v3-schema.json';
+            schemaFile = './schemas/CMakePresets-v3-schema.json';
+        } else if (presetsFile.version === 4) {
+            schemaFile = './schemas/CMakePresets-v4-schema.json';
         } else {
-            schemaFile = 'schemas/CMakePresets-v4-schema.json';
+            schemaFile = './schemas/CMakePresets-v5-schema.json';
         }
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);
         if (!is_valid) {
-            const errors = validator.errors!;
-            log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
-            for (const err of errors) {
-                if (err.params && 'additionalProperty' in err.params) {
-                    log.error(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
-                } else {
-                    log.error(` >> ${err.dataPath}: ${err.message}`);
+            const showErrors = (logFunc: (x: string) => void) => {
+                const errors = validator.errors!;
+                logFunc(localize('unsupported.presets', 'Unsupported presets detected in {0}. Support is limited to features defined by version {1}.', file, maxSupportedVersion));
+                for (const err of errors) {
+                    if (err.params && 'additionalProperty' in err.params) {
+                        logFunc(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
+                    } else {
+                        logFunc(` >> ${err.dataPath}: ${err.message}`);
+                    }
                 }
+            };
+            if (validationErrorsAreWarnings) {
+                showErrors(x => log.warning(x));
+                return presetsFile;
+            } else {
+                showErrors(x => log.error(x));
+                log.error(localize('unsupported.presets.disable', 'Unknown properties and macros can be ignored by using the {0} setting.', "'cmake.allowUnsupportedPresetsVersions'"));
+                return undefined;
             }
-            return undefined;
         }
         log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
         return presetsFile;

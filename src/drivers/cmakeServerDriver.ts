@@ -41,7 +41,7 @@ export class CMakeServerDriver extends CMakeDriver {
         throw new Error('Method not implemented.');
     }
 
-    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, sourceDir: string, isMultiProject: boolean, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver) {
         super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
         this.config.onChange('environment', () => this._restartClient());
         this.config.onChange('configureEnvironment', () => this._restartClient());
@@ -157,7 +157,7 @@ export class CMakeServerDriver extends CMakeDriver {
         })();
     }
 
-    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, _options?: proc.ExecutionOptions) {
+    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, _defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, _options?: proc.ExecutionOptions) {
         await this._clientChangeInProgress;
         const cl = await this.getClient();
         const sub = this.onMessage(msg => {
@@ -409,6 +409,9 @@ export class CMakeServerDriver extends CMakeDriver {
     async onStop(): Promise<void> {
         const client = await this._cmsClient;
         if (client) {
+            if (this.configInProgress()) {
+                client.shutdownServer();
+            }
             await client.shutdownAsync();
             this._cmsClient = Promise.resolve(null);
         }
@@ -431,7 +434,7 @@ export class CMakeServerDriver extends CMakeDriver {
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
         testPreset: TestPreset | null,
-        workspaceFolder: string | null,
+        workspaceFolder: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeServerDriver> {
         return this.createDerived(new CMakeServerDriver(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler),

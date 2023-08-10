@@ -11,6 +11,7 @@
 	"clean": "wyczyść",
 	"clean.rebuild": "wyczyść ponowną kompilację",
 	"cmake.template.task": "Zadanie {0} szablonu narzędzia CMake",
+	"select.build.task": "Wybierz zadanie kompilacji",
 	"command.not.recognized": "{0} nie jest rozpoznawanym poleceniem.",
 	"target.is.ignored": "Zdefiniowane elementy docelowe w tym zadaniu są ignorowane.",
 	"enable.cmake.presets": "Włącz CMakePresets",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "Nie znaleziono ustawienia wstępnego testu.",
 	"ctest.failed": "Nie znaleziono ustawienia wstępnego testu {0}. Test nie powiódł się.",
 	"ctest.run.terminated": "Praca narzędzia CTest została przerwana",
-	"ctest.finished.with.code": "Narzędzie CTest zakończyło pracę z kodem powrotnym {0}",
+	"ctest.finished": "Zakończono testowanie CTest",
 	"test.failed": "Przebieg narzędzia CTest nie powiódł się."
 }

@@ -7,6 +7,7 @@
 	"schemas/kits-schema.json.": "Kit CMake",
 	"schemas/kits-schema.json.items": "Un kit",
 	"schemas/kits-schema.json.items.properties.name": "Nome di questo kit",
+	"schemas/kits-schema.json.items.properties.description": "Descrizione di questo kit",
 	"schemas/kits-schema.json.items.properties.vendor": "Nome del fornitore di questo kit",
 	"schemas/kits-schema.json.items.properties.triple": "Triplo della destinazione di questo kit",
 	"schemas/kits-schema.json.items.properties.version": "Versione di questo kit",
@@ -22,5 +23,6 @@
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Imposta un generatore CMake preferito per questo kit",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.name": "Nome del generatore da usare",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.platform": "Piattaforma CMake per l'argomento -A",
-	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "Set di strumenti CMake per l'argomento -T"
+	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "Set di strumenti CMake per l'argomento -T",
+	"schemas/kits-schema.json.items.properties.isTrusted": "Vero se questo kit proviene da un percorso attendibile"
 }

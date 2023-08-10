@@ -9,6 +9,7 @@ import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
+import { defaultNumJobs } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -273,6 +274,7 @@ export interface OutputOptions {
     subprojectSummary?: boolean;
     maxPassedTestOutputSize?: number;
     maxFailedTestOutputSize?: number;
+    testOutputTruncation?: 'tail' | 'heads' | 'middle';
     maxTestNameWidth?: number;
 }
 
@@ -589,6 +591,9 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
     if (preset.__file && preset.__file.version >= 4) {
         expansionOpts.vars['fileDir'] = path.dirname(preset.__file!.__path!);
     }
+    if (preset.__file && preset.__file.version >= 5) {
+        expansionOpts.vars['pathListSep'] = path.delimiter;
+    }
 
     return expansionOpts;
 }
@@ -698,18 +703,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         }
     }
 
-    if (preset.__file && preset.__file.version <= 2) {
-        // toolchainFile and installDir added in presets v3
-        if (preset.toolchainFile) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
-            return null;
-        }
-        if (preset.installDir) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
-            return null;
-        }
-    }
-
     // Expand other fields
     if (preset.binaryDir) {
         expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
@@ -736,7 +729,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
             const cacheVar = preset.cacheVariables[cacheVarName];
             if (typeof cacheVar === 'boolean') {
                 expandedPreset.cacheVariables[cacheVarName] = cacheVar;
-            } else if (cacheVar) {
+            } else if (cacheVar || cacheVar === "") {
                 if (util.isString(cacheVar)) {
                     expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
                 } else if (util.isString(cacheVar.value)) {
@@ -864,6 +857,18 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
 async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
+    }
+
+    if (preset.__file && preset.__file.version <= 2) {
+        // toolchainFile and installDir added in presets v3
+        if (preset.toolchainFile) {
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
+            return null;
+        }
+        if (preset.installDir) {
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
+            return null;
+        }
     }
 
     const refs = referencedConfigurePresets.get(folder)!;
@@ -1148,7 +1153,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
     return null;
 }
 
-export async function expandBuildPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
+export async function expandBuildPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, parallelJobs?: number, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     const refs = referencedBuildPresets.get(folder);
     if (!refs) {
         referencedBuildPresets.set(folder, new Set());
@@ -1156,7 +1161,7 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
         refs.clear();
     }
 
-    const preset = await expandBuildPresetImpl(folder, name, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, configurePreset);
+    const preset = await expandBuildPresetImpl(folder, name, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, allowUserPreset, configurePreset);
     if (!preset) {
         return null;
     }
@@ -1201,16 +1206,16 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
     return expandedPreset;
 }
 
-async function expandBuildPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
+async function expandBuildPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, parallelJobs?: number, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<BuildPreset | null> {
     let preset = getPresetByName(buildPresets(folder), name);
     if (preset) {
-        return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
+        return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName);
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userBuildPresets(folder), name);
         if (preset) {
-            return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+            return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true);
         }
     }
 
@@ -1220,16 +1225,17 @@ async function expandBuildPresetImpl(folder: string, name: string, workspaceFold
             name: defaultBuildPreset.name,
             displayName: defaultBuildPreset.displayName,
             description: defaultBuildPreset.description,
+            jobs: parallelJobs || defaultNumJobs(),
             configurePreset
         };
-        return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+        return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true);
     }
 
     log.error(localize('build.preset.not.found', 'Could not find build preset with name {0}', name));
     return null;
 }
 
-async function expandBuildPresetHelper(folder: string, preset: BuildPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false) {
+async function expandBuildPresetHelper(folder: string, preset: BuildPreset, workspaceFolder: string, sourceDir: string, parallelJobs?: number, preferredGeneratorName?: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1258,7 +1264,7 @@ async function expandBuildPresetHelper(folder: string, preset: BuildPreset, work
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
+            const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, allowUserPreset);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
@@ -1574,6 +1580,7 @@ export function testArgs(preset: TestPreset): string[] {
         preset.output.subprojectSummary === false && result.push('--no-subproject-summary');
         preset.output.maxPassedTestOutputSize && result.push('--test-output-size-passed', preset.output.maxPassedTestOutputSize.toString());
         preset.output.maxFailedTestOutputSize && result.push('--test-output-size-failed', preset.output.maxFailedTestOutputSize.toString());
+        preset.output.testOutputTruncation && result.push('--test-output-truncation', preset.output.testOutputTruncation.toString());
         preset.output.maxTestNameWidth && result.push('--max-width', preset.output.maxTestNameWidth.toString());
     }
 

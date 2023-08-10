@@ -56,7 +56,7 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 
 **3. Save results to the user-local kits file**
 
-- The [user-local kit](#user-local-kits) `cmake-tooks-kits.json` file is updated with the new kit information.
+- The [user-local kit](#user-local-kits) `cmake-tools-kits.json` file is updated with the new kit information.
 
 > **Warning:**
 > The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-tools-kits.json`. It only adds and updates existing ones.
@@ -73,26 +73,30 @@ To specify a compiler, list the path to the compiler in the `cmake-tools-kits.js
 
 The most common CMake languages are `C` and `CXX`, and CMake Tools has built-in support for finding these. However, any language can be specified:
 
-```xml
-{
-    "name": "My Compiler Kit",
-    "compilers": {
-        "C": "/usr/bin/gcc",
-        "CXX": "/usr/bin/g++",
-        "Fortran": "/usr/bin/gfortran"
+```json
+[
+    {
+        "name": "My Compiler Kit",
+        "compilers": {
+            "C": "/usr/bin/gcc",
+            "CXX": "/usr/bin/g++",
+            "Fortran": "/usr/bin/gfortran"
+        }
     }
-}
+]
 ```
 
 ### Specify a toolchain
 
 CMake Tools doesn't automatically detect toolchains, but you can specify a CMake toolchain file in a kit, like this:
 
-```xml
-{
-    "name": "Emscripten",
-    "toolchainFile": "/path/to/emscripten/toolchain.cmake"
-}
+```json
+[
+    {
+        "name": "Emscripten",
+        "toolchainFile": "/path/to/emscripten/toolchain.cmake"
+    }
+]
 ```
 
 CMake Tools will pass this path for `CMAKE_TOOLCHAIN_FILE` during configuration.
@@ -101,12 +105,14 @@ CMake Tools will pass this path for `CMAKE_TOOLCHAIN_FILE` during configuration.
 
 CMake Tools automatically sets up the environment for working with Visual C++. It is best to let CMake Tools generate the kits first, then duplicate and modify them:
 
-```xml
-{
-    "name": "A Visual Studio",
-    "visualStudio": "Visual Studio Build Tools 2017",
-    "visualStudioArchitecture": "amd64"
-}
+```json
+[
+    {
+        "name": "A Visual Studio",
+        "visualStudio": "Visual Studio Build Tools 2017",
+        "visualStudioArchitecture": "amd64"
+    }
+]
 ```
 
 Keys:
@@ -137,6 +143,10 @@ The following additional options may be specified:
 `environmentSetupScript`
 
 > The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
+
+`description`
+
+> A short description of the kit, which will appear next to its name in the selection menu.
 
 ## Next steps
 

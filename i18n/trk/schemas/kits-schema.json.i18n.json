@@ -7,11 +7,12 @@
 	"schemas/kits-schema.json.": "CMake Setleri",
 	"schemas/kits-schema.json.items": "Bir set",
 	"schemas/kits-schema.json.items.properties.name": "Bu setin adı",
+	"schemas/kits-schema.json.items.properties.description": "Bu kitin açıklaması",
 	"schemas/kits-schema.json.items.properties.vendor": "Bu setin satıcı adı",
 	"schemas/kits-schema.json.items.properties.triple": "Bu setin hedefi üçlüsü",
 	"schemas/kits-schema.json.items.properties.version": "Bu setin sürümü",
 	"schemas/kits-schema.json.items.properties.versionRuntime": "Setin C çalışma zamanı sürümü",
-	"schemas/kits-schema.json.items.properties.keep": "'true' olması durumunda, bu set süresi dolmuş görünse bile tutulacaktır.",
+	"schemas/kits-schema.json.items.properties.keep": "`true` olması durumunda, bu set süresi dolmuş görünse bile tutulacaktır.",
 	"schemas/kits-schema.json.items.properties.compilers.patternProperties.\\w+": "Bu dil için bir derleyici yolu",
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Araç zinciri dosyasının yolu",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Visual Studio ürününün örnek kimliği",
@@ -22,5 +23,6 @@
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Bu Set için tercih edilen bir CMake oluşturucusu ayarlayın",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.name": "Kullanılacak oluşturucunun adı",
 	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.platform": "-A bağımsız değişkeni için CMake platformu",
-	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "-T bağımsız değişkeni için CMake araç takımı"
+	"schemas/kits-schema.json.items.properties.preferredGenerator.properties.toolset": "-T bağımsız değişkeni için CMake araç takımı",
+	"schemas/kits-schema.json.items.properties.isTrusted": "Bu set güvenilir bir yoldan geliyorsa true"
 }

@@ -14,7 +14,7 @@ import CMakeProject from './cmakeProject';
 import * as expand from './expand';
 import { VSInstallation, vsInstallations, getHostTargetArchString, varsForVSInstallation, generatorPlatformFromVSArch } from './installs/visualStudio';
 import * as logging from './logging';
-import paths from './paths';
+import paths, { PathWithTrust } from './paths';
 import { fs } from './pr';
 import * as proc from './proc';
 import { loadSchema } from './schema';
@@ -94,6 +94,11 @@ export interface Kit extends KitDetect {
     name: string;
 
     /**
+     * A description of the kit
+     */
+    description?: string;
+
+    /**
      * The preferred CMake generator for this kit
      */
     preferredGenerator?: CMakeGenerator;
@@ -141,6 +146,11 @@ export interface Kit extends KitDetect {
      * If `true`, keep this kit around even if it seems out-of-date
      */
     keep?: boolean;
+
+    /**
+     * If `true`, this kit comes from a trusted path.
+     */
+    isTrusted: boolean;
 }
 
 interface CompilerVersion {
@@ -202,7 +212,12 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     if (install_dir_mat && vendor === 'Clang') {
         installedDir = install_dir_mat[1];
     }
-    const detectedName = `${vendor} ${version} ${target.triple}`;
+    let detectedName = `${vendor} ${version} ${target.triple}`;
+    if (isMsys(binPath)) {
+        // Add the MSYS environment to the name, so that we can distinguish between different MSYS environments
+        const msysEnvDirName = path.dirname(path.dirname(binPath));
+        detectedName += ` (${path.basename(msysEnvDirName)})`;
+    }
     log.debug(localize('detected.compiler', 'Detected {0} compiler: {1}', vendor, binPath));
     return {
         vendor,
@@ -273,14 +288,61 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
     }
 }
 
+function isMsys(bin: string): boolean {
+    const isWin32 = process.platform === 'win32';
+    const isMsys = isWin32 && bin.toLowerCase().includes('msys');
+    return isMsys;
+}
+
+function isMingw(bin: string): boolean {
+    const isWin32 = process.platform === 'win32';
+    const isMingw = isWin32 && (
+        bin.toLowerCase().includes('mingw') ||
+        isMsys(bin)
+    );
+    return isMingw;
+}
+
+async function asMingwKit(bin: string, kit: Kit): Promise<Kit> {
+    const binParentPath = path.dirname(bin);
+    const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
+    const mingwMakeExists = await fs.exists(mingwMakePath);
+
+    // During a scan, binParentPath must be a directory already in the PATH.
+    // Therefore, we will assume that MinGW will remain in the user's PATH
+    // and do not need to record the current state of PATH (leave it to the
+    // user to rescan later or specify an explicit path to MinGW if this
+    // changes).  Additionally, caching the current state of PATH can cause
+    // complications on later invocation when using the kit environment
+    // because its PATH will take precedence.  If a user makes changes to
+    // their PATH later without rescanning for kits, then the kit's cached
+    // PATH will clobber the actual current PATH.  We will, however, record
+    // the MinGW path in case we want to use it later.
+    const ENV_PATH = `${binParentPath}`;
+    kit.environmentVariables = { CMT_MINGW_PATH: ENV_PATH };
+
+    if (mingwMakeExists) {
+        // Check for working mingw32-make
+        const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH }, timeout: 30000 }).result;
+        if (execMake.retc !== 0) {
+            log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ({0} returns non-zero): {1}', "\"-v\"", bin));
+        } else {
+            kit.preferredGenerator = { name: 'MinGW Makefiles' };
+        }
+    }
+
+    return kit;
+}
+
 /**
  * Convert a binary (by path) to a CompilerKit. This checks if the named binary
  * is a GCC or Clang compiler and gets its version. If it is not a compiler,
  * returns `null`.
  * @param bin Path to a binary
+ * @param isTrusted True iff the binary is in a trusted path. Default true.
  * @returns A CompilerKit, or null if `bin` is not a known compiler
  */
-export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise<Kit | null> {
+export async function kitIfCompiler(bin: string, isTrusted: boolean = true, pr?: ProgressReporter): Promise<Kit | null> {
     const fname = path.basename(bin);
     // Check by filename what the compiler might be. This is just heuristic.
     const gcc_regex = /^((\w+-)*)gcc(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
@@ -289,9 +351,10 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     const gcc_res = gcc_regex.exec(fname);
     const clang_res = clang_regex.exec(fname);
     const clang_cl_res = clang_cl_regex.exec(fname);
+
     if (gcc_res) {
-        const version = await getCompilerVersion('GCC', bin, pr);
-        if (version === null) {
+        const version = isTrusted ? await getCompilerVersion('GCC', bin, pr) : null;
+        if (isTrusted && version === null) {
             return null;
         }
         const gccCompilers: { [lang: string]: string } = {};
@@ -308,8 +371,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             const gxx_fname2 = fname2.replace(/gcc/, 'g++');
             const gxx_bin2 = path.join(path.dirname(bin), gxx_fname2);
             // Ensure the version is match
-            const version2 = await fs.exists(bin2) ? await getCompilerVersion('GCC', bin2, pr) : null;
-            const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            const version2 = (isTrusted && await fs.exists(bin2)) ? await getCompilerVersion('GCC', bin2, pr) : null;
+            const version_is_match = version2 === null ? false : version === null ? false : version2.fullVersion === version.fullVersion;
             // For the kits with only `x86_64-pc-linux-gnu-gcc` provided:
             // We will have bin2 === bin1 because the regex did not make a replacement,
             // then version_match will be true, but no C++ compiler will be found,
@@ -327,62 +390,36 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             }
         }
         const gccKit: Kit = {
-            name: version.detectedName,
-            compilers: gccCompilers
+            name: version?.detectedName ?? localize('unknown.gcc.kit.untrusted', "Unknown GCC kit (untrusted path)"),
+            compilers: gccCompilers,
+            isTrusted
         };
 
-        const isWin32 = process.platform === 'win32';
-        if (isWin32 && bin.toLowerCase().includes('mingw')) {
-            const binParentPath = path.dirname(bin);
-            const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
-            if (await fs.exists(mingwMakePath)) {
-                // During a scan, binParentPath must be a directory already in the PATH.
-                // Therefore, we will assume that MinGW will remain in the user's PATH
-                // and do not need to record the current state of PATH (leave it to the
-                // user to rescan later or specify an explicit path to MinGW if this
-                // changes).  Additionally, caching the current state of PATH can cause
-                // complications on later invocation when using the kit environment
-                // because its PATH will take precedence.  If a user makes changes to
-                // their PATH later without rescanning for kits, then the kit's cached
-                // PATH will clobber the actual current PATH.  We will, however, record
-                // the MinGW path in case we want to use it later.
-                const ENV_PATH = `${binParentPath}`;
-                // Check for working mingw32-make
-                const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH }, timeout: 30000 }).result;
-                if (execMake.retc !== 0) {
-                    log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ({0} returns non-zero): {1}', "\"-v\"", bin));
-                } else {
-                    let make_version_output = execMake.stdout;
-                    if (make_version_output.length === 0) {
-                        make_version_output = execMake.stderr;
-                    }
-                    const output_line_sep = make_version_output.trim().split('\n');
-                    const isMake = output_line_sep[0].includes('Make');
-                    const isMingwTool = output_line_sep[1].includes('mingw32');
-
-                    if (isMake && isMingwTool) {
-                        gccKit.preferredGenerator = { name: 'MinGW Makefiles' };
-                        // save the ENV_PATH as a benign name unlikely to already exist in
-                        // the user's environment, like CMT_MINGW_PATH
-                        gccKit.environmentVariables = { CMT_MINGW_PATH: ENV_PATH };
-                    }
-                }
-            }
+        if (isTrusted && isMingw(bin)) {
+            return asMingwKit(bin, gccKit);
+        } else {
+            return gccKit;
         }
-        return gccKit;
 
     } else if (clang_res || clang_cl_res) {
-        const version = await getCompilerVersion('Clang', bin, pr);
-        if (version === null) {
-            return null;
-        }
+        const version = isTrusted ? await getCompilerVersion('Clang', bin, pr) : null;
+        if (isTrusted) {
+            if (version === null) {
+                return null;
+            }
 
-        if (version.target && version.target.triple.includes('msvc') &&
-            version.installedDir && version.installedDir.includes("Microsoft Visual Studio")) {
-            // Skip MSVC ABI compatible Clang installations (bundled within VS), which will be handled in 'scanForClangForMSVCKits()' later.
-            // But still process any Clang installations outside VS (right in Program Files for example), even if their version
-            // mentions msvc.
-            return null;
+            if (version.target && version.target.triple.includes('msvc') &&
+                version.installedDir && version.installedDir.includes("Microsoft Visual Studio")) {
+                // Skip MSVC ABI compatible Clang installations (bundled within VS), which will be handled in 'scanForClangForMSVCKits()' later.
+                // But still process any Clang installations outside VS (right in Program Files for example), even if their version
+                // mentions msvc.
+                return null;
+            }
+            if (version.target && version.target.triple.includes('msvc') && clang_cl_res && isMingw(bin)) {
+                // Skip clang-cl.exe from mingw, as it won't work (correct access to MSVC environment is not granted).
+                // TODO: handle this case correctly at some point.
+                return null;
+            }
         }
 
         const clangCompilers: { [lang: string]: string } = {};
@@ -400,8 +437,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
             const clangxx_fname2 = clang_cl_res ? fname : fname2.replace(/clang/, 'clang++');
             const clangxx_bin2 = path.join(path.dirname(bin), clangxx_fname2);
             // Ensure the version is match
-            const version2 = await fs.exists(bin2) ? await getCompilerVersion('Clang', bin2, pr) : null;
-            const version_is_match = version2 === null ? false : version2.fullVersion === version.fullVersion;
+            const version2 = (isTrusted && await fs.exists(bin2)) ? await getCompilerVersion('Clang', bin2, pr) : null;
+            const version_is_match = version2 === null ? false : version === null ? false : version2.fullVersion === version.fullVersion;
             // For the kits with only `clang` provided:
             // We will have bin2 === bin1 because the regex did not make a replacement,
             // then version_match will be true, but no C++ compiler will be found,
@@ -418,10 +455,18 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
                 clangCompilers.CXX = clangxx_bin2;
             }
         }
-        return {
-            name: clang_cl_res ? version.detectedName.replace(/^Clang/, 'Clang-cl') : version.detectedName,
-            compilers: clangCompilers
+        const clangKit: Kit = {
+            name: (clang_cl_res ? version?.detectedName.replace(/^Clang/, 'Clang-cl') : version?.detectedName)
+                ?? localize('unknown.clang.kit.untrusted', "Unknown Clang kit (untrusted path)"),
+            compilers: clangCompilers,
+            isTrusted
         };
+
+        if (isTrusted && isMingw(bin)) {
+            return asMingwKit(bin, clangKit);
+        } else {
+            return clangKit;
+        }
     } else {
         return null;
     }
@@ -460,7 +505,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
         bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
     } catch (ce) {
         const e = ce as NodeJS.ErrnoException;
-        if (e.code === 'EACCESS' || e.code === 'EPERM') {
+        if (e.code === 'EACCES' || e.code === 'EPERM') {
             return [];
         }
         console.log('unexpected file system error');
@@ -475,13 +520,14 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
 /**
  * Scans a directory for compiler binaries.
  * @param dir Directory containing candidate binaries
+ * @param isTrusted True iff the directory is a trusted path. Default true.
  * @returns A list of CompilerKits found
  */
-export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter): Promise<Kit[]> {
+export async function scanDirForCompilerKits(dir: string, isTrusted: boolean = true, pr?: ProgressReporter): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async bin => {
         log.trace(localize('checking.file.for.compiler.features', 'Checking file for compiler features: {0}', bin));
         try {
-            const kit: Kit | null = await kitIfCompiler(bin, pr);
+            const kit: Kit | null = await kitIfCompiler(bin, isTrusted, pr);
             if (kit?.compilers) {
                 log.trace(`Kit found: ${kit.name}`);
                 log.trace(`        C: ${kit.compilers['C']}`);
@@ -661,8 +707,9 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         return;
     }
 
-    // split and trim env vars
-    const vars = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Environment>((acc, line) => {
+    // split and trim env vars, and exclude ${variables}
+    const filter: RegExp = /\$\{.+?\}/;
+    const vars = env.split('\n').map(line => line.trim()).filter(line => (line.length !== 0 && !line.match(filter))).reduce<Environment>((acc, line) => {
         const match = /(\w+)=?(.*)/.exec(line);
         if (match) {
             acc[match[1]] = match[2];
@@ -710,7 +757,8 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
     const kit: Kit = {
         name,
         visualStudio: kitVSName(inst),
-        visualStudioArchitecture: hostArch
+        visualStudioArchitecture: hostArch,
+        isTrusted: true
     };
 
     const version = /^(\d+)+./.exec(inst.installationVersion);
@@ -777,16 +825,16 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakePath?: string): Promise<Kit[]> {
-    const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
+async function scanDirForClangForMSVCKits(dir: PathWithTrust, vsInstalls: VSInstallation[], cmakePath?: string): Promise<Kit[]> {
+    const kits = await scanDirectory(dir.path, async (binPath): Promise<Kit[] | null> => {
         const isClangGnuCli = (path.basename(binPath, '.exe') === 'clang');
         const isClangMsvcCli = (path.basename(binPath, '.exe') === 'clang-cl');
         if (!isClangGnuCli && !isClangMsvcCli) {
             return null;
         }
 
-        const version = await getCompilerVersion('Clang', binPath);
-        if (version === null) {
+        const version = dir.isTrusted ? await getCompilerVersion('Clang', binPath) : null;
+        if (dir.isTrusted && version === null) {
             return null;
         }
 
@@ -815,10 +863,10 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         const clangKits: Kit[] = [];
         for (const vs of vsInstalls) {
             const install_name = vsDisplayName(vs);
-            const vsArch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'x64';
+            const vsArch = (version?.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'x64';
             const archForKitName = vsArch === 'x86' ? 'x86' : 'amd64';
             const clangArchPath = (vsArch === "x64") ? "x64\\" : "";
-            const clangKitName: string = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${archForKitName})`;
+            const clangKitName: string = `Clang ${version?.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${archForKitName})`;
             const clangExists = async () => {
                 const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArchPath}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
                 return exists;
@@ -832,7 +880,8 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                         compilers: {
                             C: binPath,
                             CXX: binPath
-                        }
+                        },
+                        isTrusted: dir.isTrusted
                     });
                 }
             } else {
@@ -852,7 +901,8 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
                             compilers: {
                                 C: binPath,
                                 CXX: binPath
-                            }
+                            },
+                            isTrusted: dir.isTrusted
                         });
                     }
                 }
@@ -864,7 +914,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangForMSVCKits(searchPaths: string[], cmakePath?: string): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: PathWithTrust[], cmakePath?: string): Promise<Promise<Kit[]>[]> {
     const vs_installs = await vsInstallations();
     const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakePath));
     return results;
@@ -939,7 +989,12 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
                 path_list.push(mingwPath);
             }
             if (env.hasOwnProperty('PATH')) {
-                path_list.unshift(env['PATH'] ?? '');
+                let current_path_list = (env['PATH']?.split(';') ?? []);
+                if (mingwPath) {
+                    // Remove other mingw from PATH as it will cause conflict
+                    current_path_list = current_path_list.filter(p => !isMingw(p));
+                }
+                path_list.unshift(current_path_list.join(';'));
                 env['PATH'] = path_list.join(';');
             }
         }
@@ -976,7 +1031,6 @@ export async function findCLCompilerPath(env?: Environment): Promise<string | nu
 export interface KitScanOptions {
     ignorePath?: boolean;
     scanDirs?: string[];
-    minGWSearchDirs?: string[];
 }
 
 /**
@@ -984,20 +1038,26 @@ export interface KitScanOptions {
  * @returns A list of Kits.
  */
 export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
-    const kit_options = opt || {};
-
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
     const prog = {
         location: vscode.ProgressLocation.Notification,
         title: localize('scanning.for.kits', 'Scanning for kits')
     };
 
-    return vscode.window.withProgress(prog, async pr => {
+    const untrusted_paths = new Set<string>();
+
+    const result = await vscode.window.withProgress(prog, async pr => {
         const isWin32 = process.platform === 'win32';
 
         pr.report({ message: localize('scanning.for.cmake.kits', 'Scanning for CMake kits...') });
 
-        const scan_paths = new Set<string>();
+        // Maps paths to booleans indicating if the path is trusted.
+        const scan_paths = new Map<string, boolean>();
+        function addScanPath(path: string, trusted: boolean, paths?: Map<string, boolean>) {
+            const normalizedPath = util.lightNormalizePath(path);
+            const map = paths ?? scan_paths;
+            map.set(normalizedPath, map.get(normalizedPath) || trusted);
+        }
 
         // Search directories on `PATH` for compiler binaries
         if (process.env.hasOwnProperty('PATH')) {
@@ -1006,47 +1066,40 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
             } else {
                 const sep = isWin32 ? ';' : ':';
                 for (const dir of (process.env.PATH as string).split(sep)) {
-                    scan_paths.add(dir);
+                    // Directories on PATH are considered trusted
+                    addScanPath(dir, true);
                 }
             }
         }
 
         if (opt?.scanDirs) {
             for (const dir of opt.scanDirs) {
-                scan_paths.add(dir);
+                addScanPath(dir, true);
             }
         }
 
         // Search them all in parallel
         let kit_promises = [] as Promise<Kit[]>[];
-        if (isWin32 && kit_options.minGWSearchDirs) {
-            for (const dir of convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs)) {
-                scan_paths.add(dir);
-            }
-        }
 
         // Default installation locations
-        scan_paths.add(paths.windows.ProgramFilesX86! + '\\LLVM\\bin');
-        scan_paths.add(paths.windows.ProgramFiles! + '\\LLVM\\bin');
-        const compiler_kits = Array.from(scan_paths).map(path_el => scanDirForCompilerKits(path_el, pr));
+        paths.windows.defaultCompilerPaths.LLVM.forEach(p => addScanPath(p.path, p.isTrusted));
+        paths.windows.defaultCompilerPaths.MSYS2.forEach(p => addScanPath(p.path, p.isTrusted));
+
+        const compiler_kits = Array.from(scan_paths).map(path_el => scanDirForCompilerKits(path_el[0], path_el[1], pr));
         kit_promises = kit_promises.concat(compiler_kits);
 
         if (isWin32) {
             // Prepare clang-cl search paths
-            const clang_paths = new Set<string>();
+            const clang_paths = new Map<string, boolean>();
 
             // LLVM_ROOT environment variable location
             if (process.env.hasOwnProperty('LLVM_ROOT')) {
                 const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
-                clang_paths.add(llvm_root);
+                addScanPath(llvm_root, true, clang_paths);
             }
 
-            // Default installation locations
-            clang_paths.add(paths.windows.ProgramFiles! + '\\LLVM\\bin');
-            clang_paths.add(paths.windows.ProgramFilesX86! + '\\LLVM\\bin');
-
             // PATH environment variable locations
-            scan_paths.forEach(path_el => clang_paths.add(path_el));
+            scan_paths.forEach((isTrusted, path) => addScanPath(path, isTrusted, clang_paths));
             // LLVM bundled in VS locations
             const vs_installs = await vsInstallations();
             const bundled_clang_paths: string[] = [];
@@ -1054,21 +1107,52 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
                 bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin");
                 bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\x64\\bin");
             });
-            bundled_clang_paths.forEach(path_el => clang_paths.add(path_el));
+            bundled_clang_paths.forEach(path_el => addScanPath(path_el, true, clang_paths));
 
             // Scan for kits
             const vs_kits = scanForVSKits(pr);
             kit_promises.push(vs_kits);
-            const clang_kits = await scanForClangForMSVCKits(Array.from(clang_paths), cmakePath);
+            const clang_kits = await scanForClangForMSVCKits(
+                // eslint-disable-next-line arrow-body-style
+                Array.from(clang_paths).map(([path, isTrusted]) => {
+                    return { path, isTrusted };
+                }), cmakePath);
             kit_promises = kit_promises.concat(clang_kits);
         }
 
         const arrays = await Promise.all(kit_promises);
         const kits = ([] as Kit[]).concat(...arrays);
-        kits.map(k => log.info(localize('found.kit', 'Found Kit: {0}', k.name)));
+        kits.map(k => log.info(localize(
+            'found.kit',
+            'Found Kit ({0}): {1}',
+            k.isTrusted ? localize('trusted', 'trusted') : localize('untrusted', 'untrusted'),
+            k.name)));
+
+        scan_paths.forEach((isTrusted, path) => !isTrusted ? untrusted_paths.add(path) : undefined);
 
         return kits;
     });
+
+    const untrustedKits = result.filter(kit => !kit.isTrusted);
+    if (untrustedKits.length > 0) {
+        void vscode.window.showWarningMessage<{ action: 'yes' | 'no'; title: string }>(
+            localize(
+                'untrusted.kits.found',
+                'Compiler kits may be present in these directories: {0}. Would you like to scan and execute potential compilers in these directories by adding them to "cmake.additionalCompilerSearchDirs"?',
+                Array.from(untrusted_paths).toString()),
+            { action: 'yes', title: localize('yes', 'Yes') },
+            { action: 'no', title: localize('no', 'No') }).then(async action => {
+            if (action?.action === 'yes') {
+                const settings = vscode.workspace.getConfiguration('cmake');
+                const additionalCompilerSearchDirs = settings.get<string[]>('additionalCompilerSearchDirs', []);
+                additionalCompilerSearchDirs.push(...Array.from(untrusted_paths));
+                await settings.update('additionalCompilerSearchDirs', additionalCompilerSearchDirs, vscode.ConfigurationTarget.Global);
+                await vscode.commands.executeCommand('cmake.scanForKits');
+            }
+        });
+    }
+
+    return result.filter(kit => kit.isTrusted);
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
@@ -1092,6 +1176,9 @@ export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolea
  * @param kit The kit to generate a description for
  */
 export async function descriptionForKit(kit: Kit, shortVsName: boolean = false): Promise<string> {
+    if (kit.description) {
+        return kit.description;
+    }
     if (kit.toolchainFile) {
         return localize('kit.for.toolchain.file', 'Kit for toolchain file {0}', kit.toolchainFile);
     }
@@ -1146,7 +1233,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filePath), util.errorToString(e)));
         return [];
     }
-    const validator = await loadSchema('schemas/kits-schema.json');
+    const validator = await loadSchema('./schemas/kits-schema.json');
     const is_valid = validator(kits_raw);
     if (!is_valid) {
         const errors = validator.errors!;
@@ -1156,7 +1243,11 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         }
         return [];
     }
-    const kits = kits_raw as Kit[];
+    const kits = (kits_raw as Kit[]).map(kit => {
+        // Serialized kits are trusted for backwards compatibility if not otherwise specified.
+        kit.isTrusted = kit.isTrusted === undefined ? true : kit.isTrusted;
+        return kit;
+    });
     log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, filePath));
 
     const expandedKits: Kit[] = [];
@@ -1177,6 +1268,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
                 userHome: paths.userHome,
                 workspaceFolder: workspaceFolder ? workspaceFolder : '${workspaceFolder}',
                 workspaceFolderBasename: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceFolderBasename}',
+                sourceDir: '${sourceDir}',
                 workspaceHash: '${workspaceHash}',
                 workspaceRoot: workspaceFolder ? workspaceFolder : '${workspaceRoot}',
                 workspaceRootFolderName: workspaceFolder ? path.basename(workspaceFolder) : '${workspaceRootFolderName}'
@@ -1196,10 +1288,6 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         expandedKits.push(kit);
     }
     return expandedKits;
-}
-
-function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
-    return mingwDirs.map(mingwDir => path.join(mingwDir, 'bin'));
 }
 
 /**

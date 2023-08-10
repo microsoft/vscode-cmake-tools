@@ -11,6 +11,7 @@
 	"clean": "temizle",
 	"clean.rebuild": "yeniden derlemeyi temizle",
 	"cmake.template.task": "CMake şablonu {0} görevi",
+	"select.build.task": "Derleme görevi seçin",
 	"command.not.recognized": "{0}, tanınan bir komut değil.",
 	"target.is.ignored": "Bu görevdeki tanımlı hedefler yoksayılıyor.",
 	"enable.cmake.presets": "CMakePresets'i etkinleştir",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "Test ön ayarı bulunamadı.",
 	"ctest.failed": "Test ön ayarı {0} bulunamadı. Test başarısız oldu.",
 	"ctest.run.terminated": "CTest çalıştırması sonlandırıldı",
-	"ctest.finished.with.code": "CTest, {0} dönüş koduyla tamamlandı",
+	"ctest.finished": "CTest tamamlandı",
 	"test.failed": "CTest çalıştırması başarısız oldu."
 }

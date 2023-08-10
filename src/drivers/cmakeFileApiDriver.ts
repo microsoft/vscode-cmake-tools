@@ -28,6 +28,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import * as nls from 'vscode-nls';
+import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -46,7 +48,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         readonly config: ConfigurationReader,
         sourceDir: string,
         isMultiProject: boolean,
-        workspaceRootPath: string | null,
+        workspaceRootPath: string,
         preconditionHandler: CMakePreconditionProblemSolver) {
         super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler);
     }
@@ -60,7 +62,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
         testPreset: TestPreset | null,
-        workspaceRootPath: string | null,
+        workspaceRootPath: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
         log.debug('Creating instance of CMakeFileApiDriver');
@@ -196,8 +198,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
-        const api_path = this.getCMakeFileApiPath(configurePreset?.binaryDir);
+    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number> {
+        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
+        const api_path = this.getCMakeFileApiPath(binaryDir);
         await createQueryFileForApi(api_path);
 
         // Dup args so we can modify them
@@ -208,7 +211,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 has_gen = true;
             }
         }
-        const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
         args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
         args.push(`-B${util.lightNormalizePath(binaryDir)}`);
@@ -219,7 +221,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
                 toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
 
-            } : this.generator ;
+            } : this.generator;
             if (generator) {
                 if (generator.name) {
                     args.push('-G');
@@ -237,6 +239,16 @@ export class CMakeFileApiDriver extends CMakeDriver {
         }
 
         const cmake = this.cmake.path;
+        if (debuggerInformation) {
+            args.push("--debugger");
+            args.push("--debugger-pipe");
+            args.push(`${debuggerInformation.pipeName}`);
+            if (debuggerInformation.dapLog) {
+                args.push("--debugger-dap-log");
+                args.push(debuggerInformation.dapLog);
+            }
+        }
+
         if (showCommandOnly) {
             log.showChannel();
             log.info(proc.buildCmdStr(this.cmake.path, args));
@@ -245,17 +257,44 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
             const env = await this.getConfigureEnvironment(configurePreset, options?.environment);
-            const result = await this.executeCommand(cmake, args, outputConsumer, {
+
+            const child = this.executeCommand(cmake, args, outputConsumer, {
                 environment: env,
                 cwd: options?.cwd ?? binaryDir
-            }).result;
+            });
+            this.configureProcess = child;
+
+            if (debuggerInformation) {
+                if (outputConsumer instanceof CMakeOutputConsumer) {
+                    while (!outputConsumer.stateMessages.includes(StateMessage.WaitingForDebuggerClient)) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+
+                    // if there isn't a `debuggerIsReady` callback provided, this means that this invocation was
+                    // started by a command, rather than by a launch configuration, and the debug session will start from here.
+                    if (debuggerInformation.debuggerIsReady) {
+                        debuggerInformation.debuggerIsReady();
+                    } else {
+                        await vscode.debug.startDebugging(undefined, {
+                            name: localize("cmake.debug.name", "CMake Debugger"),
+                            request: "launch",
+                            type: "cmake",
+                            pipeName: debuggerInformation.pipeName,
+                            fromCommand: true
+                        });
+                    }
+                }
+            }
+
+            const result = await child.result;
+            this.configureProcess = null;
             log.trace(result.stderr);
             log.trace(result.stdout);
             if (result.retc === 0) {
-                if (!configurePreset) {
+                if (!configurePreset || (configurePreset && defaultConfigurePresetName && configurePreset.name === defaultConfigurePresetName)) {
                     this._needsReconfigure = false;
                 }
-                await this.updateCodeModel(configurePreset?.binaryDir);
+                await this.updateCodeModel(binaryDir);
             }
             return result.retc === null ? -1 : result.retc;
         }

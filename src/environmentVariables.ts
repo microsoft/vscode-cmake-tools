@@ -7,6 +7,7 @@ const envProperty = Symbol('envProperty');
 // alias of NodeJS.ProcessEnv, Record<string, string | undefined> === Dict<string>
 export type Environment = Record<string, string | undefined>;
 export type EnvironmentWithNull = Record<string, string | undefined | null>;
+const filter: RegExp = /\$\{.+?\}/;
 
 export interface EnvironmentOptions {
     preserveNull?: boolean;
@@ -76,6 +77,8 @@ class EnvironmentPrivate {
                 if (!this.options.preserveNull) {
                     deleteKey = true;
                 }
+            } else if (key.match(filter)) {
+                deleteKey = true;
             } else if (typeof value !== 'string') {
                 value = '' + value;
             }

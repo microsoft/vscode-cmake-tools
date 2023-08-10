@@ -11,6 +11,7 @@
 	"clean": "vyčistit",
 	"clean.rebuild": "vyčistit a znovu sestavit",
 	"cmake.template.task": "Úloha {0} šablony CMake",
+	"select.build.task": "Vyberte úlohu sestavení.",
 	"command.not.recognized": "{0} není rozpoznaný příkaz.",
 	"target.is.ignored": "Definované cíle v této úloze se ignorují.",
 	"enable.cmake.presets": "Povolit CMakePresets",
@@ -35,6 +36,6 @@
 	"test.preset.not.found": "Předvolba testování se nenašla.",
 	"ctest.failed": "Předvolba testování {0} se nenašla. Test se nezdařil.",
 	"ctest.run.terminated": "Běh CTestu se ukončil.",
-	"ctest.finished.with.code": "CTest skončil s návratovým kódem {0}.",
+	"ctest.finished": "CTest dokončen",
 	"test.failed": "Spuštění CTest se nezdařilo."
 }

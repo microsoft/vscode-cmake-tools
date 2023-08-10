@@ -50,7 +50,7 @@ export class DefaultEnvironment {
     readonly kitSelection = new SelectKitPickerHandle(this.defaultKitLabel, this.excludeKitLabel);
 
     private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
-        const fakeShowQuickPick = <T>(items: T[] | Thenable<T[]>, options?: vscode.QuickPickOptions, _token?: vscode.CancellationToken): Thenable<T | undefined> => {
+        const fakeShowQuickPick = <T>(items: readonly vscode.QuickPickItem[]  | Thenable<readonly vscode.QuickPickItem[]>, options?: vscode.QuickPickOptions, _token?: vscode.CancellationToken): Thenable<T | undefined> => {
             if (options?.placeHolder === selections[0].identifier) {
                 return Promise.resolve(selections[0].handleQuickPick(items));
             }

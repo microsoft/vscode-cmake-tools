@@ -17,7 +17,38 @@ interface VSCMakePaths {
     ninja?: string;
 }
 
+export interface PathWithTrust {
+    path: string;
+    isTrusted: boolean;
+}
+
+class WindowsDefaultCompilerPaths {
+    constructor(private readonly _env: WindowsEnvironment) {
+        this._env = _env;
+    }
+
+    get LLVM(): PathWithTrust[] {
+        return [
+            this._env.ProgramFiles! + "\\LLVM\\bin",
+            this._env.ProgramFilesX86! + "\\LLVM\\bin"
+        ].map(p => ({ path: p, isTrusted: true }));
+    }
+
+    get MSYS2(): PathWithTrust[] {
+        return [
+            paths.windows.SystemDrive! + '\\msys64\\mingw32\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\mingw64\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\clang32\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\clang64\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\clangarm64\\bin',
+            paths.windows.SystemDrive! + '\\msys64\\ucrt64\\bin'
+        ].map(p => ({ path: p, isTrusted: false }));
+    }
+}
+
 class WindowsEnvironment {
+    readonly defaultCompilerPaths: WindowsDefaultCompilerPaths = new WindowsDefaultCompilerPaths(this);
+
     get AppData(): string | undefined {
         if (util.isTestMode()) {
             return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');
@@ -252,6 +283,7 @@ class Paths {
                 userHome: this.userHome,
                 workspaceFolder: wsc.folder.uri.fsPath,
                 workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+                sourceDir: '${sourceDir}',
                 workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
                 workspaceRoot: wsc.folder.uri.fsPath,
                 workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath)
@@ -264,19 +296,25 @@ class Paths {
 
         const vs_installations = await vsInstallations();
         if (vs_installations.length > 0) {
-            const bundled_tool_paths = [] as { cmake: string; ninja: string }[];
+            const bundled_tool_paths = [] as { cmake: string; ninja: string; instanceId: string; version: util.Version }[];
 
             for (const install of vs_installations) {
                 const bundled_tool_path = {
                     cmake: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe',
-                    ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe'
+                    ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe',
+                    instanceId: install.instanceId,
+                    version: util.parseVersion(install.installationVersion)
                 };
-                if (preferredInstanceId === install.instanceId) {
-                    bundled_tool_paths.unshift(bundled_tool_path);
-                } else {
-                    bundled_tool_paths.push(bundled_tool_path);
-                }
+                bundled_tool_paths.push(bundled_tool_path);
             }
+            bundled_tool_paths.sort((a, b) => {
+                if (preferredInstanceId === a.instanceId) {
+                    return -1;
+                } else if (preferredInstanceId === b.instanceId) {
+                    return 1;
+                }
+                return util.versionGreater(a.version, b.version) ? -1 : util.versionEquals(a.version, b.version) ? 0 : 1;
+            });
 
             for (const tool_path of bundled_tool_paths) {
                 if (await fs.exists(tool_path.cmake)) {

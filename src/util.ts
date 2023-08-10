@@ -11,6 +11,7 @@ import rollbar from '@cmt/rollbar';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
+import { ExtensionManager } from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -328,8 +329,8 @@ export function splitCommandLine(cmd: string): string[] {
 /**
  * This is an initial check without atually configuring. It may or may not be accurate.
  */
-export function isMultiConfGeneratorFast(gen: string): boolean {
-    return gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config');
+export function isMultiConfGeneratorFast(gen?: string): boolean {
+    return gen !== undefined && (gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config'));
 }
 
 export class InvalidVersionString extends Error {}
@@ -340,12 +341,12 @@ export interface Version {
     patch: number;
 }
 export function parseVersion(str: string): Version {
-    const version_re = /(\d+)\.(\d+)\.(\d+)(.*)/;
+    const version_re = /(\d+)\.(\d+)(\.(\d+))?(.*)/;
     const mat = version_re.exec(str);
     if (!mat) {
         throw new InvalidVersionString(localize('invalid.version.string', 'Invalid version string {0}', str));
     }
-    const [, major, minor, patch] = mat;
+    const [, major, minor, , patch] = mat;
     return {
         major: parseInt(major ?? '0'),
         minor: parseInt(minor ?? '0'),
@@ -381,6 +382,20 @@ export function errorToString(e: any): string {
         return `\n\t${e.stack}`;
     }
     return `\n\t${e.toString()}`;
+}
+
+/**
+ * Convert milliseconds into a friendly string like: 00:00:00.000
+ */
+export function msToString(ms: number): string {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    return `${pad(hours)}:${pad(minutes % 60)}:${pad(seconds % 60)}.${pad(ms % 1000, 3)}`;
+}
+
+function pad(x: number, length?: number): string {
+    return ('000' + x).slice(-(length ?? 2));
 }
 
 export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<Out>): Iterable<Out> {
@@ -864,9 +879,9 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
     });
 }
 
-export function isFileInsideFolder(openEditor: vscode.TextDocument, folderPath: string): boolean {
+export function isFileInsideFolder(uri: vscode.Uri, folderPath: string): boolean {
     const parent = platformNormalizePath(folderPath);
-    const file = platformNormalizePath(openEditor.uri.fsPath);
+    const file = platformNormalizePath(uri.fsPath);
     return file.startsWith(parent);
 }
 
@@ -890,4 +905,9 @@ export function getHostArchitecture() {
         default:
             return 'x64';
     }
+}
+
+// Util for the special commands to forward to real commands
+export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
+    return vscode.commands.executeCommand(`cmake.${key}`, ...args);
 }
