@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/stale@v4.1.1
       with:
-        stale-pr-label: $stale-label
+        stale-issue-label: $stale-label
         exempt-issue-labels: stale-exempt
         days-before-pr-stale: -1
         days-before-pr-close: -1
