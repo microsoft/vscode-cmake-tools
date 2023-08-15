@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       stale-days: 360
-      close-days: 14
+      close-days: 30
       stale-label: stale-old
       stale-exempt-label: stale-exempt
     steps:
