@@ -1,7 +1,7 @@
 name: Close Stale Issues
 on:
   schedule:
-    - cron: "0 0 * * *"
+  - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       readonly:
@@ -14,15 +14,18 @@ jobs:
       stale-days: 60
       close-days: 7
       stale-label: stale
+      stale-exempt-label: stale-exempt
+      only-label: needs more info
     steps:
     - uses: actions/stale@v4.1.1
       with:
         stale-issue-label: $stale-label
-        exempt-issue-labels: stale-exempt
+        exempt-issue-labels: $stale-exempt-label
+        only-label: $only-label
         days-before-pr-stale: -1
         days-before-pr-close: -1
         days-before-stale: $stale-days
-        stale-issue-message: "This issue is now marked as '$stale-label' due to there being no activity on it for the past $stale-days days. Unless the '$stale-label' label is removed or the issue is commented on, this will be closed in $close-days days."
+        stale-issue-message: "This issue is now marked as '$stale-label' due to there being no activity on it for the past $stale-days days and being labelled '$only-label'. Unless the '$stale-label' label is removed or the issue is commented on, this will be closed in $close-days days. If you would like to make this issue exempt from getting stale, please remove the 'more info needed' label or add the '$stale-exempt-label' label"
         days-before-close: $close-days
         close-issue-reason: not_planned
         close-issue-message: "This issue is now closed due to there being no activity on it for the past $close-days days since being marked as 'stale'."
