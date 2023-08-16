@@ -399,7 +399,7 @@ export async function loadAllTargetsForBuildTypeConfiguration(replyPath: string,
         metaTargets.push({
             type: 'rich' as 'rich',
             name: 'install',
-            filepath: 'A special target to install all available targets',
+            filepath: localize('install.all.target', 'A special target to install all available targets'),
             targetType: 'META'
         });
     }
