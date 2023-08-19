@@ -39,6 +39,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         mingwSearchDirs: [], // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: [],
         emscriptenSearchDirs: [],
+        compileCommandsFilename: 'compile_commands.json',
         mergedCompileCommands: null,
         copyCompileCommands: null,
         loadCompileCommands: true,

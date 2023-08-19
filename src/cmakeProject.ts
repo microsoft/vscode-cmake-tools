@@ -1196,6 +1196,7 @@ export class CMakeProject {
 
     private async refreshCompileDatabase(opts: ExpansionOptions): Promise<void> {
         const compdbPaths: string[] = [];
+        const compileCommandsFilename: string = this.workspaceContext.config.compileCommandsFilename;
         if (this.workspaceContext.config.mergedCompileCommands && this.workspaceContext.config.copyCompileCommands) {
             log.warning(localize('merge.and.copy.compile.commands', "The {0} setting is ignored when {1} is defined.", 'cmake.copyCompileCommands', 'cmake.mergedCompileCommands'));
         }
@@ -1205,14 +1206,14 @@ export class CMakeProject {
             const searchRoot = await this.binaryDir;
             if (await fs.exists(searchRoot)) {
                 (await fs.walk(searchRoot)).forEach(e => {
-                    if (e.name === 'compile_commands.json') {
+                    if (e.name === compileCommandsFilename) {
                         compdbPaths.push(e.path);
                     }
                 });
             }
         } else {
             // single file with known path
-            const compdbPath = path.join(await this.binaryDir, 'compile_commands.json');
+            const compdbPath = path.join(await this.binaryDir, compileCommandsFilename);
             if (await fs.exists(compdbPath)) {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
@@ -1221,7 +1222,7 @@ export class CMakeProject {
                     const expandedDest = await expandString(copyDest, opts);
                     const parentDir = path.dirname(expandedDest);
                     try {
-                        log.debug(localize('copy.compile.commands', 'Copying {2} from {0} to {1}', compdbPath, expandedDest, 'compile_commands.json'));
+                        log.debug(localize('copy.compile.commands', 'Copying {2} from {0} to {1}', compdbPath, expandedDest, compileCommandsFilename));
                         await fs.mkdir_p(parentDir);
                         try {
                             await fs.copyFile(compdbPath, expandedDest);
@@ -1236,7 +1237,7 @@ export class CMakeProject {
                     }
                 }
             } else if (this.workspaceContext.config.copyCompileCommands) {
-                log.debug(localize('cannot.copy.compile.commands', 'Cannot copy {1} because it does not exist at {0}', compdbPath, 'compile_commands.json'));
+                log.debug(localize('cannot.copy.compile.commands', 'Cannot copy {1} because it does not exist at {0}', compdbPath, compileCommandsFilename));
             }
         }
         if (!this.workspaceContext.config.loadCompileCommands) {
@@ -1274,6 +1275,11 @@ export class CMakeProject {
                 return;
             }
         }
+    }
+
+    async refreshCompileDatabaseWithDefaultOptions(): Promise<void> {
+        const opts: ExpansionOptions = await this.getExpansionOptions();
+        await this.refreshCompileDatabase(opts);
     }
 
     /**

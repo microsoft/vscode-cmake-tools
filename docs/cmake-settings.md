@@ -18,6 +18,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.cmakePath`| Specify location of the cmake executable. | `cmake` (causes CMake Tools to search the `PATH` environment variable, as well as some hard-coded locations.) | Supports substitution for `workspaceRoot`, `workspaceFolder`, `workspaceRootFolderName`, `userHome`, `${command:...}` and `${env:...}`. Other substitutions result in an empty string. |
 | `cmake.cmakeCommunicationMode` | Specifies the protocol for communicating between the extension and CMake | `automatic` | no |
 | `cmake.configureArgs` | Arguments to CMake that will be passed during the configure process. Prefer to use `cmake.configureSettings` or [CMake variants](variants.md).</br> It is not recommended to pass `-D` arguments using this setting. | `[]` (empty array-no arguments) | yes |
+| `cmake.compileCommandsFilename`| The filename of the compile commands database. | `compile_commands.json` | no |
 | `cmake.configureEnvironment` | An object containing `key:value` pairs of environment variables, which will be passed to CMake only when configuring.| `null` (no environment variable pairs) | yes |
 | `cmake.configureOnEdit` | Automatically configure CMake project directories when the path in the `cmake.sourceDirectory` setting is updated or when `CMakeLists.txt` or `*.cmake` files are saved. | `true` | no |
 | `cmake.configureOnOpen` | Automatically configure CMake project directories when they are opened. | `null` (prompt for configure) | no |

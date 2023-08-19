@@ -124,6 +124,7 @@ export interface ExtensionConfigurationSettings {
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
+    compileCommandsFilename: string;
     loadCompileCommands: boolean;
     configureOnOpen: boolean | null;
     configureOnEdit: boolean;
@@ -415,6 +416,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get emscriptenSearchDirs(): string[] {
         return this.configData.emscriptenSearchDirs;
     }
+    get compileCommandsFilename(): string {
+        return this.configData.compileCommandsFilename;
+    }
     get mergedCompileCommands(): string | null {
         return this.configData.mergedCompileCommands;
     }
@@ -501,6 +505,7 @@ export class ConfigurationReader implements vscode.Disposable {
         mingwSearchDirs: new vscode.EventEmitter<string[]>(), // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
+        compileCommandsFilename: new vscode.EventEmitter<string>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
