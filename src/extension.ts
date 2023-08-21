@@ -45,7 +45,7 @@ import { StatusBar } from '@cmt/status';
 import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
 import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
-import { DebugConfigurationProvider } from './debug/debugConfigurationProvider';
+import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from './debug/debugConfigurationProvider';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1733,6 +1733,12 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     );
 
     context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("cmake", new DebugConfigurationProvider()));
+    context.subscriptions.push(
+        vscode.debug.registerDebugConfigurationProvider(
+            "cmake",
+            new DynamicDebugConfigurationProvider(),
+            vscode.DebugConfigurationProviderTriggerKind.Dynamic)
+    );
 
     // List of functions that will be bound commands
     const funs: (keyof ExtensionManager)[] = [

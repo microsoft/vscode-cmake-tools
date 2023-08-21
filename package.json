@@ -52,6 +52,7 @@
     "onCommand:cmake.tasksBuildCommand",
     "onDebugResolve:cmake",
     "onDebugInitialConfigurations",
+    "onDebugDynamicConfigurations:cmake",
     "workspaceContains:CMakeLists.txt",
     "workspaceContains:*/CMakeLists.txt",
     "workspaceContains:*/*/CMakeLists.txt",
@@ -723,13 +724,16 @@
         {
             "type": "cmake",
             "label": "%cmake-tools.debugger.label%",
+            "languages": [
+                "cmake"
+            ],
             "configurationAttributes": {
                 "launch": {
                     "properties": {
                         "scriptPath": {
                             "type": "string",
                             "descripttion": "%cmake-tools.debugger.scriptPath.description%",
-                            "default": ""
+                            "default": "script.cmake"
                         },
                         "scriptArgs": {
                             "type": "array",
@@ -896,7 +900,7 @@
                         "request": "launch",
                         "name": "%cmake-tools.debugger.script.snippet.body.name%",
                         "cmakeDebugType": "script",
-                        "scriptPath": "^\"\\${workspaceFolder}/<...>\""
+                        "scriptPath": "^\"\\${workspaceFolder}/<...>.cmake\""
                     }
                 },
                 {

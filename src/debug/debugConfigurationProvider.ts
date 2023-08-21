@@ -4,6 +4,24 @@ import * as nls from "vscode-nls";
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
+export class DynamicDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+    provideDebugConfigurations(_folder: vscode.WorkspaceFolder | undefined, _token?: vscode.CancellationToken | undefined): vscode.ProviderResult<vscode.DebugConfiguration[]> {
+        const providers: vscode.DebugConfiguration[] = [];
+
+        providers.push(
+            {
+                name: 'CMake: CMake Script',
+                type: "cmake",
+                request: "launch",
+                cmakeDebugType: "script",
+                scriptPath: '${file}'
+            }
+        );
+
+        return providers;
+    }
+}
+
 export class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     resolveDebugConfiguration(_folder: vscode.WorkspaceFolder | undefined, debugConfiguration: vscode.DebugConfiguration, _token?: vscode.CancellationToken | undefined): vscode.ProviderResult<vscode.DebugConfiguration> {
         if (!debugConfiguration.type && !debugConfiguration.request && !debugConfiguration.name) {
@@ -43,11 +61,11 @@ export class DebugConfigurationProvider implements vscode.DebugConfigurationProv
                         'The "cmake" debug type with "cmakeDebugType" set to "external" requires you to define "pipeName".'
                     )
                 );
-            } else if (debugConfiguration.cmakeDebugType === "script" && debugConfiguration.scriptPath === undefined) {
+            } else if (debugConfiguration.cmakeDebugType === "script" && !(debugConfiguration.scriptPath.endsWith(".cmake") || (debugConfiguration.scriptPath === "${file}" && vscode.window.activeTextEditor?.document.fileName.endsWith(".cmake")))) {
                 throw new Error(
                     localize(
                         "cmake.debug.script.requires.scriptPath",
-                        'The "cmake" debug type with "cmakeDebugType" set to "script" requires you to define "scriptPath".'
+                        'The "cmake" debug type with "cmakeDebugType" set to "script" requires you to define a "scriptPath" that points to a CMake script.'
                     )
                 );
             }
