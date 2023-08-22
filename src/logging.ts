@@ -7,6 +7,11 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
 /** Logging levels */
 export enum LogLevel {
     Trace,
@@ -138,7 +143,7 @@ class SingletonLogger {
     private readonly _logStream = _openLogFile();
 
     private get _channel() {
-        return channelManager.get('CMake/Build');
+        return channelManager.get(`CMake/${localize("build.logging.title", "Build")}`);
     }
 
     private _log(level: LogLevel, ...args: Stringable[]) {

@@ -1754,6 +1754,7 @@
               }
             }
           ],
+          "description": "%cmake-tools.configuration.cmake.cacheInit.overall.description%",
           "scope": "resource"
         },
         "cmake.preferredGenerators": {
@@ -2030,6 +2031,7 @@
         "cmake.defaultVariants": {
           "type": "object",
           "$schema": "cmake-tools-schema://schemas/variants-schema.json",
+          "description": "%cmake-tools.configuration.cmake.defaultVariants.overall.description%",
           "default": {
             "buildType": {
               "default": "debug",
@@ -2234,6 +2236,7 @@
         "cmake.loggingLevel": {
           "type": "string",
           "default": "info",
+          "description": "%cmake-tools.configuration.cmake.debugConfig.logging.description%",
           "enum": [
             "trace",
             "debug",
@@ -2262,6 +2265,7 @@
         "cmake.touchbar.advanced": {
           "type": "object",
           "scope": "window",
+          "description": "%cmake-tools.configuration.cmake.touchbar.advanced.description%",
           "properties": {
             "build": {
               "type": "string",
