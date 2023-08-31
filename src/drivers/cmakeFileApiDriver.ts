@@ -65,7 +65,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         workspaceRootPath: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
-        log.debug('Creating instance of CMakeFileApiDriver');
+        log.debug(localize('creating.instance.of', 'Creating instance of {0}', "CMakeFileApiDriver"));
         return this.createDerived(new CMakeFileApiDriver(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler),
             useCMakePresets,
             kit,
@@ -384,7 +384,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             const metaTargets = [{
                 type: 'rich' as 'rich',
                 name: this.allTargetName,
-                filepath: 'A special target to build all available targets',
+                filepath: localize('build.all.target', 'A special target to build all available targets'),
                 targetType: 'META'
             }];
             return [...metaTargets, ...targets].filter((value, idx, self) => self.findIndex(e => value.name === e.name) === idx);
