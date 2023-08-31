@@ -1,7 +1,5 @@
 name: Close Old Issues
 on:
-  schedule:
-  - cron: "0 0 1 * *"
   workflow_dispatch:
     inputs:
       readonly:
@@ -11,7 +9,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     env:
-      stale-days: 360
+      stale-days: 720
       close-days: 30
       stale-label: stale-old
       stale-exempt-label: stale-exempt
@@ -23,7 +21,7 @@ jobs:
         days-before-pr-stale: -1
         days-before-pr-close: -1
         days-before-stale: $stale-days
-        stale-issue-message: "This issue is now marked as '$stale-label' due to there being no activity on it for the past $stale-days days. Unless the '$stale-label' label is removed or the issue is commented on, this will be closed in $close-days days. If you would like to make this issue exempt from getting stale, please add the '$stale-exempt-label' label."
+        stale-issue-message: "This issue is now marked as '$stale-label' due to there being no activity on it for the past $stale-days days. Unless the '$stale-label' label is removed or the issue is commented on, this will be remain open for at least $close-days days and then it may be closed. If you would like to make this issue exempt from getting stale, please add the '$stale-exempt-label' label."
         days-before-close: $close-days
         close-issue-reason: not_planned
         close-issue-message: "This issue is now closed due to there being no activity on it for the past $close-days days since being marked as '$stale-label'."
