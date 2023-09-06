@@ -43,5 +43,7 @@
 	"source.directory.not.set": "소스 디렉터리가 설정되지 않음",
 	"not.configuring": "구성하지 않음: {0}이(가) 없음",
 	"cmake.build.args.are": "CMake 빌드 인수: {0}",
-	"no.build.preset": "선택한 빌드 사전 설정 없음"
+	"no.build.preset": "선택한 빌드 사전 설정 없음",
+	"init.driver.using.preset": "사전 설정을 사용하여 기본 드라이버 초기화",
+	"init.driver.using.kit": "키트를 사용하여 기본 드라이버 초기화"
 }

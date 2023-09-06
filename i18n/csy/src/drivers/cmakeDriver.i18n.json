@@ -43,5 +43,7 @@
 	"source.directory.not.set": "Zdrojový adresář není nastaven.",
 	"not.configuring": "Neprobíhá konfigurace: Není k dispozici žádná {0}.",
 	"cmake.build.args.are": "Argumenty sestavení CMake: {0}",
-	"no.build.preset": "Nevybrala se žádná předvolba sestavení."
+	"no.build.preset": "Nevybrala se žádná předvolba sestavení.",
+	"init.driver.using.preset": "Inicializace základního ovladače pomocí předvolby",
+	"init.driver.using.kit": "Inicializace základního ovladače pomocí sady"
 }

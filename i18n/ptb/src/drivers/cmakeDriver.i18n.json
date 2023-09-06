@@ -43,5 +43,7 @@
 	"source.directory.not.set": "Diretório de origem não definido",
 	"not.configuring": "Não está configurando: não há {0}",
 	"cmake.build.args.are": "Os argumentos de build do CMake são: {0}",
-	"no.build.preset": "Nenhuma predefinição de compilação selecionada"
+	"no.build.preset": "Nenhuma predefinição de compilação selecionada",
+	"init.driver.using.preset": "Inicializando o driver base usando predefinição",
+	"init.driver.using.kit": "Inicializando o driver base usando o kit"
 }

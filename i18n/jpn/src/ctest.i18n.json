@@ -6,7 +6,7 @@
 {
 	"no.tests.found": "テストが見つかりません。",
 	"ctest.path.not.set": "CTest パスが設定されていません",
-	"test.preset.not.set": "Test preset is not set",
+	"test.preset.not.set": "テストの事前設定が設定されていない",
 	"ctest.run.terminated": "CTest の実行が終了しました",
 	"ctest.finished.with.code": "CTest がリターン コード {0} で終了しました",
 	"no.project.found": "フォルダー {0} のプロジェクトが見つかりません",

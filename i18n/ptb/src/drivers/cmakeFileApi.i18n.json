@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "Versão inesperada do objeto CMake Files ({0}.{1}) de cmake-file-api. Esperado ({2}.{3}).",
 	"cache.entry.unknowntype": "Tipo de entrada de cache desconhecido: {0}.",
 	"code.model.version": "A versão do modelo de código ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta.",
+	"install.all.target": "Um destino especial para instalar todos os destinos disponíveis",
 	"toolchains.object.version": "A versão do objeto toolchains ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta."
 }
