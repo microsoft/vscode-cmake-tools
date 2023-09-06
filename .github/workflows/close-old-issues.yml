@@ -9,10 +9,11 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     env:
-      stale-days: 720
-      close-days: 30
-      stale-label: stale-old
+      stale-days: 0
+      close-days: 7
+      stale-label: stale-test
       stale-exempt-label: stale-exempt
+      only-label: for-stale-test
     steps:
     - uses: actions/stale@v4.1.1
       with:
@@ -20,6 +21,7 @@ jobs:
         exempt-issue-labels:  ${{ env.stale-exempt-label }}
         days-before-pr-stale: -1
         days-before-pr-close: -1
+        only-label: ${{ env.only-label }}
         days-before-stale:  ${{ env.stale-days }}
         stale-issue-message: "This issue is now marked as ' ${{ env.stale-label }}' due to there being no activity on it for the past  ${{ env.stale-days }} days. Unless the ' ${{ env.stale-label }}' label is removed or the issue is commented on, this will be remain open for at least  ${{ env.close-days }} days and then it may be closed. If you would like to make this issue exempt from getting stale, please add the ' ${{ env.stale-exempt-label }}' label."
         days-before-close:  ${{ env.close-days }}
