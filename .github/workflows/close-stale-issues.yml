@@ -15,7 +15,7 @@ jobs:
       close-days: 7
       stale-label: stale
       stale-exempt-label: stale-exempt
-      only-label: needs more info
+      only-label: more info needed
     steps:
     - uses: actions/stale@v4.1.1
       with:
@@ -25,7 +25,7 @@ jobs:
         days-before-pr-stale: -1
         days-before-pr-close: -1
         days-before-stale: ${{ env.stale-days }}
-        stale-issue-message: "This issue is now marked as '${{ env.stale-label }}' due to there being no activity on it for the past ${{ env.stale-days }} days and being labelled '${{ env.only-label }}'. Unless the '${{ env.stale-label }}' label is removed or the issue is commented on, this will be closed in ${{ env.close-days }} days. If you would like to make this issue exempt from getting stale, please remove the 'more info needed' label or add the '${{ env.stale-exempt-label }}' label"
+        stale-issue-message: "This issue is now marked as '${{ env.stale-label }}' due to there being no activity on it for the past ${{ env.stale-days }} days and being labelled '${{ env.only-label }}'. Unless the '${{ env.stale-label }}' label is removed or the issue is commented on, this will be closed in ${{ env.close-days }} days. If you would like to make this issue exempt from getting stale, please remove the '${{ env.only-label }}' label or add the '${{ env.stale-exempt-label }}' label"
         days-before-close: ${{ env.close-days }}
         close-issue-reason: not_planned
         close-issue-message: "This issue is now closed due to there being no activity on it for the past ${{ env.close-days }} days since being marked as '${{ env.stale-label }}'."
