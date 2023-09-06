@@ -28,6 +28,6 @@ jobs:
         stale-issue-message: "This issue is now marked as '$stale-label' due to there being no activity on it for the past $stale-days days and being labelled '$only-label'. Unless the '$stale-label' label is removed or the issue is commented on, this will be closed in $close-days days. If you would like to make this issue exempt from getting stale, please remove the 'more info needed' label or add the '$stale-exempt-label' label"
         days-before-close: $close-days
         close-issue-reason: not_planned
-        close-issue-message: "This issue is now closed due to there being no activity on it for the past $close-days days since being marked as 'stale'."
+        close-issue-message: "This issue is now closed due to there being no activity on it for the past $close-days days since being marked as '$stale-label'."
         operations-per-run: 50
 
