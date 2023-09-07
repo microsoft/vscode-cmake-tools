@@ -27,7 +27,6 @@ jobs:
         days-before-stale: ${{ env.stale-days }}
         stale-issue-message: "This issue is now marked as '${{ env.stale-label }}' due to there being no activity on it for the past ${{ env.stale-days }} days and being labelled '${{ env.only-label }}'. Unless the '${{ env.stale-label }}' label is removed or the issue is commented on, this will be closed in ${{ env.close-days }} days. If you would like to make this issue exempt from getting stale, please remove the '${{ env.only-label }}' label or add the '${{ env.stale-exempt-label }}' label"
         days-before-close: ${{ env.close-days }}
-        close-issue-reason: not_planned
         close-issue-message: "This issue is now closed due to there being no activity on it for the past ${{ env.close-days }} days since being marked as '${{ env.stale-label }}'."
         operations-per-run: 50
 
