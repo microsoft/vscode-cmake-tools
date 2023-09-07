@@ -21,7 +21,7 @@ jobs:
       with:
         stale-issue-label: ${{ env.stale-label }}
         exempt-issue-labels: ${{ env.stale-exempt-label }}
-        only-label: ${{ env.only-label }}
+        only-labels: ${{ env.only-label }}
         days-before-pr-stale: -1
         days-before-pr-close: -1
         days-before-stale: ${{ env.stale-days }}
