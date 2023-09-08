@@ -43,5 +43,7 @@
 	"source.directory.not.set": "Kaynak dizin ayarlanmadı",
 	"not.configuring": "Yapılandırma yok: {0} yok",
 	"cmake.build.args.are": "CMake derleme bağımsız değişkenleri: {0}",
-	"no.build.preset": "Derleme ön ayarı seçilmedi"
+	"no.build.preset": "Derleme ön ayarı seçilmedi",
+	"init.driver.using.preset": "Ön ayar kullanılarak temel sürücü başlatılıyor",
+	"init.driver.using.kit": "Set kullanılarak temel sürücü başlatılıyor"
 }

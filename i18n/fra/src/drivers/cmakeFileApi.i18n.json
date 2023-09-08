@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "La version de l’objet CMake Files ({0}.{1}) de cmake-file-api est inattendue. Attendu ({2}.{3}).",
 	"cache.entry.unknowntype": "Type d'entrée de cache inconnu : {0}.",
 	"code.model.version": "Le modèle de code version ({0}.{1}) de cmake-file-api est inattendu. En attente de ({2}.{3}). La configuration d'IntelliSense est peut-être incorrecte.",
+	"install.all.target": "Cible spéciale pour installer toutes les cibles disponibles",
 	"toolchains.object.version": "L'objet de chaînes d'outils version ({0}.{1}) de cmake-file-api est inattendu. En attente de ({2}.{3}). La configuration d'IntelliSense est peut-être incorrecte."
 }
