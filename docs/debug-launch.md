@@ -158,8 +158,8 @@ You can also construct launch.json configurations that allow you to debug tests 
 > **Note:**
 > These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
 
-The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, and `cmake.testArgs` for 
-the `args` field.
+The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, `cmake.testArgs` for 
+the `args` field, and `cmake.testWorkingDirectory` for the `cwd` field.
 
 A couple of examples:
 
@@ -168,9 +168,9 @@ A couple of examples:
 {
     "name": "(ctest) Launch",
     "type": "cppdbg",
-    "cwd": "${workspaceFolder}",
     "request": "launch",
     // Resolved by CMake Tools:
+    "cwd": "${cmake.testWorkingDirectory}",
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],
 }
