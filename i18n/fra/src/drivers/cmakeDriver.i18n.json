@@ -43,5 +43,7 @@
 	"source.directory.not.set": "Répertoire source non défini",
 	"not.configuring": "Aucune configuration : {0} n'existe pas",
 	"cmake.build.args.are": "Arguments de build CMake : {0}",
-	"no.build.preset": "Aucune présélection de build sélectionnée"
+	"no.build.preset": "Aucune présélection de build sélectionnée",
+	"init.driver.using.preset": "Initialisation du pilote de base à l'aide du préréglage",
+	"init.driver.using.kit": "Initialisation du pilote de base à l'aide du kit"
 }

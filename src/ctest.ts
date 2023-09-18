@@ -798,6 +798,8 @@ export class CTestDriver implements vscode.Disposable {
         // Commands can't be used to replace array (i.e., args); and both test program and test args requires folder and
         // test name as parameters, which means one lauch config for each test. So replacing them here is a better way.
         chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testProgram}', this.testProgram(testName));
+        chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
+
         // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
         // since we need to repalce the quotes as well.
         chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
@@ -851,6 +853,17 @@ export class CTestDriver implements vscode.Disposable {
                     return test.command[0];
                 }
             }
+        }
+        return '';
+    }
+
+    private testWorkingDirectory(testName: string): string {
+        const property = this.tests?.tests
+            .find(test => test.name === testName)?.properties
+            .find(prop => prop.name === 'WORKING_DIRECTORY');
+
+        if (typeof(property?.value) === 'string') {
+            return property.value;
         }
         return '';
     }

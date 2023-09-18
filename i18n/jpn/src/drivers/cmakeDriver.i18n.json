@@ -43,5 +43,7 @@
 	"source.directory.not.set": "ソース ディレクトリが設定されていません",
 	"not.configuring": "構成されていません: {0} がありません",
 	"cmake.build.args.are": "CMake ビルド引数: {0}",
-	"no.build.preset": "ビルドの事前設定が選択されていません"
+	"no.build.preset": "ビルドの事前設定が選択されていません",
+	"init.driver.using.preset": "プリセットを使用してベース ドライバーを初期化しています",
+	"init.driver.using.kit": "キットを使用してベース ドライバーを初期化しています"
 }

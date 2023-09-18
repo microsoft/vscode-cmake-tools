@@ -43,5 +43,7 @@
 	"source.directory.not.set": "未设置源目录",
 	"not.configuring": "未配置: {0} 不存在",
 	"cmake.build.args.are": "CMake 生成参数为: {0}",
-	"no.build.preset": "未选择生成预设"
+	"no.build.preset": "未选择生成预设",
+	"init.driver.using.preset": "正在使用预设初始化基本驱动程序",
+	"init.driver.using.kit": "正在使用工具包初始化基本驱动程序"
 }
