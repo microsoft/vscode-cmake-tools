@@ -41,6 +41,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [Quick debugging](debug-launch.md#quick-debugging)
 * [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file)
 * [Run without debugging](debug-launch.md#run-without-debugging)
+* [Debugging CMake](debug.md)
 
 [Configure CMake Tools settings](cmake-settings.md)
 * [CMake Tools settings](cmake-settings.md#cmake-settings)
