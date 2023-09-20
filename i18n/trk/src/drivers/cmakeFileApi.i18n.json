@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "cmake-file-api'nin CMake Dosyaları nesne sürümü ({0}.{1}) beklenmiyor. ({2}.{3}) bekleniyor.",
 	"cache.entry.unknowntype": "Bilinmeyen önbellek girdisi türü: {0}.",
 	"code.model.version": "cmake-file-api'nin kod modeli sürümü ({0}.{1}) beklenmiyordu. Beklenen ({2}.{3}). IntelliSense yapılandırması yanlış olabilir.",
+	"install.all.target": "Tüm kullanılabilir hedefleri yüklemek için özel bir hedef",
 	"toolchains.object.version": "cmake-file-api'nin araç zinciri nesne sürümü ({0}.{1}) beklenmiyordu. Beklenen ({2}.{3}). IntelliSense yapılandırması yanlış olabilir."
 }

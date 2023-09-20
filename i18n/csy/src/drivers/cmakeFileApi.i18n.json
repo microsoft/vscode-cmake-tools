@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "Verze objektu CMake Files ({0}.{1}) cmake-file-api je neočekávaná. Očekává se ({2}.{3}).",
 	"cache.entry.unknowntype": "Neznámý typ položky mezipaměti: {0}",
 	"code.model.version": "Verze modelu kódu ({0}.{1}) pro cmake-file-api se neočekává. Očekává se ({2}.{3}). Je možné, že konfigurace IntelliSense není správná.",
+	"install.all.target": "Speciální cíl umožňující instalaci všech dostupných cílů",
 	"toolchains.object.version": "Verze objektu sad nástrojů ({0}.{1}) pro cmake-file-api se neočekává. Očekává se ({2}.{3}). Je možné, že konfigurace IntelliSense není správná."
 }

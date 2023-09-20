@@ -43,5 +43,7 @@
 	"source.directory.not.set": "Das Quellverzeichnis wurde nicht festgelegt.",
 	"not.configuring": "Die Konfiguration wird nicht ausgeführt: {0} nicht vorhanden",
 	"cmake.build.args.are": "CMake-Buildargumente: {0}",
-	"no.build.preset": "Keine Buildvoreinstellung ausgewählt"
+	"no.build.preset": "Keine Buildvoreinstellung ausgewählt",
+	"init.driver.using.preset": "Der Basistreiber wird mithilfe der Voreinstellung initialisiert.",
+	"init.driver.using.kit": "Der Basistreiber wird mithilfe des Kits initialisiert."
 }

@@ -3,6 +3,11 @@
 ## 1.16
 Features:
 - Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
+- Add ability to get a test's `WORKING_DIRECTORY` in launch.json via `cmake.testWorkingDirectory` [PR #3336](https://github.com/microsoft/vscode-cmake-tools/pull/3336)
+
+Improvements:
+- Updated debugging documentation to add the LLDB configuration needed for macOS. [PR #3332](https://github.com/microsoft/vscode-cmake-tools/pull/3332) [@slhck](https://github.com/slhck)
+- In multi-root workspace, the Project Outline View now shows all configured projects. [PR #3270](https://github.com/microsoft/vscode-cmake-tools/pull/3270) [@vlavati](https://github.com/vlavati)
 
 ## 1.15
 Features:
