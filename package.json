@@ -437,7 +437,11 @@
       {
         "command": "cmake.outline.clean",
         "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.clean.title%"
+        "title": "%cmake-tools.command.cmake.clean.title%",
+        "icon": {
+          "dark": "res/dark/build-icon.svg",
+          "light": "res/light/build-icon.svg"
+        }
       },
       {
         "command": "cmake.cleanAll",
@@ -1344,6 +1348,21 @@
           "command": "cmake.outline.compileFile",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /compilable=true/",
           "group": "1_fileActions@7"
+        },
+        {
+          "command": "cmake.outline.configure",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=project/",
+          "group": "inline@1"
+        },
+        {
+          "command": "cmake.outline.build",
+          "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=project/",
+          "group": "inline@2"
+        },
+        {
+          "command": "cmake.outline.clean",
+          "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=project/",
+          "group": "inline@3"
         },
         {
           "command": "cmake.outline.compileFile",
