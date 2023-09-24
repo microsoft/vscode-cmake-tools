@@ -439,8 +439,8 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.clean.title%",
         "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
+          "dark": "res/dark/clean-icon.svg",
+          "light": "res/light/clean-icon.svg"
         }
       },
       {
