@@ -414,7 +414,7 @@ export class ProjectNode extends BaseNode {
             item.label += ` — (${localize('empty.project', 'Empty project')})`;
         }
         item.tooltip = `${this.name}\n${this.sourceDirectory}`;
-        item.contextValue = ['nodeType=project'].join(',');
+        item.contextValue = 'nodeType=project';
         return item;
     }
 
