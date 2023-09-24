@@ -1100,11 +1100,11 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureAllWithDebugger, debuggerInformation), undefined, true);
     }
 
-    configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
+    configure(folder?: vscode.WorkspaceFolder, sourceDir?: string, showCommandOnly?: boolean) {
         telemetry.logEvent("configure", { all: "false", debug: "false"});
         return this.runCMakeCommand(
             cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
-            folder, undefined, true);
+            folder, undefined, true, sourceDir);
     }
 
     configureWithDebugger(folder?: vscode.WorkspaceFolder) {
@@ -1119,7 +1119,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     showConfigureCommand(folder?: vscode.WorkspaceFolder) {
-        return this.configure(folder, true);
+        return this.configure(folder, undefined, true);
     }
 
     configureAll() {
@@ -1867,7 +1867,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items
-        vscode.commands.registerCommand('cmake.outline.configure', (what: ProjectNode) => runCommand('configure', what.folder, false)),
+        vscode.commands.registerCommand('cmake.outline.configure', (what: ProjectNode) => runCommand('configure', what.folder, what.sourceDirectory, false)),
         vscode.commands.registerCommand('cmake.outline.build', (what: ProjectNode) => runCommand('build', what.folder, "all", what.sourceDirectory)),
         vscode.commands.registerCommand('cmake.outline.clean', (what: ProjectNode) => runCommand('build', what.folder, "clean", what.sourceDirectory)),
         vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, what.sourceDir)),
