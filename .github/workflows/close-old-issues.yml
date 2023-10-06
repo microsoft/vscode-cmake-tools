@@ -2,9 +2,6 @@ name: Close Test Issues
 on:
   workflow_dispatch:
     inputs:
-      readonly:
-        description: "readonly: Specify true or 1 to prevent changes from being commited to GitHub"
-        default: false
       inactive-days:
         description: "inactive-days: Specify how many days the issue has to have had no activity to get the 'stale-old' label."
         default: 720
