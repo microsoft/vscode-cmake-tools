@@ -43,5 +43,7 @@
 	"source.directory.not.set": "La directory di origine non è impostata",
 	"not.configuring": "Nessuna configurazione: non è presente alcun {0}",
 	"cmake.build.args.are": "Gli argomenti di compilazione di CMake sono: {0}",
-	"no.build.preset": "Nessun set di impostazioni di compilazione selezionato"
+	"no.build.preset": "Nessun set di impostazioni di compilazione selezionato",
+	"init.driver.using.preset": "Inizializzazione del driver di base con set di impostazioni",
+	"init.driver.using.kit": "Inizializzazione del driver di base con il kit"
 }

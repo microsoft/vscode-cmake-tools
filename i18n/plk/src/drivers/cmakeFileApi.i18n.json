@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "Wersja obiektu plików CMake ({0}.{1}) polecenia cmake-file-api jest nieoczekiwana. Oczekiwano ({2}.{3}).",
 	"cache.entry.unknowntype": "Nieznany typ wpisu w pamięci podręcznej: {0}.",
 	"code.model.version": "Wersja modelu kodu ({0}.{1}) interfejsu cmake-file-api jest nieoczekiwana. Oczekiwano wersji ({2}.{3}). Konfiguracja funkcji IntelliSense może być niepoprawna.",
+	"install.all.target": "Specjalny element docelowy umożliwiający zainstalowanie wszystkich dostępnych elementów docelowych",
 	"toolchains.object.version": "Wersja obiektu łańcuchów narzędzi ({0}.{1}) interfejsu cmake-file-api jest nieoczekiwana. Oczekiwano wersji ({2}.{3}). Konfiguracja funkcji IntelliSense może być niepoprawna."
 }

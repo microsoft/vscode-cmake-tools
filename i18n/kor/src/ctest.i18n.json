@@ -6,7 +6,7 @@
 {
 	"no.tests.found": "테스트를 찾을 수 없습니다.",
 	"ctest.path.not.set": "CTest 경로가 설정되지 않음",
-	"test.preset.not.set": "Test preset is not set",
+	"test.preset.not.set": "테스트 사전 설정이 설정되지 않음",
 	"ctest.run.terminated": "CTest 실행이 종료됨",
 	"ctest.finished.with.code": "CTest 완료(반환 코드: {0})",
 	"no.project.found": "{0} 폴더에 대한 프로젝트를 찾을 수 없습니다.",
