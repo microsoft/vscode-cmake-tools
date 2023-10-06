@@ -7,8 +7,8 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     env:
-      stale-days: 60
-      close-days: 14
+      stale-days: 30
+      close-days: 7
       stale-label: stale
       stale-exempt-label: stale-exempt
       only-label: more info needed
