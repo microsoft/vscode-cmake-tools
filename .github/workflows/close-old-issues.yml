@@ -26,7 +26,7 @@ jobs:
         exempt-issue-labels: ${{ env.stale-exempt-label }}
         days-before-pr-stale: -1
         days-before-pr-close: -1
-        only-labels: action-test
+        only-labels: stale-test
         days-before-stale: ${{ env.stale-days }}
         stale-issue-message: "This issue is now marked as '${{ env.stale-label }}' due to there being no activity on it for the past ${{ env.stale-days }} days. Unless the '${{ env.stale-label }}' label is removed or the issue is commented on, this will be remain open for at least ${{ env.close-days }} days and then it may be closed. If you would like to make this issue exempt from getting stale, please add the '${{ env.stale-exempt-label }}' label."
         days-before-close: ${{ env.close-days }}

@@ -11,7 +11,7 @@ jobs:
       close-days: 7
       stale-label: stale
       stale-exempt-label: stale-exempt
-      only-label: action-test
+      only-label: stale-test
     steps:
     - uses: actions/stale@v4.1.1
       with:
