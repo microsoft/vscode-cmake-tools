@@ -1,4 +1,4 @@
-name: Close Old Issues
+name: Close Test Issues
 on:
   workflow_dispatch:
     inputs:
