@@ -3,10 +3,6 @@ on:
   schedule:
   - cron: "0 0 * * *"
   workflow_dispatch:
-    inputs:
-      readonly:
-        description: "readonly: Specify true or 1 to prevent changes from being commited to GitHub"
-        default: false
 jobs:
   stale:
     runs-on: ubuntu-latest
@@ -15,7 +11,7 @@ jobs:
       close-days: 7
       stale-label: stale
       stale-exempt-label: stale-exempt
-      only-label: more info needed
+      only-label: action-test
     steps:
     - uses: actions/stale@v4.1.1
       with:
