@@ -1,4 +1,4 @@
-name: Close Test Issues
+name: Close Old Issues
 on:
   workflow_dispatch:
     inputs:
@@ -12,8 +12,8 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     env:
-      stale-days: ${{ github.event.inputs.inactive-days || 0 }}
-      close-days: ${{ github.event.inputs.stale-label-days || 0 }}
+      stale-days: ${{ github.event.inputs.inactive-days || 720 }}
+      close-days: ${{ github.event.inputs.stale-label-days || -1 }}
       stale-label: stale-old
       stale-exempt-label: stale-exempt
     steps:
@@ -23,9 +23,8 @@ jobs:
         exempt-issue-labels: ${{ env.stale-exempt-label }}
         days-before-pr-stale: -1
         days-before-pr-close: -1
-        only-labels: stale-test
         days-before-stale: ${{ env.stale-days }}
         stale-issue-message: "This issue is now marked as '${{ env.stale-label }}' due to there being no activity on it for the past ${{ env.stale-days }} days. Unless the '${{ env.stale-label }}' label is removed or the issue is commented on, this will be remain open for at least ${{ env.close-days }} days and then it may be closed. If you would like to make this issue exempt from getting stale, please add the '${{ env.stale-exempt-label }}' label."
         days-before-close: ${{ env.close-days }}
         close-issue-message: "This issue is now closed due to there being no activity on it for the past ${{ env.close-days }} days since being marked as '${{ env.stale-label }}'."
-        operations-per-run: 10
+        operations-per-run: 100

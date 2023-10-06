@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       stale-days: 60
-      close-days: 7
+      close-days: 14
       stale-label: stale
       stale-exempt-label: stale-exempt
-      only-label: stale-test
+      only-label: more info needed
     steps:
     - uses: actions/stale@v4.1.1
       with:
