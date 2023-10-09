@@ -17,7 +17,7 @@ The first time you run target debugging, CMake Tools asks for you to specify a t
 
 The active launch target is shown in the status bar to the right of the *Debug* and *Play* buttons:
 
-![Image of launch target to the right of the debug and run button](images/launch_targetv2.png)
+![Image of launch target to the right of the debug and run button](images/launch_debugv2.png)
 
 Selecting the active launch target button will show the launch target selector so that you can change the active launch target.
 
