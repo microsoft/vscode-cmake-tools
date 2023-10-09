@@ -1876,10 +1876,15 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items
-        vscode.commands.registerCommand('cmake.outline.configure', (what: ProjectNode) => runCommand('configure', what.folder, false, what.sourceDirectory)),
+        vscode.commands.registerCommand('cmake.outline.configure', async (what: object) => {
+            if (what instanceof ProjectNode) {
+                await runCommand('configure', what.folder, false, what.sourceDirectory);
+            } else if (what instanceof SourceFileNode) {
+                await runCommand('configure', what.folder, false, what.sourcePath);
+            }
+        }),
         vscode.commands.registerCommand('cmake.outline.build', (what: ProjectNode) => runCommand('build', what.folder, "all", what.sourceDirectory)),
         vscode.commands.registerCommand('cmake.outline.clean', (what: ProjectNode) => runCommand('build', what.folder, "clean", what.sourceDirectory)),
-        vscode.commands.registerCommand('cmake.outline.configure', (what: SourceFileNode) => runCommand('configure', what.folder, what.sourcePath, false)),
         vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.runUtilityTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.debugTarget', (what: TargetNode) => runCommand('debugTarget', what.folder, what.name, what.sourceDir)),
