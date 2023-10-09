@@ -392,7 +392,7 @@ export class TargetNode extends BaseNode {
     }
 }
 
-class ProjectNode extends BaseNode {
+export class ProjectNode extends BaseNode {
     constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDirectory: string) {
         // id: project_name:project_directory
         super(`${name}:${sourceDirectory}`);
@@ -414,6 +414,7 @@ class ProjectNode extends BaseNode {
             item.label += ` — (${localize('empty.project', 'Empty project')})`;
         }
         item.tooltip = `${this.name}\n${this.sourceDirectory}`;
+        item.contextValue = 'nodeType=project';
         return item;
     }
 
