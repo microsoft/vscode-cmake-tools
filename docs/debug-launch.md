@@ -15,20 +15,22 @@ By default, launching or debugging an executable target causes it to be built fi
 
 The first time you run target debugging, CMake Tools asks for you to specify a target, which will be persisted between sessions.
 
-The active launch target is shown in the status bar to the right of the *Debug* button:
+The active launch target is shown in the status bar to the right of the *Debug* and *Play* buttons:
 
-![Image of launch target to the right of the debug button](images/launch_target.png)
+![Image of launch target to the right of the debug and run button](images/launch_targetv2.png)
 
 Selecting the active launch target button will show the launch target selector so that you can change the active launch target.
 
-## Quick debugging
+## Debugging without a launch.json
 
-Quick-debugging lets you start a debugger on a target without creating a `launch.json`.
+CMake Tools lets you start a debugger on a target without creating a `launch.json`.
 
 > **Note:**
 > Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file), below, for information about `launch.json` and using other debuggers.
 
-Start quick debugging by running the  *CMake: Debug Target* command from the VS Code command pallette, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
+Start a debugging session on the active target by running the  *CMake: Debug* command from the VS Code command pallette, by selecting the Debug button in the status bar, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
+
+![Image of launching the debugger for the selected target](images/debug_target.png)
 
 > **Note:**
 > Quick-debugging does not let you specify program arguments or other debugging options. See the next section for more options.
