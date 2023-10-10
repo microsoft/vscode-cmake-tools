@@ -279,6 +279,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                             name: localize("cmake.debug.name", "CMake Debugger"),
                             request: "launch",
                             type: "cmake",
+                            cmakeDebugType: "configure",
                             pipeName: debuggerInformation.pipeName,
                             fromCommand: true
                         });

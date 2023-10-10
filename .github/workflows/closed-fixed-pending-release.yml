@@ -1,0 +1,14 @@
+name: Closed fixed-pending-release issues
+on:
+    release:
+        types: [published]
+
+jobs:
+    close_fixed_pending_release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Close issues marked 'fixed-pending-release'
+              uses: gcampbell-msft/fixed-pending-release@0.0.12
+              with:
+                token: ${{ secrets.GITHUB_TOKEN }}
+                label: fixed (release pending)

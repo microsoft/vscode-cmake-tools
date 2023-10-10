@@ -8,6 +8,12 @@ Features:
 Improvements:
 - Updated debugging documentation to add the LLDB configuration needed for macOS. [PR #3332](https://github.com/microsoft/vscode-cmake-tools/pull/3332) [@slhck](https://github.com/slhck)
 - In multi-root workspace, the Project Outline View now shows all configured projects. [PR #3270](https://github.com/microsoft/vscode-cmake-tools/pull/3270) [@vlavati](https://github.com/vlavati)
+- Added script mode and ability to connect to externally launched CMake processes. [PR #3277](https://github.com/microsoft/vscode-cmake-tools/pull/3277)
+- Added buttons to the project nodes in the Project Outline View. [PR #3354](https://github.com/microsoft/vscode-cmake-tools/pull/3354) [@vlavati](https://github.com/vlavati)
+
+Bug Fixes:
+- Fix Unhandled Exception if no args are specified in `cmake.getLaunchTargetFilename` inside an input context of a task. [PR #3348](https://github.com/microsoft/vscode-cmake-tools/issues/3348) [@vlavati](https://github.com/vlavati)
+- Fix incorrect IntelliSense configuration with default/empty `CMAKE_BUILD_TYPE` using CMakePresets. [PR #3363](https://github.com/microsoft/vscode-cmake-tools/pull/3363) [@deribaucourt](https://github.com/deribaucourt)
 
 ## 1.15
 Features:
