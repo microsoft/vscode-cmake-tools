@@ -1,24 +1,41 @@
 # What's New?
 
+## 1.16
+Features:
+- Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
+- Add ability to get a test's `WORKING_DIRECTORY` in launch.json via `cmake.testWorkingDirectory` [PR #3336](https://github.com/microsoft/vscode-cmake-tools/pull/3336)
+
+Improvements:
+- Updated debugging documentation to add the LLDB configuration needed for macOS. [PR #3332](https://github.com/microsoft/vscode-cmake-tools/pull/3332) [@slhck](https://github.com/slhck)
+- In multi-root workspace, the Project Outline View now shows all configured projects. [PR #3270](https://github.com/microsoft/vscode-cmake-tools/pull/3270) [@vlavati](https://github.com/vlavati)
+- Added script mode and ability to connect to externally launched CMake processes. [PR #3277](https://github.com/microsoft/vscode-cmake-tools/pull/3277)
+- Added buttons to the project nodes in the Project Outline View. [PR #3354](https://github.com/microsoft/vscode-cmake-tools/pull/3354) [@vlavati](https://github.com/vlavati)
+
+Bug Fixes:
+- Fix Unhandled Exception if no args are specified in `cmake.getLaunchTargetFilename` inside an input context of a task. [PR #3348](https://github.com/microsoft/vscode-cmake-tools/issues/3348) [@vlavati](https://github.com/vlavati)
+- Fix incorrect IntelliSense configuration with default/empty `CMAKE_BUILD_TYPE` using CMakePresets. [PR #3363](https://github.com/microsoft/vscode-cmake-tools/pull/3363) [@deribaucourt](https://github.com/deribaucourt)
+
 ## 1.15
 Features:
 - Added support for the CMake Debugger. [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
 - Added kit selection by name from settings.json [#1496](https://github.com/microsoft/vscode-cmake-tools/issues/1496)
 - Added support for passing a folder parameter to the `cmake.selectActiveFolder` command. [#3256](https://github.com/microsoft/vscode-cmake-tools/issues/3256) [@cvanbeek](https://github.com/cvanbeek13)
 
-Bug Fixes:
+Improvements:
 - When using CMake presets, the Project Status View now shows the build target along with the build preset. [PR #3241](https://github.com/microsoft/vscode-cmake-tools/pull/3241)
-- Fix per-folder browse configurations returning incorrect information. [#3155](https://github.com/microsoft/vscode-cmake-tools/issues/3155)
 - IntelliSense resolves headers coming from MacOS frameworks. CMake 3.27 or later is required. [#2324](https://github.com/microsoft/vscode-cmake-tools/issues/2324)
 - Allow configure settings to override the usual arguments the extension is usually passing to cmake. Don't have unremovable options. [#1639](https://github.com/microsoft/vscode-cmake-tools/issues/1639)
+- Allow a way to run CTests in parallel by setting `cmake.ctest.allowParallelJobs` to `true`. [#3091](https://github.com/microsoft/vscode-cmake-tools/issues/3091)
+- When clicking `Run CTests` from the status bar view, it now will bypass the Test Explorer and directly run the CTests. [#3151](https://github.com/microsoft/vscode-cmake-tools/issues/3151)
+
+Bug Fixes:
+- Fix per-folder browse configurations returning incorrect information. [#3155](https://github.com/microsoft/vscode-cmake-tools/issues/3155)
 - Fix triggers of "Bad CMake Executable" error message. [#2368](https://github.com/microsoft/vscode-cmake-tools/issues/2368)
 - Don't ignore empty cache string variables when configuring from presets. [#1842](https://github.com/microsoft/vscode-cmake-tools/issues/1842)
 - Fix active build configuration warning coming from CppTools. [#2353](https://github.com/microsoft/vscode-cmake-tools/issues/2353)
-
-Improvements:
-- Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath`. [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
 - Fix our checking for invalid settings when CMakeUserPresets version is different than CMakePresets. [#2897](https://github.com/microsoft/vscode-cmake-tools/issues/2897)
 - Fix the precendence order that we evaluate the `cmake.parallelJobs` setting. [#3206](https://github.com/microsoft/vscode-cmake-tools/issues/3206)
+- Decreased the number of cases where we reconfigure erroneously upon usage of `cmake.getLaunchTargetPath`. [#2878](https://github.com/microsoft/vscode-cmake-tools/issues/2878)
 
 ## 1.14.33
 Bug Fixes:

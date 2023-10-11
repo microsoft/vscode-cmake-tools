@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "cmake-file-api の CMake Files オブジェクトのバージョン ({0}.{1}) は想定されていません。({2}.{3}) であると想定されています。",
 	"cache.entry.unknowntype": "不明なキャッシュ エントリの種類: {0}。",
 	"code.model.version": "cmake-file-api のコード モデル バージョン ({1}.{0}) は予期されていません。({2}.{3}) が必要です。IntelliSense の構成が正しくない可能性があります。",
+	"install.all.target": "すべての使用可能なターゲットをインストールする特別なターゲット",
 	"toolchains.object.version": "cmake-file-api のツールチェーン オブジェクト バージョン ({0}.{1}) が予期されていません。({2}.{3}) が必要です。IntelliSense の構成が正しくない可能性があります。"
 }

@@ -4,6 +4,7 @@ import * as nls from 'vscode-nls';
 import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath } from '@cmt/util';
+import CMakeProject from '@cmt/cmakeProject';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -391,7 +392,7 @@ export class TargetNode extends BaseNode {
     }
 }
 
-class ProjectNode extends BaseNode {
+export class ProjectNode extends BaseNode {
     constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDirectory: string) {
         // id: project_name:project_directory
         super(`${name}:${sourceDirectory}`);
@@ -400,7 +401,7 @@ class ProjectNode extends BaseNode {
     private readonly _rootDir = new DirectoryNode<TargetNode>(this.id, '', '');
 
     getOrderTuple() {
-        return [];
+        return [this.sourceDirectory, this.name];
     }
 
     getChildren() {
@@ -413,6 +414,7 @@ class ProjectNode extends BaseNode {
             item.label += ` — (${localize('empty.project', 'Empty project')})`;
         }
         item.tooltip = `${this.name}\n${this.sourceDirectory}`;
+        item.contextValue = 'nodeType=project';
         return item;
     }
 
@@ -450,16 +452,10 @@ class ProjectNode extends BaseNode {
     }
 }
 
-interface ExternalUpdateContext {
-    launchTargetName: string | null;
-    defaultTarget?: string;
-}
-
 export class WorkspaceFolderNode extends BaseNode {
     constructor(readonly wsFolder: vscode.WorkspaceFolder) {
         super(`wsf/${wsFolder.uri.fsPath}`);
     }
-    private _children: BaseNode[] = [];
 
     private _active: boolean = false;
     setActive(active: boolean) {
@@ -485,29 +481,48 @@ export class WorkspaceFolderNode extends BaseNode {
         return item;
     }
 
-    private _codeModel: codeModel.CodeModelContent = { configurations: [], toolchains: new Map<string, codeModel.CodeModelToolchain>() };
-    get codeModel() {
-        return this._codeModel;
+    private readonly _projects = new Map<string, Map<string, ProjectNode>>();
+
+    private getNode(cmakeProject: CMakeProject, modelProjectName: string) {
+        return this._projects.get(cmakeProject.folderPath)?.get(modelProjectName);
     }
-    updateCodeModel(model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
+
+    private setNode(cmakeProject: CMakeProject, modelProjectName: string, node: ProjectNode) {
+        let sub_map = this._projects.get(cmakeProject.folderPath);
+        if (!sub_map) {
+            sub_map = new Map<string, ProjectNode>();
+            this._projects.set(cmakeProject.folderPath, sub_map);
+        }
+        return sub_map.set(modelProjectName, node);
+    }
+
+    private removeNodes(cmakeProject: CMakeProject) {
+        this._projects.delete(cmakeProject.folderPath);
+    }
+
+    updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
         if (!model || model.configurations.length < 1) {
-            this._children = [];
+            this.removeNodes(cmakeProject);
             ctx.nodesToUpdate.push(this);
             return;
         }
-        this._codeModel = model;
-        const config = model.configurations[0];
-        const new_children: BaseNode[] = [];
-        for (const pr of config.projects) {
-            const item = new ProjectNode(pr.name, ctx.folder, pr.sourceDirectory);
-            item.update(pr, ctx);
-            new_children.push(item);
+
+        for (const modelProj of model.configurations[0].projects) {
+            let item = this.getNode(cmakeProject, modelProj.name);
+            if (!item) {
+                item = new ProjectNode(modelProj.name, this.wsFolder, cmakeProject.folderPath);
+                this.setNode(cmakeProject, modelProj.name, item);
+            }
+            item.update(modelProj, ctx);
         }
-        this._children = new_children;
     }
 
     getChildren() {
-        return this._children;
+        const children: BaseNode[] = [];
+        for (const sub_map of this._projects.values()) {
+            children.push(...sub_map.values());
+        }
+        return children.sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
     }
 }
 
@@ -536,7 +551,8 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         this._changeEvent.fire(null);
     }
 
-    updateCodeModel(folder: vscode.WorkspaceFolder, model: codeModel.CodeModelContent | null, ctx: ExternalUpdateContext) {
+    updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null) {
+        const folder = cmakeProject.workspaceContext.folder;
         let existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {
             rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that has not yet been loaded.'));
@@ -546,7 +562,15 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         }
 
         const updates: BaseNode[] = [];
-        existing.updateCodeModel(model, { ...ctx, nodesToUpdate: updates, folder });
+        existing.updateCodeModel(
+            cmakeProject,
+            model,
+            {
+                defaultTarget: cmakeProject.defaultBuildTarget || undefined,
+                launchTargetName: cmakeProject.launchTargetName,
+                nodesToUpdate: updates,
+                folder
+            });
 
         this._changeEvent.fire(null);
     }

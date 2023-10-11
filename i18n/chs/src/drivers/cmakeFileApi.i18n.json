@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "cmake-file-api 的 CMake 文件对象版本({0}.{1})是意外的。应为({2}.{3})。",
 	"cache.entry.unknowntype": "未知的缓存条目类型: {0}。",
 	"code.model.version": "cmake-file-api 的代码模型版本({0}.{1})不是预期版本。应为 ({2}.{3})。IntelliSense 配置可能不正确。",
+	"install.all.target": "用于安装所有可用目标的特殊目标",
 	"toolchains.object.version": "cmake-file-api 的工具链对象版本({0}.{1})不是预期版本。应为 ({2}.{3})。IntelliSense 配置可能不正确。"
 }

@@ -10,5 +10,6 @@
 	"cmake.files.object.version": "Unerwartete CMake Files-Objektversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}).",
 	"cache.entry.unknowntype": "Unbekannter Cacheeintragstyp: {0}.",
 	"code.model.version": "Unerwartete Codemodellversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch.",
+	"install.all.target": "Ein spezielles Ziel zum Installieren aller verfügbaren Ziele",
 	"toolchains.object.version": "Unerwartete Objektversion für “toolchains” ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch."
 }
