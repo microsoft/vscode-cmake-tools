@@ -1876,7 +1876,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items
-        vscode.commands.registerCommand('cmake.outline.configure', async (what: object) => {
+        vscode.commands.registerCommand('cmake.outline.configure', async (what: ProjectNode|SourceFileNode) => {
             if (what instanceof ProjectNode) {
                 await runCommand('configure', what.folder, false, what.sourceDirectory);
             } else if (what instanceof SourceFileNode) {
