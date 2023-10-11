@@ -1029,7 +1029,7 @@ export class PresetsController {
             const includePath = presetsFile.version >= 7 ?
                 // Version 7 and later support $penv{} expansions in include paths
                 substituteAll(rawInclude, getParentEnvSubstitutions(rawInclude, new Map<string, string>())).result :
-                presetsFile.include[i];
+                rawInclude;
             const fullIncludePath = path.normalize(path.resolve(path.dirname(file), includePath));
 
             // Do not include files more than once
