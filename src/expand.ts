@@ -126,6 +126,11 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
     return replaceAll(result, '${dollar}', '$');
 }
 
+// Regular expression for variable value (between the variable suffix and the next ending curly bracket):
+// .+? matches any character (except line terminators) between one and unlimited times,
+// as few times as possible, expanding as needed (lazy)
+const varValueRegexp = ".+?";
+
 async function expandStringHelper(input: string, opts: ExpansionOptions) {
     const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
     const env = EnvironmentUtils.create(envPreNormalize);
@@ -153,10 +158,6 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         }
     }
 
-    // Regular expression for variable value (between the variable suffix and the next ending curly bracket):
-    // .+? matches any character (except line terminators) between one and unlimited times,
-    // as few times as possible, expanding as needed (lazy)
-    const varValueRegexp = ".+?";
     const envRegex1 = RegExp(`\\$\\{env:(${varValueRegexp})\\}`, "g");
     while ((mat = envRegex1.exec(input))) {
         const full = mat[0];
@@ -189,13 +190,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         subs.set(full, replacement);
     }
 
-    const parentEnvRegex = RegExp(`\\$penv\\{(${varValueRegexp})\\}`, "g");
-    while ((mat = parentEnvRegex.exec(input))) {
-        const full = mat[0];
-        const varName = mat[1];
-        const replacement = fixPaths(process.env[varName]) || '';
-        subs.set(full, replacement);
-    }
+    getParentEnvSubstitutions(input, subs);
 
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
         const folderRegex = RegExp(`\\$\\{workspaceFolder:(${varValueRegexp})\\}`, "g");
@@ -241,15 +236,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         }
     }
 
-    let finalString = input;
-    let didReplacement = false;
-    subs.forEach((value, key) => {
-        if (value !== key) {
-            finalString = replaceAll(finalString, key, value);
-            didReplacement = true;
-        }
-    });
-    return { result: finalString, didReplacement, circularReference };
+    return { ...substituteAll(input, subs), circularReference };
 }
 
 export async function expandStrings(inputs: string[], opts: ExpansionOptions): Promise<string[]> {
@@ -259,4 +246,29 @@ export async function expandStrings(inputs: string[], opts: ExpansionOptions): P
         expandedInputs.push(expandedInput);
     }
     return expandedInputs;
+}
+
+export function substituteAll(input: string, subs: Map<string, string>) {
+    let finalString = input;
+    let didReplacement = false;
+    subs.forEach((value, key) => {
+        if (value !== key) {
+            finalString = replaceAll(finalString, key, value);
+            didReplacement = true;
+        }
+    });
+    return { result: finalString, didReplacement };
+}
+
+export function getParentEnvSubstitutions(input: string, subs: Map<string, string>): Map<string, string> {
+    let mat: RegExpMatchArray | null = null;
+    const parentEnvRegex = RegExp(`\\$penv\\{(${varValueRegexp})\\}`, "g");
+    while ((mat = parentEnvRegex.exec(input))) {
+        const full = mat[0];
+        const varName = mat[1];
+        const replacement = fixPaths(process.env[varName]) || '';
+        subs.set(full, replacement);
+    }
+
+    return subs;
 }
