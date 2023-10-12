@@ -9,7 +9,7 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { ExpansionOptions } from '@cmt/expand';
+import { ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
@@ -1025,7 +1025,12 @@ export class PresetsController {
 
         // Merge the includes in reverse order so that the final presets order is correct
         for (let i = presetsFile.include.length - 1; i >= 0; i--) {
-            const fullIncludePath = path.normalize(path.resolve(path.dirname(file), presetsFile.include[i]));
+            const rawInclude = presetsFile.include[i];
+            const includePath = presetsFile.version >= 7 ?
+                // Version 7 and later support $penv{} expansions in include paths
+                substituteAll(rawInclude, getParentEnvSubstitutions(rawInclude, new Map<string, string>())).result :
+                rawInclude;
+            const fullIncludePath = path.normalize(path.resolve(path.dirname(file), includePath));
 
             // Do not include files more than once
             if (referencedFiles.has(fullIncludePath)) {
