@@ -12,6 +12,7 @@ Improvements:
 - Added buttons to the project nodes in the Project Outline View. [PR #3354](https://github.com/microsoft/vscode-cmake-tools/pull/3354) [@vlavati](https://github.com/vlavati)
 - `$penv{}` macros are expanded in `include` paths in CMakePresets.json as long as `version` is 7 or higher. [#3310](https://github.com/microsoft/vscode-cmake-tools/issues/3310)
 - Disable search and select of CMakeLists.txt, if user chooses not to configure project without CMakeLists.txt in the root. [PR #3276](https://github.com/microsoft/vscode-cmake-tools/pull/3276) [@vlavati](https://github.com/vlavati)
+- If the "configure" button of CMakeLists.txt node in the Project Outline is clicked, only the corresponding project is configured. [PR #3372](https://github.com/microsoft/vscode-cmake-tools/pull/3372) [@vlavati](https://github.com/vlavati)
 
 Bug Fixes:
 - Fix Unhandled Exception if no args are specified in `cmake.getLaunchTargetFilename` inside an input context of a task. [PR #3348](https://github.com/microsoft/vscode-cmake-tools/issues/3348) [@vlavati](https://github.com/vlavati)
