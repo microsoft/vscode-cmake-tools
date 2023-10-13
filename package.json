@@ -1540,7 +1540,7 @@
           "group": "inline"
         },
         {
-          "command": "cmake.outline.configureAll",
+          "command": "cmake.outline.configure",
           "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
           "group": "inline"
         },
