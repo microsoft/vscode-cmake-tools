@@ -989,12 +989,9 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
                 path_list.push(mingwPath);
             }
             if (env.hasOwnProperty('PATH')) {
-                let current_path_list = (env['PATH']?.split(';') ?? []);
-                if (mingwPath) {
-                    // Remove other mingw from PATH as it will cause conflict
-                    current_path_list = current_path_list.filter(p => !isMingw(p));
-                }
-                path_list.unshift(current_path_list.join(';'));
+                const current_path_list = (env['PATH']?.split(';') ?? []);
+                // since mingwPath is at the front of path_list, we shouldn't need to remove other mingw from current_path_list
+                path_list.push(current_path_list.join(';'));
                 env['PATH'] = path_list.join(';');
             }
         }
