@@ -18,6 +18,7 @@ Bug Fixes:
 - Fix Unhandled Exception if no args are specified in `cmake.getLaunchTargetFilename` inside an input context of a task. [PR #3348](https://github.com/microsoft/vscode-cmake-tools/issues/3348) [@vlavati](https://github.com/vlavati)
 - Fix incorrect IntelliSense configuration with default/empty `CMAKE_BUILD_TYPE` using CMakePresets. [PR #3363](https://github.com/microsoft/vscode-cmake-tools/pull/3363) [@deribaucourt](https://github.com/deribaucourt)
 - Paths containing `mingw` are no longer removed from the `PATH` environment variable because the selected MinGW kit is added before the `PATH` environment variable, rather than after. [#220](https://github.com/microsoft/vscode-cmake-tools/issues/3220)
+- Fix a bug where `CMake: Show Configure` or `CMake: Show Build` commands would run them. [#3381](https://github.com/microsoft/vscode-cmake-tools/issues/3381) [@AbdullahAmrSobh](https://github.com/AbdullahAmrSobh)
 
 ## 1.15
 Features:
