@@ -18,7 +18,7 @@
 	"run.ctest.tests.tooltip": "Exécuter les tests CTest",
 	"run.ctest": "Exécuter CTest",
 	"build.tooltip": "Générer la cible sélectionnée",
-	"build": "Version",
+	"build": "Générer",
 	"stop": "Arrêter",
 	"click.to.change.configure.preset.tooltip": "Cliquez pour modifier la présélection de configuration active",
 	"no.configure.preset.selected": "Aucune présélection de configuration sélectionnée",
