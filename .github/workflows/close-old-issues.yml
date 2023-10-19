@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       stale-days: ${{ github.event.inputs.inactive-days || 720 }}
-      close-days: ${{ github.event.inputs.stale-label-days >= 14 && github.event.inputs.stale-label-days || -1 }}
-      stale-label: stale-old
+      close-days: ${{ github.event.inputs.stale-label-days >= 0 && github.event.inputs.stale-label-days || -1 }}
+      stale-label: stale-test
       stale-exempt-label: stale-exempt
     steps:
     - uses: actions/stale@v4.1.1
@@ -27,6 +27,7 @@ jobs:
         exempt-issue-labels: ${{ env.stale-exempt-label }}
         days-before-pr-stale: -1
         days-before-pr-close: -1
+        only-labels: for-stale-test
         days-before-stale: ${{ env.stale-days }}
         stale-issue-message: "This issue is now marked as '${{ env.stale-label }}' due to there being no activity on it for the past ${{ env.stale-days }} days. Unless the '${{ env.stale-label }}' label is removed or the issue is commented on, this will be remain open for at least 14 days and then it may be closed. If you would like to make this issue exempt from getting stale, please add the '${{ env.stale-exempt-label }}' label."
         days-before-close: ${{ env.close-days }}
