@@ -924,6 +924,8 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
     expansionOpts.envOverride = inheritedEnv;
 
+    preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
+
     // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
     // but they are not on PATH, then set the env automatically.
     if (process.platform === 'win32') {
