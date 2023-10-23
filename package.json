@@ -412,6 +412,16 @@
         }
       },
       {
+        "command": "cmake.projectStatus.openSettings",
+        "title": "%cmake-tools.command.cmake.openSettings.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/settings-icon.svg",
+          "light": "res/light/settings-icon.svg"
+        }
+      },
+      {
         "command": "cmake.cleanConfigureWithDebugger",
         "title": "%cmake-tools.command.cmake.cleanConfigureWithDebugger.title%",
         "category": "CMake",
@@ -654,6 +664,11 @@
       {
         "command": "cmake.resetState",
         "title": "%cmake-tools.command.cmake.resetState.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.openSettings",
+        "title": "%cmake-tools.command.cmake.openSettings.title%",
         "category": "CMake"
       },
       {
@@ -1002,6 +1017,9 @@
           "command": "cmake.resetState"
         },
         {
+          "command": "cmake.openSettings"
+        },
+        {
           "command": "cmake.configureAll",
           "when": "cmake:multiProject"
         },
@@ -1261,6 +1279,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.projectStatus.openSettings",
+          "when": "never"
+        },
+        {
           "command": "cmake.projectStatus.setVariant",
           "when": "never"
         },
@@ -1332,6 +1354,11 @@
           "group": "navigation@4"
         },
         {
+          "command": "cmake.projectStatus.openSettings",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet",
+          "group": "navigation@5"
+        },
+        {
           "command": "cmake.outline.configureAll",
           "when": "view == cmake.outline && !cmake:isBuilding",
           "group": "navigation@1"
@@ -1396,6 +1423,11 @@
         {
           "command": "cmake.projectStatus.cleanConfigure",
           "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'cleanConfigure'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.openSettings",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'openSettings'",
           "group": "inline"
         },
         {

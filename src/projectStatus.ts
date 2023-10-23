@@ -28,6 +28,9 @@ export class ProjectStatus {
                 await runCommand('cleanConfigure');
                 await this.refresh();
             }),
+            vscode.commands.registerCommand('cmake.projectStatus.openSettings', async(_node: Node) => {
+                await runCommand('openSettings');
+            }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (_node: Node) => {
                 await runCommand('selectKit');
                 await this.refresh();
