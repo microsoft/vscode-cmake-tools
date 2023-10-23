@@ -840,13 +840,13 @@ function parseToolset(toolset: string): Toolset {
 async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
-        return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
+        return expandConfigurePresetHelper(folder, name, preset, workspaceFolder, sourceDir);
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userConfigurePresets(folder), name);
         if (preset) {
-            return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir, true);
+            return expandConfigurePresetHelper(folder, name, preset, workspaceFolder, sourceDir, true);
         }
     }
 
@@ -854,7 +854,7 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
     return null;
 }
 
-async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
+async function expandConfigurePresetHelper(folder: string, name: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -934,14 +934,17 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
             // The env variables for the supported compilers are the same.
             const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+            const expandedPreset: ConfigurePreset = { name };
+            const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
             if (compilerName) {
+                expandedPreset.environment = EnvironmentUtils.createPreserveNull();
                 for (const key in preset.environment) {
                     if (preset.environment[key]) {
-                        preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+                        expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
                     }
                 }
                 const compilerLocation = await execute('where.exe', [compilerName], null, {
-                    environment: EnvironmentUtils.create(preset.environment),
+                    environment: EnvironmentUtils.create(expandedPreset.environment),
                     silent: true,
                     encoding: 'utf8',
                     shell: true
