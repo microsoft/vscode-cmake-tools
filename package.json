@@ -402,6 +402,16 @@
         "title": "%cmake-tools.command.cmake.outline.cleanConfigure.title%"
       },
       {
+        "command": "cmake.projectStatus.cleanConfigure",
+        "title": "%cmake-tools.command.cmake.projectStatus.cleanConfigure.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/dark/clean-configure-icon.svg",
+          "light": "res/light/clean-configure-icon.svg"
+        }
+      },
+      {
         "command": "cmake.cleanConfigureWithDebugger",
         "title": "%cmake-tools.command.cmake.cleanConfigureWithDebugger.title%",
         "category": "CMake",
@@ -1247,6 +1257,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.projectStatus.cleanConfigure",
+          "when": "never"
+        },
+        {
           "command": "cmake.projectStatus.setVariant",
           "when": "never"
         },
@@ -1298,19 +1312,24 @@
           "group": "navigation@1"
         },
         {
+          "command": "cmake.projectStatus.cleanConfigure",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet",
+          "group": "navigation@2"
+        },
+        {
           "command": "cmake.projectStatus.stop",
           "when": "view == cmake.projectStatus && cmake:isBuilding && cmake:enableFullFeatureSet",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "cmake.projectStatus.debugTarget",
           "when": "view == cmake.projectStatus && !cmake:isBuilding && !cmake:hideDebugCommand && cmake:enableFullFeatureSet",
-          "group": "navigation@3"
+          "group": "navigation@4"
         },
         {
           "command": "cmake.projectStatus.launchTarget",
           "when": "view == cmake.projectStatus && !cmake:isBuilding && !cmake:hideLaunchCommand && cmake:enableFullFeatureSet",
-          "group": "navigation@3"
+          "group": "navigation@4"
         },
         {
           "command": "cmake.outline.configureAll",
@@ -1372,6 +1391,11 @@
         {
           "command": "cmake.projectStatus.configure",
           "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'configure'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.cleanConfigure",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'cleanConfigure'",
           "group": "inline"
         },
         {
