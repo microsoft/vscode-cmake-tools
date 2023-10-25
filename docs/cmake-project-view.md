@@ -21,5 +21,5 @@ The default settings will be set to
   “statusBarVisibility”: “default” 
 }
 }
-<\span>
 ```
+<\span>
