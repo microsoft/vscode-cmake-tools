@@ -185,12 +185,17 @@ suite('Debug/Launch interface', () => {
         const exists = fs.existsSync(createdFileOnExecution);
         // Check that it is compiled as a new file
         expect(exists).to.be.true;
+
+        terminal?.dispose();
+
+        // Needed to ensure things get disposed
+        await new Promise((resolve) => setTimeout(resolve, 3000));
     }).timeout(60000);
 
     test('Test launch same target multiple times when newTerminal run is enabled', async () => {
         testEnv.config.updatePartial({
             buildBeforeRun: false,
-            launchBehavior: 'newTerminal'
+            launchBehavior: "newTerminal"
         });
 
         const executablesTargets = await cmakeProject.executableTargets;
@@ -201,7 +206,10 @@ suite('Debug/Launch interface', () => {
         expect(launchProgramPath).to.be.not.null;
 
         // Remove file if exists
-        const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
+        const createdFileOnExecution = path.join(
+            path.dirname(launchProgramPath!),
+            "test.txt"
+        );
         if (fs.existsSync(createdFileOnExecution)) {
             fs.unlinkSync(createdFileOnExecution);
         }
@@ -212,16 +220,23 @@ suite('Debug/Launch interface', () => {
 
         const term2 = await cmakeProject.launchTarget();
         expect(term2).to.be.not.null;
-        expect(term2!.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
+        expect(term2!.name).to.eq(
+            `CMake/Launch - ${executablesTargets[0].name}`
+        );
 
         const term2Pid = await term2?.processId;
         expect(term1Pid).to.not.eq(term2Pid);
+        term1?.dispose();
+        term2?.dispose();
+
+        // Needed to ensure things get disposed
+        await new Promise((resolve) => setTimeout(resolve, 3000));
     }).timeout(60000);
 
     test('Test launch same target multiple times when newTerminal run is disabled', async () => {
         testEnv.config.updatePartial({
             buildBeforeRun: false,
-            launchBehavior: 'reuseTerminal'
+            launchBehavior: "reuseTerminal"
         });
 
         const executablesTargets = await cmakeProject.executableTargets;
@@ -232,7 +247,10 @@ suite('Debug/Launch interface', () => {
         expect(launchProgramPath).to.be.not.null;
 
         // Remove file if exists
-        const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
+        const createdFileOnExecution = path.join(
+            path.dirname(launchProgramPath!),
+            "test.txt"
+        );
         if (fs.existsSync(createdFileOnExecution)) {
             fs.unlinkSync(createdFileOnExecution);
         }
@@ -246,6 +264,11 @@ suite('Debug/Launch interface', () => {
 
         const term2Pid = await term2?.processId;
         expect(term1Pid).to.eq(term2Pid);
+        term1?.dispose();
+        term2?.dispose();
+
+        // Needed to ensure things get disposed
+        await new Promise((resolve) => setTimeout(resolve, 3000));
     }).timeout(60000);
 });
 

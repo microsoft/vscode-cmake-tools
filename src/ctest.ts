@@ -105,7 +105,7 @@ interface CTestInfo {
         backtrace: number;
         command: string[];
         name: string;
-        properties: { name: string; value: string }[];
+        properties: { name: string; value: string | string[] }[];
     }[];
     version: { major: number; minor: number };
 }
@@ -285,13 +285,61 @@ export class CTestDriver implements vscode.Disposable {
         if (!testExplorer) {
             log.info(localize('no.tests.found', 'No tests found'));
             return -1;
-        } else {
+        } else if (!this.ws.config.ctestAllowParallelJobs) {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
             const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
             run.end();
             return returnCode;
+        } else {
+            // below code taken from #3032 PR (before changes in how tests are run)
+            const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
+            if (ctestpath === null) {
+                log.info(localize('ctest.path.not.set', 'CTest path is not set'));
+                return -2;
+            }
+
+            let ctestArgs: string[];
+            if (customizedTask && testPreset) {
+                ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
+            } else if (!customizedTask && driver.useCMakePresets) {
+                if (!driver.testPreset) {
+                    log.error(localize('test.preset.not.set', 'Test preset is not set'));
+                    return -3;
+                }
+                // Add a few more args so we can show the result in status bar
+                ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
+            } else {
+                const configuration = driver.currentBuildType;
+                const opts = driver.expansionOptions;
+                const jobs = await expandString(this.ws.config.numCTestJobs, opts);
+                const defaultArgs = [];
+                for (const value of this.ws.config.ctestDefaultArgs) {
+                    defaultArgs.push(await expandString(value, opts));
+                }
+                const args = [];
+                for (const value of this.ws.config.ctestArgs) {
+                    args.push(await expandString(value, opts));
+                }
+                ctestArgs = [`-j${jobs}`, '-C', configuration].concat(defaultArgs, args);
+            }
+
+            const child = driver.executeCommand(
+                ctestpath,
+                ctestArgs,
+                ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
+                { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
+            const res = await child.result;
+            // not sure if direct comparison can be made to replace reloadTests with refreshTests
+            await this.refreshTests(driver);
+            if (res.retc === null) {
+                log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
+                return -1;
+            } else {
+                log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
+            }
+            return res.retc;
         }
     }
 
@@ -552,18 +600,36 @@ export class CTestDriver implements vscode.Disposable {
             this.tests = JSON.parse(result.stdout) ?? undefined;
             if (this.tests && this.tests.kind === 'ctestInfo') {
                 this.tests.tests.forEach(test => {
+                    let testItem: vscode.TestItem;
                     if (test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
                         const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
                         const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
-                        const testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
+                        testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
                         if (testDefLine !== undefined) {
                             testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
                         }
-                        testExplorerRoot.children.add(testItem);
                     } else {
-                        const testItem = initializedTestExplorer.createTestItem(test.name, test.name);
-                        testExplorerRoot.children.add(testItem);
+                        testItem = initializedTestExplorer.createTestItem(test.name, test.name);
                     }
+
+                    const testTags: vscode.TestTag[] = [];
+                    if (test.properties) {
+                        for (const property of test.properties) {
+                            if (property.name === "LABELS") {
+                                if (util.isString(property.value)) {
+                                    testTags.push(new vscode.TestTag(property.value));
+                                } else {
+                                    testTags.push(...property.value.map(v => new vscode.TestTag(v)));
+                                }
+                            }
+                        }
+                    }
+
+                    if (testTags.length !== 0) {
+                        testItem.tags = [...testItem.tags, ...testTags];
+                    }
+
+                    testExplorerRoot.children.add(testItem);
                 });
             };
         }
@@ -587,7 +653,7 @@ export class CTestDriver implements vscode.Disposable {
     /**
      * Filters out duplicate tests, i.e., both the parent and child are requested
      */
-    private uniqueTests(tests: vscode.TestItem[]): vscode.TestItem[] {
+    private uniqueTests(tests: readonly vscode.TestItem[]): vscode.TestItem[] {
         const parents = new Set<string>();
         tests.forEach(t => {
             if (!t.parent) {
@@ -732,6 +798,8 @@ export class CTestDriver implements vscode.Disposable {
         // Commands can't be used to replace array (i.e., args); and both test program and test args requires folder and
         // test name as parameters, which means one lauch config for each test. So replacing them here is a better way.
         chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testProgram}', this.testProgram(testName));
+        chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
+
         // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
         // since we need to repalce the quotes as well.
         chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
@@ -785,6 +853,17 @@ export class CTestDriver implements vscode.Disposable {
                     return test.command[0];
                 }
             }
+        }
+        return '';
+    }
+
+    private testWorkingDirectory(testName: string): string {
+        const property = this.tests?.tests
+            .find(test => test.name === testName)?.properties
+            .find(prop => prop.name === 'WORKING_DIRECTORY');
+
+        if (typeof(property?.value) === 'string') {
+            return property.value;
         }
         return '';
     }
@@ -902,7 +981,7 @@ export class CTestDriver implements vscode.Disposable {
      */
     private ensureTestExplorerInitialized(): vscode.TestController {
         if (!testExplorer) {
-            testExplorer = vscode.tests.createTestController('cmakeToolsCTest', 'CTest');
+            testExplorer = vscode.tests.createTestController('cmake-tools.CTest', 'CTest');
 
             // Cast to any since this is not supported yet in the API we use.
             (testExplorer as any).refreshHandler = () => vscode.commands.executeCommand('cmake.refreshTestsAll');

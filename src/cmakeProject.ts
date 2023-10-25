@@ -47,7 +47,7 @@ import { PresetsController } from './presetsController';
 import paths from './paths';
 import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
-import { DebugTrackerFactory, DebuggerInformation } from './debug/debuggerConfigureDriver';
+import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1391,7 +1391,7 @@ export class CMakeProject {
                                             result = await drv.cleanConfigure(trigger, extraArgs, consumer, debuggerInformation);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
-                                            result = await drv.configure(trigger, extraArgs, consumer, undefined, true);
+                                            result = await drv.configure(trigger, extraArgs, consumer, undefined, false, true);
                                             break;
                                         default:
                                             rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
@@ -1415,7 +1415,9 @@ export class CMakeProject {
                                         {title: localize('no.configureWithDebugger.button', 'Cancel')})
                                         .then(async chosen => {
                                             if (chosen && chosen.title === yesButtonTitle) {
-                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugger);
+                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugger, {
+                                                    pipeName: getDebuggerPipeName()
+                                                });
                                             }
                                         });
                                 }

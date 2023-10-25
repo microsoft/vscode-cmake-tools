@@ -1855,7 +1855,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         testPreset: preset.TestPreset | null,
         preferredGenerators: CMakeGenerator[]) {
         this._useCMakePresets = useCMakePresets;
-        log.debug(`Initializating base driver using ${useCMakePresets ? 'preset' : 'kit'}`);
+        const initBaseDriverWithPresetLoc = localize("init.driver.using.preset", "Initializing base driver using preset");
+        const initBaseDriverWithKitLoc = localize("init.driver.using.kit", "Initializing base driver using kit");
+        log.debug(`${useCMakePresets ? initBaseDriverWithPresetLoc : initBaseDriverWithKitLoc}`);
         // Load up kit or presets before starting any drivers.
         if (useCMakePresets) {
             if (configurePreset) {
