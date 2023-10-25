@@ -1472,7 +1472,7 @@ export class ExtensionManager implements vscode.Disposable {
         void vscode.commands.executeCommand('workbench.action.reloadWindow');
     }
 
-    async openSettings() {
+    openSettings() {
         void vscode.commands.executeCommand('workbench.action.openSettings', '@ext:ms-vscode.cmake-tools');
     }
 
