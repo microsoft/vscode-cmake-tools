@@ -3,7 +3,7 @@ import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { runCommand } from './util';
-import { ConfigurationReader, ProjectStatusButtonVisibility, StatusConfig } from './config';
+import { ConfigurationReader, StatusConfig } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -157,12 +157,12 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             this.activeCMakeProject = cmakeProject;
             await this.doStatusChange(status);
         } else {
-            this.isFolderButtonHidden = true;
-            this.isConfigButtonHidden = true;
-            this.isBuildButtonHidden = true;
-            this.isTestButtonHidden = true;
-            this.isDebugButtonHidden = true;
-            this.isLaunchButtonHidden = true;
+            this.isConfigButtonHidden = false;
+            this.isFolderButtonHidden = false;
+            this.isBuildButtonHidden = false;
+            this.isTestButtonHidden = false;
+            this.isDebugButtonHidden = false;
+            this.isLaunchButtonHidden = false;
         }
         await this.refresh();
     }
@@ -251,34 +251,34 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         let didChange: boolean = false;
         if (this.activeCMakeProject) {
             const folderVisibility = status?.advanced?.folder?.projectStatusVisibility !== "hidden";
-            if (folderVisibility !== this.isFolderButtonHidden) {
+            if (folderVisibility === this.isFolderButtonHidden) {
                 didChange = true;
-                this.isFolderButtonHidden = folderVisibility;
+                this.isFolderButtonHidden = !folderVisibility;
             }
             const configureVisibility = status?.advanced?.configure?.projectStatusVisibility !== "hidden";
-            if (configureVisibility !== this.isConfigButtonHidden) {
+            if (configureVisibility === this.isConfigButtonHidden) {
                 didChange = true;
-                this.isConfigButtonHidden = configureVisibility;
+                this.isConfigButtonHidden = !configureVisibility;
             }
             const buildVisibility = status?.advanced?.build?.projectStatusVisibility !== "hidden";
-            if (buildVisibility !== this.isBuildButtonHidden) {
+            if (buildVisibility === this.isBuildButtonHidden) {
                 didChange = true;
-                this.isBuildButtonHidden = buildVisibility;
+                this.isBuildButtonHidden = !buildVisibility;
             }
             const testVisibility = status?.advanced?.ctest?.projectStatusVisibility !== "hidden";
-            if (testVisibility !== this.isTestButtonHidden) {
+            if (testVisibility === this.isTestButtonHidden) {
                 didChange = true;
-                this.isTestButtonHidden = testVisibility;
+                this.isTestButtonHidden = !testVisibility;
             }
             const debugVisibility = status?.advanced?.debug?.projectStatusVisibility !== "hidden";
-            if (debugVisibility !== this.isDebugButtonHidden) {
+            if (debugVisibility === this.isDebugButtonHidden) {
                 didChange = true;
-                this.isDebugButtonHidden = debugVisibility;
+                this.isDebugButtonHidden = !debugVisibility;
             }
             const launchVisibility = status?.advanced?.launch?.projectStatusVisibility !== "hidden";
-            if (launchVisibility !== this.isLaunchButtonHidden) {
+            if (launchVisibility === this.isLaunchButtonHidden) {
                 didChange = true;
-                this.isLaunchButtonHidden = launchVisibility;
+                this.isLaunchButtonHidden = !launchVisibility;
             }
         }
         if (didChange) {

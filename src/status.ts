@@ -133,7 +133,10 @@ abstract class Button {
     }
     private _getVisibilitySetting(): StatusBarButtonVisibility | StatusBarTextButtonVisibility | StatusBarStaticButtonVisibility | null {
         if (this.settingsName) {
-            const setting = Object(this.config.status)[this.settingsName]?.statusBarVisibility;
+            let setting = Object(this.config.status.advanced)[this.settingsName]?.statusBarVisibility;
+            if (setting === undefined) {
+                setting = this.config.status.statusBarVisibility;
+            }
             return setting || null;
         }
         return null;
@@ -287,7 +290,7 @@ class KitSelection extends Button {
     }
 
     protected getTextShort(): string {
-        let len = this.config.status.kit?.statusBarLength || 0;
+        let len = this.config.status.advanced?.kit?.statusBarLength || 0;
         if (!Number.isInteger(len) || len <= 0) {
             len = 20;
         }
@@ -319,7 +322,7 @@ class BuildTargetSelectionButton extends Button {
     }
 
     protected getTextShort(): string {
-        let len = this.config.status.buildTarget?.statusBarLength || 0;
+        let len = this.config.status.advanced?.buildTarget?.statusBarLength || 0;
         if (!Number.isInteger(len) || len <= 0) {
             len = 20;
         }
@@ -351,7 +354,7 @@ class LaunchTargetSelectionButton extends Button {
     }
 
     protected getTextShort(): string {
-        let len = this.config.status.launchTarget?.statusBarLength || 0;
+        let len = this.config.status.advanced?.launchTarget?.statusBarLength || 0;
         if (!Number.isInteger(len) || len <= 0) {
             len = 20;
         }
@@ -436,7 +439,7 @@ class CTestButton extends Button {
 
     update(): void {
         this.icon = 'beaker';
-        if (this.config.status.ctest?.color === true) {
+        if (this.config.status.advanced?.ctest?.color === true) {
             this.button.color = this._color;
         } else {
             this.button.color = '';
@@ -454,7 +457,7 @@ class CTestButton extends Button {
     }
 
     protected getTextShort(): string {
-        let len = this.config.status.ctest?.statusBarLength || 0;
+        let len = this.config.status.advanced?.ctest?.statusBarLength || 0;
         if (!Number.isInteger(len) || len <= 0) {
             len = 20;
         }
@@ -546,7 +549,7 @@ export class ConfigurePresetSelection extends Button {
     }
 
     protected getTextShort(): string {
-        let len = this.config.status.configurePreset?.statusBarLength || 0;
+        let len = this.config.status.advanced?.configurePreset?.statusBarLength || 0;
         if (!Number.isInteger(len) || len <= 0) {
             len = 20;
         }
@@ -589,7 +592,7 @@ export class BuildPresetSelection extends Button {
     }
 
     protected getTextShort(): string {
-        let len = this.config.status.buildPreset?.statusBarLength || 0;
+        let len = this.config.status.advanced?.buildPreset?.statusBarLength || 0;
         if (!Number.isInteger(len) || len <= 0) {
             len = 20;
         }
@@ -632,7 +635,7 @@ export class TestPresetSelection extends Button {
     }
 
     protected getTextShort(): string {
-        let len = this.config.status.testPreset?.statusBarLength || 0;
+        let len = this.config.status.advanced?.testPreset?.statusBarLength || 0;
         if (!Number.isInteger(len) || len <= 0) {
             len = 20;
         }

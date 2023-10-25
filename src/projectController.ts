@@ -32,7 +32,6 @@ export class ProjectController implements vscode.Disposable {
     private readonly buildDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly useCMakePresetsSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
-    private readonly useProjectStatusView = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly hideDebugButtonSub  = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
