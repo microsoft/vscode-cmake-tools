@@ -1460,6 +1460,10 @@ export class ExtensionManager implements vscode.Disposable {
         void vscode.commands.executeCommand('workbench.action.reloadWindow');
     }
 
+    openSettings() {
+        void vscode.commands.executeCommand('workbench.action.openSettings', '@ext:ms-vscode.cmake-tools');
+    }
+
     async viewLog() {
         telemetry.logEvent("openLogFile");
         await logging.showLogFile();
@@ -1831,6 +1835,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'selectLaunchTarget',
         'setDefaultTarget',
         'resetState',
+        'openSettings',
         'viewLog',
         'logDiagnostics',
         'compileFile',
