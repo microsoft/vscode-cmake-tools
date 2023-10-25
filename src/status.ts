@@ -1,4 +1,4 @@
-import { ConfigurationReader, StatusBarButtonVisibility, StatusBarTextButtonVisibility, StatusBarStaticButtonVisibility } from '@cmt/config';
+import { ConfigurationReader, StatusBarButtonVisibility, StatusBarTextButtonVisibility, StatusBarStaticButtonVisibility, StatusBarIconButtonVisibility } from '@cmt/config';
 import { SpecialKits } from '@cmt/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -131,7 +131,7 @@ abstract class Button {
     private _isVisible(): boolean {
         return this.isVisible() && this._getVisibilitySetting() !== 'hidden';
     }
-    private _getVisibilitySetting(): StatusBarButtonVisibility | StatusBarTextButtonVisibility | StatusBarStaticButtonVisibility | null {
+    private _getVisibilitySetting(): StatusBarButtonVisibility | StatusBarTextButtonVisibility | StatusBarStaticButtonVisibility | StatusBarIconButtonVisibility | null {
         if (this.settingsName) {
             let setting = Object(this.config.status.advanced)[this.settingsName]?.statusBarVisibility;
             if (setting === undefined) {

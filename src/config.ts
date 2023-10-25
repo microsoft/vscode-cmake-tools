@@ -26,6 +26,7 @@ export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'autom
 export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
 export type StatusBarStaticButtonVisibility = "default" | "icon" | "hidden";
 export type StatusBarTextButtonVisibility = "default" | "compact" | "hidden";
+export type StatusBarIconButtonVisibility = "default" | "hidden";
 export type ProjectStatusButtonVisibility = "default" | "hidden";
 export type TouchBarButtonVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
@@ -91,11 +92,11 @@ export interface AdvancedStatusConfig {
     };
     debug?: {
         projectStatusVisibility?: ProjectStatusButtonVisibility;
-        statusBarVisibility?: StatusBarStaticButtonVisibility;
+        statusBarVisibility?: StatusBarIconButtonVisibility;
     };
     launch?: {
         projectStatusVisibility?: ProjectStatusButtonVisibility;
-        statusBarVisibility?: StatusBarStaticButtonVisibility;
+        statusBarVisibility?: StatusBarIconButtonVisibility;
     };
     ctest?: {
         projectStatusVisibility?: ProjectStatusButtonVisibility;

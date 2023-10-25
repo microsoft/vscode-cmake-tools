@@ -13,7 +13,7 @@ import * as nls from 'vscode-nls';
 import * as api from 'vscode-cmake-tools';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
-import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
+import { ConfigurationReader, getSettingsChangePromise, StatusConfig, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { ProjectController, FolderProjectType} from '@cmt/projectController';
 
@@ -228,7 +228,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * The project status view controller
      */
-    private readonly projectStatus = new ProjectStatus(this.workspaceConfig);
+    projectStatus = new ProjectStatus();
 
     // NOTE: (from sidebar) The project controller manages all the projects in the workspace
     public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus);
@@ -581,7 +581,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     // Update the active project
     private async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, editor?: vscode.TextEditor): Promise<void> {
-        await this.projectController.updateActiveProject(workspaceFolder, editor);
+        await this.projectController.updateActiveProject(workspaceFolder, editor, this.workspaceConfig.status);
         await this.postUpdateActiveProject();
     }
 

@@ -92,19 +92,19 @@ export class ProjectController implements vscode.Disposable {
     }
 
     private activeProject: CMakeProject | undefined;
-    async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor): Promise<void> {
+    async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, openEditor?: vscode.TextEditor, status?: StatusConfig): Promise<void> {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(workspaceFolder);
         if (projects && projects.length > 0) {
             if (openEditor) {
                 for (const project of projects) {
                     if (util.isFileInsideFolder(openEditor.document.uri, project.folderPath)) {
-                        await this.setActiveProject(project);
+                        await this.setActiveProject(project, status);
                         break;
                     }
                 }
                 if (!this.activeProject) {
                     if (util.isFileInsideFolder(openEditor.document.uri, projects[0].workspaceFolder.uri.fsPath)) {
-                        await this.setActiveProject(projects[0]);
+                        await this.setActiveProject(projects[0], status);
                     }
                 }
                 // If active project is found, return.
@@ -113,17 +113,17 @@ export class ProjectController implements vscode.Disposable {
                 }
             } else {
                 // Set a default active project.
-                await this.setActiveProject(projects[0]);
+                await this.setActiveProject(projects[0], status);
                 return;
             }
         }
         await this.setActiveProject(undefined);
     }
 
-    async setActiveProject(project?: CMakeProject): Promise<void> {
+    async setActiveProject(project?: CMakeProject, status?: StatusConfig): Promise<void> {
         this.activeProject = project;
         void this.updateUsePresetsState(this.activeProject);
-        await this.projectStatus.updateActiveProject(project);
+        await this.projectStatus.updateActiveProject(project, status);
         await this.setupProjectSubscriptions(project);
     }
 
@@ -334,7 +334,7 @@ export class ProjectController implements vscode.Disposable {
             this.folderToProjectsMap.set(folder.uri.fsPath, projects);
             const config: ConfigurationReader | undefined = workspaceContext.config;
             if (config) {
-                this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories)));
+                this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories, config.status)));
                 this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(config, folder)));
                 this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(config, folder)));
                 this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
@@ -379,7 +379,7 @@ export class ProjectController implements vscode.Disposable {
         this.useCMakePresetsSub.delete(folder);
     }
 
-    private async doSourceDirectoryChange(folder: vscode.WorkspaceFolder, value: string | string[]) {
+    private async doSourceDirectoryChange(folder: vscode.WorkspaceFolder, value: string | string[], status: StatusConfig) {
         let sourceDirectories: string[] = [];
         if (typeof (value) === 'string') {
             sourceDirectories = [value];
@@ -416,7 +416,7 @@ export class ProjectController implements vscode.Disposable {
             for (let i = 0; i < sourceDirectories.length; i++) {
                 const cmakeProject: CMakeProject = await CMakeProject.create(workspaceContext, sourceDirectories[i], this, sourceDirectories.length > 1);
                 if (activeProjectPath === cmakeProject.sourceDir) {
-                    await this.setActiveProject(cmakeProject);
+                    await this.setActiveProject(cmakeProject, status);
 
                     activeProjectPath = undefined;
                 }
@@ -426,7 +426,7 @@ export class ProjectController implements vscode.Disposable {
 
             if (activeProjectPath !== undefined) {
                 // Active project is no longer available. Pick a different one.
-                await this.setActiveProject(projects.length > 0 ? projects[0] : undefined);
+                await this.setActiveProject(projects.length > 0 ? projects[0] : undefined, status);
 
             }
 
@@ -470,7 +470,7 @@ export class ProjectController implements vscode.Disposable {
                 project.doStatusChange(status);
             }
         }
-        await this.projectStatus.doStatusChange();
+        await this.projectStatus.doStatusChange(status);
         await util.setContextValue(ext.hideBuildCommandKey, (status.advanced?.build?.statusBarVisibility === "hidden" && status?.advanced?.build?.projectStatusVisibility === "hidden") ? true : false);
         await util.setContextValue(ext.hideDebugCommandKey, (status.advanced?.debug?.statusBarVisibility === "hidden" && status?.advanced?.debug?.projectStatusVisibility === "hidden") ? true : false);
         await util.setContextValue(ext.hideLaunchCommandKey, (status.advanced?.launch?.statusBarVisibility === "hidden" && status?.advanced?.launch?.projectStatusVisibility === "hidden") ? true : false);

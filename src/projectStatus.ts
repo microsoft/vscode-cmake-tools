@@ -18,9 +18,8 @@ export class ProjectStatus {
 
     protected disposables: vscode.Disposable[] = [];
 
-    constructor(protected readonly config: ConfigurationReader) {
+    constructor() {
         treeDataProvider = new TreeDataProvider();
-        this.config.onChange('status', () => this.doStatusChange());
         this.disposables.push(...[
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
@@ -86,9 +85,9 @@ export class ProjectStatus {
         ]);
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
+    async updateActiveProject(cmakeProject?: CMakeProject, status?: StatusConfig): Promise<void> {
         // Update Active Project
-        await treeDataProvider.updateActiveProject(cmakeProject, this.config.status);
+        await treeDataProvider.updateActiveProject(cmakeProject, status);
     }
 
     refresh(node?: Node): Promise<any> {
@@ -120,8 +119,8 @@ export class ProjectStatus {
         await treeDataProvider.setIsBusy(isBusy);
     }
 
-    async doStatusChange() {
-        await treeDataProvider.doStatusChange(this.config.status);
+    async doStatusChange(status: StatusConfig) {
+        await treeDataProvider.doStatusChange(status);
     }
 
 }
@@ -247,6 +246,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         }
     }
 
+    // TODO: get rid of undefined?
     public async doStatusChange(status: StatusConfig | undefined) {
         let didChange: boolean = false;
         if (this.activeCMakeProject) {
