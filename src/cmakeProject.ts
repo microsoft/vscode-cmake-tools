@@ -1369,7 +1369,7 @@ export class CMakeProject {
                                             result = await drv.cleanConfigure(trigger, extraArgs, consumer, debuggerInformation);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
-                                            result = await drv.configure(trigger, extraArgs, consumer, undefined, true);
+                                            result = await drv.configure(trigger, extraArgs, consumer, undefined, false, true);
                                             break;
                                         default:
                                             rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });

@@ -1,29 +1,34 @@
 name: Close Old Issues
 on:
+  schedule:
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
-      readonly:
-        description: "readonly: Specify true or 1 to prevent changes from being commited to GitHub"
-        default: false
+      inactive-days:
+        description: "inactive-days: Specify how many days the issue has to have had no activity to get the 'stale-old' label."
+        type: number
+        default: 720
+      stale-label-days:
+        description: "stale-label-days: Specify how many days the issue has to have had the 'stale-old' label to be closed. Must be >= 14 days or will default to -1 days (never)."
+        type: number
+        default: -1
 jobs:
   stale:
     runs-on: ubuntu-latest
     env:
-      stale-days: 720
-      close-days: 30
+      stale-days: ${{ github.event.inputs.inactive-days || 720 }}
+      close-days: ${{ github.event.inputs.stale-label-days >= 14 && github.event.inputs.stale-label-days || -1 }}
       stale-label: stale-old
       stale-exempt-label: stale-exempt
     steps:
     - uses: actions/stale@v4.1.1
       with:
-        stale-issue-label: $stale-label
-        exempt-issue-labels: $stale-exempt-label
+        stale-issue-label: ${{ env.stale-label }}
+        exempt-issue-labels: ${{ env.stale-exempt-label }}
         days-before-pr-stale: -1
         days-before-pr-close: -1
-        days-before-stale: $stale-days
-        stale-issue-message: "This issue is now marked as '$stale-label' due to there being no activity on it for the past $stale-days days. Unless the '$stale-label' label is removed or the issue is commented on, this will be remain open for at least $close-days days and then it may be closed. If you would like to make this issue exempt from getting stale, please add the '$stale-exempt-label' label."
-        days-before-close: $close-days
-        close-issue-reason: not_planned
-        close-issue-message: "This issue is now closed due to there being no activity on it for the past $close-days days since being marked as '$stale-label'."
-        operations-per-run: 50
-
+        days-before-stale: ${{ env.stale-days }}
+        stale-issue-message: "This issue is now marked as '${{ env.stale-label }}' due to there being no activity on it for the past ${{ env.stale-days }} days. Unless the '${{ env.stale-label }}' label is removed or the issue is commented on, this will be remain open for at least 14 days and then it may be closed. If you would like to make this issue exempt from getting stale, please add the '${{ env.stale-exempt-label }}' label."
+        days-before-close: ${{ env.close-days }}
+        close-issue-message: "This issue is now closed due to there being no activity on it for the past ${{ env.close-days }} days since being marked as '${{ env.stale-label }}'."
+        operations-per-run: 500
