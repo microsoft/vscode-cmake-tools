@@ -3,7 +3,7 @@ import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { runCommand } from './util';
-import { ConfigurationReader, StatusConfig } from './config';
+import { StatusConfig } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

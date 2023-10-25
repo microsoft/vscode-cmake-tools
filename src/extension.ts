@@ -13,7 +13,7 @@ import * as nls from 'vscode-nls';
 import * as api from 'vscode-cmake-tools';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
-import { ConfigurationReader, getSettingsChangePromise, StatusConfig, TouchBarConfig } from '@cmt/config';
+import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { ProjectController, FolderProjectType} from '@cmt/projectController';
 
