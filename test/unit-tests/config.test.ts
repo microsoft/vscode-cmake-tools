@@ -57,11 +57,10 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         touchbar: {
             visibility: "default"
         },
-        statusbar: {
+        status: {
             advanced: {},
-            visibility: "default"
+            statusBarVisibility: "default"
         },
-        useProjectStatusView: true,
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
         allowUnsupportedPresetsVersions: false,

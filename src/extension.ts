@@ -50,7 +50,6 @@ import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '.
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
-export let projectStatus: ProjectStatus;
 
 const log = logging.createLogger('extension');
 
@@ -173,9 +172,6 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
-        this.workspaceConfig.onChange('useProjectStatusView', v => {
-            telemetry.logEvent('configChanged.useProjectStatusView', { useProjectStatusView: `${v}`});
-        });
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         });
@@ -214,10 +210,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     public showStatusBar(fullFeatureSet: boolean) {
-        const useProjectStatusView = this.workspaceConfig.useProjectStatusView;
-        if (!useProjectStatusView) {
-            this.statusBar.setVisible(fullFeatureSet);
-        }
+        this.statusBar.setVisible(fullFeatureSet);
     }
 
     public getStatusBar(): StatusBar {
@@ -232,13 +225,13 @@ export class ExtensionManager implements vscode.Disposable {
         const inst = new ExtensionManager(ctx);
         return inst;
     }
+    /**
+     * The project status view controller
+     */
+    private readonly projectStatus = new ProjectStatus(this.workspaceConfig);
 
     // NOTE: (from sidebar) The project controller manages all the projects in the workspace
-    /**
-     * NOTE: (from revert)
-     * The folder controller manages multiple instances. One per folder.
-     */
-    public readonly projectController = new ProjectController(this.extensionContext);
+    public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus);
     /**
      * The status bar controller
      */
@@ -414,7 +407,9 @@ export class ExtensionManager implements vscode.Disposable {
         if (this.cppToolsAPI) {
             this.cppToolsAPI.dispose();
         }
-
+        if (this.projectStatus) {
+            this.projectStatus.dispose();
+        }
         await this.projectController.dispose();
         await telemetry.deactivate();
     }
@@ -712,13 +707,7 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setBuildPresetName('');
             this.statusBar.setTestPresetName('');
         } else {
-            // this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, target => this.onBuildTargetChangedEmitter.fire(target));
-            // this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, target => this.onLaunchTargetChangedEmitter.fire(target || ''));
-            if (vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true)) {
-                this.statusBar.setVisible(false);
-            } else {
-                this.statusBar.setVisible(true);
-            }
+            // TODO: set status bar visibility?
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
                 this.statusBar.setBuildTargetName(t);
@@ -1520,6 +1509,7 @@ export class ExtensionManager implements vscode.Disposable {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
         // await this.projectController.hideLaunchButton(shouldHide);
         this.statusBar.hideLaunchButton(shouldHide);
+        await this.projectStatus.hideLaunchButton(shouldHide);
         await util.setContextValue(hideLaunchCommandKey, shouldHide);
     }
 
@@ -1527,12 +1517,14 @@ export class ExtensionManager implements vscode.Disposable {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
         // await this.projectController.hideDebugButton(shouldHide);
         this.statusBar.hideDebugButton(shouldHide);
+        await this.projectStatus.hideDebugButton(shouldHide);
         await util.setContextValue(hideDebugCommandKey, shouldHide);
     }
 
     async hideBuildCommand(shouldHide: boolean = true) {
         // await this.projectController.hideBuildButton(shouldHide);
         this.statusBar.hideBuildButton(shouldHide);
+        await this.projectStatus.hideBuildButton(shouldHide);
         await util.setContextValue(hideBuildCommandKey, shouldHide);
     }
 
@@ -1938,7 +1930,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await util.setContextValue("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
-    projectStatus = new ProjectStatus();
 
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
@@ -1983,9 +1974,6 @@ export async function deactivate() {
     }
     if (taskProvider) {
         taskProvider.dispose();
-    }
-    if (projectStatus) {
-        projectStatus.dispose();
     }
 }
 

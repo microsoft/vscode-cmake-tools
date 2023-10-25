@@ -3,6 +3,7 @@ import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { runCommand } from './util';
+import { ConfigurationReader, ProjectStatusButtonVisibility, StatusConfig } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -17,8 +18,9 @@ export class ProjectStatus {
 
     protected disposables: vscode.Disposable[] = [];
 
-    constructor() {
+    constructor(protected readonly config: ConfigurationReader) {
         treeDataProvider = new TreeDataProvider();
+        this.config.onChange('status', () => this.doStatusChange());
         this.disposables.push(...[
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
@@ -86,7 +88,7 @@ export class ProjectStatus {
 
     async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
         // Update Active Project
-        await treeDataProvider.updateActiveProject(cmakeProject);
+        await treeDataProvider.updateActiveProject(cmakeProject, this.config.status);
     }
 
     refresh(node?: Node): Promise<any> {
@@ -118,8 +120,8 @@ export class ProjectStatus {
         await treeDataProvider.setIsBusy(isBusy);
     }
 
-    async doStatusBarChange() {
-        await treeDataProvider.doStatusBarChange();
+    async doStatusChange() {
+        await treeDataProvider.doStatusChange(this.config.status);
     }
 
 }
@@ -129,7 +131,10 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     private treeView: vscode.TreeView<Node>;
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     private activeCMakeProject?: CMakeProject;
+    private isFolderButtonHidden: boolean = false;
+    private isConfigButtonHidden: boolean = false;
     private isBuildButtonHidden: boolean = false;
+    private isTestButtonHidden: boolean = false;
     private isDebugButtonHidden: boolean = false;
     private isLaunchButtonHidden: boolean = false;
     private isBusy: boolean = false;
@@ -146,21 +151,18 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         return this.activeCMakeProject;
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
+    async updateActiveProject(cmakeProject?: CMakeProject, status?: StatusConfig): Promise<void> {
         // Use project to create the tree
         if (cmakeProject) {
             this.activeCMakeProject = cmakeProject;
-            // this.isBuildButtonHidden = cmakeProject.hideBuildButton;
-            // this.isDebugButtonHidden = cmakeProject.hideDebugButton;
-            // this.isLaunchButtonHidden = cmakeProject.hideLaunchButton;
-            // temporary to not allow status bar settings to affect side bar view
-            this.isBuildButtonHidden = false;
-            this.isDebugButtonHidden = false;
-            this.isLaunchButtonHidden = false;
+            await this.doStatusChange(status);
         } else {
-            this.isBuildButtonHidden = false;
-            this.isDebugButtonHidden = false;
-            this.isLaunchButtonHidden = false;
+            this.isFolderButtonHidden = true;
+            this.isConfigButtonHidden = true;
+            this.isBuildButtonHidden = true;
+            this.isTestButtonHidden = true;
+            this.isDebugButtonHidden = true;
+            this.isLaunchButtonHidden = true;
         }
         await this.refresh();
     }
@@ -193,15 +195,22 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         } else {
             // Initializing the tree for the first time
             const nodes: Node[] = [];
-            const projectNode = new ProjectNode();
-            await projectNode.initialize();
-            nodes.push(projectNode);
-            const configNode = new ConfigNode();
-            await configNode.initialize();
-            if (this.isBusy) {
-                configNode.convertToStopCommand();
+            if (!this.isFolderButtonHidden) {
+                const folderNode = new FolderNode();
+                await folderNode.initialize();
+                if (this.isBusy) {
+                    folderNode.convertToStopCommand();
+                }
+                nodes.push(folderNode);
             }
-            nodes.push(configNode);
+            if (!this.isConfigButtonHidden) {
+                const configNode = new ConfigNode();
+                await configNode.initialize();
+                if (this.isBusy) {
+                    configNode.convertToStopCommand();
+                }
+                nodes.push(configNode);
+            }
             if (!this.isBuildButtonHidden) {
                 const buildNode = new BuildNode();
                 await buildNode.initialize();
@@ -210,43 +219,71 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 }
                 nodes.push(buildNode);
             }
-            const testNode = new TestNode();
-            await testNode.initialize();
-            nodes.push(testNode);
+            if (!this.isTestButtonHidden) {
+                const testNode = new TestNode();
+                await testNode.initialize();
+                if (this.isBusy) {
+                    testNode.convertToStopCommand();
+                }
+                nodes.push(testNode);
+            }
             if (!this.isDebugButtonHidden) {
                 const debugNode = new DebugNode();
                 await debugNode.initialize();
+                if (this.isBusy) {
+                    debugNode.convertToStopCommand();
+                }
                 nodes.push(debugNode);
             }
             if (!this.isLaunchButtonHidden) {
                 const launchNode = new LaunchNode();
                 await launchNode.initialize();
+                if (this.isBusy) {
+                    launchNode.convertToStopCommand();
+                }
                 nodes.push(launchNode);
             }
             return nodes;
         }
     }
 
-    public async doStatusBarChange() {
-        // temporary change to prevent status bar settings from affecting side bar
-        // let didChange: boolean = false;
-        // if (this.activeCMakeProject) {
-        //     if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
-        //         didChange = true;
-        //         this.isBuildButtonHidden = this.activeCMakeProject.hideBuildButton;
-        //     }
-        //     if (this.isDebugButtonHidden !== this.activeCMakeProject.hideDebugButton) {
-        //         didChange = true;
-        //         this.isDebugButtonHidden = this.activeCMakeProject.hideDebugButton;
-        //     }
-        //     if (this.isLaunchButtonHidden !== this.activeCMakeProject.hideLaunchButton) {
-        //         didChange = true;
-        //         this.isLaunchButtonHidden = this.activeCMakeProject.hideLaunchButton;
-        //     }
-        // if (didChange) {
-        //     await this.refresh();
-        // }
-        // }
+    public async doStatusChange(status: StatusConfig | undefined) {
+        let didChange: boolean = false;
+        if (this.activeCMakeProject) {
+            const folderVisibility = status?.advanced?.folder?.projectStatusVisibility !== "hidden";
+            if (folderVisibility !== this.isFolderButtonHidden) {
+                didChange = true;
+                this.isFolderButtonHidden = folderVisibility;
+            }
+            const configureVisibility = status?.advanced?.configure?.projectStatusVisibility !== "hidden";
+            if (configureVisibility !== this.isConfigButtonHidden) {
+                didChange = true;
+                this.isConfigButtonHidden = configureVisibility;
+            }
+            const buildVisibility = status?.advanced?.build?.projectStatusVisibility !== "hidden";
+            if (buildVisibility !== this.isBuildButtonHidden) {
+                didChange = true;
+                this.isBuildButtonHidden = buildVisibility;
+            }
+            const testVisibility = status?.advanced?.ctest?.projectStatusVisibility !== "hidden";
+            if (testVisibility !== this.isTestButtonHidden) {
+                didChange = true;
+                this.isTestButtonHidden = testVisibility;
+            }
+            const debugVisibility = status?.advanced?.debug?.projectStatusVisibility !== "hidden";
+            if (debugVisibility !== this.isDebugButtonHidden) {
+                didChange = true;
+                this.isDebugButtonHidden = debugVisibility;
+            }
+            const launchVisibility = status?.advanced?.launch?.projectStatusVisibility !== "hidden";
+            if (launchVisibility !== this.isLaunchButtonHidden) {
+                didChange = true;
+                this.isLaunchButtonHidden = launchVisibility;
+            }
+        }
+        if (didChange) {
+            await this.refresh();
+        }
     }
 
     public async hideBuildButton(isHidden: boolean) {
@@ -529,7 +566,7 @@ class LaunchNode extends Node {
 
 }
 
-class ProjectNode extends Node {
+class FolderNode extends Node {
 
     private project?: Project;
 
@@ -749,6 +786,7 @@ class Project extends Node {
         this.label = treeDataProvider.cmakeProject.folderName;
     }
 }
+
 class Variant extends Node {
 
     async initialize(): Promise<void> {
