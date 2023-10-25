@@ -574,8 +574,8 @@ class FolderNode extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = localize('Project', 'Project');
-        this.tooltip = localize('active.project', 'Active project');
+        this.label = localize('Folder', 'Folder');
+        this.tooltip = localize('active.folder', 'Active Folder');
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         await this.InitializeChildren();
     }
@@ -731,7 +731,7 @@ class DebugTarget extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
-        const title: string = localize('set.debug.target', 'Set debug target');
+        const title: string = localize('set.debug.target', 'Set Debug Target');
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'debugTarget';
@@ -773,7 +773,7 @@ class Project extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.folderName;
-        const title: string = localize('select.active.project', 'Select active project');
+        const title: string = localize('select.active.folder', 'Select Active Folder');
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'activeProject';

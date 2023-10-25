@@ -707,7 +707,6 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setBuildPresetName('');
             this.statusBar.setTestPresetName('');
         } else {
-            // TODO: set status bar visibility?
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
                 this.statusBar.setBuildTargetName(t);
