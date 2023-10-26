@@ -77,6 +77,10 @@ To revert to the prior experience and have all of your presets display in the st
         "testPreset": { 
             	"statusBarVisibility": "default", "icon", "compact", "hidden" 
             	"statusBarLength": <integer>, 
+        },
+        "launchTarget": { 
+            	"statusBarVisibility": "default", "compact", "hidden" 
+            	"statusBarLength": <integer> 
         }, 
         "debug": { 
             	"statusBarVisibility": "default", "hidden" 
@@ -85,11 +89,7 @@ To revert to the prior experience and have all of your presets display in the st
         "launch": { 
             	"statusBarVisibility": "default", "hidden" 
             	"projectStatusVisibility": "default", "hidden" 
-        }, 
-        "launchTarget": { 
-            	"statusBarVisibility": "default", "compact", "hidden" 
-            	"statusBarLength": <integer> 
-        } 
+        }
 }
 ```
 
@@ -103,4 +103,6 @@ To revert to the prior experience and have all of your presets display in the st
 * `buildTarget` is associated with your active CMake Build Target. When selected, the user can specify their active Build Target. This will be the target invoked when the user presses the `Build` icon in the status bar (if not hidden) or runs `CMake: Build Target` from the Command Palette
 * `ctest` is associated with running CTest. When selected, it will invoke CTest on the test preset specified. If there is no test preset specified, it will run all your tests by default.
 * `testPreset` is associated with selecting your active CMake Test Preset. When selected, the user can modify their active CMake Test Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project)
-
+* `launchTarget` is associated with selecting your active launch target. When selected, you can specify the active launch target.
+* `debug` is associated with the CMake Debug action. It invokes a debugger on the active launch target.
+* `launch` is associated with launching the target. It will run the specified target application in the terminal.
