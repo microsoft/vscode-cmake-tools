@@ -90,5 +90,5 @@ The full level of options for the cmake status can be seen below
 *`folder` means <TODO: what does folder mean>
 *`configure` is associated with the CMake Configure action. It can only be found in the Project Status View and can't be seen in the status bar, hence no `statusBarVisibility` property value
 *`configurePreset` is associated with the CMake Configure Preset. When selected, the user can modify their active CMake Configure Preset from the list detected in their CMakePresets.json (if found in project)
-*`kit` is associated with the active kit selected (when CMake Presets aren't present). When selected, the user can modify their active kit. To learn more about kits, please see [our kit documentation]<https://github.com/microsoft/vscode-cmake-tools/blob/sinemakinci/CMakeProjectViewDocs/docs/kits.md>
+*`kit` is associated with the active kit selected (when CMake Presets aren't present). When selected, the user can modify their active kit. To learn more about kits, please see [our kit documentation](https://github.com/microsoft/vscode-cmake-tools/blob/sinemakinci/CMakeProjectViewDocs/docs/kits.md)
 
