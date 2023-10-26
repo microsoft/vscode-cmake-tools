@@ -27,6 +27,8 @@ The default settings will be set to the following:
 These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions.
 
 To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > StatusBar: Visibility` setting to `Visible`
+![Screenshot of the Visaul Studio Code Settings view, with the CMake Statusbar: Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
+
 
  You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar. The full level of options for the cmake status can be seen below:
 
