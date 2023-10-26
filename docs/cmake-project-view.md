@@ -95,10 +95,12 @@ To revert to the prior experience and have all of your presets display in the st
 
 * `folder` means <TODO: what does folder mean>
 * `configure` is associated with the CMake Configure action. It can only be found in the Project Status View and can't be seen in the status bar, hence no `statusBarVisibility` property value
-* `configurePreset` is associated with the CMake Configure Preset. When selected, the user can modify their active CMake Configure Preset from the list detected in their CMakePresets.json (if found in project)
+* `configurePreset` is associated with the CMake Configure Preset. When selected, the user can modify their active CMake Configure Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project)
 * `kit` is associated with the active kit selected (when CMake Presets aren't present). When selected, the user can modify their active kit. To learn more about kits, please see [our kit documentation](https://github.com/microsoft/vscode-cmake-tools/blob/sinemakinci/CMakeProjectViewDocs/docs/kits.md)
 * `variantStatus` is associated with the active variant status (when CMake Presets aren't present). When selected, the user can modify their active variant. To learn more about variants, please see [our variant documentation](https://github.com/microsoft/vscode-cmake-tools/blob/sinemakinci/CMakeProjectViewDocs/docs/variants.md)
 * `build` is associated with the CMake Build action. It invokes a CMake build on your build target using your build preset or variant.
-* `buildPreset` is associated with your active CMake Build Preset. When selected, the user can modify their active CMake Build Preset from the list detected in their CMakePresets.json (if found in project)
+* `buildPreset` is associated with your active CMake Build Preset. When selected, the user can modify their active CMake Build Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project)
 * `buildTarget` is associated with your active CMake Build Target. When selected, the user can specify their active Build Target. This will be the target invoked when the user presses the `Build` icon in the status bar (if not hidden) or runs `CMake: Build Target` from the Command Palette
+* `ctest` is associated with running CTest. When selected, it will invoke CTest on the test preset specified. If there is no test preset specified, it will run all your tests by default.
+* `testPreset` is associated with selecting your active CMake Test Preset. When selected, the user can modify their active CMake Test Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project)
 
