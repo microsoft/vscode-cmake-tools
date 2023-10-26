@@ -1,6 +1,8 @@
 # CMake Project Outline View
 
-Starting in CMake Tools 1.16, we will provide users the ability to customize their tatus bar with related CMake items like presets, kits, variants, build, configure, and launch to allow for users to de-clutter as much as they like while also having access to commonly performed actions.
+Starting in CMake Tools 1.16, we will provide users the ability to customize their status bar with related CMake items like presets, kits, variants, build, configure, and launch to allow for users to de-clutter this global status bar as much as they would like to, while also having quick access to commonly performed CMake actions.
+
+Users can specify what is shown in the status bar through their `settings.json` file.
 
 The default settings will be set to the following:
 ## Default Settings Json
@@ -21,12 +23,12 @@ The default settings will be set to the following:
     }
 }
 ```
-These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions. You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar. 
+
+These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions.
 
 To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > StatusBar: Visibility` setting to `Visible`
 
-
-The full level of options for the cmake status can be seen below
+ You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar. The full level of options for the cmake status can be seen below:
 
 ```json
 "cmake.status.statusBarVisibility": "default", "icon", "compact", "hidden" 
