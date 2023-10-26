@@ -32,6 +32,9 @@ export class ProjectStatus {
             vscode.commands.registerCommand('cmake.projectStatus.openSettings', async(_node: Node) => {
                 await runCommand('openSettings');
             }),
+            vscode.commands.registerCommand('cmake.projectStatus.openVisibilitySettings', async(_node: Node) => {
+                await this.openVisibilitySettings();
+            }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (_node: Node) => {
                 await runCommand('selectKit');
                 await this.refresh();
@@ -90,6 +93,10 @@ export class ProjectStatus {
                 await this.refresh();
             })
         ]);
+    }
+
+    async openVisibilitySettings(): Promise<void> {
+        await vscode.commands.executeCommand('workbench.action.openSettingsJson', { revealSetting: { key: 'cmake.status.advanced' }});
     }
 
     async updateActiveProject(cmakeProject?: CMakeProject, status?: StatusConfig): Promise<void> {

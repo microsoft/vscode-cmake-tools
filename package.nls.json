@@ -249,5 +249,6 @@
     "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
     "cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set Test Target",
+    "cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Open Visibility Settings",
     "cmake-tools.debugger.label": "CMake Debugger"
 }
