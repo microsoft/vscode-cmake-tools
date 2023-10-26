@@ -5,6 +5,7 @@ Starting in CMake Tools 1.16, we will provide users the ability to customize the
 The default settings will be set to the following:
 ## Default Settings Json
 ```json
+{
 “cmake.status.statusBarVisibility”: “hidden”
 
 “cmake.status.advanced: { 
@@ -18,6 +19,7 @@ The default settings will be set to the following:
  
 “debug”: { 
   “statusBarVisibility”: “visible” 
+}
 }
 }
 ```
