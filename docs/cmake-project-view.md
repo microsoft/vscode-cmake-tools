@@ -97,4 +97,5 @@ To revert to the prior experience and have all of your presets display in the st
 * `variantStatus` is associated with the active variant status (when CMake Presets aren't present). When selected, the user can modify their active variant. To learn more about variants, please see [our variant documentation](https://github.com/microsoft/vscode-cmake-tools/blob/sinemakinci/CMakeProjectViewDocs/docs/variants.md)
 * `build` is associated with the CMake Build action. It invokes a CMake build on your build target using your build preset or variant.
 * `buildPreset` is associated with your active CMake Build Preset. When selected, the user can modify their active CMake Build Preset from the list detected in their CMakePresets.json (if found in project)
+* `buildTarget` is associated with your active CMake Build Target. When selected, the user can specify their active Build Target. This will be the target invoked when the user presses the `Build` icon in the status bar (if not hidden) or runs `CMake: Build Target` from the Command Palette
 
