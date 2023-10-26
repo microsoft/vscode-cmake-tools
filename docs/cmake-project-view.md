@@ -21,7 +21,9 @@ The default settings will be set to the following:
     }
 }
 ```
-These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions. You can configure settings for each of the following CMake actions in your settings.json to either be visible or hidden in the status bar. To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > StatusBar: Visibility` setting to `Visible`
+These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions. You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar. 
+
+To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > StatusBar: Visibility` setting to `Visible`
 
 
 The full level of options for the cmake status can be seen below
@@ -87,4 +89,6 @@ The full level of options for the cmake status can be seen below
 ```
 *`folder` means <TODO: what does folder mean>
 *`configure` is associated with the CMake Configure action. It can only be found in the Project Status View and can't be seen in the status bar, hence no `statusBarVisibility` property value
+*`configurePreset` is associated with the CMake Configure Preset. When selected, the user can modify their active CMake Configure Preset from the list detected in their CMakePresets.json (if found in project)
+*`kit` is associated with the active kit selected (when CMake Presets aren't present). When selected, the user can modify their active kit. To learn more about kits, please see [our kit documentation]<https://github.com/microsoft/vscode-cmake-tools/blob/sinemakinci/CMakeProjectViewDocs/docs/kits.md>
 
