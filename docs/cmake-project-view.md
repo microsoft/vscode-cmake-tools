@@ -7,7 +7,7 @@ The default settings will be set to the following:
 ```json
 “cmake.status.statusBarVisibility”: “hidden”
 
-“cmake.status.advanced: { 
+“cmake.status.advanced": { 
   “build”: { 
     “statusBarVisibility”: “visible” 
   }, 
