@@ -23,6 +23,20 @@ The default settings will be set to the following:
 ```
 ```json
 "cmake.status.statusBarVisibility": "hidden"
+
+"cmake.status.advanced": {
+    "build": {
+        "statusBarVisibility": "visible"
+    },
+
+    "launch": {
+        "statusBarVisibility": "visible"
+    },
+
+    "debug": {
+        "statusBarVisibility" :"visible"
+    }
+}
 ```
 These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions. You can configure settings for each of the following CMake actions in your settings.json to either be visible or hidden in the status bar. To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > StatusBar: Visibility` setting to `Visible`
 
