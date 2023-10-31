@@ -62,6 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "Cancelar compilación",
 	"cmake-tools.command.cmake.stopAll.title": "Cancelar la compilación de todos los proyectos",
 	"cmake-tools.command.cmake.resetState.title": "Restablecer el estado de la extensión Herramientas de CMake (para solucionar problemas)",
+	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Seleccionar la carpeta activa",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Ejecutar la utilidad",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Depurar",
@@ -206,6 +207,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Se ha creado una nueva instancia de terminal y se ha iniciado el destino en ella. Los terminales existentes no se limpian automáticamente.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controla si la extensión lee compile_commands.json para habilitar la compilación de un solo archivo.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Actualizar el estado del proyecto",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Establecer destino de prueba",
 	"cmake-tools.debugger.label": "Depurador de CMake"
 }
