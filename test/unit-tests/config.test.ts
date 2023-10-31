@@ -60,7 +60,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         showOptionsMovedNotification: true,
         status: {
             advanced: {},
-            statusBarVisibility: "default"
+            statusBarVisibility: "visible"
         },
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,

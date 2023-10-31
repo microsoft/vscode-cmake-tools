@@ -23,11 +23,11 @@ const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
 export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'automatic';
-export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
-export type StatusBarStaticButtonVisibility = "default" | "icon" | "hidden";
-export type StatusBarTextButtonVisibility = "default" | "compact" | "hidden";
-export type StatusBarIconButtonVisibility = "default" | "hidden";
-export type ProjectStatusButtonVisibility = "default" | "hidden";
+export type StatusBarButtonVisibility = "visible" | "compact" | "icon" | "hidden";
+export type StatusBarStaticButtonVisibility = "visible" | "icon" | "hidden";
+export type StatusBarTextButtonVisibility = "visible" | "compact" | "hidden";
+export type StatusBarIconButtonVisibility = "visible" | "hidden";
+export type ProjectStatusButtonVisibility = "visible" | "hidden";
 export type TouchBarButtonVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
 
