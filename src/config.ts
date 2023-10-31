@@ -109,7 +109,6 @@ export interface AdvancedStatusConfig {
 export interface StatusConfig {
     advanced?: AdvancedStatusConfig;
     statusBarVisibility: StatusBarButtonVisibility;
-    showOptionsMovedNotification: boolean;
 }
 
 export interface ExtensionConfigurationSettings {
@@ -162,6 +161,7 @@ export interface ExtensionConfigurationSettings {
     loggingLevel: LogLevelKey;
     additionalKits: string[];
     touchbar: TouchBarConfig;
+    showOptionsMovedNotification: boolean;
     status: StatusConfig;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
@@ -536,6 +536,7 @@ export class ConfigurationReader implements vscode.Disposable {
         loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
         additionalKits: new vscode.EventEmitter<string[]>(),
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
+        showOptionsMovedNotification: new vscode.EventEmitter<boolean>(),
         status: new vscode.EventEmitter<StatusConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
