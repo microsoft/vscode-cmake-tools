@@ -164,24 +164,35 @@
     "cmake-tools.configuration.cmake.touchbar.visibility.description": "Configures how the extension displays the buttons on a MacBook Touch Bar.",
     "cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Show Touch Bar buttons on supported systems.",
     "cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Do not show Touch Bar buttons.",
-    "cmake-tools.configuration.cmake.statusbar.visibility.description": "Configures how the extension displays the buttons in the status bar.",
-    "cmake-tools.configuration.cmake.statusbar.visibility.markdownDescription": {
-        "message": "Configures how the extension displays the buttons in the status bar. Only applies when `#cmake.useProjectStatusView#` is set to `false`.",
+    "cmake-tools.configuration.cmake.showOptionsMovedNotification": "Enables the notification regarding the status bar options moving to the Project Status View to show when the extension starts.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description": "Show the status bar item at full size.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description": "Show the status bar item's icon only.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription": "Show the status bar item with the text truncated to the length specified in `#cmake.status.advanced.statusBarLength#` (default is 20).",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.variantStatus.compact.description": "Show the status bar item with the status message removed.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description": "Hides the status bar item.",
+    "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
+    "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
+    "cmake-tools.configuration.cmake.status.statusBarVisibility.markdownDescription": {
+        "message": "Configures how the extension displays the items in the Status Bar. These settings may be overwritten by the more specific `#cmake.status.advanced.statusBarVisibility#` setting. For more information look [here](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/cmake-project-view.md).",
+        "comment": [
+            "Markdown text between `` and () should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription": {
+        "message": "Configures the settings for individual Status Bar items. These settings overwrite the more general `#cmake.status.statusBarVisibility#` setting.",
         "comment": [
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
-    "cmake-tools.configuration.cmake.statusbar.advanced.description": "Configures the settings for individual status bar buttons. These settings overwrite the more general 'cmake.statusbar.visibility' setting.",
-    "cmake-tools.configuration.cmake.statusbar.advanced.markdownDescription": {
-        "message": "Configures the settings for individual status bar buttons. These settings overwrite the more general `#cmake.statusbar.visibility#` setting. Only applies when `#cmake.useProjectStatusView#` is set to `false`.",
+    "cmake-tools.configuration.cmake.status.advanced.markdownDescription": {
+        "message": "Configures the settings for individual Project Status View and Status Bar items. These settings may overwrite the more general `#cmake.status.statusBarVisibility#` setting. For more information look [here](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/cmake-project-view.md).",
         "comment": [
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
-    "cmake-tools.configuration.cmake.statusbar.advanced.visibility.description": "Configures how the extension displays this button in the status bar.",
-    "cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Enables a change in color for this button depending on test results.",
-    "cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configures the maximum length of visible text in 'compact' mode.",
-    "cmake-tools.configuration.cmake.useProjectStatusView.description": "Enables the Project Status view in the CMake side panel and hides the status bar buttons.",
+    "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.description": "Configures how the extension displays this item the Project Status View.",
+    "cmake-tools.configuration.cmake.status.advanced.ctest.color.description": "Enables a change in color for this item depending on test results.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarLength.description": "Configures the maximum length of visible text in the Status Bar when set to 'compact' mode.",
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.projectStatus.description": "Project Status",
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
@@ -246,5 +257,6 @@
     "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
     "cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set Test Target",
+    "cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Open Visibility Settings",
     "cmake-tools.debugger.label": "CMake Debugger"
 }
