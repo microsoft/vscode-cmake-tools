@@ -62,7 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "Annuler la build",
 	"cmake-tools.command.cmake.stopAll.title": "Annuler la génération de tous les projets",
 	"cmake-tools.command.cmake.resetState.title": "Réinitialiser l'état de l'extension CMake Tools (pour la résolution des problèmes)",
-	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+	"cmake-tools.command.cmake.openSettings.title": "Ouvrir les paramètres d’extension de CMake Tools",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Sélectionner le dossier actif",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Exécuter l'utilitaire",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Déboguer",
@@ -206,7 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Une instance de terminal est créée et la cible y est lancée. Les terminaux existants ne sont pas nettoyés automatiquement.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Contrôle si l’extension lit compile_commands.json pour activer la compilation de fichiers uniques.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Actualiser le statut du projet",
-	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Supprimer le cache et reconfigurer",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Définir la cible du test",
 	"cmake-tools.debugger.label": "Débogueur CMake"
 }

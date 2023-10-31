@@ -62,7 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "取消建置",
 	"cmake-tools.command.cmake.stopAll.title": "取消所有專案的組建",
 	"cmake-tools.command.cmake.resetState.title": "重設 CMake 工具延伸模組狀態 (進行疑難排解)",
-	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+	"cmake-tools.command.cmake.openSettings.title": "開啟 CMake 工具延伸模組設定",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "選取作用中的資料夾",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "執行公用程式",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "偵錯",
@@ -206,7 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已建立新的終端機執行個體，並在其中啟動目標。不會自動清除現有的終端機。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制延伸模組是否要讀取 compile_commands.json 以啟用單一檔案編譯。",
 	"cmake-tools.command.cmake.projectStatus.update.title": "重新整理專案狀態",
-	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "刪除快取並重新設定",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "設定測試目標",
 	"cmake-tools.debugger.label": "CMake 偵錯工具"
 }

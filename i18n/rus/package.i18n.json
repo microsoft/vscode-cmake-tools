@@ -62,7 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "Отменить сборку",
 	"cmake-tools.command.cmake.stopAll.title": "Отмена сборки для всех проектов",
 	"cmake-tools.command.cmake.resetState.title": "Сброс состояния расширения средств CMake (для устранения неполадок)",
-	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+	"cmake-tools.command.cmake.openSettings.title": "Открыть параметры расширения инструментов CMake.",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Выбор активной папки",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Запуск служебной программы",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Отладить",
@@ -206,7 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Создан новый экземпляр терминала, в котором запущен целевой объект. Существующие терминалы не очищаются автоматически.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Управляет чтением расширения compile_commands.json, чтобы включить компиляцию одного файла.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Обновить состояние проекта",
-	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Удаление кэша и перенастройка",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Установить тестовый целевой объект",
 	"cmake-tools.debugger.label": "Отладчик CMake"
 }
