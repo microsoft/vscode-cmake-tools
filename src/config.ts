@@ -109,6 +109,7 @@ export interface AdvancedStatusConfig {
 export interface StatusConfig {
     advanced?: AdvancedStatusConfig;
     statusBarVisibility: StatusBarButtonVisibility;
+    showOptionsMovedNotification: boolean;
 }
 
 export interface ExtensionConfigurationSettings {

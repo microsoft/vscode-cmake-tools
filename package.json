@@ -2410,12 +2410,18 @@
             }
           }
         },
+        "cmake.status.showOptionsMovedNotification": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.status.showOptionsMovedNotification%",
+          "scope": "application"
+        },
         "cmake.status.statusBarVisibility": {
           "type": "string",
           "default": "hidden",
-          "description": "%cmake-tools.configuration.cmake.status.statusBarVisibility.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.status.statusBarVisibility.markdownDescription%",
           "enum": [
-            "default",
+            "visible",
             "compact",
             "icon",
             "hidden"
@@ -2425,7 +2431,7 @@
         "cmake.status.advanced": {
           "type": "object",
           "default": {"build": {"statusBarVisibility": "visible"}, "launch": {"statusBarVisibility": "visible"}, "debug": {"statusBarVisibility": "visible"}},
-          "description": "%cmake-tools.configuration.cmake.status.advanced.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.markdownDescription%",
           "properties": {
             "configure": {
               "type": "object",
@@ -2436,6 +2442,10 @@
                   "enum": [
                     "visible",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description%"
                   ]
                 }
               }
@@ -2445,7 +2455,7 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
@@ -2453,6 +2463,12 @@
                     "hidden"
                   ]
                 },
+                "markdownEnumDescriptions": [
+                  "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                  "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                  "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                  "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
+                ],
                 "statusBarLength": {
                   "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarLength.description%",
                   "type": "integer",
@@ -2465,12 +2481,18 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "icon",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "statusBarLength": {
@@ -2485,12 +2507,18 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "icon",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "statusBarLength": {
@@ -2505,12 +2533,18 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "icon",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "statusBarLength": {
@@ -2525,12 +2559,18 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "icon",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.variantStatus.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 }
               }
@@ -2540,12 +2580,18 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "icon",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "projectStatusVisibility": {
@@ -2554,6 +2600,10 @@
                   "enum": [
                     "visible",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description%"
                   ]
                 },
                 "statusBarLength": {
@@ -2568,11 +2618,16 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "statusBarLength": {
@@ -2587,11 +2642,16 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "icon",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "projectStatusVisibility": {
@@ -2600,6 +2660,10 @@
                   "enum": [
                     "visible",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description%"
                   ]
                 }
               }
@@ -2609,11 +2673,16 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "statusBarLength": {
@@ -2628,11 +2697,16 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "icon",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "projectStatusVisibility": {
@@ -2641,6 +2715,10 @@
                   "enum": [
                     "visible",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description%"
                   ]
                 }
               }
@@ -2650,11 +2728,16 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "icon",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "projectStatusVisibility": {
@@ -2663,6 +2746,10 @@
                   "enum": [
                     "visible",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description%"
                   ]
                 }
               }
@@ -2672,12 +2759,18 @@
               "properties": {
                 "statusBarVisibility": {
                   "type": "string",
-                  "description": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description%",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription%",
                   "enum": [
                     "visible",
                     "compact",
                     "icon",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
                 "projectStatusVisibility": {
@@ -2686,6 +2779,10 @@
                   "enum": [
                     "visible",
                     "hidden"
+                  ],
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description%"
                   ]
                 },
                 "color": {

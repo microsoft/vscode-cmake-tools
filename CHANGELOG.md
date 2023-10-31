@@ -15,6 +15,7 @@ Improvements:
 - If the "configure" button of CMakeLists.txt node in the Project Outline is clicked, only the corresponding project is configured. [PR #3372](https://github.com/microsoft/vscode-cmake-tools/pull/3372) [@vlavati](https://github.com/vlavati)
 - Added a command to directly open the extension settings (`CMake: Open CMake Tools Extension Settings`) and a gear icon button in the Project Status View title bar that calls it. [PR #3403](https://github.com/microsoft/vscode-cmake-tools/pull/3403)
 - Added an icon button in the Project Status View title bar that calls the `CMake: Delete Cache and Reconfigure` command. [PR #3403](https://github.com/microsoft/vscode-cmake-tools/pull/3403)
+- By default, all of the status bar options are hidden except `build`, `debug`, and `launch`. All of the previous status bar options are now, by default, visible in the Project Status View. These visibility settings can be customized in the `cmake.status.advanced` setting. This setting can also be accessed via the Project Status View. The `cmake.useProjectStatusView` setting is now removed. [PR #3407](https://github.com/microsoft/vscode-cmake-tools/pull/3407)
 
 Bug Fixes:
 - Fix Unhandled Exception if no args are specified in `cmake.getLaunchTargetFilename` inside an input context of a task. [PR #3348](https://github.com/microsoft/vscode-cmake-tools/issues/3348) [@vlavati](https://github.com/vlavati)

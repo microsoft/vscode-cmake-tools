@@ -1926,6 +1926,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
 
+    if (vscode.workspace.getConfiguration('cmake').get('status.showOptionsMovedNotification')) {
+        void vscode.window.showInformationMessage(
+            localize('options.moved.notification.body', "The status bar options in CMake Tools have moved, by default, to the Project Status View in the CMake Tools sidebar. In order to customize the visibility settings of these options in the status bar and Project Status View, you can edit the `cmake.status.advanced` setting in your `settings.json` file. This setting can also be opened from the Project Status View."),
+            localize('options.moved.notification.open.settings', 'Open visibility settings'),
+            localize('options.moved.notification.do.not.show', "Do not show again")
+        ).then(async (selection) => {
+            if (selection !== undefined) {
+                if (selection === localize('options.moved.notification.open.settings', 'Open visibility settings')) {
+                    await vscode.commands.executeCommand('workbench.action.openSettingsJson', { revealSetting: { key: 'cmake.status.advanced' }});
+                } else if (selection === localize('options.moved.notification.do.not.show', "Do not show again")) {
+                    await vscode.workspace.getConfiguration('cmake').update('status.showOptionsMovedNotification', false, vscode.ConfigurationTarget.Global);
+                }
+            }
+        });
+    }
+
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
     await enableFullFeatureSet(false);
 

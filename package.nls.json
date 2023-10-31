@@ -164,20 +164,28 @@
     "cmake-tools.configuration.cmake.touchbar.visibility.description": "Configures how the extension displays the buttons on a MacBook Touch Bar.",
     "cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Show Touch Bar buttons on supported systems.",
     "cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Do not show Touch Bar buttons.",
-    "cmake-tools.configuration.cmake.status.statusBarVisibility.description": {
+    "cmake-tools.configuration.cmake.status.showOptionsMovedNotification": "Enables the notification regarding the status bar options moving to the Project Status View to show when the extension starts.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.visible.description": "Show the status bar item at full size.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.icon.description": "Show the status bar item's icon only.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.compact.markdownDescription": "Show the status bar item with the text truncated to the length specified in `#cmake.status.advanced.statusBarLength#` (default is 20).",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.variantStatus.compact.description": "Show the status bar item with the status message removed.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.hidden.description": "Hides the status bar item.",
+    "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
+    "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
+    "cmake-tools.configuration.cmake.status.statusBarVisibility.markdownDescription": {
         "message": "Configures how the extension displays the items in the Status Bar. These settings may be overwritten by the more specific `#cmake.status.advanced.statusBarVisibility#` setting.",
         "comment": [
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
-    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.description": {
-        "message": "Configures the settings for individual Status Bar items. These settings overwrite the more general `#cmake.statusbar.visibility#` setting.",
+    "cmake-tools.configuration.cmake.status.advanced.statusBarVisibility.markdownDescription": {
+        "message": "Configures the settings for individual Status Bar items. These settings overwrite the more general `#cmake.status.statusBarVisibility#` setting.",
         "comment": [
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
-    "cmake-tools.configuration.cmake.status.advanced.description": {
-        "message": "Configures the settings for individual Project Status View and Status Bar items. These settings may overwrite the more general `#cmake.statusbar.visibility#` setting.",
+    "cmake-tools.configuration.cmake.status.advanced.markdownDescription": {
+        "message": "Configures the settings for individual Project Status View and Status Bar items. These settings may overwrite the more general `#cmake.status.statusBarVisibility#` setting.",
         "comment": [
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
