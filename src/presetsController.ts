@@ -12,8 +12,7 @@ import rollbar from '@cmt/rollbar';
 import { ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
-import { descriptionForKit, Kit, getKitDetect, SpecialKits } from '@cmt/kit';
-import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
+import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
@@ -43,26 +42,21 @@ export class PresetsController {
         const presetsController = new PresetsController(project, kitsController, isMultiProject);
         const expandSourceDir = async (dir: string) => {
             const workspaceFolder = project.workspaceFolder.uri.fsPath;
-            const kit = project.getActiveKit();
-            const kitDetect = kit ? await getKitDetect(kit) : undefined;
-            const target: Partial<TargetTriple> | undefined = kitDetect ? parseTargetTriple(kitDetect?.triple ?? '') ?? {} : undefined;
-            const version = kitDetect?.version ?? '0.0';
-
             const expansionOpts: ExpansionOptions = {
                 vars: {
                     workspaceFolder,
                     workspaceFolderBasename: path.basename(workspaceFolder),
                     workspaceHash: util.makeHashString(workspaceFolder),
                     workspaceRoot: workspaceFolder,
-                    buildKit: kit?.name || '__unknownkit__',
-                    buildKitVendor: kitDetect?.vendor ?? '__unknow_vendor__',
-                    buildKitTriple: kitDetect?.triple ?? '__unknow_triple__',
-                    buildKitVersion: version,
-                    buildKitHostOs: process.platform,
-                    buildKitTargetOs: target?.targetOs ?? '__unknow_target_os__',
-                    buildKitTargetArch: target?.targetArch ?? '__unknow_target_arch__',
-                    buildKitVersionMajor: majorVersionSemver(version),
-                    buildKitVersionMinor: minorVersionSemver(version),
+                    buildKit: '__kit_not_allowed__',
+                    buildKitVendor: '__vendor_not_allowed__',
+                    buildKitTriple: '__triple_not_allowed__',
+                    buildKitVersion: '__version_not_allowed__',
+                    buildKitHostOs: '__host_os_not_allowed__',
+                    buildKitTargetOs: '__target_os_not_allowed__',
+                    buildKitTargetArch: '__target_arch_not_allowed__',
+                    buildKitVersionMajor: '__version_major_not_allowed__',
+                    buildKitVersionMinor: '__version_minor_not_allowed__',
                     workspaceRootFolderName: path.dirname(workspaceFolder),
                     userHome: paths.userHome,
                     // Following fields are not supported for sourceDir expansion

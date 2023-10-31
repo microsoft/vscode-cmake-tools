@@ -711,8 +711,7 @@ export class CMakeProject {
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
                         await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory,
-                            await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, this.getActiveKit(),
-                                (await this.getCMakeDriverInstance())?.generatorName)));
+                            await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, this.useCMakePresets, this.getActiveKit())));
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -916,9 +915,11 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         this.kitsController = await KitsController.init(this);
+        this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
+        await this.doUseCMakePresetsChange();
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory,
-            await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, this.getActiveKit(),
-                (await this.getCMakeDriverInstance())?.generatorName)));
+            await CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath, this.useCMakePresets, this.getActiveKit())));
+
         this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
         this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
         this.hideLaunchButton = (this.workspaceContext.config.statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
@@ -945,10 +946,6 @@ export class CMakeProject {
         this.cTestController.onTestingEnabledChanged(enabled => this._ctestEnabled.set(enabled));
 
         this.statusMessage.set(localize('ready.status', 'Ready'));
-
-        this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
-
-        await this.doUseCMakePresetsChange();
 
         this.disposables.push(this.onPresetsChanged(() => this.doUseCMakePresetsChange()));
         this.disposables.push(this.onUserPresetsChanged(() => this.doUseCMakePresetsChange()));

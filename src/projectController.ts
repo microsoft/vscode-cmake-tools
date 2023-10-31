@@ -231,10 +231,11 @@ export class ProjectController implements vscode.Disposable {
     }
 
     async getProjectForFolder(folder: string): Promise<CMakeProject | undefined> {
-        const kit = this.activeProject?.activeKit;
+        // If it's too early to have activeProject, assume we use kits. It will get corrected later.
+        const useCMakePresets: boolean = this.getActiveCMakeProject()?.useCMakePresets || false;
+        const kit = this.getActiveCMakeProject()?.activeKit;
         const sourceDir = util.platformNormalizePath(await util.normalizeAndVerifySourceDir(folder,
-            await CMakeDriver.sourceDirExpansionOptions(folder, kit,
-                (await this.activeProject?.getCMakeDriverInstance())?.generatorName)));
+            await CMakeDriver.sourceDirExpansionOptions(folder, useCMakePresets, kit)));
         const allCMakeProjects: CMakeProject[] = this.getAllCMakeProjects();
         for (const project of allCMakeProjects) {
             if (util.platformNormalizePath(project.sourceDir) === sourceDir ||
@@ -393,9 +394,10 @@ export class ProjectController implements vscode.Disposable {
         }
         // Normalize the paths.
         for (let i = 0; i < sourceDirectories.length; i++) {
+            // If it's too early to have an activeProject set, assume we use kits. It will get corrected later.
+            const useCMakePresets: boolean = this.getActiveCMakeProject()?.useCMakePresets || false;
             sourceDirectories[i] = await util.normalizeAndVerifySourceDir(sourceDirectories[i],
-                await CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath, this.activeProject?.activeKit,
-                    (await this.activeProject?.getCMakeDriverInstance())?.generatorName));
+                await CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath, useCMakePresets, this.getActiveCMakeProject()?.activeKit));
         }
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
 

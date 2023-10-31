@@ -354,8 +354,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     get expansionOptions(): expand.ExpansionOptions {
         const ws_root = util.lightNormalizePath(this.workspaceFolder || '.');
-        const target: Partial<TargetTriple> = parseTargetTriple(this._kitDetect?.triple ?? '') ?? {};
-        const version = this._kitDetect?.version ?? '0.0';
+        const target: Partial<TargetTriple> | undefined = this.useCMakePresets ? undefined : parseTargetTriple(this._kitDetect?.triple ?? '') ?? {};
+        const version = this.useCMakePresets ? undefined : this._kitDetect?.version ?? '0.0';
 
         // Fill in default replacements
         const vars: expand.KitContextVars = {
@@ -367,15 +367,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             workspaceRoot: ws_root,
             workspaceRootFolderName: path.basename(ws_root),
             userHome: paths.userHome,
-            buildKit: this._kit?.name ?? '__unknownkit__',
-            buildKitVendor: this._kitDetect?.vendor ?? '__unknow_vendor__',
-            buildKitTriple: this._kitDetect?.triple ?? '__unknow_triple__',
-            buildKitVersion: version,
-            buildKitHostOs: process.platform,
-            buildKitTargetOs: target.targetOs ?? '__unknow_target_os__',
-            buildKitTargetArch: target.targetArch ?? '__unknow_target_arch__',
-            buildKitVersionMajor: majorVersionSemver(version),
-            buildKitVersionMinor: minorVersionSemver(version),
+            buildKit: this.useCMakePresets ? '__kit_not_allowed__' : (this._kit?.name ?? '__unknown_kit__'),
+            buildKitVendor: this.useCMakePresets ? '__vendor_not_allowed__' : (this._kitDetect?.vendor ?? '__unknown_vendor__'),
+            buildKitTriple: this.useCMakePresets ? '__triple_not_allowed__' : (this._kitDetect?.triple ?? '__unknown_triple__'),
+            buildKitVersion: this.useCMakePresets ? '__version_not_allowed__' : (version ?? '__unknown_version__'),
+            buildKitHostOs: this.useCMakePresets ? '__host_oS_not_allowed__' : process.platform,
+            buildKitTargetOs: this.useCMakePresets ? '__target_oS_not_allowed__' : (target?.targetOs ?? '__unknown_target_os__'),
+            buildKitTargetArch: this.useCMakePresets ? '__target_arch_not_allowed__' : (target?.targetArch ?? '__unknown_target_arch__'),
+            buildKitVersionMajor: this.useCMakePresets ? '__version_major_not_allowed__' : (version ? majorVersionSemver(version) : '__unknown_version_major__'),
+            buildKitVersionMinor: this.useCMakePresets ? '__version_minor_not_allowed__' : (version ? minorVersionSemver(version) : '__unknown_version_minor__'),
             sourceDir: this.sourceDir,
             // DEPRECATED EXPANSION: Remove this in the future:
             projectName: 'ProjectName'
@@ -391,28 +391,34 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return { vars, variantVars };
     }
 
-    static async sourceDirExpansionOptions(workspaceFolderFspath: string | null, kit?: Kit | null, generatorName?: string | null): Promise<expand.ExpansionOptions> {
+    static async sourceDirExpansionOptions(workspaceFolderFspath: string | null, useCMakePresets: boolean, kit?: Kit | null): Promise<expand.ExpansionOptions> {
         const ws_root = util.lightNormalizePath(workspaceFolderFspath || '.');
 
+        let kitDetect: KitDetect | undefined;
+        let target: Partial<TargetTriple> | undefined;
+        let version: string | undefined;
         // Fill in default replacements
-        if (!kit) {
-            kit = getActiveProject()?.getActiveKit();
+        if (!useCMakePresets) {
+            if (!kit) {
+                kit = getActiveProject()?.getActiveKit();
+            }
+
+            kitDetect = kit ? await getKitDetect(kit) : undefined;
+            target = parseTargetTriple(kitDetect?.triple ?? '') ?? {};
+            version = kitDetect?.version ?? '0.0';
         }
-        const kitDetect: KitDetect | undefined = kit ? await getKitDetect(kit) : undefined;
-        const target: Partial<TargetTriple> = parseTargetTriple(kitDetect?.triple ?? '') ?? {};
-        const version = kitDetect?.version ?? '0.0';
 
         const vars: expand.MinimalPresetContextVars = {
-            generator: generatorName ?? 'generator',
-            buildKit: kit?.name ?? '__unknownkit__',
-            buildKitVendor: kitDetect?.vendor ?? '__unknow_vendor__',
-            buildKitTriple: kitDetect?.triple ?? '__unknow_triple__',
-            buildKitVersion: version,
-            buildKitHostOs: process.platform,
-            buildKitTargetOs: target.targetOs ?? '__unknow_target_os__',
-            buildKitTargetArch: target.targetArch ?? '__unknow_target_arch__',
-            buildKitVersionMajor: majorVersionSemver(version),
-            buildKitVersionMinor: minorVersionSemver(version),
+            generator: '__generator_not_allowed__',
+            buildKit: useCMakePresets ? '__kit_not_allowed__' : (kit?.name ?? '__unknown_kit__'),
+            buildKitVendor: useCMakePresets ? '__vendor_not_allowed__' : (kitDetect?.vendor ?? '__unknown_vendor__'),
+            buildKitTriple: useCMakePresets ? '__triple_not_allowed__' : (kitDetect?.triple ?? '__unknown_triple__'),
+            buildKitVersion: useCMakePresets ? '__version_not_allowed__' : (version ?? '__unknown_version__'),
+            buildKitHostOs: useCMakePresets ? '__host_os_not_allowed__' : process.platform,
+            buildKitTargetOs: useCMakePresets ? '__target_os_not_allowed__' : (target?.targetOs ?? '__unknown_target_os__'),
+            buildKitTargetArch: useCMakePresets ? '__target_arch_not_allowed__' : (target?.targetArch ?? '__unknown_target_arch__'),
+            buildKitVersionMajor: useCMakePresets ? '__version_major_not_allowed__' : (version ? majorVersionSemver(version) : '__unknown_version_major__'),
+            buildKitVersionMinor: useCMakePresets ? '__version_minor_not_allowed__' : (version ? minorVersionSemver(version) : '__unknown_version_minor__'),
             workspaceFolder: ws_root,
             workspaceFolderBasename: path.basename(ws_root),
             sourceDir: '${sourceDir}',
@@ -698,7 +704,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private async _refreshExpansions(configurePreset?: preset.ConfigurePreset | null) {
         return this.doRefreshExpansions(async () => {
             this.sourceDir = await util.normalizeAndVerifySourceDir(this.sourceDirUnexpanded,
-                await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder, this._kit, this._generator?.name));
+                await CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder, this.useCMakePresets, this._kit));
 
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);
