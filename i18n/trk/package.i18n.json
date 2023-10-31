@@ -62,6 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "Derlemeyi İptal Et",
 	"cmake-tools.command.cmake.stopAll.title": "Tüm Projeler için Derlemeyi İptal Et",
 	"cmake-tools.command.cmake.resetState.title": "CMake Araçları Uzantısı Durumunu Sıfırla (Sorun giderme için)",
+	"cmake-tools.command.cmake.openSettings.title": "CMake Tools Uzantı Ayarlarını Aç",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Etkin Klasör Seç",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Yardımcı Programı Çalıştır",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Hata Ayıkla",
@@ -205,6 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Tek dosya derlemesini etkinleştirmek için uzantının compile_commands.json dosyasını okuyup okumadığını denetler.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Proje durumunu yenileyin",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Önbelleği Sil ve Yeniden Yapılandır",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Test Hedefini Ayarla",
 	"cmake-tools.debugger.label": "CMake Hata Ayıklayıcısı"
 }
