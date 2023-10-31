@@ -31,64 +31,65 @@ To revert to the prior experience and have all of your presets display in the st
 
 ## Configuring your CMake Status Bar
 
- You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar. The full level of options for the cmake status can be seen below:
+ You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar through the `statusBarVisibility` variable.  Settings that are available to be hidden from the project status view side bar can be configured to be `visible` or `hidden` through the `projectStatusVisibility` variable.
+The full level of options for the CMake status can be seen below:
 
 ```json
-"cmake.status.statusBarVisibility": "default", "icon", "compact", "hidden" 
+"cmake.status.statusBarVisibility": "visibile", "icon", "compact", "hidden" 
 "cmake.status.advanced": { 
 
         "folder": { 
-        	"statusBarVisibility": "default", "icon", "compact", "hidden" 
+        	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
             	"statusBarLength": <integer> 
-            	"projectStatusVisibility": "default", "hidden" 
+            	"projectStatusVisibility": "visible", "hidden" 
         }, 
         "configure": { 
-            	"projectStatusVisibility": "default", "hidden" 
+            	"projectStatusVisibility": "visible", "hidden" 
         }, 
         "configurePreset": { 
-            	"statusBarVisibility": "default", "icon", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
             	"statusBarLength": <integer> 
         }, 
         "kit": { 
-            	"statusBarVisibility": "default", "icon", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
             	"statusBarLength": <integer> 
         }, 
         "variantStatus": { 
-            	"statusBarVisibility": "default", "icon", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
         }, 
         "build": { 
-            	"statusBarVisibility": "default", "icon", "hidden" 
-            	"projectStatusVisibility": "default", "hidden" 
+            	"statusBarVisibility": "visible", "icon", "hidden" 
+            	"projectStatusVisibility": "visible", "hidden" 
         }, 
         "buildPreset": { 
-            	"statusBarVisibility": "default", "icon", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
             	"statusBarLength": <integer> 
         }, 
         "buildTarget": { 
-            	"statusBarVisibility": "default", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "compact", "hidden" 
             	"statusBarLength": <integer> 
         }, 
         "ctest": { 
-            	"statusBarVisibility": "default", "icon", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
             	"statusBarLength": <integer> 
             	"color": true, false 
-            	"projectStatusVisibility": "default", "hidden" 
+            	"projectStatusVisibility": "visible", "hidden" 
         }, 
         "testPreset": { 
-            	"statusBarVisibility": "default", "icon", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
             	"statusBarLength": <integer>, 
         },
         "launchTarget": { 
-            	"statusBarVisibility": "default", "compact", "hidden" 
+            	"statusBarVisibility": "visible", "compact", "hidden" 
             	"statusBarLength": <integer> 
         }, 
         "debug": { 
-            	"statusBarVisibility": "default", "hidden" 
-            	"projectStatusVisibility": "default", "hidden" 
+            	"statusBarVisibility": "visible", "hidden" 
+            	"projectStatusVisibility": "visible", "hidden" 
         },
         "launch": { 
-            	"statusBarVisibility": "default", "hidden" 
-            	"projectStatusVisibility": "default", "hidden" 
+            	"statusBarVisibility": "visible", "hidden" 
+            	"projectStatusVisibility": "visible", "hidden" 
         }
 }
 ```
