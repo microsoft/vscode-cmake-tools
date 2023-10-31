@@ -62,7 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "Build abbrechen",
 	"cmake-tools.command.cmake.stopAll.title": "Build für alle Projekte abbrechen",
 	"cmake-tools.command.cmake.resetState.title": "Erweiterungsstatus für CMake Tools zurücksetzen (zur Problembehandlung)",
-	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+	"cmake-tools.command.cmake.openSettings.title": "CMake Tools-Erweiterungseinstellungen öffnen",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Aktiven Ordner auswählen",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Hilfsprogramm ausführen",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Debuggen",
@@ -206,7 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Eine neue Terminalinstanz wird erstellt, und das Ziel wird darin gestartet. Vorhandene Terminals werden nicht automatisch bereinigt.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Steuert, ob die Erweiterung compile_commands.json liest, um die Kompilierung einzelner Dateien zu ermöglichen.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Projektstatus aktualisieren",
-	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Cache löschen und neu konfigurieren",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Testziel festlegen",
 	"cmake-tools.debugger.label": "CMake-Debugger"
 }

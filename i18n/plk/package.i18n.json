@@ -62,7 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "Anuluj kompilację",
 	"cmake-tools.command.cmake.stopAll.title": "Anuluj kompilację dla wszystkich projektów",
 	"cmake-tools.command.cmake.resetState.title": "Resetuj stan rozszerzenia narzędzi CMake Tools (na potrzeby rozwiązywania problemów)",
-	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+	"cmake-tools.command.cmake.openSettings.title": "Otwórz ustawienia rozszerzenia narzędzi narzędzia CMake",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Wybierz aktywny folder",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Uruchom narzędzie",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Debuguj",
@@ -206,7 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Odśwież stan projektu",
-	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Usuń pamięć podręczną i skonfiguruj ponownie",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Ustawianie docelowego elementu testu",
 	"cmake-tools.debugger.label": "Debuger CMake"
 }

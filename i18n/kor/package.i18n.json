@@ -62,7 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "빌드 취소",
 	"cmake-tools.command.cmake.stopAll.title": "모든 프로젝트의 빌드 취소",
 	"cmake-tools.command.cmake.resetState.title": "CMake 도구 확장 상태 다시 설정(문제 해결용)",
-	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+	"cmake-tools.command.cmake.openSettings.title": "CMake 도구 확장 설정 열기",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "활성 폴더 선택",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "유틸리티 실행",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "디버그",
@@ -206,7 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "새 터미널 인스턴스가 만들어지고 대상이 해당 인스턴스에서 시작됩니다. 기존 터미널은 자동으로 정리되지 않습니다.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "확장이 compile_commands.json을 읽어 단일 파일 컴파일을 사용하도록 설정할지 여부를 제어합니다.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "프로젝트 상태 새로 고침",
-	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "캐시 삭제 및 다시 구성",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "테스트 대상 설정",
 	"cmake-tools.debugger.label": "CMake 디버거"
 }

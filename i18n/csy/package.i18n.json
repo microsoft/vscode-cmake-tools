@@ -62,7 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "Zrušit sestavení",
 	"cmake-tools.command.cmake.stopAll.title": "Zrušit sestavování pro všechny projekty",
 	"cmake-tools.command.cmake.resetState.title": "Resetovat stav rozšíření nástrojů CMake Tools (pro řešení potíží)",
-	"cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+	"cmake-tools.command.cmake.openSettings.title": "Otevřít nastavení rozšíření CMake Tools",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Vybrat aktivní složku",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Spustit nástroj",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Ladit",
@@ -206,7 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Vytvoří se nová instance terminál a cíl se v ní spustí. Existující terminály se automaticky nevyčistí.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Určuje, jestli rozšíření přečte soubor compile_commands.json a povolí kompilaci jednoho souboru.",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Aktualizovat stav projektu",
-	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Odstranit mezipaměť a znovu nakonfigurovat",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Nastavit cíl testu",
 	"cmake-tools.debugger.label": "Ladicí program CMake"
 }
