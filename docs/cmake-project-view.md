@@ -95,12 +95,12 @@ The full level of options for the CMake status can be seen below:
             "statusBarLength": 20 
         }, 
         "debug": { 
-        	"statusBarVisibility": "visible", "hidden", 
-        	"projectStatusVisibility": "visible", "hidden" 
+            "statusBarVisibility": "visible", "hidden", 
+            "projectStatusVisibility": "visible", "hidden" 
         },
-        "launch": { 
-        	"statusBarVisibility": "visible", "hidden", 
-        	"projectStatusVisibility": "visible", "hidden" 
+        "launch": {
+            "statusBarVisibility": "visible", "hidden", 
+            "projectStatusVisibility": "visible", "hidden" 
         }
 }
 ```
