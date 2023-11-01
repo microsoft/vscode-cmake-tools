@@ -229,9 +229,9 @@ Depending on your configuration or your settings, there may need to be additiona
 
 ## Run without debugging
 
-You can run a target without debugging it, by running the *CMake: Run without Debugging* from VS Code's command palatte, by selecting the play button in the status bar, or by pressing the keyboard shortcut (the default `Shift+F5`).
+You can run a target without debugging it, by running the *CMake: Run without Debugging* from VS Code's command palatte, by selecting the play button in the status bar or the play button to the left of the Launch node, or by pressing the keyboard shortcut (the default `Shift+F5`).
 
-![Image of launching the selected target in the terminal window](images/run_target.png)
+![Image of launching the selected target in the terminal window](images/launch-target.png)
 
 The output of the target will be shown in an integrated terminal.
 
