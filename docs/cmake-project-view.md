@@ -23,9 +23,9 @@ The default settings will be set to the following:
 
 These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions.
 
-To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Options: StatusBar: Visibility` setting to `Visible`. This setting is overwritten by`CMake > Options: Advanced setting`, so if you had added to have some options hidden through this, these options will still remain hidden. 
+To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Options: Status Bar: Visibility` setting to `Visible`. This setting is overwritten by`CMake > Options: Advanced`, so if you had added to have some options hidden through this, these options will still remain hidden. 
 
-![Screenshot of the Visaul Studio Code Settings view, with the CMake Statusbar: Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
+![Screenshot of the Visual Studio Code Settings view, with the CMake Status Bar: Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
 
 ## Configuring your CMake Status Bar
 
@@ -46,7 +46,7 @@ The full level of options for the CMake status can be seen below:
 
 ### CMake Status Bar Configuration Options in your Settings Json
 ```json
-"cmake.options.statusBarVisibility": "visibile", "icon", "compact", "hidden" 
+"cmake.options.statusBarVisibility": "visible", "icon", "compact", "hidden" 
 "cmake.options.advanced": { 
 
         "folder": { 
@@ -106,19 +106,19 @@ The full level of options for the CMake status can be seen below:
 ```
 
 * `folder` is the active folder in your workspace. This is where the project is scoped to.
-* `configure` is associated with the CMake Configure action. It can only be found in the Project Status View and can't be seen in the status bar, hence no `statusBarVisibility` property value
-* `configurePreset` is associated with the CMake Configure Preset. When selected, the user can modify their active CMake Configure Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project)
-* `kit` is associated with the active kit selected (when CMake Presets aren't present). When selected, the user can modify their active kit. To learn more about kits, please see [our kit documentation](https://github.com/microsoft/vscode-cmake-tools/docs/kits.md)
-* `variant` is associated with the active variant (when CMake Presets aren't present). When selected, the user can modify their active variant. Variant status does not show on the Project Status View, but will show in the status bar when set to `visible`. To learn more about variants, please see [our variant documentation](https://github.com/microsoft/vscode-cmake-tools/docs/variants.md)
+* `configure` is associated with the CMake Configure action. It can only be found in the Project Status View and can't be seen in the status bar, hence no `statusBarVisibility` property value.
+* `configurePreset` is associated with the CMake Configure Preset. When selected, the user can modify their active CMake Configure Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project).
+* `kit` is associated with the active kit selected (when CMake Presets aren't present). When selected, the user can modify their active kit. To learn more about kits, please see [our kit documentation](https://github.com/microsoft/vscode-cmake-tools/docs/kits.md).
+* `variant` is associated with the active variant (when CMake Presets aren't present). When selected, the user can modify their active variant. Variant status does not show on the Project Status View, but will show in the status bar when set to `visible`. To learn more about variants, please see [our variant documentation](https://github.com/microsoft/vscode-cmake-tools/docs/variants.md).
 * `build` is associated with the CMake Build action. It invokes a CMake build on your build target using your build preset or variant.
-* `buildPreset` is associated with your active CMake Build Preset. When selected, the user can modify their active CMake Build Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project)
-* `buildTarget` is associated with your active CMake Build Target. When selected, the user can specify their active Build Target. This will be the target invoked when the user presses the `Build` icon in the status bar (if not hidden) or runs `CMake: Build Target` from the Command Palette
+* `buildPreset` is associated with your active CMake Build Preset. When selected, the user can modify their active CMake Build Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project).
+* `buildTarget` is associated with your active CMake Build Target. When selected, the user can specify their active Build Target. This will be the target invoked when the user presses the `Build` icon in the status bar (if not hidden) or runs `CMake: Build Target` from the Command Palette.
 * `ctest` is associated with running CTest. When selected, it will invoke CTest on the test preset specified. If there is no test preset specified, it will run all your tests by default.
 * `testPreset` is associated with selecting your active CMake Test Preset. When selected, the user can modify their active CMake Test Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project)
 * `launchTarget` is associated with selecting your active launch target. When selected, you can specify the active launch target.
 * `debug` is associated with the CMake Debug action. It invokes a debugger on the active launch target.
 * `launch` is associated with launching the target. It will run the specified target application in the terminal.
 
-To reset your CMake options back to the default, hover over your `CMake > Options: Status bar Visibility` and `CMake > Options: Advanced` settings and select the gear icons that appear for more options. From there, select `Reset Setting` on both options
-![Screenshot of the VS Code Setting option to Reset Setting to the left of CMake Statusbar visibility](images/cmake-setting-2.png)
-![Screenshot of the VS Code Setting option to Reset Setting to the left of CMake Options Advanced visibility](images/cmake-setting-1.png)
+To reset your CMake options back to the default, hover over your `Cmake > Options: Status Bar Visibility` and `Cmake > Options: Advanced` settings and select the gear icons that appear for more options. From there, select `Reset Setting` on both options.
+![Screenshot of the VS Code Setting option to Reset Setting to the left of Cmake Statusbar visibility](images/cmake-setting-2.png)
+![Screenshot of the VS Code Setting option to Reset Setting to the left of Cmake Options Advanced visibility](images/cmake-setting-1.png)
