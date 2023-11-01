@@ -581,7 +581,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     // Update the active project
     private async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, editor?: vscode.TextEditor): Promise<void> {
-        await this.projectController.updateActiveProject(workspaceFolder, editor, this.workspaceConfig.status);
+        await this.projectController.updateActiveProject(workspaceFolder, editor, this.workspaceConfig.options);
         await this.postUpdateActiveProject();
     }
 
@@ -1928,14 +1928,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 
     if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
         void vscode.window.showInformationMessage(
-            localize('options.moved.notification.body', "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools side panel by default. You can customize your view in the `cmake.status` settings."),
-            localize('options.moved.notification.open.visibility.settings', 'Open visibility settings'),
-            localize('options.moved.notification.do.not.show', "Do not show again")
+            localize('options.moved.notification.body', "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools sidebar. You can customize your view with the 'cmake.options' property in settings."),
+            localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility'),
+            localize('options.moved.notification.do.not.show', "Do Not Show Again")
         ).then(async (selection) => {
             if (selection !== undefined) {
-                if (selection === localize('options.moved.notification.open.visibility.settings', 'Open visibility settings')) {
-                    await vscode.commands.executeCommand('workbench.action.openSettings', 'cmake.status');
-                } else if (selection === localize('options.moved.notification.do.not.show', "Do not show again")) {
+                if (selection === localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility')) {
+                    await vscode.commands.executeCommand('workbench.action.openSettings', 'cmake.options');
+                } else if (selection === localize('options.moved.notification.do.not.show', "Do Not Show Again")) {
                     await vscode.workspace.getConfiguration('cmake').update('showOptionsMovedNotification', false, vscode.ConfigurationTarget.Global);
                 }
             }
