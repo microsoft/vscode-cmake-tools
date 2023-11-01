@@ -12,11 +12,9 @@ The default settings will be set to the following:
     "build": {
         "statusBarVisibility": "visible"
     },
-
     "launch": {
         "statusBarVisibility": "visible"
     },
-
     "debug": {
         "statusBarVisibility": "visible"
     }
@@ -25,7 +23,7 @@ The default settings will be set to the following:
 
 These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions.
 
-To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Status: StatusBar: Visibility` setting to `Visible`. This setting is overwritten by your CMake status settings in your `settings.json`, so if you had added to have some options hidden through your `settings.json`, these options will still remain hidden. 
+To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Options: StatusBar: Visibility` setting to `Visible`. This setting is overwritten by`CMake > Options: Advanced setting`, so if you had added to have some options hidden through this, these options will still remain hidden. 
 
 ![Screenshot of the Visaul Studio Code Settings view, with the CMake Statusbar: Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
 
@@ -121,5 +119,6 @@ The full level of options for the CMake status can be seen below:
 * `debug` is associated with the CMake Debug action. It invokes a debugger on the active launch target.
 * `launch` is associated with launching the target. It will run the specified target application in the terminal.
 
-To reset your CMake options back to the default, hover over your `CMake > Status: Status bar Visibility` and `CMake: Status: Advanced` settings and select the gear icons that appear for more options. From there, select `Reset Setting` on both options
-![Screenshot of the VS Code Setting option to Reset Setting to the left of CMake Statusbar visibility](images/cmake-status.png)
+To reset your CMake options back to the default, hover over your `CMake > Options: Status bar Visibility` and `CMake > Options: Advanced` settings and select the gear icons that appear for more options. From there, select `Reset Setting` on both options
+![Screenshot of the VS Code Setting option to Reset Setting to the left of CMake Statusbar visibility](images/cmake-setting-2.png)
+![Screenshot of the VS Code Setting option to Reset Setting to the left of CMake Options Advanced visibility](images/cmake-setting-1.png)
