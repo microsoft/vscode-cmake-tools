@@ -18,7 +18,7 @@ The results of the build are written to the directory specified by [cmake.buildD
 
 CMake Tools persists a "default target" for the build process. The default target is the "all" target (named `ALL_BUILD` in some generators), which builds all of the targets that CMake has designated for a default build.
 
-The name of the default target is shown in the status bar to the right of the **Build** button in square brackets:
+The name of the default target is shown in the CMake Tools sidebar underneath the **Build** node:
 
 ![Default target as shown in the status bar](images/build-target.png)
 
