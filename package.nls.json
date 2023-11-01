@@ -173,7 +173,7 @@
     "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
     "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
     "cmake-tools.configuration.cmake.status.statusBarVisibility.markdownDescription": {
-        "message": "Configures how the extension displays the items in the Status Bar. These settings may be overwritten by the more specific `#cmake.status.advanced.statusBarVisibility#` setting. For more information look [here](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/cmake-project-view.md).",
+        "message": "Configures how the extension displays the items in the Status Bar. These settings may be overwritten by the more specific `#cmake.status.advanced.statusBarVisibility#` setting. [More info](https://aka.ms/cmaketoolsoptionsconfiguration).",
         "comment": [
             "Markdown text between `` and () should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
@@ -185,7 +185,7 @@
         ]
     },
     "cmake-tools.configuration.cmake.status.advanced.markdownDescription": {
-        "message": "Configures the settings for individual Project Status View and Status Bar items. These settings may overwrite the more general `#cmake.status.statusBarVisibility#` setting. For more information look [here](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/cmake-project-view.md).",
+        "message": "Configures the settings for individual Project Status View and Status Bar items. These settings may overwrite the more general `#cmake.status.statusBarVisibility#` setting. [More info](https://aka.ms/cmaketoolsoptionsconfiguration).",
         "comment": [
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
