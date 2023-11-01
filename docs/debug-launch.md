@@ -23,6 +23,8 @@ Selecting the active launch target button will show the launch target selector s
 
 From there, you can press the play button by the `Launch` node to run it in terminal.
 
+![Image of running in terminal when you hover over the Launch node](images/launch-target.png)
+
 ## Debugging without a launch.json
 
 CMake Tools lets you start a debugger on a target without creating a `launch.json`.
@@ -32,7 +34,7 @@ CMake Tools lets you start a debugger on a target without creating a `launch.jso
 
 Start a debugging session on the active target by running the  *CMake: Debug* command from the VS Code command pallette, by selecting the Debug button in the status bar or CMake Tools side bar, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
 
-![Image of launching the debugger for the selected target](images/debug_target.png)
+![Image of launching the debugger for the selected target](images/debug-target.png)
 
 > **Note:**
 > Quick-debugging does not let you specify program arguments or other debugging options. See the next section for more options.
