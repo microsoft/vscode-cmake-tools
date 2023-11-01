@@ -58,7 +58,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             visibility: "default"
         },
         showOptionsMovedNotification: true,
-        status: {
+        options: {
             advanced: {},
             statusBarVisibility: "visible"
         },
