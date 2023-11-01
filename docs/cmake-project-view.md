@@ -111,3 +111,6 @@ The full level of options for the CMake status can be seen below:
 * `launchTarget` is associated with selecting your active launch target. When selected, you can specify the active launch target.
 * `debug` is associated with the CMake Debug action. It invokes a debugger on the active launch target.
 * `launch` is associated with launching the target. It will run the specified target application in the terminal.
+
+To reset your CMake options back to the default, hover over your `CMake > Statusbar: Visibility setting` and select `Reset Setting`
+![Screenshot of the VS Code Setting option to Reset Setting to the left of CMake Statusbar visibility](images/cmake-status.png)
