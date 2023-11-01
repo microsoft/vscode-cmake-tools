@@ -62,6 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "ビルドをキャンセル",
 	"cmake-tools.command.cmake.stopAll.title": "すべてのプロジェクトのビルドをキャンセル",
 	"cmake-tools.command.cmake.resetState.title": "CMake Tools 拡張機能の状態をリセットする (トラブルシューティング用)",
+	"cmake-tools.command.cmake.openSettings.title": "CMake Tools 拡張機能の設定を開く",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "アクティブなフォルダーの選択",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "ユーティリティの実行",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "デバッグ",
@@ -205,6 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "拡張子が単一ファイルのコンパイルを有効にするために compile_commands.json を読み取るかどうかを制御します。",
 	"cmake-tools.command.cmake.projectStatus.update.title": "プロジェクトの状態を最新の情報に更新",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "キャッシュの削除と再構成",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "テストの対象の設定",
 	"cmake-tools.debugger.label": "CMake デバッガー"
 }
