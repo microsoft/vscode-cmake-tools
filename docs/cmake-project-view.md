@@ -50,7 +50,7 @@ The full level of options for the CMake status can be seen below:
 "cmake.options.advanced": { 
 
         "folder": { 
-        	"statusBarVisibility": "visible", "icon", "compact", "hidden", 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20,
             "projectStatusVisibility": "visible", "hidden" 
         }, 
