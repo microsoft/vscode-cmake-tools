@@ -187,7 +187,7 @@
     "cmake-tools.configuration.cmake.status.advanced.markdownDescription": {
         "message": "Configures the settings for individual Project Status View and Status Bar items. These settings may overwrite the more general `#cmake.status.statusBarVisibility#` setting. [More info](https://aka.ms/cmaketoolsoptionsconfiguration).",
         "comment": [
-            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+            "Markdown text between `` and () should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
     "cmake-tools.configuration.cmake.status.advanced.projectStatusVisibility.description": "Configures how the extension displays this item the Project Status View.",
