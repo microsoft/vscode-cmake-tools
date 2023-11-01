@@ -1101,7 +1101,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
-        telemetry.logEvent("configureWithDebugger", { all: "false", debug: "true"});
+        telemetry.logEvent("configure", { all: "false", debug: "true"});
         return this.runCMakeCommand(
             cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation),
             folder, undefined, true);
