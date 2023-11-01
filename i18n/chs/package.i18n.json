@@ -62,6 +62,7 @@
 	"cmake-tools.command.cmake.stop.title": "取消生成",
 	"cmake-tools.command.cmake.stopAll.title": "取消所有项目的生成",
 	"cmake-tools.command.cmake.resetState.title": "重置 CMake Tools 扩展状态(用于故障排除)",
+	"cmake-tools.command.cmake.openSettings.title": "打开 CMake 工具扩展设置",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "选择活动文件夹",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "运行实用工具",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "调试",
@@ -205,6 +206,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已创建新的终端实例，并且已在其中启动目标。系统不会自动清理现有终端。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制扩展是否读取 compile_commands.json 以启用单个文件编译。",
 	"cmake-tools.command.cmake.projectStatus.update.title": "刷新项目状态",
+	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "删除缓存并重新配置",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "设置测试目标",
 	"cmake-tools.debugger.label": "CMake 调试程序"
 }
