@@ -8,7 +8,6 @@ The default settings will be set to the following:
 ## Default Settings Json
 ```json
 "cmake.status.statusBarVisibility": "hidden"
-
 "cmake.status.advanced": {
     "build": {
         "statusBarVisibility": "visible"
@@ -19,14 +18,15 @@ The default settings will be set to the following:
     },
 
     "debug": {
-        "statusBarVisibility" :"visible"
+        "statusBarVisibility": "visible"
     }
 }
 ```
 
 These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions.
 
-To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > StatusBar: Visibility` setting to `Visible`
+To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Status: StatusBar: Visibility` setting to `Visible`. This setting is overwritten by your CMake status settings in your `settings.json`, so if you had added to have some options hidden through your `settings.json`, these options will still remain hidden. 
+
 ![Screenshot of the Visaul Studio Code Settings view, with the CMake Statusbar: Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
 
 ## Configuring your CMake Status Bar
@@ -48,52 +48,52 @@ The full level of options for the CMake status can be seen below:
             "projectStatusVisibility": "visible", "hidden" 
         }, 
         "configure": { 
-            	"projectStatusVisibility": "visible", "hidden" 
+            "projectStatusVisibility": "visible", "hidden" 
         }, 
         "configurePreset": { 
-            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
-            	"statusBarLength": 20
+            "statusBarVisibility": "visible", "icon", "compact", "hidden" 
+            "statusBarLength": 20
         }, 
         "kit": { 
-            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
-            	"statusBarLength": 20 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden" 
+            "statusBarLength": 20 
         }, 
         "variantStatus": { 
-            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden" 
         }, 
         "build": { 
-            	"statusBarVisibility": "visible", "icon", "hidden" 
-            	"projectStatusVisibility": "visible", "hidden" 
+            "statusBarVisibility": "visible", "icon", "hidden",\ 
+            "projectStatusVisibility": "visible", "hidden" 
         }, 
         "buildPreset": { 
-            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
-            	"statusBarLength": 20 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden" 
+            "statusBarLength": 20 
         }, 
         "buildTarget": { 
-            	"statusBarVisibility": "visible", "compact", "hidden" 
-            	"statusBarLength": 20 
+            "statusBarVisibility": "visible", "compact", "hidden" 
+            "statusBarLength": 20 
         }, 
         "ctest": { 
-            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
-            	"statusBarLength": 20 
-            	"color": true, false 
-            	"projectStatusVisibility": "visible", "hidden" 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden" 
+            "statusBarLength": 20 
+            "color": true, false 
+            "projectStatusVisibility": "visible", "hidden" 
         }, 
         "testPreset": { 
-            	"statusBarVisibility": "visible", "icon", "compact", "hidden" 
-            	"statusBarLength": 20
+            "statusBarVisibility": "visible", "icon", "compact", "hidden" 
+            "statusBarLength": 20
         },
         "launchTarget": { 
-            	"statusBarVisibility": "visible", "compact", "hidden" 
-            	"statusBarLength": 20 
+            "statusBarVisibility": "visible", "compact", "hidden" 
+            "statusBarLength": 20 
         }, 
         "debug": { 
-            	"statusBarVisibility": "visible", "hidden" 
-            	"projectStatusVisibility": "visible", "hidden" 
+        	"statusBarVisibility": "visible", "hidden" 
+        	"projectStatusVisibility": "visible", "hidden" 
         },
         "launch": { 
-            	"statusBarVisibility": "visible", "hidden" 
-            	"projectStatusVisibility": "visible", "hidden" 
+        	"statusBarVisibility": "visible", "hidden" 
+        	"projectStatusVisibility": "visible", "hidden" 
         }
 }
 ```
