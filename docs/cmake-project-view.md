@@ -1,6 +1,8 @@
 # CMake Options Visibility Configuration
 
-Starting in CMake Tools 1.16, we will provide users the ability to customize their status bar with related CMake items like presets, kits, variants, build, configure, and launch to allow for users to de-clutter this global status bar as much as they would like to, while also having quick access to commonly performed CMake actions.
+Starting in CMake Tools 1.16, we will provide users the ability to customize their status bar with related CMake items like presets, kits, variants, build, configure, and launch to allow for users to de-clutter this global status bar as much as they would like to, while also having quick access to commonly performed CMake actions. By default, only `Build`, `Debug`, and `Run` will persist in the status bar. All of the CMake actions for configuring your project will now be available in the CMake Tools side bar under **Project Status** View.
+
+![Screenshot of the CMake Tools side bar to the left in VS Code with the Project Status View open](images/cmake-tools-sidebar.png)
 
 Users can specify what is shown in the status bar through their `settings.json` file.
 
@@ -40,7 +42,7 @@ You can also configure options to be `visible` or `hidden` in the Project Status
 *`ctest`
 *`debug`
 *`launch`
-Note: if you set one of these to hidden, the parent node will entirely be hidden. For example, if you set `build` to `hidden` in `projectStatusVisibility`, the option to select your build preset will also be hidden
+Note: if you set one of these to hidden, the parent node and it's children will entirely be hidden. For example, if you set `build` to `hidden` in `projectStatusVisibility`, the option to select your build preset will also be hidden
  
 The full level of options for the CMake status can be seen below:
 
