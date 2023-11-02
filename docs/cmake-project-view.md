@@ -27,11 +27,11 @@ These settings mean that by default all settings will be hidden from the status 
 
 To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Options: Status Bar: Visibility` setting to `Visible`. This setting is overwritten by`CMake > Options: Advanced`, so if you had added to have some options hidden through this, these options will still remain hidden. 
 
-![Screenshot of the Visual Studio Code Settings view, with the CMake Status Bar: Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
+![Screenshot of the VS Code Settings view, with the CMake > Status Bar Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
 
 ## Configuring your CMake Status Bar
 
- You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar through the `statusBarVisibility` variable.  Settings that are available to be hidden from the project status view side bar can be configured to be `visible` or `hidden` through the `projectStatusVisibility` variable.
+You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar through the `statusBarVisibility` variable.  Settings that are available to be hidden from the project status view side bar can be configured to be `visible` or `hidden` through the `projectStatusVisibility` variable.
  
 To make options visible in the status bar take up less space, you can configure certain options to be only the respective icon through the `icon` option in `statusBarVisibility` or specify a given character length through the `compact` option in `statusBarVisibility`. If a `statusBarVisibility` option is set to `compact` you can then specify an integer length for how many characters you want an option to take up through the `statusBarLength` option. It will truncate your existing status bar option to that specified character length. The default option is 20 characters.
 
@@ -46,7 +46,7 @@ Note: if you set one of these to hidden, the parent node and it's children will 
  
 The full level of options for the CMake status can be seen below:
 
-### CMake Status Bar Configuration Options in your Settings Json
+### CMake Status Bar and Project Status View Configuration Options in your Settings Json
 ```json
 "cmake.options.statusBarVisibility": "visible", "icon", "compact", "hidden" 
 "cmake.options.advanced": { 
