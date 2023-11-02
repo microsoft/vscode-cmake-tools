@@ -49,5 +49,8 @@
 	"loading.extension.commands": "Erweiterungsbefehle werden geladen.",
 	"register.command": "Registrieren von CMakeTools-Erweiterungsbefehl {0}",
 	"uninstall.old.cmaketools": "Deinstallieren Sie alle älteren Versionen der CMake Tools-Erweiterung. Sie wird jetzt von Microsoft ab Version 1.2.0 veröffentlicht.",
+	"options.moved.notification.body": "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools sidebar. You can customize your view with the 'cmake.options' property in settings.",
+	"options.moved.notification.configure.cmake.options": "Configure CMake Options Visibility",
+	"options.moved.notification.do.not.show": "Do Not Show Again",
 	"deactivate.cmaketools": "CMakeTools deaktivieren"
 }

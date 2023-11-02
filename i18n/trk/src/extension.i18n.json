@@ -49,5 +49,8 @@
 	"loading.extension.commands": "Uzantı komutları yükleniyor",
 	"register.command": "{0} CMake Araçları uzantısını komutunu kaydet",
 	"uninstall.old.cmaketools": "Lütfen CMake Araçları uzantısının eski sürümlerini kaldırın. Uzantı, 1.2.0 sürümünden itibaren Microsoft tarafından yayımlanmaktadır.",
+	"options.moved.notification.body": "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools sidebar. You can customize your view with the 'cmake.options' property in settings.",
+	"options.moved.notification.configure.cmake.options": "Configure CMake Options Visibility",
+	"options.moved.notification.do.not.show": "Do Not Show Again",
 	"deactivate.cmaketools": "CMake Araçları'nı devre dışı bırak"
 }

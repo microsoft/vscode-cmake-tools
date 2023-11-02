@@ -16,10 +16,10 @@
 	"Test": "Testuj",
 	"Debug": "Debuguj",
 	"Launch": "Uruchom",
-	"Project": "Projekt",
-	"active.project": "Aktywny projekt",
+	"Folder": "Folder",
+	"active.folder": "Active Folder",
 	"set.build.target": "Ustaw docelowy element kompilacji",
-	"set.debug.target": "Ustaw element docelowy debugowania",
+	"set.debug.target": "Set Debug Target",
 	"set.launch.target": "Ustaw element docelowy uruchamiania",
-	"select.active.project": "Wybierz aktywny projekt"
+	"select.active.folder": "Select Active Folder"
 }
