@@ -122,5 +122,5 @@ The full level of options for the CMake status can be seen below:
 * `launch` is associated with launching the target. It will run the specified target application in the terminal.
 
 To reset your CMake options back to the default, hover over your `Cmake > Options: Status Bar Visibility` and `Cmake > Options: Advanced` settings and select the gear icons that appear for more options. From there, select `Reset Setting` on both options.
-![Screenshot of the VS Code Setting option to Reset Setting to the left of Cmake Statusbar visibility](images/cmake-setting-2.png)
+![Screenshot of the VS Code Setting option to Reset Setting to the left of Cmake > Options: Status Bar Visibility](images/cmake-setting-2.png)
 ![Screenshot of the VS Code Setting option to Reset Setting to the left of Cmake > Options: Advanced visibility](images/cmake-setting-1.png)
