@@ -44,7 +44,7 @@ Note: if you set one of these to hidden, the parent node will entirely be hidden
  
 The full level of options for the CMake status can be seen below:
 
-### CMake Status Bar Configuration Options in your Settings Json
+### CMake Status Bar and Project Status View Configuration Options in your Settings Json
 ```json
 "cmake.options.statusBarVisibility": "visible", "icon", "compact", "hidden" 
 "cmake.options.advanced": { 
