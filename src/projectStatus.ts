@@ -3,7 +3,7 @@ import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { runCommand } from './util';
-import { StatusConfig } from './config';
+import { OptionConfig } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -96,12 +96,12 @@ export class ProjectStatus {
     }
 
     async openVisibilitySettings(): Promise<void> {
-        await vscode.commands.executeCommand('workbench.action.openSettingsJson', { revealSetting: { key: 'cmake.status.advanced' }});
+        await vscode.commands.executeCommand('workbench.action.openSettingsJson', { revealSetting: { key: 'cmake.options.advanced' }});
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject, status?: StatusConfig): Promise<void> {
+    async updateActiveProject(cmakeProject?: CMakeProject, options?: OptionConfig): Promise<void> {
         // Update Active Project
-        await treeDataProvider.updateActiveProject(cmakeProject, status);
+        await treeDataProvider.updateActiveProject(cmakeProject, options);
     }
 
     refresh(node?: Node): Promise<any> {
@@ -133,8 +133,8 @@ export class ProjectStatus {
         await treeDataProvider.setIsBusy(isBusy);
     }
 
-    async doStatusChange(status: StatusConfig) {
-        await treeDataProvider.doStatusChange(status);
+    async doStatusChange(options: OptionConfig) {
+        await treeDataProvider.doStatusChange(options);
     }
 
 }
@@ -164,11 +164,11 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         return this.activeCMakeProject;
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject, status?: StatusConfig): Promise<void> {
+    async updateActiveProject(cmakeProject?: CMakeProject, options?: OptionConfig): Promise<void> {
         // Use project to create the tree
         if (cmakeProject) {
             this.activeCMakeProject = cmakeProject;
-            await this.doStatusChange(status);
+            await this.doStatusChange(options);
         } else {
             this.isConfigButtonHidden = false;
             this.isFolderButtonHidden = false;
@@ -261,35 +261,35 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     }
 
     // TODO: get rid of undefined?
-    public async doStatusChange(status: StatusConfig | undefined) {
+    public async doStatusChange(options: OptionConfig | undefined) {
         let didChange: boolean = false;
         if (this.activeCMakeProject) {
-            const folderVisibility = status?.advanced?.folder?.projectStatusVisibility !== "hidden";
+            const folderVisibility = options?.advanced?.folder?.projectStatusVisibility !== "hidden";
             if (folderVisibility === this.isFolderButtonHidden) {
                 didChange = true;
                 this.isFolderButtonHidden = !folderVisibility;
             }
-            const configureVisibility = status?.advanced?.configure?.projectStatusVisibility !== "hidden";
+            const configureVisibility = options?.advanced?.configure?.projectStatusVisibility !== "hidden";
             if (configureVisibility === this.isConfigButtonHidden) {
                 didChange = true;
                 this.isConfigButtonHidden = !configureVisibility;
             }
-            const buildVisibility = status?.advanced?.build?.projectStatusVisibility !== "hidden";
+            const buildVisibility = options?.advanced?.build?.projectStatusVisibility !== "hidden";
             if (buildVisibility === this.isBuildButtonHidden) {
                 didChange = true;
                 this.isBuildButtonHidden = !buildVisibility;
             }
-            const testVisibility = status?.advanced?.ctest?.projectStatusVisibility !== "hidden";
+            const testVisibility = options?.advanced?.ctest?.projectStatusVisibility !== "hidden";
             if (testVisibility === this.isTestButtonHidden) {
                 didChange = true;
                 this.isTestButtonHidden = !testVisibility;
             }
-            const debugVisibility = status?.advanced?.debug?.projectStatusVisibility !== "hidden";
+            const debugVisibility = options?.advanced?.debug?.projectStatusVisibility !== "hidden";
             if (debugVisibility === this.isDebugButtonHidden) {
                 didChange = true;
                 this.isDebugButtonHidden = !debugVisibility;
             }
-            const launchVisibility = status?.advanced?.launch?.projectStatusVisibility !== "hidden";
+            const launchVisibility = options?.advanced?.launch?.projectStatusVisibility !== "hidden";
             if (launchVisibility === this.isLaunchButtonHidden) {
                 didChange = true;
                 this.isLaunchButtonHidden = !launchVisibility;

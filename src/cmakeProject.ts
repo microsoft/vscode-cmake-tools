@@ -38,7 +38,7 @@ import { VariantManager } from './variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
 import { enableFullFeatureSet, updateFullFeatureSet } from './extension';
-import { CMakeCommunicationMode, ConfigurationReader, StatusConfig, UseCMakePresets } from './config';
+import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -914,7 +914,7 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
-        this.doStatusChange(this.workspaceContext.config.status);
+        this.doStatusChange(this.workspaceContext.config.options);
         // Start up the variant manager
         await this.variantManager.initialize(this.folderName);
         // Set the status bar message
@@ -2825,10 +2825,10 @@ export class CMakeProject {
     public hideDebugButton: boolean = false;
     public hideLaunchButton: boolean = false;
 
-    doStatusChange(status: StatusConfig) {
-        this.hideBuildButton = (status?.advanced?.build?.statusBarVisibility === "hidden" && status?.advanced?.build?.projectStatusVisibility === "hidden") ? true : false;
-        this.hideDebugButton = (status?.advanced?.debug?.statusBarVisibility === "hidden" && status?.advanced?.debug?.projectStatusVisibility === "hidden") ? true : false;
-        this.hideLaunchButton = (status?.advanced?.launch?.statusBarVisibility === "hidden" && status?.advanced?.launch?.projectStatusVisibility === "hidden") ? true : false;
+    doStatusChange(options: OptionConfig) {
+        this.hideBuildButton = (options?.advanced?.build?.statusBarVisibility === "hidden" && options?.advanced?.build?.projectStatusVisibility === "hidden") ? true : false;
+        this.hideDebugButton = (options?.advanced?.debug?.statusBarVisibility === "hidden" && options?.advanced?.debug?.projectStatusVisibility === "hidden") ? true : false;
+        this.hideLaunchButton = (options?.advanced?.launch?.statusBarVisibility === "hidden" && options?.advanced?.launch?.projectStatusVisibility === "hidden") ? true : false;
     }
 }
 
