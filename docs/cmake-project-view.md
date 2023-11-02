@@ -25,7 +25,7 @@ These settings mean that by default all settings will be hidden from the status 
 
 To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Options: Status Bar: Visibility` setting to `Visible`. This setting is overwritten by`CMake > Options: Advanced`, so if you had added to have some options hidden through this, these options will still remain hidden. 
 
-![Screenshot of the Visual Studio Code Settings view, with the CMake Status Bar: Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
+![Screenshot of the VS Code Settings view, with the CMake > Status Bar Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
 
 ## Configuring your CMake Status Bar
 
