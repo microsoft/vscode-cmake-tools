@@ -16,10 +16,10 @@
 	"Test": "测试",
 	"Debug": "调试",
 	"Launch": "启动",
-	"Project": "项目",
-	"active.project": "活动项目",
+	"Folder": "Folder",
+	"active.folder": "Active Folder",
 	"set.build.target": "设置生成目标",
-	"set.debug.target": "设置调试目标",
+	"set.debug.target": "Set Debug Target",
 	"set.launch.target": "设置启动目标",
-	"select.active.project": "选择活动项目"
+	"select.active.folder": "Select Active Folder"
 }
