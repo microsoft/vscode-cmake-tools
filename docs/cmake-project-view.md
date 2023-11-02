@@ -30,7 +30,7 @@ To revert to the prior experience and have all of your presets display in the st
 
 ![Screenshot of the VS Code Settings view, with the CMake > Status Bar Visibility options. You can set these to visible, hidden, compact, or icon](images/cmake-statusbar-setting.png)
 
-## Configuring your CMake Status Bar
+## Configuring your CMake Status Bar and Project Status View
 
 You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar through the `statusBarVisibility` variable.  Settings that are available to be hidden from the project status view side bar can be configured to be `visible` or `hidden` through the `projectStatusVisibility` variable.
  
