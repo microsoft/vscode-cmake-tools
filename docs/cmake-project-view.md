@@ -7,6 +7,7 @@ Starting in CMake Tools 1.16, we will provide users the ability to customize the
 Users can specify what is shown in the status bar through their `settings.json` file.
 
 The default settings will be set to the following:
+
 ## Default Settings Json
 ```json
 "cmake.options.statusBarVisibility": "hidden"
