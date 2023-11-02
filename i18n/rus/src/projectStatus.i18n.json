@@ -16,10 +16,10 @@
 	"Test": "Тест",
 	"Debug": "Отладка",
 	"Launch": "Запуск",
-	"Project": "Проект",
-	"active.project": "Активный проект",
+	"Folder": "Folder",
+	"active.folder": "Active Folder",
 	"set.build.target": "Задание целевого объекта сборки",
-	"set.debug.target": "Задание целевого объекта отладки",
+	"set.debug.target": "Set Debug Target",
 	"set.launch.target": "Установить целевой объект",
-	"select.active.project": "Выбрать активный проект"
+	"select.active.folder": "Select Active Folder"
 }
