@@ -78,7 +78,7 @@ To invoke CTest, run **CMake: Run Tests from the command palette**. This is the 
 
 The CMake Tools side bar displays the active Configure Preset, Build Preset, and Test Preset under their respective Configure, Build, and Test Nodes. You can select each option to change the active preset:
 
-![Screenshot of the CMake side bar, showing the active Configure Preset, Build Preset, and Test Preset.](images/cmake-presets.png)
+![Screenshot of the CMake sidebar Project Status View, showing the active Configure Preset, Build Preset, and Test Preset.](images/cmake-presets.png)
 
 To show or hide individual status bar icons, you can modify `cmake.statusbar.advanced` in `settings.json`. For more information on how to configure your view, please see our [CMake view configuration docs](cmake-options-configuration.md)
 
