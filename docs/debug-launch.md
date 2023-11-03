@@ -15,7 +15,7 @@ By default, launching or debugging an executable target causes it to be built fi
 
 The first time you run target debugging, CMake Tools asks for you to specify a target, which will be persisted between sessions.
 
-The active launch target is shown in the CMake Tools side bar under the `Launch` node:
+The active launch target is shown in the CMake Tools sidebar Project Status View under the `Launch` node:
 
 ![Image of launch target to the right of the debug and run button](images/launch-debugv2.png)
 
