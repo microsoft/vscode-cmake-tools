@@ -72,9 +72,9 @@ All Test Presets must specify an associated `configurePreset` value. CMake Tools
 
 ### CMake: Run Tests
 
-To invoke CTest, run **CMake: Run Tests from the command palette**. This is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
+To invoke CTest, run **CMake: Run Tests** from the command palette. This is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
 
-### CMake Tools side bar behavior
+### CMake Tools side bar Project Status View behavior
 
 The CMake Tools Project Status View in the sidebar displays the active Configure Preset, Build Preset, and Test Preset under their respective Configure, Build, and Test Nodes. You can select each option to change the active preset:
 
