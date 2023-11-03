@@ -66,7 +66,7 @@ CTest is the CMake test driver program and is integrated with the CMake Tools ex
 
 **CMake: Select Test Preset** lists the default Test Preset and the union of non-hidden Test Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The default Test Preset is the same as invoking `ctest` with no other arguments from the command line.
 
-Select a Test Preset to make it the active Test Preset. This is the `testPreset` value that will be used when you invoke CTest to run tests. The active Test Preset appears on the CMake Tools side bar.
+Select a Test Preset to make it the active Test Preset. This is the `testPreset` value that will be used when you invoke CTest to run tests. The active Test Preset appears in the Project Status View on the CMake Tools sidebar.
 
 All Test Presets must specify an associated `configurePreset` value. CMake Tools will hide Test Presets that don't apply to the active Configure Preset. For more information, see the [list of Test Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#test-preset).
 
