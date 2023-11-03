@@ -32,7 +32,7 @@ CMake Tools lets you start a debugger on a target without creating a `launch.jso
 > **Note:**
 > Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file), below, for information about `launch.json` and using other debuggers.
 
-Start a debugging session on the active target by running the  *CMake: Debug* command from the VS Code command pallette, by selecting the Debug button in the status bar or CMake Tools side bar, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
+Start a debugging session on the active target by running the *CMake: Debug* command from the VS Code command palette, by selecting the Debug button in the status bar or CMake Tools sidebar Project Status View, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
 
 ![Image of launching the debugger for the selected target](images/debug-targetv2.png)
 
