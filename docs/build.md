@@ -31,7 +31,7 @@ Selecting this button shows a quick pick list for all the targets CMake Tools is
 You can build a single target without changing the current build target from the VS Code command palette by running the **CMake: Build Target** command, or by pressing the keyboard shortcut (default is `Shift+F7`). CMake will build any dependent targets, even if they aren't directly selected.
 
 ## Create a build task
-You can also define a build task from the VS Code command pallette by running the **Tasks: Configure task** command.
+You can also define a build task from the VS Code command palette by running the **Tasks: Configure Task** command.
 
 ![Configure a build task](images/configure_task.png)
 
