@@ -1121,6 +1121,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
+        // I need to add ConfigureTriggers that account for coming from the project status view or project outline.
         telemetry.logEvent("configure", { all: "true", debug: "true"});
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation), undefined, true);
     }
@@ -1863,6 +1864,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
+        // add parameters that give a more specific configureTrigger
         vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger')),
         vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
         vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
