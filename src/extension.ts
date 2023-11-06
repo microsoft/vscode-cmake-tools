@@ -172,6 +172,12 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
+        this.workspaceConfig.onChange('options', v => {
+            telemetry.logEvent('configChanged.options', {
+                statusBarVisibility: `${v.statusBarVisibility}`,
+                advanced: `${v.advanced}`
+            });
+        });
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         });
