@@ -1080,13 +1080,13 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
     }
 
-    cleanConfigureAllWithDebugger() {
-        return this.cleanConfigureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()});
+    cleanConfigureAllWithDebugger(trigger?: ConfigureTrigger) {
+        return this.cleanConfigureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
     }
 
-    cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
+    cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
         telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureAllWithDebugger, debuggerInformation), undefined, true);
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(trigger ?? ConfigureTrigger.commandCleanConfigureAllWithDebugger, debuggerInformation), undefined, true);
     }
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string) {
@@ -1096,15 +1096,15 @@ export class ExtensionManager implements vscode.Disposable {
             folder, undefined, true, sourceDir);
     }
 
-    configureWithDebugger(folder?: vscode.WorkspaceFolder) {
-        return this.configureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder);
+    configureWithDebugger(folder?: vscode.WorkspaceFolder, sourceDir?: string, trigger?: ConfigureTrigger) {
+        return this.configureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder, undefined, sourceDir, trigger);
     }
 
-    configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
+    configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string, trigger?: ConfigureTrigger) {
         telemetry.logEvent("configure", { all: "false", debug: "true"});
         return this.runCMakeCommand(
-            cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation),
-            folder, undefined, true);
+            cmakeProject => cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation),
+            folder, undefined, true, sourceDir);
     }
 
     showConfigureCommand(folder?: vscode.WorkspaceFolder) {
@@ -1116,14 +1116,14 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true);
     }
 
-    configureAllWithDebugger() {
-        return this.configureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()});
+    configureAllWithDebugger(trigger?: ConfigureTrigger) {
+        return this.configureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
     }
 
-    configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
+    configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
         // I need to add ConfigureTriggers that account for coming from the project status view or project outline.
         telemetry.logEvent("configure", { all: "true", debug: "true"});
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation), undefined, true);
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation), undefined, true);
     }
 
     editCacheUI() {
@@ -1865,12 +1865,12 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
         // add parameters that give a more specific configureTrigger
-        vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger')),
+        vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger', ConfigureTrigger.projectOutlineConfigureAllWithDebugger)),
         vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
         vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
         vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
-        vscode.commands.registerCommand('cmake.outline.cleanConfigureAllWithDebugger', () => runCommand('cleanConfigureAllWithDebugger')),
+        vscode.commands.registerCommand('cmake.outline.cleanConfigureAllWithDebugger', () => runCommand('cleanConfigureAllWithDebugger', ConfigureTrigger.projectOutlineCleanConfigureAllWithDebugger)),
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items
@@ -1880,6 +1880,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             } else if (what instanceof SourceFileNode) {
                 await runCommand('configure', what.folder, false, what.sourcePath);
             }
+        }),
+        vscode.commands.registerCommand('cmake.outline.configureWithDebugger', async (what: SourceFileNode) => {
+            await runCommand('configureWithDebugger', what.folder, what.sourcePath, ConfigureTrigger.projectOutlineConfigureWithDebugger);
         }),
         vscode.commands.registerCommand('cmake.outline.build', (what: ProjectNode) => runCommand('build', what.folder, "all", what.sourceDirectory)),
         vscode.commands.registerCommand('cmake.outline.clean', (what: ProjectNode) => runCommand('build', what.folder, "clean", what.sourceDirectory)),

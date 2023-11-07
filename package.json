@@ -1615,7 +1615,7 @@
           "group": "inline"
         },
         {
-          "command": "cmake.outline.configureAllWithDebugger",
+          "command": "cmake.outline.configureWithDebugger",
           "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/ && vscode-cmake-tools.cmakeDebuggerAvailable",
           "group": "inline"
         },
