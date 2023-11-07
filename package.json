@@ -2461,14 +2461,14 @@
                     "compact",
                     "icon",
                     "hidden"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%"
                   ]
                 },
-                "markdownEnumDescriptions": [
-                  "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
-                  "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
-                  "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription%",
-                  "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%"
-                ],
                 "statusBarLength": {
                   "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
                   "type": "integer",

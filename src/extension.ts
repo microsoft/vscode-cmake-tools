@@ -172,6 +172,38 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
+        this.workspaceConfig.onChange('options', v => {
+            telemetry.logEvent('configChanged.options', {
+                statusBarVisibility: `${v.statusBarVisibility}`,
+                advanced_configure_projectStatusVisibility: `${v.advanced?.configure?.projectStatusVisibility}`,
+                advanced_configurePreset_statusBarVisibility: `${v.advanced?.configurePreset?.statusBarVisibility}`,
+                advanced_configurePreset_statusBarLength: `${v.advanced?.configurePreset?.statusBarLength}`,
+                advanced_buildPreset_statusBarVisibility: `${v.advanced?.buildPreset?.statusBarVisibility}`,
+                advanced_buildPreset_statusBarLength: `${v.advanced?.buildPreset?.statusBarLength}`,
+                advanced_testPreset_statusBarVisibility: `${v.advanced?.testPreset?.statusBarVisibility}`,
+                advanced_testPreset_statusBarLength: `${v.advanced?.testPreset?.statusBarLength}`,
+                advanced_kit_statusBarVisibility: `${v.advanced?.kit?.statusBarVisibility}`,
+                advanced_kit_statusBarLength: `${v.advanced?.kit?.statusBarLength}`,
+                advanced_variant_statusBarVisibility: `${v.advanced?.variant?.statusBarVisibility}`,
+                advanced_folder_statusBarVisibility: `${v.advanced?.folder?.statusBarVisibility}`,
+                advanced_folder_statusBarLength: `${v.advanced?.folder?.statusBarLength}`,
+                advanced_folder_projectStatusVisibility: `${v.advanced?.folder?.projectStatusVisibility}`,
+                advanced_buildTarget_statusBarVisibility: `${v.advanced?.buildTarget?.statusBarVisibility}`,
+                advanced_buildTarget_statusBarLength: `${v.advanced?.buildTarget?.statusBarLength}`,
+                advanced_build_statusBarVisibility: `${v.advanced?.build?.statusBarVisibility}`,
+                advanced_build_projectStatusVisibility: `${v.advanced?.build?.projectStatusVisibility}`,
+                advanced_launchTarget_statusBarVisibility: `${v.advanced?.launchTarget?.statusBarVisibility}`,
+                advanced_launchTarget_statusBarLength: `${v.advanced?.launchTarget?.statusBarLength}`,
+                advanced_debug_statusBarVisibility: `${v.advanced?.debug?.statusBarVisibility}`,
+                advanced_debug_projectStatusVisibility: `${v.advanced?.debug?.projectStatusVisibility}`,
+                advanced_launch_statusBarVisibility: `${v.advanced?.launch?.statusBarVisibility}`,
+                advanced_launch_projectStatusVisibility: `${v.advanced?.launch?.projectStatusVisibility}`,
+                advanced_ctest_statusBarVisibility: `${v.advanced?.ctest?.statusBarVisibility}`,
+                advanced_ctest_statusBarLength: `${v.advanced?.ctest?.statusBarLength}`,
+                advanced_ctest_color: `${v.advanced?.ctest?.color}`,
+                advanced_ctest_projectStatusVisibility: `${v.advanced?.ctest?.projectStatusVisibility}`
+            });
+        });
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         });
