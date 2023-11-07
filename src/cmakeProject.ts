@@ -83,12 +83,16 @@ export enum ConfigureTrigger {
     commandEditCacheUI = "commandEditCacheUI",
     commandConfigure = "commandConfigure",
     commandConfigureWithDebugger = "commandConfigureWithDebugger",
+    projectOutlineConfigureWithDebugger = "projectOutlineConfigureWithDebugger",
     commandCleanConfigure = "commandCleanConfigure",
     commandCleanConfigureWithDebugger = "commandCleanConfigureWithDebugger",
     commandConfigureAll = "commandConfigureAll",
     commandConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
+    projectOutlineConfigureAllWithDebugger = "projectOutlineConfigureAllWithDebugger",
     commandCleanConfigureAll = "commandCleanConfigureAll",
     commandCleanConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
+    projectOutlineCleanConfigureAllWithDebugger = "projectOutlineCleanConfigureAllWithDebugger",
+    configureFailedConfigureWithDebuggerButton = "configureFailedConfigureWithDebuggerButton",
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
     selectKit = "selectKit"
@@ -1390,7 +1394,7 @@ export class CMakeProject {
                                         {title: localize('no.configureWithDebugger.button', 'Cancel')})
                                         .then(async chosen => {
                                             if (chosen && chosen.title === yesButtonTitle) {
-                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugger, {
+                                                await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
                                                     pipeName: getDebuggerPipeName()
                                                 });
                                             }
