@@ -38,7 +38,7 @@ import { VariantManager } from './variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
 import { enableFullFeatureSet, updateFullFeatureSet } from './extension';
-import { CMakeCommunicationMode, ConfigurationReader, StatusBarConfig, UseCMakePresets } from './config';
+import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -84,12 +84,16 @@ export enum ConfigureTrigger {
     commandEditCacheUI = "commandEditCacheUI",
     commandConfigure = "commandConfigure",
     commandConfigureWithDebugger = "commandConfigureWithDebugger",
+    projectOutlineConfigureWithDebugger = "projectOutlineConfigureWithDebugger",
     commandCleanConfigure = "commandCleanConfigure",
     commandCleanConfigureWithDebugger = "commandCleanConfigureWithDebugger",
     commandConfigureAll = "commandConfigureAll",
     commandConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
+    projectOutlineConfigureAllWithDebugger = "projectOutlineConfigureAllWithDebugger",
     commandCleanConfigureAll = "commandCleanConfigureAll",
     commandCleanConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
+    projectOutlineCleanConfigureAllWithDebugger = "projectOutlineCleanConfigureAllWithDebugger",
+    configureFailedConfigureWithDebuggerButton = "configureFailedConfigureWithDebuggerButton",
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
     selectKit = "selectKit"
@@ -915,9 +919,7 @@ export class CMakeProject {
     private async init(sourceDirectory: string) {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
-        this.hideBuildButton = (this.workspaceContext.config.statusbar.advanced?.build?.visibility === "hidden") ? true : false;
-        this.hideDebugButton = (this.workspaceContext.config.statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
-        this.hideLaunchButton = (this.workspaceContext.config.statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
+        this.doStatusChange(this.workspaceContext.config.options);
         // Start up the variant manager
         await this.variantManager.initialize(this.folderName);
         // Set the status bar message
@@ -1393,7 +1395,7 @@ export class CMakeProject {
                                         {title: localize('no.configureWithDebugger.button', 'Cancel')})
                                         .then(async chosen => {
                                             if (chosen && chosen.title === yesButtonTitle) {
-                                                await this.configureInternal(trigger, extraArgs, ConfigureType.NormalWithDebugger, {
+                                                await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
                                                     pipeName: getDebuggerPipeName()
                                                 });
                                             }
@@ -2827,16 +2829,11 @@ export class CMakeProject {
     public hideBuildButton: boolean = false;
     public hideDebugButton: boolean = false;
     public hideLaunchButton: boolean = false;
-    doStatusBarChange(statusbar: StatusBarConfig) {
-        if (statusbar.visibility === "hidden") {
-            this.hideBuildButton = true;
-            this.hideDebugButton = true;
-            this.hideLaunchButton = true;
-            return;
-        }
-        this.hideBuildButton = (statusbar.advanced?.build?.visibility === "hidden") ? true : false;
-        this.hideDebugButton = (statusbar.advanced?.debug?.visibility === "hidden") ? true : false;
-        this.hideLaunchButton = (statusbar.advanced?.launch?.visibility === "hidden") ? true : false;
+
+    doStatusChange(options: OptionConfig) {
+        this.hideBuildButton = (options?.advanced?.build?.statusBarVisibility === "hidden" && options?.advanced?.build?.projectStatusVisibility === "hidden") ? true : false;
+        this.hideDebugButton = (options?.advanced?.debug?.statusBarVisibility === "hidden" && options?.advanced?.debug?.projectStatusVisibility === "hidden") ? true : false;
+        this.hideLaunchButton = (options?.advanced?.launch?.statusBarVisibility === "hidden" && options?.advanced?.launch?.projectStatusVisibility === "hidden") ? true : false;
     }
 }
 

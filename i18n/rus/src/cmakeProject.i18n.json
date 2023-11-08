@@ -117,7 +117,7 @@
 	"configure.now.button": "Настроить сейчас",
 	"cache.load.failed": "Файл CMakeCache.txt не найден. Сначала настройте проект.",
 	"set.up.before.selecting.target": "Настройте проект CMake перед выбором целевого объекта.",
-	"select.active.target.tooltip": "Выобрать целевой объект сборки по умолчанию",
+	"select.active.target.tooltip": "Выбрать целевой объект сборки по умолчанию",
 	"enter.target.name": "Введите имя целевого объекта.",
 	"target.to.build.description": "Целевой объект для сборки",
 	"build.failed": "Сбой сборки.",

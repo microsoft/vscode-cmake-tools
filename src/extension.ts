@@ -51,7 +51,6 @@ import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '.
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
-export let projectStatus: ProjectStatus;
 
 const log = logging.createLogger('extension');
 
@@ -174,8 +173,37 @@ export class ExtensionManager implements vscode.Disposable {
             }
             this.statusBar.setAutoSelectActiveProject(v);
         });
-        this.workspaceConfig.onChange('useProjectStatusView', v => {
-            telemetry.logEvent('configChanged.useProjectStatusView', { useProjectStatusView: `${v}`});
+        this.workspaceConfig.onChange('options', v => {
+            telemetry.logEvent('configChanged.options', {
+                statusBarVisibility: `${v.statusBarVisibility}`,
+                advanced_configure_projectStatusVisibility: `${v.advanced?.configure?.projectStatusVisibility}`,
+                advanced_configurePreset_statusBarVisibility: `${v.advanced?.configurePreset?.statusBarVisibility}`,
+                advanced_configurePreset_statusBarLength: `${v.advanced?.configurePreset?.statusBarLength}`,
+                advanced_buildPreset_statusBarVisibility: `${v.advanced?.buildPreset?.statusBarVisibility}`,
+                advanced_buildPreset_statusBarLength: `${v.advanced?.buildPreset?.statusBarLength}`,
+                advanced_testPreset_statusBarVisibility: `${v.advanced?.testPreset?.statusBarVisibility}`,
+                advanced_testPreset_statusBarLength: `${v.advanced?.testPreset?.statusBarLength}`,
+                advanced_kit_statusBarVisibility: `${v.advanced?.kit?.statusBarVisibility}`,
+                advanced_kit_statusBarLength: `${v.advanced?.kit?.statusBarLength}`,
+                advanced_variant_statusBarVisibility: `${v.advanced?.variant?.statusBarVisibility}`,
+                advanced_folder_statusBarVisibility: `${v.advanced?.folder?.statusBarVisibility}`,
+                advanced_folder_statusBarLength: `${v.advanced?.folder?.statusBarLength}`,
+                advanced_folder_projectStatusVisibility: `${v.advanced?.folder?.projectStatusVisibility}`,
+                advanced_buildTarget_statusBarVisibility: `${v.advanced?.buildTarget?.statusBarVisibility}`,
+                advanced_buildTarget_statusBarLength: `${v.advanced?.buildTarget?.statusBarLength}`,
+                advanced_build_statusBarVisibility: `${v.advanced?.build?.statusBarVisibility}`,
+                advanced_build_projectStatusVisibility: `${v.advanced?.build?.projectStatusVisibility}`,
+                advanced_launchTarget_statusBarVisibility: `${v.advanced?.launchTarget?.statusBarVisibility}`,
+                advanced_launchTarget_statusBarLength: `${v.advanced?.launchTarget?.statusBarLength}`,
+                advanced_debug_statusBarVisibility: `${v.advanced?.debug?.statusBarVisibility}`,
+                advanced_debug_projectStatusVisibility: `${v.advanced?.debug?.projectStatusVisibility}`,
+                advanced_launch_statusBarVisibility: `${v.advanced?.launch?.statusBarVisibility}`,
+                advanced_launch_projectStatusVisibility: `${v.advanced?.launch?.projectStatusVisibility}`,
+                advanced_ctest_statusBarVisibility: `${v.advanced?.ctest?.statusBarVisibility}`,
+                advanced_ctest_statusBarLength: `${v.advanced?.ctest?.statusBarLength}`,
+                advanced_ctest_color: `${v.advanced?.ctest?.color}`,
+                advanced_ctest_projectStatusVisibility: `${v.advanced?.ctest?.projectStatusVisibility}`
+            });
         });
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
@@ -215,10 +243,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     public showStatusBar(fullFeatureSet: boolean) {
-        const useProjectStatusView = this.workspaceConfig.useProjectStatusView;
-        if (!useProjectStatusView) {
-            this.statusBar.setVisible(fullFeatureSet);
-        }
+        this.statusBar.setVisible(fullFeatureSet);
     }
 
     public getStatusBar(): StatusBar {
@@ -233,13 +258,13 @@ export class ExtensionManager implements vscode.Disposable {
         const inst = new ExtensionManager(ctx);
         return inst;
     }
+    /**
+     * The project status view controller
+     */
+    projectStatus = new ProjectStatus();
 
     // NOTE: (from sidebar) The project controller manages all the projects in the workspace
-    /**
-     * NOTE: (from revert)
-     * The folder controller manages multiple instances. One per folder.
-     */
-    public readonly projectController = new ProjectController(this.extensionContext);
+    public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus);
     /**
      * The status bar controller
      */
@@ -430,7 +455,9 @@ export class ExtensionManager implements vscode.Disposable {
         if (this.cppToolsAPI) {
             this.cppToolsAPI.dispose();
         }
-
+        if (this.projectStatus) {
+            this.projectStatus.dispose();
+        }
         await this.projectController.dispose();
         await telemetry.deactivate();
     }
@@ -602,7 +629,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     // Update the active project
     private async updateActiveProject(workspaceFolder?: vscode.WorkspaceFolder, editor?: vscode.TextEditor): Promise<void> {
-        await this.projectController.updateActiveProject(workspaceFolder, editor);
+        await this.projectController.updateActiveProject(workspaceFolder, editor, this.workspaceConfig.options);
         await this.postUpdateActiveProject();
     }
 
@@ -728,13 +755,6 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setBuildPresetName('');
             this.statusBar.setTestPresetName('');
         } else {
-            // this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, target => this.onBuildTargetChangedEmitter.fire(target));
-            // this.launchTargetSub = cmakeProject.onLaunchTargetNameChanged(FireNow, target => this.onLaunchTargetChangedEmitter.fire(target || ''));
-            if (vscode.workspace.getConfiguration('cmake').get('useProjectStatusView', true)) {
-                this.statusBar.setVisible(false);
-            } else {
-                this.statusBar.setVisible(true);
-            }
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
                 this.statusBar.setBuildTargetName(t);
@@ -1108,13 +1128,13 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
     }
 
-    cleanConfigureAllWithDebugger() {
-        return this.cleanConfigureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()});
+    cleanConfigureAllWithDebugger(trigger?: ConfigureTrigger) {
+        return this.cleanConfigureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
     }
 
-    cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
+    cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
         telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureAllWithDebugger, debuggerInformation), undefined, true);
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureWithDebugger(trigger ?? ConfigureTrigger.commandCleanConfigureAllWithDebugger, debuggerInformation), undefined, true);
     }
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string) {
@@ -1124,15 +1144,15 @@ export class ExtensionManager implements vscode.Disposable {
             folder, undefined, true, sourceDir);
     }
 
-    configureWithDebugger(folder?: vscode.WorkspaceFolder) {
-        return this.configureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder);
+    configureWithDebugger(folder?: vscode.WorkspaceFolder, sourceDir?: string, trigger?: ConfigureTrigger) {
+        return this.configureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder, undefined, sourceDir, trigger);
     }
 
-    configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
-        telemetry.logEvent("configureWithDebugger", { all: "false", debug: "true"});
+    configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string, trigger?: ConfigureTrigger) {
+        telemetry.logEvent("configure", { all: "false", debug: "true"});
         return this.runCMakeCommand(
-            cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation),
-            folder, undefined, true);
+            cmakeProject => cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation),
+            folder, undefined, true, sourceDir);
     }
 
     showConfigureCommand(folder?: vscode.WorkspaceFolder) {
@@ -1144,13 +1164,14 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true);
     }
 
-    configureAllWithDebugger() {
-        return this.configureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()});
+    configureAllWithDebugger(trigger?: ConfigureTrigger) {
+        return this.configureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
     }
 
-    configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation) {
+    configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
+        // I need to add ConfigureTriggers that account for coming from the project status view or project outline.
         telemetry.logEvent("configure", { all: "true", debug: "true"});
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation), undefined, true);
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation), undefined, true);
     }
 
     editCacheUI() {
@@ -1540,6 +1561,7 @@ export class ExtensionManager implements vscode.Disposable {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
         // await this.projectController.hideLaunchButton(shouldHide);
         this.statusBar.hideLaunchButton(shouldHide);
+        await this.projectStatus.hideLaunchButton(shouldHide);
         await util.setContextValue(hideLaunchCommandKey, shouldHide);
     }
 
@@ -1547,12 +1569,14 @@ export class ExtensionManager implements vscode.Disposable {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
         // await this.projectController.hideDebugButton(shouldHide);
         this.statusBar.hideDebugButton(shouldHide);
+        await this.projectStatus.hideDebugButton(shouldHide);
         await util.setContextValue(hideDebugCommandKey, shouldHide);
     }
 
     async hideBuildCommand(shouldHide: boolean = true) {
         // await this.projectController.hideBuildButton(shouldHide);
         this.statusBar.hideBuildButton(shouldHide);
+        await this.projectStatus.hideBuildButton(shouldHide);
         await util.setContextValue(hideBuildCommandKey, shouldHide);
     }
 
@@ -1888,12 +1912,13 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
-        vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger')),
+        // add parameters that give a more specific configureTrigger
+        vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger', ConfigureTrigger.projectOutlineConfigureAllWithDebugger)),
         vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
         vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
         vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
-        vscode.commands.registerCommand('cmake.outline.cleanConfigureAllWithDebugger', () => runCommand('cleanConfigureAllWithDebugger')),
+        vscode.commands.registerCommand('cmake.outline.cleanConfigureAllWithDebugger', () => runCommand('cleanConfigureAllWithDebugger', ConfigureTrigger.projectOutlineCleanConfigureAllWithDebugger)),
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         // Commands for outline items
@@ -1903,6 +1928,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             } else if (what instanceof SourceFileNode) {
                 await runCommand('configure', what.folder, false, what.sourcePath);
             }
+        }),
+        vscode.commands.registerCommand('cmake.outline.configureWithDebugger', async (what: SourceFileNode) => {
+            await runCommand('configureWithDebugger', what.folder, what.sourcePath, ConfigureTrigger.projectOutlineConfigureWithDebugger);
         }),
         vscode.commands.registerCommand('cmake.outline.build', (what: ProjectNode) => runCommand('build', what.folder, "all", what.sourceDirectory)),
         vscode.commands.registerCommand('cmake.outline.clean', (what: ProjectNode) => runCommand('build', what.folder, "clean", what.sourceDirectory)),
@@ -1951,6 +1979,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
 
+    if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
+        void vscode.window.showInformationMessage(
+            localize('options.moved.notification.body', "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools sidebar. You can customize your view with the 'cmake.options' property in settings."),
+            localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility'),
+            localize('options.moved.notification.do.not.show', "Do Not Show Again")
+        ).then(async (selection) => {
+            if (selection !== undefined) {
+                if (selection === localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility')) {
+                    await vscode.commands.executeCommand('workbench.action.openSettings', 'cmake.options');
+                } else if (selection === localize('options.moved.notification.do.not.show', "Do Not Show Again")) {
+                    await vscode.workspace.getConfiguration('cmake').update('showOptionsMovedNotification', false, vscode.ConfigurationTarget.Global);
+                }
+            }
+        });
+    }
+
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
     await enableFullFeatureSet(false);
 
@@ -1959,7 +2003,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await util.setContextValue("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
-    projectStatus = new ProjectStatus();
 
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
@@ -2004,9 +2047,6 @@ export async function deactivate() {
     }
     if (taskProvider) {
         taskProvider.dispose();
-    }
-    if (projectStatus) {
-        projectStatus.dispose();
     }
 }
 

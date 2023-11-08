@@ -23,69 +23,92 @@ const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
 export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'automatic';
-export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
-export type TouchBarButtonVisibility = "default" | "hidden";
+export type StatusBarOptionVisibility = "visible" | "compact" | "icon" | "hidden";
+export type StatusBarStaticOptionVisibility = "visible" | "icon" | "hidden";
+export type StatusBarTextOptionVisibility = "visible" | "compact" | "hidden";
+export type StatusBarIconOptionVisibility = "visible" | "hidden";
+export type ProjectStatusOptionVisibility = "visible" | "hidden";
+export type TouchBarOptionVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
 
 export interface AdvancedTouchBarConfig {
-    configure?: TouchBarButtonVisibility;
-    build?: TouchBarButtonVisibility;
-    debug?: TouchBarButtonVisibility;
-    launch?: TouchBarButtonVisibility;
+    configure?: TouchBarOptionVisibility;
+    build?: TouchBarOptionVisibility;
+    debug?: TouchBarOptionVisibility;
+    launch?: TouchBarOptionVisibility;
 }
 
 export interface TouchBarConfig {
     advanced?: AdvancedTouchBarConfig;
-    visibility: TouchBarButtonVisibility;
+    visibility: TouchBarOptionVisibility;
 }
 
-export interface AdvancedStatusBarConfig {
+export interface AdvancedOptionConfig {
+    configure?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+    };
     configurePreset?: {
-        visibility?: StatusBarButtonVisibility;
-        length?: number;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        statusBarLength?: number;
     };
     buildPreset?: {
-        visibility?: StatusBarButtonVisibility;
-        length?: number;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        statusBarLength?: number;
     };
     testPreset?: {
-        visibility?: StatusBarButtonVisibility;
-        length?: number;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        statusBarLength?: number;
     };
     kit?: {
-        visibility?: StatusBarButtonVisibility;
-        length?: number;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        statusBarLength?: number;
     };
-    status?: {
-        visibility?: StatusBarButtonVisibility;
+    variant?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
     };
-    workspace?: {
-        visibility?: StatusBarButtonVisibility;
+    folder?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        statusBarLength?: number;
     };
     buildTarget?: {
-        visibility?: StatusBarButtonVisibility;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarTextOptionVisibility;
+        statusBarLength?: number;
     };
     build?: {
-        visibility?: StatusBarButtonVisibility;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarStaticOptionVisibility;
     };
     launchTarget?: {
-        visibility?: StatusBarButtonVisibility;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarTextOptionVisibility;
+        statusBarLength?: number;
     };
     debug?: {
-        visibility?: StatusBarButtonVisibility;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarIconOptionVisibility;
     };
     launch?: {
-        visibility?: StatusBarButtonVisibility;
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarIconOptionVisibility;
     };
     ctest?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
         color?: boolean;
-        visibility?: StatusBarButtonVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        statusBarLength?: number;
     };
 }
 
-export interface StatusBarConfig {
-    advanced?: AdvancedStatusBarConfig;
-    visibility: StatusBarButtonVisibility;
+export interface OptionConfig {
+    advanced?: AdvancedOptionConfig;
+    statusBarVisibility: StatusBarOptionVisibility;
 }
 
 export interface ExtensionConfigurationSettings {
@@ -139,8 +162,8 @@ export interface ExtensionConfigurationSettings {
     loggingLevel: LogLevelKey;
     additionalKits: string[];
     touchbar: TouchBarConfig;
-    statusbar: StatusBarConfig;
-    useProjectStatusView: boolean;
+    showOptionsMovedNotification: boolean;
+    options: OptionConfig;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
     allowUnsupportedPresetsVersions: boolean;
@@ -460,12 +483,8 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.touchbar;
     }
 
-    get statusbar() {
-        return this.configData.statusbar;
-    }
-
-    get useProjectStatusView(): boolean {
-        return this.configData.useProjectStatusView;
+    get options() {
+        return this.configData.options;
     }
 
     get launchBehavior(): string {
@@ -527,8 +546,8 @@ export class ConfigurationReader implements vscode.Disposable {
         loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
         additionalKits: new vscode.EventEmitter<string[]>(),
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
-        statusbar: new vscode.EventEmitter<StatusBarConfig>(),
-        useProjectStatusView: new vscode.EventEmitter<boolean>(),
+        showOptionsMovedNotification: new vscode.EventEmitter<boolean>(),
+        options: new vscode.EventEmitter<OptionConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
