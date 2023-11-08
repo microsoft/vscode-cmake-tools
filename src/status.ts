@@ -238,7 +238,7 @@ class FolderButton extends Button {
 class VariantStatus extends Button {
     private _statusMessage: string = localize('loading.status', 'Loading...');
 
-    settingsName = 'variantStatus';
+    settingsName = 'variant';
     constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
         super(config, priority);
         this.hidden = true;
