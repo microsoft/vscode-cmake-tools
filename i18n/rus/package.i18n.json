@@ -155,7 +155,7 @@
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Show the status bar option at full size.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Show the status bar option's icon only.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Show the status bar option with the text truncated to the length specified in `#cmake.status.advanced.statusBarLength#` (default is 20).",
-	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.variantStatus.compact.description": "Show the status bar option with the status message removed.",
+	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.variant.compact.description": "Show the status bar option with the status message removed.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description": "Hides the status bar option.",
 	"cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
 	"cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
