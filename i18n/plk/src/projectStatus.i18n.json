@@ -17,9 +17,9 @@
 	"Debug": "Debuguj",
 	"Launch": "Uruchom",
 	"Folder": "Folder",
-	"active.folder": "Active Folder",
+	"active.folder": "Aktywny folder",
 	"set.build.target": "Ustaw docelowy element kompilacji",
-	"set.debug.target": "Set Debug Target",
+	"set.debug.target": "Ustaw element docelowy debugowania",
 	"set.launch.target": "Ustaw element docelowy uruchamiania",
-	"select.active.folder": "Select Active Folder"
+	"select.active.folder": "Wybierz aktywny folder"
 }

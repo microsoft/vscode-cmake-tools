@@ -16,10 +16,10 @@
 	"Test": "测试",
 	"Debug": "调试",
 	"Launch": "启动",
-	"Folder": "Folder",
-	"active.folder": "Active Folder",
+	"Folder": "文件夹",
+	"active.folder": "活动文件夹",
 	"set.build.target": "设置生成目标",
-	"set.debug.target": "Set Debug Target",
+	"set.debug.target": "设置调试目标",
 	"set.launch.target": "设置启动目标",
-	"select.active.folder": "Select Active Folder"
+	"select.active.folder": "选择活动文件夹"
 }

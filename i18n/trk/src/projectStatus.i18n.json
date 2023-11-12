@@ -16,10 +16,10 @@
 	"Test": "Test",
 	"Debug": "Hata Ayıkla",
 	"Launch": "Başlat",
-	"Folder": "Folder",
-	"active.folder": "Active Folder",
+	"Folder": "Klasör",
+	"active.folder": "Etkin Klasör",
 	"set.build.target": "Derleme Hedefini Ayarla",
-	"set.debug.target": "Set Debug Target",
+	"set.debug.target": "Hata Ayıklama Hedefini Ayarla",
 	"set.launch.target": "Hedefi Başlat",
-	"select.active.folder": "Select Active Folder"
+	"select.active.folder": "Etkin Klasör Seç"
 }

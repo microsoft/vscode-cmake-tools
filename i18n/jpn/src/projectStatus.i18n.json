@@ -16,10 +16,10 @@
 	"Test": "テスト",
 	"Debug": "デバッグ",
 	"Launch": "起動",
-	"Folder": "Folder",
-	"active.folder": "Active Folder",
+	"Folder": "フォルダー",
+	"active.folder": "アクティブなフォルダー",
 	"set.build.target": "ビルド ターゲットの設定",
-	"set.debug.target": "Set Debug Target",
+	"set.debug.target": "デバッグ ターゲットの設定",
 	"set.launch.target": "起動ターゲットの設定",
-	"select.active.folder": "Select Active Folder"
+	"select.active.folder": "アクティブなフォルダーの選択"
 }
