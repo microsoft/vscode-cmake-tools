@@ -16,10 +16,10 @@
 	"Test": "Teste",
 	"Debug": "Depurar",
 	"Launch": "Lançamento",
-	"Folder": "Folder",
-	"active.folder": "Active Folder",
+	"Folder": "Pasta",
+	"active.folder": "Pasta Ativa",
 	"set.build.target": "Definir o Destino de Compilação",
-	"set.debug.target": "Set Debug Target",
+	"set.debug.target": "Definir o Destino de Depuração",
 	"set.launch.target": "Definir Destino de Inicialização",
-	"select.active.folder": "Select Active Folder"
+	"select.active.folder": "Selecionar a Pasta Ativa"
 }

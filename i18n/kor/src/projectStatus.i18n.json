@@ -16,10 +16,10 @@
 	"Test": "테스트",
 	"Debug": "디버그",
 	"Launch": "시작",
-	"Folder": "Folder",
-	"active.folder": "Active Folder",
+	"Folder": "폴더",
+	"active.folder": "활성 폴더",
 	"set.build.target": "빌드 대상 설정",
-	"set.debug.target": "Set Debug Target",
+	"set.debug.target": "디버그 대상 설정",
 	"set.launch.target": "시작 대상 설정",
-	"select.active.folder": "Select Active Folder"
+	"select.active.folder": "활성 폴더 선택"
 }
