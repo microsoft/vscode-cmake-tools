@@ -924,8 +924,6 @@ async function expandConfigurePresetHelper(folder: string, name: string, preset:
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
     expansionOpts.envOverride = inheritedEnv;
 
-    preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
-
     // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
     // but they are not on PATH, then set the env automatically.
     if (process.platform === 'win32') {
@@ -937,10 +935,10 @@ async function expandConfigurePresetHelper(folder: string, name: string, preset:
             const expandedPreset: ConfigurePreset = { name };
             const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
             if (compilerName) {
-                expandedPreset.environment = EnvironmentUtils.createPreserveNull();
-                for (const key in preset.environment) {
-                    if (preset.environment[key]) {
-                        expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+                expandedPreset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
+                for (const key in expandedPreset.environment) {
+                    if (expandedPreset.environment[key]) {
+                        expandedPreset.environment[key] = await expandString(expandedPreset.environment[key]!, expansionOpts);
                     }
                 }
                 const compilerLocation = await execute('where.exe', [compilerName], null, {
