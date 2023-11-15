@@ -35,7 +35,7 @@ You can configure and build your CMake project by using a series of commands. Op
 
 ### CMake: Select Configure Preset
 
-**CMake: Select Configure Preset** lists the union of non-hidden Configure Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. Select a Configure Preset to make it the active Configure Preset. This is the `configurePreset` value that's used when CMake is invoked to generate the project build system. The active Configure Preset appears on the status bar.
+**CMake: Select Configure Preset** lists the union of non-hidden Configure Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. Select a Configure Preset to make it the active Configure Preset. This is the `configurePreset` value that's used when CMake is invoked to generate the project build system. The active Configure Preset appears in the Project Status View on the CMake Tools sidebar.
 
 CMake Tools uses the value of `hostOS` in the Microsoft Visual Studio Settings vendor map to hide Configure Presets that don't apply to your platform. For more information, see the entry for `hostOS` in the table under [Visual Studio Settings vendor map](https://docs.microsoft.com/cpp/build/cmake-presets-json-reference#visual-studio-settings-vendor-map).
 
@@ -48,7 +48,7 @@ To configure the project, run **CMake: Configure** from the command palette. Thi
 
 ### CMake: Select Build Preset
 
-**CMake: Select Build Preset** lists the Default Build Preset and the union of non-hidden Build Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The Default Build Preset is equivalent to passing `cmake --build` with no additional arguments from the command line. Select a Build Preset to make it the active Build Preset. This is the `buildPreset` value that's used when CMake is invoked to build the project. The active Build Preset is displayed on the status bar.
+**CMake: Select Build Preset** lists the Default Build Preset and the union of non-hidden Build Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The Default Build Preset is equivalent to passing `cmake --build` with no additional arguments from the command line. Select a Build Preset to make it the active Build Preset. This is the `buildPreset` value that's used when CMake is invoked to build the project. The active Build Preset is displayed in the Project Status View on the CMake Tools sidebar.
 
 All Build Presets must specify an associated `configurePreset` value. CMake Tools hides Build Presets that don't apply to the active Configure Preset. For more information, see the [list of Build Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#build-preset).
 
@@ -66,21 +66,21 @@ CTest is the CMake test driver program and is integrated with the CMake Tools ex
 
 **CMake: Select Test Preset** lists the default Test Preset and the union of non-hidden Test Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The default Test Preset is the same as invoking `ctest` with no other arguments from the command line.
 
-Select a Test Preset to make it the active Test Preset. This is the `testPreset` value that will be used when you invoke CTest to run tests. The active Test Preset appears on the status bar.
+Select a Test Preset to make it the active Test Preset. This is the `testPreset` value that will be used when you invoke CTest to run tests. The active Test Preset appears in the Project Status View on the CMake Tools sidebar.
 
 All Test Presets must specify an associated `configurePreset` value. CMake Tools will hide Test Presets that don't apply to the active Configure Preset. For more information, see the [list of Test Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#test-preset).
 
 ### CMake: Run Tests
 
-To invoke CTest, run **CMake: Run Tests from the command palette**. This is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
+To invoke CTest, run **CMake: Run Tests** from the command palette. This is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
 
-### Status bar behavior
+### CMake Tools side bar Project Status View behavior
 
-The status bar displays the active Configure Preset, Build Preset, and Test Preset:
+The CMake Tools Project Status View in the sidebar displays the active Configure Preset, Build Preset, and Test Preset under their respective Configure, Build, and Test Nodes. You can select each option to change the active preset:
 
-![Screenshot of the Visual Studio Code status bar, showing the active Configure Preset, Build Preset, and Test Preset.](images/status_bar_preset_status.png)
+![Screenshot of the CMake sidebar Project Status View, showing the active Configure Preset, Build Preset, and Test Preset.](images/cmake-presets.png)
 
-To show or hide individual status bar icons, you can modify `cmake.statusbar.advanced` in `settings.json`.
+To show or hide individual status bar icons, you can modify `cmake.options.advanced` in `settings.json`. For more information on how to configure your view, please see our [CMake view configuration docs](cmake-options-configuration.md)
 
 ## Add new presets
 
