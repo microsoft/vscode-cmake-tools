@@ -16,10 +16,10 @@
 	"Test": "Test",
 	"Debug": "Debuggen",
 	"Launch": "Starten",
-	"Project": "Projekt",
-	"active.project": "Aktives Projekt",
+	"Folder": "Ordner",
+	"active.folder": "Aktiver Ordner",
 	"set.build.target": "Buildziel festlegen",
 	"set.debug.target": "Debugziel festlegen",
 	"set.launch.target": "Startziel festlegen",
-	"select.active.project": "Aktives Projekt auswählen"
+	"select.active.folder": "Aktiven Ordner auswählen"
 }

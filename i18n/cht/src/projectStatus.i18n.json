@@ -16,10 +16,10 @@
 	"Test": "測試",
 	"Debug": "偵錯",
 	"Launch": "啟動",
-	"Project": "專案",
-	"active.project": "作用中專案",
+	"Folder": "資料夾",
+	"active.folder": "作用中資料夾",
 	"set.build.target": "設定組建目標",
 	"set.debug.target": "設定偵錯目標",
 	"set.launch.target": "設定啟動目標",
-	"select.active.project": "選取使用中專案"
+	"select.active.folder": "選取作用中資料夾"
 }

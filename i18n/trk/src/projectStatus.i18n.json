@@ -16,10 +16,10 @@
 	"Test": "Test",
 	"Debug": "Hata Ayıkla",
 	"Launch": "Başlat",
-	"Project": "Proje",
-	"active.project": "Etkin proje",
+	"Folder": "Klasör",
+	"active.folder": "Etkin Klasör",
 	"set.build.target": "Derleme Hedefini Ayarla",
-	"set.debug.target": "Hata ayıklama hedefi ayarla",
+	"set.debug.target": "Hata Ayıklama Hedefini Ayarla",
 	"set.launch.target": "Hedefi Başlat",
-	"select.active.project": "Etkin proje seçin"
+	"select.active.folder": "Etkin Klasör Seç"
 }

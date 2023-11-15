@@ -16,10 +16,10 @@
 	"Test": "Testovat",
 	"Debug": "Ladit",
 	"Launch": "Spustit",
-	"Project": "Projekt",
-	"active.project": "Aktivní projekt",
+	"Folder": "Složka",
+	"active.folder": "Aktivní složka",
 	"set.build.target": "Nastavit cíl sestavení",
 	"set.debug.target": "Nastavit cíl ladění",
 	"set.launch.target": "Nastavit cíl spuštění",
-	"select.active.project": "Vybrat aktivní projekt"
+	"select.active.folder": "Vybrat aktivní složku"
 }

@@ -16,10 +16,10 @@
 	"Test": "Prueba",
 	"Debug": "Depurar",
 	"Launch": "Iniciar",
-	"Project": "Proyecto",
-	"active.project": "Proyecto activo",
+	"Folder": "Carpeta",
+	"active.folder": "Carpeta activa",
 	"set.build.target": "Establecer el destino de compilación",
 	"set.debug.target": "Establecer el destino de depuración",
 	"set.launch.target": "Establecer destino de inicio",
-	"select.active.project": "Seleccionar proyecto activo"
+	"select.active.folder": "Seleccionar la carpeta activa"
 }
