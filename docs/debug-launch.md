@@ -15,11 +15,15 @@ By default, launching or debugging an executable target causes it to be built fi
 
 The first time you run target debugging, CMake Tools asks for you to specify a target, which will be persisted between sessions.
 
-The active launch target is shown in the status bar to the right of the *Debug* and *Play* buttons:
+The active launch target is shown in the CMake Tools sidebar Project Status View under the `Launch` node:
 
-![Image of launch target to the right of the debug and run button](images/launch_debugv2.png)
+![Image of launch target to the right of the debug and run button](images/launch-debugv2.png)
 
 Selecting the active launch target button will show the launch target selector so that you can change the active launch target.
+
+From there, you can press the play button by the `Launch` node to run it in terminal.
+
+![Image of running in terminal when you hover over the Launch node](images/launch-target.png)
 
 ## Debugging without a launch.json
 
@@ -28,9 +32,9 @@ CMake Tools lets you start a debugger on a target without creating a `launch.jso
 > **Note:**
 > Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file), below, for information about `launch.json` and using other debuggers.
 
-Start a debugging session on the active target by running the  *CMake: Debug* command from the VS Code command pallette, by selecting the Debug button in the status bar, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
+Start a debugging session on the active target by running the *CMake: Debug* command from the VS Code command palette, by selecting the Debug button in the status bar or CMake Tools sidebar Project Status View, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
 
-![Image of launching the debugger for the selected target](images/debug_target.png)
+![Image of launching the debugger for the selected target](images/debug-targetv2.png)
 
 > **Note:**
 > Quick-debugging does not let you specify program arguments or other debugging options. See the next section for more options.
@@ -225,9 +229,9 @@ Depending on your configuration or your settings, there may need to be additiona
 
 ## Run without debugging
 
-You can run a target without debugging it, by running the *CMake: Run without Debugging* from VS Code's command palatte, by selecting the play button in the status bar, or by pressing the keyboard shortcut (the default `Shift+F5`).
+You can run a target without debugging it, by running the *CMake: Run Without Debugging* from VS Code's command palette, by selecting the play button in the status bar or the play button to the left of the Launch node, or by pressing the keyboard shortcut (the default `Shift+F5`).
 
-![Image of launching the selected target in the terminal window](images/run_target.png)
+![Image of launching the selected target in the terminal window](images/launch-target.png)
 
 The output of the target will be shown in an integrated terminal.
 
