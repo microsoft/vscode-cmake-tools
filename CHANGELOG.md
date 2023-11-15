@@ -1,6 +1,10 @@
 # What's New?
 
-## 1.16
+## 1.16.30
+Bug Fixes:
+- Fixed an issue where finding cl.exe and ninja from Visual Studio was broken. [PR #3445](https://github.com/microsoft/vscode-cmake-tools/pull/3445)
+
+## 1.16.29
 Features:
 - Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
 - Add ability to get a test's `WORKING_DIRECTORY` in launch.json via `cmake.testWorkingDirectory` [PR #3336](https://github.com/microsoft/vscode-cmake-tools/pull/3336)
@@ -23,7 +27,7 @@ Bug Fixes:
 - Paths containing `mingw` are no longer removed from the `PATH` environment variable because the selected MinGW kit is added before the `PATH` environment variable, rather than after. [#3220](https://github.com/microsoft/vscode-cmake-tools/issues/3220)
 - Fix a bug where `CMake: Show Configure` or `CMake: Show Build` commands would run them. [#3381](https://github.com/microsoft/vscode-cmake-tools/issues/3381) [@AbdullahAmrSobh](https://github.com/AbdullahAmrSobh)
 
-## 1.15
+## 1.15.31
 Features:
 - Added support for the CMake Debugger. [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
 - Added support for passing a folder parameter to the `cmake.selectActiveFolder` command. [#3256](https://github.com/microsoft/vscode-cmake-tools/issues/3256) [@cvanbeek](https://github.com/cvanbeek13)
