@@ -748,182 +748,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
 
-    return expandedPreset;
-}
-
-export function getArchitecture(preset: ConfigurePreset) {
-    if (util.isString(preset.architecture)) {
-        return preset.architecture;
-    } else if (preset.architecture && preset.architecture.value) {
-        return preset.architecture.value;
-    }
-    log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
-    return 'x86';
-}
-
-export function getToolset(preset: ConfigurePreset): Toolset {
-    let result: Toolset | undefined;
-    if (util.isString(preset.toolset)) {
-        result = parseToolset(preset.toolset);
-    } else if (preset.toolset && util.isString(preset.toolset.value)) {
-        result = parseToolset(preset.toolset.value);
-    }
-
-    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using {1} by default", preset.name, '"host=x86"');
-    if (result) {
-        if (result.name === 'x86' || result.name === 'x64') {
-            log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified {1}, did you mean {2}?", preset.name, `"${result.name}"`, `"host=${result.name}"`));
-        }
-        if (!result.host) {
-            log.warning(noToolsetArchWarning);
-            result.host = 'x86';
-        }
-        if (!result.version && result.name !== latestToolsetName) {
-            log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
-        }
-    } else {
-        log.warning(noToolsetArchWarning);
-        result = { host: 'x86' };
-    }
-    return result;
-}
-
-const toolsetToVersion: { [key: string]: string } = {
-    'v100': '10.0',
-    'v110': '11.0',
-    'v120': '12.0',
-    'v140': '14.0',
-    'v141': '14.16',
-    'v142': '14.29'
-    // don't include the latest version - the compiler version changes frequently and it will be picked by default anyway.
-    // NOTE: the latest toolset name (below) should be kept up to date.
-};
-const latestToolsetName = 'v143';
-
-// We don't support all of these options for Kit lookup right now, but might in the future.
-function parseToolset(toolset: string): Toolset {
-    const toolsetOptions = toolset.split(',');
-
-    const result: Toolset = {};
-    for (const option of toolsetOptions) {
-        if (option.indexOf('=') < 0) {
-            const version = toolsetToVersion[option];
-            if (version) {
-                result.version = version;
-            } else {
-                result.name = option;
-            }
-        } else {
-            const keyValue = option.split('=');
-            switch (keyValue[0].toLowerCase()) {
-                case 'cuda':
-                    result.cuda = keyValue[1];
-                    break;
-                case 'host':
-                    result.host = keyValue[1];
-                    break;
-                case 'version':
-                    result.version = keyValue[1];
-                    break;
-                case 'vctargetspath':
-                    result.VCTargetsPath = keyValue[1];
-                    break;
-                default:
-                    log.warning(localize('unknown.toolset.option', "Unrecognized toolset option will be ignored: {0}", option));
-                    break;
-            }
-        }
-    }
-    return result;
-}
-
-async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
-    let preset = getPresetByName(configurePresets(folder), name);
-    if (preset) {
-        return expandConfigurePresetHelper(folder, name, preset, workspaceFolder, sourceDir);
-    }
-
-    if (allowUserPreset) {
-        preset = getPresetByName(userConfigurePresets(folder), name);
-        if (preset) {
-            return expandConfigurePresetHelper(folder, name, preset, workspaceFolder, sourceDir, true);
-        }
-    }
-
-    log.error(localize('config.preset.not.found', 'Could not find configure preset with name {0}', name));
-    return null;
-}
-
-async function expandConfigurePresetHelper(folder: string, name: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
-    if (preset.__expanded) {
-        return preset;
-    }
-
-    if (preset.__file && preset.__file.version <= 2) {
-        // toolchainFile and installDir added in presets v3
-        if (preset.toolchainFile) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
-            return null;
-        }
-        if (preset.installDir) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
-            return null;
-        }
-    }
-
-    const refs = referencedConfigurePresets.get(folder)!;
-
-    if (refs.has(preset.name) && !preset.__expanded) {
-        // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
-        log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
-        return null;
-    }
-
-    refs.add(preset.name);
-
-    // Init env and cacheVar to empty if not specified to avoid null checks later
-    if (!preset.environment) {
-        preset.environment = EnvironmentUtils.createPreserveNull();
-    }
-    if (!preset.cacheVariables) {
-        preset.cacheVariables = {};
-    }
-
-    // Expand inherits
-    let inheritedEnv = EnvironmentUtils.createPreserveNull();
-    if (preset.inherits) {
-        if (util.isString(preset.inherits)) {
-            preset.inherits = [preset.inherits];
-        }
-        for (const parentName of preset.inherits) {
-            const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
-            if (parent) {
-                // Inherit environment
-                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
-                // Inherit cache vars
-                for (const name in parent.cacheVariables) {
-                    if (preset.cacheVariables[name] === undefined) {
-                        preset.cacheVariables[name] = parent.cacheVariables[name];
-                    }
-                }
-                // Inherit other fields
-                let key: keyof ConfigurePreset;
-                for (key in parent) {
-                    if (isInheritable(key) && preset[key] === undefined) {
-                        // 'as never' to bypass type check
-                        preset[key] = parent[key] as never;
-                    }
-                }
-            }
-        }
-    }
-
-    inheritedEnv = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv]);
-
     let compilerEnv = EnvironmentUtils.createPreserveNull();
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
-    expansionOpts.envOverride = inheritedEnv;
-
     // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
     // but they are not on PATH, then set the env automatically.
     if (process.platform === 'win32') {
@@ -932,15 +757,7 @@ async function expandConfigurePresetHelper(folder: string, name: string, preset:
             const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
             // The env variables for the supported compilers are the same.
             const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
-            const expandedPreset: ConfigurePreset = { name };
-            const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
             if (compilerName) {
-                expandedPreset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
-                for (const key in expandedPreset.environment) {
-                    if (expandedPreset.environment[key]) {
-                        expandedPreset.environment[key] = await expandString(expandedPreset.environment[key]!, expansionOpts);
-                    }
-                }
                 const compilerLocation = await execute('where.exe', [compilerName], null, {
                     environment: EnvironmentUtils.create(expandedPreset.environment),
                     silent: true,
@@ -1034,14 +851,186 @@ async function expandConfigurePresetHelper(folder: string, name: string, preset:
                                 compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
                             }
                         }
+
+                        expandedPreset.environment = EnvironmentUtils.mergePreserveNull([expandedPreset.environment, compilerEnv]);
                     }
                 }
             }
         }
     }
 
-    compilerEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, compilerEnv]);
-    preset.environment = EnvironmentUtils.mergePreserveNull([compilerEnv, preset.environment]);
+    return expandedPreset;
+}
+
+export function getArchitecture(preset: ConfigurePreset) {
+    if (util.isString(preset.architecture)) {
+        return preset.architecture;
+    } else if (preset.architecture && preset.architecture.value) {
+        return preset.architecture.value;
+    }
+    log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
+    return 'x86';
+}
+
+export function getToolset(preset: ConfigurePreset): Toolset {
+    let result: Toolset | undefined;
+    if (util.isString(preset.toolset)) {
+        result = parseToolset(preset.toolset);
+    } else if (preset.toolset && util.isString(preset.toolset.value)) {
+        result = parseToolset(preset.toolset.value);
+    }
+
+    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using {1} by default", preset.name, '"host=x86"');
+    if (result) {
+        if (result.name === 'x86' || result.name === 'x64') {
+            log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified {1}, did you mean {2}?", preset.name, `"${result.name}"`, `"host=${result.name}"`));
+        }
+        if (!result.host) {
+            log.warning(noToolsetArchWarning);
+            result.host = 'x86';
+        }
+        if (!result.version && result.name !== latestToolsetName) {
+            log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
+        }
+    } else {
+        log.warning(noToolsetArchWarning);
+        result = { host: 'x86' };
+    }
+    return result;
+}
+
+const toolsetToVersion: { [key: string]: string } = {
+    'v100': '10.0',
+    'v110': '11.0',
+    'v120': '12.0',
+    'v140': '14.0',
+    'v141': '14.16',
+    'v142': '14.29'
+    // don't include the latest version - the compiler version changes frequently and it will be picked by default anyway.
+    // NOTE: the latest toolset name (below) should be kept up to date.
+};
+const latestToolsetName = 'v143';
+
+// We don't support all of these options for Kit lookup right now, but might in the future.
+function parseToolset(toolset: string): Toolset {
+    const toolsetOptions = toolset.split(',');
+
+    const result: Toolset = {};
+    for (const option of toolsetOptions) {
+        if (option.indexOf('=') < 0) {
+            const version = toolsetToVersion[option];
+            if (version) {
+                result.version = version;
+            } else {
+                result.name = option;
+            }
+        } else {
+            const keyValue = option.split('=');
+            switch (keyValue[0].toLowerCase()) {
+                case 'cuda':
+                    result.cuda = keyValue[1];
+                    break;
+                case 'host':
+                    result.host = keyValue[1];
+                    break;
+                case 'version':
+                    result.version = keyValue[1];
+                    break;
+                case 'vctargetspath':
+                    result.VCTargetsPath = keyValue[1];
+                    break;
+                default:
+                    log.warning(localize('unknown.toolset.option', "Unrecognized toolset option will be ignored: {0}", option));
+                    break;
+            }
+        }
+    }
+    return result;
+}
+
+async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+    let preset = getPresetByName(configurePresets(folder), name);
+    if (preset) {
+        return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
+    }
+
+    if (allowUserPreset) {
+        preset = getPresetByName(userConfigurePresets(folder), name);
+        if (preset) {
+            return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir, true);
+        }
+    }
+
+    log.error(localize('config.preset.not.found', 'Could not find configure preset with name {0}', name));
+    return null;
+}
+
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
+    if (preset.__expanded) {
+        return preset;
+    }
+
+    if (preset.__file && preset.__file.version <= 2) {
+        // toolchainFile and installDir added in presets v3
+        if (preset.toolchainFile) {
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
+            return null;
+        }
+        if (preset.installDir) {
+            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
+            return null;
+        }
+    }
+
+    const refs = referencedConfigurePresets.get(folder)!;
+
+    if (refs.has(preset.name) && !preset.__expanded) {
+        // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+        log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
+        return null;
+    }
+
+    refs.add(preset.name);
+
+    // Init env and cacheVar to empty if not specified to avoid null checks later
+    if (!preset.environment) {
+        preset.environment = EnvironmentUtils.createPreserveNull();
+    }
+    if (!preset.cacheVariables) {
+        preset.cacheVariables = {};
+    }
+
+    // Expand inherits
+    let inheritedEnv = EnvironmentUtils.createPreserveNull();
+    if (preset.inherits) {
+        if (util.isString(preset.inherits)) {
+            preset.inherits = [preset.inherits];
+        }
+        for (const parentName of preset.inherits) {
+            const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
+            if (parent) {
+                // Inherit environment
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                // Inherit cache vars
+                for (const name in parent.cacheVariables) {
+                    if (preset.cacheVariables[name] === undefined) {
+                        preset.cacheVariables[name] = parent.cacheVariables[name];
+                    }
+                }
+                // Inherit other fields
+                let key: keyof ConfigurePreset;
+                for (key in parent) {
+                    if (isInheritable(key) && preset[key] === undefined) {
+                        // 'as never' to bypass type check
+                        preset[key] = parent[key] as never;
+                    }
+                }
+            }
+        }
+    }
+
+    inheritedEnv = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv]);
+    preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
 
     preset.__expanded = true;
     return preset;

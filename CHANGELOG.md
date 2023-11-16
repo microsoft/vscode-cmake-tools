@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.16.31
+Bug Fixes:
+- Refactor our attempt to add VS paths to PATH for cl, clang, etc. so that we fix issues with using the wrong compiler. [PR #3449](https://github.com/microsoft/vscode-cmake-tools/pull/3449)
+
 ## 1.16.30
 Bug Fixes:
 - Fixed an issue where finding cl.exe and ninja from Visual Studio was broken. [PR #3445](https://github.com/microsoft/vscode-cmake-tools/pull/3445)
