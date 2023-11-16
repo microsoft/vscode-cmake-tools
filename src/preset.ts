@@ -691,8 +691,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         }
     }
 
-    // TODO: We should try to find visual studio installations here.
-
     expansionOpts.envOverride = expandedPreset.environment;
 
     if (preset.__file && preset.__file.version >= 3) {
