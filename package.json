@@ -3053,7 +3053,7 @@
     "vscode-cpptools": "^6.1.0",
     "@vscode/extension-telemetry": "^0.6.2",
     "vscode-nls": "^5.0.0",
-    "vscode-tas-client": "^0.1.22",
+    "vscode-tas-client": "^0.1.45",
     "which": "~2.0.2",
     "xml2js": "^0.4.23",
     "uuid": "~8.3.2"
