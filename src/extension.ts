@@ -66,6 +66,7 @@ export let extensionManager: ExtensionManager | null = null;
 
 type RunCMakeCommand = (project: CMakeProject) => Thenable<any>;
 type QueryCMakeProject = (project: CMakeProject) => Thenable<string | string[] | null>;
+type FolderTargetNameArgsType = vscode.WorkspaceFolder | string | { folder?: vscode.WorkspaceFolder | string; targetName?: string };
 
 interface Diagnostics {
     os: string;
@@ -1354,7 +1355,27 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForProject(cmakeProject => cmakeProject.quickStart(folder));
     }
 
-    launchTargetPath({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string; targetName?: string } = {}) {
+    resolveFolderTargetNameArgs(args?: FolderTargetNameArgsType): [ folder?: vscode.WorkspaceFolder | string, targetName?: string ] {
+        let folder: vscode.WorkspaceFolder | string | undefined;
+        let targetName: string | undefined;
+
+        if (args === undefined) {
+            folder = undefined;
+            targetName = undefined;
+        } else if (util.isString(args) || util.isWorkspaceFolder(args)) {
+            folder = args;
+            targetName = undefined;
+        } else {
+            folder = args.folder;
+            targetName = args.targetName;
+        }
+
+        return [ folder, targetName ];
+    }
+
+    launchTargetPath(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
         telemetry.logEvent("substitution", { command: "launchTargetPath" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
@@ -1365,7 +1386,9 @@ export class ExtensionManager implements vscode.Disposable {
         }, folder);
     }
 
-    launchTargetDirectory({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string; targetName?: string } = {}) {
+    launchTargetDirectory(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
         telemetry.logEvent("substitution", { command: "launchTargetDirectory" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
@@ -1376,7 +1399,9 @@ export class ExtensionManager implements vscode.Disposable {
         }, folder);
     }
 
-    launchTargetFilename({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string; targetName?: string } = {}) {
+    launchTargetFilename(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
         telemetry.logEvent("substitution", { command: "launchTargetFilename" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
@@ -1387,7 +1412,9 @@ export class ExtensionManager implements vscode.Disposable {
         }, folder);
     }
 
-    getLaunchTargetPath({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string; targetName?: string } = {}) {
+    getLaunchTargetPath(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
         telemetry.logEvent("substitution", { command: "getLaunchTargetPath" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
@@ -1398,7 +1425,9 @@ export class ExtensionManager implements vscode.Disposable {
         }, folder);
     }
 
-    getLaunchTargetDirectory({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string; targetName?: string } = {}) {
+    getLaunchTargetDirectory(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
         telemetry.logEvent("substitution", { command: "getLaunchTargetDirectory" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
@@ -1409,7 +1438,9 @@ export class ExtensionManager implements vscode.Disposable {
         }, folder);
     }
 
-    getLaunchTargetFilename({ folder, targetName }: { folder?: vscode.WorkspaceFolder | string; targetName?: string } = {}) {
+    getLaunchTargetFilename(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
         telemetry.logEvent("substitution", { command: "getLaunchTargetFilename" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
