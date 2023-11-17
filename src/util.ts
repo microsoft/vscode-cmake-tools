@@ -738,7 +738,7 @@ export function isNullOrUndefined(x?: any): x is null | undefined {
     return (x === null || x === undefined);
 }
 
-export function isWorkspaceFolder(x?: any): boolean {
+export function isWorkspaceFolder(x?: any): x is vscode.WorkspaceFolder {
     return 'uri' in x && 'name' in x && 'index' in x;
 }
 
