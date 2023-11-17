@@ -1363,7 +1363,7 @@ export class ExtensionManager implements vscode.Disposable {
             folder = undefined;
             targetName = undefined;
         } else if (util.isString(args) || util.isWorkspaceFolder(args)) {
-            folder = folder;
+            folder = args;
             targetName = undefined;
         } else {
             folder = args.folder;
