@@ -1356,8 +1356,8 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     resolveFolderTargetNameArgs(args?: FolderTargetNameArgsType): [ folder?: vscode.WorkspaceFolder | string, targetName?: string ] {
-        let folder: vscode.WorkspaceFolder | string | undefined = undefined;
-        let targetName: string | undefined = undefined;
+        let folder: vscode.WorkspaceFolder | string | undefined;
+        let targetName: string | undefined;
 
         if (args === undefined) {
             folder = undefined;
