@@ -757,13 +757,34 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
             const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
             // The env variables for the supported compilers are the same.
             const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
-            if (compilerName) {
-                const compilerLocation = await execute('where.exe', [compilerName], null, {
+
+            // find where.exe using process.env since we're on windows.
+            let whereExecutable;
+            // assume in this call that it exists
+            const whereOutput = await execute('where.exe', ['where.exe'], null, {
+                environment: process.env,
+                silent: true,
+                encoding: 'utf-8',
+                shell: true
+            }).result;
+
+            // now we have a valid where.exe
+
+            if (whereOutput.stdout) {
+                const locations = whereOutput.stdout.split('\r\n');
+                if (locations.length > 0) {
+                    whereExecutable = locations[0];
+                }
+            }
+
+            if (compilerName && whereExecutable) {
+                const compilerLocation = await execute(whereExecutable, [compilerName], null, {
                     environment: EnvironmentUtils.create(expandedPreset.environment),
                     silent: true,
                     encoding: 'utf8',
                     shell: true
                 }).result;
+
                 if (!compilerLocation.stdout) {
                     // Not on PATH, need to set env
                     const arch = getArchitecture(preset);
@@ -838,8 +859,8 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
                         compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
                         // if ninja isn't on path, try to look for it in a VS install
-                        const ninjaLoc = await execute('where.exe', ['ninja'], null, {
-                            environment: EnvironmentUtils.create(preset.environment),
+                        const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                            environment: EnvironmentUtils.create(expandedPreset.environment),
                             silent: true,
                             encoding: 'utf8',
                             shell: true
