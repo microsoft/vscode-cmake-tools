@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.16.32
+Improvements:
+
+- Improve our "smarts" when we attempt to provide PATH's for compilers or ninja. [PR #3458](https://github.com/microsoft/vscode-cmake-tools/pull/3458)
+
 ## 1.16.31
 Bug Fixes:
 - Refactor our attempt to add VS paths to PATH for cl, clang, etc. so that we fix issues with using the wrong compiler. [PR #3449](https://github.com/microsoft/vscode-cmake-tools/pull/3449)
