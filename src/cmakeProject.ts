@@ -2249,7 +2249,7 @@ export class CMakeProject {
         }
 
         if (name) {
-            const found = (await this.executableTargets).find(e => e.name === name);
+            const found = (await this.executableTargets).find(e => path.parse(e.path).name === name);
             if (!found) {
                 return null;
             }
