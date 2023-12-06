@@ -115,7 +115,6 @@ export class ExtensionManager implements vscode.Disposable {
 
         this.projectController.onAfterAddFolder(async (folderProjectMap: FolderProjectType) => {
             const folder: vscode.WorkspaceFolder = folderProjectMap.folder;
-            console.assert(this.projectController.numOfWorkspaceFolders === vscode.workspace.workspaceFolders?.length);
             if (this.projectController.numOfWorkspaceFolders === 1) {
                 // First folder added
                 await this.updateActiveProject(folder);
