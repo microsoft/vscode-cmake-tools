@@ -1482,7 +1482,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     debugTarget(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string): Promise<vscode.DebugSession | null> {
         telemetry.logEvent("debug", { all: "false" });
-        return this.runCMakeCommand(cmakeProject => cmakeProject.debugTarget(name), folder, undefined, undefined, sourceDir);
+        return this.runCMakeCommand(cmakeProject => cmakeProject.debugTarget(name), folder, undefined, true, sourceDir);
     }
 
     async debugTargetAll(): Promise<(vscode.DebugSession | null)[]> {
@@ -1496,7 +1496,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     launchTarget(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string): Promise<vscode.Terminal | null> {
         telemetry.logEvent("launch", { all: "false" });
-        return this.runCMakeCommand(cmakeProject => cmakeProject.launchTarget(name), folder, undefined, undefined, sourceDir);
+        return this.runCMakeCommand(cmakeProject => cmakeProject.launchTarget(name), folder, undefined, true, sourceDir);
     }
 
     async launchTargetAll(): Promise<(vscode.Terminal | null)[]> {
