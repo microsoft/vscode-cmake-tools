@@ -3004,7 +3004,7 @@
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.25.0",
     "@typescript-eslint/parser": "^5.25.0",
-    "@vscode/test-electron": "^2.1.4",
+    "@vscode/test-electron": "^2.3.8",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
