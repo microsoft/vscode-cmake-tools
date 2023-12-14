@@ -180,11 +180,12 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
 }
 
 export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], references?: Set<string>): boolean | undefined {
-    if (!evaluateInheritedPresetConditions(preset, allPresets, references || new Set<string>())) {
+    const condition = preset.condition;
+
+    if (condition === undefined && !evaluateInheritedPresetConditions(preset, allPresets, references || new Set<string>())) {
         return false;
     }
 
-    const condition = preset.condition;
     if (condition === undefined || condition === null) {
         return true;
     } else if (typeof condition === 'boolean') {
