@@ -1381,27 +1381,33 @@ export class CMakeProject {
                                     }
                                     await setContextValue(isConfiguringKey, false);
                                 }
+
+                                const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
+                                const showDebuggerConfigurationString = "showConfigureWithDebuggerNotification";
+
                                 if (result.result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && !forciblyCanceled && result.resultType === ConfigureResultType.NormalOperation) {
-                                    // TODO: I think the thing to do is create an enum for return codes, and then maybe a list of debugger pop-up valid return codes (failures)
-                                    // then we can check and make sure that we only pop it due to actual errors, and not based on things like attempting another configure while there
-                                    // is one active, cancelling, etc.
+                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
                                         "Debug"
                                     );
+                                    const doNotShowAgainTitle = localize('options.configureWithDebuggerOnFail.do.not.show', 'Do Not Show Again');
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         localize('configure.failed.tryWithDebugger', 'Configure failed. Would you like to attempt to configure with the CMake Debugger?'),
-                                        {},
                                         {title: yesButtonTitle},
-                                        {title: localize('no.configureWithDebugger.button', 'Cancel')})
+                                        {title: localize('no.configureWithDebugger.button', 'Cancel')},
+                                        {title: doNotShowAgainTitle})
                                         .then(async chosen => {
-                                            if (chosen && chosen.title === yesButtonTitle) {
-                                                await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
-                                                    pipeName: getDebuggerPipeName()
-                                                });
+                                            if (chosen) {
+                                                if (chosen.title === yesButtonTitle) {
+                                                    await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
+                                                        pipeName: getDebuggerPipeName()
+                                                    });
+                                                } else if (chosen.title === doNotShowAgainTitle) {
+                                                    await cmakeConfiguration.update(showDebuggerConfigurationString, false, vscode.ConfigurationTarget.Global);
+                                                }
                                             }
                                         });
                                 }

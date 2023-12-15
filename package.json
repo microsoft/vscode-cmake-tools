@@ -2416,6 +2416,12 @@
           "description": "%cmake-tools.configuration.cmake.showOptionsMovedNotification%",
           "scope": "application"
         },
+        "cmake.showConfigureWithDebuggerNotification": {
+            "type": "boolean",
+            "default": true,
+            "description": "%cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification%",
+            "scope": "application"
+        },
         "cmake.options.statusBarVisibility": {
           "type": "string",
           "default": "hidden",
