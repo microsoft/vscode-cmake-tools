@@ -1,4 +1,3 @@
-import { ConfigureResultType } from '@cmt/drivers/cmakeDriver';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
 import {
@@ -58,7 +57,7 @@ suite('Build using Kits and Variants', () => {
 
     test('Configure', async () => {
         expect(await vscode.commands.executeCommand('cmake.useCMakePresets', vscode.workspace.workspaceFolders![0])).to.be.eq(false);
-        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq({result: 0, resultType: ConfigureResultType.NormalOperation});
+        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
 
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
     }).timeout(100000);
