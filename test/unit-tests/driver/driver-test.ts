@@ -13,7 +13,7 @@ import { CMakeServerDriver } from '@cmt/drivers/cmakeServerDriver';
 chai.use(chaiString);
 
 import { Kit, CMakeGenerator } from '@cmt/kit';
-import { CMakePreconditionProblems, CMakeDriver, CMakePreconditionProblemSolver, NoGeneratorError, ConfigureResultType } from '@cmt/drivers/cmakeDriver';
+import { CMakePreconditionProblems, CMakeDriver, CMakePreconditionProblemSolver, NoGeneratorError } from '@cmt/drivers/cmakeDriver';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
