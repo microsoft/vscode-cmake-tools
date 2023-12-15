@@ -211,11 +211,11 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 called = true;
             };
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-            const configure1 = (await driver.configure(ConfigureTrigger.runTests, [])).result;
-            const configure2 = (await driver.configure(ConfigureTrigger.runTests, [])).result;
+            const configure1 = driver.configure(ConfigureTrigger.runTests, []);
+            const configure2 = driver.configure(ConfigureTrigger.runTests, []);
 
-            expect(configure1).to.be.equal(0);
-            expect(configure2).to.be.equal(-1);
+            expect((await configure1).result).to.be.equal(0);
+            expect((await configure2).result).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
 
@@ -230,11 +230,11 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             };
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-            const configure1 = (await driver.cleanConfigure(ConfigureTrigger.runTests, [])).result;
-            const configure2 = (await driver.cleanConfigure(ConfigureTrigger.runTests, [])).result;
+            const configure1 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            const configure2 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
 
-            expect(configure1).to.be.equal(0);
-            expect(configure2).to.be.equal(-1);
+            expect((await configure1).result).to.be.equal(0);
+            expect((await configure2).result).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
 
@@ -297,7 +297,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const configure = driver.configure(ConfigureTrigger.runTests, []);
 
             expect(await build).to.be.equal(0);
-            expect(await configure).to.be.equal(-1);
+            expect((await configure).result).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
 
