@@ -58,7 +58,7 @@ suite('Build using Kits and Variants', () => {
 
     test('Configure', async () => {
         expect(await vscode.commands.executeCommand('cmake.useCMakePresets', vscode.workspace.workspaceFolders![0])).to.be.eq(false);
-        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eql({ result: 0, resultType: ConfigureResultType.NormalOperation });
+        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.deep.equal({ result: 0, resultType: ConfigureResultType.NormalOperation });
 
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
     }).timeout(100000);
