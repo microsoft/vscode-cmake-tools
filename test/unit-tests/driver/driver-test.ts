@@ -272,11 +272,11 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
             expect((await driver.configure(ConfigureTrigger.runTests, [])).result).to.be.equal(0);
-            const configure = await driver.configure(ConfigureTrigger.runTests, []);
-            const build = await driver.build([driver.allTargetName]);
+            const configure = driver.configure(ConfigureTrigger.runTests, []);
+            const build = driver.build([driver.allTargetName]);
 
-            expect(configure.result).to.be.equal(0);
-            expect(build).to.be.equal(-1);
+            expect(await configure).to.be.equal(0);
+            expect(await build).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
 
@@ -313,11 +313,11 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             };
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-            const configure = await driver.cleanConfigure(ConfigureTrigger.runTests, []);
-            const build = await driver.build([driver.allTargetName]);
+            const configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            const build = driver.build([driver.allTargetName]);
 
-            expect(configure.result).to.be.equal(0);
-            expect(build).to.be.equal(-1);
+            expect(await configure).to.be.equal(0);
+            expect(await build).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
 
