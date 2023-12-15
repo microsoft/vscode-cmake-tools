@@ -165,7 +165,7 @@ suite('Variable Substitution', () => {
         testEnv.config.updatePartial({ configureSettings: configSettings });
 
         // Configure and retrieve generated cache
-        expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[variant] configure failed');
+        expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).result).to.be.eq(0, '[variant] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, '[variant] cache not found');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
