@@ -1902,7 +1902,9 @@ export class CMakeProject {
     }
 
     private async preTest(): Promise<CMakeDriver> {
-        extensionManager?.cleanOutputChannel();
+        if (extensionManager !== undefined) {
+            extensionManager?.cleanOutputChannel();
+        }
         const buildResult = await this.build(undefined, false, false);
         if (buildResult !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));
