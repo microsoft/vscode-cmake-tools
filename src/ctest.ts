@@ -958,8 +958,8 @@ export class CTestDriver implements vscode.Disposable {
                     status = 1;
                 } else {
                     try {
-                        if (extensionManager !== undefined) {
-                            extensionManager?.cleanOutputChannel();
+                        if (extensionManager !== undefined && extensionManager !== null) {
+                            extensionManager.cleanOutputChannel();
                         }
                         const buildResult = await project.build(undefined, false, false);
                         if (buildResult !== 0) {

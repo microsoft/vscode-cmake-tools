@@ -1902,8 +1902,8 @@ export class CMakeProject {
     }
 
     private async preTest(): Promise<CMakeDriver> {
-        if (extensionManager !== undefined) {
-            extensionManager?.cleanOutputChannel();
+        if (extensionManager !== undefined && extensionManager !== null) {
+            extensionManager.cleanOutputChannel();
         }
         const buildResult = await this.build(undefined, false, false);
         if (buildResult !== 0) {
