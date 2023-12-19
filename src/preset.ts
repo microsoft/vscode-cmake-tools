@@ -1032,7 +1032,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
             if (parent) {
                 // Inherit environment
-                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, parent.environment]);
                 // Inherit cache vars
                 for (const name in parent.cacheVariables) {
                     if (preset.cacheVariables[name] === undefined) {
