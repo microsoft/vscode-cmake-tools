@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.17
+Bug Fixes:
+
+- Fixed an issue where changing an empty value to a non-empty value using the Cache Editor UI didn't work. [PR #3508](https://github.com/microsoft/vscode-cmake-tools/pull/3508)
+
 ## 1.16.32
 Improvements:
 
