@@ -1,6 +1,11 @@
 # What's New?
 
 ## 1.17
+
+Improvements:
+
+- Improve when the "Configure with Debugger" popup appears and allow for "Do Not Show Again". [#3343](https://github.com/microsoft/vscode-cmake-tools/issues/3343)
+
 Bug Fixes:
 
 - Fixed an issue where changing an empty value to a non-empty value using the Cache Editor UI didn't work. [PR #3508](https://github.com/microsoft/vscode-cmake-tools/pull/3508)
