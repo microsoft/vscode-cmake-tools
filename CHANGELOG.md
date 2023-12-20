@@ -4,6 +4,10 @@
 Bug Fixes:
 
 - Fixed an issue where changing an empty value to a non-empty value using the Cache Editor UI didn't work. [PR #3508](https://github.com/microsoft/vscode-cmake-tools/pull/3508)
+- Fix CMakePresets inheritance for the `condition` field. [PR #3494](https://github.com/microsoft/vscode-cmake-tools/pull/3494)
+- Ensure that the output is cleared for `debugTarget` and `launchTarget` [#3489](https://github.com/microsoft/vscode-cmake-tools/issues/3489)
+- Fix the inheritance of the `environment` for CMakePresets. [#3473](https://github.com/microsoft/vscode-cmake-tools/issues/3473)
+- Removed an unnecessary `console.assert` [#3474](https://github.com/microsoft/vscode-cmake-tools/issues/3474)
 
 ## 1.16.32
 Improvements:
