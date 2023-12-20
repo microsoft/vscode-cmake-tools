@@ -180,11 +180,12 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
 }
 
 export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], references?: Set<string>): boolean | undefined {
-    if (!evaluateInheritedPresetConditions(preset, allPresets, references || new Set<string>())) {
+    const condition = preset.condition;
+
+    if (condition === undefined && !evaluateInheritedPresetConditions(preset, allPresets, references || new Set<string>())) {
         return false;
     }
 
-    const condition = preset.condition;
     if (condition === undefined || condition === null) {
         return true;
     } else if (typeof condition === 'boolean') {
@@ -1031,7 +1032,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
             if (parent) {
                 // Inherit environment
-                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, parent.environment]);
                 // Inherit cache vars
                 for (const name in parent.cacheVariables) {
                     if (preset.cacheVariables[name] === undefined) {

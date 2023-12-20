@@ -224,7 +224,7 @@ export class CMakeCache {
         if (entry !== undefined) {
             // cmake variable name may contain characters with special meanings in regex
             const escapedKey = entry.serializedKey.replace(/[^A-Za-z0-9_]/g, '\\$&');
-            const re = RegExp(`^${escapedKey}(:[^=]+=)(.+)`, 'm');
+            const re = RegExp(`^${escapedKey}(:[^=]+=)(.*)`, 'm');
             const found = content.match(re);
 
             if (found && found.length >= 3) {
