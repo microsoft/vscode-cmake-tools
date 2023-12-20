@@ -8,7 +8,7 @@ Bug Fixes:
 - Ensure that the output is cleared for `debugTarget` and `launchTarget` [#3489](https://github.com/microsoft/vscode-cmake-tools/issues/3489)
 - Fix the inheritance of the `environment` for CMakePresets. [#3473](https://github.com/microsoft/vscode-cmake-tools/issues/3473)
 - Removed an unnecessary `console.assert` [#3474](https://github.com/microsoft/vscode-cmake-tools/issues/3474)
-- Avoid running tests after a build failure [#3366](https://github.com/microsoft/vscode-cmake-tools/pull/3506)
+- Avoid running tests after a build failure [#3366](https://github.com/microsoft/vscode-cmake-tools/issues/3366)
 
 ## 1.16.32
 Improvements:
