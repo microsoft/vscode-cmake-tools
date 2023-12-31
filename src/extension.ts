@@ -1959,7 +1959,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         // vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
         // Notification of active project change (e.g. when cmake.sourceDirectory changes)
-        vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange())
+        vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange()),
+        // Share the Active Workspace setting to reuse by another extensions
+        vscode.commands.registerCommand('cmake.getActiveWorkspace', () => extensionManager?.activeFolderPath())
     ]);
 
     return { getApi: (_version) => ext.api };
