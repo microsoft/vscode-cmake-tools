@@ -18,6 +18,8 @@ import {
     CMakeLegacyDriver,
     CMakePreconditionProblems,
     CMakeServerDriver,
+    ConfigureResult,
+    ConfigureResultType,
     ExecutableTarget,
     NoGeneratorError
 } from '@cmt/drivers/drivers';
@@ -1294,17 +1296,17 @@ export class CMakeProject {
      *          All other configure calls in this extension are able to provide
      *          proper trigger information.
      */
-    configure(extraArgs: string[] = []): Thenable<number> {
+    configure(extraArgs: string[] = []): Thenable<ConfigureResult> {
         return this.configureInternal(ConfigureTrigger.api, extraArgs, ConfigureType.Normal);
     }
 
-    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<number> {
+    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
         if (drv && drv.shouldUseCachedConfiguration(trigger)) {
-            const result: number = await drv.configure(trigger, []);
-            if (result === 0) {
+            const result: ConfigureResult = await drv.configure(trigger, []);
+            if (result.result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
             }
             await this.cTestController.refreshTests(drv);
@@ -1314,7 +1316,7 @@ export class CMakeProject {
 
         if (trigger === ConfigureTrigger.configureWithCache) {
             log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));
-            return -1;
+            return { result: -1, resultType: ConfigureResultType.NoCache };
         }
 
         return vscode.window.withProgress(
@@ -1359,7 +1361,7 @@ export class CMakeProject {
                             });
                             try {
                                 progress.report({ message: this.folderName });
-                                let result: number;
+                                let result: ConfigureResult;
                                 await setContextValue(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
                                     result = await drv.configure(trigger, [], consumer, debuggerInformation);
@@ -1387,24 +1389,33 @@ export class CMakeProject {
                                     }
                                     await setContextValue(isConfiguringKey, false);
                                 }
-                                if (result === 0) {
+
+                                const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
+                                const showDebuggerConfigurationString = "showConfigureWithDebuggerNotification";
+
+                                if (result.result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && !forciblyCanceled) {
+                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
                                         "Debug"
                                     );
+                                    const doNotShowAgainTitle = localize('options.configureWithDebuggerOnFail.do.not.show', 'Do Not Show Again');
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         localize('configure.failed.tryWithDebugger', 'Configure failed. Would you like to attempt to configure with the CMake Debugger?'),
-                                        {},
                                         {title: yesButtonTitle},
-                                        {title: localize('no.configureWithDebugger.button', 'Cancel')})
+                                        {title: localize('no.configureWithDebugger.button', 'Cancel')},
+                                        {title: doNotShowAgainTitle})
                                         .then(async chosen => {
-                                            if (chosen && chosen.title === yesButtonTitle) {
-                                                await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
-                                                    pipeName: getDebuggerPipeName()
-                                                });
+                                            if (chosen) {
+                                                if (chosen.title === yesButtonTitle) {
+                                                    await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
+                                                        pipeName: getDebuggerPipeName()
+                                                    });
+                                                } else if (chosen.title === doNotShowAgainTitle) {
+                                                    await cmakeConfiguration.update(showDebuggerConfigurationString, false, vscode.ConfigurationTarget.Global);
+                                                }
                                             }
                                         });
                                 }
@@ -1419,13 +1430,13 @@ export class CMakeProject {
                             }
                         } else {
                             progress.report({ message: localize('configure.failed', 'Failed to configure project') });
-                            return -1;
+                            return { result: -1, resultType: ConfigureResultType.NormalOperation };
                         }
                     });
                 } catch (e: any) {
                     const error = e as Error;
                     progress.report({ message: error.message });
-                    return -1;
+                    return { result: -1, resultType: ConfigureResultType.NormalOperation };
                 }
             }
         );
@@ -1490,10 +1501,10 @@ export class CMakeProject {
      * Wraps pre/post configure logic around an actual configure function
      * @param cb The actual configure callback. Called to do the configure
      */
-    private async doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
+    private async doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<ConfigureResult>): Promise<ConfigureResult> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
-            return -1;
+            return { result: -1, resultType: ConfigureResultType.Other };
         }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
@@ -1504,7 +1515,7 @@ export class CMakeProject {
                 await this.variantManager.selectVariant();
                 if (!this.variantManager.haveVariant) {
                     log.debug(localize('no.variant.abort', 'No variant selected. Abort configure'));
-                    return -1;
+                    return { result: -1, resultType: ConfigureResultType.Other };
                 }
             }
         } else if (!this.configurePreset) {
@@ -1577,7 +1588,7 @@ export class CMakeProject {
             return -1;
         }
         if (await this.needsReconfigure()) {
-            return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal);
+            return (await this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal)).result;
         } else {
             return 0;
         }
@@ -1800,7 +1811,7 @@ export class CMakeProject {
                 localize('project.not.yet.configured', 'This project has not yet been configured'),
                 localize('configure.now.button', 'Configure Now')));
             if (doConfigure) {
-                if (await this.configureInternal() !== 0) {
+                if ((await this.configureInternal()).result !== 0) {
                     return;
                 }
             } else {
@@ -2061,7 +2072,7 @@ export class CMakeProject {
     async setLaunchTargetByName(name?: string | null) {
         if (await this.needsReconfigure()) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
-            if (rc !== 0) {
+            if (rc.result !== 0) {
                 return null;
             }
         }
@@ -2149,7 +2160,7 @@ export class CMakeProject {
     async getLaunchTargetPath(): Promise<string | null> {
         if (await this.needsReconfigure()) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
-            if (rc !== 0) {
+            if (rc.result !== 0) {
                 return null;
             }
         }
@@ -2252,7 +2263,7 @@ export class CMakeProject {
         const isReconfigurationNeeded = await this.needsReconfigure();
         if (isReconfigurationNeeded) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
-            if (rc !== 0) {
+            if (rc.result !== 0) {
                 log.debug(localize('project.configuration.failed', 'Configuration of project failed.'));
                 return null;
             }
@@ -2628,7 +2639,7 @@ export class CMakeProject {
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
         await enableFullFeatureSet(true);
-        return this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal);
+        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).result;
     }
 
     /**

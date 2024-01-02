@@ -19,7 +19,7 @@ suite('Smoke test: No ctest in bin dir', () => {
                     cmakeProject.workspaceContext.config.updatePartial({
                         cmakePath: path.join(ctx.projectDir.uri.fsPath, 'bin', cmake_filename)
                     });
-                    expect(await cmakeProject.configureInternal(ConfigureTrigger.runTests)).to.eq(0);
+                    expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).result).to.eq(0);
                     expect(await cmakeProject.build()).to.eq(0);
                     expect(await cmakeProject.ctest()).to.eq(0);
                 }
