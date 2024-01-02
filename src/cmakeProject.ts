@@ -285,6 +285,7 @@ export class CMakeProject {
                 await this.resetPresets(drv);
                 return;
             }
+            const priorCMakePath = await this.getCMakePathofProject(); // used for later comparison to determine if we need to update the driver's cmake.
             this._configurePreset.set(expandedConfigurePreset);
             if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
                 await this.shutDownCMakeDriver();
@@ -294,6 +295,13 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setConfigurePreset(expandedConfigurePreset);
+                    const updatedCMakePath = await this.getCMakePathofProject();
+
+                    // check if we need to update the driver's cmake, if so, update.
+                    if (priorCMakePath !== updatedCMakePath) {
+                        drv.cmake = await this.getCMakeExecutable();
+                    }
+
                     await this.workspaceContext.state.setConfigurePresetName(this.folderName, configurePreset, this.isMultiProjectFolder);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
