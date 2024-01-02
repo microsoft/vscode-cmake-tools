@@ -2575,7 +2575,7 @@
                   "enumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
-                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.variant.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.variant.compact.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%"
                   ]
                 }
