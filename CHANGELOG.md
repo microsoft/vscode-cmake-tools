@@ -7,8 +7,9 @@ Bug Fixes:
 - Fix CMakePresets inheritance for the `condition` field. [PR #3494](https://github.com/microsoft/vscode-cmake-tools/pull/3494)
 - Ensure that the output is cleared for `debugTarget` and `launchTarget`. [#3489](https://github.com/microsoft/vscode-cmake-tools/issues/3489)
 - Fix the inheritance of the `environment` for CMakePresets. [#3473](https://github.com/microsoft/vscode-cmake-tools/issues/3473)
-- Removed an unnecessary `console.assert`. [#3474](https://github.com/microsoft/vscode-cmake-tools/issues/3474)
-- Make sure that we apply our presets to the local cache before also adding a build preset and erroneously overwriting our change. [#3376](https://github.com/microsoft/vscode-cmake-tools/issues/3376)
+- Removed an unnecessary `console.assert` [#3474](https://github.com/microsoft/vscode-cmake-tools/issues/3474)
+- Make sure we clear the output on builds due to test when `Clear output before build` is enabled. [#1179](https://github.com/microsoft/vscode-cmake-tools/issues/1179)
+- Ensure that, when switching between presets, the CMake executable is modified. [#2791](https://github.com/microsoft/vscode-cmake-tools/issues/2791)
 
 ## 1.16.32
 Improvements:
