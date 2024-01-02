@@ -715,8 +715,12 @@ export class CTestDriver implements vscode.Disposable {
 
         const run = testExplorer.createTestRun(request);
         this.ctestsEnqueued(tests, run);
-        await this.buildTests(tests, run);
-        await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+        const buildSucceeded = await this.buildTests(tests, run);
+        if (buildSucceeded) {
+            await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+        } else {
+            log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
+        }
         run.end();
     };
 
@@ -941,12 +945,16 @@ export class CTestDriver implements vscode.Disposable {
 
         const run = testExplorer.createTestRun(request);
         this.ctestsEnqueued(tests, run);
-        await this.buildTests(tests, run);
-        await this.debugCTestHelper(tests, run, cancellation);
+        const buildSucceeded = await this.buildTests(tests, run);
+        if (buildSucceeded) {
+            await this.debugCTestHelper(tests, run, cancellation);
+        } else {
+            log.info(localize('test.skip.debug.build.failure', "Not debugging tests due to build failure."));
+        }
         run.end();
     };
 
-    private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun) {
+    private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
         // Folder => status
         const builtFolder = new Map<string, number>();
         let status: number = 0;
@@ -977,6 +985,8 @@ export class CTestDriver implements vscode.Disposable {
                 this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
             }
         }
+
+        return Array.from(builtFolder.values()).filter(v => v !== 0).length === 0;
     }
 
     /**
