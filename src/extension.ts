@@ -1005,7 +1005,7 @@ export class ExtensionManager implements vscode.Disposable {
         }
     }
 
-    private cleanOutputChannel() {
+    cleanOutputChannel() {
         if (this.workspaceConfig.clearOutputBeforeBuild) {
             log.clearOutputChannel();
         }
