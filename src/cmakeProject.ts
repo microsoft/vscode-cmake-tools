@@ -39,7 +39,7 @@ import { setContextValue } from './util';
 import { VariantManager } from './variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
-import { enableFullFeatureSet, updateFullFeatureSet } from './extension';
+import { enableFullFeatureSet, extensionManager, updateFullFeatureSet } from './extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -287,6 +287,7 @@ export class CMakeProject {
                 await this.resetPresets(drv);
                 return;
             }
+            const priorCMakePath = await this.getCMakePathofProject(); // used for later comparison to determine if we need to update the driver's cmake.
             this._configurePreset.set(expandedConfigurePreset);
             if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
                 await this.shutDownCMakeDriver();
@@ -296,6 +297,13 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setConfigurePreset(expandedConfigurePreset);
+                    const updatedCMakePath = await this.getCMakePathofProject();
+
+                    // check if we need to update the driver's cmake, if so, update.
+                    if (priorCMakePath !== updatedCMakePath) {
+                        drv.cmake = await this.getCMakeExecutable();
+                    }
+
                     await this.workspaceContext.state.setConfigurePresetName(this.folderName, configurePreset, this.isMultiProjectFolder);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
@@ -1913,6 +1921,9 @@ export class CMakeProject {
     }
 
     private async preTest(): Promise<CMakeDriver> {
+        if (extensionManager !== undefined && extensionManager !== null) {
+            extensionManager.cleanOutputChannel();
+        }
         const buildResult = await this.build(undefined, false, false);
         if (buildResult !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));

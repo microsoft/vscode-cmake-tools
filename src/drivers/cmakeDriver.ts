@@ -199,7 +199,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Construct the driver. Concrete instances should provide their own creation
      * routines.
      */
-    protected constructor(public readonly cmake: CMakeExecutable,
+    protected constructor(public cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
         protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
         private readonly isMultiProject: boolean,
