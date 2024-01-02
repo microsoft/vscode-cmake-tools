@@ -392,6 +392,9 @@ export class PresetsController {
                 await this.addPresetAddUpdate(newPreset, 'configurePresets');
 
                 if (isMultiConfigGenerator) {
+                    // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
+                    await this.reapplyPresets();
+
                     const buildPreset: preset.BuildPreset = {
                         name: `${newPreset.name}-debug`,
                         displayName: `${newPreset.displayName} - Debug`,
