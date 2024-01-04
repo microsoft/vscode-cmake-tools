@@ -16,6 +16,7 @@ Bug Fixes:
 - Avoid running tests after a build failure [#3366](https://github.com/microsoft/vscode-cmake-tools/issues/3366)
 - Make sure we clear the output on builds due to test when `Clear output before build` is enabled. [#1179](https://github.com/microsoft/vscode-cmake-tools/issues/1179)
 - Ensure that, when switching between presets, the CMake executable is modified. [#2791](https://github.com/microsoft/vscode-cmake-tools/issues/2791)
+- Fixed the key to reference the correct description for the `compact` option of the `cmake.options.advanced.variant.statusBarVisibility` setting. [#3511](https://github.com/microsoft/vscode-cmake-tools/issues/3511).
 
 ## 1.16.32
 Improvements:
