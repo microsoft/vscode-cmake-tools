@@ -129,10 +129,18 @@ export class ExtensionManager implements vscode.Disposable {
             }
             const subs: vscode.Disposable[] = [];
             for (const project of folderProjectMap.projects) {
-                subs.push(project.onCodeModelChanged(FireLate, () => this.updateCodeModel(project)));
-                subs.push(project.onTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
-                subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
-                subs.push(project.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(project)));
+                subs.push(project.onCodeModelChanged(FireLate, () => {
+                    this.updateCodeModel(project);
+                }));
+                subs.push(project.onTargetNameChanged(FireLate, () => {
+                    this.updateCodeModel(project);
+                }));
+                subs.push(project.onLaunchTargetNameChanged(FireLate, () => {
+                    this.updateCodeModel(project);
+                }));
+                subs.push(project.onActiveBuildPresetChanged(FireLate, () => {
+                    this.updateCodeModel(project);
+                }));
                 this.codeModelUpdateSubs.set(project.folderPath, subs);
                 rollbar.takePromise('Post-folder-open', { folder: folder, project: project }, this.postWorkspaceOpen(project));
             }
@@ -543,8 +551,6 @@ export class ExtensionManager implements vscode.Disposable {
                 }
             }
         }
-
-        this.updateCodeModel(project);
     }
 
     private async onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
@@ -707,13 +713,20 @@ export class ExtensionManager implements vscode.Disposable {
                     cpptools.didChangeCustomBrowseConfiguration(this.configProvider);
                     cpptools.didChangeCustomConfiguration(this.configProvider);
                 } else {
-                    this.configProvider.markAsReady();
-                    if (cpptools.notifyReady) {
-                        // Notify cpptools that the provider is ready to provide IntelliSense configurations.
-                        cpptools.notifyReady(this.configProvider);
-                    } else {
-                        cpptools.didChangeCustomBrowseConfiguration(this.configProvider);
-                        cpptools.didChangeCustomConfiguration(this.configProvider);
+                    // we should only initialize and call the cpptools notifyReady if we actually have content.
+                    if (codeModelContent) {
+                        this.configProvider.markAsReady();
+                        if (cpptools.notifyReady) {
+                            // Notify cpptools that the provider is ready to provide IntelliSense configurations.
+                            cpptools.notifyReady(this.configProvider);
+                        } else {
+                            cpptools.didChangeCustomBrowseConfiguration(
+                                this.configProvider
+                            );
+                            cpptools.didChangeCustomConfiguration(
+                                this.configProvider
+                            );
+                        }
                     }
                 }
             }
