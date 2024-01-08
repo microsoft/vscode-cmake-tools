@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Mostra i pulsanti della Touch Bar sui sistemi supportati.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Non visualizza i pulsanti della Touch Bar.",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Consente di attivare la notifica relativa alle opzioni della barra di stato che si spostano nella visualizzazione Stato del progetto per visualizzarla all'avvio dell'estensione.",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Abilita il pop-up che chiede all'utente se, dopo una configurazione non riuscita, vuole configurare con il Debugger CMake.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Mostra l'opzione della barra di stato a schermo intero.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Mostra solo l'icona dell'opzione della barra di stato.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Mostra l'opzione della barra di stato con il testo troncato alla lunghezza specificata in `#cmake.status.advanced.statusBarLength#` (il valore predefinito è 20).",

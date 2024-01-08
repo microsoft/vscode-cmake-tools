@@ -82,6 +82,7 @@
 	"run.configure": "設定專案: {0}",
 	"unexpected.configure.type": "未預期的設定類型",
 	"yes.configureWithDebugger.button": "偵錯",
+	"options.configureWithDebuggerOnFail.do.not.show": "不要再顯示",
 	"configure.failed.tryWithDebugger": "設定失敗。要嘗試使用 CMake 偵錯工具進行設定嗎?",
 	"no.configureWithDebugger.button": "取消",
 	"finishing.configure": "正在完成設定",

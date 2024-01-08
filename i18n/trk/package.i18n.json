@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Desteklenen sistemlerde Touch Bar düğmelerini göster.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Touch Bar düğmelerini göstermeyin.",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Uzantının ne zaman başladığını göstermek üzere Proje Durum Görünümü'ne taşınan durum çubuğu seçenekleriyle ilgili bildirimi etkinleştirir.",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Kullanıcıya başarısız bir yapılandırmadan sonra CMake Hata Ayıklayıcısı ile yapılandırmak isteyip istemediğini soran açılır pencereyi etkinleştirir.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Durum çubuğu seçeneğini tam boyutta göster.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Yalnızca durum çubuğu seçeneğinin simgesini gösterin.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Durum çubuğu seçeneğini, metni `#cmake.status.advanced.statusBarLength#` (varsayılan 20'dir) belirtilen uzunluğa kısaltılmış şekilde gösterin.",

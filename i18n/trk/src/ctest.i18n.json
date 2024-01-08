@@ -19,7 +19,9 @@
 	"folder.not.found.in.test.explorer": "Klasör Test Gezgini'nde bulunamadı: {0}",
 	"test.preset.required": "Testleri keşfetmek için bir test ön ayarı seçin",
 	"ctest.error": "Kullanılabilir test yürütülebilir dosyalarını belirlemek için ctest çalıştırılırken bir hata oluştu",
+	"test.skip.run.build.failure": "Derleme hatası nedeniyle testler çalıştırılamıyor.",
 	"no.launch.config": "Başlatma yapılandırması bulunamadı.",
 	"choose.launch.config": "Testte hata ayıklamak için bir başlatma yapılandırması seçin.",
+	"test.skip.debug.build.failure": "Derleme hatası nedeniyle testlerde hata ayıklama gerçekleştirilemiyor.",
 	"build.failed": "Derleme başarısız"
 }

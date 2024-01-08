@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "지원되는 시스템에 Touch Bar 단추를 표시합니다.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Touch Bar 단추를 표시하지 않습니다.",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "확장 시작 시기를 표시하기 위해 프로젝트 상태 보기로 이동하는 상태 표시줄 옵션에 대한 알림을 사용하도록 설정합니다.",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "구성 실패 시 CMake 디버거를 사용하여 구성할지를 묻는 팝업을 사용합니다.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "상태 표시줄 옵션을 전체 크기로 표시합니다.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "상태 표시줄 옵션의 아이콘만 표시합니다.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "상태 표시줄 옵션의 텍스트가 `#cmake.status.advanced.statusBarLength#`(기본값 20)에 지정된 길이로 잘려 표시됩니다.",

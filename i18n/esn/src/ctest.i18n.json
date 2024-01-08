@@ -19,7 +19,9 @@
 	"folder.not.found.in.test.explorer": "No se ha encontrado la carpeta en el Explorador de pruebas: {0}",
 	"test.preset.required": "Seleccionar un valor preestablecido de prueba para detectar pruebas",
 	"ctest.error": "Error al ejecutar ctest para determinar los ejecutables de pruebas disponibles",
+	"test.skip.run.build.failure": "No se ejecutan pruebas debido a una falla en la compilación.",
 	"no.launch.config": "No se encontraron configuraciones de inicio.",
 	"choose.launch.config": "Elija una configuración de inicio con la que depurar la prueba.",
+	"test.skip.debug.build.failure": "No se ejecutan pruebas de depuración debido a una falla en la compilación.",
 	"build.failed": "Error de compilación"
 }

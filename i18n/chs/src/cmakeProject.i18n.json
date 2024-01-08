@@ -82,6 +82,7 @@
 	"run.configure": "正在配置项目: {0}",
 	"unexpected.configure.type": "意外的配置类型",
 	"yes.configureWithDebugger.button": "调试",
+	"options.configureWithDebuggerOnFail.do.not.show": "不再显示",
 	"configure.failed.tryWithDebugger": "配置失败。是否要尝试使用 CMake 调试程序进行配置?",
 	"no.configureWithDebugger.button": "取消",
 	"finishing.configure": "正在完成配置",

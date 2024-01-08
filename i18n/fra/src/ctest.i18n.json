@@ -19,7 +19,9 @@
 	"folder.not.found.in.test.explorer": "Dossier introuvable dans l’Explorateur de tests : {0}",
 	"test.preset.required": "Sélectionner une présélection de test pour découvrir les tests",
 	"ctest.error": "Une erreur s'est produite durant l'exécution de ctest pour déterminer les exécutables de test disponibles",
+	"test.skip.run.build.failure": "Tests non exécutés en raison d’un échec de build.",
 	"no.launch.config": "Configurations de lancement introuvables.",
 	"choose.launch.config": "Choisissez une configuration de lancement avec qui déboguer le test.",
+	"test.skip.debug.build.failure": "Tests non débogués en raison d’un échec de build.",
 	"build.failed": "Échec de la build"
 }
