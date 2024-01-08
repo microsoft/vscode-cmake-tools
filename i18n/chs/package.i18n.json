@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "在支持的系统上显示触控栏按钮。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "不显示触控栏按钮。",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "启用有关移动到项目状态视图的状态栏选项的通知，以便在扩展启动时显示。",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "启用弹出窗口，询问用户在配置失败时是否要使用 CMake 调试器进行配置。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "以完整大小显示状态栏选项。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "仅显示状态栏选项的图标。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "显示状态栏选项，其中文本截断为 `#cmake.status.advanced.statusBarLength#` 中指定的长度(默认为 20)。",

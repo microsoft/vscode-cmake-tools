@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "サポートされているシステムで Touch Bar ボタンを表示します。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Touch Bar ボタンを表示しません。",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "拡張機能の開始時に表示するプロジェクト状態ビューに移動するステータス バー オプションに関する通知を有効にします。",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "失敗した構成時に CMake デバッガーを使用して構成するかどうかをユーザーに確認するポップアップを有効にします。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "ステータス バー オプションをフル サイズで表示します。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "ステータス バー オプションのアイコンのみを表示します。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "テキストが `#cmake.status.advanced.statusBarLength#` で指定された長さに切り捨てられたステータス バー オプションを表示します (既定値は 20)。",

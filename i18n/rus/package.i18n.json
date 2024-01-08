@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Отображение кнопок панели Touch Bar на поддерживаемых системах.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Кнопки панели Touch Bar отображаться не будут.",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Включает уведомление о параметрах строки состояния, перемещаемых в представление состояния проекта, для отображения при запуске расширения.",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Разрешает всплывающее окно, которое при сбое настройки спрашивает у пользователя, хочет ли он выполнить настройку с помощью отладчика CMake.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Отображение параметра строки состояния в полном размере.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Показывать только значок параметра строки состояния.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Отображение параметра строки состояния с текстом, усеченным до длины, указанной в параметре `#cmake.status.advanced.statusBarLength#` (значение по умолчанию — 20).",

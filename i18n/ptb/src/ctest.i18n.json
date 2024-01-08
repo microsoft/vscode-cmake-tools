@@ -19,7 +19,9 @@
 	"folder.not.found.in.test.explorer": "A pasta não foi encontrada no Gerenciador de Testes: {0}",
 	"test.preset.required": "Selecione uma predefinição de teste para descobrir testes",
 	"ctest.error": "Houve um erro ao executar o CTest para determinar os executáveis de teste disponíveis",
+	"test.skip.run.build.failure": "Não está executando testes devido a uma falha de compilação.",
 	"no.launch.config": "Nenhuma configuração de inicialização encontrada.",
 	"choose.launch.config": "Escolha uma configuração de inicialização para depurar o teste.",
+	"test.skip.debug.build.failure": "Não está depurando testes devido a uma falha de compilação.",
 	"build.failed": "Ocorreu um erro na compilação"
 }

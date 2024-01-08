@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Pokaż przyciski paska Touch Bar w obsługiwanych systemach.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Nie pokazuj przycisków paska Touch Bar.",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Włącza powiadomienie o opcjach paska stanu przenoszonych do widoku stanu projektu, które będzie wyświetlane po uruchomieniu rozszerzenia.",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Włącza wyskakujące okienko z pytaniem, czy po nieudanej konfiguracji użytkownik chce przeprowadzić konfigurację za pomocą debugera narzędzia CMake.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Pokaż opcję paska stanu w pełnym rozmiarze.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Pokaż tylko ikonę opcji paska stanu.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Pokaż opcję paska stanu z tekstem obciętym do długości określonej w ustawieniu `#cmake.status.advanced.statusBarLength#` (wartość domyślna to 20).",
