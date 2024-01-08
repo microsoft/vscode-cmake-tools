@@ -1,0 +1,69 @@
+# This pipeline is designed to foster sharing our text mate grammars.
+
+parameters:
+  - name: shareGrammars
+    type: boolean
+    default: false
+    values:
+      - true
+      - false
+  - name: shareQuickInfo
+    type: boolean
+    default: false
+    values:
+      - true
+      - false
+
+resources: 
+  repositories:
+    - repository: self
+      clean: true
+    - repository: VS-Platform
+      type: git
+      name: VS-Platform
+
+# Every time we merge into main, we want to check for changes to code that is shared in other repos and that is synced other places.
+trigger: 
+  branches:
+    include:
+    - main
+pr: none
+
+pool: 
+  name: "AzurePipelines-EO"
+  demands:
+    - ImageOverride -equals AzurePipelinesWindows2022compliant
+
+name: $(Date:yyMMdd)$(Rev:rrr)
+
+jobs:
+- job: Copy_Code_Create_PRs
+  displayName: Copy shared code and create PRs if changes
+  condition: or(${{ parameters.shareGrammars }}, ${{ parameters.shareQuickInfo }})
+  steps:
+    - checkout: self
+    - checkout: VS-Platform
+    - task: UseNode@1
+      displayName: "Use Node 16.18"
+      inputs:
+        version: "16.18"
+    - script: npm install
+      displayName: "npm install"
+      workingDirectory: $(Build.SourcesDirectory)/vscode-cmake-tools/tools/pr-creator
+    - script: npm run build
+      displayName: "npm run build"
+      workingDirectory: $(Build.SourcesDirectory)/vscode-cmake-tools/tools/pr-creator
+    - script: node $(Build.SourcesDirectory)/vscode-cmake-tools/tools/pr-creator/dist/index.js --source-file-location $(grammarSourcePath) --target-repo $(grammarTargetRepo) --target-file-location $(grammarTargetPath)
+      displayName: Grammar - Copy files and Create PR
+      workingDirectory: $(Build.SourcesDirectory)/$(grammarTargetRepo)
+      env: 
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      condition: ${{ parameters.shareGrammars }}
+    - script: node $(Build.SourcesDirectory)/vscode-cmake-tools/tools/pr-creator/dist/index.js --source-file-location $(quickInfoSourcePath) --target-repo $(quickInfoTargetRepo) --target-file-location $(quickInfoTargetPath)
+      displayName: QuickInfo - Copy files and Create PR
+      workingDirectory: $(Build.SourcesDirectory)/$(quickInfoTargetRepo)
+      env: 
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      condition: ${{ parameters.shareQuickInfo }}
+
+  
