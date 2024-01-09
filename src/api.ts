@@ -39,6 +39,10 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
         return project ? new CMakeProjectWrapper(project) : undefined;
     }
 
+    getActiveFolderPath(): string {
+        return this.manager.activeFolderPath();
+    }
+
     private async setUIElementVisibility(element: api.UIElement, visible: boolean): Promise<void> {
         switch (element) {
             case api.UIElement.StatusBarDebugButton:
