@@ -70,6 +70,8 @@ export enum ConfigureType {
 export enum ConfigureTrigger {
     api = "api",
     runTests = "runTests",
+    package = "package",
+    workflow =  "workflow",
     badHomeDir = "badHomeDir",
     configureOnOpen = "configureOnOpen",
     configureWithCache = "configureWithCache",
@@ -130,6 +132,9 @@ export class CMakeProject {
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
     public readonly cTestController: CTestDriver;
+    // do we need this?
+    public readonly cPackageController: CPackageDriver;
+    public readonly cWorkflowController: CWorkflowDriver;
     public kitsController!: KitsController;
     public presetsController!: PresetsController;
 
@@ -143,6 +148,8 @@ export class CMakeProject {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
         this.cTestController = new CTestDriver(workspaceContext, projectController);
+        this.cPackageController = new CPackageDriver(workspaceContext, projectController);
+        this.cWorkflowController = new CWorkflowDriver(workspaceContext, projectController);
         this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
     }
 
@@ -231,13 +238,21 @@ export class CMakeProject {
         if (this.configurePreset) {
             await this.workspaceContext.state.setBuildPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
             await this.workspaceContext.state.setTestPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
+            await this.workspaceContext.state.setPackagePresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
+            await this.workspaceContext.state.setWorkflowPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
         }
+
         this._configurePreset.set(null);
         this._buildPreset.set(null);
         this._testPreset.set(null);
+        this._packagePreset.set(null);
+        this._workflowPreset.set(null);
+
         await driver?.setConfigurePreset(null);
         await driver?.setBuildPreset(null);
         await driver?.setTestPreset(null);
+        await driver?.setPackagePreset(null);
+        await driver?.setWorkflowPreset(null);
     }
 
     async expandConfigPresetbyName(configurePreset: string | null | undefined): Promise<preset.ConfigurePreset | undefined> {
@@ -459,6 +474,162 @@ export class CMakeProject {
     }
 
     /**
+     * Currently selected package preset
+     */
+    get packagePreset() {
+        return this._packagePreset.value;
+    }
+    get onActivePackagePresetChanged() {
+        return this._packagePreset.changeEvent;
+    }
+    private readonly _packagePreset = new Property<preset.PackagePreset | null>(null);
+
+    async expandPackagePresetbyName(packagePreset: string | null): Promise<preset.PackagePreset | undefined> {
+        if (!packagePreset) {
+            return undefined;
+        }
+        log.debug(localize('resolving.package.preset', 'Resolving the selected package preset'));
+        const expandedPackagePreset = await preset.expandPackagePreset(this.folderPath,
+            packagePreset,
+            lightNormalizePath(this.folderPath || '.'),
+            this.sourceDir,
+            this.getPreferredGeneratorName(),
+            true,
+            this.configurePreset?.name);
+        if (!expandedPackagePreset) {
+            log.error(localize('failed.resolve.package.preset', 'Failed to resolve package preset: {0}', packagePreset));
+            return undefined;
+        }
+        if (!expandedPackagePreset.configurePreset) {
+            log.error(localize('configurePreset.not.set.package.preset', '{0} is not set in package preset: {1}', "\"configurePreset\"", packagePreset));
+            return undefined;
+        }
+        return expandedPackagePreset;
+    }
+
+    /**
+     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+     */
+    async setPackagePreset(packagePreset: string | null) {
+        const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
+        if (packagePreset) {
+            log.debug(localize('resolving.package.preset', 'Resolving the selected package preset'));
+            const expandedPackagePreset = await this.expandPackagePresetbyName(packagePreset);
+            if (!expandedPackagePreset) {
+                this._packagePreset.set(null);
+                return;
+            }
+            this._packagePreset.set(expandedPackagePreset);
+            log.debug(localize('loading.new.package.preset', 'Loading new package preset into CMake driver'));
+            if (drv) {
+                try {
+                    this.statusMessage.set(localize('reloading.status', 'Reloading...'));
+                    await drv.setPackagePreset(expandedPackagePreset);
+                    if (expandedPackagePreset.configurePreset) {
+                        await this.workspaceContext.state.setPackagePresetName(this.folderName, expandedPackagePreset.configurePreset, packagePreset, this.isMultiProjectFolder);
+                    }
+                    this.statusMessage.set(localize('ready.status', 'Ready'));
+                } catch (error: any) {
+                    void vscode.window.showErrorMessage(localize('unable.to.set.package.preset', 'Unable to set package preset {0}.', `"${error}"`));
+                    this.statusMessage.set(localize('error.on.switch.package.preset', 'Error on switch of package preset ({0})', error.message));
+                    this.cmakeDriver = Promise.resolve(null);
+                    this._packagePreset.set(null);
+                }
+            } else {
+                if (expandedPackagePreset.configurePreset) {
+                    // Remember the selected package preset for the next session.
+                    await this.workspaceContext.state.setPackagePresetName(this.folderName, expandedPackagePreset.configurePreset, packagePreset, this.isMultiProjectFolder);
+                }
+            }
+        } else {
+            this._packagePreset.set(null);
+            await drv?.setPackagePreset(null);
+            if (this.configurePreset) {
+                await this.workspaceContext.state.setPackagePresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
+            }
+        }
+    }
+
+
+    /**
+     * Currently selected workflow preset
+     */
+    get workflowPreset() {
+        return this._workflowPreset.value;
+    }
+    get onActiveWorkflowPresetChanged() {
+        return this._workflowPreset.changeEvent;
+    }
+    private readonly _workflowPreset = new Property<preset.WorkflowPreset | null>(null);
+
+    async expandWorkflowPresetbyName(workflowPreset: string | null): Promise<preset.WorkflowPreset | undefined> {
+        if (!workflowPreset) {
+            return undefined;
+        }
+        log.debug(localize('resolving.workflow.preset', 'Resolving the selected workflow preset'));
+        const expandedWorkflowPreset = await preset.expandWorkflowPreset(this.folderPath,
+            workflowPreset,
+            lightNormalizePath(this.folderPath || '.'),
+            this.sourceDir,
+            this.getPreferredGeneratorName(),
+            true,
+            this.configurePreset?.name);
+        if (!expandedWorkflowPreset) {
+            log.error(localize('failed.resolve.workflow.preset', 'Failed to resolve workflow preset: {0}', workflowPreset));
+            return undefined;
+        }
+        if (!expandedWorkflowPreset.steps[0].name) {
+            log.error(localize('configurePreset.not.set.workflow.preset', '{0} is not set in workflow preset: {1}', "\"configurePreset\"", workflowPreset));
+            return undefined;
+        }
+        return expandedWorkflowPreset;
+    }
+
+    /**
+     * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+     */
+    async setWorkflowPreset(workflowPreset: string | null) {
+        const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
+        if (workflowPreset) {
+            log.debug(localize('resolving.workflow.preset', 'Resolving the selected workflow preset'));
+            const expandedWorkflowPreset = await this.expandWorkflowPresetbyName(workflowPreset);
+            if (!expandedWorkflowPreset) {
+                this._workflowPreset.set(null);
+                return;
+            }
+            this._workflowPreset.set(expandedWorkflowPreset);
+            log.debug(localize('loading.new.workflow.preset', 'Loading new workflow preset into CMake driver'));
+            if (drv) {
+                try {
+                    this.statusMessage.set(localize('reloading.status', 'Reloading...'));
+                    await drv.setWorkflowPreset(expandedWorkflowPreset);
+                    if (expandedWorkflowPreset.steps[0].name) {
+                        await this.workspaceContext.state.setWorkflowPresetName(this.folderName, expandedWorkflowPreset.steps[0].name, workflowPreset, this.isMultiProjectFolder);
+                    }
+                    this.statusMessage.set(localize('ready.status', 'Ready'));
+                } catch (error: any) {
+                    void vscode.window.showErrorMessage(localize('unable.to.set.workflow.preset', 'Unable to set workflow preset {0}.', `"${error}"`));
+                    this.statusMessage.set(localize('error.on.switch.workflow.preset', 'Error on switch of workflow preset ({0})', error.message));
+                    this.cmakeDriver = Promise.resolve(null);
+                    this._workflowPreset.set(null);
+                }
+            } else {
+                if (expandedWorkflowPreset.steps[0].name) {
+                    // Remember the selected workflow preset for the next session.
+                    await this.workspaceContext.state.setWorkflowPresetName(this.folderName, expandedWorkflowPreset.steps[0].name, workflowPreset, this.isMultiProjectFolder);
+                }
+            }
+        } else {
+            this._workflowPreset.set(null);
+            await drv?.setWorkflowPreset(null);
+            if (this.configurePreset) {
+                await this.workspaceContext.state.setWorkflowPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
+            }
+        }
+    }
+
+
+    /**
      * The current target to build.
      */
     get onTargetNameChanged() {
@@ -499,6 +670,17 @@ export class CMakeProject {
         return this._ctestEnabled.changeEvent;
     }
     private readonly _ctestEnabled = new Property<boolean>(false);
+
+    /**
+     * Whether CPack is enabled
+     */
+    get cpackEnabled() {
+        return this._cpackEnabled.value;
+    }
+    get onCPackEnabledChanged() {
+        return this._cpackEnabled.changeEvent;
+    }
+    private readonly _cpackEnabled = new Property<boolean>(false);
 
     /**
      * Whether the backend is busy running some task
@@ -614,7 +796,7 @@ export class CMakeProject {
         if (drv) {
             await drv.asyncDispose();
         }
-        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this.isBusy, this.variantManager, this.cTestController]) {
+        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this.isBusy, this.variantManager, this.cTestController, this.cPackageController, this.cWorkflowController]) {
             disp.dispose();
         }
     }
@@ -809,11 +991,15 @@ export class CMakeProject {
                         this.configurePreset,
                         this.buildPreset,
                         this.testPreset,
+                        this.packagePreset,
+                        this.workflowPreset,
                         workspace,
                         preConditionHandler,
                         preferredGenerators);
                     break;
                 case serverApi:
+                    // Since package and worfklow presets support has been introduced
+                    // after the serverAPI was deprecated, don't mention them here.
                     drv = await CMakeServerDriver.create(cmake,
                         this.workspaceContext.config,
                         this.sourceDir,
@@ -848,6 +1034,8 @@ export class CMakeProject {
         await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
         this.targetName.set(this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
         this.cTestController.clearTests(drv);
+        this.cPackageController.something();
+        this.cWorkflowController.something();
 
         // All set up. Fulfill the driver promise.
         return drv;
@@ -938,6 +1126,9 @@ export class CMakeProject {
             });
         });
         this.cTestController.onTestingEnabledChanged(enabled => this._ctestEnabled.set(enabled));
+        // not sure we need this
+        this.cPackageController.onActivePackagePresetChanged(enabled => this._cpackageEnabled.set(enabled));
+        this.cWorkflowController.onActiveWorkflowPresetChanged(enabled => this._workflowEnabled.set(enabled));
 
         this.statusMessage.set(localize('ready.status', 'Ready'));
 
@@ -998,14 +1189,14 @@ export class CMakeProject {
         }
     }
     /**
-     * Call configurePresets, buildPresets, or testPresets to get the latest presets when the event is fired.
+     * Call configurePresets, buildPresets, testPresets, packagePresets or workflowPresets to get the latest presets when the event is fired.
      */
     onPresetsChanged(listener: () => any) {
         return this.presetsController.onPresetsChanged(listener);
     }
 
     /**
-     * Call configurePresets, buildPresets, or testPresets to get the latest presets when the event is fired.
+     * Call configurePresets, buildPresets, testPresets, packagePresets or workflowPresets to get the latest presets when the event is fired.
      */
     onUserPresetsChanged(listener: () => any) {
         return this.presetsController.onUserPresetsChanged(listener);
@@ -1301,6 +1492,8 @@ export class CMakeProject {
             this.onReconfiguredEmitter.fire();
             return result;
         }
+
+        // anything packaging or workflow related in configure? in UI panel?
 
         if (trigger === ConfigureTrigger.configureWithCache) {
             log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));
@@ -1934,6 +2127,14 @@ export class CMakeProject {
     removeTestExplorerRoot(folder: string) {
         return this.cTestController.removeTestExplorerRoot(folder);
     }
+
+    public async runCPackCustomized(driver: CMakeDriver, packagePreset?: preset.PackagePreset, consumer?: proc.OutputConsumer) {
+        return this.cPackageController.runCPack(driver, true, packagePreset, consumer);
+    }
+
+    public async runWorkflowCustomized(driver: CMakeDriver, workflowPreset?: preset.WorkflowPreset, consumer?: proc.OutputConsumer) {
+      return this.cWorkflowController.runWorkflow(driver, true, workflowPreset, consumer);
+  }
 
     /**
      * Implementation of `cmake.install`

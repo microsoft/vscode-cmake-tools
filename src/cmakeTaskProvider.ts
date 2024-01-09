@@ -25,7 +25,7 @@ const endOfLine: string = "\r\n";
 export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
     label: string;
-    command: string; // Command is either "build", "configure", "install", or "test".
+    command: string; // Command is either "build", "configure", "install", "test", "package" or "workflow".
     targets?: string[]; // only in "build" command
     preset?: string;
     options?: { cwd?: string ; environment?: Environment };
@@ -46,6 +46,8 @@ export enum CommandType {
     config = "configure",
     install = "install",
     test = "test",
+    package = "package",
+    workflow = "workflow",
     clean = "clean",
     cleanRebuild = "cleanRebuild"
 }
@@ -60,6 +62,12 @@ const localizeCommandType = (cmd: CommandType): string => {
         }
         case CommandType.test: {
             return localize("test", "test");
+        }
+        case CommandType.package: {
+            return localize("package", "package");
+        }
+        case CommandType.workflow: {
+            return localize("workflow", "workflow");
         }
         case CommandType.config: {
             return localize("configure", "configure");
@@ -103,6 +111,14 @@ async function getDefaultPresetName(commandType: CommandType, resolve: boolean =
             result = resolve ? await vscode.commands.executeCommand("cmake.activeTestPresetName", []) as string :
                 "${command:cmake.activeTestPresetName}";
             break;
+        case CommandType.package:
+            result = resolve ? await vscode.commands.executeCommand("cmake.activePackagePresetName", []) as string :
+                "${command:cmake.activePackagePresetName}";
+            break;
+        case CommandType.workflow:
+            result = resolve ? await vscode.commands.executeCommand("cmake.activeWorkflowPresetName", []) as string :
+                "${command:cmake.activeWorkflowPresetName}";
+            break;
         default:
             return undefined;
     }
@@ -124,6 +140,8 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         result.push(await CMakeTaskProvider.provideTask(CommandType.build, project?.useCMakePresets, targets));
         result.push(await CMakeTaskProvider.provideTask(CommandType.install, project?.useCMakePresets));
         result.push(await CMakeTaskProvider.provideTask(CommandType.test, project?.useCMakePresets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.package, project?.useCMakePresets));
+        result.push(await CMakeTaskProvider.provideTask(CommandType.workflow, project?.useCMakePresets));
         result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project?.useCMakePresets));
         result.push(await CMakeTaskProvider.provideTask(CommandType.cleanRebuild, project?.useCMakePresets, targets));
         return result;
@@ -308,6 +326,12 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 break;
             case CommandType.test:
                 await this.runTestTask();
+                break;
+            case CommandType.package:
+                await this.runPackageTask();
+                break;
+            case CommandType.workflow:
+                await this.runWorkflowTask();
                 break;
             case CommandType.clean:
                 await this.runBuildTask(CommandType.clean);
@@ -544,6 +568,83 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }  else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
             this.writeEmitter.fire(localize("test.failed", "CTest run failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        }
+    }
+
+    private async runPackageTask(): Promise<any> {
+        this.writeEmitter.fire(localize("package.started", "Package task started...") + endOfLine);
+
+        const project: CMakeProject | undefined = this.getActiveProject();
+        if (!project || !await this.isTaskCompatibleWithPresets(project)) {
+            return;
+        }
+        telemetry.logEvent("task", {taskType: "package", useCMakePresets: String(project.useCMakePresets)});
+        await this.correctTargets(project, CommandType.package);
+        const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
+
+        if (cmakeDriver) {
+            let packagePreset: preset.PackagePreset | undefined;
+            this.preset = await this.resolvePresetName(this.preset, project.useCMakePresets, CommandType.package);
+            if (this.preset) {
+                packagePreset = await project?.expandPackagePresetbyName(this.preset);
+                if (!packagePreset) {
+                    log.debug(localize("package.preset.not.found", 'Package preset not found.'));
+                    this.writeEmitter.fire(localize("cpack.failed", "Package preset {0} not found. CPack failed.", this.preset) + endOfLine);
+                    this.closeEmitter.fire(-1);
+                    return;
+                }
+            }
+            const result: number | undefined = cmakeDriver ? await project?.runCPackCustomized(cmakeDriver, packagePreset, this) : undefined;
+            if (result === undefined) {
+                this.writeEmitter.fire(localize('cpack.run.terminated', 'CPack run was terminated') + endOfLine);
+                this.closeEmitter.fire(-1);
+            } else {
+                this.writeEmitter.fire(localize('cpack.finished', 'CPack finished') + endOfLine);
+                this.closeEmitter.fire(0);
+            }
+        }  else {
+            log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
+            this.writeEmitter.fire(localize("cpack.failed", "CPack run failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        }
+    }
+
+    // should we have one task per workflow or launch the specific tasks for each entry
+    private async runWorkflowTask(): Promise<any> {
+        this.writeEmitter.fire(localize("workflow.started", "Workflow task started...") + endOfLine);
+
+        const project: CMakeProject | undefined = this.getActiveProject();
+        if (!project || !await this.isTaskCompatibleWithPresets(project)) {
+            return;
+        }
+        telemetry.logEvent("task", {taskType: "workflow", useCMakePresets: String(project.useCMakePresets)});
+        await this.correctTargets(project, CommandType.workflow); // ?????
+        const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
+
+        if (cmakeDriver) {
+            let workflowPreset: preset.WorkflowPreset | undefined;
+            this.preset = await this.resolvePresetName(this.preset, project.useCMakePresets, CommandType.workflow);
+            if (this.preset) {
+                workflowPreset = await project?.expandWorkflowPresetbyName(this.preset);
+                if (!workflowPreset) {
+                    log.debug(localize("workflow.preset.not.found", 'Workflow preset not found.'));
+                    this.writeEmitter.fire(localize("workflow.failed", "Workflow preset {0} not found. Workflow failed.", this.preset) + endOfLine);
+                    this.closeEmitter.fire(-1);
+                    return;
+                }
+            }
+            const result: number | undefined = cmakeDriver ? await project?.runWorkflowCustomized(cmakeDriver, workflowPreset, this) : undefined;
+            if (result === undefined) {
+                this.writeEmitter.fire(localize('workflow.run.terminated', 'Workflow run was terminated') + endOfLine);
+                this.closeEmitter.fire(-1);
+            } else {
+                this.writeEmitter.fire(localize('workflow.finished', 'Workflow finished') + endOfLine);
+                this.closeEmitter.fire(0);
+            }
+        }  else {
+            log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
+            this.writeEmitter.fire(localize("workflow.failed", "Workflow run failed.") + endOfLine);
             this.closeEmitter.fire(-1);
         }
     }

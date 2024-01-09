@@ -54,6 +54,8 @@ export class ProjectController implements vscode.Disposable {
     private activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
     private activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
     private activeTestPresetSub: vscode.Disposable = new DummyDisposable();
+    private activePackagePresetSub: vscode.Disposable = new DummyDisposable();
+    private activeWorkflowPresetSub: vscode.Disposable = new DummyDisposable();
     private isBusySub = new DummyDisposable();
     private projectSubscriptions: vscode.Disposable[] = [
         this.targetNameSub,
@@ -63,6 +65,8 @@ export class ProjectController implements vscode.Disposable {
         this.activeConfigurePresetSub,
         this.activeBuildPresetSub,
         this.activeTestPresetSub,
+        this.activePackagePresetSub,
+        this.activeWorkflowPresetSub,
         this.isBusySub
     ];
 
@@ -138,6 +142,8 @@ export class ProjectController implements vscode.Disposable {
             this.activeConfigurePresetSub = new DummyDisposable();
             this.activeBuildPresetSub = new DummyDisposable();
             this.activeTestPresetSub = new DummyDisposable();
+            this.activePackagePresetSub = new DummyDisposable();
+            this.activeWorkflowPresetSub = new DummyDisposable();
             this.isBusySub = new DummyDisposable();
         } else {
             this.targetNameSub = project.onTargetNameChanged(FireNow, () => void projectStatus.refresh());
@@ -147,6 +153,8 @@ export class ProjectController implements vscode.Disposable {
             this.activeConfigurePresetSub = project.onActiveConfigurePresetChanged(FireNow, () => void projectStatus.refresh());
             this.activeBuildPresetSub = project.onActiveBuildPresetChanged(FireNow, () => void projectStatus.refresh());
             this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => void projectStatus.refresh());
+            this.activePackagePresetSub = project.onActivePackagePresetChanged(FireNow, () => void projectStatus.refresh());
+            this.activeWorkflowPresetSub = project.onActiveWorkflowPresetChanged(FireNow, () => void projectStatus.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, (isBusy) => void projectStatus.setIsBusy(isBusy));
             await util.setContextValue(ext.hideBuildCommandKey, project.hideBuildButton);
             await util.setContextValue(ext.hideDebugCommandKey, project.hideDebugButton);

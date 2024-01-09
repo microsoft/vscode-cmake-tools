@@ -469,6 +469,7 @@ class BuildButton extends Button {
     }
 }
 
+// No status bar elements for Package and Workflow presets
 export class ConfigurePresetSelection extends Button {
     private static readonly _noPresetSelected = localize('no.configure.preset.selected', 'No Configure Preset Selected');
 

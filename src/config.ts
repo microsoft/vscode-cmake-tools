@@ -52,6 +52,7 @@ export interface AdvancedStatusBarConfig {
         visibility?: StatusBarButtonVisibility;
         length?: number;
     };
+    // No room for package/workflow presets in status bar
     kit?: {
         visibility?: StatusBarButtonVisibility;
         length?: number;
@@ -119,6 +120,12 @@ export interface ExtensionConfigurationSettings {
     configureEnvironment: Environment;
     buildEnvironment: Environment;
     testEnvironment: Environment;
+    packEnvironment: Environment;
+    cpackPath: string;
+    cpackArgs: string[];
+    cpackDefaultArgs: string[];
+    cpackVars: { [key: string]: boolean | number | string | string[] | util.CMakeValue };
+    // no settings needed for workflow presets execution?
     mingwSearchDirs: string[]; // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
     additionalCompilerSearchDirs: string[];
     emscriptenSearchDirs: string[];
@@ -316,6 +323,12 @@ export class ConfigurationReader implements vscode.Disposable {
     get rawCTestPath(): string {
         return this.configData.ctestPath;
     }
+    get rawCPackPath(): string {
+      return this.configData.cpackPath;
+    }
+    get cpackVars(): {[key: string]: boolean | number | string | string[] | util.CMakeValue} {
+        return this.configData.cpackVars;
+    }
     get debugConfig(): CppDebugConfiguration {
         return this.configData.debugConfig;
     }
@@ -339,6 +352,15 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get ctestDefaultArgs(): string[] {
         return this.configData.ctestDefaultArgs;
+    }
+    get packEnvironment() {
+        return this.configData.packEnvironment;
+    }
+    get cpackArgs(): string[] {
+        return this.configData.cpackArgs;
+    }
+    get cpackDefaultArgs(): string[] {
+        return this.configData.cpackDefaultArgs;
     }
     get configureOnOpen() {
         if (util.isCodespaces() && this.configData.configureOnOpen === null) {
@@ -488,16 +510,21 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean }>(),
+        cpackPath: new vscode.EventEmitter<string>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
         defaultVariants: new vscode.EventEmitter<object>(),
         ctestArgs: new vscode.EventEmitter<string[]>(),
         ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
+        cpackArgs: new vscode.EventEmitter<string[]>(),
+        cpackDefaultArgs: new vscode.EventEmitter<string[]>(),
+        cpackVars: new vscode.EventEmitter<{ [key: string]: any }>(),
         environment: new vscode.EventEmitter<Environment>(),
         configureEnvironment: new vscode.EventEmitter<Environment>(),
         buildEnvironment: new vscode.EventEmitter<Environment>(),
         testEnvironment: new vscode.EventEmitter<Environment>(),
+        packEnvironment: new vscode.EventEmitter<Environment>(),
         mingwSearchDirs: new vscode.EventEmitter<string[]>(), // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),

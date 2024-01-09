@@ -26,7 +26,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
 import * as nls from 'vscode-nls';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
@@ -62,6 +62,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
         testPreset: TestPreset | null,
+        packagePreset: PackagePreset | null,
+        workflowPreset: WorkflowPreset | null,
         workspaceRootPath: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
@@ -72,6 +74,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
             configurePreset,
             buildPreset,
             testPreset,
+            packagePreset,
+            workflowPreset,
             preferredGenerators);
     }
 
@@ -180,6 +184,14 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     doSetTestPreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
+    doSetPackagePreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
+    doSetWorkflowPreset(cb: () => Promise<void>): Promise<void> {
         return cb();
     }
 

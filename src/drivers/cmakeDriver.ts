@@ -305,6 +305,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
+    /**
+     * Get the environment variables that should be set at CPack and packaging time.
+     */
+    async getCPackCommandEnvironment(): Promise<Environment> {
+        if (this.useCMakePresets) {
+            return EnvironmentUtils.create(this._packagePreset?.environment);
+        } else {
+            let envs = this._kitEnvironmentVariables;
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this._variantEnv, envs)]);
+            return envs;
+        }
+    }
+
     get onProgress(): vscode.Event<ProgressMessage> {
         return (_cb: (ev: ProgressMessage) => any) => new util.DummyDisposable();
     }
@@ -334,6 +349,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     get testPreset(): preset.TestPreset | null {
         return this._testPreset;
+    }
+
+    private _packagePreset: preset.PackagePreset | null = null;
+
+    get packagePreset(): preset.PackagePreset | null {
+        return this._packagePreset;
+    }
+
+    private _workflowPreset: preset.WorkflowPreset | null = null;
+
+    get workflowPreset(): preset.WorkflowPreset | null {
+        return this._workflowPreset;
     }
 
     /**
@@ -568,6 +595,48 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     /**
+     * Change the current package preset
+     * @param packagePreset The new package preset
+     */
+    async setPackagePreset(packagePreset: preset.PackagePreset | null): Promise<void> {
+        if (packagePreset) {
+            log.info(localize('switching.to.package.preset', 'Switching to package preset: {0}', packagePreset.name));
+        } else {
+            log.info(localize('unsetting.package.preset', 'Unsetting package preset'));
+        }
+
+        await this.doSetPackagePreset(async () => { 
+            await this._setPackagePreset(packagePreset);
+        });
+    }
+
+    private async _setPackagePreset(packagePreset: preset.PackagePreset | null): Promise<void> {
+        this._packagePreset = packagePreset;
+        log.debug(localize('cmakedriver.package.preset.set.to', 'CMakeDriver package preset set to {0}', packagePreset?.name || null));
+    }
+
+    /**
+     * Change the current workflow preset
+     * @param workflowPreset The new workflow preset
+     */
+    async setWorkflowPreset(workflowPreset: preset.WorkflowPreset | null): Promise<void> {
+        if (workflowPreset) {
+            log.info(localize('switching.to.workflow.preset', 'Switching to workflow preset: {0}', workflowPreset.name));
+        } else {
+            log.info(localize('unsetting.workflow.preset', 'Unsetting workflow preset'));
+        }
+
+        await this.doSetWorkflowPreset(async () => {
+            await this._setWorkflowPreset(workflowPreset);
+        });
+    }
+
+    private async _setWorkflowPreset(workflowPreset: preset.WorkflowPreset | null): Promise<void> {
+        this._workflowPreset = workflowPreset;
+        log.debug(localize('cmakedriver.workflow.preset.set.to', 'CMakeDriver workflow preset set to {0}', workflowPreset?.name || null));
+    }
+
+    /**
      * Ensure that variables are up to date (e.g. sourceDirectory, buildDirectory, env, installDirectory)
      */
     async refreshSettings() {
@@ -632,6 +701,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
     protected abstract doSetBuildPreset(cb: () => Promise<void>): Promise<void>;
     protected abstract doSetTestPreset(cb: () => Promise<void>): Promise<void>;
+    protected abstract doSetPackagePreset(cb: () => Promise<void>): Promise<void>;
+    protected abstract doSetWorkflowPreset(cb: () => Promise<void>): Promise<void>;
 
     protected abstract doSetKit(cb: () => Promise<void>): Promise<void>;
 
@@ -1434,6 +1505,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 const userBuildPresets = preset.userBuildPresets(this.workspaceFolder);
                 const testPresets = preset.testPresets(this.workspaceFolder);
                 const userTestPresets = preset.userTestPresets(this.workspaceFolder);
+                const packagePresets = preset.packagePresets(this.workspaceFolder);
+                const userPackagePresets = preset.userPackagePresets(this.workspaceFolder);
+                const workflowPresets = preset.workflowPresets(this.workspaceFolder);
+                const userWorkflowPresets = preset.userWorkflowPresets(this.workspaceFolder);
                 telemetryMeasures['ConfigurePresets'] = configurePresets.length;
                 telemetryMeasures['HiddenConfigurePresets'] = this.countHiddenPresets(configurePresets);
                 telemetryMeasures['UserConfigurePresets'] = userConfigurePresets.length;
@@ -1446,6 +1521,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 telemetryMeasures['HiddenTestPresets'] = this.countHiddenPresets(testPresets);
                 telemetryMeasures['UserTestPresets'] = userTestPresets.length;
                 telemetryMeasures['HiddenUserTestPresets'] = this.countHiddenPresets(userTestPresets);
+                telemetryMeasures['PackagePresets'] = packagePresets.length;
+                telemetryMeasures['HiddenPackagePresets'] = this.countHiddenPresets(packagePresets);
+                telemetryMeasures['UserPackagePresets'] = userPackagePresets.length;
+                telemetryMeasures['HiddenUserPackagePresets'] = this.countHiddenPresets(userPackagePresets);
+                telemetryMeasures['WorkflowPresets'] = workflowPresets.length;
+                telemetryMeasures['HiddenWorkflowPresets'] = this.countHiddenPresets(workflowPresets);
+                telemetryMeasures['UserWorkflowPresets'] = userWorkflowPresets.length;
+                telemetryMeasures['HiddenUserWorkflowPresets'] = this.countHiddenPresets(userWorkflowPresets);
             }
             if (consumer) {
                 if (consumer instanceof CMakeOutputConsumer) {
@@ -1835,6 +1918,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         configurePreset: preset.ConfigurePreset | null,
         buildPreset: preset.BuildPreset | null,
         testPreset: preset.TestPreset | null,
+        packagePreset: preset.PackagePreset | null,
+        workflowPreset: preset.WorkflowPreset | null,
         preferredGenerators: CMakeGenerator[]) {
         this._useCMakePresets = useCMakePresets;
         const initBaseDriverWithPresetLoc = localize("init.driver.using.preset", "Initializing base driver using preset");
@@ -1850,6 +1935,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             if (testPreset) {
                 await this._setTestPreset(testPreset);
+            }
+            if (packagePreset) {
+                await this._setPackagePreset(packagePreset);
+            }
+            if (workflowPreset) {
+                await this._setWorkflowPreset(workflowPreset);
             }
         } else if (kit) {
             await this._setKit(kit, preferredGenerators);
@@ -1869,8 +1960,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
         configurePreset: preset.ConfigurePreset | null,
         buildPreset: preset.BuildPreset | null,
         testPreset: preset.TestPreset | null,
+        packagePreset: preset.PackagePreset | null,
+        workflowPreset: preset.WorkflowPreset | null,
         preferredGenerators: CMakeGenerator[]): Promise<T> {
-        await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators);
+        await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, packagePreset, workflowPreset, preferredGenerators);
         return inst;
     }
 
