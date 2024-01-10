@@ -12,7 +12,7 @@ import { assertNever } from '@cmt/util';
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
 
-    version: api.Version = api.Version.v1;
+    version: api.Version = api.Version.v1_1;
 
     showUIElement(element: api.UIElement): Promise<void> {
         return this.setUIElementVisibility(element, true);
