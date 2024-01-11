@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Hiermit werden die Touch Bar-Schaltflächen auf unterstützten Systemen angezeigt.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Hiermit werden die Touch Bar-Schaltflächen nicht angezeigt.",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Aktiviert die Benachrichtigung über die Statusleistenoptionen, die in die Projektstatusansicht verschoben werden, um anzuzeigen, wann die Erweiterung gestartet wird.",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Aktiviert das Popup, das den Benutzer fragt, ob er bei einer fehlerhaften Konfiguration mit dem CMake Debugger konfigurieren möchte.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Zeigt die Statusleistenoption in voller Größe an.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Zeigt nur das Symbol der Statusleistenoption an.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Zeigt die Statusleistenoption an, bei der der Text auf die in `#cmake.status.advanced.statusBarLength#` angegebene Länge abgeschnitten ist (Standardwert: 20).",
