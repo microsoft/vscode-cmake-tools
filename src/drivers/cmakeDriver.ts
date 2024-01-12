@@ -1290,10 +1290,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             true : false;
     }
 
-    public generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): string[] {
+    public async generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): Promise<string[]> {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = this.generateInitCacheFlags();
-        return init_cache_flags.concat(preset.configureArgs(configPreset), this.config.configureArgs);
+        // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
+        return init_cache_flags.concat(preset.configureArgs(configPreset), await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()}))));
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
@@ -1357,7 +1358,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     return { result: -3, resultType: ConfigureResultType.NoConfigurePreset };
                 }
                 // For now, fields in presets are expanded when the preset is selected
-                expanded_flags = this.generateConfigArgsFromPreset(configurePreset);
+                expanded_flags = await this.generateConfigArgsFromPreset(configurePreset);
             } else {
                 expanded_flags = await this.generateConfigArgsFromSettings(extra_args, withoutCmakeSettings);
             }
