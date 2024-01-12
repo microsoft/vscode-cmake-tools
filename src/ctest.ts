@@ -247,29 +247,29 @@ export class CTestDriver implements vscode.Disposable {
 
     private async getCTestArgs(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[] | undefined> {
         let ctestArgs: string[];
+        const opts = driver.expansionOptions;
+        const initialArgs = await Promise.all(this.ws.config.ctestDefaultArgs.map(async (value) => expandString(value, driver.expansionOptions)));
+        const additionalArgs = await Promise.all(this.ws.config.ctestArgs.map(async (value) => expandString(value, driver.expansionOptions)));
+
+        ctestArgs = initialArgs.slice(0);
+
         if (customizedTask && testPreset) {
-            ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
+            ctestArgs = ctestArgs.concat(testArgs(testPreset));
         } else if (!customizedTask && driver.useCMakePresets) {
             if (!driver.testPreset) {
                 // Test explorer doesn't handle errors well, so we need to deal with them ourselves
                 return undefined;
             }
             // Add a few more args so we can show the result in status bar
-            ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
+            ctestArgs = ctestArgs.concat(testArgs(driver.testPreset));
         } else {
             const configuration = driver.currentBuildType;
-            const opts = driver.expansionOptions;
             const jobs = await expandString(this.ws.config.numCTestJobs, opts);
-            const defaultArgs = [];
-            for (const value of this.ws.config.ctestDefaultArgs) {
-                defaultArgs.push(await expandString(value, opts));
-            }
-            const args = [];
-            for (const value of this.ws.config.ctestArgs) {
-                args.push(await expandString(value, opts));
-            }
-            ctestArgs = [`-j${jobs}`, '-C', configuration].concat(defaultArgs, args);
+            ctestArgs = [`-j${jobs}`, '-C', configuration].concat(ctestArgs);
         }
+
+        ctestArgs = ctestArgs.concat(additionalArgs);
+
         return ctestArgs;
     }
 

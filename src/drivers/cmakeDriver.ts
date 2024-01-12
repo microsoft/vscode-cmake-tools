@@ -276,11 +276,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         let envs;
         if (this.useCMakePresets) {
             envs = EnvironmentUtils.create(configurePreset ? configurePreset.environment : this._configurePreset?.environment);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs)]);
         } else {
             envs = this._kitEnvironmentVariables;
             /* NOTE: By mergeEnvironment one by one to enable expanding self containd variable such as PATH properly */
             /* If configureEnvironment and environment both configured different PATH, doing this will preserve them all */
-            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this._variantEnv, envs)]);
         }
@@ -295,7 +295,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async getCMakeBuildCommandEnvironment(in_env?: Environment): Promise<Environment> {
         if (this.useCMakePresets) {
-            return EnvironmentUtils.merge([in_env, this._buildPreset?.environment]);
+            let envs = EnvironmentUtils.merge([in_env, this._buildPreset?.environment]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs)]);
+            return envs;
         } else {
             let envs = EnvironmentUtils.merge([in_env, this._kitEnvironmentVariables]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
@@ -310,7 +312,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async getCTestCommandEnvironment(): Promise<Environment> {
         if (this.useCMakePresets) {
-            return EnvironmentUtils.create(this._testPreset?.environment);
+            let envs = EnvironmentUtils.create(this._testPreset?.environment);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs)]);
+            return envs;
         } else {
             let envs = this._kitEnvironmentVariables;
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
@@ -1285,7 +1289,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     public generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): string[] {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = this.generateInitCacheFlags();
-        return init_cache_flags.concat(preset.configureArgs(configPreset));
+        return init_cache_flags.concat(preset.configureArgs(configPreset), this.config.configureArgs);
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
@@ -1714,9 +1718,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         } else {
             buildPreset.__targets = buildPreset.targets;
         }
-        const args = preset.buildArgs(buildPreset);
+        let args = preset.buildArgs(buildPreset, this.config.buildArgs);
+        args = args.concat('--', ...this.config.buildToolArgs);
+        const initialEnvironment = EnvironmentUtils.create(buildPreset.environment);
+        const build_env = await this.getCMakeBuildCommandEnvironment(initialEnvironment);
+        const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...this.expansionOptions, envOverride: build_env }));
+        const expanded_args = await Promise.all(expanded_args_promises) as string[];
         log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
-        return { command: this.cmake.path, args, build_env: EnvironmentUtils.create(buildPreset.environment) };
+        return { command: this.cmake.path, args: expanded_args, build_env};
     }
 
     async generateBuildCommandFromSettings(targets?: string[]): Promise<proc.BuildCommand | null> {

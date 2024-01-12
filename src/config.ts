@@ -342,6 +342,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get debugConfig(): CppDebugConfiguration {
         return this.configData.debugConfig;
     }
+    // TODO: Deprecate. We handle these in more specific settings.
     get environment() {
         return this.configData.environment;
     }
