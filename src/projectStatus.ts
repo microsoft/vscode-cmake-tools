@@ -12,7 +12,7 @@ const noConfigPresetSelected = localize('no.configure.preset.selected', '[No Con
 const noBuildPresetSelected = localize('no.build.preset.selected', '[No Build Preset Selected]');
 const noTestPresetSelected = localize('no.test.preset.selected', '[No Test Preset Selected]');
 
-let treeDataProvider: TreeDataProvider;
+export let treeDataProvider: TreeDataProvider;
 
 export class ProjectStatus {
 
@@ -151,6 +151,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     private isDebugButtonHidden: boolean = false;
     private isLaunchButtonHidden: boolean = false;
     private isBusy: boolean = false;
+    private configNode: ConfigNode | undefined;
 
     get onDidChangeTreeData(): vscode.Event<Node | undefined> {
         return this._onDidChangeTreeData.event;
@@ -178,6 +179,13 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             this.isLaunchButtonHidden = false;
         }
         await this.refresh();
+    }
+
+    public async refreshConfigNode(): Promise<any> {
+        if (this.configNode) {
+            await this.configNode.refresh();
+            this._onDidChangeTreeData.fire(this.configNode);
+        }
     }
 
     public async refresh(node?: Node): Promise<any> {
@@ -218,6 +226,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             }
             if (!this.isConfigButtonHidden) {
                 const configNode = new ConfigNode();
+                this.configNode = configNode;
                 await configNode.initialize();
                 if (this.isBusy) {
                     configNode.convertToStopCommand();
@@ -418,6 +427,10 @@ class ConfigNode extends Node {
 
     convertToOriginalCommand(): Promise<void> {
         return this.initialize();
+    }
+
+    async refresh(): Promise<void> {
+        await this.configPreset?.refresh();
     }
 
 }
@@ -621,6 +634,7 @@ class ConfigPreset extends Node {
         this.tooltip = 'Change Configure Preset';
         this.contextValue = 'configPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        await this.updateDescription();
     }
 
     async refresh() {
@@ -628,6 +642,19 @@ class ConfigPreset extends Node {
             return;
         }
         this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName ?? treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && (config.configureArgs.length > 0 || Object.entries(config.configureEnvironment).length > 0)) {
+            this.description = "Override settings";
+        } else {
+            this.description = "";
+        }
     }
 }
 

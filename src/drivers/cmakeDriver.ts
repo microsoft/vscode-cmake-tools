@@ -1359,6 +1359,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
                 // For now, fields in presets are expanded when the preset is selected
                 expanded_flags = await this.generateConfigArgsFromPreset(configurePreset);
+
+                if (!showCommandOnly && (this.config.configureArgs.length > 0 || Object.values(this.config.configureEnvironment).length > 0)) {
+                    log.info(localize('configure.with.overrides', `NOTE: You are configuring with preset ${configurePreset.name}, but there are some overrides being applied from your VS Code settings`));
+                }
             } else {
                 expanded_flags = await this.generateConfigArgsFromSettings(extra_args, withoutCmakeSettings);
             }
