@@ -276,11 +276,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
         let envs;
         if (this.useCMakePresets) {
             envs = EnvironmentUtils.create(configurePreset ? configurePreset.environment : this._configurePreset?.environment);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs)]);
         } else {
             envs = this._kitEnvironmentVariables;
             /* NOTE: By mergeEnvironment one by one to enable expanding self containd variable such as PATH properly */
             /* If configureEnvironment and environment both configured different PATH, doing this will preserve them all */
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this._variantEnv, envs)]);
         }
@@ -296,6 +298,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     async getCMakeBuildCommandEnvironment(in_env?: Environment): Promise<Environment> {
         if (this.useCMakePresets) {
             let envs = EnvironmentUtils.merge([in_env, this._buildPreset?.environment]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs)]);
             return envs;
         } else {
@@ -313,6 +316,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     async getCTestCommandEnvironment(): Promise<Environment> {
         if (this.useCMakePresets) {
             let envs = EnvironmentUtils.create(this._testPreset?.environment);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs)]);
             return envs;
         } else {
