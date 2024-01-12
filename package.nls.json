@@ -74,7 +74,7 @@
     "cmake-tools.configuration.cmake.saveBeforeBuild.description": "Save open files before building.",
     "cmake-tools.configuration.cmake.buildBeforeRun.description": "Build the target before running it.",
     "cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Clear build output before each build.",
-    "cmake-tools.configuration.cmake.configureSettings.description": "CMake variables to set on the command line.",
+    "cmake-tools.configuration.cmake.configureSettings.description": "CMake variables to set on the command line. This setting is specific to kits and will not be used for CMake Presets.",
     "cmake-tools.configuration.cmake.cacheInit.string.description": "Path to a cache-initializing CMake file.",
     "cmake-tools.configuration.cmake.cacheInit.array.description": "List of cache initializer files.",
     "cmake-tools.configuration.cmake.cacheInit.array.string.description": "A cache initializing CMake file.",
