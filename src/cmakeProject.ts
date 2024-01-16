@@ -860,7 +860,10 @@ export class CMakeProject {
         }
 
         await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
-        this.targetName.set(this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
+        const newTargetName = this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName);
+        if (this.targetName.value !== newTargetName) {
+            this.targetName.set(newTargetName);
+        }
         this.cTestController.clearTests(drv);
 
         // All set up. Fulfill the driver promise.
