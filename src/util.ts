@@ -914,7 +914,7 @@ export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
 }
 
 export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
-    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || Object.values(config.environment).length > 0) {
+    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 
@@ -923,7 +923,7 @@ export function checkConfigureOverridesPresent(config: ConfigurationReader): boo
 
 export function checkBuildOverridesPresent(config: ConfigurationReader): boolean {
     if (config.buildArgs.length > 0 || config.buildToolArgs.length > 0
-        || Object.values(config.buildEnvironment).length > 0 || Object.values(config.environment).length > 0) {
+        || Object.values(config.buildEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 
@@ -931,9 +931,13 @@ export function checkBuildOverridesPresent(config: ConfigurationReader): boolean
 }
 
 export function checkTestOverridesPresent(config: ConfigurationReader): boolean {
-    if (Object.values(config.testEnvironment).length > 0 || config.ctestArgs.length > 0 || Object.values(config.environment).length > 0) {
+    if (Object.values(config.testEnvironment).length > 0 || config.ctestArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 
     return false;
+}
+
+export function checkGeneralEnvironmentOverridesPresent(config: ConfigurationReader): boolean {
+    return Object.values(config.environment).length > 0;
 }
