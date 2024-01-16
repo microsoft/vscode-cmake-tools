@@ -543,8 +543,6 @@ export class ExtensionManager implements vscode.Disposable {
                 }
             }
         }
-
-        this.updateCodeModel(project);
     }
 
     private async onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
@@ -707,13 +705,20 @@ export class ExtensionManager implements vscode.Disposable {
                     cpptools.didChangeCustomBrowseConfiguration(this.configProvider);
                     cpptools.didChangeCustomConfiguration(this.configProvider);
                 } else {
-                    this.configProvider.markAsReady();
-                    if (cpptools.notifyReady) {
-                        // Notify cpptools that the provider is ready to provide IntelliSense configurations.
-                        cpptools.notifyReady(this.configProvider);
-                    } else {
-                        cpptools.didChangeCustomBrowseConfiguration(this.configProvider);
-                        cpptools.didChangeCustomConfiguration(this.configProvider);
+                    // we should only initialize and call the cpptools notifyReady if we actually have content.
+                    if (codeModelContent) {
+                        this.configProvider.markAsReady();
+                        if (cpptools.notifyReady) {
+                            // Notify cpptools that the provider is ready to provide IntelliSense configurations.
+                            cpptools.notifyReady(this.configProvider);
+                        } else {
+                            cpptools.didChangeCustomBrowseConfiguration(
+                                this.configProvider
+                            );
+                            cpptools.didChangeCustomConfiguration(
+                                this.configProvider
+                            );
+                        }
                     }
                 }
             }

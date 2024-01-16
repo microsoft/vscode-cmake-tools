@@ -152,6 +152,7 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "在支援的系統上顯示觸控列按鈕。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "不顯示觸控列按鈕。",
 	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "啟用有關移至 [專案狀態檢視] 之狀態列選項的通知，以在延伸模組開始時顯示。",
+	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "啟用會詢問使用者在設定失敗時是否要使用 CMake 偵錯工具進行設定的快顯。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "以完整大小顯示狀態列選項。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "僅顯示狀態列選項的圖示。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "顯示狀態列選項，並將文字截斷為 `#cmake.status.advanced.statusBarLength#` 中指定的長度 (預設值為 20)。",
