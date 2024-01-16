@@ -12,6 +12,7 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
 import { ExtensionManager } from './extension';
+import { ConfigurationReader } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -910,4 +911,29 @@ export function getHostArchitecture() {
 // Util for the special commands to forward to real commands
 export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
     return vscode.commands.executeCommand(`cmake.${key}`, ...args);
+}
+
+export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
+    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || Object.values(config.environment).length > 0) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkBuildOverridesPresent(config: ConfigurationReader): boolean {
+    if (config.buildArgs.length > 0 || config.buildToolArgs.length > 0
+        || Object.values(config.buildEnvironment).length > 0 || Object.values(config.environment).length > 0) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkTestOverridesPresent(config: ConfigurationReader): boolean {
+    if (Object.values(config.testEnvironment).length > 0 || config.ctestArgs.length > 0 || Object.values(config.environment).length > 0) {
+        return true;
+    }
+
+    return false;
 }

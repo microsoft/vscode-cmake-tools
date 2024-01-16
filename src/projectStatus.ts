@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
-import { runCommand } from './util';
+import { checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, runCommand } from './util';
 import { OptionConfig } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -674,7 +674,8 @@ class ConfigPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        if ((await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.checkConfigureOverridesPresent() ?? false) {
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkConfigureOverridesPresent(config)) {
             this.description = "Override settings applied";
         } else {
             this.description = "";
@@ -711,7 +712,8 @@ class BuildPreset extends Node {
             return;
         }
 
-        if ((await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.checkBuildOverridesPresent() ?? false) {
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkBuildOverridesPresent(config)) {
             this.description = "Override settings applied";
         } else {
             this.description = "";
@@ -732,6 +734,7 @@ class TestPreset extends Node {
         this.tooltip = 'Change Test Preset';
         this.contextValue = 'testPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        await this.updateDescription();
     }
 
     async refresh() {
@@ -739,6 +742,20 @@ class TestPreset extends Node {
             return;
         }
         this.label = (treeDataProvider.cmakeProject.testPreset?.displayName ?? treeDataProvider.cmakeProject.testPreset?.name)  || noTestPresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkTestOverridesPresent(config)) {
+            this.description = "Override settings applied";
+        } else {
+            this.description = "";
+        }
     }
 }
 

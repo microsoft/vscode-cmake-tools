@@ -20,6 +20,7 @@ import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset'
 import { CodeModelContent } from './codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { treeDataProvider } from '@cmt/projectStatus';
+import { getStatusBar } from '@cmt/extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -47,6 +48,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
     async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
         await treeDataProvider.refreshConfigNode();
+        getStatusBar()?.updateConfigurePresetButton();
     }
     async checkNeedsReconfigure(): Promise<boolean> {
         return this._needsReconfigure;

@@ -2348,8 +2348,8 @@ export class CMakeProject {
         // Add environment variables from ConfigureEnvironment.
         const configureEnv = await drv?.getConfigureEnvironment();
 
-        if ((drv?.useCMakePresets ?? false) && (drv?.checkConfigureOverridesPresent() ?? false)) {
-            log.info(localize('launch.with.overrides', `NOTE: You are launching a target with a preset, but there are some overrides being applied from your VS Code settings.`));
+        if ((drv?.useCMakePresets ?? false) && (util.checkConfigureOverridesPresent(this.workspaceContext.config) ?? false)) {
+            log.info(localize('launch.with.overrides', `NOTE: You are launching a target and there are some environment overrides being applied from your VS Code settings.`));
         }
 
         return EnvironmentUtils.merge([env, configureEnv]);
