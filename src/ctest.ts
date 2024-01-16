@@ -301,29 +301,11 @@ export class CTestDriver implements vscode.Disposable {
                 return -2;
             }
 
-            let ctestArgs: string[];
-            if (customizedTask && testPreset) {
-                ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
-            } else if (!customizedTask && driver.useCMakePresets) {
-                if (!driver.testPreset) {
-                    log.error(localize('test.preset.not.set', 'Test preset is not set'));
-                    return -3;
-                }
-                // Add a few more args so we can show the result in status bar
-                ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
-            } else {
-                const configuration = driver.currentBuildType;
-                const opts = driver.expansionOptions;
-                const jobs = await expandString(this.ws.config.numCTestJobs, opts);
-                const defaultArgs = [];
-                for (const value of this.ws.config.ctestDefaultArgs) {
-                    defaultArgs.push(await expandString(value, opts));
-                }
-                const args = [];
-                for (const value of this.ws.config.ctestArgs) {
-                    args.push(await expandString(value, opts));
-                }
-                ctestArgs = [`-j${jobs}`, '-C', configuration].concat(defaultArgs, args);
+            const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
+
+            if (ctestArgs === undefined) {
+                log.error(localize('test.preset.not.set', 'Test preset is not set'));
+                return -3;
             }
 
             const child = driver.executeCommand(

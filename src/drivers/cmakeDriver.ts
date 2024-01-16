@@ -269,6 +269,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return env;
     }
 
+    checkConfigureOverridesPresent(): boolean {
+        if (this.config.configureArgs.length > 0 || Object.values(this.config.configureEnvironment).length > 0 || Object.values(this.config.environment).length > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Get the environment variables that should be set at CMake-configure time.
      */
@@ -292,6 +300,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return envs;
     }
 
+    checkBuildOverridesPresent(): boolean {
+        if (this.config.buildArgs.length > 0 || this.config.buildToolArgs.length > 0
+            || Object.values(this.config.buildEnvironment).length > 0 || Object.values(this.config.environment).length > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Get the environment variables that should be set at CMake-build time.
      */
@@ -310,6 +327,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
+    checkTestOverridesPresent(): boolean {
+        if (Object.values(this.config.testEnvironment).length > 0 || this.config.ctestArgs.length > 0 || Object.values(this.config.environment).length > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Get the environment variables that should be set at CTest and running program time.
      */
@@ -318,6 +343,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             let envs = EnvironmentUtils.create(this._testPreset?.environment);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs)]);
+
+            if (this.useCMakePresets && this.testPreset !== null && this.checkTestOverridesPresent()) {
+                log.info(localize('test.with.overrides', `NOTE: You are testing with preset ${this.testPreset.displayName ?? this.testPreset.name}, but there are some overrides being applied from your VS Code settings.`));
+            }
+
             return envs;
         } else {
             let envs = this._kitEnvironmentVariables;
@@ -461,6 +491,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async runCompileCommand(cmd: CompileCommand): Promise<vscode.Terminal> {
         const env = await this.getCMakeBuildCommandEnvironment();
+
+        if (this.useCMakePresets && this._buildPreset && this.checkBuildOverridesPresent()) {
+            log.info(localize('compile.with.overrides', `NOTE: You are compiling with preset ${this._buildPreset.displayName ?? this._buildPreset.name}, but there are some overrides being applied from your VS Code settings.`));
+        }
+
         const key = `${cmd.directory}${JSON.stringify(env)}`;
         let existing = this._compileTerms.get(key);
         if (existing && this.config.clearOutputBeforeBuild) {
@@ -1360,8 +1395,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 // For now, fields in presets are expanded when the preset is selected
                 expanded_flags = await this.generateConfigArgsFromPreset(configurePreset);
 
-                if (!showCommandOnly && (this.config.configureArgs.length > 0 || Object.values(this.config.configureEnvironment).length > 0)) {
-                    log.info(localize('configure.with.overrides', `NOTE: You are configuring with preset ${configurePreset.name}, but there are some overrides being applied from your VS Code settings`));
+                if (!showCommandOnly && this.checkConfigureOverridesPresent()) {
+                    log.info(localize('configure.with.overrides', `NOTE: You are configuring with preset ${configurePreset.name}, but there are some overrides being applied from your VS Code settings.`));
                 }
             } else {
                 expanded_flags = await this.generateConfigArgsFromSettings(extra_args, withoutCmakeSettings);
@@ -1734,6 +1769,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...this.expansionOptions, envOverride: build_env }));
         const expanded_args = await Promise.all(expanded_args_promises) as string[];
         log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
+
+        if (this.checkBuildOverridesPresent()) {
+            log.info(localize('build.with.overrides', `NOTE: You are building with preset ${buildPreset.displayName ?? buildPreset.name}, but there are some overrides being applied from your VS Code settings.`));
+        }
+
         return { command: this.cmake.path, args: expanded_args, build_env};
     }
 
