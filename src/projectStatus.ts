@@ -43,6 +43,9 @@ export class ProjectStatus {
                 await runCommand('selectConfigurePreset');
                 await this.refresh(node);
             }),
+            vscode.commands.registerCommand('cmake.projectStatus.viewConfigureSettings', async (_node: Node) => {
+                await runCommand('viewConfigureSettings');
+            }),
             vscode.commands.registerCommand('cmake.projectStatus.configure', async (_node: Node) => {
                 void runCommand('configure');
             }),
@@ -61,6 +64,9 @@ export class ProjectStatus {
                 await runCommand('selectBuildPreset');
                 await this.refresh(node);
             }),
+            vscode.commands.registerCommand('cmake.projectStatus.viewBuildSettings', async (_node: Node) => {
+                await runCommand('viewBuildSettings');
+            }),
             vscode.commands.registerCommand('cmake.projectStatus.ctest', async (_node: Node) => {
                 void runCommand('ctest');
             }),
@@ -70,6 +76,9 @@ export class ProjectStatus {
             vscode.commands.registerCommand('cmake.projectStatus.selectTestPreset', async (node: Node) => {
                 await runCommand('selectTestPreset');
                 await this.refresh(node);
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.viewTestSettings', async (_node: Node) => {
+                await runCommand('viewTestSettings');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.debugTarget', async (_node: Node) => {
                 await runCommand('debugTarget');
@@ -260,6 +269,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             }
             if (!this.isTestButtonHidden) {
                 const testNode = new TestNode();
+                this.testNode = testNode;
                 await testNode.initialize();
                 if (this.isBusy) {
                     testNode.convertToStopCommand();
@@ -677,8 +687,10 @@ class ConfigPreset extends Node {
         const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
         if (config && checkConfigureOverridesPresent(config)) {
             this.description = "Override settings applied";
+            this.contextValue = 'configPreset - overrides present';
         } else {
             this.description = "";
+            this.contextValue = 'configPreset';
         }
     }
 }
@@ -715,8 +727,10 @@ class BuildPreset extends Node {
         const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
         if (config && checkBuildOverridesPresent(config)) {
             this.description = "Override settings applied";
+            this.contextValue = 'buildPreset - overrides present';
         } else {
             this.description = "";
+            this.contextValue = 'buildPreset';
         }
     }
 }
@@ -753,8 +767,10 @@ class TestPreset extends Node {
         const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
         if (config && checkTestOverridesPresent(config)) {
             this.description = "Override settings applied";
+            this.contextValue = 'testPreset - overrides present';
         } else {
             this.description = "";
+            this.contextValue = 'testPreset';
         }
     }
 }
