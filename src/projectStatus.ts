@@ -152,6 +152,8 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     private isLaunchButtonHidden: boolean = false;
     private isBusy: boolean = false;
     private configNode: ConfigNode | undefined;
+    private buildNode: BuildNode | undefined;
+    private testNode: TestNode | undefined;
 
     get onDidChangeTreeData(): vscode.Event<Node | undefined> {
         return this._onDidChangeTreeData.event;
@@ -185,6 +187,20 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         if (this.configNode) {
             await this.configNode.refresh();
             this._onDidChangeTreeData.fire(this.configNode);
+        }
+    }
+
+    public async refreshBuildNode(): Promise<any> {
+        if (this.buildNode) {
+            await this.buildNode.refresh();
+            this._onDidChangeTreeData.fire(this.buildNode);
+        }
+    }
+
+    public async refreshTestNode(): Promise<any> {
+        if (this.testNode) {
+            await this.testNode.refresh();
+            this._onDidChangeTreeData.fire(this.testNode);
         }
     }
 
@@ -235,6 +251,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             }
             if (!this.isBuildButtonHidden) {
                 const buildNode = new BuildNode();
+                this.buildNode = buildNode;
                 await buildNode.initialize();
                 if (this.isBusy) {
                     buildNode.convertToStopCommand();
@@ -485,6 +502,10 @@ class BuildNode extends Node {
         return this.initialize();
     }
 
+    async refresh(): Promise<void> {
+        await this.buildPreset?.refresh();
+    }
+
 }
 
 class TestNode extends Node {
@@ -525,6 +546,10 @@ class TestNode extends Node {
         } else {
             return [this.testPreset!];
         }
+    }
+
+    async refresh(): Promise<void> {
+        await this.testPreset?.refresh();
     }
 
 }
@@ -649,9 +674,8 @@ class ConfigPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
-        if (config && (config.configureArgs.length > 0 || Object.entries(config.configureEnvironment).length > 0)) {
-            this.description = "Override settings";
+        if ((await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.checkConfigureOverridesPresent() ?? false) {
+            this.description = "Override settings applied";
         } else {
             this.description = "";
         }
@@ -671,6 +695,7 @@ class BuildPreset extends Node {
         this.tooltip = 'Change Build Preset';
         this.contextValue = 'buildPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        await this.updateDescription();
     }
 
     async refresh() {
@@ -678,6 +703,19 @@ class BuildPreset extends Node {
             return;
         }
         this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName ?? treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+
+        if ((await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.checkBuildOverridesPresent() ?? false) {
+            this.description = "Override settings applied";
+        } else {
+            this.description = "";
+        }
     }
 }
 

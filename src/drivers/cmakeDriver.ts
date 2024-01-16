@@ -34,6 +34,7 @@ import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { treeDataProvider } from '@cmt/projectStatus';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -244,7 +245,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         for (const term of this._compileTerms.values()) {
             term.dispose();
         }
-        for (const sub of [this._settingsSub, this._argsSub, this._envSub]) {
+        for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._generalEnvSub]) {
             sub.dispose();
         }
         rollbar.invokeAsync(localize('async.disposing.cmake.driver', 'Async disposing CMake driver'), () => this.asyncDispose());
@@ -1731,14 +1732,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return true;
     }
 
-    protected abstract doConfigureSettingsChange(): void;
+    protected abstract doConfigureSettingsChange(): Promise<void>;
 
     /**
      * Subscribe to changes that affect the CMake configuration
      */
-    private readonly _settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
-    private readonly _argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
-    private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
+    private readonly _settingsSub = this.config.onChange('configureSettings', async () => this.doConfigureSettingsChange());
+    private readonly _argsSub = this.config.onChange('configureArgs', async () => this.doConfigureSettingsChange());
+    private readonly _envSub = this.config.onChange('configureEnvironment', async () => this.doConfigureSettingsChange());
+    private readonly _buildArgsSub = this.config.onChange('buildArgs', async () => treeDataProvider.refreshBuildNode());
+    private readonly _buildEnvSub = this.config.onChange('buildEnvironment', async () => treeDataProvider.refreshBuildNode());
+    private readonly _testArgsSub = this.config.onChange('ctestArgs', async () => treeDataProvider.refreshTestNode());
+    private readonly _testEnvSub = this.config.onChange('testEnvironment', async () => treeDataProvider.refreshTestNode());
+    private readonly _generalEnvSub = this.config.onChange('environment', async () => {
+        await this.doConfigureSettingsChange();
+        await treeDataProvider.refreshBuildNode();
+        await treeDataProvider.refreshTestNode();
+    });
     private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
     protected configureProcess: proc.Subprocess | null = null;
 
