@@ -4,7 +4,6 @@ import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, runCommand } from './util';
 import { OptionConfig } from './config';
-import { Test } from 'mocha';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

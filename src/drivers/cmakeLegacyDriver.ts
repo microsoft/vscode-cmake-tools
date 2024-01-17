@@ -19,8 +19,6 @@ import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import { CodeModelContent } from './codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
-import { treeDataProvider } from '@cmt/projectStatus';
-import { getStatusBar } from '@cmt/extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
