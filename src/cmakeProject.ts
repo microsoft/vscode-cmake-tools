@@ -40,7 +40,7 @@ import { VariantManager } from './variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet } from './extension';
-import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets } from './config';
+import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -2348,7 +2348,7 @@ export class CMakeProject {
         // Add environment variables from ConfigureEnvironment.
         const configureEnv = await drv?.getConfigureEnvironment();
 
-        if ((drv?.useCMakePresets ?? false) && (util.checkConfigureOverridesPresent(this.workspaceContext.config) ?? false)) {
+        if ((drv?.useCMakePresets ?? false) && (checkConfigureOverridesPresent(this.workspaceContext.config) ?? false)) {
             log.info(localize('launch.with.overrides', `NOTE: You are launching a target and there are some environment overrides being applied from your VS Code settings.`));
         }
 
