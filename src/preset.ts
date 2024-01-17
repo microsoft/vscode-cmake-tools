@@ -1558,7 +1558,7 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     return result;
 }
 
-export function buildArgs(preset: BuildPreset, overrideArgs?: string[]): string[] {
+export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], tempOverrideBuildToolArgs?: string[]): string[] {
     const result: string[] = [];
 
     preset.__binaryDir && result.push('--build', preset.__binaryDir);
@@ -1573,8 +1573,9 @@ export function buildArgs(preset: BuildPreset, overrideArgs?: string[]): string[
         result.push('--target', ...preset.__targets);
     }
 
-    overrideArgs && result.push(...overrideArgs);
+    tempOverrideArgs && result.push(...tempOverrideArgs);
     preset.nativeToolOptions && result.push('--', ...preset.nativeToolOptions);
+    tempOverrideBuildToolArgs && result.push(...tempOverrideBuildToolArgs);
 
     return result;
 }
