@@ -21,11 +21,12 @@ import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
-import { errorToString, onConfigureSettingsChange } from '@cmt/util';
+import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
+import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

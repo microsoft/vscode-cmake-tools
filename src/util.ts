@@ -12,7 +12,6 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
 import { ExtensionManager, getStatusBar } from './extension';
-import { ConfigurationReader } from './config';
 import { treeDataProvider } from './projectStatus';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -912,48 +911,4 @@ export function getHostArchitecture() {
 // Util for the special commands to forward to real commands
 export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
     return vscode.commands.executeCommand(`cmake.${key}`, ...args);
-}
-
-export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
-    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
-        return true;
-    }
-
-    return false;
-}
-
-export function checkBuildOverridesPresent(config: ConfigurationReader): boolean {
-    if (config.buildArgs.length > 0 || config.buildToolArgs.length > 0
-        || Object.values(config.buildEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
-        return true;
-    }
-
-    return false;
-}
-
-export function checkTestOverridesPresent(config: ConfigurationReader): boolean {
-    if (Object.values(config.testEnvironment).length > 0 || config.ctestArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
-        return true;
-    }
-
-    return false;
-}
-
-export function checkGeneralEnvironmentOverridesPresent(config: ConfigurationReader): boolean {
-    return Object.values(config.environment).length > 0;
-}
-
-export async function onConfigureSettingsChange(): Promise<void> {
-    await treeDataProvider.refreshConfigNode();
-    getStatusBar()?.updateConfigurePresetButton();
-}
-
-export async function onBuildSettingsChange(): Promise<void> {
-    await treeDataProvider.refreshBuildNode();
-    getStatusBar()?.updateBuildPresetButton();
-}
-
-export async function onTestSettingsChange(): Promise<void> {
-    await treeDataProvider.refreshTestNode();
-    getStatusBar()?.updateTestPresetButton();
 }

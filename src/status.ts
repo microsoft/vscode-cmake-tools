@@ -1,8 +1,7 @@
-import { ConfigurationReader, StatusBarOptionVisibility, StatusBarTextOptionVisibility, StatusBarStaticOptionVisibility, StatusBarIconOptionVisibility } from '@cmt/config';
+import { ConfigurationReader, StatusBarOptionVisibility, StatusBarTextOptionVisibility, StatusBarStaticOptionVisibility, StatusBarIconOptionVisibility, checkConfigureOverridesPresent, checkBuildOverridesPresent, checkTestOverridesPresent } from '@cmt/config';
 import { SpecialKits } from '@cmt/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent } from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

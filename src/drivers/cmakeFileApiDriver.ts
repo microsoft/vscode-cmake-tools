@@ -32,6 +32,7 @@ import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { logCMakeDebuggerTelemetry } from '@cmt/debug/cmakeDebuggerTelemetry';
+import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -156,7 +157,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
-        await util.onConfigureSettingsChange();
+        await onConfigureSettingsChange();
     }
     async checkNeedsReconfigure(): Promise<boolean> {
         return this._needsReconfigure;

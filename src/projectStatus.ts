@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
-import { checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, runCommand } from './util';
-import { OptionConfig } from './config';
+import { runCommand } from './util';
+import { OptionConfig, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

@@ -9,7 +9,7 @@ import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
-import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
+import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
@@ -34,6 +34,7 @@ import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { onBuildSettingsChange, onTestSettingsChange } from '@cmt/ui/util';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
@@ -318,7 +319,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs)]);
 
-            if (this.useCMakePresets && this.testPreset !== null && util.checkTestOverridesPresent(this.config)) {
+            if (this.useCMakePresets && this.testPreset !== null && checkTestOverridesPresent(this.config)) {
                 log.info(localize('test.with.overrides', 'NOTE: You are testing with preset {0}, but there are some overrides being applied from your VS Code settings.', this.testPreset.displayName ?? this.testPreset.name));
             }
 
@@ -466,7 +467,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     async runCompileCommand(cmd: CompileCommand): Promise<vscode.Terminal> {
         const env = await this.getCMakeBuildCommandEnvironment();
 
-        if (this.useCMakePresets && this._buildPreset && util.checkBuildOverridesPresent(this.config)) {
+        if (this.useCMakePresets && this._buildPreset && checkBuildOverridesPresent(this.config)) {
             log.info(localize('compile.with.overrides', 'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.', this._buildPreset.displayName ?? this._buildPreset.name));
         }
 
@@ -1369,7 +1370,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 // For now, fields in presets are expanded when the preset is selected
                 expanded_flags = await this.generateConfigArgsFromPreset(configurePreset);
 
-                if (!showCommandOnly && !shouldUseCachedConfiguration && util.checkConfigureOverridesPresent(this.config)) {
+                if (!showCommandOnly && !shouldUseCachedConfiguration && checkConfigureOverridesPresent(this.config)) {
                     log.info(localize('configure.with.overrides', 'NOTE: You are configuring with preset {0}, but there are some overrides being applied from your VS Code settings.', configurePreset.displayName ?? configurePreset.name));
                 }
             } else {
@@ -1714,21 +1715,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _argsSub = this.config.onChange('configureArgs', async () => this.doConfigureSettingsChange());
     private readonly _envSub = this.config.onChange('configureEnvironment', async () => this.doConfigureSettingsChange());
     private readonly _buildArgsSub = this.config.onChange('buildArgs', async () => {
-        await util.onBuildSettingsChange();
+        await onBuildSettingsChange();
     });
     private readonly _buildEnvSub = this.config.onChange('buildEnvironment', async () => {
-        await util.onBuildSettingsChange();
+        await onBuildSettingsChange();
     });
     private readonly _testArgsSub = this.config.onChange('ctestArgs', async () => {
-        await util.onTestSettingsChange();
+        await onTestSettingsChange();
     });
     private readonly _testEnvSub = this.config.onChange('testEnvironment', async () => {
-        await util.onTestSettingsChange();
+        await onTestSettingsChange();
     });
     private readonly _generalEnvSub = this.config.onChange('environment', async () => {
         await this.doConfigureSettingsChange();
-        await util.onBuildSettingsChange();
-        await util.onTestSettingsChange();
+        await onBuildSettingsChange();
+        await onTestSettingsChange();
     });
     private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
     protected configureProcess: proc.Subprocess | null = null;
@@ -1760,7 +1761,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const expanded_args = await Promise.all(expanded_args_promises) as string[];
         log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
 
-        if (util.checkBuildOverridesPresent(this.config)) {
+        if (checkBuildOverridesPresent(this.config)) {
             log.info(localize('build.with.overrides', 'NOTE: You are building with preset {0}, but there are some overrides being applied from your VS Code settings.', buildPreset.displayName ?? buildPreset.name));
         }
 
