@@ -11,8 +11,7 @@ import rollbar from '@cmt/rollbar';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
-import { ExtensionManager, getStatusBar } from './extension';
-import { treeDataProvider } from './projectStatus';
+import { ExtensionManager } from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
