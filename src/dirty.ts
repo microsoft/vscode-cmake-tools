@@ -7,6 +7,9 @@ import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
 import { Stats } from 'fs';
 import * as path from 'path';
+import { createLogger } from '@cmt/logging';
+
+const logger = createLogger('dirty');
 
 export class InputFile {
     constructor(readonly filePath: string, readonly mtime: Date | null) {}
@@ -18,7 +21,8 @@ export class InputFile {
         let stat: Stats;
         try {
             stat = await fs.stat(this.filePath);
-        } catch (_) {
+        } catch (error: any) {
+            logger.debug(error as Error);
             // Failed to stat: Treat the file as out-of-date
             return true;
         }
