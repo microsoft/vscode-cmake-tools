@@ -11,8 +11,9 @@ import rollbar from '@cmt/rollbar';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
-import { ExtensionManager } from './extension';
+import { ExtensionManager, getStatusBar } from './extension';
 import { ConfigurationReader } from './config';
+import { treeDataProvider } from './projectStatus';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -940,4 +941,19 @@ export function checkTestOverridesPresent(config: ConfigurationReader): boolean 
 
 export function checkGeneralEnvironmentOverridesPresent(config: ConfigurationReader): boolean {
     return Object.values(config.environment).length > 0;
+}
+
+export async function onConfigureSettingsChange(): Promise<void> {
+    await treeDataProvider.refreshConfigNode();
+    getStatusBar()?.updateConfigurePresetButton();
+}
+
+export async function onBuildSettingsChange(): Promise<void> {
+    await treeDataProvider.refreshBuildNode();
+    getStatusBar()?.updateBuildPresetButton();
+}
+
+export async function onTestSettingsChange(): Promise<void> {
+    await treeDataProvider.refreshTestNode();
+    getStatusBar()?.updateTestPresetButton();
 }

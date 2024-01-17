@@ -1717,29 +1717,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _argsSub = this.config.onChange('configureArgs', async () => this.doConfigureSettingsChange());
     private readonly _envSub = this.config.onChange('configureEnvironment', async () => this.doConfigureSettingsChange());
     private readonly _buildArgsSub = this.config.onChange('buildArgs', async () => {
-        await treeDataProvider.refreshBuildNode();
-        getStatusBar()?.updateBuildPresetButton();
+        await util.onBuildSettingsChange();
     });
     private readonly _buildEnvSub = this.config.onChange('buildEnvironment', async () => {
-        await treeDataProvider.refreshBuildNode();
-        getStatusBar()?.updateBuildPresetButton();
+        await util.onBuildSettingsChange();
     });
     private readonly _testArgsSub = this.config.onChange('ctestArgs', async () => {
-        await treeDataProvider.refreshTestNode();
-        getStatusBar()?.updateTestPresetButton();
+        await util.onTestSettingsChange();
     });
     private readonly _testEnvSub = this.config.onChange('testEnvironment', async () => {
-        await treeDataProvider.refreshTestNode();
-        getStatusBar()?.updateTestPresetButton();
+        await util.onTestSettingsChange();
     });
     private readonly _generalEnvSub = this.config.onChange('environment', async () => {
         await this.doConfigureSettingsChange();
-        await treeDataProvider.refreshBuildNode();
-        await treeDataProvider.refreshTestNode();
-        const statusBar = getStatusBar();
-        statusBar?.updateConfigurePresetButton();
-        statusBar?.updateBuildPresetButton();
-        statusBar?.updateTestPresetButton();
+        await util.onBuildSettingsChange();
+        await util.onTestSettingsChange();
     });
     private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
     protected configureProcess: proc.Subprocess | null = null;

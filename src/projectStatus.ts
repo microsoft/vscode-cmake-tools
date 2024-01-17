@@ -4,6 +4,7 @@ import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, runCommand } from './util';
 import { OptionConfig } from './config';
+import { Test } from 'mocha';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -192,25 +193,23 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         await this.refresh();
     }
 
-    public async refreshConfigNode(): Promise<any> {
-        if (this.configNode) {
-            await this.configNode.refresh();
-            this._onDidChangeTreeData.fire(this.configNode);
+    public async refreshNode(node: ConfigNode | BuildNode | TestNode | undefined): Promise<any> {
+        if (node) {
+            await node.refresh();
+            this._onDidChangeTreeData.fire(node);
         }
+    }
+
+    public async refreshConfigNode(): Promise<any> {
+        await this.refreshNode(this.configNode);
     }
 
     public async refreshBuildNode(): Promise<any> {
-        if (this.buildNode) {
-            await this.buildNode.refresh();
-            this._onDidChangeTreeData.fire(this.buildNode);
-        }
+        await this.refreshNode(this.buildNode);
     }
 
     public async refreshTestNode(): Promise<any> {
-        if (this.testNode) {
-            await this.testNode.refresh();
-            this._onDidChangeTreeData.fire(this.testNode);
-        }
+        await this.refreshNode(this.testNode);
     }
 
     public async refresh(node?: Node): Promise<any> {

@@ -21,7 +21,7 @@ import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
-import { errorToString } from '@cmt/util';
+import { errorToString, onConfigureSettingsChange } from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
@@ -311,8 +311,7 @@ export class CMakeServerDriver extends CMakeDriver {
     private _hadConfigurationChanged = true;
     protected async doConfigureSettingsChange(): Promise<void> {
         this._hadConfigurationChanged = true;
-        await treeDataProvider.refreshConfigNode();
-        getStatusBar()?.updateConfigurePresetButton();
+        await onConfigureSettingsChange();
     }
 
     async checkNeedsReconfigure(): Promise<boolean> {

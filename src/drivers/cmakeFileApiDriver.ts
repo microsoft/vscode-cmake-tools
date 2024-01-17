@@ -158,8 +158,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
-        await treeDataProvider.refreshConfigNode();
-        getStatusBar()?.updateConfigurePresetButton();
+        await util.onConfigureSettingsChange();
     }
     async checkNeedsReconfigure(): Promise<boolean> {
         return this._needsReconfigure;
