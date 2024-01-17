@@ -1257,35 +1257,41 @@ export class CMakeProject {
         if (!this.workspaceContext.config.loadCompileCommands) {
             this.compilationDatabase = null;
         } else if (compdbPaths.length > 0) {
-            // Read the compilation database, and update our db property
-            const newDB = await CompilationDatabase.fromFilePaths(compdbPaths);
-            this.compilationDatabase = newDB;
-            // Now try to dump the compdb to the user-requested path
-            const mergeDest = this.workspaceContext.config.mergedCompileCommands;
-            if (!mergeDest) {
-                return;
-            }
-            let expandedDest = await expandString(mergeDest, opts);
-            const pardir = path.dirname(expandedDest);
             try {
-                await fs.mkdir_p(pardir);
-            } catch (e: any) {
-                void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.2',
-                    'Tried to copy compilation database to {0}, but failed to create the parent directory {1}: {2}',
-                    `"${expandedDest}"`, `"${pardir}"`, e.toString()));
-                return;
-            }
-            if (await fs.exists(expandedDest) && (await fs.stat(expandedDest)).isDirectory()) {
-                // Emulate the behavior of copyFile() with writeFile() so that
-                // mergedCompileCommands works like copyCompileCommands for
-                // target paths which lead to existing directories.
-                expandedDest = path.join(expandedDest, "merged_compile_commands.json");
-            }
-            try {
-                await fs.writeFile(expandedDest, CompilationDatabase.toJson(newDB));
+                // Read the compilation database, and update our db property
+                const newDB = await CompilationDatabase.fromFilePaths(compdbPaths);
+                this.compilationDatabase = newDB;
+                // Now try to dump the compdb to the user-requested path
+                const mergeDest = this.workspaceContext.config.mergedCompileCommands;
+                if (!mergeDest) {
+                    return;
+                }
+                let expandedDest = await expandString(mergeDest, opts);
+                const pardir = path.dirname(expandedDest);
+                try {
+                    await fs.mkdir_p(pardir);
+                } catch (e: any) {
+                    void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.2',
+                        'Tried to copy compilation database to {0}, but failed to create the parent directory {1}: {2}',
+                        `"${expandedDest}"`, `"${pardir}"`, e.toString()));
+                    return;
+                }
+                if (await fs.exists(expandedDest) && (await fs.stat(expandedDest)).isDirectory()) {
+                    // Emulate the behavior of copyFile() with writeFile() so that
+                    // mergedCompileCommands works like copyCompileCommands for
+                    // target paths which lead to existing directories.
+                    expandedDest = path.join(expandedDest, "merged_compile_commands.json");
+                }
+                try {
+                    await fs.writeFile(expandedDest, CompilationDatabase.toJson(newDB));
+                } catch (e: any) {
+                    // Just display the error. It's the best we can do.
+                    void vscode.window.showErrorMessage(localize('failed.to.merge', 'Failed to write merged compilation database to {0}: {1}', `"${expandedDest}"`, e.toString()));
+                    return;
+                }
             } catch (e: any) {
                 // Just display the error. It's the best we can do.
-                void vscode.window.showErrorMessage(localize('failed.to.merge', 'Failed to write merged compilation database to {0}: {1}', `"${expandedDest}"`, e.toString()));
+                void vscode.window.showErrorMessage(localize('load.compile.commands', 'Failed while trying to ingest the compile_commands.json: {0}', e.toString()));
                 return;
             }
         }
