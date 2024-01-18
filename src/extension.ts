@@ -266,8 +266,8 @@ export class ExtensionManager implements vscode.Disposable {
         }
     }
 
-    public GetExtensionActiveCommandsEmitter() {
-        return this.extensionActiveCommandsEmitter;
+    public OnExtensionActiveCommandsChanged(listener: () => any, thisObject: any | null) {
+        this.extensionActiveCommandsEmitter.event(listener, thisObject);
     }
 
     public GetContextValues() {
@@ -2108,8 +2108,8 @@ export function GetExtensionLocalizedStrings(): {[key: string]: string} {
     return extensionManager ? extensionManager.GetExtensionLocalizedStrings() : {};
 }
 
-export function GetExtensionActiveCommandsEmitter(): vscode.EventEmitter<void> | null {
-    return extensionManager ? extensionManager.GetExtensionActiveCommandsEmitter() : null;
+export function OnExtensionActiveCommandsChanged(listener: () => any, thisObject: any | null) {
+    extensionManager?.OnExtensionActiveCommandsChanged(listener, thisObject);
 }
 
 // This method updates the full/partial view state.

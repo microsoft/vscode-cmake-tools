@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { GetExtensionActiveCommands, GetExtensionActiveCommandsEmitter, GetExtensionLocalizedStrings } from './extension';
+import { GetExtensionActiveCommands, GetExtensionLocalizedStrings, OnExtensionActiveCommandsChanged } from './extension';
 import * as logging from './logging';
 import { ConfigurationReader } from '@cmt/config';
 
@@ -96,7 +96,7 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
         this.treeView = vscode.window.createTreeView('cmake.pinnedCommands', { treeDataProvider: this });
         this._settingsSub = configReader.onChange('pinnedCommandsList', () => this.doConfigureSettingsChange());
         this.config = vscode.workspace.getConfiguration();
-        GetExtensionActiveCommandsEmitter()?.event(this.doConfigureSettingsChange, this);
+        OnExtensionActiveCommandsChanged(this.doConfigureSettingsChange, this);
     }
 
     get onDidChangeTreeData(): vscode.Event<PinnedCommandNode | void | undefined> {

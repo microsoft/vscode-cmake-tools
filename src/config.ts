@@ -548,7 +548,7 @@ export class ConfigurationReader implements vscode.Disposable {
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>(),
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
-        pinnedCommandsList: new vscode.EventEmitter<string[]>(),
+        pinnedCommandsList: new vscode.EventEmitter<string[]>()
     };
 
     /**
