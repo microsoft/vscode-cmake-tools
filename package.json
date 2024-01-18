@@ -3051,6 +3051,7 @@
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^7.1.0",
     "chokidar": "^3.5.1",
     "handlebars": "^4.7.7",
@@ -3061,6 +3062,7 @@
     "open": "^7.4.1",
     "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
+    "string.prototype.matchall": "^4.0.10",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^6.1.0",
     "@vscode/extension-telemetry": "^0.6.2",
