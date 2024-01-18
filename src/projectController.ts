@@ -17,7 +17,7 @@ import { getStatusBar } from './extension';
 import * as telemetry from './telemetry';
 import { StatusBar } from './status';
 import { FireNow } from './prop';
-import { projectStatus } from './extension';
+import { projectStatus, setContextAndStore } from './extension';
 import * as ext from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -148,9 +148,9 @@ export class ProjectController implements vscode.Disposable {
             this.activeBuildPresetSub = project.onActiveBuildPresetChanged(FireNow, () => void projectStatus.refresh());
             this.activeTestPresetSub = project.onActiveTestPresetChanged(FireNow, () => void projectStatus.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, (isBusy) => void projectStatus.setIsBusy(isBusy));
-            await util.setContextValue(ext.hideBuildCommandKey, project.hideBuildButton);
-            await util.setContextValue(ext.hideDebugCommandKey, project.hideDebugButton);
-            await util.setContextValue(ext.hideLaunchCommandKey, project.hideLaunchButton);
+            await setContextAndStore(ext.hideBuildCommandKey, project.hideBuildButton);
+            await setContextAndStore(ext.hideDebugCommandKey, project.hideDebugButton);
+            await setContextAndStore(ext.hideLaunchCommandKey, project.hideLaunchButton);
         }
     }
 
@@ -480,32 +480,32 @@ export class ProjectController implements vscode.Disposable {
             }
         }
         await projectStatus.doStatusBarChange();
-        await util.setContextValue(ext.hideBuildCommandKey, (statusbar.advanced?.build?.visibility === "hidden") ? true : false);
-        await util.setContextValue(ext.hideDebugCommandKey, (statusbar.advanced?.debug?.visibility === "hidden") ? true : false);
-        await util.setContextValue(ext.hideLaunchCommandKey, (statusbar.advanced?.launch?.visibility === "hidden") ? true : false);
+        await setContextAndStore(ext.hideBuildCommandKey, (statusbar.advanced?.build?.visibility === "hidden") ? true : false);
+        await setContextAndStore(ext.hideDebugCommandKey, (statusbar.advanced?.debug?.visibility === "hidden") ? true : false);
+        await setContextAndStore(ext.hideLaunchCommandKey, (statusbar.advanced?.launch?.visibility === "hidden") ? true : false);
     }
 
     async hideBuildButton(isHidden: boolean) {
         // Doesn't hide the button in the Side Bar because there are no space-saving issues there vs status bar
         // await projectStatus.hideBuildButton(isHidden);
-        await util.setContextValue(ext.hideBuildCommandKey, isHidden);
+        await setContextAndStore(ext.hideBuildCommandKey, isHidden);
     }
 
     async hideDebugButton(isHidden: boolean) {
         // Doesn't hide the button in the Side Bar because there are no space-saving issues there vs status bar
         // await projectStatus.hideDebugButton(isHidden);
-        await util.setContextValue(ext.hideDebugCommandKey, isHidden);
+        await setContextAndStore(ext.hideDebugCommandKey, isHidden);
     }
 
     async hideLaunchButton(isHidden: boolean) {
         // Doesn't hide the button in the Side Bar because there are no space-saving issues there vs status bar
         // await projectStatus.hideLaunchButton(isHidden);
-        await util.setContextValue(ext.hideLaunchCommandKey, isHidden);
+        await setContextAndStore(ext.hideLaunchCommandKey, isHidden);
     }
 
     private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
         const state: boolean = project?.useCMakePresets || false;
-        await util.setContextValue('useCMakePresets', state);
+        await setContextAndStore('useCMakePresets', state);
         await projectStatus.refresh();
         const statusBar: StatusBar | undefined = getStatusBar();
         if (statusBar) {

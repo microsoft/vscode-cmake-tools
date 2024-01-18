@@ -12,6 +12,7 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
 import { ExtensionManager } from './extension';
+import { Exception } from 'handlebars';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -477,6 +478,65 @@ export function thisExtensionPackage(): PackageJSON {
         publisher: pkg.publisher,
         version: pkg.version
     };
+}
+
+export async function GetExtensionLocalizedPackageJson(): Promise<{[key:string]:any}> {
+    let localizedFilePath: string = path.join(thisExtensionPath(), `package.nls.${getLocaleId()}.json`);
+    const fileExists: boolean = await checkFileExists(localizedFilePath);
+    if (!fileExists) {
+        localizedFilePath = path.join(thisExtensionPath(), "package.nls.json");
+    }
+    const localizedStrings = fs.readFileSync(localizedFilePath, "utf8");
+    return JSON.parse(localizedStrings);
+}
+
+interface CommandPalette {
+    command: string;
+    when: string | null;
+}
+
+function evaluateExpression(expression: string | null, context: {[key: string]: any}): boolean 
+{
+    if(expression == null) {
+        return true;
+    } else if(expression == "never") {
+        return false;
+    }
+
+    try {
+        // look for && or || in expression as those are the operators that'll separate multiple keys
+        const regex = /&&|\|\|/g; 
+        const replacements = expression.split(regex);
+        for(let i = 0; i < replacements.length; i++){
+            let trimmed = replacements[i].trim();
+            replacements[i] = trimmed.startsWith('!')? trimmed.substring(1) : trimmed;
+        }
+       
+        for (const key of replacements) {
+            if (!context.hasOwnProperty(key)) {
+               throw new Exception(`item not in context dictionary: \"${key}\"`);
+            }
+            // Create a regular expression to match the key globally and replace it
+            expression = expression.replace(new RegExp(key, 'g'), context[key]);
+        }
+
+        return eval(expression);
+    } catch (e) {
+        console.error("Invalid expression:", e);
+        return false;
+    }
+}
+
+export function thisExtensionActiveCommands(context: {[key: string]: any}) : string [] {
+    const pkg = thisExtension().packageJSON;
+    const allCommands = pkg.contributes.menus.commandPalette as CommandPalette[];
+    const activeCommands = allCommands.map((commandP) => {
+        if (evaluateExpression(commandP.when, context )) {
+            return commandP.command;
+        }
+        return null;
+    });
+    return activeCommands.filter(x=>x!=null) as string[];
 }
 
 export function thisExtensionPath(): string {

@@ -41,6 +41,7 @@ import { platform } from 'os';
 import { CMakeToolsApiImpl } from './api';
 import { DirectoryContext } from './workspace';
 import { ProjectStatus } from './projectStatus';
+import { PinnedCommands } from './pinnedCommands';
 import { StatusBar } from '@cmt/status';
 import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
 import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
@@ -50,6 +51,7 @@ import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '.
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
+let pinnedCommands : PinnedCommands;
 export let projectStatus: ProjectStatus;
 
 const log = logging.createLogger('extension');
@@ -77,6 +79,11 @@ interface Diagnostics {
     cpptoolsIntegration: DiagnosticsCpptools;
 }
 
+interface ExtensionActiveCommandsInfo{
+    contextUsed : {[key: string]: any};
+    extensionActiveCommands : string [];
+}
+
 /**
  * A class to manage the extension.
  * This is the true "singleton" of the extension. It acts as the glue between
@@ -89,17 +96,21 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.activate(extensionContext);
         this.api = new CMakeToolsApiImpl(this);
     }
-
+   
+    private contextValues: {[key: string]: any} = {};
+    private extensionActiveCommandsInfo : ExtensionActiveCommandsInfo | null = null;
+    private extensionLocalizedStrings : {[key: string]:string} = {};
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
+    private readonly extensionActiveCommandsEmitter = new vscode.EventEmitter<void>();
     private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
     private updateTouchBarVisibility(config: TouchBarConfig) {
         const touchBarVisible = config.visibility === "default";
-        void util.setContextValue("cmake:enableTouchBar", touchBarVisible);
-        void util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
-        void util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
-        void util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
-        void util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
+        void setContextAndStore("cmake:enableTouchBar", touchBarVisible);
+        void setContextAndStore("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
+        void setContextAndStore("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
+        void setContextAndStore("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
+        void setContextAndStore("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
     }
     /**
      * Second-phase async init
@@ -122,7 +133,7 @@ export class ExtensionManager implements vscode.Disposable {
             } else {
                 await this.initActiveProject();
             }
-            await util.setContextValue(multiProjectModeKey, this.projectController.hasMultipleProjects);
+            await setContextAndStore(multiProjectModeKey, this.projectController.hasMultipleProjects);
             this.projectOutline.addFolder(folder);
             if (this.codeModelUpdateSubs.get(folder.uri.fsPath)) {
                 this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
@@ -158,7 +169,7 @@ export class ExtensionManager implements vscode.Disposable {
                 } else {
                     this.setupSubscriptions();
                 }
-                await util.setContextValue(multiProjectModeKey, this.projectController.hasMultipleProjects);
+                await setContextAndStore(multiProjectModeKey, this.projectController.hasMultipleProjects);
                 // Update the full/partial view of the workspace by verifying if after the folder removal
                 // it still has at least one CMake project.
                 await enableFullFeatureSet(this.workspaceHasAtLeastOneProject());
@@ -188,7 +199,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (vscode.workspace.workspaceFolders) {
             await this.projectController.loadAllProjects();
             isMultiProject = this.projectController.hasMultipleProjects;
-            await util.setContextValue(multiProjectModeKey, isMultiProject);
+            await setContextAndStore(multiProjectModeKey, isMultiProject);
             this.projectOutline.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
@@ -207,6 +218,45 @@ export class ExtensionManager implements vscode.Disposable {
             telemetryProperties['autoSelectActiveFolder'] = `${this.workspaceConfig.autoSelectActiveFolder}`;
         }
         telemetry.sendOpenTelemetry(telemetryProperties);
+
+        // do these last
+        this.extensionLocalizedStrings = await util.GetExtensionLocalizedPackageJson();
+        this.SetExtensionActiveCommands();
+
+        // need the extension active commands to be initialized for this.
+        pinnedCommands = new PinnedCommands(this.workspaceConfig);
+    }
+    
+    public UpdateContextValues(key:string, value:string){
+        this.contextValues[key] = value;
+
+        // contextvalues have changed so update active extension commands.
+        if(this.extensionActiveCommandsInfo && (!this.extensionActiveCommandsInfo.contextUsed.hasOwnProperty(key) || this.extensionActiveCommandsInfo.contextUsed[key] != value))
+        {
+            this.SetExtensionActiveCommands();
+            this.extensionActiveCommandsEmitter.fire();
+        }
+    }
+
+    public GetExtensionActiveCommandsEmitter(){
+        return this.extensionActiveCommandsEmitter;
+    }
+
+    public GetContextValues(){
+        return this.contextValues;
+    }
+
+    public GetExtensionActiveCommands(){
+        return this.extensionActiveCommandsInfo ? this.extensionActiveCommandsInfo.extensionActiveCommands : [];
+    }
+
+    public GetExtensionLocalizedStrings(){
+        return this.extensionLocalizedStrings;
+    }
+
+    public SetExtensionActiveCommands()
+    {
+        this.extensionActiveCommandsInfo  = { contextUsed: this.contextValues ? {...this.contextValues} : {}, extensionActiveCommands: this.contextValues ? util.thisExtensionActiveCommands(this.contextValues): [] } as ExtensionActiveCommandsInfo;
     }
 
     public getFolderContext(folder: vscode.WorkspaceFolder): StateManager {
@@ -411,6 +461,8 @@ export class ExtensionManager implements vscode.Disposable {
         this.onDidChangeActiveTextEditorSub.dispose();
         void this.kitsWatcher.close();
         this.projectOutlineTreeView.dispose();
+        this.extensionActiveCommandsEmitter.dispose()
+        pinnedCommands.dispose();
         if (this.cppToolsAPI) {
             this.cppToolsAPI.dispose();
         }
@@ -1520,20 +1572,20 @@ export class ExtensionManager implements vscode.Disposable {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
         // await this.projectController.hideLaunchButton(shouldHide);
         this.statusBar.hideLaunchButton(shouldHide);
-        await util.setContextValue(hideLaunchCommandKey, shouldHide);
+        await setContextAndStore(hideLaunchCommandKey, shouldHide);
     }
 
     async hideDebugCommand(shouldHide: boolean = true) {
         // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
         // await this.projectController.hideDebugButton(shouldHide);
         this.statusBar.hideDebugButton(shouldHide);
-        await util.setContextValue(hideDebugCommandKey, shouldHide);
+        await setContextAndStore(hideDebugCommandKey, shouldHide);
     }
 
     async hideBuildCommand(shouldHide: boolean = true) {
         // await this.projectController.hideBuildButton(shouldHide);
         this.statusBar.hideBuildButton(shouldHide);
-        await util.setContextValue(hideBuildCommandKey, shouldHide);
+        await setContextAndStore(hideBuildCommandKey, shouldHide);
     }
 
     // Answers whether the workspace contains at least one project folder that is CMake based,
@@ -1935,11 +1987,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 
     // Register a protocol handler to serve localized schemas
     vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
-    await util.setContextValue("inCMakeProject", true);
+    await setContextAndStore("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
     projectStatus = new ProjectStatus();
-
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
     await extensionManager.init();
@@ -1950,12 +2001,33 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 // and show or hide the buttons in the status bar, according to the boolean.
 // The scope of this is the whole workspace.
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
-    await util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
+    await setContextAndStore("cmake:enableFullFeatureSet", fullFeatureSet);
     extensionManager?.showStatusBar(fullFeatureSet);
 }
 
 export function getActiveProject(): CMakeProject | undefined {
     return extensionManager?.getActiveProject();
+}
+
+export async function setContextAndStore(key: string, value: any)
+{
+    await util.setContextValue(key,value);
+    extensionManager?.UpdateContextValues(key, value)
+}
+
+export function GetExtensionActiveCommands() : string[]
+{
+    return extensionManager ? extensionManager.GetExtensionActiveCommands() : [];
+}
+
+export function GetExtensionLocalizedStrings() : {[key:string]:string}
+{
+    return extensionManager ? extensionManager.GetExtensionLocalizedStrings() : {};
+}
+
+export function GetExtensionActiveCommandsEmitter() : vscode.EventEmitter<void> | null
+{
+    return extensionManager ? extensionManager.GetExtensionActiveCommandsEmitter() : null;
 }
 
 // This method updates the full/partial view state.

@@ -662,6 +662,27 @@
         "title": "%cmake-tools.command.cmake.projectStatus.update.title%",
         "category": "CMake",
         "icon": "$(refresh)"      
+      },
+      {
+        "command": "cmake.pinnedCommands.add",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.pinnedCommands.add.title%",
+        "category": "CMake",
+        "icon": "$(add)"      
+      },
+      {
+        "command": "cmake.pinnedCommands.remove",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.pinnedCommands.remove.title%",
+        "category": "CMake",
+        "icon": "$(remove)"      
+      },
+      {
+        "command": "cmake.pinnedCommands.run",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.pinnedCommands.run.title%",
+        "category": "CMake",
+        "icon": "$(play-circle)"      
       }
     ],
     "taskDefinitions": [
@@ -1127,6 +1148,10 @@
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
+          "command": "cmake.logDiagnostics",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
           "command": "cmake.outline.configure",
           "when": "never"
         },
@@ -1235,6 +1260,18 @@
           "when": "never"
         },
         {
+          "command": "cmake.pinnedCommands.add",
+          "when": "never"
+        },
+        {
+          "command": "cmake.pinnedCommands.remove",
+          "when": "never"
+        },
+        {
+          "command": "cmake.pinnedCommands.run",
+          "when": "never"
+        },
+        {
           "command": "cmake.projectStatus.stop",
           "when": "never"
         },
@@ -1288,6 +1325,14 @@
         },
         {
           "command": "cmake.projectStatus.selectActiveProject",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.selectTestPreset",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.setTestTarget",
           "when": "never"
         }
       ],
@@ -1356,6 +1401,11 @@
           "command": "cmake.outline.editCacheUI",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet",
           "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.pinnedCommands.add",
+          "when": "view == cmake.pinnedCommands && cmake:enableFullFeatureSet",
+          "group": "navigation@1"
         }
       ],
       "view/item/context": [
@@ -1552,6 +1602,16 @@
         {
           "command": "cmake.outline.selectWorkspace",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=workspace/ && viewItem =~ /selected=false/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.pinnedCommands.remove",
+          "when": "view == cmake.pinnedCommands && cmake:enableFullFeatureSet",
+          "group": "pinnedCommands@1"
+        },
+        {
+          "command": "cmake.pinnedCommands.run",
+          "when": "view == cmake.pinnedCommands && cmake:enableFullFeatureSet",
           "group": "inline"
         }
       ],
@@ -2657,6 +2717,15 @@
           "default": true,
           "description": "%cmake-tools.configuration.cmake.automaticReconfigure.description%",
           "scope": "resource"
+        },
+        "cmake.pinnedCommandsList": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "%cmake-tools.configuration.cmake.pinnedCommandsList.description%",
+          "default": [],
+          "scope": "resource"
         }
       }
     },
@@ -2703,9 +2772,21 @@
           "id": "cmake.outline",
           "name": "%cmake-tools.configuration.views.cmake.outline.description%",
           "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "id": "cmake.pinnedCommands",
+          "name": "%cmake-tools.configuration.views.cmake.pinnedCommands.description%",
+          "when": "cmake:enableFullFeatureSet"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "cmake.pinnedCommands",
+        "contents": "%cmake-tools.configuration.views.cmake.pinnedCommandsWelcome.description%",
+        "when": "cmake:enableFullFeatureSet"
+      }
+    ],
     "yamlValidation": [
       {
         "fileMatch": "cmake-variants.yaml",
