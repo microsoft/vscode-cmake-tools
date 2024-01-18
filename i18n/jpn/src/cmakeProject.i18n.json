@@ -82,6 +82,7 @@
 	"run.configure": "プロジェクトを構成しています: {0}",
 	"unexpected.configure.type": "予期しない構成の種類です",
 	"yes.configureWithDebugger.button": "デバッグ",
+	"options.configureWithDebuggerOnFail.do.not.show": "今後表示しない",
 	"configure.failed.tryWithDebugger": "構成に失敗しました。CMake デバッガーを使用して構成しますか?",
 	"no.configureWithDebugger.button": "キャンセル",
 	"finishing.configure": "構成を終了しています",

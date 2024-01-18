@@ -53,7 +53,7 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     }
 }
 
-async function withErrorCheck(name: string, action: () => Thenable<number>): Promise<void> {
+async function withErrorCheck(name: string, action: () => Promise<number>): Promise<void> {
     const code = await action();
     if (code !== 0) {
         throw new Error(`${name} failed with code ${code}`);
@@ -72,7 +72,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     configure(): Promise<void> {
-        return withErrorCheck('configure', () => this.project.configure());
+        return withErrorCheck('configure', async () => (await this.project.configure()).result);
     }
 
     build(targets?: string[]): Promise<void> {
@@ -88,7 +88,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     reconfigure(): Promise<void> {
-        return withErrorCheck('reconfigure', () => this.project.cleanConfigure());
+        return withErrorCheck('reconfigure', async () => (await this.project.cleanConfigure()).result);
     }
 
     async getBuildDirectory(): Promise<string | undefined> {

@@ -82,6 +82,7 @@
 	"run.configure": "Proje yapılandırılıyor: {0}",
 	"unexpected.configure.type": "Beklenmeyen yapılandırma türü",
 	"yes.configureWithDebugger.button": "Hata Ayıkla",
+	"options.configureWithDebuggerOnFail.do.not.show": "Tekrar Gösterme",
 	"configure.failed.tryWithDebugger": "Yapılandırma başarısız oldu. CMake Hata Ayıklayıcısı ile yapılandırmayı denemek ister misiniz?",
 	"no.configureWithDebugger.button": "İptal",
 	"finishing.configure": "Yapılandırma tamamlanıyor",

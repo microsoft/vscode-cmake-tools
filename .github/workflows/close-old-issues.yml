@@ -32,3 +32,4 @@ jobs:
         days-before-close: ${{ env.close-days }}
         close-issue-message: "This issue is now closed due to there being no activity on it for the past ${{ env.close-days }} days since being marked as '${{ env.stale-label }}'."
         operations-per-run: 500
+        close-issue-reason: not_planned

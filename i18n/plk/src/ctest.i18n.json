@@ -19,7 +19,9 @@
 	"folder.not.found.in.test.explorer": "Nie znaleziono folderu w Eksploratorze testów: {0}",
 	"test.preset.required": "Wybierz ustawienie wstępne testu, aby odnaleźć testy",
 	"ctest.error": "Wystąpił błąd podczas uruchamiania narzędzia ctest w celu określenia dostępnych plików wykonywalnych testu",
+	"test.skip.run.build.failure": "Testy nie są uruchamiane z powodu niepowodzenia kompilacji.",
 	"no.launch.config": "Nie znaleziono konfiguracji uruchamiania.",
 	"choose.launch.config": "Wybierz konfigurację uruchamiania do debugowania testu.",
+	"test.skip.debug.build.failure": "Testy nie są debugowane z powodu niepowodzenia kompilacji.",
 	"build.failed": "Kompilacja nie powiodła się"
 }

@@ -1,6 +1,39 @@
 # What's New?
 
-## 1.16
+## 1.17
+
+Improvements:
+
+- Improve when the "Configure with Debugger" popup appears and allow for "Do Not Show Again". [#3343](https://github.com/microsoft/vscode-cmake-tools/issues/3343)
+
+Bug Fixes:
+
+- Fixed an issue where changing an empty value to a non-empty value using the Cache Editor UI didn't work. [PR #3508](https://github.com/microsoft/vscode-cmake-tools/pull/3508)
+- Fix CMakePresets inheritance for the `condition` field. [PR #3494](https://github.com/microsoft/vscode-cmake-tools/pull/3494)
+- Ensure that the output is cleared for `debugTarget` and `launchTarget`. [#3489](https://github.com/microsoft/vscode-cmake-tools/issues/3489)
+- Fix the inheritance of the `environment` for CMakePresets. [#3473](https://github.com/microsoft/vscode-cmake-tools/issues/3473)
+- Removed an unnecessary `console.assert` [#3474](https://github.com/microsoft/vscode-cmake-tools/issues/3474)
+- Avoid running tests after a build failure [#3366](https://github.com/microsoft/vscode-cmake-tools/issues/3366)
+- Make sure we clear the output on builds due to test when `Clear output before build` is enabled. [#1179](https://github.com/microsoft/vscode-cmake-tools/issues/1179)
+- Ensure that, when switching between presets, the CMake executable is modified. [#2791](https://github.com/microsoft/vscode-cmake-tools/issues/2791)
+- Fixed the key to reference the correct description for the `compact` option of the `cmake.options.advanced.variant.statusBarVisibility` setting. [#3511](https://github.com/microsoft/vscode-cmake-tools/issues/3511).
+- Fixed the parsing of C and CXX compiler cache variables when adding a new configure preset from existing compilers. [#2773](https://github.com/microsoft/vscode-cmake-tools/issues/2773)
+- Avoid the pitfalls of using `RegExp.exec()` in loops, replacing their usage with `string.matchAll()`. This change is applied to the expand.ts file which deals with expansion of variables in user provided strings. It may address the failures described in issue [#3469](https://github.com/microsoft/vscode-cmake-tools/issues/3469).
+
+## 1.16.32
+Improvements:
+
+- Improve our "smarts" when we attempt to provide PATH's for compilers or ninja. [PR #3458](https://github.com/microsoft/vscode-cmake-tools/pull/3458)
+
+## 1.16.31
+Bug Fixes:
+- Refactor our attempt to add VS paths to PATH for cl, clang, etc. so that we fix issues with using the wrong compiler. [PR #3449](https://github.com/microsoft/vscode-cmake-tools/pull/3449)
+
+## 1.16.30
+Bug Fixes:
+- Fixed an issue where finding cl.exe and ninja from Visual Studio was broken. [PR #3445](https://github.com/microsoft/vscode-cmake-tools/pull/3445)
+
+## 1.16.29
 Features:
 - Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
 - Add ability to get a test's `WORKING_DIRECTORY` in launch.json via `cmake.testWorkingDirectory` [PR #3336](https://github.com/microsoft/vscode-cmake-tools/pull/3336)
@@ -13,6 +46,9 @@ Improvements:
 - `$penv{}` macros are expanded in `include` paths in CMakePresets.json as long as `version` is 7 or higher. [#3310](https://github.com/microsoft/vscode-cmake-tools/issues/3310)
 - Disable search and select of CMakeLists.txt, if user chooses not to configure project without CMakeLists.txt in the root. [PR #3276](https://github.com/microsoft/vscode-cmake-tools/pull/3276) [@vlavati](https://github.com/vlavati)
 - If the "configure" button of CMakeLists.txt node in the Project Outline is clicked, only the corresponding project is configured. [PR #3372](https://github.com/microsoft/vscode-cmake-tools/pull/3372) [@vlavati](https://github.com/vlavati)
+- Added a command to directly open the extension settings (`CMake: Open CMake Tools Extension Settings`) and a gear icon button in the Project Status View title bar that calls it. [PR #3403](https://github.com/microsoft/vscode-cmake-tools/pull/3403)
+- Added an icon button in the Project Status View title bar that calls the `CMake: Delete Cache and Reconfigure` command. [PR #3403](https://github.com/microsoft/vscode-cmake-tools/pull/3403)
+- By default, all of the status bar options are hidden except `build`, `debug`, and `launch`. All of the previous status bar options are now, by default, visible in the Project Status View. These visibility settings can be customized in the `cmake.options.advanced` setting. This setting can also be accessed via the Project Status View. The `cmake.useProjectStatusView` setting is now removed. [PR #3407](https://github.com/microsoft/vscode-cmake-tools/pull/3407) & [PR #3417](https://github.com/microsoft/vscode-cmake-tools/pull/3417)
 
 Bug Fixes:
 - Fix Unhandled Exception if no args are specified in `cmake.getLaunchTargetFilename` inside an input context of a task. [PR #3348](https://github.com/microsoft/vscode-cmake-tools/issues/3348) [@vlavati](https://github.com/vlavati)
@@ -20,7 +56,7 @@ Bug Fixes:
 - Paths containing `mingw` are no longer removed from the `PATH` environment variable because the selected MinGW kit is added before the `PATH` environment variable, rather than after. [#3220](https://github.com/microsoft/vscode-cmake-tools/issues/3220)
 - Fix a bug where `CMake: Show Configure` or `CMake: Show Build` commands would run them. [#3381](https://github.com/microsoft/vscode-cmake-tools/issues/3381) [@AbdullahAmrSobh](https://github.com/AbdullahAmrSobh)
 
-## 1.15
+## 1.15.31
 Features:
 - Added support for the CMake Debugger. [#3093](https://github.com/microsoft/vscode-cmake-tools/issues/3093)
 - Added support for passing a folder parameter to the `cmake.selectActiveFolder` command. [#3256](https://github.com/microsoft/vscode-cmake-tools/issues/3256) [@cvanbeek](https://github.com/cvanbeek13)

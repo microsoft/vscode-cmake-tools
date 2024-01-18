@@ -16,10 +16,10 @@
 	"Test": "Test",
 	"Debug": "Debug",
 	"Launch": "Avvia",
-	"Project": "Progetto",
-	"active.project": "Progetto attivo",
+	"Folder": "Cartella",
+	"active.folder": "Cartella attiva",
 	"set.build.target": "Imposta la destinazione di compilazione",
-	"set.debug.target": "Imposta destinazione di debug",
+	"set.debug.target": "Imposta la destinazione di debug",
 	"set.launch.target": "Impostare destinazione di avvio",
-	"select.active.project": "Selezionare progetto attivo"
+	"select.active.folder": "Seleziona la cartella attiva"
 }

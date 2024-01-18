@@ -82,6 +82,7 @@
 	"run.configure": "Konfiguruje se projekt: {0}",
 	"unexpected.configure.type": "Neočekávaný typ konfigurace",
 	"yes.configureWithDebugger.button": "Ladit",
+	"options.configureWithDebuggerOnFail.do.not.show": "Už nezobrazovat",
 	"configure.failed.tryWithDebugger": "Konfigurace se nezdařila. Chcete se pokusit o konfiguraci pomocí ladicího programu CMake?",
 	"no.configureWithDebugger.button": "Zrušit",
 	"finishing.configure": "Dokončuje se příkaz configure.",

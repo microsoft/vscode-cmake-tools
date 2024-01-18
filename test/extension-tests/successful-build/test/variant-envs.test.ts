@@ -72,7 +72,7 @@ suite('Environment Variables in Variants', () => {
 
         try {
             // Configure
-            expect(await cmakeProject.configure()).to.be.eq(0, '[variantEnv] configure failed');
+            expect((await cmakeProject.configure()).result).to.be.eq(0, '[variantEnv] configure failed');
             expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
             const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 

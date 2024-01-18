@@ -3,6 +3,7 @@ import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { runCommand } from './util';
+import { OptionConfig } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -23,6 +24,16 @@ export class ProjectStatus {
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
                 await runCommand('stop');
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.cleanConfigure', async (_node: Node) => {
+                await runCommand('cleanConfigure');
+                await this.refresh();
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.openSettings', async(_node: Node) => {
+                await runCommand('openSettings');
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.openVisibilitySettings', async(_node: Node) => {
+                await this.openVisibilitySettings();
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (_node: Node) => {
                 await runCommand('selectKit');
@@ -84,9 +95,13 @@ export class ProjectStatus {
         ]);
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
+    async openVisibilitySettings(): Promise<void> {
+        await vscode.commands.executeCommand('workbench.action.openSettingsJson', { revealSetting: { key: 'cmake.options.advanced' }});
+    }
+
+    async updateActiveProject(cmakeProject?: CMakeProject, options?: OptionConfig): Promise<void> {
         // Update Active Project
-        await treeDataProvider.updateActiveProject(cmakeProject);
+        await treeDataProvider.updateActiveProject(cmakeProject, options);
     }
 
     refresh(node?: Node): Promise<any> {
@@ -118,8 +133,8 @@ export class ProjectStatus {
         await treeDataProvider.setIsBusy(isBusy);
     }
 
-    async doStatusBarChange() {
-        await treeDataProvider.doStatusBarChange();
+    async doStatusChange(options: OptionConfig) {
+        await treeDataProvider.doStatusChange(options);
     }
 
 }
@@ -129,7 +144,10 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     private treeView: vscode.TreeView<Node>;
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     private activeCMakeProject?: CMakeProject;
+    private isFolderButtonHidden: boolean = false;
+    private isConfigButtonHidden: boolean = false;
     private isBuildButtonHidden: boolean = false;
+    private isTestButtonHidden: boolean = false;
     private isDebugButtonHidden: boolean = false;
     private isLaunchButtonHidden: boolean = false;
     private isBusy: boolean = false;
@@ -146,19 +164,16 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         return this.activeCMakeProject;
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
+    async updateActiveProject(cmakeProject?: CMakeProject, options?: OptionConfig): Promise<void> {
         // Use project to create the tree
         if (cmakeProject) {
             this.activeCMakeProject = cmakeProject;
-            // this.isBuildButtonHidden = cmakeProject.hideBuildButton;
-            // this.isDebugButtonHidden = cmakeProject.hideDebugButton;
-            // this.isLaunchButtonHidden = cmakeProject.hideLaunchButton;
-            // temporary to not allow status bar settings to affect side bar view
-            this.isBuildButtonHidden = false;
-            this.isDebugButtonHidden = false;
-            this.isLaunchButtonHidden = false;
+            await this.doStatusChange(options);
         } else {
+            this.isConfigButtonHidden = false;
+            this.isFolderButtonHidden = false;
             this.isBuildButtonHidden = false;
+            this.isTestButtonHidden = false;
             this.isDebugButtonHidden = false;
             this.isLaunchButtonHidden = false;
         }
@@ -193,15 +208,22 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         } else {
             // Initializing the tree for the first time
             const nodes: Node[] = [];
-            const projectNode = new ProjectNode();
-            await projectNode.initialize();
-            nodes.push(projectNode);
-            const configNode = new ConfigNode();
-            await configNode.initialize();
-            if (this.isBusy) {
-                configNode.convertToStopCommand();
+            if (!this.isFolderButtonHidden) {
+                const folderNode = new FolderNode();
+                await folderNode.initialize();
+                if (this.isBusy) {
+                    folderNode.convertToStopCommand();
+                }
+                nodes.push(folderNode);
             }
-            nodes.push(configNode);
+            if (!this.isConfigButtonHidden) {
+                const configNode = new ConfigNode();
+                await configNode.initialize();
+                if (this.isBusy) {
+                    configNode.convertToStopCommand();
+                }
+                nodes.push(configNode);
+            }
             if (!this.isBuildButtonHidden) {
                 const buildNode = new BuildNode();
                 await buildNode.initialize();
@@ -210,43 +232,72 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 }
                 nodes.push(buildNode);
             }
-            const testNode = new TestNode();
-            await testNode.initialize();
-            nodes.push(testNode);
+            if (!this.isTestButtonHidden) {
+                const testNode = new TestNode();
+                await testNode.initialize();
+                if (this.isBusy) {
+                    testNode.convertToStopCommand();
+                }
+                nodes.push(testNode);
+            }
             if (!this.isDebugButtonHidden) {
                 const debugNode = new DebugNode();
                 await debugNode.initialize();
+                if (this.isBusy) {
+                    debugNode.convertToStopCommand();
+                }
                 nodes.push(debugNode);
             }
             if (!this.isLaunchButtonHidden) {
                 const launchNode = new LaunchNode();
                 await launchNode.initialize();
+                if (this.isBusy) {
+                    launchNode.convertToStopCommand();
+                }
                 nodes.push(launchNode);
             }
             return nodes;
         }
     }
 
-    public async doStatusBarChange() {
-        // temporary change to prevent status bar settings from affecting side bar
-        // let didChange: boolean = false;
-        // if (this.activeCMakeProject) {
-        //     if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
-        //         didChange = true;
-        //         this.isBuildButtonHidden = this.activeCMakeProject.hideBuildButton;
-        //     }
-        //     if (this.isDebugButtonHidden !== this.activeCMakeProject.hideDebugButton) {
-        //         didChange = true;
-        //         this.isDebugButtonHidden = this.activeCMakeProject.hideDebugButton;
-        //     }
-        //     if (this.isLaunchButtonHidden !== this.activeCMakeProject.hideLaunchButton) {
-        //         didChange = true;
-        //         this.isLaunchButtonHidden = this.activeCMakeProject.hideLaunchButton;
-        //     }
-        // if (didChange) {
-        //     await this.refresh();
-        // }
-        // }
+    // TODO: get rid of undefined?
+    public async doStatusChange(options: OptionConfig | undefined) {
+        let didChange: boolean = false;
+        if (this.activeCMakeProject) {
+            const folderVisibility = options?.advanced?.folder?.projectStatusVisibility !== "hidden";
+            if (folderVisibility === this.isFolderButtonHidden) {
+                didChange = true;
+                this.isFolderButtonHidden = !folderVisibility;
+            }
+            const configureVisibility = options?.advanced?.configure?.projectStatusVisibility !== "hidden";
+            if (configureVisibility === this.isConfigButtonHidden) {
+                didChange = true;
+                this.isConfigButtonHidden = !configureVisibility;
+            }
+            const buildVisibility = options?.advanced?.build?.projectStatusVisibility !== "hidden";
+            if (buildVisibility === this.isBuildButtonHidden) {
+                didChange = true;
+                this.isBuildButtonHidden = !buildVisibility;
+            }
+            const testVisibility = options?.advanced?.ctest?.projectStatusVisibility !== "hidden";
+            if (testVisibility === this.isTestButtonHidden) {
+                didChange = true;
+                this.isTestButtonHidden = !testVisibility;
+            }
+            const debugVisibility = options?.advanced?.debug?.projectStatusVisibility !== "hidden";
+            if (debugVisibility === this.isDebugButtonHidden) {
+                didChange = true;
+                this.isDebugButtonHidden = !debugVisibility;
+            }
+            const launchVisibility = options?.advanced?.launch?.projectStatusVisibility !== "hidden";
+            if (launchVisibility === this.isLaunchButtonHidden) {
+                didChange = true;
+                this.isLaunchButtonHidden = !launchVisibility;
+            }
+        }
+        if (didChange) {
+            await this.refresh();
+        }
     }
 
     public async hideBuildButton(isHidden: boolean) {
@@ -529,7 +580,7 @@ class LaunchNode extends Node {
 
 }
 
-class ProjectNode extends Node {
+class FolderNode extends Node {
 
     private project?: Project;
 
@@ -537,8 +588,8 @@ class ProjectNode extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = localize('Project', 'Project');
-        this.tooltip = localize('active.project', 'Active project');
+        this.label = localize('Folder', 'Folder');
+        this.tooltip = localize('active.folder', 'Active Folder');
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         await this.InitializeChildren();
     }
@@ -694,7 +745,7 @@ class DebugTarget extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
-        const title: string = localize('set.debug.target', 'Set debug target');
+        const title: string = localize('set.debug.target', 'Set Debug Target');
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'debugTarget';
@@ -736,7 +787,7 @@ class Project extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.folderName;
-        const title: string = localize('select.active.project', 'Select active project');
+        const title: string = localize('select.active.folder', 'Select Active Folder');
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'activeProject';
@@ -749,6 +800,7 @@ class Project extends Node {
         this.label = treeDataProvider.cmakeProject.folderName;
     }
 }
+
 class Variant extends Node {
 
     async initialize(): Promise<void> {
