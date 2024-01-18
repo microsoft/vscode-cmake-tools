@@ -13,9 +13,9 @@ interface PinnedCommandsQuickPickItem extends vscode.QuickPickItem {
 }
 
 class PinnedCommandNode extends vscode.TreeItem {
-    public commandName : string;
-    public isVisible : boolean;
-    constructor(label:string, command:string, isVisible: boolean ) {
+    public commandName: string;
+    public isVisible: boolean;
+    constructor(label: string, command: string, isVisible: boolean) {
         super(label);
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.tooltip = label;
@@ -27,8 +27,8 @@ class PinnedCommandNode extends vscode.TreeItem {
         return this;
     }
 
-    runThisCommand(){
-        vscode.commands.executeCommand(this.commandName);
+    async runThisCommand() {
+        await vscode.commands.executeCommand(this.commandName);
     }
 }
 
@@ -36,34 +36,34 @@ export class PinnedCommands {
 
     private treeDataProvider: PinnedCommandsTreeDataProvider;
     protected disposables: vscode.Disposable[] = [];
-    
-    constructor(configReader : ConfigurationReader) {
+
+    constructor(configReader: ConfigurationReader) {
         this.treeDataProvider = new PinnedCommandsTreeDataProvider(configReader);
         this.disposables.push(...[
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.pinnedCommands.add', async () => {
-                let chosen = await this.showPinnableCommands();
-                if (chosen != null) {
-                   this.treeDataProvider.addCommand(chosen);
+                const chosen = await this.showPinnableCommands();
+                if (chosen !== null) {
+                    await this.treeDataProvider.addCommand(chosen);
                 }
             }),
             vscode.commands.registerCommand('cmake.pinnedCommands.remove', async (what: PinnedCommandNode) => {
-                this.treeDataProvider.removeCommand(what);
+                await this.treeDataProvider.removeCommand(what);
             }),
             vscode.commands.registerCommand('cmake.pinnedCommands.run', async (what: PinnedCommandNode) => {
-                this.treeDataProvider.runCommand(what);
-            }),
+                await this.treeDataProvider.runCommand(what);
+            })
         ]);
     }
 
-     /**
+    /**
      * Show List of All Commands that can be pinned
      */
-     async showPinnableCommands() : Promise<PinnedCommandsQuickPickItem | null> {
-        var localization = GetExtensionLocalizedStrings();
-        let items = GetExtensionActiveCommands().map((x) => {return {
-        command: x,
-        label: localization[`cmake-tools.command.${x}.title`]} as PinnedCommandsQuickPickItem});
+    async showPinnableCommands(): Promise<PinnedCommandsQuickPickItem | null> {
+        const localization = GetExtensionLocalizedStrings();
+        const items = GetExtensionActiveCommands().map((x) => ({
+            command: x,
+            label: localization[`cmake-tools.command.${x}.title`]} as PinnedCommandsQuickPickItem));
         const chosenItem = await vscode.window.showQuickPick(items,
             { placeHolder: localize('add.pinned.cmake.command', 'Select a CMake command to pin') });
         if (!chosenItem) {
@@ -72,7 +72,7 @@ export class PinnedCommands {
         }
         return chosenItem;
     }
-    
+
     refresh(): Promise<any> {
         return this.treeDataProvider.refresh();
     }
@@ -86,13 +86,13 @@ export class PinnedCommands {
 class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCommandNode>, vscode.Disposable {
     private treeView: vscode.TreeView<PinnedCommandNode>;
     private _onDidChangeTreeData: vscode.EventEmitter<PinnedCommandNode | void> = new vscode.EventEmitter<PinnedCommandNode | void>();
-    private pinnedCommands : PinnedCommandNode[] = [];
+    private pinnedCommands: PinnedCommandNode[] = [];
     private config: vscode.WorkspaceConfiguration | null;
-    private pinnedCommandsKey : string = "cmake.pinnedCommandsList";
+    private pinnedCommandsKey: string = "cmake.pinnedCommandsList";
     private isInitialized = false;
     private readonly _settingsSub ;
 
-    constructor(configReader : ConfigurationReader) {
+    constructor(configReader: ConfigurationReader) {
         this.treeView = vscode.window.createTreeView('cmake.pinnedCommands', { treeDataProvider: this });
         this._settingsSub = configReader.onChange('pinnedCommandsList', () => this.doConfigureSettingsChange());
         this.config = vscode.workspace.getConfiguration();
@@ -102,7 +102,7 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
     get onDidChangeTreeData(): vscode.Event<PinnedCommandNode | void | undefined> {
         return this._onDidChangeTreeData.event;
     }
-    
+
     async initialize(): Promise<void> {
         this.config = vscode.workspace.getConfiguration();
         this.pinnedCommands = []; //reset to empty list.
@@ -115,26 +115,26 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
                 this.pinnedCommands.push(new PinnedCommandNode(localization[`cmake-tools.command.${commandName}.title`], commandName, activeCommands.has(commandName)));
             }
         }
-        this.isInitialized = true
+        this.isInitialized = true;
     }
 
     async doConfigureSettingsChange() {
         await this.initialize();
-        this.refresh();
+        await this.refresh();
     }
 
-    addCommand(chosen: PinnedCommandsQuickPickItem) {
+    async addCommand(chosen: PinnedCommandsQuickPickItem) {
         // first check if it is already in the list of pinned commands.
-        if(this.findNode(chosen.label) == -1) {
+        if (this.findNode(chosen.label) === -1) {
             const node = new PinnedCommandNode(chosen.label, chosen.command, true);
             this.pinnedCommands.push(node);
-            this.refresh();
-            this.updateSettings();
+            await this.refresh();
+            await this.updateSettings();
         }
     }
-    
+
     findNode(nodeLabel: string) {
-        for(let i = 0; i < this.pinnedCommands.length; i++) {
+        for (let i = 0; i < this.pinnedCommands.length; i++) {
             if (this.pinnedCommands[i].label === nodeLabel) {
                 return i;
             }
@@ -142,27 +142,27 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
         return -1;
     }
 
-    removeCommand(node: PinnedCommandNode) {
+    async removeCommand(node: PinnedCommandNode) {
         const index = this.findNode(node.label as string);
-        if (index != -1) {
+        if (index !== -1) {
             this.pinnedCommands.splice(index, 1);
-            this.refresh();
+            await this.refresh();
         }
-        this.updateSettings();
+        await this.updateSettings();
     }
 
-    runCommand(node: PinnedCommandNode) {
-        node.runThisCommand();
+    async runCommand(node: PinnedCommandNode) {
+        await node.runThisCommand();
     }
 
     getTreeItem(node: PinnedCommandNode): vscode.TreeItem {
         return node.getTreeItem();
     }
 
-    updateSettings() {
+    async updateSettings() {
         if (this.config) {
-            const newValue: string[] = this.pinnedCommands.map(x=>x.commandName);
-            this.config.update(this.pinnedCommandsKey, newValue, true); // update global
+            const newValue: string[] = this.pinnedCommands.map(x => x.commandName);
+            await this.config.update(this.pinnedCommandsKey, newValue, true); // update global
         }
     }
 
@@ -176,9 +176,9 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
     }
 
     async getChildren(): Promise<PinnedCommandNode[]> {
-        if(!this.isInitialized) {
+        if (!this.isInitialized) {
             await this.initialize();
         }
-        return this.pinnedCommands.filter(x=>x.isVisible)!;
+        return this.pinnedCommands.filter(x => x.isVisible)!;
     }
 }

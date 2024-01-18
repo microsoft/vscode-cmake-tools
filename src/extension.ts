@@ -51,7 +51,7 @@ import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '.
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 let taskProvider: vscode.Disposable;
-let pinnedCommands : PinnedCommands;
+let pinnedCommands: PinnedCommands;
 
 const log = logging.createLogger('extension');
 
@@ -79,9 +79,9 @@ interface Diagnostics {
     cpptoolsIntegration: DiagnosticsCpptools;
 }
 
-interface ExtensionActiveCommandsInfo{
-    contextUsed : {[key: string]: any};
-    extensionActiveCommands : string [];
+interface ExtensionActiveCommandsInfo {
+    contextUsed: {[key: string]: any};
+    extensionActiveCommands: string [];
 }
 
 /**
@@ -96,10 +96,10 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.activate(extensionContext);
         this.api = new CMakeToolsApiImpl(this);
     }
-   
+
     private contextValues: {[key: string]: any} = {};
-    private extensionActiveCommandsInfo : ExtensionActiveCommandsInfo | null = null;
-    private extensionLocalizedStrings : {[key: string]:string} = {};
+    private extensionActiveCommandsInfo: ExtensionActiveCommandsInfo | null = null;
+    private extensionLocalizedStrings: {[key: string]: string} = {};
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
     private readonly extensionActiveCommandsEmitter = new vscode.EventEmitter<void>();
     private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
@@ -251,41 +251,39 @@ export class ExtensionManager implements vscode.Disposable {
         this.extensionLocalizedStrings = await util.GetExtensionLocalizedPackageJson();
         this.SetExtensionActiveCommands();
     }
-    
-    public GetWorkspaceConfig(){
+
+    public GetWorkspaceConfig() {
         return this.workspaceConfig;
     }
 
-    public UpdateContextValues(key:string, value:string){
+    public UpdateContextValues(key: string, value: string) {
         this.contextValues[key] = value;
 
         // contextvalues have changed so update active extension commands.
-        if(this.extensionActiveCommandsInfo && (!this.extensionActiveCommandsInfo.contextUsed.hasOwnProperty(key) || this.extensionActiveCommandsInfo.contextUsed[key] != value))
-        {
+        if (this.extensionActiveCommandsInfo && (!this.extensionActiveCommandsInfo.contextUsed.hasOwnProperty(key) || this.extensionActiveCommandsInfo.contextUsed[key] !== value)) {
             this.SetExtensionActiveCommands();
             this.extensionActiveCommandsEmitter.fire();
         }
     }
 
-    public GetExtensionActiveCommandsEmitter(){
+    public GetExtensionActiveCommandsEmitter() {
         return this.extensionActiveCommandsEmitter;
     }
 
-    public GetContextValues(){
+    public GetContextValues() {
         return this.contextValues;
     }
 
-    public GetExtensionActiveCommands(){
+    public GetExtensionActiveCommands() {
         return this.extensionActiveCommandsInfo ? this.extensionActiveCommandsInfo.extensionActiveCommands : [];
     }
 
-    public GetExtensionLocalizedStrings(){
+    public GetExtensionLocalizedStrings() {
         return this.extensionLocalizedStrings;
     }
 
-    public SetExtensionActiveCommands()
-    {
-        this.extensionActiveCommandsInfo  = { contextUsed: this.contextValues ? {...this.contextValues} : {}, extensionActiveCommands: this.contextValues ? util.thisExtensionActiveCommands(this.contextValues): [] } as ExtensionActiveCommandsInfo;
+    public SetExtensionActiveCommands() {
+        this.extensionActiveCommandsInfo  = { contextUsed: this.contextValues ? {...this.contextValues} : {}, extensionActiveCommands: this.contextValues ? util.thisExtensionActiveCommands(this.contextValues) : [] } as ExtensionActiveCommandsInfo;
     }
 
     public getFolderContext(folder: vscode.WorkspaceFolder): StateManager {
@@ -487,7 +485,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.onDidChangeActiveTextEditorSub.dispose();
         void this.kitsWatcher.close();
         this.projectOutlineTreeView.dispose();
-        this.extensionActiveCommandsEmitter.dispose()
+        this.extensionActiveCommandsEmitter.dispose();
         pinnedCommands.dispose();
         if (this.cppToolsAPI) {
             this.cppToolsAPI.dispose();
@@ -2097,24 +2095,20 @@ export function getActiveProject(): CMakeProject | undefined {
     return extensionManager?.getActiveProject();
 }
 
-export async function setContextAndStore(key: string, value: any)
-{
-    await util.setContextValue(key,value);
-    extensionManager?.UpdateContextValues(key, value)
+export async function setContextAndStore(key: string, value: any) {
+    await util.setContextValue(key, value);
+    extensionManager?.UpdateContextValues(key, value);
 }
 
-export function GetExtensionActiveCommands() : string[]
-{
+export function GetExtensionActiveCommands(): string[] {
     return extensionManager ? extensionManager.GetExtensionActiveCommands() : [];
 }
 
-export function GetExtensionLocalizedStrings() : {[key:string]:string}
-{
+export function GetExtensionLocalizedStrings(): {[key: string]: string} {
     return extensionManager ? extensionManager.GetExtensionLocalizedStrings() : {};
 }
 
-export function GetExtensionActiveCommandsEmitter() : vscode.EventEmitter<void> | null
-{
+export function GetExtensionActiveCommandsEmitter(): vscode.EventEmitter<void> | null {
     return extensionManager ? extensionManager.GetExtensionActiveCommandsEmitter() : null;
 }
 
