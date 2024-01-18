@@ -14,11 +14,13 @@ interface PinnedCommandsQuickPickItem extends vscode.QuickPickItem {
 
 class PinnedCommandNode extends vscode.TreeItem {
     public commandName : string;
-    constructor(label:string, command:string ) {
+    public isVisible : boolean;
+    constructor(label:string, command:string, isVisible: boolean ) {
         super(label);
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.tooltip = label;
         this.commandName = command;
+        this.isVisible = isVisible;
     }
 
     getTreeItem(): vscode.TreeItem {
@@ -110,9 +112,7 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
             const activeCommands = new Set<string>(GetExtensionActiveCommands());
             for (const commandName of settingsPinnedCommands) {
                 // only show commands that are contained in the active commands for the extension.
-                if(activeCommands.has(commandName)) {
-                    this.pinnedCommands.push(new PinnedCommandNode(localization[`cmake-tools.command.${commandName}.title`], commandName));
-                }
+                this.pinnedCommands.push(new PinnedCommandNode(localization[`cmake-tools.command.${commandName}.title`], commandName, activeCommands.has(commandName)));
             }
         }
         this.isInitialized = true
@@ -126,7 +126,7 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
     addCommand(chosen: PinnedCommandsQuickPickItem) {
         // first check if it is already in the list of pinned commands.
         if(this.findNode(chosen.label) == -1) {
-            const node = new PinnedCommandNode(chosen.label, chosen.command);
+            const node = new PinnedCommandNode(chosen.label, chosen.command, true);
             this.pinnedCommands.push(node);
             this.refresh();
             this.updateSettings();
@@ -179,6 +179,6 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
         if(!this.isInitialized) {
             await this.initialize();
         }
-        return this.pinnedCommands!;
+        return this.pinnedCommands.filter(x=>x.isVisible)!;
     }
 }
