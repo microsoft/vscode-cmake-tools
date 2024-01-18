@@ -323,6 +323,12 @@ export class PresetsController {
                                 CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined),
                                 CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined)
                             };
+                            if (util.isString(cacheVariables['CMAKE_C_COMPILER'])) {
+                                cacheVariables['CMAKE_C_COMPILER'] = cacheVariables['CMAKE_C_COMPILER'].replace(/\\/g, '/');
+                            }
+                            if (util.isString(cacheVariables['CMAKE_CXX_COMPILER'])) {
+                                cacheVariables['CMAKE_CXX_COMPILER'] = cacheVariables['CMAKE_CXX_COMPILER'].replace(/\\/g, '/');
+                            }
                             isMultiConfigGenerator = util.isMultiConfGeneratorFast(generator);
                             if (!isMultiConfigGenerator) {
                                 cacheVariables['CMAKE_BUILD_TYPE'] = 'Debug';
