@@ -1970,6 +1970,12 @@
           "description": "%cmake-tools.configuration.cmake.ctest.allowParallelJobs.description%",
           "scope": "resource"
         },
+        "cmake.ctest.testExplorerIntegrationEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description%",
+          "scope": "application"
+        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,

@@ -286,7 +286,7 @@ export class CTestDriver implements vscode.Disposable {
         if (!testExplorer) {
             log.info(localize('no.tests.found', 'No tests found'));
             return -1;
-        } else if (!this.ws.config.ctestAllowParallelJobs) {
+        } else if (this.ws.config.testExplorerIntegrationEnabled && !this.ws.config.ctestAllowParallelJobs) {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
