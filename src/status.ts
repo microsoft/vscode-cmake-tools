@@ -1,4 +1,4 @@
-import { ConfigurationReader, StatusBarOptionVisibility, StatusBarTextOptionVisibility, StatusBarStaticOptionVisibility, StatusBarIconOptionVisibility } from '@cmt/config';
+import { ConfigurationReader, StatusBarOptionVisibility, StatusBarTextOptionVisibility, StatusBarStaticOptionVisibility, StatusBarIconOptionVisibility, checkConfigureOverridesPresent, checkBuildOverridesPresent, checkTestOverridesPresent } from '@cmt/config';
 import { SpecialKits } from '@cmt/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -545,7 +545,7 @@ export class ConfigurePresetSelection extends Button {
         if (text.length === 0) {
             return ConfigurePresetSelection._noPresetSelected;
         }
-        return this.bracketText;
+        return checkConfigureOverridesPresent(this.config) ? `*${this.bracketText}` : this.bracketText;
     }
 
     protected getTextShort(): string {
@@ -588,7 +588,7 @@ export class BuildPresetSelection extends Button {
         if (text.length === 0) {
             return BuildPresetSelection._noPresetSelected;
         }
-        return this.bracketText;
+        return checkBuildOverridesPresent(this.config) ? `*${this.bracketText}` : this.bracketText;
     }
 
     protected getTextShort(): string {
@@ -631,7 +631,7 @@ export class TestPresetSelection extends Button {
         if (text.length === 0) {
             return TestPresetSelection._noPresetSelected;
         }
-        return this.bracketText;
+        return checkTestOverridesPresent(this.config) ? `*${this.bracketText}` : this.bracketText;
     }
 
     protected getTextShort(): string {
@@ -741,11 +741,20 @@ export class StatusBar implements vscode.Disposable {
     setConfigurePresetName(v: string): void {
         this._configurePresetButton.text = v;
     }
+    updateConfigurePresetButton(): void {
+        this._configurePresetButton.update();
+    }
     setBuildPresetName(v: string): void {
         this._buildPresetButton.text = v;
     }
+    updateBuildPresetButton(): void {
+        this._buildPresetButton.update();
+    }
     setTestPresetName(v: string): void {
         this._testPresetButton.text = v; this.setCTestEnabled(true);
+    }
+    updateTestPresetButton(): void {
+        this._testPresetButton.update();
     }
 
     hideLaunchButton(shouldHide: boolean = true): void {

@@ -15,7 +15,6 @@
         "rootDir": ".",
         "strict": true,
         "experimentalDecorators": true,
-        "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noImplicitThis": true,
         "skipLibCheck": true

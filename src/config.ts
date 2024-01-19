@@ -604,3 +604,32 @@ const activeChangeEvents: PromiseTracker = new PromiseTracker();
 export function getSettingsChangePromise(): Promise<any[]> {
     return activeChangeEvents.getAwaiter();
 }
+
+export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
+    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkBuildOverridesPresent(config: ConfigurationReader): boolean {
+    if (config.buildArgs.length > 0 || config.buildToolArgs.length > 0
+        || Object.values(config.buildEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkTestOverridesPresent(config: ConfigurationReader): boolean {
+    if (Object.values(config.testEnvironment).length > 0 || config.ctestArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkGeneralEnvironmentOverridesPresent(config: ConfigurationReader): boolean {
+    return Object.values(config.environment).length > 0;
+}
