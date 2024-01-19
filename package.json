@@ -564,19 +564,19 @@
       {
         "command": "cmake.revealTestExplorer",
         "title": "%cmake-tools.command.cmake.revealTestExplorer.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled",
         "category": "CMake"
       },
       {
         "command": "cmake.refreshTests",
         "title": "%cmake-tools.command.cmake.refreshTests.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled",
         "category": "CMake"
       },
       {
         "command": "cmake.refreshTestsAll",
         "title": "%cmake-tools.command.cmake.refreshTestsAll.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled",
         "category": "CMake"
       },
       {
@@ -1143,15 +1143,15 @@
         },
         {
           "command": "cmake.revealTestExplorer",
-          "when": "cmake:enableFullFeatureSet"
+          "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled"
         },
         {
           "command": "cmake.refreshTests",
-          "when": "cmake:enableFullFeatureSet"
+          "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled"
         },
         {
           "command": "cmake.refreshTestsAll",
-          "when": "cmake:enableFullFeatureSet"
+          "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled"
         },
         {
           "when": "cmake:enableFullFeatureSet",

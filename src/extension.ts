@@ -46,6 +46,7 @@ import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapt
 import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from './debug/debugConfigurationProvider';
+import { deIntegrateTestExplorer } from './ctest';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -110,6 +111,14 @@ export class ExtensionManager implements vscode.Disposable {
 
         // initialize the state of the cmake exe
         await getCMakeExecutableInformation(this.workspaceConfig.rawCMakePath);
+
+        await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
+        this.workspaceConfig.onChange("ctest", async (value) => {
+            await util.setContextValue("cmake:testExplorerIntegrationEnabled", value.testExplorerIntegrationEnabled);
+            if (!value.testExplorerIntegrationEnabled) {
+                deIntegrateTestExplorer();
+            }
+        });
 
         this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
 
