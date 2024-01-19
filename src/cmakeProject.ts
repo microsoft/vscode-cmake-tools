@@ -1485,21 +1485,38 @@ export class CMakeProject {
                 log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
             }
 
+            const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
+            const showSaveFailedNotificationString = "showNotAllDocumentsSavedQuestion";
+
             const saveGood = await vscode.workspace.saveAll();
-            if (!saveGood) {
+            if (!saveGood && cmakeConfiguration.get(showSaveFailedNotificationString)) {
                 log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
                 const yesButtonTitle: string = localize('yes.button', 'Yes');
-                const chosen = await vscode.window.showErrorMessage<vscode.MessageItem>(
-                    localize('not.saved.continue.anyway', 'Not all open documents were saved. Would you like to continue anyway?'),
-                    {
-                        title: yesButtonTitle,
-                        isCloseAffordance: false
-                    },
-                    {
-                        title: localize('no.button', 'No'),
-                        isCloseAffordance: true
-                    });
-                return chosen !== undefined && (chosen.title === yesButtonTitle);
+                const yesAndDoNotShowAgain: string = localize('do.not.show.not.saved.again', "Yes (don't show again)");
+                const chosen =
+                    await vscode.window.showErrorMessage<vscode.MessageItem>(
+                        localize(
+                            "not.saved.continue.anyway",
+                            "Not all open documents were saved. Would you like to continue anyway?"
+                        ),
+                        {
+                            title: yesButtonTitle,
+                            isCloseAffordance: false
+                        },
+                        {
+                            title: yesAndDoNotShowAgain,
+                            isCloseAffordance: false
+                        },
+                        {
+                            title: localize("no.button", "No"),
+                            isCloseAffordance: true
+                        }
+                    );
+
+                if (chosen?.title === yesAndDoNotShowAgain) {
+                    await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
+                }
+                return chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
             }
         }
         return true;

@@ -2482,6 +2482,12 @@
             "description": "%cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification%",
             "scope": "application"
         },
+        "cmake.showNotAllDocumentsSavedQuestion": {
+            "type": "boolean",
+            "default": true,
+            "description": "%cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion%",
+            "scope": "application"
+        },
         "cmake.options.statusBarVisibility": {
           "type": "string",
           "default": "hidden",
