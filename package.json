@@ -1056,7 +1056,7 @@
         },
         {
           "command": "cmake.configureAllWithDebugger",
-          "when": "cmake:multiProject && vscode-cmake-tools.cmakeDebuggerAvailable == 'true'"
+          "when": "cmake:multiProject && vscode-cmake-tools.cmakeDebuggerAvailable"
         },
         {
           "when": "cmake:enableFullFeatureSet",
