@@ -1073,6 +1073,8 @@ export class CTestDriver implements vscode.Disposable {
 let testExplorer: vscode.TestController | undefined;
 
 export function deIntegrateTestExplorer(): void {
-    testExplorer?.dispose();
-    testExplorer = undefined;
+    if (testExplorer) {
+        testExplorer.dispose();
+        testExplorer = undefined;
+    }
 }
