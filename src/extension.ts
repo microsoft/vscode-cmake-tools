@@ -116,7 +116,11 @@ export class ExtensionManager implements vscode.Disposable {
         this.workspaceConfig.onChange("ctest", async (value) => {
             await util.setContextValue("cmake:testExplorerIntegrationEnabled", value.testExplorerIntegrationEnabled);
             if (!value.testExplorerIntegrationEnabled) {
+                // Dynamically de-integrate the test explorer.
                 deIntegrateTestExplorer();
+            } else {
+                // Attempt to refresh the tests when dynamically re-integrating the test explorer.
+                await getActiveProject()?.refreshTests();
             }
         });
 
