@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as os from 'os';
+import * as contex from './contextKeyExpr';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -12,10 +13,23 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
 import { ExtensionManager } from './extension';
-import { Exception } from 'handlebars';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+const parser = new contex.Parser({ regexParsingWithErrorRecovery: false });
+
+class Context implements contex.IContext {
+
+    protected _value: {[key: string]: any};
+
+    constructor(dictionary: {[key: string]: any}) {
+        this._value = dictionary;
+    }
+    public getValue<T>(key: string): T | undefined {
+        const ret = this._value[key];
+        return ret;
+    }
+}
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -480,7 +494,7 @@ export function thisExtensionPackage(): PackageJSON {
     };
 }
 
-export async function GetExtensionLocalizedPackageJson(): Promise<{[key: string]: any}> {
+export async function getExtensionLocalizedPackageJson(): Promise<{[key: string]: any}> {
     let localizedFilePath: string = path.join(thisExtensionPath(), `package.nls.${getLocaleId()}.json`);
     const fileExists: boolean = await checkFileExists(localizedFilePath);
     if (!fileExists) {
@@ -495,7 +509,10 @@ interface CommandPalette {
     when: string | null;
 }
 
-function evaluateExpression(expression: string | null, context: {[key: string]: any}): boolean {
+/*
+ * This works in our simple conditio case. would need to expand if our context conditions start getting more complex - including parentheses, other expressions that are not booleans.
+*/
+function evaluateExpression(expression: string | null, context: contex.IContext): boolean {
     if (expression === null || expression === undefined) {
         return true;
     } else if (expression === "never") {
@@ -503,23 +520,8 @@ function evaluateExpression(expression: string | null, context: {[key: string]: 
     }
 
     try {
-        // look for && or || in expression as those are the operators that'll separate multiple keys
-        const regex = /&&|\|\|/g;
-        const replacements = expression.split(regex);
-        for (let i = 0; i < replacements.length; i++) {
-            const trimmed = replacements[i].trim();
-            replacements[i] = trimmed.startsWith('!') ? trimmed.substring(1) : trimmed;
-        }
-        for (const key of replacements) {
-            if (!context.hasOwnProperty(key)) {
-                // this is helping sanitize input and make sure it's only an expression we expect
-                throw new Exception(`item not in context dictionary: \"${key}\"`);
-            }
-            // Create a regular expression to match the key globally and replace it
-            expression = expression.replace(new RegExp(key, 'g'), context[key]);
-        }
-        const func = new Function(`return ${expression};`);
-        return func();
+        const constExpr = parser.parse(expression);
+        return constExpr ? constExpr.evaluate(context) : false;
     } catch (e) {
         console.error("Invalid expression:", e);
         return false;
@@ -529,8 +531,9 @@ function evaluateExpression(expression: string | null, context: {[key: string]: 
 export function thisExtensionActiveCommands(context: {[key: string]: any}): string [] {
     const pkg = thisExtension().packageJSON;
     const allCommands = pkg.contributes.menus.commandPalette as CommandPalette[];
+    const contextObj = new Context(context);
     const activeCommands = allCommands.map((commandP) => {
-        if (evaluateExpression(commandP.when, context)) {
+        if (evaluateExpression(commandP.when, contextObj)) {
             return commandP.command;
         }
         return null;

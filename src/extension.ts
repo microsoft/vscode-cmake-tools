@@ -99,7 +99,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     private contextValues: {[key: string]: any} = {};
     private extensionActiveCommandsInfo: ExtensionActiveCommandsInfo | null = null;
-    private extensionLocalizedStrings: {[key: string]: string} = {};
+    private localizedStrings: {[key: string]: string} = {};
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
     private readonly extensionActiveCommandsEmitter = new vscode.EventEmitter<void>();
     private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
@@ -248,41 +248,37 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.sendOpenTelemetry(telemetryProperties);
 
         // do these last
-        this.extensionLocalizedStrings = await util.GetExtensionLocalizedPackageJson();
-        this.SetExtensionActiveCommands();
+        this.localizedStrings = await util.getExtensionLocalizedPackageJson();
+        this.setExtensionActiveCommands();
     }
 
-    public GetWorkspaceConfig() {
+    public getWorkspaceConfig() {
         return this.workspaceConfig;
     }
 
-    public UpdateContextValues(key: string, value: string) {
+    public updateContextValues(key: string, value: string) {
         this.contextValues[key] = value;
 
         // contextvalues have changed so update active extension commands.
         if (this.extensionActiveCommandsInfo && (!this.extensionActiveCommandsInfo.contextUsed.hasOwnProperty(key) || this.extensionActiveCommandsInfo.contextUsed[key] !== value)) {
-            this.SetExtensionActiveCommands();
+            this.setExtensionActiveCommands();
             this.extensionActiveCommandsEmitter.fire();
         }
     }
 
-    public OnExtensionActiveCommandsChanged(listener: () => any, thisObject: any | null) {
+    public onExtensionActiveCommandsChanged(listener: () => any, thisObject: any | null) {
         this.extensionActiveCommandsEmitter.event(listener, thisObject);
     }
 
-    public GetContextValues() {
-        return this.contextValues;
-    }
-
-    public GetExtensionActiveCommands() {
+    get extensionActiveCommands(): string[] {
         return this.extensionActiveCommandsInfo ? this.extensionActiveCommandsInfo.extensionActiveCommands : [];
     }
 
-    public GetExtensionLocalizedStrings() {
-        return this.extensionLocalizedStrings;
+    get extensionLocalizedStrings(): {[key: string]: string} {
+        return this.localizedStrings;
     }
 
-    public SetExtensionActiveCommands() {
+    public setExtensionActiveCommands() {
         this.extensionActiveCommandsInfo  = { contextUsed: this.contextValues ? {...this.contextValues} : {}, extensionActiveCommands: this.contextValues ? util.thisExtensionActiveCommands(this.contextValues) : [] } as ExtensionActiveCommandsInfo;
     }
 
@@ -2078,7 +2074,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await extensionManager.init();
 
     // need the extensionManager to be initialized for this.
-    pinnedCommands = new PinnedCommands(extensionManager.GetWorkspaceConfig());
+    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig());
 
     return setup(context);
 }
@@ -2097,19 +2093,19 @@ export function getActiveProject(): CMakeProject | undefined {
 
 export async function setContextAndStore(key: string, value: any) {
     await util.setContextValue(key, value);
-    extensionManager?.UpdateContextValues(key, value);
+    extensionManager?.updateContextValues(key, value);
 }
 
-export function GetExtensionActiveCommands(): string[] {
-    return extensionManager ? extensionManager.GetExtensionActiveCommands() : [];
+export function getExtensionActiveCommands(): string[] {
+    return extensionManager ? extensionManager.extensionActiveCommands : [];
 }
 
-export function GetExtensionLocalizedStrings(): {[key: string]: string} {
-    return extensionManager ? extensionManager.GetExtensionLocalizedStrings() : {};
+export function getExtensionLocalizedStrings(): {[key: string]: string} {
+    return extensionManager ? extensionManager.extensionLocalizedStrings : {};
 }
 
-export function OnExtensionActiveCommandsChanged(listener: () => any, thisObject: any | null) {
-    extensionManager?.OnExtensionActiveCommandsChanged(listener, thisObject);
+export function onExtensionActiveCommandsChanged(listener: () => any, thisObject: any | null) {
+    extensionManager?.onExtensionActiveCommandsChanged(listener, thisObject);
 }
 
 // This method updates the full/partial view state.

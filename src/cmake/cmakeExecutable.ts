@@ -67,5 +67,5 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
 }
 
 export async function setCMakeDebuggerAvailableContext(value: boolean): Promise<void> {
-    await setContextAndStore("vscode-cmake-tools.cmakeDebuggerAvailable", value);
+    await setContextAndStore("cmake:cmakeDebuggerAvailable", value);
 }

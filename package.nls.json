@@ -203,7 +203,7 @@
         ]
     }, 
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
-    "cmake-tools.configuration.views.cmake.pinnedCommands.description": "CMake: Pinned Commands",
+    "cmake-tools.configuration.views.cmake.pinnedCommands.description": "Pinned Commands",
     "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files.",
     "cmake-tools.configuration.cmake.revealLog.description": "Configures the settings for showing the log and focusing on the output channel.",
     "cmake-tools.configuration.cmake.revealLog.focus.description": "The log appears and the output channel takes the cursor focus.",
@@ -221,7 +221,7 @@
     },
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
     "cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatically configure CMake project directories when the kit or the configuration preset is changed.",
-    "cmake-tools.configuration.cmake.pinnedCommandsList.description":"List of CMake commands to pin.",
+    "cmake-tools.configuration.cmake.pinnedCommands.description":"List of CMake commands to pin.",
     "cmake-tools.debugger.pipeName.description": "Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.",
     "cmake-tools.debugger.clean.description": "Clean prior to configuring.",
     "cmake-tools.debugger.configureAll.description": "Configure for all projects.",

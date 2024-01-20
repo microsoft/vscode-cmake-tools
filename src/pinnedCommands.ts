@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { GetExtensionActiveCommands, GetExtensionLocalizedStrings, OnExtensionActiveCommandsChanged } from './extension';
+import { getExtensionActiveCommands, getExtensionLocalizedStrings, onExtensionActiveCommandsChanged } from './extension';
 import * as logging from './logging';
 import { ConfigurationReader } from '@cmt/config';
 
@@ -60,8 +60,8 @@ export class PinnedCommands {
      * Show List of All Commands that can be pinned
      */
     async showPinnableCommands(): Promise<PinnedCommandsQuickPickItem | null> {
-        const localization = GetExtensionLocalizedStrings();
-        const items = GetExtensionActiveCommands().map((x) => ({
+        const localization = getExtensionLocalizedStrings();
+        const items = getExtensionActiveCommands().map((x) => ({
             command: x,
             label: localization[`cmake-tools.command.${x}.title`]} as PinnedCommandsQuickPickItem));
         const chosenItem = await vscode.window.showQuickPick(items,
@@ -88,15 +88,15 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
     private _onDidChangeTreeData: vscode.EventEmitter<PinnedCommandNode | void> = new vscode.EventEmitter<PinnedCommandNode | void>();
     private pinnedCommands: PinnedCommandNode[] = [];
     private config: vscode.WorkspaceConfiguration | null;
-    private pinnedCommandsKey: string = "cmake.pinnedCommandsList";
+    private pinnedCommandsKey: string = "cmake.pinnedCommands";
     private isInitialized = false;
     private readonly _settingsSub ;
 
     constructor(configReader: ConfigurationReader) {
         this.treeView = vscode.window.createTreeView('cmake.pinnedCommands', { treeDataProvider: this });
-        this._settingsSub = configReader.onChange('pinnedCommandsList', () => this.doConfigureSettingsChange());
+        this._settingsSub = configReader.onChange('pinnedCommands', () => this.doConfigureSettingsChange());
         this.config = vscode.workspace.getConfiguration();
-        OnExtensionActiveCommandsChanged(this.doConfigureSettingsChange, this);
+        onExtensionActiveCommandsChanged(this.doConfigureSettingsChange, this);
     }
 
     get onDidChangeTreeData(): vscode.Event<PinnedCommandNode | void | undefined> {
@@ -107,12 +107,15 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
         this.config = vscode.workspace.getConfiguration();
         this.pinnedCommands = []; //reset to empty list.
         if (this.config.has(this.pinnedCommandsKey)) {
-            const localization = GetExtensionLocalizedStrings();
+            const localization = getExtensionLocalizedStrings();
             const settingsPinnedCommands = this.config.get(this.pinnedCommandsKey) as string[];
-            const activeCommands = new Set<string>(GetExtensionActiveCommands());
+            const activeCommands = new Set<string>(getExtensionActiveCommands());
             for (const commandName of settingsPinnedCommands) {
-                // only show commands that are contained in the active commands for the extension.
-                this.pinnedCommands.push(new PinnedCommandNode(localization[`cmake-tools.command.${commandName}.title`], commandName, activeCommands.has(commandName)));
+                const label = localization[`cmake-tools.command.${commandName}.title`];
+                if (this.findNode(label) === -1) {
+                    // only show commands that are contained in the active commands for the extension.
+                    this.pinnedCommands.push(new PinnedCommandNode(label, commandName, activeCommands.has(commandName)));
+                }
             }
         }
         this.isInitialized = true;
