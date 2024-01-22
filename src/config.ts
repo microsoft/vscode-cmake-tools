@@ -123,7 +123,6 @@ export interface ExtensionConfigurationSettings {
     packEnvironment: Environment;
     cpackPath: string;
     cpackArgs: string[];
-    cpackDefaultArgs: string[];
     cpackVars: { [key: string]: boolean | number | string | string[] | util.CMakeValue };
     // no settings needed for workflow presets execution?
     mingwSearchDirs: string[]; // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
@@ -359,9 +358,6 @@ export class ConfigurationReader implements vscode.Disposable {
     get cpackArgs(): string[] {
         return this.configData.cpackArgs;
     }
-    get cpackDefaultArgs(): string[] {
-        return this.configData.cpackDefaultArgs;
-    }
     get configureOnOpen() {
         if (util.isCodespaces() && this.configData.configureOnOpen === null) {
             return true;
@@ -518,7 +514,6 @@ export class ConfigurationReader implements vscode.Disposable {
         ctestArgs: new vscode.EventEmitter<string[]>(),
         ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
         cpackArgs: new vscode.EventEmitter<string[]>(),
-        cpackDefaultArgs: new vscode.EventEmitter<string[]>(),
         cpackVars: new vscode.EventEmitter<{ [key: string]: any }>(),
         environment: new vscode.EventEmitter<Environment>(),
         configureEnvironment: new vscode.EventEmitter<Environment>(),

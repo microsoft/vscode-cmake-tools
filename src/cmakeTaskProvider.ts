@@ -595,7 +595,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                     return;
                 }
             }
-            const result: number | undefined = cmakeDriver ? await project?.runCPackCustomized(cmakeDriver, packagePreset, this) : undefined;
+            const result: number | undefined = cmakeDriver ? await project?.runCPack(cmakeDriver, packagePreset, this) : undefined;//.runCPackCustomized(cmakeDriver, packagePreset, this) : undefined;
             if (result === undefined) {
                 this.writeEmitter.fire(localize('cpack.run.terminated', 'CPack run was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
@@ -634,7 +634,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                     return;
                 }
             }
-            const result: number | undefined = cmakeDriver ? await project?.runWorkflowCustomized(cmakeDriver, workflowPreset, this) : undefined;
+            const result: number | undefined = cmakeDriver ? await project?.runWorkflow(cmakeDriver, workflowPreset, this) : undefined;
             if (result === undefined) {
                 this.writeEmitter.fire(localize('workflow.run.terminated', 'Workflow run was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);

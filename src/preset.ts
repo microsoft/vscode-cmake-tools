@@ -379,6 +379,8 @@ interface Toolset {
 /**
  * Should NOT cache anything. Need to make a copy if any fields need to be changed.
  */
+
+// the strings don't match the spec???
 export const defaultTestPreset: TestPreset = {
     name: '__defaultTestPreset__',
     displayName: localize('default.test.preset', '[Default]'),
@@ -1780,6 +1782,7 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
 
     // According to CMake docs, no other fields support macro expansion in a workflow preset.
     merge(expandedPreset, preset);
+    expandedPreset.steps = preset.steps;
     return expandedPreset;
 }
 

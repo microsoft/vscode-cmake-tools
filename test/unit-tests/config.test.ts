@@ -22,6 +22,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         buildToolArgs: [],
         parallelJobs: 0,
         ctestPath: '',
+        cpackPath: '',
+        cpackVars: {},
         ctest: {
             parallelJobs: 0,
             allowParallelJobs: false
@@ -31,11 +33,13 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         debugConfig: {},
         defaultVariants: {},
         ctestArgs: [],
+        cpackArgs: [],
         ctestDefaultArgs: [],
         environment: {},
         configureEnvironment: {},
         buildEnvironment: {},
         testEnvironment: {},
+        packEnvironment: {},
         mingwSearchDirs: [], // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: [],
         emscriptenSearchDirs: [],

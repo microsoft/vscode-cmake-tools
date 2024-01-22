@@ -1051,6 +1051,7 @@ export class PresetsController {
 
         if (packagePreset) {
             packagePresetCompatible = (configurePreset?.name === packagePreset.configurePreset) && !packagePreset.hidden;
+            // we might need build type matches here as well as test preset checks, also in other places where I ommitted because I thought is not needed
         }
 
         if (workflowPreset) {
@@ -1185,7 +1186,6 @@ export class PresetsController {
         } else {
             log.debug(localize('user.selected.package.preset', 'User selected package preset {0}', JSON.stringify(chosenPreset)));
             await this.setPackagePreset(chosenPreset, false);
-            await vscode.commands.executeCommand('cmake.refreshPackaging', this.workspaceFolder);
             return true;
         }
     }
@@ -1275,9 +1275,8 @@ export class PresetsController {
             await this.addWorkflowPreset();
             return false;
         } else {
-            log.debug(localize('user.selected.package.preset', 'User selected package preset {0}', JSON.stringify(chosenPreset)));
-            await this.setPackagePreset(chosenPreset, false);
-            await vscode.commands.executeCommand('cmake.refreshWorkflows', this.workspaceFolder);
+            log.debug(localize('user.selected.workflow.preset', 'User selected workflow preset {0}', JSON.stringify(chosenPreset)));
+            await this.setWorkflowPreset(chosenPreset, false);
             return true;
         }
     }
@@ -1471,8 +1470,10 @@ export class PresetsController {
             schemaFile = './schemas/CMakePresets-v3-schema.json';
         } else if (presetsFile.version === 4) {
             schemaFile = './schemas/CMakePresets-v4-schema.json';
-        } else {
+        } else if (presetsFile.version === 5) {
             schemaFile = './schemas/CMakePresets-v5-schema.json';
+        } else {
+            schemaFile = './schemas/CMakePresets-v6-schema.json';
         }
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);

@@ -55,6 +55,12 @@ export class ProjectStatus {
             vscode.commands.registerCommand('cmake.projectStatus.ctest', async (_node: Node) => {
                 void runCommand('ctest');
             }),
+            vscode.commands.registerCommand('cmake.projectStatus.cpack', async (_node: Node) => {
+                void runCommand('cpack');
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.workflow', async (_node: Node) => {
+                void runCommand('workflow');
+            }),
             vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_node: Node) => {
                 // Do nothing
             }),

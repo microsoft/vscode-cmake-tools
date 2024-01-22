@@ -22,6 +22,8 @@ import {
     NoGeneratorError
 } from '@cmt/drivers/drivers';
 import { CTestDriver } from './ctest';
+import { CPackDriver } from './cpack';
+import { WorkflowDriver } from './workflow';
 import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { FileDiagnostic, populateCollection } from './diagnostics/util';
@@ -133,8 +135,8 @@ export class CMakeProject {
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
     public readonly cTestController: CTestDriver;
     // do we need this?
-    public readonly cPackageController: CPackageDriver;
-    public readonly cWorkflowController: CWorkflowDriver;
+    public readonly cPackageController: CPackDriver;
+    public readonly workflowController: WorkflowDriver;
     public kitsController!: KitsController;
     public presetsController!: PresetsController;
 
@@ -148,8 +150,8 @@ export class CMakeProject {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
         this.cTestController = new CTestDriver(workspaceContext, projectController);
-        this.cPackageController = new CPackageDriver(workspaceContext, projectController);
-        this.cWorkflowController = new CWorkflowDriver(workspaceContext, projectController);
+        this.cPackageController = new CPackDriver(workspaceContext, projectController);
+        this.workflowController = new WorkflowDriver(workspaceContext);
         this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
     }
 
@@ -796,7 +798,7 @@ export class CMakeProject {
         if (drv) {
             await drv.asyncDispose();
         }
-        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this.isBusy, this.variantManager, this.cTestController, this.cPackageController, this.cWorkflowController]) {
+        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this.isBusy, this.variantManager, this.cTestController, this.cPackageController/*, this.cWorkflowController*/]) {
             disp.dispose();
         }
     }
@@ -1009,6 +1011,8 @@ export class CMakeProject {
                         this.configurePreset,
                         this.buildPreset,
                         this.testPreset,
+                        this.packagePreset,
+                        this.workflowPreset,
                         workspace,
                         preConditionHandler,
                         preferredGenerators);
@@ -1023,6 +1027,8 @@ export class CMakeProject {
                         this.configurePreset,
                         this.buildPreset,
                         this.testPreset,
+                        this.packagePreset,
+                        this.workflowPreset,
                         workspace,
                         preConditionHandler,
                         preferredGenerators);
@@ -1033,9 +1039,6 @@ export class CMakeProject {
 
         await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
         this.targetName.set(this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName));
-        this.cTestController.clearTests(drv);
-        this.cPackageController.something();
-        this.cWorkflowController.something();
 
         // All set up. Fulfill the driver promise.
         return drv;
@@ -1127,8 +1130,8 @@ export class CMakeProject {
         });
         this.cTestController.onTestingEnabledChanged(enabled => this._ctestEnabled.set(enabled));
         // not sure we need this
-        this.cPackageController.onActivePackagePresetChanged(enabled => this._cpackageEnabled.set(enabled));
-        this.cWorkflowController.onActiveWorkflowPresetChanged(enabled => this._workflowEnabled.set(enabled));
+        this.cPackageController.onPackagingEnabledChanged(enabled => this._cpackEnabled.set(enabled));
+        //this.cWorkflowController.onActiveWorkflowPresetChanged(enabled => this._workflowEnabled.set(enabled));
 
         this.statusMessage.set(localize('ready.status', 'Ready'));
 
@@ -2105,7 +2108,19 @@ export class CMakeProject {
 
     async ctest(): Promise<number> {
         const drv = await this.preTest();
-        return (await this.cTestController.runCTest(drv)) ? 0 : -1;
+        const retc = await this.cTestController.runCTest(drv);
+        return (retc) ? 0 : -1;
+    }
+
+    async cpack(): Promise<number> {
+        const drv = await this.preTest();
+        const retc = await this.cPackageController.runCPack(drv);
+        return (retc) ? 0 : -1;
+    }
+
+    async workflow(): Promise<number> {
+        const drv = await this.preTest();
+        return (await this.workflowController.runWorkflow(drv, this.workflowPreset, this.configurePreset, this.buildPreset, this.testPreset, this.packagePreset)) ? 0 : -1;
     }
 
     async revealTestExplorer() {
@@ -2128,13 +2143,13 @@ export class CMakeProject {
         return this.cTestController.removeTestExplorerRoot(folder);
     }
 
-    public async runCPackCustomized(driver: CMakeDriver, packagePreset?: preset.PackagePreset, consumer?: proc.OutputConsumer) {
-        return this.cPackageController.runCPack(driver, true, packagePreset, consumer);
+    public async runCPack(driver: CMakeDriver, packagePreset?: preset.PackagePreset, consumer?: proc.OutputConsumer) {
+        return this.cPackageController.runCPack(driver, packagePreset, consumer);
     }
 
-    public async runWorkflowCustomized(driver: CMakeDriver, workflowPreset?: preset.WorkflowPreset, consumer?: proc.OutputConsumer) {
-      return this.cWorkflowController.runWorkflow(driver, true, workflowPreset, consumer);
-  }
+    public async runWorkflow(driver: CMakeDriver, workflowPreset?: preset.WorkflowPreset, consumer?: proc.OutputConsumer) {
+      return this.workflowController.runWorkflow(driver, workflowPreset, this.configurePreset, this.buildPreset, this.testPreset, this.packagePreset, consumer);
+    }
 
     /**
      * Implementation of `cmake.install`

@@ -390,7 +390,47 @@ export class ExtensionManager implements vscode.Disposable {
         return true;
     };
 
-    // Do we need ensureActivePreset helpers for package and workflow?
+    private readonly ensureActivePackagePreset = async (project?: CMakeProject): Promise<boolean> => {
+        if (!project) {
+            project = this.getActiveProject();
+        }
+        if (!project) {
+            // No CMakeProject. Probably no workspace open.
+            return false;
+        }
+        if (project.useCMakePresets) {
+            if (project.packagePreset) {
+                return true;
+            }
+            const didChoosePreset = await this.selectPackagePreset(project.workspaceFolder);
+            if (!didChoosePreset && !project.packagePreset) {
+                return false;
+            }
+            return !!project.packagePreset;
+        }
+        return true;
+    };
+
+    private readonly ensureActiveWorkflowPreset = async (project?: CMakeProject): Promise<boolean> => {
+        if (!project) {
+            project = this.getActiveProject();
+        }
+        if (!project) {
+            // No CMakeProject. Probably no workspace open.
+            return false;
+        }
+        if (project.useCMakePresets) {
+            if (project.workflowPreset) {
+                return true;
+            }
+            const didChoosePreset = await this.selectWorkflowPreset(project.workspaceFolder);
+            if (!didChoosePreset && !project.workflowPreset) {
+                return false;
+            }
+            return !!project.workflowPreset;
+        }
+        return true;
+    };
 
     /**
      * Dispose of the CMake Tools extension.
@@ -1352,6 +1392,26 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.ctest(), this.ensureActiveTestPreset);
     }
 
+    cpack(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("runCPack", { all: "false"});
+        return this.runCMakeCommand(cmakeProject => cmakeProject.cpack(), folder, this.ensureActivePackagePreset);
+    }
+
+    cpackAll() {
+        telemetry.logEvent("runCPack", { all: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cpack(), this.ensureActivePackagePreset);
+    }
+
+    workflow(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("runWorkflow", { all: "false"});
+        return this.runCMakeCommand(cmakeProject => cmakeProject.workflow(), folder, this.ensureActiveWorkflowPreset);
+    }
+
+    workflowAll() {
+        telemetry.logEvent("runWorkflow", { all: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.workflow(), this.ensureActiveWorkflowPreset);
+    }
+
     revealTestExplorer(folder?: vscode.WorkspaceFolder) {
         return this.runCMakeCommand(cmakeProject => cmakeProject.revealTestExplorer(), folder, this.ensureActiveTestPreset);
     }
@@ -1363,8 +1423,6 @@ export class ExtensionManager implements vscode.Disposable {
     refreshTestsAll() {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.refreshTests());
     }
-
-    // refresh package and workflows
 
     stop(folder?: vscode.WorkspaceFolder) {
         return this.runCMakeCommand(cmakeProject => cmakeProject.stop(), folder);
@@ -1739,7 +1797,6 @@ export class ExtensionManager implements vscode.Disposable {
         const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
 
-        // no updates in status bar for package and workflow... but any other updates in project state apis internals.... and in UI panel... here? 
         return presetSelected;
     }
 
@@ -1812,14 +1869,7 @@ export class ExtensionManager implements vscode.Disposable {
           return false;
       }
 
-      const packagePreset2 = project.packagePreset;
       const presetSelected = await project.presetsController.selectPackagePreset();
-      const packagePreset = project.packagePreset;
-      //this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-      // No status bar updates for package preset, but UI panel here?
-   
-      // Put a breakpoint here and see whether selectPackagePreset modifies something else
-      // Compare packagePreset2 and packagePreset, then delete packagePreset since no status bar update is necessary
       return presetSelected;
   }
 
@@ -1842,11 +1892,7 @@ export class ExtensionManager implements vscode.Disposable {
           return false;
       }
 
-      const workflowPreset2 = project.workflowPreset;
       const presetSelected = await project.presetsController.selectWorkflowPreset();
-      const workflowPreset = project.workflowPreset;
-      //this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-      // No status bar updates for workflow preset, but UI panel here?
       return presetSelected;
   }
 
@@ -1965,6 +2011,10 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'editCacheUI',
         'ctest',
         'ctestAll',
+        'cpack',
+        'cpackAll',
+        'workflow',
+        'workflowAll',
         'revealTestExplorer',
         'refreshTests',
         'refreshTestsAll',
