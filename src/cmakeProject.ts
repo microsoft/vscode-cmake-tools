@@ -40,7 +40,7 @@ import { VariantManager } from './variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet } from './extension';
-import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets } from './config';
+import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -1257,35 +1257,41 @@ export class CMakeProject {
         if (!this.workspaceContext.config.loadCompileCommands) {
             this.compilationDatabase = null;
         } else if (compdbPaths.length > 0) {
-            // Read the compilation database, and update our db property
-            const newDB = await CompilationDatabase.fromFilePaths(compdbPaths);
-            this.compilationDatabase = newDB;
-            // Now try to dump the compdb to the user-requested path
-            const mergeDest = this.workspaceContext.config.mergedCompileCommands;
-            if (!mergeDest) {
-                return;
-            }
-            let expandedDest = await expandString(mergeDest, opts);
-            const pardir = path.dirname(expandedDest);
             try {
-                await fs.mkdir_p(pardir);
-            } catch (e: any) {
-                void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.2',
-                    'Tried to copy compilation database to {0}, but failed to create the parent directory {1}: {2}',
-                    `"${expandedDest}"`, `"${pardir}"`, e.toString()));
-                return;
-            }
-            if (await fs.exists(expandedDest) && (await fs.stat(expandedDest)).isDirectory()) {
-                // Emulate the behavior of copyFile() with writeFile() so that
-                // mergedCompileCommands works like copyCompileCommands for
-                // target paths which lead to existing directories.
-                expandedDest = path.join(expandedDest, "merged_compile_commands.json");
-            }
-            try {
-                await fs.writeFile(expandedDest, CompilationDatabase.toJson(newDB));
+                // Read the compilation database, and update our db property
+                const newDB = await CompilationDatabase.fromFilePaths(compdbPaths);
+                this.compilationDatabase = newDB;
+                // Now try to dump the compdb to the user-requested path
+                const mergeDest = this.workspaceContext.config.mergedCompileCommands;
+                if (!mergeDest) {
+                    return;
+                }
+                let expandedDest = await expandString(mergeDest, opts);
+                const pardir = path.dirname(expandedDest);
+                try {
+                    await fs.mkdir_p(pardir);
+                } catch (e: any) {
+                    void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.2',
+                        'Tried to copy compilation database to {0}, but failed to create the parent directory {1}: {2}',
+                        `"${expandedDest}"`, `"${pardir}"`, e.toString()));
+                    return;
+                }
+                if (await fs.exists(expandedDest) && (await fs.stat(expandedDest)).isDirectory()) {
+                    // Emulate the behavior of copyFile() with writeFile() so that
+                    // mergedCompileCommands works like copyCompileCommands for
+                    // target paths which lead to existing directories.
+                    expandedDest = path.join(expandedDest, "merged_compile_commands.json");
+                }
+                try {
+                    await fs.writeFile(expandedDest, CompilationDatabase.toJson(newDB));
+                } catch (e: any) {
+                    // Just display the error. It's the best we can do.
+                    void vscode.window.showErrorMessage(localize('failed.to.merge', 'Failed to write merged compilation database to {0}: {1}', `"${expandedDest}"`, e.toString()));
+                    return;
+                }
             } catch (e: any) {
                 // Just display the error. It's the best we can do.
-                void vscode.window.showErrorMessage(localize('failed.to.merge', 'Failed to write merged compilation database to {0}: {1}', `"${expandedDest}"`, e.toString()));
+                void vscode.window.showErrorMessage(localize('load.compile.commands', 'Failed while trying to ingest the compile_commands.json: {0}', e.toString()));
                 return;
             }
         }
@@ -1480,21 +1486,38 @@ export class CMakeProject {
                 log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
             }
 
+            const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
+            const showSaveFailedNotificationString = "showNotAllDocumentsSavedQuestion";
+
             const saveGood = await vscode.workspace.saveAll();
-            if (!saveGood) {
+            if (!saveGood && cmakeConfiguration.get(showSaveFailedNotificationString)) {
                 log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
                 const yesButtonTitle: string = localize('yes.button', 'Yes');
-                const chosen = await vscode.window.showErrorMessage<vscode.MessageItem>(
-                    localize('not.saved.continue.anyway', 'Not all open documents were saved. Would you like to continue anyway?'),
-                    {
-                        title: yesButtonTitle,
-                        isCloseAffordance: false
-                    },
-                    {
-                        title: localize('no.button', 'No'),
-                        isCloseAffordance: true
-                    });
-                return chosen !== undefined && (chosen.title === yesButtonTitle);
+                const yesAndDoNotShowAgain: string = localize('do.not.show.not.saved.again', "Yes (don't show again)");
+                const chosen =
+                    await vscode.window.showErrorMessage<vscode.MessageItem>(
+                        localize(
+                            "not.saved.continue.anyway",
+                            "Not all open documents were saved. Would you like to continue anyway?"
+                        ),
+                        {
+                            title: yesButtonTitle,
+                            isCloseAffordance: false
+                        },
+                        {
+                            title: yesAndDoNotShowAgain,
+                            isCloseAffordance: false
+                        },
+                        {
+                            title: localize("no.button", "No"),
+                            isCloseAffordance: true
+                        }
+                    );
+
+                if (chosen?.title === yesAndDoNotShowAgain) {
+                    await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
+                }
+                return chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
             }
         }
         return true;
@@ -2324,6 +2347,10 @@ export class CMakeProject {
 
         // Add environment variables from ConfigureEnvironment.
         const configureEnv = await drv?.getConfigureEnvironment();
+
+        if ((drv?.useCMakePresets ?? false) && (checkConfigureOverridesPresent(this.workspaceContext.config) ?? false)) {
+            log.info(localize('launch.with.overrides', `NOTE: You are launching a target and there are some environment overrides being applied from your VS Code settings.`));
+        }
 
         return EnvironmentUtils.merge([env, configureEnv]);
     }

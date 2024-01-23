@@ -93,6 +93,13 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.projectStatus.viewConfigureSettings",
+        "title": "%cmake-tools.command.cmake.viewConfigureSettings.title%",
+        "when": "cmake:enabelFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": "$(settings-gear)"
+      },
+      {
         "command": "cmake.projectStatus.selectConfigurePreset",
         "title": "%cmake-tools.command.cmake.selectConfigurePreset.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",
@@ -106,11 +113,25 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.projectStatus.viewBuildSettings",
+        "title": "%cmake-tools.command.cmake.viewBuildSettings.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": "$(settings-gear)"
+      },
+      {
         "command": "cmake.projectStatus.selectBuildPreset",
         "title": "%cmake-tools.command.cmake.selectBuildPreset.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake",
         "icon": "$(edit)"
+      },
+      {
+        "command": "cmake.projectStatus.viewTestSettings",
+        "title": "%cmake-tools.command.cmake.viewTestSettings.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": "$(settings-gear)"
       },
       {
         "command": "cmake.selectTestPreset",
@@ -1305,7 +1326,15 @@
           "when": "never"
         },
         {
+          "command": "cmake.projectStatus.viewConfigureSettings",
+          "when": "never"
+        },
+        {
           "command": "cmake.projectStatus.build",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.viewBuildSettings",
           "when": "never"
         },
         {
@@ -1314,6 +1343,10 @@
         },
         {
           "command": "cmake.projectStatus.selectBuildPreset",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.viewTestSettings",
           "when": "never"
         },
         {
@@ -1451,7 +1484,12 @@
         },
         {
           "command": "cmake.projectStatus.selectConfigurePreset",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'configPreset'",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem =~ /configPreset/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.viewConfigureSettings",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'configPreset - overrides present'",
           "group": "inline"
         },
         {
@@ -1466,8 +1504,13 @@
         },
         {
           "command": "cmake.projectStatus.selectBuildPreset",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'buildPreset'",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem =~ /buildPreset/",
           "group": "inline"
+        },
+        {
+            "command": "cmake.projectStatus.viewBuildSettings",
+            "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'buildPreset - overrides present'",
+            "group": "inline"
         },
         {
           "command": "cmake.projectStatus.ctest",
@@ -1481,8 +1524,13 @@
         },
         {
           "command": "cmake.projectStatus.selectTestPreset",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'testPreset'",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem =~ /testPreset/",
           "group": "inline"
+        },
+        {
+            "command": "cmake.projectStatus.viewTestSettings",
+            "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'testPreset - overrides present'",
+            "group": "inline"
         },
         {
           "command": "cmake.projectStatus.debugTarget",
@@ -2422,6 +2470,12 @@
             "description": "%cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification%",
             "scope": "application"
         },
+        "cmake.showNotAllDocumentsSavedQuestion": {
+            "type": "boolean",
+            "default": true,
+            "description": "%cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion%",
+            "scope": "application"
+        },
         "cmake.options.statusBarVisibility": {
           "type": "string",
           "default": "hidden",
@@ -3039,12 +3093,13 @@
     "tslint": "^6.1.3",
     "typescript": "^4.1.5",
     "vsce": "^2.7.0",
-    "vscode-cmake-tools": "^1.0.0",
+    "vscode-cmake-tools": "^1.1.0",
     "vscode-nls-dev": "^3.3.2",
     "webpack": "^5.76.0",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^7.1.0",
     "chokidar": "^3.5.1",
     "handlebars": "^4.7.7",
@@ -3055,6 +3110,7 @@
     "open": "^7.4.1",
     "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
+    "string.prototype.matchall": "^4.0.10",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^6.1.0",
     "@vscode/extension-telemetry": "^0.6.2",

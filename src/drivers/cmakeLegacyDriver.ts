@@ -19,6 +19,7 @@ import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
 import { CodeModelContent } from './codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
+import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -43,8 +44,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
     }
 
     private _needsReconfigure = true;
-    doConfigureSettingsChange() {
+    async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
+        await onConfigureSettingsChange();
     }
     async checkNeedsReconfigure(): Promise<boolean> {
         return this._needsReconfigure;
