@@ -185,6 +185,7 @@ export interface ExtensionConfigurationSettings {
     launchBehavior: string;
     ignoreCMakeListsMissing: boolean;
     automaticReconfigure: boolean;
+    pinnedCommands: string[];
 }
 
 type EmittersOf<T> = {
@@ -348,6 +349,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get enableOutputParsers(): string[] | null {
         return this.configData.enabledOutputParsers;
+    }
+    get pinnedCommands(): string[] | null {
+        return this.configData.pinnedCommands;
     }
     get rawCMakePath(): string {
         return this.configData.cmakePath;
@@ -559,7 +563,8 @@ export class ConfigurationReader implements vscode.Disposable {
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>(),
-        automaticReconfigure: new vscode.EventEmitter<boolean>()
+        automaticReconfigure: new vscode.EventEmitter<boolean>(),
+        pinnedCommands: new vscode.EventEmitter<string[]>()
     };
 
     /**

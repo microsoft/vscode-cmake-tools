@@ -1,5 +1,6 @@
 import * as proc from '../proc';
 import * as util from '../util';
+import {setContextAndStore} from '../extension';
 
 export interface CMakeExecutable {
     path: string;
@@ -66,5 +67,5 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
 }
 
 export async function setCMakeDebuggerAvailableContext(value: boolean): Promise<void> {
-    await util.setContextValue("vscode-cmake-tools.cmakeDebuggerAvailable", value);
+    await setContextAndStore("cmake:cmakeDebuggerAvailable", value);
 }

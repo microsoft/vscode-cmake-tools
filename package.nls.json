@@ -222,7 +222,14 @@
     },
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.projectStatus.description": "Project Status",
+    "cmake-tools.configuration.views.cmake.pinnedCommandsWelcome.description":{
+        "message": "No CMake commands have been pinned yet.\n[Add Command](command:cmake.pinnedCommands.add)",
+        "comment": [
+            "The text in parentheses () should not be localized or altered in any way. Also the square brackets and parentheses themselves [] () should not be altered or as well. However, the text inside the square brackets [] should be localized."
+        ]
+    }, 
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
+    "cmake-tools.configuration.views.cmake.pinnedCommands.description": "Pinned Commands",
     "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files.",
     "cmake-tools.configuration.cmake.revealLog.description": "Configures the settings for showing the log and focusing on the output channel.",
     "cmake-tools.configuration.cmake.revealLog.focus.description": "The log appears and the output channel takes the cursor focus.",
@@ -240,6 +247,7 @@
     },
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
     "cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatically configure CMake project directories when the kit or the configuration preset is changed.",
+    "cmake-tools.configuration.cmake.pinnedCommands.description":"List of CMake commands to pin.",
     "cmake-tools.debugger.pipeName.description": "Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.",
     "cmake-tools.debugger.clean.description": "Clean prior to configuring.",
     "cmake-tools.debugger.configureAll.description": "Configure for all projects.",
@@ -282,6 +290,9 @@
     "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
     "cmake-tools.configuration.cmake.loadCompileCommands.description": "Controls whether the extension reads compile_commands.json to enable single file compilation.",
     "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
+    "cmake-tools.command.cmake.pinnedCommands.add.title": "Add a CMake command to pin",
+    "cmake-tools.command.cmake.pinnedCommands.remove.title": "Unpin Command",
+    "cmake-tools.command.cmake.pinnedCommands.run.title": "Run Command",
     "cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set Test Target",
     "cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Open Visibility Settings",
