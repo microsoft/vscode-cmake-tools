@@ -23,10 +23,14 @@ const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
 export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'automatic';
-export type StatusBarOptionVisibility = "visible" | "compact" | "icon" | "hidden";
-export type StatusBarStaticOptionVisibility = "visible" | "icon" | "hidden";
-export type StatusBarTextOptionVisibility = "visible" | "compact" | "hidden";
-export type StatusBarIconOptionVisibility = "visible" | "hidden";
+export type StatusBarOptionVisibility = "visible" | "compact" | "icon" | "hidden" | "inherit";
+export type StatusBarInheritOptionVisibility = "visible" | "compact" | "icon" | "hidden";
+export type StatusBarStaticOptionVisibility = "visible" | "icon" | "hidden" | "inherit";
+export type StatusBarInheritStaticOptionVisibility = "visible" | "icon" | "hidden";
+export type StatusBarTextOptionVisibility = "visible" | "compact" | "hidden" | "inherit";
+export type StatusBarInheritTextOptionVisibility = "visible" | "compact" | "hidden";
+export type StatusBarIconOptionVisibility = "visible" | "hidden" | "inherit";
+export type StatusBarInheritIconOptionVisibility = "visible" | "hidden" | "inherit";
 export type ProjectStatusOptionVisibility = "visible" | "hidden";
 export type TouchBarOptionVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
@@ -50,58 +54,70 @@ export interface AdvancedOptionConfig {
     configurePreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     buildPreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     testPreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     kit?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     variant?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
     };
     folder?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     buildTarget?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarTextOptionVisibility;
+        inheritDefault?: StatusBarInheritTextOptionVisibility;
         statusBarLength?: number;
     };
     build?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarStaticOptionVisibility;
+        inheritDefault?: StatusBarInheritStaticOptionVisibility;
     };
     launchTarget?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarTextOptionVisibility;
+        inheritDefault?: StatusBarInheritTextOptionVisibility;
         statusBarLength?: number;
     };
     debug?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarIconOptionVisibility;
+        inheritDefault?: StatusBarInheritIconOptionVisibility;
     };
     launch?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarIconOptionVisibility;
+        inheritDefault?: StatusBarInheritIconOptionVisibility;
     };
     ctest?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         color?: boolean;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
 }
@@ -169,6 +185,7 @@ export interface ExtensionConfigurationSettings {
     launchBehavior: string;
     ignoreCMakeListsMissing: boolean;
     automaticReconfigure: boolean;
+    pinnedCommands: string[];
 }
 
 type EmittersOf<T> = {
@@ -335,6 +352,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get enableOutputParsers(): string[] | null {
         return this.configData.enabledOutputParsers;
+    }
+    get pinnedCommands(): string[] | null {
+        return this.configData.pinnedCommands;
     }
     get rawCMakePath(): string {
         return this.configData.cmakePath;
@@ -546,7 +566,8 @@ export class ConfigurationReader implements vscode.Disposable {
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>(),
-        automaticReconfigure: new vscode.EventEmitter<boolean>()
+        automaticReconfigure: new vscode.EventEmitter<boolean>(),
+        pinnedCommands: new vscode.EventEmitter<string[]>()
     };
 
     /**

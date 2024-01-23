@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as os from 'os';
+import * as contex from './contextKeyExpr';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -15,6 +16,20 @@ import { ExtensionManager } from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+const parser = new contex.Parser({ regexParsingWithErrorRecovery: false });
+
+class Context implements contex.IContext {
+
+    protected _value: {[key: string]: any};
+
+    constructor(dictionary: {[key: string]: any}) {
+        this._value = dictionary;
+    }
+    public getValue<T>(key: string): T | undefined {
+        const ret = this._value[key];
+        return ret;
+    }
+}
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -477,6 +492,53 @@ export function thisExtensionPackage(): PackageJSON {
         publisher: pkg.publisher,
         version: pkg.version
     };
+}
+
+export async function getExtensionLocalizedPackageJson(): Promise<{[key: string]: any}> {
+    let localizedFilePath: string = path.join(thisExtensionPath(), `package.nls.${getLocaleId()}.json`);
+    const fileExists: boolean = await checkFileExists(localizedFilePath);
+    if (!fileExists) {
+        localizedFilePath = path.join(thisExtensionPath(), "package.nls.json");
+    }
+    const localizedStrings = fs.readFileSync(localizedFilePath, "utf8");
+    return JSON.parse(localizedStrings);
+}
+
+interface CommandPalette {
+    command: string;
+    when: string | null;
+}
+
+/*
+ * This works in our simple conditio case. would need to expand if our context conditions start getting more complex - including parentheses, other expressions that are not booleans.
+*/
+function evaluateExpression(expression: string | null, context: contex.IContext): boolean {
+    if (expression === null || expression === undefined) {
+        return true;
+    } else if (expression === "never") {
+        return false;
+    }
+
+    try {
+        const constExpr = parser.parse(expression);
+        return constExpr ? constExpr.evaluate(context) : false;
+    } catch (e) {
+        console.error("Invalid expression:", e);
+        return false;
+    }
+}
+
+export function thisExtensionActiveCommands(context: {[key: string]: any}): string [] {
+    const pkg = thisExtension().packageJSON;
+    const allCommands = pkg.contributes.menus.commandPalette as CommandPalette[];
+    const contextObj = new Context(context);
+    const activeCommands = allCommands.map((commandP) => {
+        if (evaluateExpression(commandP.when, contextObj)) {
+            return commandP.command;
+        }
+        return null;
+    });
+    return activeCommands.filter(x => x !== null) as string[];
 }
 
 export function thisExtensionPath(): string {

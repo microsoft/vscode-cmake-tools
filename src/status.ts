@@ -134,6 +134,14 @@ abstract class Button {
     private _getVisibilitySetting(): StatusBarOptionVisibility | StatusBarTextOptionVisibility | StatusBarStaticOptionVisibility | StatusBarIconOptionVisibility | null {
         if (this.settingsName) {
             let setting = Object(this.config.options.advanced)[this.settingsName]?.statusBarVisibility;
+
+            if (setting === 'inherit') {
+                if (this.config.options.statusBarVisibility === 'hidden') {
+                    setting = Object(this.config.options.advanced)[this.settingsName]?.inheritDefault;
+                } else {
+                    setting = this.config.options.statusBarVisibility;
+                }
+            }
             if (setting === undefined) {
                 setting = this.config.options.statusBarVisibility;
             }

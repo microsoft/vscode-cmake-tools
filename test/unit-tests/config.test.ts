@@ -51,6 +51,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         showSystemKits: true,
         ignoreKitEnv: false,
         additionalKits: [],
+        pinnedCommands: [],
         buildTask: false,
         outputLogEncoding: 'auto',
         enableTraceLogging: false,

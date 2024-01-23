@@ -173,11 +173,26 @@
     "cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Enables the pop-up that asks the user if they want to continue the build despite some files possibly not being saved. If not enabled, the build will be continued.",
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Show the status bar option at full size.",
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Show the status bar option's icon only.",
-    "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Show the status bar option with the text truncated to the length specified in `#cmake.status.advanced.statusBarLength#` (default is 20).",
+    "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": {
+        "message": "Show the status bar option with the text truncated to the length specified in `#cmake.status.advanced.statusBarLength#` (default is 20).",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.variant.compact.description": "Show the status bar option with the status message removed.",
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description": "Hides the status bar option.",
-    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
-    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
+    "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.inherit.markdownDescription": {
+        "message": "If the more general `#cmake.options.statusBarVisibility#` setting is set to `hidden`, this defaults to what is set in the `#cmake.options.advanced.inheritDefault#` setting, else this inherits the `#cmake.options.statusBarVisibility#` setting.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.options.advanced.inheritDefault.markdownDescription": {
+        "message": "Configures what the `#cmake.options.advanced.statusBarVisibility#` setting's `inherit` option defaults to if `#cmake.options.statusBarVisibility#` is set to `hidden`. This has the same options as the `#cmake.options.advanced.statusBarVisibility#` setting, minus the `inherit` option.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
     "cmake-tools.configuration.cmake.options.statusBarVisibility.markdownDescription": {
         "message": "Configures how the extension displays the options in the Status Bar. These settings may be overwritten by the more specific `#cmake.options.advanced.statusBarVisibility#` setting. [More info](https://aka.ms/cmaketoolsoptionsconfiguration).",
         "comment": [
@@ -190,6 +205,8 @@
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
+    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
+    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
     "cmake-tools.configuration.cmake.options.advanced.markdownDescription": {
         "message": "Configures the settings for individual Project Status View and status bar options. These settings may overwrite the more general `#cmake.options.statusBarVisibility#` setting. [More info](https://aka.ms/cmaketoolsoptionsconfiguration).",
         "comment": [
@@ -198,10 +215,22 @@
     },
     "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.description": "Configures how the extension displays this option the Project Status View.",
     "cmake-tools.configuration.cmake.options.advanced.ctest.color.description": "Enables a change in color for this option depending on test results.",
-    "cmake-tools.configuration.cmake.options.advanced.statusBarLength.description": "Configures the maximum length of visible text in the Status Bar when set to 'compact' mode.",
+    "cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription": {
+        "message": "Configures the maximum length of visible text in the Status Bar when set to `compact` mode.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.projectStatus.description": "Project Status",
+    "cmake-tools.configuration.views.cmake.pinnedCommandsWelcome.description":{
+        "message": "No CMake commands have been pinned yet.\n[Add Command](command:cmake.pinnedCommands.add)",
+        "comment": [
+            "The text in parentheses () should not be localized or altered in any way. Also the square brackets and parentheses themselves [] () should not be altered or as well. However, the text inside the square brackets [] should be localized."
+        ]
+    }, 
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
+    "cmake-tools.configuration.views.cmake.pinnedCommands.description": "Pinned Commands",
     "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files.",
     "cmake-tools.configuration.cmake.revealLog.description": "Configures the settings for showing the log and focusing on the output channel.",
     "cmake-tools.configuration.cmake.revealLog.focus.description": "The log appears and the output channel takes the cursor focus.",
@@ -219,6 +248,7 @@
     },
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
     "cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatically configure CMake project directories when the kit or the configuration preset is changed.",
+    "cmake-tools.configuration.cmake.pinnedCommands.description":"List of CMake commands to pin.",
     "cmake-tools.debugger.pipeName.description": "Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.",
     "cmake-tools.debugger.clean.description": "Clean prior to configuring.",
     "cmake-tools.debugger.configureAll.description": "Configure for all projects.",
@@ -261,6 +291,9 @@
     "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
     "cmake-tools.configuration.cmake.loadCompileCommands.description": "Controls whether the extension reads compile_commands.json to enable single file compilation.",
     "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
+    "cmake-tools.command.cmake.pinnedCommands.add.title": "Add a CMake command to pin",
+    "cmake-tools.command.cmake.pinnedCommands.remove.title": "Unpin Command",
+    "cmake-tools.command.cmake.pinnedCommands.run.title": "Run Command",
     "cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set Test Target",
     "cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Open Visibility Settings",

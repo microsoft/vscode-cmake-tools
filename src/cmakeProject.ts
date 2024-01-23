@@ -35,11 +35,10 @@ import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOpt
 import { FireLate, Property } from './prop';
 import rollbar from './rollbar';
 import * as telemetry from './telemetry';
-import { setContextValue } from './util';
 import { VariantManager } from './variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from './cacheView';
-import { enableFullFeatureSet, extensionManager, updateFullFeatureSet } from './extension';
+import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from './extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -1371,7 +1370,7 @@ export class CMakeProject {
                             try {
                                 progress.report({ message: this.folderName });
                                 let result: ConfigureResult;
-                                await setContextValue(isConfiguringKey, true);
+                                await setContextAndStore(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
                                     result = await drv.configure(trigger, [], consumer, debuggerInformation);
                                 } else {
@@ -1396,7 +1395,7 @@ export class CMakeProject {
                                             result = await this.configureInternal(trigger, extraArgs, ConfigureType.Normal);
                                             break;
                                     }
-                                    await setContextValue(isConfiguringKey, false);
+                                    await setContextAndStore(isConfiguringKey, false);
                                 }
 
                                 const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
@@ -1433,7 +1432,7 @@ export class CMakeProject {
                                 this.onReconfiguredEmitter.fire();
                                 return result;
                             } finally {
-                                await setContextValue(isConfiguringKey, false);
+                                await setContextAndStore(isConfiguringKey, false);
                                 progress.report({ message: localize('finishing.configure', 'Finishing configure') });
                                 progressSub.dispose();
                             }
@@ -1736,9 +1735,9 @@ export class CMakeProject {
             let rc: number | null;
             if (taskConsumer) {
                 buildLogger.info(localize('starting.build', 'Starting build'));
-                await setContextValue(isBuildingKey, true);
+                await setContextAndStore(isBuildingKey, true);
                 rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
-                await setContextValue(isBuildingKey, false);
+                await setContextAndStore(isBuildingKey, false);
                 if (rc === null) {
                     buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
                 } else {
@@ -1765,9 +1764,9 @@ export class CMakeProject {
                         cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
-                        await setContextValue(isBuildingKey, true);
+                        await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
-                        await setContextValue(isBuildingKey, false);
+                        await setContextAndStore(isBuildingKey, false);
                         if (rc === null) {
                             buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
                         } else {
@@ -1783,7 +1782,7 @@ export class CMakeProject {
                 );
             }
         } finally {
-            await setContextValue(isBuildingKey, false);
+            await setContextAndStore(isBuildingKey, false);
             this.statusMessage.set(localize('ready.status', 'Ready'));
             this.isBusy.set(false);
             if (consumer) {
