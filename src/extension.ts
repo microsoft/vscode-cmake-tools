@@ -1761,6 +1761,10 @@ export class ExtensionManager implements vscode.Disposable {
         return presetSelected;
     }
 
+    viewConfigureSettings(): void {
+        void vscode.commands.executeCommand('workbench.action.openSettings', '@id:cmake.configureArgs, @id:cmake.configureEnvironment, @id:cmake.environment');
+    }
+
     /**
      * Show UI to allow the user to select an active build preset
      */
@@ -1786,6 +1790,10 @@ export class ExtensionManager implements vscode.Disposable {
         return presetSelected;
     }
 
+    viewBuildSettings(): void {
+        void vscode.commands.executeCommand('workbench.action.openSettings', '@id:cmake.buildArgs, @id:cmake.buildToolArgs @id:cmake.buildEnvironment @id:cmake.environment');
+    }
+
     /**
      * Show UI to allow the user to select an active test preset
      */
@@ -1809,6 +1817,10 @@ export class ExtensionManager implements vscode.Disposable {
         const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
         return presetSelected;
+    }
+
+    viewTestSettings(): void {
+        void vscode.commands.executeCommand('workbench.action.openSettings', '@id:cmake.ctestArgs, @id:cmake.testEnvironment, @id:cmake.environment');
     }
 
     public api: CMakeToolsApiImpl;
@@ -1890,8 +1902,11 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'addBuildPreset',
         'addTestPreset',
         'selectConfigurePreset',
+        'viewConfigureSettings',
         'selectBuildPreset',
+        'viewBuildSettings',
         'selectTestPreset',
+        'viewTestSettings',
         'selectActiveFolder',
         'editKits',
         'scanForKits',
@@ -2014,7 +2029,14 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange())
     ]);
 
-    return { getApi: (_version) => ext.api };
+    return { getApi: (version: api.Version) => {
+        // Since our API is backwards compatible, we can make our version number match that which was requested.
+        if (version === api.Version.v1 || version === api.Version.v2) {
+            ext.api.version = version;
+        }
+        return ext.api;
+    }
+    };
 }
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {

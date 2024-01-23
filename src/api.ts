@@ -12,7 +12,7 @@ import { assertNever } from '@cmt/util';
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
 
-    version: api.Version = api.Version.v1;
+    version: api.Version = api.Version.v2;
 
     showUIElement(element: api.UIElement): Promise<void> {
         return this.setUIElementVisibility(element, true);
@@ -37,6 +37,10 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     async getProject(uri: vscode.Uri): Promise<CMakeProjectWrapper | undefined> {
         const project: CMakeProject | undefined = await this.manager.projectController.getProjectForFolder(uri.fsPath);
         return project ? new CMakeProjectWrapper(project) : undefined;
+    }
+
+    getActiveFolderPath(): string {
+        return this.manager.activeFolderPath();
     }
 
     private async setUIElementVisibility(element: api.UIElement, visible: boolean): Promise<void> {

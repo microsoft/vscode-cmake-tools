@@ -4,8 +4,11 @@
     "cmake-tools.command.cmake.addBuildPreset.title": "Add Build Preset",
     "cmake-tools.command.cmake.addTestPreset.title": "Add Test Preset",
     "cmake-tools.command.cmake.selectConfigurePreset.title": "Select Configure Preset",
+    "cmake-tools.command.cmake.viewConfigureSettings.title": "View the settings overriding your Configure Preset",
     "cmake-tools.command.cmake.selectBuildPreset.title": "Select Build Preset",
+    "cmake-tools.command.cmake.viewBuildSettings.title": "View the settings overriding your Build Preset",
     "cmake-tools.command.cmake.selectTestPreset.title": "Select Test Preset",
+    "cmake-tools.command.cmake.viewTestSettings.title": "View the settings overriding your Test Preset",
     "cmake-tools.command.cmake.viewLog.title": "Open the CMake Tools Log File",
     "cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
     "cmake-tools.command.cmake.editKits.title": "Edit User-Local CMake Kits",
@@ -74,7 +77,7 @@
     "cmake-tools.configuration.cmake.saveBeforeBuild.description": "Save open files before building.",
     "cmake-tools.configuration.cmake.buildBeforeRun.description": "Build the target before running it.",
     "cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Clear build output before each build.",
-    "cmake-tools.configuration.cmake.configureSettings.description": "CMake variables to set on the command line.",
+    "cmake-tools.configuration.cmake.configureSettings.description": "CMake variables to set on the command line. This setting is specific to kits and will not be used for CMake Presets.",
     "cmake-tools.configuration.cmake.cacheInit.string.description": "Path to a cache-initializing CMake file.",
     "cmake-tools.configuration.cmake.cacheInit.array.description": "List of cache initializer files.",
     "cmake-tools.configuration.cmake.cacheInit.array.string.description": "A cache initializing CMake file.",
@@ -83,9 +86,9 @@
     "cmake-tools.configuration.cmake.generator.description": "The CMake generator to use.",
     "cmake-tools.configuration.cmake.toolset.description": "The CMake toolset to use when configuring.",
     "cmake-tools.configuration.cmake.platform.description": "The CMake platform to use when configuring.",
-    "cmake-tools.configuration.cmake.configureArgs.description": "Additional arguments to pass to CMake when configuring.",
-    "cmake-tools.configuration.cmake.buildArgs.description": "Additional arguments to pass to CMake when building.",
-    "cmake-tools.configuration.cmake.buildToolArgs.description": "Additional arguments to pass to the underlying build tool when building.",
+    "cmake-tools.configuration.cmake.configureArgs.description": "Additional arguments to pass to CMake when configuring. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active configure preset.",
+    "cmake-tools.configuration.cmake.buildArgs.description": "Additional arguments to pass to CMake when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset.",
+    "cmake-tools.configuration.cmake.buildToolArgs.description": "Additional arguments to pass to the underlying build tool when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset to invoke the build tool.",
     "cmake-tools.configuration.cmake.parallelJobs.description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs. Setting this to 1 will omit the parallelism flag (-j) from the underlying build command, which has a generator-dependent effect on build parallelism.",
     "cmake-tools.configuration.cmake.ctestPath.description": "Path to CTest executable. If null, will be inferred from cmake.cmakePath (recommended to leave null).",
     "cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": {
@@ -136,13 +139,13 @@
     "cmake-tools.configuration.cmake.defaultVariants.buildType.release.long": "Optimize for speed - exclude debug information.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Optimize for smallest binary size - exclude debug information.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Optimize for speed - include debug information.",
-    "cmake-tools.configuration.cmake.ctestArgs.description": "Arguments to pass to CTest.",
+    "cmake-tools.configuration.cmake.ctestArgs.description": "Additional arguments to pass to CTest. When using CMake Presets, these arguments are temporarily added to the arguments provided by the active test preset.",
     "cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
-    "cmake-tools.configuration.cmake.environment.description": "Environment variables to set when running CMake commands.",
+    "cmake-tools.configuration.cmake.environment.description": "Environment variables to set when running CMake commands. When using CMake Presets, these are temporarily added to the environment used for CMake commands.",
     "cmake-tools.configuration.cmake.environment.additionalProperties.description": "Value for the environment variable.",
-    "cmake-tools.configuration.cmake.configureEnvironment.description": "Environment variables to pass to CMake during configure.",
-    "cmake-tools.configuration.cmake.buildEnvironment.description": "Environment variables to pass to CMake during build.",
-    "cmake-tools.configuration.cmake.testEnvironment.description": "Environment variables to pass to CTest.",
+    "cmake-tools.configuration.cmake.configureEnvironment.description": "Environment variables to pass to CMake during configure. When using CMake Presets, these are temporarily added to the environment provided by the active configure preset.",
+    "cmake-tools.configuration.cmake.buildEnvironment.description": "Environment variables to pass to CMake during build. When using CMake Presets, these are temporarily added to the environment provided by the active build preset.",
+    "cmake-tools.configuration.cmake.testEnvironment.description": "Environment variables to pass to CTest. When using CMake Presets, these are temporarily added to the environment provided by the active test preset.",
     "cmake-tools.configuration.cmake.mingwSearchDirs.description": "Directories where MinGW may be installed.",
     "cmake-tools.configuration.cmake.additionalCompilerSearchDirs.description": "Additional directories to search for compilers.",
     "cmake-tools.configuration.cmake.searchDirs.items.description": "Path to a directory.",
@@ -169,11 +172,26 @@
     "cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Enables the pop-up that asks the user if they want to continue the build despite some files possibly not being saved. If not enabled, the build will be continued.",
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Show the status bar option at full size.",
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description": "Show the status bar option's icon only.",
-    "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": "Show the status bar option with the text truncated to the length specified in `#cmake.status.advanced.statusBarLength#` (default is 20).",
+    "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription": {
+        "message": "Show the status bar option with the text truncated to the length specified in `#cmake.status.advanced.statusBarLength#` (default is 20).",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.variant.compact.description": "Show the status bar option with the status message removed.",
     "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description": "Hides the status bar option.",
-    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
-    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
+    "cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.inherit.markdownDescription": {
+        "message": "If the more general `#cmake.options.statusBarVisibility#` setting is set to `hidden`, this defaults to what is set in the `#cmake.options.advanced.inheritDefault#` setting, else this inherits the `#cmake.options.statusBarVisibility#` setting.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.options.advanced.inheritDefault.markdownDescription": {
+        "message": "Configures what the `#cmake.options.advanced.statusBarVisibility#` setting's `inherit` option defaults to if `#cmake.options.statusBarVisibility#` is set to `hidden`. This has the same options as the `#cmake.options.advanced.statusBarVisibility#` setting, minus the `inherit` option.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
     "cmake-tools.configuration.cmake.options.statusBarVisibility.markdownDescription": {
         "message": "Configures how the extension displays the options in the Status Bar. These settings may be overwritten by the more specific `#cmake.options.advanced.statusBarVisibility#` setting. [More info](https://aka.ms/cmaketoolsoptionsconfiguration).",
         "comment": [
@@ -186,6 +204,8 @@
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
+    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description": "Show the node in the Project Status View.",
+    "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description": "Hide the node and its children in the Project Status View.",
     "cmake-tools.configuration.cmake.options.advanced.markdownDescription": {
         "message": "Configures the settings for individual Project Status View and status bar options. These settings may overwrite the more general `#cmake.options.statusBarVisibility#` setting. [More info](https://aka.ms/cmaketoolsoptionsconfiguration).",
         "comment": [
@@ -194,7 +214,12 @@
     },
     "cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.description": "Configures how the extension displays this option the Project Status View.",
     "cmake-tools.configuration.cmake.options.advanced.ctest.color.description": "Enables a change in color for this option depending on test results.",
-    "cmake-tools.configuration.cmake.options.advanced.statusBarLength.description": "Configures the maximum length of visible text in the Status Bar when set to 'compact' mode.",
+    "cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription": {
+        "message": "Configures the maximum length of visible text in the Status Bar when set to `compact` mode.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.projectStatus.description": "Project Status",
     "cmake-tools.configuration.views.cmake.pinnedCommandsWelcome.description":{

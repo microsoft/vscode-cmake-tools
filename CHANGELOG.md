@@ -2,10 +2,16 @@
 
 ## 1.17
 
+Features:
+
+- Update `api.ts` to add the `getActiveFolderPath` method. [#3528](https://github.com/microsoft/vscode-cmake-tools/pull/3528) [@Kemaweyan](https://github.com/Kemaweyan)
+
 Improvements:
 
 - Improve when the "Configure with Debugger" popup appears and allow for "Do Not Show Again". [#3343](https://github.com/microsoft/vscode-cmake-tools/issues/3343)
 - Add option to disable "Not all open documents were saved" popup. [#2889](https://github.com/microsoft/vscode-cmake-tools/issues/2889)
+- Allow overriding of CMakePresets cache variables and arguments. [#1836](https://github.com/microsoft/vscode-cmake-tools/issues/1836)
+- Improve advanced status bar options configuration by adding an `inherit` option to the `statusBarVisibility` setting and by adding the `inheritDefault` setting. Look at the CMake Options Visibility Configuration docs for more information. [#3452](https://github.com/microsoft/vscode-cmake-tools/issues/3452)
 
 Bug Fixes:
 

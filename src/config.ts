@@ -23,10 +23,14 @@ const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
 export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'automatic';
-export type StatusBarOptionVisibility = "visible" | "compact" | "icon" | "hidden";
-export type StatusBarStaticOptionVisibility = "visible" | "icon" | "hidden";
-export type StatusBarTextOptionVisibility = "visible" | "compact" | "hidden";
-export type StatusBarIconOptionVisibility = "visible" | "hidden";
+export type StatusBarOptionVisibility = "visible" | "compact" | "icon" | "hidden" | "inherit";
+export type StatusBarInheritOptionVisibility = "visible" | "compact" | "icon" | "hidden";
+export type StatusBarStaticOptionVisibility = "visible" | "icon" | "hidden" | "inherit";
+export type StatusBarInheritStaticOptionVisibility = "visible" | "icon" | "hidden";
+export type StatusBarTextOptionVisibility = "visible" | "compact" | "hidden" | "inherit";
+export type StatusBarInheritTextOptionVisibility = "visible" | "compact" | "hidden";
+export type StatusBarIconOptionVisibility = "visible" | "hidden" | "inherit";
+export type StatusBarInheritIconOptionVisibility = "visible" | "hidden" | "inherit";
 export type ProjectStatusOptionVisibility = "visible" | "hidden";
 export type TouchBarOptionVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
@@ -50,58 +54,70 @@ export interface AdvancedOptionConfig {
     configurePreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     buildPreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     testPreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     kit?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     variant?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
     };
     folder?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     buildTarget?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarTextOptionVisibility;
+        inheritDefault?: StatusBarInheritTextOptionVisibility;
         statusBarLength?: number;
     };
     build?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarStaticOptionVisibility;
+        inheritDefault?: StatusBarInheritStaticOptionVisibility;
     };
     launchTarget?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarTextOptionVisibility;
+        inheritDefault?: StatusBarInheritTextOptionVisibility;
         statusBarLength?: number;
     };
     debug?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarIconOptionVisibility;
+        inheritDefault?: StatusBarInheritIconOptionVisibility;
     };
     launch?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarIconOptionVisibility;
+        inheritDefault?: StatusBarInheritIconOptionVisibility;
     };
     ctest?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         color?: boolean;
         statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
 }
@@ -608,4 +624,33 @@ const activeChangeEvents: PromiseTracker = new PromiseTracker();
  */
 export function getSettingsChangePromise(): Promise<any[]> {
     return activeChangeEvents.getAwaiter();
+}
+
+export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
+    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkBuildOverridesPresent(config: ConfigurationReader): boolean {
+    if (config.buildArgs.length > 0 || config.buildToolArgs.length > 0
+        || Object.values(config.buildEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkTestOverridesPresent(config: ConfigurationReader): boolean {
+    if (Object.values(config.testEnvironment).length > 0 || config.ctestArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkGeneralEnvironmentOverridesPresent(config: ConfigurationReader): boolean {
+    return Object.values(config.environment).length > 0;
 }
