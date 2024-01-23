@@ -5,6 +5,7 @@
 Features:
 
 - Update `api.ts` to add the `getActiveFolderPath` method. [#3528](https://github.com/microsoft/vscode-cmake-tools/pull/3528) [@Kemaweyan](https://github.com/Kemaweyan)
+- Add a setting that allows users to enable/disable the Test Explorer integration. [#3145](https://github.com/microsoft/vscode-cmake-tools/issues/3145)
 
 Improvements:
 
