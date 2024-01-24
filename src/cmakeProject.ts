@@ -605,8 +605,10 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setWorkflowPreset(expandedWorkflowPreset);
-                    if (expandedWorkflowPreset.steps[0].name) {
-                        await this.workspaceContext.state.setWorkflowPresetName(this.folderName, expandedWorkflowPreset.steps[0].name, workflowPreset, this.isMultiProjectFolder);
+                    // We need to associate this workflow preset with the current configure preset of the project,
+                    // not the configure preset of step0 (which may even differ).
+                    if (this.configurePreset) {
+                        await this.workspaceContext.state.setWorkflowPresetName(this.folderName, this.configurePreset.name, workflowPreset, this.isMultiProjectFolder);
                     }
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
@@ -2119,7 +2121,14 @@ export class CMakeProject {
     }
 
     async workflow(): Promise<number> {
-        const drv = await this.preTest();
+        // Don't call this.preTest for workflow (as all other types of presets do above).
+        // The workflow handles itself any configure or building needed. It can even hurt to run preTest here (which triggers a build),
+        // before the workflow preset has a chance to setup the desired configure and other parameters.
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            throw new Error(localize('driver.died.before.workflow', 'CMake driver died before starting workflow.'));
+        }
+
         return (await this.workflowController.runWorkflow(drv, this.workflowPreset, this.configurePreset, this.buildPreset, this.testPreset, this.packagePreset)) ? 0 : -1;
     }
 

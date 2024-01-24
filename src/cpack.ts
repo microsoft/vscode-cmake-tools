@@ -62,7 +62,7 @@ export class CPackDriver implements vscode.Disposable {
             args.push(await expandString(value, opts));
         }
 
-        cpackArgs = [`--preset ${packagePreset.name}`];
+        cpackArgs = []; //[`--preset ${packagePreset.name}`];
         if (packagePreset.vendorName) {
             cpackArgs.push("--vendor", `${packagePreset.vendorName}`);
         }

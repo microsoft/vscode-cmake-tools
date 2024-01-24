@@ -20,6 +20,8 @@ suite('Environment Variables in Presets', () => {
         await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'WindowsUser1' : 'LinuxUser1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
         await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
+        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
     });
 
     teardown(async function (this: Mocha.Context) {

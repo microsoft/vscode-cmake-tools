@@ -535,7 +535,7 @@ export function userWorkflowPresets(folder: string) {
 * Don't use this function if you need to keep any changes in the presets
 */
 export function allWorkflowPresets(folder: string) {
-   return packagePresets(folder).concat(userWorkflowPresets(folder));
+   return workflowPresets(folder).concat(userWorkflowPresets(folder));
 }
 
 export function getPresetByName<T extends Preset>(presets: T[], name: string): T | null {
@@ -1870,10 +1870,35 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
             preset.__binaryDir = configurePreset.binaryDir;
             preset.__generator = configurePreset.generator;
 
-            // !!!???!!! Do this for all the presets in the steps array, depending on their inherit flag
-            // if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
-            //     inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, configurePreset.environment]);
-            // }
+            // The below is critical when the workflow step0 configure preset is different than the
+            // configure preset selected for the project.
+            // Something that occurs during the usual configure of the project does not happen
+            // when we configure on the fly and temporary for step0.
+            for (const step of preset.steps) {
+               switch (step.type) {
+                   case "build":
+                       const buildStepPr = getPresetByName(allBuildPresets(workspaceFolder), step.name);
+                       if (buildStepPr) {
+                           buildStepPr.__binaryDir = configurePreset.binaryDir;
+                           buildStepPr.__generator = configurePreset.generator;
+                       }
+                       break;
+                   case "test":
+                       const testStepPr = getPresetByName(allTestPresets(workspaceFolder), step.name);
+                       if (testStepPr) {
+                           testStepPr.__binaryDir = configurePreset.binaryDir;
+                           testStepPr.__generator = configurePreset.generator;
+                       }
+                       break;
+                   case "package":
+                       const packageStepPr = getPresetByName(allPackagePresets(workspaceFolder), step.name);
+                       if (packageStepPr) {
+                           packageStepPr.__binaryDir = configurePreset.binaryDir;
+                           packageStepPr.__generator = configurePreset.generator;
+                       }
+                       break;
+               }
+           };
         } else {
             return null;
         }

@@ -1054,8 +1054,32 @@ export class PresetsController {
             // we might need build type matches here as well as test preset checks, also in other places where I ommitted because I thought is not needed
         }
 
+        // For a workflow preset, the step0 configure may be different than the current configure of the project,
+        // but all the workflow steps that follow should have the same configure preset as the one mentioned in step0.
         if (workflowPreset) {
-            workflowPresetCompatible = (configurePreset?.name === workflowPreset.steps[0].name);
+            const temp = workflowPreset.steps.find(st => {
+                let stepConfigurePreset: string | undefined;
+                switch (st.type) {
+                    case "configure":
+                        stepConfigurePreset = preset.getPresetByName(preset.allConfigurePresets(this.folderPath), st.name)?.name;
+                        break;
+                    case "build":
+                        stepConfigurePreset = preset.getPresetByName(preset.allBuildPresets(this.folderPath), st.name)?.configurePreset;
+                        break;
+                    case "test":
+                        stepConfigurePreset = preset.getPresetByName(preset.allTestPresets(this.folderPath), st.name)?.configurePreset;
+                        break;
+                    case "package":
+                        stepConfigurePreset = preset.getPresetByName(preset.allPackagePresets(this.folderPath), st.name)?.configurePreset;
+                        break;
+                }
+
+                if (stepConfigurePreset !== workflowPreset.steps[0].name) {
+                    return true;
+                }
+              });
+
+              workflowPresetCompatible = (temp === undefined);
         }
 
         return {buildPresetCompatible, testPresetCompatible, packagePresetCompatible, workflowPresetCompatible};
@@ -1169,7 +1193,7 @@ export class PresetsController {
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
-        const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, _preset).packagePresetCompatible);
+        const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, this.project.testPreset, _preset).packagePresetCompatible);
         presets.push(preset.defaultPackagePreset);
 
         log.debug(localize('start.selection.of.package.presets', 'Start selection of package presets. Found {0} presets.', presets.length));
@@ -1202,7 +1226,7 @@ export class PresetsController {
             if (needToCheckConfigurePreset && presetName !== preset.defaultPackagePreset.name) {
                 preset.expandConfigurePresetForPresets(this.folderPath, 'package');
                 const _preset = preset.getPresetByName(preset.allPackagePresets(this.folderPath), presetName);
-                const compatibility = this.checkCompatibility(this.project.configurePreset, this.project.buildPreset, _preset);
+                const compatibility = this.checkCompatibility(this.project.configurePreset, this.project.buildPreset, this.project.testPreset, _preset);
                 if (!compatibility.packagePresetCompatible) {
                     log.warning(localize('package.preset.configure.preset.not.match', 'Package preset {0} is not compatible with the active configure or build presets', `'${presetName}'`));
                     await vscode.window.withProgress(
@@ -1260,7 +1284,7 @@ export class PresetsController {
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
-        const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, _preset).workflowPresetCompatible);
+        const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, this.project.testPreset, this.project.packagePreset, _preset).workflowPresetCompatible);
         presets.push(preset.defaultWorkflowPreset);
 
         log.debug(localize('start.selection.of.workflow.presets', 'Start selection of workflow presets. Found {0} presets.', presets.length));
@@ -1293,9 +1317,9 @@ export class PresetsController {
             if (needToCheckConfigurePreset && presetName !== preset.defaultWorkflowPreset.name) {
                 preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
                 const _preset = preset.getPresetByName(preset.allWorkflowPresets(this.folderPath), presetName);
-                const compatibility = this.checkCompatibility(this.project.configurePreset, _preset);
+                const compatibility = this.checkCompatibility(this.project.configurePreset, this.project.buildPreset, this.project.testPreset, this.project.packagePreset, _preset);
                 if (!compatibility.workflowPresetCompatible) {
-                    log.warning(localize('workflow.preset.configure.preset.not.match', 'Workflow preset {0} is not compatible with the active configure preset', `'${presetName}'`));
+                    log.warning(localize('workflow.preset.configure.preset.not.match', 'The configure preset of the workflow preset {0} is not compatible with the configure preset of some of the workflow steps', `'${presetName}'`));
                     await vscode.window.withProgress(
                         {
                             location: vscode.ProgressLocation.Notification,

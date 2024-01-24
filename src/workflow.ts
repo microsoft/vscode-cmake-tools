@@ -57,7 +57,8 @@ export class WorkflowDriver implements vscode.Disposable {
         if (newConfigurePreset?.name !== oldConfigurePreset?.name) {
             await driver.setConfigurePreset(newConfigurePreset);
         }
-        await driver.configure(ConfigureTrigger.workflow, [], consumer);
+        log.info(localize('workflow.configuring', `Configuring project with the '${newConfigurePreset?.name}' configure preset of the workflow.`));
+        await driver.cleanConfigure(ConfigureTrigger.workflow, [], consumer);
 
         let newBuildPreset: BuildPreset | null = null;
         let newTestPreset: TestPreset | null = null ;
@@ -69,6 +70,7 @@ export class WorkflowDriver implements vscode.Disposable {
                     if (newBuildPreset?.name !== oldBuildPreset?.name) {
                         await driver.setBuildPreset(newBuildPreset);
                     }
+                    log.info(localize('workflow.building', `Building project with the '${step.name}' build preset of the workflow step.`));
                     await driver.build(); // targets??? save old, specify which to build now, restore later?
                     break;
                 case "test":
@@ -76,6 +78,7 @@ export class WorkflowDriver implements vscode.Disposable {
                     if (newTestPreset?.name !== oldTestPreset?.name) {
                         await driver.setTestPreset(newTestPreset);
                     }
+                    log.info(localize('workflow.running.ctest', `Running ctest for the '${step.name}' test preset of the workflow step.`));
                     await vscode.commands.executeCommand("cmake.ctest"); // how else ctest from driver other than execute command?
                     break;
                 case "package":
@@ -83,6 +86,7 @@ export class WorkflowDriver implements vscode.Disposable {
                     if (newPackagePreset?.name !== oldPackagePreset?.name) {
                         await driver.setPackagePreset(newPackagePreset);
                     }
+                    log.info(localize('workflow.packaging', `Packaging the project with the '${step.name}' package preset of the workflow step.`));
                     await vscode.commands.executeCommand("cmake.cpack"); // how else cpack from driver other than execute command?
                     break;
             }
@@ -91,7 +95,8 @@ export class WorkflowDriver implements vscode.Disposable {
 
         if (newConfigurePreset?.name !== oldConfigurePreset?.name) {
             await driver.setConfigurePreset(oldConfigurePreset || null);
-            await driver.configure(ConfigureTrigger.workflow, [], consumer);
+            log.info(localize('workflow.restore.configuring', `Workflow finished. Restore the original '${oldConfigurePreset?.name}' configure preset and reconfigure.`));
+            await driver.cleanConfigure(ConfigureTrigger.workflow, [], consumer);
         }
 
         if (newBuildPreset?.name !== oldBuildPreset?.name) {
