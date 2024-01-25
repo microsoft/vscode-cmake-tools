@@ -34,7 +34,7 @@ import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
-import { onBuildSettingsChange, onTestSettingsChange } from '@cmt/ui/util';
+import { onBuildSettingsChange, onTestSettingsChange, onPackageSettingsChange } from '@cmt/ui/util';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
@@ -1812,6 +1812,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     });
     private readonly _testEnvSub = this.config.onChange('testEnvironment', async () => {
         await onTestSettingsChange();
+    });
+    private readonly _packEnvSub = this.config.onChange('packEnvironment', async () => {
+        await onPackageSettingsChange();
     });
     private readonly _generalEnvSub = this.config.onChange('environment', async () => {
         await this.doConfigureSettingsChange();

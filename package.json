@@ -2488,6 +2488,16 @@
           },
           "scope": "resource"
         },
+        "cmake.packEnvironment": {
+          "type": "object",
+          "default": {},
+          "description": "%cmake-tools.configuration.cmake.packEnvironment.description%",
+          "additionalProperties": {
+            "type": "string",
+            "description": "%cmake-tools.configuration.cmake.environment.additionalProperties.description%"
+          },
+          "scope": "resource"
+        },
         "cmake.mingwSearchDirs": {
           "type": "array",
           "items": {

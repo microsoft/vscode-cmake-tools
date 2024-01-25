@@ -133,6 +133,20 @@ export interface AdvancedOptionConfig {
         inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
+    cpack?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        color?: boolean;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
+        statusBarLength?: number;
+    };
+    workflow?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        color?: boolean;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
+        statusBarLength?: number;
+    };
 }
 
 export interface OptionConfig {
