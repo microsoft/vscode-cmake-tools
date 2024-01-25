@@ -23,7 +23,6 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         parallelJobs: 0,
         ctestPath: '',
         cpackPath: '',
-        cpackVars: {},
         ctest: {
             parallelJobs: 0,
             allowParallelJobs: false

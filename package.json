@@ -1801,6 +1801,12 @@
           "description": "%cmake-tools.configuration.cmake.ctestPath.description%",
           "scope": "resource"
         },
+        "cmake.cpackPath": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.cpackPath.description%",
+          "scope": "resource"
+        },
         "cmake.ctest.parallelJobs": {
           "type": "number",
           "default": 0,

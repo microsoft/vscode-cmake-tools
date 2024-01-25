@@ -361,9 +361,6 @@ export interface WorkflowPreset extends Preset {
     description?: string;
     vendor?: VendorType;
     steps: WorkflowStepsOptions[];
-    // Private fields
-    __binaryDir?: string; // Getting this from the config preset ("name" field of the first entry in the array)
-    __generator?: string; // Getting this from the config preset
 }
 
 // Interface for toolset options specified here: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html
@@ -1867,9 +1864,6 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
     if (workflowConfigurePreset) {
         const configurePreset = await expandConfigurePreset(folder, workflowConfigurePreset, workspaceFolder, sourceDir, allowUserPreset);
         if (configurePreset) {
-            preset.__binaryDir = configurePreset.binaryDir;
-            preset.__generator = configurePreset.generator;
-
             // The below is critical when the workflow step0 configure preset is different than the
             // configure preset selected for the project.
             // Something that occurs during the usual configure of the project does not happen

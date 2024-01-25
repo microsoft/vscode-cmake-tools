@@ -123,7 +123,6 @@ export interface ExtensionConfigurationSettings {
     packEnvironment: Environment;
     cpackPath: string;
     cpackArgs: string[];
-    cpackVars: { [key: string]: boolean | number | string | string[] | util.CMakeValue };
     // no settings needed for workflow presets execution?
     mingwSearchDirs: string[]; // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
     additionalCompilerSearchDirs: string[];
@@ -325,9 +324,6 @@ export class ConfigurationReader implements vscode.Disposable {
     get rawCPackPath(): string {
         return this.configData.cpackPath;
     }
-    get cpackVars(): {[key: string]: boolean | number | string | string[] | util.CMakeValue} {
-        return this.configData.cpackVars;
-    }
     get debugConfig(): CppDebugConfiguration {
         return this.configData.debugConfig;
     }
@@ -514,7 +510,6 @@ export class ConfigurationReader implements vscode.Disposable {
         ctestArgs: new vscode.EventEmitter<string[]>(),
         ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
         cpackArgs: new vscode.EventEmitter<string[]>(),
-        cpackVars: new vscode.EventEmitter<{ [key: string]: any }>(),
         environment: new vscode.EventEmitter<Environment>(),
         configureEnvironment: new vscode.EventEmitter<Environment>(),
         buildEnvironment: new vscode.EventEmitter<Environment>(),
@@ -606,4 +601,16 @@ const activeChangeEvents: PromiseTracker = new PromiseTracker();
  */
 export function getSettingsChangePromise(): Promise<any[]> {
     return activeChangeEvents.getAwaiter();
+}
+
+export function checkPackageOverridesPresent(config: ConfigurationReader): boolean {
+   if (Object.values(config.packEnvironment).length > 0 || config.cpackArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+       return true;
+   }
+
+   return false;
+}
+
+export function checkGeneralEnvironmentOverridesPresent(config: ConfigurationReader): boolean {
+   return Object.values(config.environment).length > 0;
 }

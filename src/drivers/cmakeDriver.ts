@@ -9,7 +9,7 @@ import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
-import { ConfigurationReader, defaultNumJobs } from '@cmt/config';
+import { ConfigurationReader, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
@@ -310,13 +310,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async getCPackCommandEnvironment(): Promise<Environment> {
         if (this.useCMakePresets) {
-            return EnvironmentUtils.create(this._packagePreset?.environment);
-        } else {
-            let envs = this._kitEnvironmentVariables;
+            let envs = EnvironmentUtils.create(this._packagePreset?.environment);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
-            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs)]);
-            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this._variantEnv, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.packEnvironment, envs)]);
+
+            if (this.useCMakePresets && this.packagePreset !== null && checkPackageOverridesPresent(this.config)) {
+                log.info(localize('package.with.overrides', 'NOTE: You are packaging with preset {0}, but there are some overrides being applied from your VS Code settings.', this.packagePreset.displayName ?? this.packagePreset.name));
+            }
+
             return envs;
+        } else {
+            return {};
         }
     }
 
