@@ -323,7 +323,7 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.ctestPath;
     }
     get rawCPackPath(): string {
-      return this.configData.cpackPath;
+        return this.configData.cpackPath;
     }
     get cpackVars(): {[key: string]: boolean | number | string | string[] | util.CMakeValue} {
         return this.configData.cpackVars;

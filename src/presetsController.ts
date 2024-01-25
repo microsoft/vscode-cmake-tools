@@ -702,7 +702,7 @@ export class PresetsController {
                     const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
                     if (configurePreset) {
                         newPreset = { name: '__placeholder__', description: '', displayName: '',
-                                  steps: [{type: "configure", name: configurePreset}] };
+                            steps: [{type: "configure", name: configurePreset}] };
                     }
 
                     break;
@@ -716,7 +716,7 @@ export class PresetsController {
                     break;
                 }
                 case SpecialOptions.Custom: {
-                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps:[] };
+                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: [] };
                     break;
                 }
                 default:
@@ -1018,7 +1018,7 @@ export class PresetsController {
     }
 
     private checkCompatibility(configurePreset: preset.ConfigurePreset | null, buildPreset?: preset.BuildPreset | null, testPreset?: preset.TestPreset | null, packagePreset?: preset.PackagePreset | null, workflowPreset?: preset.WorkflowPreset | null):
-                              {buildPresetCompatible: boolean; testPresetCompatible: boolean; packagePresetCompatible: boolean; workflowPresetCompatible: boolean} {
+    {buildPresetCompatible: boolean; testPresetCompatible: boolean; packagePresetCompatible: boolean; workflowPresetCompatible: boolean} {
         let testPresetCompatible = true;
         let buildPresetCompatible = true;
         let packagePresetCompatible = true;
@@ -1077,9 +1077,9 @@ export class PresetsController {
                 if (stepConfigurePreset !== workflowPreset.steps[0].name) {
                     return true;
                 }
-              });
+            });
 
-              workflowPresetCompatible = (temp === undefined);
+            workflowPresetCompatible = (temp === undefined);
         }
 
         return {buildPresetCompatible, testPresetCompatible, packagePresetCompatible, workflowPresetCompatible};
@@ -1175,7 +1175,7 @@ export class PresetsController {
         }
     }
 
-//----
+    //----
     async selectPackagePreset(): Promise<boolean> {
         // configure preset required
         const selectedConfigurePreset = await this.checkConfigurePreset();
@@ -1357,7 +1357,7 @@ export class PresetsController {
             );
         }
     }
-//-----
+    //-----
     async openCMakePresets(): Promise<vscode.TextEditor | undefined> {
         if (!await fs.exists(this.presetsPath)) {
             return this.updatePresetsFile({ version: 2 });
@@ -1541,7 +1541,7 @@ export class PresetsController {
 
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
-                             presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
+        presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
         const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 2 };
         if (!originalPresetsFile[presetType]) {
             originalPresetsFile[presetType] = [];

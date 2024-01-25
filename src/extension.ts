@@ -1854,49 +1854,49 @@ export class ExtensionManager implements vscode.Disposable {
      * Show UI to allow the user to select an active package preset
      */
     async selectPackagePreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
-      if (util.isTestMode()) {
-          log.trace(localize('selecting.package.preset.in.test.mode', 'Running CMakeTools in test mode. selectPackagePreset is disabled.'));
-          return false;
-      }
+        if (util.isTestMode()) {
+            log.trace(localize('selecting.package.preset.in.test.mode', 'Running CMakeTools in test mode. selectPackagePreset is disabled.'));
+            return false;
+        }
 
-      const project = this.getProjectFromFolder(folder);
-      if (!project) {
-          return false;
-      }
+        const project = this.getProjectFromFolder(folder);
+        if (!project) {
+            return false;
+        }
 
-      if (!project.useCMakePresets) {
-          log.info(localize('skip.set.package.preset', 'Using kits, skip selecting package preset'));
-          return false;
-      }
+        if (!project.useCMakePresets) {
+            log.info(localize('skip.set.package.preset', 'Using kits, skip selecting package preset'));
+            return false;
+        }
 
-      const presetSelected = await project.presetsController.selectPackagePreset();
-      return presetSelected;
-  }
+        const presetSelected = await project.presetsController.selectPackagePreset();
+        return presetSelected;
+    }
 
     /**
      * Show UI to allow the user to select an active workflow preset
      */
     async selectWorkflowPreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
-      if (util.isTestMode()) {
-          log.trace(localize('selecting.workflow.preset.in.test.mode', 'Running CMakeTools in test mode. selectWorkflowPreset is disabled.'));
-          return false;
-      }
+        if (util.isTestMode()) {
+            log.trace(localize('selecting.workflow.preset.in.test.mode', 'Running CMakeTools in test mode. selectWorkflowPreset is disabled.'));
+            return false;
+        }
 
-      const project = this.getProjectFromFolder(folder);
-      if (!project) {
-          return false;
-      }
+        const project = this.getProjectFromFolder(folder);
+        if (!project) {
+            return false;
+        }
 
-      if (!project.useCMakePresets) {
-          log.info(localize('skip.set.workflow.preset', 'Using kits, skip selecting workflow preset'));
-          return false;
-      }
+        if (!project.useCMakePresets) {
+            log.info(localize('skip.set.workflow.preset', 'Using kits, skip selecting workflow preset'));
+            return false;
+        }
 
-      const presetSelected = await project.presetsController.selectWorkflowPreset();
-      return presetSelected;
-  }
+        const presetSelected = await project.presetsController.selectWorkflowPreset();
+        return presetSelected;
+    }
 
-  public api: CMakeToolsApiImpl;
+    public api: CMakeToolsApiImpl;
 
     get onBuildTargetChanged() {
         return this.onBuildTargetChangedEmitter.event;

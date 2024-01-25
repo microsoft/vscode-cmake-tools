@@ -552,7 +552,6 @@ export class CMakeProject {
         }
     }
 
-
     /**
      * Currently selected workflow preset
      */
@@ -631,7 +630,6 @@ export class CMakeProject {
             }
         }
     }
-
 
     /**
      * The current target to build.
@@ -2158,7 +2156,7 @@ export class CMakeProject {
     }
 
     public async runWorkflow(driver: CMakeDriver, workflowPreset?: preset.WorkflowPreset, consumer?: proc.OutputConsumer) {
-      return this.workflowController.runWorkflow(driver, workflowPreset, this.configurePreset, this.buildPreset, this.testPreset, this.packagePreset, consumer);
+        return this.workflowController.runWorkflow(driver, workflowPreset, this.configurePreset, this.buildPreset, this.testPreset, this.packagePreset, consumer);
     }
 
     /**

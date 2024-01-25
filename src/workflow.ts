@@ -33,12 +33,12 @@ export class WorkflowDriver implements vscode.Disposable {
     }
 
     public async runWorkflow(driver: CMakeDriver,
-                             workflowPreset?: WorkflowPreset | null,
-                             configurePreset?: ConfigurePreset | null,
-                             buildPreset?: BuildPreset | null,
-                             testPreset?: TestPreset | null,
-                             packagePreset?: PackagePreset | null,
-                             consumer?: proc.OutputConsumer): Promise<number> {
+        workflowPreset?: WorkflowPreset | null,
+        configurePreset?: ConfigurePreset | null,
+        buildPreset?: BuildPreset | null,
+        testPreset?: TestPreset | null,
+        packagePreset?: PackagePreset | null,
+        _consumer?: proc.OutputConsumer): Promise<number> {
         if (driver.useCMakePresets && !driver.workflowPreset) {
             log.error(localize('workflow.preset.not.set', 'Workflow preset is not set'));
             return -3;
@@ -68,12 +68,12 @@ export class WorkflowDriver implements vscode.Disposable {
                 case "configure":
                     newConfigurePreset = getPresetByName(allConfigurePresets(driver.workspaceFolder), step.name);
                     if (!newConfigurePreset) {
-                        log.error(localize('workflow.configure.preset.does.not.exist', `The workflow step references a non existing configure preset: '${step.name}'`));
+                        log.error(localize('workflow.configure.preset.does.not.exist', 'The workflow step references a non existing configure preset: {0}', step.name));
                         return -3;
                     }
 
                     if (step.name !== workflowPreset.steps[0].name) {
-                        log.error(localize('workflow.has.subsequent.configure.preset', `The workflow preset has another configure besides the first step: '${step.name}'`));
+                        log.error(localize('workflow.has.subsequent.configure.preset', 'The workflow preset has another configure besides the first step: ', step.name));
                         return -3;
                     }
 
@@ -81,7 +81,7 @@ export class WorkflowDriver implements vscode.Disposable {
                         await prj.setConfigurePreset(newConfigurePreset.name);
                     }
 
-                    log.info(localize('workflow.configuring', `Configuring project with the '${newConfigurePreset.name}' configure preset of the workflow.`));
+                    log.info(localize('workflow.configuring', 'Configuring project with the {0} configure preset of the workflow.', newConfigurePreset.name));
                     await prj.configureInternal(ConfigureTrigger.workflow);
 
                     break;
@@ -89,7 +89,7 @@ export class WorkflowDriver implements vscode.Disposable {
                 case "build":
                     newBuildPreset = getPresetByName(allBuildPresets(driver.workspaceFolder), step.name);
                     if (!newBuildPreset) {
-                        log.error(localize('workflow.build.preset.does.not.exist', `The workflow step references a non existing build preset: '${step.name}'`));
+                        log.error(localize('workflow.build.preset.does.not.exist', 'The workflow step references a non existing build preset: {0}', step.name));
                         return -3;
                     }
 
@@ -97,7 +97,7 @@ export class WorkflowDriver implements vscode.Disposable {
                         await prj.setBuildPreset(step.name);
                     }
 
-                    log.info(localize('workflow.building', `Building project with the '${step.name}' build preset of the workflow step.`));
+                    log.info(localize('workflow.building', 'Building project with the {0} build preset of the workflow step.', step.name));
                     await prj.runBuild();
 
                     break;
@@ -105,7 +105,7 @@ export class WorkflowDriver implements vscode.Disposable {
                 case "test":
                     newTestPreset = getPresetByName(allTestPresets(driver.workspaceFolder), step.name);
                     if (!newTestPreset) {
-                        log.error(localize('workflow.test.preset.does.not.exist', `The workflow step references a non existing test preset: '${step.name}'`));
+                        log.error(localize('workflow.test.preset.does.not.exist', 'The workflow step references a non existing test preset: {0}', step.name));
                         return -3;
                     }
 
@@ -113,15 +113,15 @@ export class WorkflowDriver implements vscode.Disposable {
                         await prj.setTestPreset(step.name);
                     }
 
-                    log.info(localize('workflow.running.ctest', `Running ctest for the '${step.name}' test preset of the workflow step.`));
+                    log.info(localize('workflow.running.ctest', 'Running ctest for the {0} test preset of the workflow step.', step.name));
                     await prj.ctest();
- 
+
                     break;
 
                 case "package":
                     newPackagePreset = getPresetByName(allPackagePresets(driver.workspaceFolder), step.name);
                     if (!newPackagePreset) {
-                        log.error(localize('workflow.package.preset.does.not.exist', `The workflow step references a non existing package preset: '${step.name}'`));
+                        log.error(localize('workflow.package.preset.does.not.exist', 'The workflow step references a non existing package preset: {0}', step.name));
                         return -3;
                     }
 
@@ -129,19 +129,18 @@ export class WorkflowDriver implements vscode.Disposable {
                         await prj.setPackagePreset(step.name);
                     }
 
-                    log.info(localize('workflow.packaging', `Packaging the project with the '${step.name}' package preset of the workflow step.`));
+                    log.info(localize('workflow.packaging', 'Packaging the project with the {0} package preset of the workflow step.', step.name));
                     await prj.cpack();
 
                     break;
             }
         };
 
-
         if (newConfigurePreset?.name !== oldConfigurePreset?.name && oldConfigurePreset) {
             await prj.setConfigurePreset(oldConfigurePreset?.name);
-            log.info(localize('workflow.restore.configuring', `Workflow finished. Restore the original '${oldConfigurePreset?.name}' configure preset and reconfigure.`));
+            log.info(localize('workflow.restore.configuring', 'Workflow finished. Restore the original {0} configure preset and reconfigure.', oldConfigurePreset?.name ?? ""));
             await prj.configureInternal(ConfigureTrigger.workflow);
-         }
+        }
 
         if (newBuildPreset?.name !== oldBuildPreset?.name && oldBuildPreset) {
             await prj.setBuildPreset(oldBuildPreset.name);

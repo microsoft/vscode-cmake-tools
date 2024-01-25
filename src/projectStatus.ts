@@ -234,19 +234,19 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             nodes.push(testNode);
 
             if (this.cmakeProject?.useCMakePresets) {
-               const packageNode = new PackageNode();
-               await packageNode.initialize();
-               if (this.isBusy) {
-                  packageNode.convertToStopCommand();
-               }
-               nodes.push(packageNode);
+                const packageNode = new PackageNode();
+                await packageNode.initialize();
+                if (this.isBusy) {
+                    packageNode.convertToStopCommand();
+                }
+                nodes.push(packageNode);
 
-               const workflowNode = new WorkflowNode();
-               await workflowNode.initialize();
-               if (this.isBusy) {
-                  workflowNode.convertToStopCommand();
-               }
-               nodes.push(workflowNode);
+                const workflowNode = new WorkflowNode();
+                await workflowNode.initialize();
+                if (this.isBusy) {
+                    workflowNode.convertToStopCommand();
+                }
+                nodes.push(workflowNode);
             }
 
             if (!this.isDebugButtonHidden) {

@@ -605,7 +605,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             log.info(localize('unsetting.package.preset', 'Unsetting package preset'));
         }
 
-        await this.doSetPackagePreset(async () => { 
+        await this.doSetPackagePreset(async () => {
             await this._setPackagePreset(packagePreset);
         });
     }

@@ -328,42 +328,42 @@ export interface TestPreset extends Preset {
 }
 
 export interface PackageOutputOptions {
-   debug?: boolean;
-   verbose?: boolean;
+    debug?: boolean;
+    verbose?: boolean;
 }
 
 export interface PackagePreset extends Preset {
-   configurePreset?: string;
-   inheritConfigureEnvironment?: boolean; // Defaults to true
-   configurations?: string[];
-   generators?: string[];
-   variables?: { [key: string]: string | null | undefined };
-   configFile?: string;
-   output?: PackageOutputOptions;
-   packageName?: string;
-   packageVersion?: string;
-   packageDirectory?: string;
-   vendorName?: string;
+    configurePreset?: string;
+    inheritConfigureEnvironment?: boolean; // Defaults to true
+    configurations?: string[];
+    generators?: string[];
+    variables?: { [key: string]: string | null | undefined };
+    configFile?: string;
+    output?: PackageOutputOptions;
+    packageName?: string;
+    packageVersion?: string;
+    packageDirectory?: string;
+    vendorName?: string;
 
-   // Private fields
-   __binaryDir?: string; // Getting this from the config preset
-   __generator?: string; // Getting this from the config preset
+    // Private fields
+    __binaryDir?: string; // Getting this from the config preset
+    __generator?: string; // Getting this from the config preset
 }
 
 export interface WorkflowStepsOptions {
-   type: string;
-   name: string;
+    type: string;
+    name: string;
 }
 
 export interface WorkflowPreset extends Preset {
-   name: string;
-   displayName?: string;
-   description?: string;
-   vendor?: VendorType;
-   steps: WorkflowStepsOptions[];
-   // Private fields
-   __binaryDir?: string; // Getting this from the config preset ("name" field of the first entry in the array)
-   __generator?: string; // Getting this from the config preset
+    name: string;
+    displayName?: string;
+    description?: string;
+    vendor?: VendorType;
+    steps: WorkflowStepsOptions[];
+    // Private fields
+    __binaryDir?: string; // Getting this from the config preset ("name" field of the first entry in the array)
+    __generator?: string; // Getting this from the config preset
 }
 
 // Interface for toolset options specified here: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html
@@ -387,15 +387,15 @@ export const defaultTestPreset: TestPreset = {
     description: localize('default.test.preset.description', 'An empty test preset that does not add any arguments')
 };
 export const defaultPackagePreset: PackagePreset = {
-   name: '__defaultPackagePreset__',
-   displayName: localize('default.package.preset', '[Default]'),
-   description: localize('default.package.preset.description', 'An empty package preset that does not add any arguments')
+    name: '__defaultPackagePreset__',
+    displayName: localize('default.package.preset', '[Default]'),
+    description: localize('default.package.preset.description', 'An empty package preset that does not add any arguments')
 };
 export const defaultWorkflowPreset: WorkflowPreset = {
-   name: '__defaultWorkflowPreset__',
-   steps: [],
-   displayName: localize('default.workflow.preset', '[Default]'),
-   description: localize('default.workflow.preset.description', 'An empty workflow preset that does not add any arguments')
+    name: '__defaultWorkflowPreset__',
+    steps: [],
+    displayName: localize('default.workflow.preset', '[Default]'),
+    description: localize('default.workflow.preset.description', 'An empty workflow preset that does not add any arguments')
 };
 
 // presetsFiles are stored here because expansions require access to other presets.
@@ -509,33 +509,33 @@ export function allTestPresets(folder: string) {
 }
 
 export function packagePresets(folder: string) {
-   return presetsFiles.get(folder)?.packagePresets || [];
+    return presetsFiles.get(folder)?.packagePresets || [];
 }
 
 export function userPackagePresets(folder: string) {
-   return userPresetsFiles.get(folder)?.packagePresets || [];
+    return userPresetsFiles.get(folder)?.packagePresets || [];
 }
 
 /**
 * Don't use this function if you need to keep any changes in the presets
 */
 export function allPackagePresets(folder: string) {
-   return packagePresets(folder).concat(userPackagePresets(folder));
+    return packagePresets(folder).concat(userPackagePresets(folder));
 }
 
 export function workflowPresets(folder: string) {
-   return presetsFiles.get(folder)?.workflowPresets || [];
+    return presetsFiles.get(folder)?.workflowPresets || [];
 }
 
 export function userWorkflowPresets(folder: string) {
-   return userPresetsFiles.get(folder)?.workflowPresets || [];
+    return userPresetsFiles.get(folder)?.workflowPresets || [];
 }
 
 /**
 * Don't use this function if you need to keep any changes in the presets
 */
 export function allWorkflowPresets(folder: string) {
-   return workflowPresets(folder).concat(userWorkflowPresets(folder));
+    return workflowPresets(folder).concat(userWorkflowPresets(folder));
 }
 
 export function getPresetByName<T extends Preset>(presets: T[], name: string): T | null {
@@ -1806,10 +1806,10 @@ async function expandWorkflowPresetImpl(folder: string, name: string, workspaceF
             displayName: defaultWorkflowPreset.displayName,
             description: defaultWorkflowPreset.description,
             steps: configurePreset ? [
-               {
-                  type: "Configure",
-                  name: configurePreset
-               }
+                {
+                    type: "Configure",
+                    name: configurePreset
+                }
             ] : []
         };
         return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
@@ -1863,7 +1863,7 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
     }
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
-    let workflowConfigurePreset = preset.steps[0].name;
+    const workflowConfigurePreset = preset.steps[0].name;
     if (workflowConfigurePreset) {
         const configurePreset = await expandConfigurePreset(folder, workflowConfigurePreset, workspaceFolder, sourceDir, allowUserPreset);
         if (configurePreset) {
@@ -1875,30 +1875,30 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
             // Something that occurs during the usual configure of the project does not happen
             // when we configure on the fly and temporary for step0.
             for (const step of preset.steps) {
-               switch (step.type) {
-                   case "build":
-                       const buildStepPr = getPresetByName(allBuildPresets(folder), step.name);
-                       if (buildStepPr) {
-                           buildStepPr.__binaryDir = configurePreset.binaryDir;
-                           buildStepPr.__generator = configurePreset.generator;
-                       }
-                       break;
-                   case "test":
-                       const testStepPr = getPresetByName(allTestPresets(folder), step.name);
-                       if (testStepPr) {
-                           testStepPr.__binaryDir = configurePreset.binaryDir;
-                           testStepPr.__generator = configurePreset.generator;
-                       }
-                       break;
-                   case "package":
-                       const packageStepPr = getPresetByName(allPackagePresets(folder), step.name);
-                       if (packageStepPr) {
-                           packageStepPr.__binaryDir = configurePreset.binaryDir;
-                           packageStepPr.__generator = configurePreset.generator;
-                       }
-                       break;
-               }
-           };
+                switch (step.type) {
+                    case "build":
+                        const buildStepPr = getPresetByName(allBuildPresets(folder), step.name);
+                        if (buildStepPr) {
+                            buildStepPr.__binaryDir = configurePreset.binaryDir;
+                            buildStepPr.__generator = configurePreset.generator;
+                        }
+                        break;
+                    case "test":
+                        const testStepPr = getPresetByName(allTestPresets(folder), step.name);
+                        if (testStepPr) {
+                            testStepPr.__binaryDir = configurePreset.binaryDir;
+                            testStepPr.__generator = configurePreset.generator;
+                        }
+                        break;
+                    case "package":
+                        const packageStepPr = getPresetByName(allPackagePresets(folder), step.name);
+                        if (packageStepPr) {
+                            packageStepPr.__binaryDir = configurePreset.binaryDir;
+                            packageStepPr.__generator = configurePreset.generator;
+                        }
+                        break;
+                }
+            };
         } else {
             return null;
         }
