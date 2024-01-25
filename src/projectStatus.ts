@@ -212,12 +212,14 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             const projectNode = new ProjectNode();
             await projectNode.initialize();
             nodes.push(projectNode);
+
             const configNode = new ConfigNode();
             await configNode.initialize();
             if (this.isBusy) {
                 configNode.convertToStopCommand();
             }
             nodes.push(configNode);
+
             if (!this.isBuildButtonHidden) {
                 const buildNode = new BuildNode();
                 await buildNode.initialize();
@@ -226,15 +228,27 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 }
                 nodes.push(buildNode);
             }
+
             const testNode = new TestNode();
             await testNode.initialize();
             nodes.push(testNode);
-            const packageNode = new PackageNode();
-            await packageNode.initialize();
-            nodes.push(packageNode);
-            const workflowNode = new WorkflowNode();
-            await workflowNode.initialize();
-            nodes.push(workflowNode);
+
+            if (this.cmakeProject?.useCMakePresets) {
+               const packageNode = new PackageNode();
+               await packageNode.initialize();
+               if (this.isBusy) {
+                  packageNode.convertToStopCommand();
+               }
+               nodes.push(packageNode);
+
+               const workflowNode = new WorkflowNode();
+               await workflowNode.initialize();
+               if (this.isBusy) {
+                  workflowNode.convertToStopCommand();
+               }
+               nodes.push(workflowNode);
+            }
+
             if (!this.isDebugButtonHidden) {
                 const debugNode = new DebugNode();
                 await debugNode.initialize();
@@ -523,7 +537,7 @@ class PackageNode extends Node {
     }
 
     convertToStopCommand(): void {
-        this.label = localize("configure.running", "Package (Running)");
+        this.label = localize("cpack.running", "CPack (packaging)");
         const title: string = localize('Stop', 'Stop');
         this.tooltip = title;
         this.contextValue = "stop";
@@ -931,5 +945,4 @@ class Variant extends Node {
         }
         this.label = treeDataProvider.cmakeProject.activeVariantName || "Debug";
     }
-
 }

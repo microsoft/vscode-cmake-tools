@@ -1877,21 +1877,21 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
             for (const step of preset.steps) {
                switch (step.type) {
                    case "build":
-                       const buildStepPr = getPresetByName(allBuildPresets(workspaceFolder), step.name);
+                       const buildStepPr = getPresetByName(allBuildPresets(folder), step.name);
                        if (buildStepPr) {
                            buildStepPr.__binaryDir = configurePreset.binaryDir;
                            buildStepPr.__generator = configurePreset.generator;
                        }
                        break;
                    case "test":
-                       const testStepPr = getPresetByName(allTestPresets(workspaceFolder), step.name);
+                       const testStepPr = getPresetByName(allTestPresets(folder), step.name);
                        if (testStepPr) {
                            testStepPr.__binaryDir = configurePreset.binaryDir;
                            testStepPr.__generator = configurePreset.generator;
                        }
                        break;
                    case "package":
-                       const packageStepPr = getPresetByName(allPackagePresets(workspaceFolder), step.name);
+                       const packageStepPr = getPresetByName(allPackagePresets(folder), step.name);
                        if (packageStepPr) {
                            packageStepPr.__binaryDir = configurePreset.binaryDir;
                            packageStepPr.__generator = configurePreset.generator;

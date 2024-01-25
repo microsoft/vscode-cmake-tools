@@ -150,8 +150,8 @@ export class CMakeProject {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
         this.cTestController = new CTestDriver(workspaceContext, projectController);
-        this.cPackageController = new CPackDriver(workspaceContext, projectController);
-        this.workflowController = new WorkflowDriver(workspaceContext);
+        this.cPackageController = new CPackDriver(workspaceContext);
+        this.workflowController = new WorkflowDriver(workspaceContext, projectController);
         this.onCodeModelChanged(FireLate, (_) => this._codeModelChangedApiEventEmitter.fire());
     }
 
@@ -618,9 +618,9 @@ export class CMakeProject {
                     this._workflowPreset.set(null);
                 }
             } else {
-                if (expandedWorkflowPreset.steps[0].name) {
+                if (this.configurePreset) {
                     // Remember the selected workflow preset for the next session.
-                    await this.workspaceContext.state.setWorkflowPresetName(this.folderName, expandedWorkflowPreset.steps[0].name, workflowPreset, this.isMultiProjectFolder);
+                    await this.workspaceContext.state.setWorkflowPresetName(this.folderName, this.configurePreset.name, workflowPreset, this.isMultiProjectFolder);
                 }
             }
         } else {
@@ -1131,9 +1131,7 @@ export class CMakeProject {
             });
         });
         this.cTestController.onTestingEnabledChanged(enabled => this._ctestEnabled.set(enabled));
-        // not sure we need this
         this.cPackageController.onPackagingEnabledChanged(enabled => this._cpackEnabled.set(enabled));
-        //this.cWorkflowController.onActiveWorkflowPresetChanged(enabled => this._workflowEnabled.set(enabled));
 
         this.statusMessage.set(localize('ready.status', 'Ready'));
 
@@ -2115,8 +2113,10 @@ export class CMakeProject {
     }
 
     async cpack(): Promise<number> {
+        this.isBusy.set(true);
         const drv = await this.preTest();
         const retc = await this.cPackageController.runCPack(drv);
+        this.isBusy.set(false);
         return (retc) ? 0 : -1;
     }
 
@@ -2129,6 +2129,7 @@ export class CMakeProject {
             throw new Error(localize('driver.died.before.workflow', 'CMake driver died before starting workflow.'));
         }
 
+        // We shouldn't set isBusy here, because the workflow is composed of phases that each set this flag.
         return (await this.workflowController.runWorkflow(drv, this.workflowPreset, this.configurePreset, this.buildPreset, this.testPreset, this.packagePreset)) ? 0 : -1;
     }
 

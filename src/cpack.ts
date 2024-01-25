@@ -6,7 +6,6 @@ import * as nls from 'vscode-nls';
 import { PackagePreset } from './preset';
 import { expandString } from './expand';
 import * as proc from '@cmt/proc';
-import { ProjectController } from './projectController';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -24,20 +23,18 @@ class CPackOutputLogger implements OutputConsumer {
 }
 
 export class CPackDriver implements vscode.Disposable {
-    /**
-     * @param projectController Do we need this?
-     */
-    constructor(readonly ws: DirectoryContext, private readonly projectController?: ProjectController) {}
+    constructor(readonly ws: DirectoryContext) {}
 
-    // packaging can be ever disabled?
+    // TODO: evaluate whether files like CPackSourceConfig.cmake or CPackConfig.cmake should have any impact on the package presets functionality
+    // same as CTestTestfile.cmake looks to have on test presets. Remove if not necessary and also review testingEnabled in ctest.ts
+    // (it is set/unset according to some logic but never queried).
     private _packagingEnabled: boolean = false;
     get packagingEnabled(): boolean {
-        this.projectController; // declared never read warning
         return this._packagingEnabled;
     }
     set packagingEnabled(v: boolean) {
         this._packagingEnabled = v;
-        this.packagingEnabledEmitter.fire(v); // need this?
+        this.packagingEnabledEmitter.fire(v);
     }
 
     private readonly packagingEnabledEmitter = new vscode.EventEmitter<boolean>();
@@ -62,7 +59,8 @@ export class CPackDriver implements vscode.Disposable {
             args.push(await expandString(value, opts));
         }
 
-        cpackArgs = []; //[`--preset ${packagePreset.name}`];
+        // Note: in CMake Tools, we don't run cmake or cpack with --preset argument. We generate the equivalent command line from all the properties
+        cpackArgs = [];
         if (packagePreset.vendorName) {
             cpackArgs.push("--vendor", `${packagePreset.vendorName}`);
         }
@@ -139,6 +137,6 @@ export class CPackDriver implements vscode.Disposable {
         }
 
         return res.retc;
-}
+    }
 }
 
