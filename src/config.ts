@@ -698,11 +698,11 @@ export function checkTestOverridesPresent(config: ConfigurationReader): boolean 
 }
 
 export function checkPackageOverridesPresent(config: ConfigurationReader): boolean {
-   if (Object.values(config.packEnvironment).length > 0 || config.cpackArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
-       return true;
-   }
+    if (Object.values(config.packEnvironment).length > 0 || config.cpackArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
 
-   return false;
+    return false;
 }
 
 export function checkGeneralEnvironmentOverridesPresent(config: ConfigurationReader): boolean {
