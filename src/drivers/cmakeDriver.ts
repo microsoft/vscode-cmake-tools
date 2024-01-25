@@ -9,7 +9,7 @@ import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
-import { ConfigurationReader, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
+import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
@@ -34,7 +34,7 @@ import { getValue } from '@cmt/preset';
 import { CacheEntry } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
-
+import { onBuildSettingsChange, onTestSettingsChange } from '@cmt/ui/util';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
@@ -54,6 +54,21 @@ export enum CMakePreconditionProblems {
 interface CompilerInfo {
     name: string;
     version: string;
+}
+
+export enum ConfigureResultType {
+    NormalOperation,
+    ForcedCancel,
+    ConfigureInProgress,
+    BuildInProgress,
+    NoCache,
+    NoConfigurePreset,
+    Other
+}
+
+export interface ConfigureResult {
+    result: number;
+    resultType: ConfigureResultType;
 }
 
 export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<void>;
@@ -112,7 +127,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      *
      * @returns The exit code from CMake
      */
-    protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: preset.ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number>;
+    protected abstract doConfigure(extra_args: string[], trigger?: ConfigureTrigger, consumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: preset.ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number>;
     protected abstract doCacheConfigure(): Promise<number>;
 
     private _isConfiguredAtLeastOnce = false;
@@ -184,7 +199,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Construct the driver. Concrete instances should provide their own creation
      * routines.
      */
-    protected constructor(public readonly cmake: CMakeExecutable,
+    protected constructor(public cmake: CMakeExecutable,
         readonly config: ConfigurationReader,
         protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
         private readonly isMultiProject: boolean,
@@ -229,7 +244,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         for (const term of this._compileTerms.values()) {
             term.dispose();
         }
-        for (const sub of [this._settingsSub, this._argsSub, this._envSub]) {
+        for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._generalEnvSub]) {
             sub.dispose();
         }
         rollbar.invokeAsync(localize('async.disposing.cmake.driver', 'Async disposing CMake driver'), () => this.asyncDispose());
@@ -261,6 +276,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         let envs;
         if (this.useCMakePresets) {
             envs = EnvironmentUtils.create(configurePreset ? configurePreset.environment : this._configurePreset?.environment);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs)]);
         } else {
             envs = this._kitEnvironmentVariables;
             /* NOTE: By mergeEnvironment one by one to enable expanding self containd variable such as PATH properly */
@@ -280,7 +297,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async getCMakeBuildCommandEnvironment(in_env?: Environment): Promise<Environment> {
         if (this.useCMakePresets) {
-            return EnvironmentUtils.merge([in_env, this._buildPreset?.environment]);
+            let envs = EnvironmentUtils.merge([in_env, this._buildPreset?.environment]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs)]);
+            return envs;
         } else {
             let envs = EnvironmentUtils.merge([in_env, this._kitEnvironmentVariables]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
@@ -295,7 +315,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async getCTestCommandEnvironment(): Promise<Environment> {
         if (this.useCMakePresets) {
-            return EnvironmentUtils.create(this._testPreset?.environment);
+            let envs = EnvironmentUtils.create(this._testPreset?.environment);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs)]);
+
+            if (this.useCMakePresets && this.testPreset !== null && checkTestOverridesPresent(this.config)) {
+                log.info(localize('test.with.overrides', 'NOTE: You are testing with preset {0}, but there are some overrides being applied from your VS Code settings.', this.testPreset.displayName ?? this.testPreset.name));
+            }
+
+            return envs;
         } else {
             let envs = this._kitEnvironmentVariables;
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
@@ -469,6 +497,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     async runCompileCommand(cmd: CompileCommand): Promise<vscode.Terminal> {
         const env = await this.getCMakeBuildCommandEnvironment();
+
+        if (this.useCMakePresets && this._buildPreset && checkBuildOverridesPresent(this.config)) {
+            log.info(localize('compile.with.overrides', 'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.', this._buildPreset.displayName ?? this._buildPreset.name));
+        }
+
         const key = `${cmd.directory}${JSON.stringify(env)}`;
         let existing = this._compileTerms.get(key);
         if (existing && this.config.clearOutputBeforeBuild) {
@@ -986,14 +1019,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Perform a clean configure. Deletes cached files before running the config
      * @param consumer The output consumer
      */
-    public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation): Promise<number> {
+    public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
         if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-            return -1;
+            return { result: -1, resultType: ConfigureResultType.ForcedCancel };
         }
         if (this.cmakeBuildRunner.isBuildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
-            return -1;
+            return { result: -1, resultType: ConfigureResultType.ConfigureInProgress };
         }
         this.isConfigInProgress = true;
         await this.doPreCleanConfigure();
@@ -1342,10 +1375,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             true : false;
     }
 
-    public generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): string[] {
+    public async generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): Promise<string[]> {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = this.generateInitCacheFlags();
-        return init_cache_flags.concat(preset.configureArgs(configPreset));
+        // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
+        return init_cache_flags.concat(preset.configureArgs(configPreset), await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()}))));
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
@@ -1365,21 +1399,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<number> {
+    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<ConfigureResult> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
         if (trigger === ConfigureTrigger.configureWithCache && !shouldUseCachedConfiguration) {
             log.debug(localize('no.cached.config', "No cached config could be used for IntelliSense"));
-            return -2;
+            return { result: -2, resultType: ConfigureResultType.NoCache };
         }
         if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-            return -1;
+            return { result: -1, resultType: ConfigureResultType.ConfigureInProgress };
         }
         if (this.cmakeBuildRunner.isBuildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
-            return -1;
+            return { result: -1, resultType: ConfigureResultType.BuildInProgress };
         }
         this.isConfigInProgress = true;
         try {
@@ -1396,7 +1430,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             const pre_check_ok = await this._beforeConfigureOrBuild(showCommandOnly);
             if (!pre_check_ok) {
-                return -2;
+                return { result: -2, resultType: ConfigureResultType.Other };
             }
 
             let expanded_flags: string[];
@@ -1406,10 +1440,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? presetOverride : this._configurePreset;
                 if (!configurePreset) {
                     log.debug(localize('no.config.Preset', 'No configure preset selected'));
-                    return -3;
+                    return { result: -3, resultType: ConfigureResultType.NoConfigurePreset };
                 }
                 // For now, fields in presets are expanded when the preset is selected
-                expanded_flags = this.generateConfigArgsFromPreset(configurePreset);
+                expanded_flags = await this.generateConfigArgsFromPreset(configurePreset);
+
+                if (!showCommandOnly && !shouldUseCachedConfiguration && checkConfigureOverridesPresent(this.config)) {
+                    log.info(localize('configure.with.overrides', 'NOTE: You are configuring with preset {0}, but there are some overrides being applied from your VS Code settings.', configurePreset.displayName ?? configurePreset.name));
+                }
             } else {
                 expanded_flags = await this.generateConfigArgsFromSettings(extra_args, withoutCmakeSettings);
             }
@@ -1425,9 +1463,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (shouldUseCachedConfiguration) {
                 retc = await this.doCacheConfigure();
                 this._isConfiguredAtLeastOnce = true;
-                return retc;
+                return { result: retc, resultType: ConfigureResultType.NormalOperation };
             } else {
-                retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly, defaultPresetName, presetOverride, options, debuggerInformation);
+                retc = await this.doConfigure(expanded_flags, trigger, consumer, showCommandOnly, defaultPresetName, presetOverride, options, debuggerInformation);
                 this._isConfiguredAtLeastOnce = true;
             }
             const timeEnd: number = new Date().getTime();
@@ -1556,10 +1594,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
-            return retc;
+            return { result: retc, resultType: ConfigureResultType.NormalOperation };
         } catch {
             log.info(localize('configure.failed', 'Failed to configure project'));
-            return -1;
+            return { result: -1, resultType: ConfigureResultType.NormalOperation };
         } finally {
             this.isConfigInProgress = false;
         }
@@ -1755,14 +1793,31 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return true;
     }
 
-    protected abstract doConfigureSettingsChange(): void;
+    protected abstract doConfigureSettingsChange(): Promise<void>;
 
-    /**
+    /**g
      * Subscribe to changes that affect the CMake configuration
      */
-    private readonly _settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
-    private readonly _argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
-    private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
+    private readonly _settingsSub = this.config.onChange('configureSettings', async () => this.doConfigureSettingsChange());
+    private readonly _argsSub = this.config.onChange('configureArgs', async () => this.doConfigureSettingsChange());
+    private readonly _envSub = this.config.onChange('configureEnvironment', async () => this.doConfigureSettingsChange());
+    private readonly _buildArgsSub = this.config.onChange('buildArgs', async () => {
+        await onBuildSettingsChange();
+    });
+    private readonly _buildEnvSub = this.config.onChange('buildEnvironment', async () => {
+        await onBuildSettingsChange();
+    });
+    private readonly _testArgsSub = this.config.onChange('ctestArgs', async () => {
+        await onTestSettingsChange();
+    });
+    private readonly _testEnvSub = this.config.onChange('testEnvironment', async () => {
+        await onTestSettingsChange();
+    });
+    private readonly _generalEnvSub = this.config.onChange('environment', async () => {
+        await this.doConfigureSettingsChange();
+        await onBuildSettingsChange();
+        await onTestSettingsChange();
+    });
     private cmakeBuildRunner: CMakeBuildRunner = new CMakeBuildRunner();
     protected configureProcess: proc.Subprocess | null = null;
 
@@ -1786,9 +1841,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
         } else {
             buildPreset.__targets = buildPreset.targets;
         }
-        const args = preset.buildArgs(buildPreset);
+        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs);
+        const initialEnvironment = EnvironmentUtils.create(buildPreset.environment);
+        const build_env = await this.getCMakeBuildCommandEnvironment(initialEnvironment);
+        const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...this.expansionOptions, envOverride: build_env }));
+        const expanded_args = await Promise.all(expanded_args_promises) as string[];
         log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
-        return { command: this.cmake.path, args, build_env: EnvironmentUtils.create(buildPreset.environment) };
+
+        if (checkBuildOverridesPresent(this.config)) {
+            log.info(localize('build.with.overrides', 'NOTE: You are building with preset {0}, but there are some overrides being applied from your VS Code settings.', buildPreset.displayName ?? buildPreset.name));
+        }
+
+        return { command: this.cmake.path, args: expanded_args, build_env};
     }
 
     async generateBuildCommandFromSettings(targets?: string[]): Promise<proc.BuildCommand | null> {

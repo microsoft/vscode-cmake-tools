@@ -12,7 +12,7 @@ import { assertNever } from '@cmt/util';
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
 
-    version: api.Version = api.Version.v1;
+    version: api.Version = api.Version.v2;
 
     showUIElement(element: api.UIElement): Promise<void> {
         return this.setUIElementVisibility(element, true);
@@ -39,6 +39,10 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
         return project ? new CMakeProjectWrapper(project) : undefined;
     }
 
+    getActiveFolderPath(): string {
+        return this.manager.activeFolderPath();
+    }
+
     private async setUIElementVisibility(element: api.UIElement, visible: boolean): Promise<void> {
         switch (element) {
             case api.UIElement.StatusBarDebugButton:
@@ -53,7 +57,7 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     }
 }
 
-async function withErrorCheck(name: string, action: () => Thenable<number>): Promise<void> {
+async function withErrorCheck(name: string, action: () => Promise<number>): Promise<void> {
     const code = await action();
     if (code !== 0) {
         throw new Error(`${name} failed with code ${code}`);
@@ -72,7 +76,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     configure(): Promise<void> {
-        return withErrorCheck('configure', () => this.project.configure());
+        return withErrorCheck('configure', async () => (await this.project.configure()).result);
     }
 
     build(targets?: string[]): Promise<void> {
@@ -88,7 +92,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     reconfigure(): Promise<void> {
-        return withErrorCheck('reconfigure', () => this.project.cleanConfigure());
+        return withErrorCheck('reconfigure', async () => (await this.project.cleanConfigure()).result);
     }
 
     async getBuildDirectory(): Promise<string | undefined> {

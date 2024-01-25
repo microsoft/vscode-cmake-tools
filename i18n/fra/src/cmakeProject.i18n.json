@@ -82,6 +82,7 @@
 	"run.configure": "Configuration du projet : {0}",
 	"unexpected.configure.type": "Type de configuration inattendu",
 	"yes.configureWithDebugger.button": "Déboguer",
+	"options.configureWithDebuggerOnFail.do.not.show": "Ne plus afficher",
 	"configure.failed.tryWithDebugger": "Échec de la configuration. Voulez-vous essayer de configurer avec le débogueur CMake ?",
 	"no.configureWithDebugger.button": "Annuler",
 	"finishing.configure": "Fin de la configuration",

@@ -9,7 +9,7 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { ExpansionOptions } from '@cmt/expand';
+import { ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
@@ -323,6 +323,12 @@ export class PresetsController {
                                 CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined),
                                 CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX'] || (chosen_kit.kit.visualStudio ? 'cl.exe' : undefined)
                             };
+                            if (util.isString(cacheVariables['CMAKE_C_COMPILER'])) {
+                                cacheVariables['CMAKE_C_COMPILER'] = cacheVariables['CMAKE_C_COMPILER'].replace(/\\/g, '/');
+                            }
+                            if (util.isString(cacheVariables['CMAKE_CXX_COMPILER'])) {
+                                cacheVariables['CMAKE_CXX_COMPILER'] = cacheVariables['CMAKE_CXX_COMPILER'].replace(/\\/g, '/');
+                            }
                             isMultiConfigGenerator = util.isMultiConfGeneratorFast(generator);
                             if (!isMultiConfigGenerator) {
                                 cacheVariables['CMAKE_BUILD_TYPE'] = 'Debug';
@@ -392,6 +398,9 @@ export class PresetsController {
                 await this.addPresetAddUpdate(newPreset, 'configurePresets');
 
                 if (isMultiConfigGenerator) {
+                    // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
+                    await this.reapplyPresets();
+
                     const buildPreset: preset.BuildPreset = {
                         name: `${newPreset.name}-debug`,
                         displayName: `${newPreset.displayName} - Debug`,
@@ -1428,7 +1437,12 @@ export class PresetsController {
 
         // Merge the includes in reverse order so that the final presets order is correct
         for (let i = presetsFile.include.length - 1; i >= 0; i--) {
-            const fullIncludePath = path.normalize(path.resolve(path.dirname(file), presetsFile.include[i]));
+            const rawInclude = presetsFile.include[i];
+            const includePath = presetsFile.version >= 7 ?
+                // Version 7 and later support $penv{} expansions in include paths
+                substituteAll(rawInclude, getParentEnvSubstitutions(rawInclude, new Map<string, string>())).result :
+                rawInclude;
+            const fullIncludePath = path.normalize(path.resolve(path.dirname(file), includePath));
 
             // Do not include files more than once
             if (referencedFiles.has(fullIncludePath)) {

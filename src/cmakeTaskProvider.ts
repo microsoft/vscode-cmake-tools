@@ -8,7 +8,7 @@ import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
-import { getActiveProject } from './extension';
+import { extensionManager, getActiveProject } from './extension';
 import { CMakeProject, ConfigureTrigger } from './cmakeProject';
 import * as preset from '@cmt/preset';
 import { UseCMakePresets } from './config';
@@ -136,14 +136,17 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const result: CMakeTask[] = [];
         const project: CMakeProject | undefined = getActiveProject();
         const targets: string[] | undefined = await project?.getDefaultBuildTargets() || ["all"];
-        result.push(await CMakeTaskProvider.provideTask(CommandType.config, project?.useCMakePresets));
-        result.push(await CMakeTaskProvider.provideTask(CommandType.build, project?.useCMakePresets, targets));
-        result.push(await CMakeTaskProvider.provideTask(CommandType.install, project?.useCMakePresets));
-        result.push(await CMakeTaskProvider.provideTask(CommandType.test, project?.useCMakePresets));
-        result.push(await CMakeTaskProvider.provideTask(CommandType.package, project?.useCMakePresets));
-        result.push(await CMakeTaskProvider.provideTask(CommandType.workflow, project?.useCMakePresets));
-        result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project?.useCMakePresets));
-        result.push(await CMakeTaskProvider.provideTask(CommandType.cleanRebuild, project?.useCMakePresets, targets));
+        if (extensionManager?.workspaceHasAtLeastOneProject()) {
+            result.push(await CMakeTaskProvider.provideTask(CommandType.config, project?.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.build, project?.useCMakePresets, targets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.install, project?.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.test, project?.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.package, project?.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.workflow, project?.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project?.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.cleanRebuild, project?.useCMakePresets, targets));
+        }
+
         return result;
     }
 
@@ -441,8 +444,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
             } else {
-                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result) + endOfLine);
-                this.closeEmitter.fire(result);
+                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result.result) + endOfLine);
+                this.closeEmitter.fire(result.result);
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));

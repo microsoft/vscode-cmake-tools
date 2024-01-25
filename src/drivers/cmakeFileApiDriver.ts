@@ -30,6 +30,9 @@ import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, Work
 import * as nls from 'vscode-nls';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
+import { ConfigureTrigger } from '@cmt/cmakeProject';
+import { logCMakeDebuggerTelemetry } from '@cmt/debug/cmakeDebuggerTelemetry';
+import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -126,7 +129,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             await this.loadGeneratorInformationFromCache(this.cachePath);
             const code_model_exist = await this.updateCodeModel();
             if (!code_model_exist && this.config.configureOnOpen === true) {
-                await this.doConfigure([], undefined);
+                await this.doConfigure([], undefined, undefined);
             }
         } else {
             // Do not delete the cache if configureOnOpen is false, which signals a project that may be
@@ -156,8 +159,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
         });
     }
 
-    doConfigureSettingsChange() {
+    async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
+        await onConfigureSettingsChange();
     }
     async checkNeedsReconfigure(): Promise<boolean> {
         return this._needsReconfigure;
@@ -210,7 +214,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return 0;
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number> {
+    async doConfigure(args_: string[], trigger?: ConfigureTrigger, outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions, debuggerInformation?: DebuggerInformation): Promise<number> {
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         const api_path = this.getCMakeFileApiPath(binaryDir);
         await createQueryFileForApi(api_path);
@@ -285,12 +289,16 @@ export class CMakeFileApiDriver extends CMakeDriver {
                     // if there isn't a `debuggerIsReady` callback provided, this means that this invocation was
                     // started by a command, rather than by a launch configuration, and the debug session will start from here.
                     if (debuggerInformation.debuggerIsReady) {
+                        // This cmake debug invocation came from a launch configuration. All telemetry is handled in the createDebugAdapterDescriptor handler.
                         debuggerInformation.debuggerIsReady();
                     } else {
+                        const cmakeDebugType = "configure";
+                        logCMakeDebuggerTelemetry(trigger ?? "", cmakeDebugType);
                         await vscode.debug.startDebugging(undefined, {
                             name: localize("cmake.debug.name", "CMake Debugger"),
                             request: "launch",
                             type: "cmake",
+                            cmakeDebugType,
                             pipeName: debuggerInformation.pipeName,
                             fromCommand: true
                         });

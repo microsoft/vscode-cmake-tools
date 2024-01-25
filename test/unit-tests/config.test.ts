@@ -25,7 +25,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         cpackPath: '',
         ctest: {
             parallelJobs: 0,
-            allowParallelJobs: false
+            allowParallelJobs: false,
+            testExplorerIntegrationEnabled: true
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
@@ -53,6 +54,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         showSystemKits: true,
         ignoreKitEnv: false,
         additionalKits: [],
+        pinnedCommands: [],
         buildTask: false,
         outputLogEncoding: 'auto',
         enableTraceLogging: false,
@@ -60,11 +62,11 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         touchbar: {
             visibility: "default"
         },
-        statusbar: {
+        showOptionsMovedNotification: true,
+        options: {
             advanced: {},
-            visibility: "default"
+            statusBarVisibility: "visible"
         },
-        useProjectStatusView: true,
         useCMakePresets: 'never',
         allowCommentsInPresetsFile: false,
         allowUnsupportedPresetsVersions: false,

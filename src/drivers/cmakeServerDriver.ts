@@ -25,6 +25,8 @@ import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
+import { ConfigureTrigger } from '@cmt/cmakeProject';
+import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -157,7 +159,7 @@ export class CMakeServerDriver extends CMakeDriver {
         })();
     }
 
-    protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean, _defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, _options?: proc.ExecutionOptions) {
+    protected async doConfigure(args: string[], _trigger?: ConfigureTrigger, consumer?: proc.OutputConsumer, showCommandOnly?: boolean, _defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, _options?: proc.ExecutionOptions) {
         await this._clientChangeInProgress;
         const cl = await this.getClient();
         const sub = this.onMessage(msg => {
@@ -306,8 +308,9 @@ export class CMakeServerDriver extends CMakeDriver {
      * Track if the user changes the settings of the configure via settings.json
      */
     private _hadConfigurationChanged = true;
-    protected doConfigureSettingsChange() {
+    protected async doConfigureSettingsChange(): Promise<void> {
         this._hadConfigurationChanged = true;
+        await onConfigureSettingsChange();
     }
 
     async checkNeedsReconfigure(): Promise<boolean> {

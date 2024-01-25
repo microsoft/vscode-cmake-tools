@@ -213,7 +213,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
 }
 
 export class SourceFileNode extends BaseNode {
-    constructor(readonly prefix: string, readonly sourcePath: string, readonly filePath: string, private readonly _language?: string) {
+    constructor(readonly prefix: string, readonly folder: vscode.WorkspaceFolder, readonly sourcePath: string, readonly filePath: string, private readonly _language?: string) {
         // id: {prefix}::filename:directory of file relative to Target
         super(`${prefix}::${path.basename(filePath)}:${path.relative(sourcePath, path.dirname(filePath))}`);
     }
@@ -361,11 +361,11 @@ export class TargetNode extends BaseNode {
                 }
                 const src_dir = path.dirname(src);
                 const relpath = path.relative(this.sourceDir, src_dir);
-                addToTree(tree, relpath, new SourceFileNode(this.id, this.sourceDir, src, grp.language));
+                addToTree(tree, relpath, new SourceFileNode(this.id, this.folder, this.sourceDir, src, grp.language));
             }
         }
 
-        addToTree(tree, '', new SourceFileNode(this.id, this.sourceDir, path.join(this.sourceDir, 'CMakeLists.txt')));
+        addToTree(tree, '', new SourceFileNode(this.id, this.folder, this.sourceDir, path.join(this.sourceDir, 'CMakeLists.txt')));
 
         collapseTreeInplace(tree);
 
@@ -392,7 +392,7 @@ export class TargetNode extends BaseNode {
     }
 }
 
-class ProjectNode extends BaseNode {
+export class ProjectNode extends BaseNode {
     constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDirectory: string) {
         // id: project_name:project_directory
         super(`${name}:${sourceDirectory}`);
@@ -414,6 +414,7 @@ class ProjectNode extends BaseNode {
             item.label += ` — (${localize('empty.project', 'Empty project')})`;
         }
         item.tooltip = `${this.name}\n${this.sourceDirectory}`;
+        item.contextValue = 'nodeType=project';
         return item;
     }
 

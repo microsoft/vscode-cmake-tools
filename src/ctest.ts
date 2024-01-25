@@ -14,6 +14,7 @@ import { testArgs, TestPreset } from './preset';
 import { expandString } from './expand';
 import * as proc from '@cmt/proc';
 import { ProjectController } from './projectController';
+import { extensionManager } from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -246,29 +247,29 @@ export class CTestDriver implements vscode.Disposable {
 
     private async getCTestArgs(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[] | undefined> {
         let ctestArgs: string[];
+        const opts = driver.expansionOptions;
+        const initialArgs = await Promise.all(this.ws.config.ctestDefaultArgs.map(async (value) => expandString(value, driver.expansionOptions)));
+        const additionalArgs = await Promise.all(this.ws.config.ctestArgs.map(async (value) => expandString(value, driver.expansionOptions)));
+
+        ctestArgs = initialArgs.slice(0);
+
         if (customizedTask && testPreset) {
-            ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
+            ctestArgs = ctestArgs.concat(testArgs(testPreset));
         } else if (!customizedTask && driver.useCMakePresets) {
             if (!driver.testPreset) {
                 // Test explorer doesn't handle errors well, so we need to deal with them ourselves
                 return undefined;
             }
             // Add a few more args so we can show the result in status bar
-            ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
+            ctestArgs = ctestArgs.concat(testArgs(driver.testPreset));
         } else {
             const configuration = driver.currentBuildType;
-            const opts = driver.expansionOptions;
             const jobs = await expandString(this.ws.config.numCTestJobs, opts);
-            const defaultArgs = [];
-            for (const value of this.ws.config.ctestDefaultArgs) {
-                defaultArgs.push(await expandString(value, opts));
-            }
-            const args = [];
-            for (const value of this.ws.config.ctestArgs) {
-                args.push(await expandString(value, opts));
-            }
-            ctestArgs = [`-j${jobs}`, '-C', configuration].concat(defaultArgs, args);
+            ctestArgs = [`-j${jobs}`, '-C', configuration].concat(ctestArgs);
         }
+
+        ctestArgs = ctestArgs.concat(additionalArgs);
+
         return ctestArgs;
     }
 
@@ -278,69 +279,63 @@ export class CTestDriver implements vscode.Disposable {
             log.showChannel();
         }
 
-        if (!testExplorer) {
-            await this.refreshTests(driver);
-        }
-
-        if (!testExplorer) {
-            log.info(localize('no.tests.found', 'No tests found'));
-            return -1;
-        } else if (!this.ws.config.ctestAllowParallelJobs) {
-            const tests = this.testItemCollectionToArray(testExplorer.items);
-            const run = testExplorer.createTestRun(new vscode.TestRunRequest());
-            const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-            const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
-            run.end();
-            return returnCode;
-        } else {
-            // below code taken from #3032 PR (before changes in how tests are run)
-            const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
-            if (ctestpath === null) {
-                log.info(localize('ctest.path.not.set', 'CTest path is not set'));
-                return -2;
+        if (this.ws.config.testExplorerIntegrationEnabled) {
+            if (!testExplorer) {
+                await this.refreshTests(driver);
             }
 
-            let ctestArgs: string[];
-            if (customizedTask && testPreset) {
-                ctestArgs = ['-T', 'test'].concat(testArgs(testPreset));
-            } else if (!customizedTask && driver.useCMakePresets) {
-                if (!driver.testPreset) {
-                    log.error(localize('test.preset.not.set', 'Test preset is not set'));
-                    return -3;
-                }
-                // Add a few more args so we can show the result in status bar
-                ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
-            } else {
-                const configuration = driver.currentBuildType;
-                const opts = driver.expansionOptions;
-                const jobs = await expandString(this.ws.config.numCTestJobs, opts);
-                const defaultArgs = [];
-                for (const value of this.ws.config.ctestDefaultArgs) {
-                    defaultArgs.push(await expandString(value, opts));
-                }
-                const args = [];
-                for (const value of this.ws.config.ctestArgs) {
-                    args.push(await expandString(value, opts));
-                }
-                ctestArgs = [`-j${jobs}`, '-C', configuration].concat(defaultArgs, args);
-            }
-
-            const child = driver.executeCommand(
-                ctestpath,
-                ctestArgs,
-                ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
-                { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
-            const res = await child.result;
-            // not sure if direct comparison can be made to replace reloadTests with refreshTests
-            await this.refreshTests(driver);
-            if (res.retc === null) {
-                log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
+            if (!testExplorer) {
+                log.info(localize('no.tests.found', 'No tests found'));
                 return -1;
-            } else {
-                log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
             }
-            return res.retc;
+
+            if (!this.ws.config.ctestAllowParallelJobs) {
+                const tests = this.testItemCollectionToArray(testExplorer.items);
+                const run = testExplorer.createTestRun(new vscode.TestRunRequest());
+                const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
+                const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
+                run.end();
+                return returnCode;
+            } else {
+                const retc = await this.runCTestDirectly(driver, customizedTask, testPreset, consumer);
+
+                // not sure if direct comparison can be made to replace reloadTests with refreshTests
+                await this.refreshTests(driver);
+                return retc;
+            }
+        } else {
+            return this.runCTestDirectly(driver, customizedTask, testPreset, consumer);
         }
+    }
+
+    private async runCTestDirectly(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
+        // below code taken from #3032 PR (before changes in how tests are run)
+        const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
+        if (ctestpath === null) {
+            log.info(localize('ctest.path.not.set', 'CTest path is not set'));
+            return -2;
+        }
+
+        const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
+
+        if (!driver.testPreset) {
+            log.error('test.preset.not.set', 'Test preset is not set');
+            return -3;
+        }
+
+        const child = driver.executeCommand(
+            ctestpath,
+            ctestArgs,
+            ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
+            { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
+        const res = await child.result;
+        if (res.retc === null) {
+            log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
+            return -1;
+        } else {
+            log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
+        }
+        return res.retc;
     }
 
     private ctestsEnqueued(tests: vscode.TestItem[], run: vscode.TestRun) {
@@ -536,6 +531,13 @@ export class CTestDriver implements vscode.Disposable {
      * @returns 0 when successful
      */
     async refreshTests(driver: CMakeDriver): Promise<number> {
+        // NOTE: If the cmake.ctest.testExplorerIntegrationEnabled is disabled, we should return early and not initialize
+        // the testExplorer.
+        if (!driver.config.testExplorerIntegrationEnabled) {
+            // Test Explorer integration is disabled
+            return -1;
+        }
+
         if (util.isTestMode()) {
             // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
             return 0;
@@ -638,6 +640,7 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     clearTests(driver: CMakeDriver) {
+        // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return;
         }
@@ -701,6 +704,7 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
+        // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return;
         }
@@ -714,8 +718,12 @@ export class CTestDriver implements vscode.Disposable {
 
         const run = testExplorer.createTestRun(request);
         this.ctestsEnqueued(tests, run);
-        await this.buildTests(tests, run);
-        await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+        const buildSucceeded = await this.buildTests(tests, run);
+        if (buildSucceeded) {
+            await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+        } else {
+            log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
+        }
         run.end();
     };
 
@@ -931,6 +939,7 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private async debugTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
+        // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return;
         }
@@ -940,12 +949,16 @@ export class CTestDriver implements vscode.Disposable {
 
         const run = testExplorer.createTestRun(request);
         this.ctestsEnqueued(tests, run);
-        await this.buildTests(tests, run);
-        await this.debugCTestHelper(tests, run, cancellation);
+        const buildSucceeded = await this.buildTests(tests, run);
+        if (buildSucceeded) {
+            await this.debugCTestHelper(tests, run, cancellation);
+        } else {
+            log.info(localize('test.skip.debug.build.failure', "Not debugging tests due to build failure."));
+        }
         run.end();
     };
 
-    private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun) {
+    private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
         // Folder => status
         const builtFolder = new Map<string, number>();
         let status: number = 0;
@@ -957,6 +970,9 @@ export class CTestDriver implements vscode.Disposable {
                     status = 1;
                 } else {
                     try {
+                        if (extensionManager !== undefined && extensionManager !== null) {
+                            extensionManager.cleanOutputChannel();
+                        }
                         const buildResult = await project.build(undefined, false, false);
                         if (buildResult !== 0) {
                             status = 2;
@@ -973,6 +989,8 @@ export class CTestDriver implements vscode.Disposable {
                 this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
             }
         }
+
+        return Array.from(builtFolder.values()).filter(v => v !== 0).length === 0;
     }
 
     /**
@@ -980,6 +998,7 @@ export class CTestDriver implements vscode.Disposable {
      * Should only be called by refreshTests since it adds tests to the controller.
      */
     private ensureTestExplorerInitialized(): vscode.TestController {
+        // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             testExplorer = vscode.tests.createTestController('cmake-tools.CTest', 'CTest');
 
@@ -1011,6 +1030,7 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     addTestExplorerRoot(folder: string) {
+        // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return;
         }
@@ -1020,6 +1040,7 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     removeTestExplorerRoot(folder: string) {
+        // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return;
         }
@@ -1033,6 +1054,7 @@ export class CTestDriver implements vscode.Disposable {
      * Since there's no way to reveal the explorer itself, this function reveals the first test in the test explorer.
      */
     async revealTestExplorer(): Promise<boolean> {
+        // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return false;
         }
@@ -1049,3 +1071,10 @@ export class CTestDriver implements vscode.Disposable {
 
 // Only have one instance of the test controller
 let testExplorer: vscode.TestController | undefined;
+
+export function deIntegrateTestExplorer(): void {
+    if (testExplorer) {
+        testExplorer.dispose();
+        testExplorer = undefined;
+    }
+}
