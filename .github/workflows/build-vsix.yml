@@ -23,7 +23,7 @@ jobs:
 
       - name: Get Short SHA
         id: get-short-sha
-        run: echo "::set-output name=sha::$(git rev-parse --short ${GITHUB_SHA})"
+        run: echo "sha=$(git rev-parse --short ${GITHUB_SHA})" >> $GITHUB_OUTPUT
 
       - name: Update the package version
         uses: jacobtomlinson/gha-find-replace@master
