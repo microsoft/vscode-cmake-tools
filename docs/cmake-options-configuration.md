@@ -13,13 +13,13 @@ The default settings will be set to the following:
 "cmake.options.statusBarVisibility": "hidden"
 "cmake.options.advanced": {
     "build": {
-        "statusBarVisibility": "visible"
+        "statusBarVisibility": "inherit"
     },
     "launch": {
-        "statusBarVisibility": "visible"
+        "statusBarVisibility": "inherit"
     },
     "debug": {
-        "statusBarVisibility": "visible"
+        "statusBarVisibility": "inherit"
     }
 }
 ```
@@ -34,7 +34,11 @@ To revert to the prior experience and have all of your presets display in the st
 
 You can configure settings for each of the following CMake actions in your settings.json to either be `visible` or `hidden` in the status bar through the `statusBarVisibility` variable.  Settings that are available to be hidden from the project status view side bar can be configured to be `visible` or `hidden` through the `projectStatusVisibility` variable.
  
-To make options visible in the status bar take up less space, you can configure certain options to be only the respective icon through the `icon` option in `statusBarVisibility` or specify a given character length through the `compact` option in `statusBarVisibility`. If a `statusBarVisibility` option is set to `compact` you can then specify an integer length for how many characters you want an option to take up through the `statusBarLength` option. It will truncate your existing status bar option to that specified character length. The default option is 20 characters.
+To make options visible in the status bar take up less space, you can configure certain options to be only the respective icon through the `icon` option in `statusBarVisibility`, inherit the more general `Cmake > Options : Status Bar Visibility` setting or the `inheritDefault` setting through the `inherit` option in `statusBarVisibility`, or specify a given character length through the `compact` option in `statusBarVisibility`. 
+
+If a `statusBarVisibility` option is set to `inherit`, it will inherit the more general `Cmake > Options : Status Bar Visibility` setting if it is not set to `hidden`. If the more general `Cmake > Options : Status Bar Visibility` setting is set to `hidden`, then the `inherit` option will default to what is set in the `inheritDefault` setting. The default option for `inheritDefault` is `visible`. 
+
+If a `statusBarVisibility` option is set to `compact` you can then specify an integer length for how many characters you want an option to take up through the `statusBarLength` option. It will truncate your existing status bar option to that specified character length. The default option for `statusBarLength` is 20 characters. Note, if the `statusBarVisibility` option is set specifically for `variant`, `compact` will remove the status message completely instead of truncating (there is no corresponding `statusBarLength` setting).
 
 You can also configure options to be `visible` or `hidden` in the Project Status View in the CMake Tools sidebar. The options that allow for this customization are:
 *`folder`
@@ -53,7 +57,8 @@ The full level of options for the CMake status can be seen below:
 "cmake.options.advanced": { 
 
         "folder": { 
-            "statusBarVisibility": "visible", "icon", "compact", "hidden", 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20,
             "projectStatusVisibility": "visible", "hidden" 
         }, 
@@ -61,48 +66,59 @@ The full level of options for the CMake status can be seen below:
             "projectStatusVisibility": "visible", "hidden" 
         }, 
         "configurePreset": { 
-            "statusBarVisibility": "visible", "icon", "compact", "hidden", 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20
         }, 
         "kit": { 
-            "statusBarVisibility": "visible", "icon", "compact", "hidden", 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20 
         }, 
         "variant": { 
-            "statusBarVisibility": "visible", "icon", "compact", "hidden" 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
         }, 
         "build": { 
-            "statusBarVisibility": "visible", "icon", "hidden",
+            "statusBarVisibility": "visible", "icon", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "hidden", 
             "projectStatusVisibility": "visible", "hidden" 
         }, 
         "buildPreset": { 
-            "statusBarVisibility": "visible", "icon", "compact", "hidden", 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20 
         }, 
         "buildTarget": { 
-            "statusBarVisibility": "visible", "compact", "hidden", 
+            "statusBarVisibility": "visible", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "compact", "hidden", 
             "statusBarLength": 20 
         }, 
         "ctest": { 
-            "statusBarVisibility": "visible", "icon", "compact", "hidden", 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20, 
             "color": true, false, 
             "projectStatusVisibility": "visible", "hidden" 
         }, 
         "testPreset": { 
-            "statusBarVisibility": "visible", "icon", "compact", "hidden", 
+            "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20
         },
         "launchTarget": { 
-            "statusBarVisibility": "visible", "compact", "hidden", 
+            "statusBarVisibility": "visible", "compact", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "statusBarLength": 20 
         }, 
         "debug": { 
-            "statusBarVisibility": "visible", "hidden", 
+            "statusBarVisibility": "visible", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "projectStatusVisibility": "visible", "hidden" 
         },
         "launch": {
-            "statusBarVisibility": "visible", "hidden", 
+            "statusBarVisibility": "visible", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
             "projectStatusVisibility": "visible", "hidden" 
         }
 }

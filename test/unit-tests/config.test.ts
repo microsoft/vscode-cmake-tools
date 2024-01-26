@@ -24,7 +24,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         ctestPath: '',
         ctest: {
             parallelJobs: 0,
-            allowParallelJobs: false
+            allowParallelJobs: false,
+            testExplorerIntegrationEnabled: true
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
@@ -50,6 +51,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         showSystemKits: true,
         ignoreKitEnv: false,
         additionalKits: [],
+        pinnedCommands: [],
         buildTask: false,
         outputLogEncoding: 'auto',
         enableTraceLogging: false,
