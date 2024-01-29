@@ -1423,20 +1423,22 @@ export class CMakeProject {
                     // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
                     const expandedDest = await expandString(copyDest, opts);
-                    const parentDir = path.dirname(expandedDest);
-                    try {
-                        log.debug(localize('copy.compile.commands', 'Copying {2} from {0} to {1}', compdbPath, expandedDest, 'compile_commands.json'));
-                        await fs.mkdir_p(parentDir);
+                    if (compdbPath !== expandedDest) {
+                        const parentDir = path.dirname(expandedDest);
                         try {
-                            await fs.copyFile(compdbPath, expandedDest);
+                            log.debug(localize('copy.compile.commands', 'Copying {2} from {0} to {1}', compdbPath, expandedDest, 'compile_commands.json'));
+                            await fs.mkdir_p(parentDir);
+                            try {
+                                await fs.copyFile(compdbPath, expandedDest);
+                            } catch (e: any) {
+                                // Just display the error. It's the best we can do.
+                                void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy {0} to {1}: {2}', `"${compdbPath}"`, `"${expandedDest}"`, e.toString()));
+                            }
                         } catch (e: any) {
-                            // Just display the error. It's the best we can do.
-                            void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy {0} to {1}: {2}', `"${compdbPath}"`, `"${expandedDest}"`, e.toString()));
+                            void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.1',
+                                'Tried to copy {0} to {1}, but failed to create the parent directory {2}: {3}',
+                                `"${compdbPath}"`, `"${expandedDest}"`, `"${parentDir}"`, e.toString()));
                         }
-                    } catch (e: any) {
-                        void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory.1',
-                            'Tried to copy {0} to {1}, but failed to create the parent directory {2}: {3}',
-                            `"${compdbPath}"`, `"${expandedDest}"`, `"${parentDir}"`, e.toString()));
                     }
                 }
             } else if (this.workspaceContext.config.copyCompileCommands) {
