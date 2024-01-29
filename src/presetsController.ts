@@ -1497,7 +1497,7 @@ export class PresetsController {
             return undefined;
         }
         let schemaFile;
-        const maxSupportedVersion = 4;
+        const maxSupportedVersion = 6;
         const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
@@ -1536,6 +1536,7 @@ export class PresetsController {
                 return undefined;
             }
         }
+
         log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
         return presetsFile;
     }

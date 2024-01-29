@@ -53,12 +53,6 @@ export class CPackDriver implements vscode.Disposable {
             return undefined;
         }
 
-        const opts = driver.expansionOptions;
-        const args = [];
-        for (const value of this.ws.config.cpackArgs) {
-            args.push(await expandString(value, opts));
-        }
-
         // Note: in CMake Tools, we don't run cmake or cpack with --preset argument. We generate the equivalent command line from all the properties
         cpackArgs = [];
         if (packagePreset.vendorName) {
@@ -93,6 +87,12 @@ export class CPackDriver implements vscode.Disposable {
             for (const varName in packagePreset.variables) {
                 cpackArgs.push(`-D ${varName}=${packagePreset.variables[varName]}`);
             }
+        }
+
+        const opts = driver.expansionOptions;
+        const args = [];
+        for (const value of this.ws.config.cpackArgs) {
+            args.push(await expandString(value, opts));
         }
 
         cpackArgs = cpackArgs.concat(args);

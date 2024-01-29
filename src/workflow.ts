@@ -1,7 +1,6 @@
 import { DirectoryContext } from '@cmt/workspace';
 import * as vscode from 'vscode';
 import { CMakeDriver } from '@cmt/drivers/drivers';
-// import { OutputConsumer } from './proc';
 import * as nls from 'vscode-nls';
 import { WorkflowPreset, ConfigurePreset, BuildPreset, TestPreset, PackagePreset, getPresetByName, allConfigurePresets, allBuildPresets, allTestPresets, allPackagePresets } from './preset';
 import * as proc from '@cmt/proc';
@@ -13,15 +12,6 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 import * as logging from './logging';
 import { ConfigureTrigger } from './cmakeProject';
 const log = logging.createLogger('workflow');
-
-// class WorkflowOutputLogger implements OutputConsumer {
-//     output(line: string) {
-//         log.info(line);
-//     }
-//     error(line: string) {
-//         this.output(line);
-//     }
-// }
 
 export class WorkflowDriver implements vscode.Disposable {
     /**

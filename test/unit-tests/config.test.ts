@@ -39,7 +39,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         configureEnvironment: {},
         buildEnvironment: {},
         testEnvironment: {},
-        packEnvironment: {},
+        cpackEnvironment: {},
         mingwSearchDirs: [], // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: [],
         emscriptenSearchDirs: [],

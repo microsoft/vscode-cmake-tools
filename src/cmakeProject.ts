@@ -139,7 +139,6 @@ export class CMakeProject {
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
     public readonly cTestController: CTestDriver;
-    // do we need this?
     public readonly cPackageController: CPackDriver;
     public readonly workflowController: WorkflowDriver;
     public kitsController!: KitsController;
@@ -811,7 +810,7 @@ export class CMakeProject {
         if (drv) {
             await drv.asyncDispose();
         }
-        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this.isBusy, this.variantManager, this.cTestController, this.cPackageController/*, this.cWorkflowController*/]) {
+        for (const disp of [this.statusMessage, this.targetName, this.activeVariant, this._ctestEnabled, this.isBusy, this.variantManager, this.cTestController, this.cPackageController]) {
             disp.dispose();
         }
     }

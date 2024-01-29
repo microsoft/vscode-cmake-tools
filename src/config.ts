@@ -71,15 +71,9 @@ export interface AdvancedOptionConfig {
     };
     packagePreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
-        statusBarVisibility?: StatusBarOptionVisibility;
-        inheritDefault?: StatusBarInheritOptionVisibility;
-        statusBarLength?: number;
     };
     workflowPreset?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
-        statusBarVisibility?: StatusBarOptionVisibility;
-        inheritDefault?: StatusBarInheritOptionVisibility;
-        statusBarLength?: number;
     };
     // No room for package/workflow presets in status bar
     kit?: {
@@ -185,10 +179,9 @@ export interface ExtensionConfigurationSettings {
     configureEnvironment: Environment;
     buildEnvironment: Environment;
     testEnvironment: Environment;
-    packEnvironment: Environment;
+    cpackEnvironment: Environment;
     cpackPath: string;
     cpackArgs: string[];
-    // no settings needed for workflow presets execution?
     mingwSearchDirs: string[]; // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
     additionalCompilerSearchDirs: string[];
     emscriptenSearchDirs: string[];
@@ -420,8 +413,8 @@ export class ConfigurationReader implements vscode.Disposable {
     get ctestDefaultArgs(): string[] {
         return this.configData.ctestDefaultArgs;
     }
-    get packEnvironment() {
-        return this.configData.packEnvironment;
+    get cpackEnvironment() {
+        return this.configData.cpackEnvironment;
     }
     get cpackArgs(): string[] {
         return this.configData.cpackArgs;
@@ -582,7 +575,7 @@ export class ConfigurationReader implements vscode.Disposable {
         configureEnvironment: new vscode.EventEmitter<Environment>(),
         buildEnvironment: new vscode.EventEmitter<Environment>(),
         testEnvironment: new vscode.EventEmitter<Environment>(),
-        packEnvironment: new vscode.EventEmitter<Environment>(),
+        cpackEnvironment: new vscode.EventEmitter<Environment>(),
         mingwSearchDirs: new vscode.EventEmitter<string[]>(), // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
@@ -698,7 +691,7 @@ export function checkTestOverridesPresent(config: ConfigurationReader): boolean 
 }
 
 export function checkPackageOverridesPresent(config: ConfigurationReader): boolean {
-    if (Object.values(config.packEnvironment).length > 0 || config.cpackArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+    if (Object.values(config.cpackEnvironment).length > 0 || config.cpackArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 

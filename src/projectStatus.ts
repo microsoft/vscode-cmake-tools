@@ -3,7 +3,7 @@ import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { runCommand } from './util';
-import { OptionConfig, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent } from './config';
+import { OptionConfig, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -942,6 +942,8 @@ class PackagePreset extends Node {
         this.tooltip = 'Change Package Preset';
         this.contextValue = 'packagePreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+
+        await this.updateDescription();
     }
 
     async refresh() {
@@ -949,6 +951,22 @@ class PackagePreset extends Node {
             return;
         }
         this.label = (treeDataProvider.cmakeProject.packagePreset?.displayName ?? treeDataProvider.cmakeProject.packagePreset?.name)  || noPackagePresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkPackageOverridesPresent(config)) {
+            this.description = "Override settings applied";
+            this.contextValue = 'packagePreset - overrides present';
+        } else {
+            this.description = "";
+            this.contextValue = 'packagePreset';
+        }
     }
 }
 

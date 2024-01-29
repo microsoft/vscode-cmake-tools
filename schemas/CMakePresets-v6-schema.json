@@ -1194,29 +1194,30 @@
                             "pattern": "^.+$"
                         }
                     },
+                    "condition": { "$ref": "#/definitions/topCondition" },
                     "generators": {
                         "type": "array",
                         "description": "An optional array of (semicolon separated) strings representing generators for CPack to use. Passed to CPack via the '-G' switch.",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "An optional string representing the name of the CPack generator to use."
                         }
                     },
                     "configurations": {
                         "type": "array",
                         "description": "An optional array of (semicolon separated) strings representing build configurations for CPack to package. Passed to CPack via the '-C' switch.",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "An optional string representing the name of the configuration to use."
                         }
                     },
                     "variables": {
                         "type": "object",
                         "description": "An optional map of variables to pass to CPack via the '-D' switch. Each key is the name of a variable, and the value is the string to assign to that variable.",
-                        "properties": {},
-                        "additionalProperties": {},
-                        "propertyNames": {
-                           "pattern": "^.+$"
-                       }
-                    },
+                        "items": {
+                           "type": "string",
+                           "description": "An optional string representing the value of the variable."
+                        }                    },
                     "configFile": {
                         "type": "string",
                         "description": "An optional string representing the config file for CPack to use. Equivalent to passing --config on the command line."
@@ -1247,9 +1248,6 @@
                     "packageDirectory": {
                         "type": "string",
                         "description": "An optional string representing the directory in which to place the package. Equivalent to passing -B on the command line."
-                    },
-                    "condition": {
-                        "$ref": "#/definitions/topCondition"
                     }
                 },
                 "required": [
@@ -1291,14 +1289,17 @@
                             "properties": {
                                 "type": {
                                     "type": "string",
-                                    "description": "A required string representing the type of the preset associated with this workflow step. The first must be of 'configure' type, while all others may be either 'build', 'test' or 'package'."
+                                    "description": "A required string representing the type of the preset associated with this workflow step. The first must be of 'configure' type, while all others may be either 'build', 'test' or 'package'.",
+                                    "enum": ["configure", "build", "test", "package"]
                                 },
                                 "name": {
                                     "type": "string",
-                                    "description": "A required string representing the name of the configure, build, test or package preset associated with this workflow step."
+                                    "description": "A required string representing the name of the configure, build, test or package preset associated with this workflow step.",
+                                    "minLength": 1
                                 }
                             },
-                            "required": ["type", "name"]
+                            "required": ["type", "name"],
+                            "additionalProperties": false
                         }
                     }
                 },

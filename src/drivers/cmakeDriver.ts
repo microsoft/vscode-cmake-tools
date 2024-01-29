@@ -340,7 +340,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (this.useCMakePresets) {
             let envs = EnvironmentUtils.create(this._packagePreset?.environment);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
-            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.packEnvironment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.cpackEnvironment, envs)]);
 
             if (this.useCMakePresets && this.packagePreset !== null && checkPackageOverridesPresent(this.config)) {
                 log.info(localize('package.with.overrides', 'NOTE: You are packaging with preset {0}, but there are some overrides being applied from your VS Code settings.', this.packagePreset.displayName ?? this.packagePreset.name));
@@ -1813,7 +1813,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _testEnvSub = this.config.onChange('testEnvironment', async () => {
         await onTestSettingsChange();
     });
-    private readonly _packEnvSub = this.config.onChange('packEnvironment', async () => {
+    private readonly _packEnvSub = this.config.onChange('cpackEnvironment', async () => {
         await onPackageSettingsChange();
     });
     private readonly _generalEnvSub = this.config.onChange('environment', async () => {

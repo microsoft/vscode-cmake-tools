@@ -598,7 +598,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                     return;
                 }
             }
-            const result: number | undefined = cmakeDriver ? await project?.runCPack(cmakeDriver, packagePreset, this) : undefined; //.runCPackCustomized(cmakeDriver, packagePreset, this) : undefined;
+            const result: number | undefined = cmakeDriver ? await project?.runCPack(cmakeDriver, packagePreset, this) : undefined;
             if (result === undefined) {
                 this.writeEmitter.fire(localize('cpack.run.terminated', 'CPack run was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
@@ -613,7 +613,6 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
     }
 
-    // should we have one task per workflow or launch the specific tasks for each entry
     private async runWorkflowTask(): Promise<any> {
         this.writeEmitter.fire(localize("workflow.started", "Workflow task started...") + endOfLine);
 

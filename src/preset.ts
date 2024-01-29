@@ -2103,8 +2103,6 @@ export function packageArgs(preset: PackagePreset): string[] {
     return result;
 }
 
-// TODO: If needed, implement workflowArgs (or workflowStepsArgs) to return an array of args for each contained preset.
-
 export function configurePresetChangeNeedsClean(newPreset: ConfigurePreset, oldPreset: ConfigurePreset | null): boolean {
     if (!oldPreset) {
         // First configure preset? We never clean
