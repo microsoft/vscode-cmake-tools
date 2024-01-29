@@ -104,7 +104,7 @@ export class WorkflowDriver implements vscode.Disposable {
                     }
 
                     log.info(localize('workflow.running.ctest', 'Running ctest for the {0} test preset of the workflow step.', step.name));
-                    await prj.ctest();
+                    await prj.ctest(/*fromWorkflow = */ true);
 
                     break;
 
@@ -120,7 +120,7 @@ export class WorkflowDriver implements vscode.Disposable {
                     }
 
                     log.info(localize('workflow.packaging', 'Packaging the project with the {0} package preset of the workflow step.', step.name));
-                    await prj.cpack();
+                    await prj.cpack(true /*fromWorkflow*/);
 
                     break;
             }

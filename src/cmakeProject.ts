@@ -2139,8 +2139,8 @@ export class CMakeProject {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
-    private async preTest(): Promise<CMakeDriver> {
-        if (extensionManager !== undefined && extensionManager !== null) {
+    private async preTest(fromWorkflow: boolean = false): Promise<CMakeDriver> {
+        if (extensionManager !== undefined && extensionManager !== null && !fromWorkflow) {
             extensionManager.cleanOutputChannel();
         }
         const buildResult = await this.build(undefined, false, false);
@@ -2155,15 +2155,15 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(): Promise<number> {
-        const drv = await this.preTest();
+    async ctest(fromWorkflow: boolean = false) : Promise<number> {
+        const drv = await this.preTest(fromWorkflow);
         const retc = await this.cTestController.runCTest(drv);
         return (retc) ? 0 : -1;
     }
 
-    async cpack(): Promise<number> {
+    async cpack(fromWorkflow: boolean = false): Promise<number> {
         this.isBusy.set(true);
-        const drv = await this.preTest();
+        const drv = await this.preTest(fromWorkflow);
         const retc = await this.cPackageController.runCPack(drv);
         this.isBusy.set(false);
         return (retc) ? 0 : -1;
