@@ -18,6 +18,7 @@ const log = logging.createLogger('preset');
 
 export interface PresetsFile {
     version: number;
+    schema?: string;
     cmakeMinimumRequired?: util.Version;
     include?: string[];
     configurePresets?: ConfigurePreset[];
@@ -69,6 +70,24 @@ export interface DebugOptions {
     output?: boolean;
     tryCompile?: boolean;
     find?: boolean;
+}
+
+enum TraceMode {
+    On = "on",
+    Off = "off",
+    Expand = "expand"
+}
+
+enum FormatMode {
+    Human = "human",
+    Json = "json-v1"
+}
+
+export interface TraceOptions {
+    mode?: string;
+    format?: string;
+    source?: string[];
+    redirect: string;
 }
 
 export interface Condition {
@@ -236,6 +255,7 @@ export interface ConfigurePreset extends Preset {
     warnings?: WarningOptions;
     errors?: ErrorOptions;
     debug?: DebugOptions;
+    trace?: TraceOptions;
     vendor?: VendorVsSettings | VendorType;
     toolchainFile?: string;
     installDir?: string;
@@ -1074,15 +1094,31 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
         return preset;
     }
 
-    if (preset.__file && preset.__file.version <= 2) {
-        // toolchainFile and installDir added in presets v3
-        if (preset.toolchainFile) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
-            return null;
+    if (preset.__file) {
+        if (preset.__file.version <= 2) {
+            // toolchainFile and installDir added in presets v3
+            if (preset.toolchainFile) {
+                log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
+                return null;
+            }
+            if (preset.installDir) {
+                log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
+                return null;
+            }
         }
-        if (preset.installDir) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
-            return null;
+
+        if (preset.__file.version <= 4) {
+            if (preset.__file.include) {
+                log.error(localize('property.unsupported.include', 'Configure preset {0}: Property {1} is unsupported in presets v{2}', preset.name, '"include"', preset.__file.version));
+                return null;
+            }
+        }
+
+        if (preset.__file.version <= 6) {
+            if (preset.trace) {
+                log.error(localize('property.unsupported.trace', 'Configure preset {0}: Property {1} is unsupported in presets v{2}', preset.name, '"trace"', preset.__file.version));
+                return null;
+            }
         }
     }
 
@@ -1974,6 +2010,14 @@ export function configureArgs(preset: ConfigurePreset): string[] {
         preset.debug.output && result.push('--debug-output');
         preset.debug.tryCompile && result.push('--debug-trycompile');
         preset.debug.find && result.push('--debug-find');
+    }
+
+    // Trace
+    if (preset.trace) {
+        preset.trace.mode && (preset.trace.mode === TraceMode.On ? result.push('--trace') : preset.trace.mode === TraceMode.Expand ? result.push('--trace-expand') : false);
+        preset.trace.format && (preset.trace.format === FormatMode.Human ? result.push('--trace-format=human') : preset.trace.format === FormatMode.Json ? result.push('--trace-format=json-v1') : false);
+        preset.trace.source && preset.trace.source.length > 0 && preset.trace.source.forEach(s => result.push(`--trace-source=${s}`));
+        preset.trace.redirect && result.push(`--trace-redirect=${preset.trace.redirect}`);
     }
 
     return result;
