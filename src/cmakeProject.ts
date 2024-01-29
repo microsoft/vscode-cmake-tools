@@ -2155,7 +2155,7 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false) : Promise<number> {
+    async ctest(fromWorkflow: boolean = false): Promise<number> {
         const drv = await this.preTest(fromWorkflow);
         const retc = await this.cTestController.runCTest(drv);
         return (retc) ? 0 : -1;

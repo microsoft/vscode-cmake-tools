@@ -206,6 +206,10 @@ export class ExtensionManager implements vscode.Disposable {
                 advanced_buildPreset_statusBarLength: `${v.advanced?.buildPreset?.statusBarLength}`,
                 advanced_testPreset_statusBarVisibility: `${v.advanced?.testPreset?.statusBarVisibility}`,
                 advanced_testPreset_statusBarLength: `${v.advanced?.testPreset?.statusBarLength}`,
+                advanced_packagePreset_statusBarVisibility: `${v.advanced?.packagePreset?.statusBarVisibility}`,
+                advanced_packagePreset_statusBarLength: `${v.advanced?.packagePreset?.statusBarLength}`,
+                advanced_workflowPreset_statusBarVisibility: `${v.advanced?.workflowPreset?.statusBarVisibility}`,
+                advanced_workflowPreset_statusBarLength: `${v.advanced?.workflowPreset?.statusBarLength}`,
                 advanced_kit_statusBarVisibility: `${v.advanced?.kit?.statusBarVisibility}`,
                 advanced_kit_statusBarLength: `${v.advanced?.kit?.statusBarLength}`,
                 advanced_variant_statusBarVisibility: `${v.advanced?.variant?.statusBarVisibility}`,
@@ -225,7 +229,15 @@ export class ExtensionManager implements vscode.Disposable {
                 advanced_ctest_statusBarVisibility: `${v.advanced?.ctest?.statusBarVisibility}`,
                 advanced_ctest_statusBarLength: `${v.advanced?.ctest?.statusBarLength}`,
                 advanced_ctest_color: `${v.advanced?.ctest?.color}`,
-                advanced_ctest_projectStatusVisibility: `${v.advanced?.ctest?.projectStatusVisibility}`
+                advanced_ctest_projectStatusVisibility: `${v.advanced?.ctest?.projectStatusVisibility}`,
+                advanced_cpack_statusBarVisibility: `${v.advanced?.cpack?.statusBarVisibility}`,
+                advanced_cpack_statusBarLength: `${v.advanced?.cpack?.statusBarLength}`,
+                advanced_cpack_color: `${v.advanced?.cpack?.color}`,
+                advanced_cpack_projectStatusVisibility: `${v.advanced?.cpack?.projectStatusVisibility}`,
+                advanced_workflow_statusBarVisibility: `${v.advanced?.workflow?.statusBarVisibility}`,
+                advanced_workflow_statusBarLength: `${v.advanced?.workflow?.statusBarLength}`,
+                advanced_workflow_color: `${v.advanced?.workflow?.color}`,
+                advanced_workflow_projectStatusVisibility: `${v.advanced?.workflow?.projectStatusVisibility}`
             });
         });
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
@@ -850,7 +862,8 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setConfigurePresetName('');
             this.statusBar.setBuildPresetName('');
             this.statusBar.setTestPresetName('');
-            // no package/workflow info in status bar
+            this.statusBar.setPackagePresetName('');
+            this.statusBar.setWorkflowPresetName('');
         } else {
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
@@ -874,7 +887,12 @@ export class ExtensionManager implements vscode.Disposable {
             this.activeTestPresetSub = cmakeProject.onActiveTestPresetChanged(FireNow, p => {
                 this.statusBar.setTestPresetName(p?.displayName || p?.name || '');
             });
-            // no package/workflow info in status bar
+            this.activePackagePresetSub = cmakeProject.onActivePackagePresetChanged(FireNow, p => {
+                this.statusBar.setPackagePresetName(p?.displayName || p?.name || '');
+            });
+            this.activeWorkflowPresetSub = cmakeProject.onActiveWorkflowPresetChanged(FireNow, p => {
+                this.statusBar.setWorkflowPresetName(p?.displayName || p?.name || '');
+            });
         }
     }
 
@@ -2006,6 +2024,8 @@ export class ExtensionManager implements vscode.Disposable {
         }
 
         const presetSelected = await project.presetsController.selectPackagePreset();
+        const packagePreset = project.packagePreset;
+        this.statusBar.setPackagePresetName(packagePreset?.displayName || packagePreset?.name || '');
         return presetSelected;
     }
 
@@ -2029,6 +2049,8 @@ export class ExtensionManager implements vscode.Disposable {
         }
 
         const presetSelected = await project.presetsController.selectWorkflowPreset();
+        const workflowPreset = project.workflowPreset;
+        this.statusBar.setWorkflowPresetName(workflowPreset?.displayName || workflowPreset?.name || '');
         return presetSelected;
     }
 

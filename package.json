@@ -2746,7 +2746,15 @@
         },
         "cmake.options.advanced": {
           "type": "object",
-          "default": {"build": {"statusBarVisibility": "inherit"}, "launch": {"statusBarVisibility": "inherit"}, "debug": {"statusBarVisibility": "inherit"}},
+          "default": {
+            "build": {"statusBarVisibility": "inherit"},
+            "launch": {"statusBarVisibility": "inherit"},
+            "debug": {"statusBarVisibility": "inherit"},
+            "packagePreset": {"statusBarVisibility": "hidden"},
+            "cpack": {"statusBarVisibility": "hidden"},
+            "workflowPreset": {"statusBarVisibility": "hidden"},
+            "workflow": {"statusBarVisibility": "hidden"}
+          },
           "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.markdownDescription%",
           "properties": {
             "configure": {
@@ -2896,6 +2904,7 @@
                     "hidden",
                     "inherit"
                   ],
+                  "default": "hidden",
                   "markdownEnumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
@@ -2935,6 +2944,7 @@
                     "hidden",
                     "inherit"
                   ],
+                  "default": "hidden",
                   "markdownEnumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
@@ -3355,6 +3365,7 @@
                     "hidden",
                     "inherit"
                   ],
+                  "default": "hidden",
                   "markdownEnumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
@@ -3412,6 +3423,7 @@
                     "hidden",
                     "inherit"
                   ],
+                  "default": "hidden",
                   "markdownEnumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",

@@ -81,7 +81,6 @@ export interface AdvancedOptionConfig {
         inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
-    // No room for package/workflow presets in status bar
     kit?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
