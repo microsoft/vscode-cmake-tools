@@ -168,6 +168,8 @@ export class PresetsController {
         // Private fields must be set after validation, otherwise validation would fail.
         this.populatePrivatePresetsFields(presetsFile, file);
         await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
+        // TODO: more validation (or move some of the per file validation here when all entries are merged.
+        // Like unresolved preset reference or duplicates).
         setPresetsFile(this.folderPath, presetsFile);
     }
 
@@ -721,11 +723,11 @@ export class PresetsController {
                     const presets = preset.workflowPresets(this.folderPath);
                     const workflowBasePresetName = await this.selectNonHiddenPreset(presets, presets, { placeHolder, canPickMany: false });
                     const workflowBasePreset = presets.find(pr => pr.name === workflowBasePresetName);
-                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: workflowBasePreset?.steps || [] };
+                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: workflowBasePreset?.steps || [{type: "configure", name: "_placeholder_"}] };
                     break;
                 }
                 case SpecialOptions.Custom: {
-                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: [] };
+                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: [{type: "configure", name: "_placeholder_"}] };
                     break;
                 }
                 default:
@@ -866,20 +868,23 @@ export class PresetsController {
 
                 if (testPreset) {
                     await this.setTestPreset(testPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                } else {
-                    await this.setTestPreset(null, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                }
+                if (!testPreset || !this.project.testPreset) {
+                    await this.guessTestPreset();
                 }
 
                 if (packagePreset) {
                     await this.setPackagePreset(packagePreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                } else {
-                    await this.setPackagePreset(null, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                }
+                if (!packagePreset || !this.project.packagePreset) {
+                    await this.guessPackagePreset();
                 }
 
                 if (workflowPreset) {
                     await this.setWorkflowPreset(workflowPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                } else {
-                    await this.setWorkflowPreset(null, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                }
+                if (!workflowPreset || !this.project.workflowPreset) {
+                    await this.guessWorkflowPreset();
                 }
             }
         );
@@ -908,6 +913,78 @@ export class PresetsController {
         if (!currentBuildPreset) {
             // No valid buid preset matches the selected configure preset
             await this.setBuildPreset(preset.defaultBuildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+        }
+    }
+
+    private async guessTestPreset(): Promise<void> {
+        const selectedConfigurePreset = this.project.configurePreset?.name;
+        let currentTestPreset: string | undefined;
+        if (selectedConfigurePreset) {
+            preset.expandConfigurePresetForPresets(this.folderPath, 'test');
+            const testPresets = preset.allTestPresets(this.folderPath);
+            for (const testPreset of testPresets) {
+                // Set active test preset as the first valid test preset matches the selected configure preset
+                if (testPreset.configurePreset === selectedConfigurePreset && !testPreset.hidden) {
+                    await this.setTestPreset(testPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                    currentTestPreset = this.project.testPreset?.name;
+                }
+                if (currentTestPreset) {
+                    break;
+                }
+            }
+        }
+
+        if (!currentTestPreset) {
+            // No valid test preset matches the selected configure preset
+            await this.setTestPreset(preset.defaultTestPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+        }
+    }
+
+    private async guessPackagePreset(): Promise<void> {
+        const selectedConfigurePreset = this.project.configurePreset?.name;
+        let currentPackagePreset: string | undefined;
+        if (selectedConfigurePreset) {
+            preset.expandConfigurePresetForPresets(this.folderPath, 'package');
+            const packagePresets = preset.allPackagePresets(this.folderPath);
+            for (const packagePreset of packagePresets) {
+                // Set active package preset as the first valid package preset matches the selected configure preset
+                if (packagePreset.configurePreset === selectedConfigurePreset && !packagePreset.hidden) {
+                    await this.setPackagePreset(packagePreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                    currentPackagePreset = this.project.packagePreset?.name;
+                }
+                if (currentPackagePreset) {
+                    break;
+                }
+            }
+        }
+
+        if (!currentPackagePreset) {
+            // No valid buid preset matches the selected configure preset
+            await this.setPackagePreset(preset.defaultPackagePreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+        }
+    }
+
+    private async guessWorkflowPreset(): Promise<void> {
+        const selectedConfigurePreset = this.project.configurePreset?.name;
+        let currentWorkflowPreset: string | undefined;
+        if (selectedConfigurePreset) {
+            preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
+            const workflowPresets = preset.allWorkflowPresets(this.folderPath);
+            for (const workflowPreset of workflowPresets) {
+                // Set active workflow preset as the first valid workflow preset (matching the selected configure preset is not a requirement as for the other presets types)
+                if (!workflowPreset.hidden) {
+                    await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                    currentWorkflowPreset = this.project.workflowPreset?.name;
+                }
+                if (currentWorkflowPreset) {
+                    break;
+                }
+            }
+        }
+
+        if (!currentWorkflowPreset) {
+            // No valid workflow preset matches the selected configure preset
+            await this.setWorkflowPreset(preset.defaultWorkflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
         }
     }
 
@@ -1277,28 +1354,19 @@ export class PresetsController {
     }
 
     async selectWorkflowPreset(): Promise<boolean> {
-        // configure preset required
-        const selectedConfigurePreset = await this.checkConfigurePreset();
-        if (!selectedConfigurePreset) {
-            return false;
-        }
-
-        // Do we need this check for workflow preset?
-        const selectedBuildPreset = await this.checkBuildPreset();
-        if (!selectedBuildPreset) {
-            return false;
-        }
+        // No configure nor build preset compatibility requirement.
+        // The only consistency workflows need are the steps to be associated with the same configure preset,
+        // which to be the same as in step0. This is verified by CMakePresets.json validation in validatePresetsFile.
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
-        const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, this.project.testPreset, this.project.packagePreset, _preset).workflowPresetCompatible);
-        presets.push(preset.defaultWorkflowPreset);
+        allPresets.push(preset.defaultWorkflowPreset);
 
-        log.debug(localize('start.selection.of.workflow.presets', 'Start selection of workflow presets. Found {0} presets.', presets.length));
+        log.debug(localize('start.selection.of.workflow.presets', 'Start selection of workflow presets. Found {0} presets.', allPresets.length));
         const placeHolder = localize('select.active.workflow.preset.placeholder', 'Select a workflow preset for {0}', this.folderName);
-        const chosenPreset = await this.selectNonHiddenPreset(presets, allPresets, { placeHolder });
+        const chosenPreset = await this.selectNonHiddenPreset(allPresets, allPresets, { placeHolder });
         if (!chosenPreset) {
             log.debug(localize('user.cancelled.workflow.preset.selection', 'User cancelled workflow preset selection'));
             return false;
@@ -1496,6 +1564,8 @@ export class PresetsController {
         if (!presetsFile) {
             return undefined;
         }
+
+        log.info(localize('validating.presets.file', 'Reading and validating the presets "file {0}"', file));
         let schemaFile;
         const maxSupportedVersion = 6;
         const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
@@ -1513,6 +1583,7 @@ export class PresetsController {
         } else {
             schemaFile = './schemas/CMakePresets-v6-schema.json';
         }
+
         const validator = await loadSchema(schemaFile);
         const is_valid = validator(presetsFile);
         if (!is_valid) {
@@ -1534,6 +1605,91 @@ export class PresetsController {
                 showErrors(x => log.error(x));
                 log.error(localize('unsupported.presets.disable', 'Unknown properties and macros can be ignored by using the {0} setting.', "'cmake.allowUnsupportedPresetsVersions'"));
                 return undefined;
+            }
+        }
+
+        for (const pr of presetsFile?.buildPresets || []) {
+            const dupe = presetsFile?.buildPresets?.find(p => (pr.name === p.name && p !== pr));
+            if (dupe) {
+                log.error(localize('duplicate.build.preset.found', 'Found duplicates within the build presets collection: "{0}"', pr.name));
+                return undefined;
+            }
+        }
+
+        for (const pr of presetsFile?.testPresets || []) {
+            const dupe = presetsFile?.testPresets?.find(p => (pr.name === p.name && p !== pr));
+            if (dupe) {
+                log.error(localize('duplicate.test.preset.found', 'Found duplicates within the test presets collection: "{0}"', pr.name));
+                return undefined;
+            }
+        }
+
+        for (const pr of presetsFile?.packagePresets || []) {
+            const dupe = presetsFile?.packagePresets?.find(p => (pr.name === p.name && p !== pr));
+            if (dupe) {
+                log.error(localize('duplicate.package.preset.found', 'Found duplicates within the package presets collection: "{0}"', pr.name));
+                return undefined;
+            }
+        }
+
+        for (const pr of presetsFile?.workflowPresets || []) {
+            const dupe = presetsFile?.workflowPresets?.find(p => (pr.name === p.name && p !== pr));
+            if (dupe) {
+                log.error(localize('duplicate.workflow.preset.found', 'Found duplicates within the workflow presets collection: "{0}"', pr.name));
+                return undefined;
+            }
+        }
+
+        let allBuildTestPackagePresets: (preset.BuildPreset | preset.TestPreset | preset.PackagePreset)[] = presetsFile.buildPresets || [];
+        allBuildTestPackagePresets = allBuildTestPackagePresets.concat(presetsFile.testPresets || []);
+        allBuildTestPackagePresets = allBuildTestPackagePresets.concat(presetsFile.packagePresets || []);
+        for (const pr of allBuildTestPackagePresets) {
+            const cfgPr: preset.ConfigurePreset | undefined = presetsFile.configurePresets?.find(prs => (prs.name === pr.configurePreset));
+            if (pr.configurePreset && !cfgPr) {
+                log.error(localize('referenced.configure.preset.not.found', 'Configure preset "{0}" referenced in preset "{1}" was not found.', pr.configurePreset, pr.name));
+                return undefined;
+            }
+        }
+
+        for (const pr of presetsFile.workflowPresets || []) {
+            if (pr.steps.length < 1 || pr.steps[0].type !== "configure") {
+                log.error(localize('workflow.does.not.start.configure.step', 'The workflow preset "{0}" does not start with a configure step.', pr.name));
+                return undefined;
+            }
+
+            const cfgPr: preset.ConfigurePreset | undefined = presetsFile.configurePresets?.find(prs => (prs.name === pr.steps[0].name));
+            if (!cfgPr) {
+                log.error(localize('referenced.configure.preset.not.found', 'Configure preset "{0}" referenced in workflow preset "{1}" was not found.', pr.steps[0].name, pr.name));
+                return undefined;
+            }
+
+            for (const step of pr.steps) {
+                let searchInPresets: any[] | undefined;
+                switch (step.type) {
+                    case "configure":
+                        searchInPresets = presetsFile.configurePresets;
+                        break;
+                    case "build":
+                        searchInPresets = presetsFile.buildPresets;
+                        break;
+                    case "test":
+                        searchInPresets = presetsFile.testPresets;
+                        break;
+                    case "package":
+                        searchInPresets = presetsFile.packagePresets;
+                        break;
+                }
+
+                const refPr: any | undefined = searchInPresets?.find(prs => (prs.name === step.name));
+                if (!refPr) {
+                    log.error(localize('referenced.preset.not.resolved', 'The {0} preset "{1}" referenced in workflow preset "{2}" was not found.', step.type, step.name, pr.name));
+                    return undefined;
+                }
+
+                if (step.type === "configure" && step !== pr.steps[0]) {
+                    log.error(localize('workflow.has.subsequent.configure.preset', 'The workflow preset "{0}" has another configure preset "{1}" besides the first step "{2}": ', pr.name, step.name, pr.steps[0].name));
+                    return undefined;
+                }
             }
         }
 

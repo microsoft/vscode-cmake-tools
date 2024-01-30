@@ -819,7 +819,7 @@ class ConfigPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName ?? treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName || treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
         this.tooltip = 'Change Configure Preset';
         this.contextValue = 'configPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -830,7 +830,7 @@ class ConfigPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName ?? treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName || treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
         await this.updateDescription();
     }
 
@@ -855,7 +855,7 @@ class BuildPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName ?? treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName || treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
         if (this.label === preset.defaultBuildPreset.name) {
             this.label = preset.defaultBuildPreset.displayName;
         }
@@ -869,7 +869,7 @@ class BuildPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName ?? treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName || treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
         await this.updateDescription();
     }
 
@@ -895,7 +895,7 @@ class TestPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName ?? treeDataProvider.cmakeProject.testPreset?.name) || noTestPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName || treeDataProvider.cmakeProject.testPreset?.name) || noTestPresetSelected;
         if (this.label === preset.defaultTestPreset.name) {
             this.label = preset.defaultTestPreset.displayName;
         }
@@ -909,7 +909,7 @@ class TestPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName ?? treeDataProvider.cmakeProject.testPreset?.name)  || noTestPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName || treeDataProvider.cmakeProject.testPreset?.name) || noTestPresetSelected;
         await this.updateDescription();
     }
 
@@ -935,7 +935,7 @@ class PackagePreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.packagePreset?.displayName ?? treeDataProvider.cmakeProject.packagePreset?.name) || noPackagePresetSelected;
+        this.label = (treeDataProvider.cmakeProject.packagePreset?.displayName || treeDataProvider.cmakeProject.packagePreset?.name)  || noPackagePresetSelected;
         if (this.label === preset.defaultPackagePreset.name) {
             this.label = preset.defaultPackagePreset.displayName;
         }
@@ -950,7 +950,7 @@ class PackagePreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.packagePreset?.displayName ?? treeDataProvider.cmakeProject.packagePreset?.name)  || noPackagePresetSelected;
+        this.label = (treeDataProvider.cmakeProject.packagePreset?.displayName || treeDataProvider.cmakeProject.packagePreset?.name)  || noPackagePresetSelected;
         await this.updateDescription();
     }
 
@@ -976,7 +976,7 @@ class WorkflowPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.workflowPreset?.displayName ?? treeDataProvider.cmakeProject.workflowPreset?.name) || noWorkflowPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.workflowPreset?.displayName || treeDataProvider.cmakeProject.workflowPreset?.name) || noWorkflowPresetSelected;
         if (this.label === preset.defaultWorkflowPreset.name) {
             this.label = preset.defaultWorkflowPreset.displayName;
         }
@@ -989,7 +989,7 @@ class WorkflowPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.workflowPreset?.displayName ?? treeDataProvider.cmakeProject.workflowPreset?.name)  || noWorkflowPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.workflowPreset?.displayName || treeDataProvider.cmakeProject.workflowPreset?.name) || noWorkflowPresetSelected;
     }
 }
 

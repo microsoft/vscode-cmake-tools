@@ -391,7 +391,7 @@ export const defaultPackagePreset: PackagePreset = {
 };
 export const defaultWorkflowPreset: WorkflowPreset = {
     name: '__defaultWorkflowPreset__',
-    steps: [],
+    steps: [{type: "configure", name: "_placeholder_"}],
     displayName: localize('default.workflow.preset', '[Default]'),
     description: localize('default.workflow.preset.description', 'An empty workflow preset that does not add any arguments')
 };
@@ -1783,7 +1783,7 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
         return null;
     }
 
-    const expandedPreset: WorkflowPreset = { name, steps: [] };
+    const expandedPreset: WorkflowPreset = { name, steps: [{type: "configure", name: "_placeholder_"}] };
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
 
     // Expand environment vars first since other fields may refer to them
@@ -1823,12 +1823,12 @@ async function expandWorkflowPresetImpl(folder: string, name: string, workspaceF
             name: defaultWorkflowPreset.name,
             displayName: defaultWorkflowPreset.displayName,
             description: defaultWorkflowPreset.description,
-            steps: configurePreset ? [
+            steps: [
                 {
                     type: "Configure",
-                    name: configurePreset
+                    name: configurePreset ? configurePreset : "_placeholder_configure_preset_"
                 }
-            ] : []
+            ]
         };
         return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
     }
