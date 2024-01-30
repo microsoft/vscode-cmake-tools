@@ -1938,7 +1938,6 @@ export class ExtensionManager implements vscode.Disposable {
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
         const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-
         return presetSelected;
     }
 

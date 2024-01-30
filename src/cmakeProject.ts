@@ -240,13 +240,10 @@ export class CMakeProject {
     private readonly _configurePreset = new Property<preset.ConfigurePreset | null>(null);
 
     private async resetPresets(driver: CMakeDriver | null) {
+        // NOTE: don't delete from workspaceContext the association between this.folderName-this.configurePreset.name
+        // and all the previously selected build/test/package/workflow presets.
+        // If we set the configure preset back to the value before this "reset", all should be restored fine.
         await this.workspaceContext.state.setConfigurePresetName(this.folderName, null, this.isMultiProjectFolder);
-        if (this.configurePreset) {
-            await this.workspaceContext.state.setBuildPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
-            await this.workspaceContext.state.setTestPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
-            await this.workspaceContext.state.setPackagePresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
-            await this.workspaceContext.state.setWorkflowPresetName(this.folderName, this.configurePreset.name, null, this.isMultiProjectFolder);
-        }
 
         this._configurePreset.set(null);
         this._buildPreset.set(null);
@@ -1513,8 +1510,6 @@ export class CMakeProject {
             this.onReconfiguredEmitter.fire();
             return result;
         }
-
-        // anything packaging or workflow related in configure? in UI panel?
 
         if (trigger === ConfigureTrigger.configureWithCache) {
             log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));

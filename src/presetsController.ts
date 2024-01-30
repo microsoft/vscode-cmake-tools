@@ -164,6 +164,7 @@ export class PresetsController {
         } else {
             setOriginalPresetsFile(this.folderPath, undefined);
         }
+
         presetsFile = await this.validatePresetsFile(presetsFile, file);
         // Private fields must be set after validation, otherwise validation would fail.
         this.populatePrivatePresetsFields(presetsFile, file);
@@ -992,8 +993,8 @@ export class PresetsController {
         const selectedConfigurePreset = this.project.configurePreset;
         if (!selectedConfigurePreset) {
             const message_noConfigurePreset = localize('config.preset.required', 'A configure preset needs to be selected. How would you like to proceed?');
-            const option_selectConfigurePreset = localize('select.config.preset', 'Select configure preset');
-            const option_later = localize('later', 'later');
+            const option_selectConfigurePreset = localize('select.config.preset', 'Select Configure Preset');
+            const option_later = localize('later', 'Later');
             const result = await vscode.window.showErrorMessage(message_noConfigurePreset, option_selectConfigurePreset, option_later);
             if (result === option_selectConfigurePreset && await vscode.commands.executeCommand('cmake.selectConfigurePreset')) {
                 return this.project.configurePreset;

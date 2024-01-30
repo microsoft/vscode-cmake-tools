@@ -378,7 +378,6 @@ interface Toolset {
  * Should NOT cache anything. Need to make a copy if any fields need to be changed.
  */
 
-// the strings don't match the spec???
 export const defaultTestPreset: TestPreset = {
     name: '__defaultTestPreset__',
     displayName: localize('default.test.preset', '[Default]'),

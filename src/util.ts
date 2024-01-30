@@ -452,6 +452,11 @@ export function makeDebuggerEnvironmentVars(env?: Environment): DebuggerEnvironm
     return converted_env;
 }
 
+export function stringNeedsExpansion(str: string): boolean {
+    const regexp: RegExp = /\$\{.+?\}/; // the ${var} format
+    return (str.match(regexp) !== null);
+}
+
 export function fromDebuggerEnvironmentVars(debug_env?: DebuggerEnvironmentVariable[]): Environment {
     const env = EnvironmentUtils.create();
     if (debug_env) {
