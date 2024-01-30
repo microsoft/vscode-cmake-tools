@@ -23,7 +23,7 @@ import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
 import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
@@ -363,6 +363,14 @@ export class CMakeServerDriver extends CMakeDriver {
         return cb();
     }
 
+    doSetPackagePreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
+    doSetWorkflowPreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
     private async _restartClient(): Promise<void> {
         this._cmsClient = this._doRestartClient();
         const client = await this.getClient();
@@ -437,6 +445,8 @@ export class CMakeServerDriver extends CMakeDriver {
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
         testPreset: TestPreset | null,
+        packagePreset: PackagePreset | null,
+        workflowPreset: WorkflowPreset | null,
         workspaceFolder: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeServerDriver> {
@@ -446,6 +456,8 @@ export class CMakeServerDriver extends CMakeDriver {
             configurePreset,
             buildPreset,
             testPreset,
+            packagePreset,
+            workflowPreset,
             preferredGenerators);
     }
 

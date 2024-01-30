@@ -1,4 +1,4 @@
-import { ConfigurationReader, StatusBarOptionVisibility, StatusBarTextOptionVisibility, StatusBarStaticOptionVisibility, StatusBarIconOptionVisibility, checkConfigureOverridesPresent, checkBuildOverridesPresent, checkTestOverridesPresent } from '@cmt/config';
+import { ConfigurationReader, StatusBarOptionVisibility, StatusBarTextOptionVisibility, StatusBarStaticOptionVisibility, StatusBarIconOptionVisibility, checkConfigureOverridesPresent, checkBuildOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent } from '@cmt/config';
 import { SpecialKits } from '@cmt/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -487,6 +487,122 @@ class CTestButton extends Button {
     }
 }
 
+class CPackButton extends Button {
+    settingsName = 'cpack';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.cpack';
+        this.tooltip = localize('run.cpack.tooltip', 'Run CPack');
+    }
+
+    private _enabled: boolean = false;
+    private _color: string = '';
+
+    set enabled(v: boolean) {
+        this._enabled = v;
+        this.update();
+    }
+
+    update(): void {
+        this.icon = 'package';
+        if (this.config.options.advanced?.cpack?.color === true) {
+            this.button.color = this._color;
+        } else {
+            this.button.color = '';
+        }
+        super.update();
+    }
+
+    protected isVisible(): boolean {
+        return super.isVisible() && this._enabled;
+    }
+
+    protected getTextNormal(): string {
+        this.button.color = '';
+        return localize('run.cpack', 'Run CPack');
+    }
+
+    protected getTextShort(): string {
+        let len = this.config.options.advanced?.cpack?.statusBarLength || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
+    }
+
+    protected getTooltipShort(): string | null {
+        return this.prependCMake(this.getTooltipNormal());
+    }
+    protected getTooltipIcon() {
+        return this.getTooltipShort();
+    }
+}
+
+class WorkflowButton extends Button {
+    settingsName = 'workflow';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.workflow';
+        this.tooltip = localize('run.workflow.tooltip', 'Run Workflow');
+    }
+
+    private _enabled: boolean = false;
+    private _color: string = '';
+
+    set enabled(v: boolean) {
+        this._enabled = v;
+        this.update();
+    }
+
+    update(): void {
+        this.icon = 'run';
+        if (this.config.options.advanced?.workflow?.color === true) {
+            this.button.color = this._color;
+        } else {
+            this.button.color = '';
+        }
+        super.update();
+    }
+
+    protected isVisible(): boolean {
+        return super.isVisible() && this._enabled;
+    }
+
+    protected getTextNormal(): string {
+        this.button.color = '';
+        return localize('run.workflow', 'Run Workflow');
+    }
+
+    protected getTextShort(): string {
+        let len = this.config.options.advanced?.workflow?.statusBarLength || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
+    }
+
+    protected getTooltipShort(): string | null {
+        return this.prependCMake(this.getTooltipNormal());
+    }
+    protected getTooltipIcon() {
+        return this.getTooltipShort();
+    }
+}
+
 class BuildButton extends Button {
     private static readonly _build = localize('build', 'Build');
     private static readonly _stop = localize('stop', 'Stop');
@@ -665,6 +781,92 @@ export class TestPresetSelection extends Button {
     }
 }
 
+export class PackagePresetSelection extends Button {
+    private static readonly _noPresetSelected = localize('no.package.preset.selected', 'No Package Preset Selected');
+
+    settingsName = 'packagePreset';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = false;
+        this.command = 'cmake.selectPackagePreset';
+        this.icon = 'tools';
+        this.tooltip = localize('click.to.change.package.preset.tooltip', 'Click to change the active package preset');
+    }
+
+    protected getTextNormal(): string {
+        const text = this.text;
+        if (text.length === 0) {
+            return PackagePresetSelection._noPresetSelected;
+        }
+        return checkPackageOverridesPresent(this.config) ? `*${this.bracketText}` : this.bracketText;
+    }
+
+    protected getTextShort(): string {
+        let len = this.config.options.advanced?.packagePreset?.statusBarLength || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
+    }
+
+    protected getTooltipShort(): string | null {
+        if (this.getTextNormal() === this.getTextShort()) {
+            return this.prependCMake(this.getTooltipNormal());
+        }
+        return super.getTooltipShort();
+    }
+}
+
+export class WorkflowPresetSelection extends Button {
+    private static readonly _noPresetSelected = localize('no.workflow.preset.selected', 'No Workflow Preset Selected');
+
+    settingsName = 'workflowPreset';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = false;
+        this.command = 'cmake.selectWorkflowPreset';
+        this.icon = 'tools';
+        this.tooltip = localize('click.to.change.workflow.preset.tooltip', 'Click to change the active workflow preset');
+    }
+
+    protected getTextNormal(): string {
+        const text = this.text;
+        if (text.length === 0) {
+            return WorkflowPresetSelection._noPresetSelected;
+        }
+        return this.bracketText; // no setting overrides for workflow
+    }
+
+    protected getTextShort(): string {
+        let len = this.config.options.advanced?.workflowPreset?.statusBarLength || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
+    }
+
+    protected getTooltipShort(): string | null {
+        if (this.getTextNormal() === this.getTextShort()) {
+            return this.prependCMake(this.getTooltipNormal());
+        }
+        return super.getTooltipShort();
+    }
+}
+
 export class StatusBar implements vscode.Disposable {
     private readonly _folderButton = new FolderButton(this._config, 3.6);
 
@@ -683,6 +885,12 @@ export class StatusBar implements vscode.Disposable {
     private readonly _testPresetButton = new TestPresetSelection(this._config, 3.15);
     private readonly _testButton = new CTestButton(this._config, 3.1);
 
+    private readonly _packagePresetButton = new PackagePresetSelection(this._config, 3.05);
+    private readonly _packButton = new CPackButton(this._config, 3.04);
+
+    private readonly _workflowPresetButton = new WorkflowPresetSelection(this._config, 3.03);
+    private readonly _workflowButton = new WorkflowButton(this._config, 3.02);
+
     private readonly _buttons: Button[];
 
     constructor(private readonly _config: ConfigurationReader) {
@@ -695,10 +903,14 @@ export class StatusBar implements vscode.Disposable {
             this._debugButton,
             this._buildButton,
             this._testButton,
+            this._packButton,
+            this._workflowButton,
             this._launchButton,
             this._configurePresetButton,
             this._buildPresetButton,
-            this._testPresetButton
+            this._testPresetButton,
+            this._packagePresetButton,
+            this._workflowPresetButton
         ];
         this._config.onChange('options', () => this.update());
         this.update();
@@ -740,6 +952,12 @@ export class StatusBar implements vscode.Disposable {
     setCTestEnabled(v: boolean): void {
         this._testButton.enabled = v;
     }
+    setCPackEnabled(v: boolean): void {
+        this._packButton.enabled = v;
+    }
+    setWorkflowEnabled(v: boolean): void {
+        this._workflowButton.enabled = v;
+    }
     setIsBusy(v: boolean): void {
         this._buildButton.isBusy = v;
     }
@@ -764,6 +982,18 @@ export class StatusBar implements vscode.Disposable {
     updateTestPresetButton(): void {
         this._testPresetButton.update();
     }
+    setPackagePresetName(v: string): void {
+        this._packagePresetButton.text = v; this.setCPackEnabled(true);
+    }
+    updatePackagePresetButton(): void {
+        this._packagePresetButton.update();
+    }
+    setWorkflowPresetName(v: string): void {
+        this._workflowPresetButton.text = v; this.setWorkflowEnabled(true);
+    }
+    updateWorkflowPresetButton(): void {
+        this._workflowPresetButton.update();
+    }
 
     hideLaunchButton(shouldHide: boolean = true): void {
         this._launchButton.hidden = shouldHide;
@@ -781,5 +1011,7 @@ export class StatusBar implements vscode.Disposable {
         this._configurePresetButton.hidden = !isUsing;
         this._buildPresetButton.hidden = !isUsing;
         this._testPresetButton.hidden = !isUsing;
+        this._packagePresetButton.hidden = !isUsing;
+        this._workflowPresetButton.hidden = !isUsing;
     }
 }

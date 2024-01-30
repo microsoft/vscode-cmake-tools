@@ -69,6 +69,18 @@ export interface AdvancedOptionConfig {
         inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
+    packagePreset?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
+        statusBarLength?: number;
+    };
+    workflowPreset?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
+        statusBarLength?: number;
+    };
     kit?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
@@ -120,6 +132,20 @@ export interface AdvancedOptionConfig {
         inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
+    cpack?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        color?: boolean;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
+        statusBarLength?: number;
+    };
+    workflow?: {
+        projectStatusVisibility?: ProjectStatusOptionVisibility;
+        color?: boolean;
+        statusBarVisibility?: StatusBarOptionVisibility;
+        inheritDefault?: StatusBarInheritOptionVisibility;
+        statusBarLength?: number;
+    };
 }
 
 export interface OptionConfig {
@@ -158,6 +184,9 @@ export interface ExtensionConfigurationSettings {
     configureEnvironment: Environment;
     buildEnvironment: Environment;
     testEnvironment: Environment;
+    cpackEnvironment: Environment;
+    cpackPath: string;
+    cpackArgs: string[];
     mingwSearchDirs: string[]; // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
     additionalCompilerSearchDirs: string[];
     emscriptenSearchDirs: string[];
@@ -362,6 +391,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get rawCTestPath(): string {
         return this.configData.ctestPath;
     }
+    get rawCPackPath(): string {
+        return this.configData.cpackPath;
+    }
     get debugConfig(): CppDebugConfiguration {
         return this.configData.debugConfig;
     }
@@ -385,6 +417,12 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get ctestDefaultArgs(): string[] {
         return this.configData.ctestDefaultArgs;
+    }
+    get cpackEnvironment() {
+        return this.configData.cpackEnvironment;
+    }
+    get cpackArgs(): string[] {
+        return this.configData.cpackArgs;
     }
     get configureOnOpen() {
         if (util.isCodespaces() && this.configData.configureOnOpen === null) {
@@ -529,6 +567,7 @@ export class ConfigurationReader implements vscode.Disposable {
         buildToolArgs: new vscode.EventEmitter<string[]>(),
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
+        cpackPath: new vscode.EventEmitter<string>(),
         ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
@@ -536,10 +575,12 @@ export class ConfigurationReader implements vscode.Disposable {
         defaultVariants: new vscode.EventEmitter<object>(),
         ctestArgs: new vscode.EventEmitter<string[]>(),
         ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
+        cpackArgs: new vscode.EventEmitter<string[]>(),
         environment: new vscode.EventEmitter<Environment>(),
         configureEnvironment: new vscode.EventEmitter<Environment>(),
         buildEnvironment: new vscode.EventEmitter<Environment>(),
         testEnvironment: new vscode.EventEmitter<Environment>(),
+        cpackEnvironment: new vscode.EventEmitter<Environment>(),
         mingwSearchDirs: new vscode.EventEmitter<string[]>(), // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
         additionalCompilerSearchDirs: new vscode.EventEmitter<string[]>(),
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
@@ -648,6 +689,14 @@ export function checkBuildOverridesPresent(config: ConfigurationReader): boolean
 
 export function checkTestOverridesPresent(config: ConfigurationReader): boolean {
     if (Object.values(config.testEnvironment).length > 0 || config.ctestArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+        return true;
+    }
+
+    return false;
+}
+
+export function checkPackageOverridesPresent(config: ConfigurationReader): boolean {
+    if (Object.values(config.cpackEnvironment).length > 0 || config.cpackArgs.length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 

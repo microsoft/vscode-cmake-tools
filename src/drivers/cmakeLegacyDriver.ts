@@ -16,7 +16,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
 import { CodeModelContent } from './codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
@@ -70,6 +70,14 @@ export class CMakeLegacyDriver extends CMakeDriver {
     }
 
     doSetTestPreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
+    doSetPackagePreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
+    doSetWorkflowPreset(cb: () => Promise<void>): Promise<void> {
         return cb();
     }
 
@@ -162,6 +170,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
         testPreset: TestPreset | null,
+        packagePreset: PackagePreset | null,
+        workflowPreset: WorkflowPreset | null,
         workspaceFolder: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeLegacyDriver> {
@@ -172,6 +182,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
             configurePreset,
             buildPreset,
             testPreset,
+            packagePreset,
+            workflowPreset,
             preferredGenerators);
     }
 

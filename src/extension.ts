@@ -206,6 +206,10 @@ export class ExtensionManager implements vscode.Disposable {
                 advanced_buildPreset_statusBarLength: `${v.advanced?.buildPreset?.statusBarLength}`,
                 advanced_testPreset_statusBarVisibility: `${v.advanced?.testPreset?.statusBarVisibility}`,
                 advanced_testPreset_statusBarLength: `${v.advanced?.testPreset?.statusBarLength}`,
+                advanced_packagePreset_statusBarVisibility: `${v.advanced?.packagePreset?.statusBarVisibility}`,
+                advanced_packagePreset_statusBarLength: `${v.advanced?.packagePreset?.statusBarLength}`,
+                advanced_workflowPreset_statusBarVisibility: `${v.advanced?.workflowPreset?.statusBarVisibility}`,
+                advanced_workflowPreset_statusBarLength: `${v.advanced?.workflowPreset?.statusBarLength}`,
                 advanced_kit_statusBarVisibility: `${v.advanced?.kit?.statusBarVisibility}`,
                 advanced_kit_statusBarLength: `${v.advanced?.kit?.statusBarLength}`,
                 advanced_variant_statusBarVisibility: `${v.advanced?.variant?.statusBarVisibility}`,
@@ -225,7 +229,15 @@ export class ExtensionManager implements vscode.Disposable {
                 advanced_ctest_statusBarVisibility: `${v.advanced?.ctest?.statusBarVisibility}`,
                 advanced_ctest_statusBarLength: `${v.advanced?.ctest?.statusBarLength}`,
                 advanced_ctest_color: `${v.advanced?.ctest?.color}`,
-                advanced_ctest_projectStatusVisibility: `${v.advanced?.ctest?.projectStatusVisibility}`
+                advanced_ctest_projectStatusVisibility: `${v.advanced?.ctest?.projectStatusVisibility}`,
+                advanced_cpack_statusBarVisibility: `${v.advanced?.cpack?.statusBarVisibility}`,
+                advanced_cpack_statusBarLength: `${v.advanced?.cpack?.statusBarLength}`,
+                advanced_cpack_color: `${v.advanced?.cpack?.color}`,
+                advanced_cpack_projectStatusVisibility: `${v.advanced?.cpack?.projectStatusVisibility}`,
+                advanced_workflow_statusBarVisibility: `${v.advanced?.workflow?.statusBarVisibility}`,
+                advanced_workflow_statusBarLength: `${v.advanced?.workflow?.statusBarLength}`,
+                advanced_workflow_color: `${v.advanced?.workflow?.color}`,
+                advanced_workflow_projectStatusVisibility: `${v.advanced?.workflow?.projectStatusVisibility}`
             });
         });
         this.workspaceConfig.onChange('additionalCompilerSearchDirs', async _ => {
@@ -340,6 +352,8 @@ export class ExtensionManager implements vscode.Disposable {
     private activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
     private activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
     private activeTestPresetSub: vscode.Disposable = new DummyDisposable();
+    private activePackagePresetSub: vscode.Disposable = new DummyDisposable();
+    private activeWorkflowPresetSub: vscode.Disposable = new DummyDisposable();
 
     // Watch the code model so that we may update the tree view
     // <fspath, sub>
@@ -468,6 +482,48 @@ export class ExtensionManager implements vscode.Disposable {
                 return false;
             }
             return !!project.testPreset;
+        }
+        return true;
+    };
+
+    private readonly ensureActivePackagePreset = async (project?: CMakeProject): Promise<boolean> => {
+        if (!project) {
+            project = this.getActiveProject();
+        }
+        if (!project) {
+            // No CMakeProject. Probably no workspace open.
+            return false;
+        }
+        if (project.useCMakePresets) {
+            if (project.packagePreset) {
+                return true;
+            }
+            const didChoosePreset = await this.selectPackagePreset(project.workspaceFolder);
+            if (!didChoosePreset && !project.packagePreset) {
+                return false;
+            }
+            return !!project.packagePreset;
+        }
+        return true;
+    };
+
+    private readonly ensureActiveWorkflowPreset = async (project?: CMakeProject): Promise<boolean> => {
+        if (!project) {
+            project = this.getActiveProject();
+        }
+        if (!project) {
+            // No CMakeProject. Probably no workspace open.
+            return false;
+        }
+        if (project.useCMakePresets) {
+            if (project.workflowPreset) {
+                return true;
+            }
+            const didChoosePreset = await this.selectWorkflowPreset(project.workspaceFolder);
+            if (!didChoosePreset && !project.workflowPreset) {
+                return false;
+            }
+            return !!project.workflowPreset;
         }
         return true;
     };
@@ -704,7 +760,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     private disposeSubs() {
         util.disposeAll(this.projectSubscriptions);
-        for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub]) {
+        for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub, this.activePackagePresetSub, this.activeWorkflowPresetSub]) {
             sub.dispose();
         }
     }
@@ -788,6 +844,7 @@ export class ExtensionManager implements vscode.Disposable {
     private setupSubscriptions() {
         this.disposeSubs();
         const cmakeProject = this.getActiveProject();
+        // Note: No package nor workflow preset info in the status bar
         if (!cmakeProject) {
             this.statusBar.setVisible(false);
             this.statusMessageSub = new DummyDisposable();
@@ -799,10 +856,14 @@ export class ExtensionManager implements vscode.Disposable {
             this.activeConfigurePresetSub = new DummyDisposable();
             this.activeBuildPresetSub = new DummyDisposable();
             this.activeTestPresetSub = new DummyDisposable();
+            this.activePackagePresetSub = new DummyDisposable();
+            this.activeWorkflowPresetSub = new DummyDisposable();
             this.statusBar.setActiveKitName('');
             this.statusBar.setConfigurePresetName('');
             this.statusBar.setBuildPresetName('');
             this.statusBar.setTestPresetName('');
+            this.statusBar.setPackagePresetName('');
+            this.statusBar.setWorkflowPresetName('');
         } else {
             this.statusMessageSub = cmakeProject.onStatusMessageChanged(FireNow, s => this.statusBar.setStatusMessage(s));
             this.targetNameSub = cmakeProject.onTargetNameChanged(FireNow, t => {
@@ -825,6 +886,12 @@ export class ExtensionManager implements vscode.Disposable {
             });
             this.activeTestPresetSub = cmakeProject.onActiveTestPresetChanged(FireNow, p => {
                 this.statusBar.setTestPresetName(p?.displayName || p?.name || '');
+            });
+            this.activePackagePresetSub = cmakeProject.onActivePackagePresetChanged(FireNow, p => {
+                this.statusBar.setPackagePresetName(p?.displayName || p?.name || '');
+            });
+            this.activeWorkflowPresetSub = cmakeProject.onActiveWorkflowPresetChanged(FireNow, p => {
+                this.statusBar.setWorkflowPresetName(p?.displayName || p?.name || '');
             });
         }
     }
@@ -1049,6 +1116,42 @@ export class ExtensionManager implements vscode.Disposable {
                     return;
                 }
                 await project.presetsController.setTestPreset(presetName);
+            }
+        }
+    }
+
+    async setPackagePreset(presetName: string, folder?: vscode.WorkspaceFolder) {
+        if (folder) {
+            if (!this.useCMakePresets(folder)) {
+                log.info(localize('skip.set.package.preset', 'Using kits, skip setting package preset: {0}', presetName));
+                return;
+            }
+            await this.getActiveProject()?.presetsController.setPackagePreset(presetName);
+        } else {
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                if (!project.useCMakePresets) {
+                    log.info(localize('skip.set.package.preset', 'Using kits, skip setting package preset: {0}', presetName));
+                    return;
+                }
+                await project.presetsController.setPackagePreset(presetName);
+            }
+        }
+    }
+
+    async setWorkflowPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
+        if (folder) {
+            if (!this.useCMakePresets(folder)) {
+                log.info(localize('skip.set.workflow.preset', 'Using kits, skip setting workflow preset: {0}', presetName));
+                return;
+            }
+            await this.getActiveProject()?.presetsController.setWorkflowPreset(presetName);
+        } else {
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                if (!project.useCMakePresets) {
+                    log.info(localize('skip.set.workflow.preset', 'Using kits, skip setting workflow preset: {0}', presetName));
+                    return;
+                }
+                await project.presetsController.setWorkflowPreset(presetName);
             }
         }
     }
@@ -1394,6 +1497,26 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.ctest(), this.ensureActiveTestPreset);
     }
 
+    cpack(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("runCPack", { all: "false"});
+        return this.runCMakeCommand(cmakeProject => cmakeProject.cpack(), folder, this.ensureActivePackagePreset);
+    }
+
+    cpackAll() {
+        telemetry.logEvent("runCPack", { all: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cpack(), this.ensureActivePackagePreset);
+    }
+
+    workflow(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("runWorkflow", { all: "false"});
+        return this.runCMakeCommand(cmakeProject => cmakeProject.workflow(), folder, this.ensureActiveWorkflowPreset);
+    }
+
+    workflowAll() {
+        telemetry.logEvent("runWorkflow", { all: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.workflow(), this.ensureActiveWorkflowPreset);
+    }
+
     revealTestExplorer(folder?: vscode.WorkspaceFolder) {
         return this.runCMakeCommand(cmakeProject => cmakeProject.revealTestExplorer(), folder, this.ensureActiveTestPreset);
     }
@@ -1684,6 +1807,16 @@ export class ExtensionManager implements vscode.Disposable {
         return this.getActiveProject()?.testPreset?.name || '';
     }
 
+    activePackagePresetName(): string {
+        telemetry.logEvent("substitution", { command: "activePackagePresetName" });
+        return this.getActiveProject()?.packagePreset?.name || '';
+    }
+
+    activeWorkflowPresetName(): string {
+        telemetry.logEvent("substitution", { command: "activeWorkflowPresetName" });
+        return this.getActiveProject()?.workflowPreset?.name || '';
+    }
+
     /**
      * Opens CMakePresets.json at the root of the project. Creates one if it does not exist.
      */
@@ -1740,6 +1873,40 @@ export class ExtensionManager implements vscode.Disposable {
         }
 
         return cmakeProject.presetsController.addTestPreset();
+    }
+
+    /**
+     * Show UI to allow the user to add an active package preset
+     */
+    async addPackagePreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
+        if (util.isTestMode()) {
+            log.trace(localize('add.package.preset.in.test.mode', 'Running CMakeTools in test mode. addPackagePreset is disabled.'));
+            return false;
+        }
+
+        const cmakeProject = this.getProjectFromFolder(folder);
+        if (!cmakeProject) {
+            return false;
+        }
+
+        return cmakeProject.presetsController.addPackagePreset();
+    }
+
+    /**
+     * Show UI to allow the user to add an active test preset
+     */
+    async addWorkflowPreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
+        if (util.isTestMode()) {
+            log.trace(localize('add.workflow.preset.in.test.mode', 'Running CMakeTools in test mode. addWorkflowPreset is disabled.'));
+            return false;
+        }
+
+        const cmakeProject = this.getProjectFromFolder(folder);
+        if (!cmakeProject) {
+            return false;
+        }
+
+        return cmakeProject.presetsController.addWorkflowPreset();
     }
 
     // Referred in presetsController.ts
@@ -1836,6 +2003,56 @@ export class ExtensionManager implements vscode.Disposable {
         void vscode.commands.executeCommand('workbench.action.openSettings', '@id:cmake.ctestArgs, @id:cmake.testEnvironment, @id:cmake.environment');
     }
 
+    /**
+     * Show UI to allow the user to select an active package preset
+     */
+    async selectPackagePreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+        if (util.isTestMode()) {
+            log.trace(localize('selecting.package.preset.in.test.mode', 'Running CMakeTools in test mode. selectPackagePreset is disabled.'));
+            return false;
+        }
+
+        const project = this.getProjectFromFolder(folder);
+        if (!project) {
+            return false;
+        }
+
+        if (!project.useCMakePresets) {
+            log.info(localize('skip.set.package.preset', 'Using kits, skip selecting package preset'));
+            return false;
+        }
+
+        const presetSelected = await project.presetsController.selectPackagePreset();
+        const packagePreset = project.packagePreset;
+        this.statusBar.setPackagePresetName(packagePreset?.displayName || packagePreset?.name || '');
+        return presetSelected;
+    }
+
+    /**
+     * Show UI to allow the user to select an active workflow preset
+     */
+    async selectWorkflowPreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+        if (util.isTestMode()) {
+            log.trace(localize('selecting.workflow.preset.in.test.mode', 'Running CMakeTools in test mode. selectWorkflowPreset is disabled.'));
+            return false;
+        }
+
+        const project = this.getProjectFromFolder(folder);
+        if (!project) {
+            return false;
+        }
+
+        if (!project.useCMakePresets) {
+            log.info(localize('skip.set.workflow.preset', 'Using kits, skip selecting workflow preset'));
+            return false;
+        }
+
+        const presetSelected = await project.presetsController.selectWorkflowPreset();
+        const workflowPreset = project.workflowPreset;
+        this.statusBar.setWorkflowPresetName(workflowPreset?.displayName || workflowPreset?.name || '');
+        return presetSelected;
+    }
+
     public api: CMakeToolsApiImpl;
 
     get onBuildTargetChanged() {
@@ -1909,17 +2126,23 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'activeConfigurePresetName',
         'activeBuildPresetName',
         'activeTestPresetName',
+        'activePackagePresetName',
+        'activeWorkflowPresetName',
         "useCMakePresets",
         "openCMakePresets",
         'addConfigurePreset',
         'addBuildPreset',
         'addTestPreset',
+        'addPackagePreset',
+        'addWorkflowPreset',
         'selectConfigurePreset',
         'viewConfigureSettings',
         'selectBuildPreset',
         'viewBuildSettings',
         'selectTestPreset',
         'viewTestSettings',
+        'selectPackagePreset',
+        'selectWorkflowPreset',
         'selectActiveFolder',
         'editKits',
         'scanForKits',
@@ -1929,6 +2152,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'setConfigurePreset',
         'setBuildPreset',
         'setTestPreset',
+        'setPackagePreset',
+        'setWorkflowPreset',
         'build',
         'showBuildCommand',
         'buildAll',
@@ -1954,6 +2179,10 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'editCacheUI',
         'ctest',
         'ctestAll',
+        'cpack',
+        'cpackAll',
+        'workflow',
+        'workflowAll',
         'revealTestExplorer',
         'refreshTests',
         'refreshTestsAll',

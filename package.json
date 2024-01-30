@@ -38,6 +38,8 @@
     "onCommand:cmake.activeConfigurePresetName",
     "onCommand:cmake.activeBuildPresetName",
     "onCommand:cmake.activeTestPresetName",
+    "onCommand:cmake.activePackagePresetName",
+    "onCommand:cmake.activeWorkflowPresetName",
     "onCommand:cmake.buildTargetName",
     "onCommand:cmake.launchTargetPath",
     "onCommand:cmake.launchTargetDirectory",
@@ -83,6 +85,18 @@
       {
         "command": "cmake.addTestPreset",
         "title": "%cmake-tools.command.cmake.addTestPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.addPackagePreset",
+        "title": "%cmake-tools.command.cmake.addPackagePreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.addWorkflowPreset",
+        "title": "%cmake-tools.command.cmake.addWorkflowPreset.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
@@ -134,6 +148,13 @@
         "icon": "$(settings-gear)"
       },
       {
+        "command": "cmake.projectStatus.viewPackageSettings",
+        "title": "%cmake-tools.command.cmake.viewPackageSettings.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": "$(settings-gear)"
+      },
+      {
         "command": "cmake.selectTestPreset",
         "title": "%cmake-tools.command.cmake.selectTestPreset.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",
@@ -149,6 +170,32 @@
       {
         "command": "cmake.projectStatus.setTestTarget",
         "title": "%cmake-tools.command.cmake.projectStatus.selectTestPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "cmake.selectPackagePreset",
+        "title": "%cmake-tools.command.cmake.selectPackagePreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.projectStatus.selectPackagePreset",
+        "title": "%cmake-tools.command.cmake.selectPackagePreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "cmake.selectWorkflowPreset",
+        "title": "%cmake-tools.command.cmake.selectWorkflowPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.projectStatus.selectWorkflowPreset",
+        "title": "%cmake-tools.command.cmake.selectWorkflowPreset.title%",
         "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake",
         "icon": "$(edit)"
@@ -577,6 +624,44 @@
         "command": "cmake.refreshTestsAll",
         "title": "%cmake-tools.command.cmake.refreshTestsAll.title%",
         "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.cpack",
+        "title": "%cmake-tools.command.cmake.cpack.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.projectStatus.cpack",
+        "title": "%cmake-tools.command.cmake.cpack.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "icon": "$(package)",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.workflow",
+        "title": "%cmake-tools.command.cmake.workflow.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.projectStatus.workflow",
+        "title": "%cmake-tools.command.cmake.workflow.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "icon": "$(run)",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.cpackAll",
+        "title": "%cmake-tools.command.cmake.cpackAll.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.workflowAll",
+        "title": "%cmake-tools.command.cmake.workflowAll.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
@@ -1017,6 +1102,14 @@
           "when": "cmake:enableFullFeatureSet && useCMakePresets"
         },
         {
+          "command": "cmake.addPackagePreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.addWorkflowPreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
           "command": "cmake.selectConfigurePreset",
           "when": "cmake:enableFullFeatureSet && useCMakePresets"
         },
@@ -1029,8 +1122,16 @@
           "when": "cmake:enableFullFeatureSet && useCMakePresets"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.viewLog"
+          "command": "cmake.selectPackagePreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.selectWorkflowPreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.viewLog",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.configure"
@@ -1043,27 +1144,27 @@
           "command": "cmake.showConfigureCommand"
         },
         {
-          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
-          "command": "cmake.scanForKits"
+          "command": "cmake.scanForKits",
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
           "command": "cmake.scanForCompilers",
           "when": "cmake:enableFullFeatureSet && useCMakePresets"
         },
         {
-          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
-          "command": "cmake.selectKit"
+          "command": "cmake.selectKit",
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
-          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
-          "command": "cmake.editKits"
+          "command": "cmake.editKits",
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
           "command": "cmake.quickStart"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.selectActiveFolder"
+          "command": "cmake.selectActiveFolder",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.resetState"
@@ -1080,44 +1181,44 @@
           "when": "cmake:multiProject && cmake:cmakeDebuggerAvailable"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.build"
+          "command": "cmake.build",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.showBuildCommand"
+          "command": "cmake.showBuildCommand",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.buildAll",
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.install"
+          "command": "cmake.install",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.installAll",
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.buildWithTarget"
+          "command": "cmake.buildWithTarget",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.compileFile"
+          "command": "cmake.compileFile",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
-          "command": "cmake.setVariant"
+          "command": "cmake.setVariant",
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
           "command": "cmake.setVariantAll",
           "when": "cmake:multiProject && cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.setDefaultTarget"
+          "command": "cmake.setDefaultTarget",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.cleanConfigure"
@@ -1135,16 +1236,16 @@
           "when": "cmake:multiProject && cmake:cmakeDebuggerAvailable"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.clean"
+          "command": "cmake.clean",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.cleanAll",
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.cleanRebuild"
+          "command": "cmake.cleanRebuild",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.cleanRebuildAll",
@@ -1155,12 +1256,28 @@
           "when": "cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.ctest"
+          "command": "cmake.ctest",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.cpack",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.workflow",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
         },
         {
           "command": "cmake.ctestAll",
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.cpackAll",
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.workflowAll",
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet && useCMakePresets"
         },
         {
           "command": "cmake.revealTestExplorer",
@@ -1172,11 +1289,11 @@
         },
         {
           "command": "cmake.refreshTestsAll",
-          "when": "cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet && cmake:testExplorerIntegrationEnabled"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.editCache"
+          "command": "cmake.editCache",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.debugTarget",
@@ -1195,12 +1312,12 @@
           "when": "cmake:multiProject && !cmake:hideLaunchCommand && cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.selectLaunchTarget"
+          "command": "cmake.selectLaunchTarget",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.stop"
+          "command": "cmake.stop",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.stopAll",
@@ -1387,7 +1504,27 @@
           "when": "never"
         },
         {
+          "command": "cmake.projectStatus.viewPackageSettings",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.selectPackagePreset",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.selectWorkflowPreset",
+          "when": "never"
+        },
+        {
           "command": "cmake.projectStatus.ctest",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.cpack",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.workflow",
           "when": "never"
         },
         {
@@ -1558,13 +1695,23 @@
           "group": "inline"
         },
         {
-            "command": "cmake.projectStatus.viewBuildSettings",
-            "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'buildPreset - overrides present'",
-            "group": "inline"
+          "command": "cmake.projectStatus.viewBuildSettings",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'buildPreset - overrides present'",
+          "group": "inline"
         },
         {
           "command": "cmake.projectStatus.ctest",
           "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'test'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.cpack",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'package' && useCMakePresets",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.workflow",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'workflow' && useCMakePresets",
           "group": "inline"
         },
         {
@@ -1578,9 +1725,24 @@
           "group": "inline"
         },
         {
-            "command": "cmake.projectStatus.viewTestSettings",
-            "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'testPreset - overrides present'",
-            "group": "inline"
+          "command": "cmake.projectStatus.viewTestSettings",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'testPreset - overrides present'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.viewPackageSettings",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'packagePreset - overrides present'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.selectPackagePreset",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'packagePreset'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.selectWorkflowPreset",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'workflowPreset'",
+          "group": "inline"
         },
         {
           "command": "cmake.projectStatus.debugTarget",
@@ -2018,6 +2180,13 @@
           "description": "%cmake-tools.configuration.cmake.ctestPath.description%",
           "scope": "resource"
         },
+        "cmake.cpackPath": {
+          "type": "string",
+          "default": null,
+          "when": "useCMakePresets == true",
+          "description": "%cmake-tools.configuration.cmake.cpackPath.description%",
+          "scope": "resource"
+        },
         "cmake.ctest.parallelJobs": {
           "type": "number",
           "default": 0,
@@ -2287,6 +2456,16 @@
           ],
           "scope": "machine"
         },
+        "cmake.cpackArgs": {
+          "type": "array",
+          "when": "useCMakePresets == true",
+          "items": {
+            "type": "string"
+          },
+          "description": "%cmake-tools.configuration.cmake.cpackArgs.description%",
+          "default": [],
+          "scope": "resource"
+        },
         "cmake.environment": {
           "type": "object",
           "default": {},
@@ -2321,6 +2500,17 @@
           "type": "object",
           "default": {},
           "description": "%cmake-tools.configuration.cmake.testEnvironment.description%",
+          "additionalProperties": {
+            "type": "string",
+            "description": "%cmake-tools.configuration.cmake.environment.additionalProperties.description%"
+          },
+          "scope": "resource"
+        },
+        "cmake.cpackEnvironment": {
+          "type": "object",
+          "default": {},
+          "when": "useCMakePresets == true",
+          "description": "%cmake-tools.configuration.cmake.cpackEnvironment.description%",
           "additionalProperties": {
             "type": "string",
             "description": "%cmake-tools.configuration.cmake.environment.additionalProperties.description%"
@@ -2556,7 +2746,15 @@
         },
         "cmake.options.advanced": {
           "type": "object",
-          "default": {"build": {"statusBarVisibility": "inherit"}, "launch": {"statusBarVisibility": "inherit"}, "debug": {"statusBarVisibility": "inherit"}},
+          "default": {
+            "build": {"statusBarVisibility": "inherit"},
+            "launch": {"statusBarVisibility": "inherit"},
+            "debug": {"statusBarVisibility": "inherit"},
+            "packagePreset": {"statusBarVisibility": "hidden"},
+            "cpack": {"statusBarVisibility": "hidden"},
+            "workflowPreset": {"statusBarVisibility": "hidden"},
+            "workflow": {"statusBarVisibility": "hidden"}
+          },
           "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.markdownDescription%",
           "properties": {
             "configure": {
@@ -2685,6 +2883,86 @@
                     "hidden"
                   ],
                   "default": "visible"
+                },
+                "statusBarLength": {
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "type": "integer",
+                  "default": 20
+                }
+              }
+            },
+            "packagePreset": {
+              "type": "object",
+              "properties": {
+                "statusBarVisibility": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden",
+                    "inherit"
+                  ],
+                  "default": "hidden",
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.inherit.markdownDescription%"
+                  ]
+                },
+                "inheritDefault": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.inheritDefault.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ],
+                  "default": "hidden"
+                },
+                "statusBarLength": {
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "type": "integer",
+                  "default": 20
+                }
+              }
+            },
+            "workflowPreset": {
+              "type": "object",
+              "properties": {
+                "statusBarVisibility": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden",
+                    "inherit"
+                  ],
+                  "default": "hidden",
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.inherit.markdownDescription%"
+                  ]
+                },
+                "inheritDefault": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.inheritDefault.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ],
+                  "default": "hidden"
                 },
                 "statusBarLength": {
                   "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
@@ -3073,6 +3351,122 @@
                   ]
                 }
               }
+            },
+            "cpack": {
+              "type": "object",
+              "properties": {
+                "statusBarVisibility": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden",
+                    "inherit"
+                  ],
+                  "default": "hidden",
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.inherit.markdownDescription%"
+                  ]
+                },
+                "inheritDefault": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.inheritDefault.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ],
+                  "default": "hidden"
+                },
+                "color": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.cpack.color.description%"
+                },
+                "statusBarLength": {
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "type": "integer",
+                  "default": 20
+                },
+                "projectStatusVisibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.description%",
+                  "enum": [
+                    "visible",
+                    "hidden"
+                  ],
+                  "default": "visible",
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description%"
+                  ]
+                }
+              }
+            },
+            "workflow": {
+              "type": "object",
+              "properties": {
+                "statusBarVisibility": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden",
+                    "inherit"
+                  ],
+                  "default": "hidden",
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.compact.markdownDescription%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.inherit.markdownDescription%"
+                  ]
+                },
+                "inheritDefault": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.inheritDefault.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ],
+                  "default": "hidden"
+                },
+                "color": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.workflow.color.description%"
+                },
+                "statusBarLength": {
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "type": "integer",
+                  "default": 20
+                },
+                "projectStatusVisibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.description%",
+                  "enum": [
+                    "visible",
+                    "hidden"
+                  ],
+                  "default": "visible",
+                  "enumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description%"
+                  ]
+                }
+              }
             }
           }
         },
@@ -3252,11 +3646,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-v5-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v6-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-v5-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v6-schema.json"
       }
     ]
   },

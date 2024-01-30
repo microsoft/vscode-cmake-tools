@@ -34,6 +34,8 @@ suite('Build using Presets', () => {
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
         await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
+        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
 
         testEnv.projectFolder.buildDirectory.clear();
     });

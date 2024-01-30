@@ -53,4 +53,11 @@ export class DirectoryContext {
     getCTestPath(overWriteCMakePathSetting?: string): Promise<string | null> {
         return paths.getCTestPath(this, overWriteCMakePathSetting);
     }
+    /**
+     * The CPack executable for the directory. See `cmakePath` for more
+     * information.
+     */
+    getCPackPath(overWriteCMakePathSetting?: string): Promise<string | null> {
+        return paths.getCPackPath(this, overWriteCMakePathSetting);
+    }
 }

@@ -15,3 +15,8 @@ export async function onTestSettingsChange(): Promise<void> {
     await treeDataProvider.refreshTestNode();
     getStatusBar()?.updateTestPresetButton();
 }
+
+export async function onPackageSettingsChange(): Promise<void> {
+    await treeDataProvider.refreshPackageNode();
+    // No updates necessary to status bar, package/workflow presets live in Project Status View only.
+}
