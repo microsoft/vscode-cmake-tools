@@ -1,0 +1,62 @@
+# ==================================================================================
+# Pipeline for release
+# ==================================================================================
+
+trigger: none
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+  - repository: MicroBuildTemplate
+    type: git
+    name: 1ESPipelineTemplates/MicroBuildTemplate
+    ref: refs/tags/release
+
+name: $(Date:yyyyMMdd).$(Rev:r)
+
+variables:
+- name: IsPreRelease
+  value: 0
+- name: ReleaseVersion
+  value: unset
+- name: TeamName
+  value: C++ Cross Platform and Cloud
+
+extends:
+  template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
+  parameters:
+    pool:
+      name: VSEngSS-MicroBuild2022-1ES
+    sdl:
+      sourceAnalysisPool:
+        name: VSEngSS-MicroBuild2022-1ES
+    customBuildTags:
+    - ES365AIMigrationTooling
+    stages:
+    - stage: stage
+      jobs:
+      - job: Job_1
+        displayName: Build release
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            displayName: 'Publish VSIX'
+            targetPath: $(Build.ArtifactStagingDirectory)/vsix
+            artifactName: vsix
+        steps:
+        - checkout: self
+          clean: true
+          fetchTags: false
+        - task: CmdLine@2
+          displayName: Check ReleaseVersion
+          inputs:
+            script: |-
+              @echo off
+              if "$(ReleaseVersion)"=="unset" (
+                  echo ^"ReleaseVersion^" was not set
+                  exit /B 1
+              )
+              exit /b 0
+        - template: /jobs/shared/build.yml@self
