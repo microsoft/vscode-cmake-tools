@@ -43,7 +43,7 @@ extends:
           outputs:
           - output: pipelineArtifact
             displayName: 'Publish VSIX'
-            targetPath: $(Build.ArtifactStagingDirectory)/vsix
+            targetPath: $(Build.ArtifactStagingDirectory)
             artifactName: vsix
         steps:
         - checkout: self
