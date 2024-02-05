@@ -22,6 +22,9 @@ schedules:
     - main
   always: true
 
+variables: 
+  TeamName: C++ Cross Platform and Cloud
+
 extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
   parameters:
