@@ -33,10 +33,14 @@ extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
   parameters:
     pool:
-      name: VSEngSS-MicroBuild2022-1ES
+      name: AzurePipelines-EO
+      image: AzurePipelinesWindows2022compliantGPT
+      os: windows
     sdl:
-      sourceAnalysisPool:
-        name: VSEngSS-MicroBuild2022-1ES
+      sourceAnalysisPool: 
+        name: AzurePipelines-EO
+        image: AzurePipelinesWindows2022compliantGPT
+        os: windows
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
