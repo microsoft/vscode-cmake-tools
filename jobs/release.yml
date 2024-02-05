@@ -48,6 +48,7 @@ extends:
             displayName: 'Publish VSIX'
             targetPath: $(Build.ArtifactStagingDirectory)/vsix
             artifactName: vsix
+            sbomBuildDropPath: $(Build.ArtifactStagingDirectory)
         steps:
         - checkout: self
           clean: true
