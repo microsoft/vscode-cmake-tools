@@ -89,6 +89,19 @@ steps:
     script: |
       mkdir $(Build.ArtifactStagingDirectory)\vsix
       if "${{parameters.IsPreRelease}}"=="1" (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+- template: /jobs/shared/install-nuget.yml@self
+- script: nuget restore $(Build.SourcesDirectory)\build\SignFiles.proj -PackagesDirectory $(Build.SourcesDirectory)\build\packages
+  displayName: Restore MicroBuild Core
+- task: MSBuild@1
+  displayName: Sign files
+  inputs:
+    solution: $(Build.SourcesDirectory)\build\SignFiles.proj
+    msbuildArguments: /p:SignType=$(SignType)
+- task: MSBuild@1
+  displayName: Sign VSIX
+  inputs:
+    solution: $(Build.SourcesDirectory)\build\SignVsix.proj
+    msbuildArguments: /p:SignType=$(SignType)
 - task: CmdLine@2
   displayName: Write the version to version.txt
   inputs:
