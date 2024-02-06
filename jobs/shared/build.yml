@@ -7,6 +7,11 @@ parameters:
   default: $(ReleaseVersion)
 
 steps:
+- task: MicroBuildSigningPlugin@3
+  displayName: Install MicroBuild Signing
+  inputs:
+    signType: $(SignType)
+    zipSources: false
 - task: NodeTool@0
   displayName: Use Node 16.x
   inputs:
