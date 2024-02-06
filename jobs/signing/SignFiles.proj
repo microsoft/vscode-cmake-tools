@@ -10,11 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FilesToSign Include="$(OutDir)\dist\**\*.js">
+    <!-- Because of Webpack bundling, this is the only shipping Javascript file.
+         There are no third-party files to sign because they've all been bundled. -->
+    <FilesToSign Include="$(OutDir)\dist\main.js">
       <Authenticode>Microsoft400</Authenticode>
-    </FilesToSign>
-    <FilesToSign Include="$(OutDir)\node_modules\**\*.js">
-      <Authenticode>3PartyScriptsSHA2</Authenticode>
     </FilesToSign>
   </ItemGroup>
 
