@@ -120,6 +120,21 @@ The full level of options for the CMake status can be seen below:
             "statusBarVisibility": "visible", "hidden", "inherit", 
             "inheritDefault": "visible", "icon", "compact", "hidden", 
             "projectStatusVisibility": "visible", "hidden" 
+        },
+        "workflow": {
+            "statusBarVisibility": "visible", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
+            "projectStatusVisibility": "visible", "hidden" 
+        },
+        "workflowPreset": {
+            "statusBarVisibility": "visible", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
+            "projectStatusVisibility": "visible", "hidden" 
+        },
+        "packagePreset": {
+            "statusBarVisibility": "visible", "hidden", "inherit", 
+            "inheritDefault": "visible", "icon", "compact", "hidden", 
+            "projectStatusVisibility": "visible", "hidden" 
         }
 }
 ```
@@ -137,7 +152,10 @@ The full level of options for the CMake status can be seen below:
 * `launchTarget` is associated with selecting your active launch target. When selected, you can specify the active launch target.
 * `debug` is associated with the CMake Debug action. It invokes a debugger on the active launch target.
 * `launch` is associated with launching the target. It will run the specified target application in the terminal.
-
+* `workflow` is associated with CMake Run Workflow action. It will run the specified CMake workflow based on the workflow preset.
+* `workflowPreset` is associated with your active CMake Workflow Preset. When selected, the user can modify their active CMake Workflow Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project).
+* `packagePreset` is associated with your active CMake Package Preset.  When selected, the user can modify their active CMake Workflow Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project).
+  
 To reset your CMake options back to the default, hover over your `Cmake > Options: Status Bar Visibility` and `Cmake > Options: Advanced` settings and select the gear icons that appear for more options. From there, select `Reset Setting` on both options.
 ![Screenshot of the VS Code Setting option to Reset Setting to the left of Cmake > Options: Status Bar Visibility](images/cmake-setting-2.png)
 ![Screenshot of the VS Code Setting option to Reset Setting to the left of Cmake > Options: Advanced visibility](images/cmake-setting-1.png)

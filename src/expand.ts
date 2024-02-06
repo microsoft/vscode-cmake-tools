@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { createLogger } from './logging';
-import { replaceAll, fixPaths, errorToString, stringNeedsExpansion } from './util';
+import { replaceAll, fixPaths, errorToString } from './util';
 import * as nls from 'vscode-nls';
 import { EnvironmentWithNull, EnvironmentUtils } from './environmentVariables';
 import * as matchAll from 'string.prototype.matchall';
@@ -100,11 +100,6 @@ export interface ExpansionOptions {
  */
 export async function expandString<T>(input: string | T, opts: ExpansionOptions): Promise<string | T> {
     if (typeof input !== 'string') {
-        return input;
-    }
-
-    // Avoid all the logic and logging output for a string that doesn't even contain the variable expansion syntax ${var}
-    if (!stringNeedsExpansion(input)) {
         return input;
     }
 
