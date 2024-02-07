@@ -2,6 +2,16 @@
 # Pipeline for release
 # ==================================================================================
 
+parameters:
+- name: SignTypeOverride
+  displayName: Signing Type Override
+  type: string
+  default: default
+  values:
+    - default
+    - test
+    - real
+
 trigger: none
 
 resources:
@@ -17,24 +27,25 @@ resources:
 name: $(Date:yyyyMMdd).$(Rev:r)
 
 variables:
-- name: IsPreRelease
-  value: 0
-# ReleaseVersion is set in the versions tab so it can be edited.
-- name: TeamName
-  value: C++ Cross Platform and Cloud
+  IsPreRelease: 0
+  # ReleaseVersion is set in the versions tab so it can be edited.
+  TeamName: C++ Cross Platform and Cloud
+  # If the user didn't override the signing type, then only real-sign on main.
+  ${{ if ne(parameters.SignTypeOverride, 'default') }}:
+    SignType: ${{ parameters.SignTypeOverride }}
+  ${{ if and(eq(parameters.SignTypeOverride, 'default'), eq(variables['Build.SourceBranchName'], 'main')) }}:
+    SignType: real
+  ${{ if and(eq(parameters.SignTypeOverride, 'default'), not(eq(variables['Build.SourceBranchName'], 'main'))) }}:
+    SignType: test
 
 extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
   parameters:
     pool:
-      name: AzurePipelines-EO
-      image: AzurePipelinesWindows2022compliantGPT
-      os: windows
+      name: VSEngSS-MicroBuild2022-1ES
     sdl:
-      sourceAnalysisPool: 
-        name: AzurePipelines-EO
-        image: AzurePipelinesWindows2022compliantGPT
-        os: windows
+      sourceAnalysisPool:
+        name: VSEngSS-MicroBuild2022-1ES
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
