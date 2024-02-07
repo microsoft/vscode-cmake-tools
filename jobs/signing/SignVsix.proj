@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FilesToSign Include="$(OutDir)\*.vsix">
+    <FilesToSign Include="$(OutDir)\**\*.vsix">
       <Authenticode>VsixSHA2</Authenticode>
     </FilesToSign>
   </ItemGroup>
