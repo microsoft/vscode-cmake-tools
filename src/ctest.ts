@@ -23,7 +23,7 @@ const log = logging.createLogger('ctest');
 
 const magicKey = 'ctest.magic.key';
 // Used as magic value
-let sessionNum= 0;
+let sessionNum = 0;
 
 // Placeholder in the test explorer when test preset is not selected
 const testPresetRequired = '_test_preset_required_';
@@ -870,7 +870,7 @@ export class CTestDriver implements vscode.Disposable {
             .find(test => test.name === testName)?.properties
             .find(prop => prop.name === 'WORKING_DIRECTORY');
 
-        if (typeof(property?.value) === 'string') {
+        if (typeof (property?.value) === 'string') {
             return property.value;
         }
         return '';
