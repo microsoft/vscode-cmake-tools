@@ -455,62 +455,7 @@ export class CTestDriver implements vscode.Disposable {
 
                 if (testResults) {
                     for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                        let foundTestResult = false;
-                        // Only show the first failure
-                        let havefailures = false;
-                        let duration: number | undefined;
-                        const testName = testResults.site.testing.test[i].name;
-                        if (testName === test.id) {
-                            foundTestResult = true;
-                            const durationStr = testResults.site.testing.test[i].measurements.get("Execution Time")?.value;
-                            duration = durationStr ? parseFloat(durationStr) * 1000 : undefined;
-                        }
-
-                        let output = testResults.site.testing.test[i].output;
-                        if (process.platform === 'win32') {
-                            output = output.replace(/\r?\n/g, '\r\n');
-                        }
-                        run.appendOutput(output);
-
-                        if (testResults.site.testing.test[i].status !== 'passed' && !havefailures) {
-                            const failureDurationStr = testResults.site.testing.test[i].measurements.get("Execution Time")?.value;
-                            const failureDuration = failureDurationStr ? parseFloat(failureDurationStr) * 1000 : undefined;
-                            const exitCode = testResults.site.testing.test[i].measurements.get("Exit Value")?.value;
-                            const completionStatus = testResults.site.testing.test[i].measurements.get("Completion Status")?.value;
-
-                            if (exitCode !== undefined) {
-                                this.ctestFailed(
-                                    test,
-                                    run,
-                                    new vscode.TestMessage(localize('test.failed.with.exit.code', 'Test {0} failed with exit code {1}.', testName, exitCode)),
-                                    failureDuration
-                                );
-                            } else if (completionStatus !== undefined) {
-                                this.ctestErrored(
-                                    test,
-                                    run,
-                                    new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
-                                );
-                            } else {
-                                this.ctestErrored(
-                                    test,
-                                    run,
-                                    new vscode.TestMessage(localize('test.failed', 'Test {0} failed. Please check output for more information.', testName))
-                                );
-                            }
-
-                            havefailures = true;
-                            returnCode = -1;
-                        }
-                        if (!foundTestResult && !havefailures) {
-                            this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
-                            havefailures = true;
-                            returnCode = -1;
-                        }
-
-                        if (!havefailures) {
-                            run.passed(test, duration);
-                        }
+                        returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], test, run, returnCode);
                     }
                 }
             }
@@ -534,71 +479,76 @@ export class CTestDriver implements vscode.Disposable {
 
             if (testResults) {
                 for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                    let foundTestResult = false;
-                    let havefailures = false;
-                    let duration: number | undefined;
-                    const testName = testResults.site.testing.test[i].name;
-                    const _test = nameToTestAssoc.get(testName);
+                    const _test = nameToTestAssoc.get(testResults.site.testing.test[i].name);
                     if (_test === undefined) {
-                        continue;
+                        continue; // Not sure what to do.
                     }
-                    if (testName === _test.id) {
-                        foundTestResult = true;
-                        const durationStr = testResults.site.testing.test[i].measurements.get("Execution Time")?.value;
-                        duration = durationStr ? parseFloat(durationStr) * 1000 : undefined;
-                    }
-
-                    let output = testResults.site.testing.test[i].output;
-                    if (process.platform === 'win32') {
-                        output = output.replace(/\r?\n/g, '\r\n');
-                    }
-                    run.appendOutput(output);
-
-                    if (testResults.site.testing.test[i].status !== 'passed' && !havefailures) {
-                        const failureDurationStr = testResults.site.testing.test[i].measurements.get("Execution Time")?.value;
-                        const failureDuration = failureDurationStr ? parseFloat(failureDurationStr) * 1000 : undefined;
-                        const exitCode = testResults.site.testing.test[i].measurements.get("Exit Value")?.value;
-                        const completionStatus = testResults.site.testing.test[i].measurements.get("Completion Status")?.value;
-
-                        if (exitCode !== undefined) {
-                            this.ctestFailed(
-                                _test,
-                                run,
-                                new vscode.TestMessage(localize('test.failed.with.exit.code', 'Test {0} failed with exit code {1}.', testName, exitCode)),
-                                failureDuration
-                            );
-                        } else if (completionStatus !== undefined) {
-                            this.ctestErrored(
-                                _test,
-                                run,
-                                new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
-                            );
-                        } else {
-                            this.ctestErrored(
-                                _test,
-                                run,
-                                new vscode.TestMessage(localize('test.failed', 'Test {0} failed. Please check output for more information.', testName))
-                            );
-                        }
-
-                        havefailures = true;
-                        returnCode = -1;
-                    }
-                    if (!foundTestResult && !havefailures) {
-                        this.ctestFailed(_test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
-                        havefailures = true;
-                        returnCode = -1;
-                    }
-
-                    if (!havefailures) {
-                        run.passed(_test, duration);
-                    }
+                    returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, run, returnCode);
                 }
             }
         }
 
         return returnCode;
     };
+
+    private testResultsAnalysis(testResult: Test, test: vscode.TestItem, run: vscode.TestRun, returnCode: number) {
+        let foundTestResult = false;
+        let havefailures = false;
+        let duration: number | undefined;
+        const testName = testResult.name;
+        if (testName === test.id) {
+            foundTestResult = true;
+            const durationStr = testResult.measurements.get("Execution Time")?.value;
+            duration = durationStr ? parseFloat(durationStr) * 1000 : undefined;
+        }
+
+        let output = testResult.output;
+        if (process.platform === 'win32') {
+            output = output.replace(/\r?\n/g, '\r\n');
+        }
+        run.appendOutput(output);
+
+        if (testResult.status !== 'passed' && !havefailures) {
+            const failureDurationStr = testResult.measurements.get("Execution Time")?.value;
+            const failureDuration = failureDurationStr ? parseFloat(failureDurationStr) * 1000 : undefined;
+            const exitCode = testResult.measurements.get("Exit Value")?.value;
+            const completionStatus = testResult.measurements.get("Completion Status")?.value;
+
+            if (exitCode !== undefined) {
+                this.ctestFailed(
+                    test,
+                    run,
+                    new vscode.TestMessage(localize('test.failed.with.exit.code', 'Test {0} failed with exit code {1}.', testName, exitCode)),
+                    failureDuration
+                );
+            } else if (completionStatus !== undefined) {
+                this.ctestErrored(
+                    test,
+                    run,
+                    new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
+                );
+            } else {
+                this.ctestErrored(
+                    test,
+                    run,
+                    new vscode.TestMessage(localize('test.failed', 'Test {0} failed. Please check output for more information.', testName))
+                );
+            }
+
+            havefailures = true;
+            returnCode = -1;
+        }
+        if (!foundTestResult && !havefailures) {
+            this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
+            havefailures = true;
+            returnCode = -1;
+        }
+
+        if (!havefailures) {
+            run.passed(test, duration);
+        }
+        return returnCode;
+    }
 
     private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
