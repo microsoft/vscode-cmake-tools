@@ -529,7 +529,7 @@ export class CTestDriver implements vscode.Disposable {
                 testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(_test.id)}\$|`)
                 nameToTestAssoc.set(_test.id, _test);
             }
-            uniqueCtestArgs.push(testsNamesRegex);
+            uniqueCtestArgs.push(testsNamesRegex.slice(0,-1)); // removes last |
             const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, uniqueCustomizedTask, uniqueConsumer);
 
             if (testResults) {
