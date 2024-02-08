@@ -376,12 +376,12 @@ export class CTestDriver implements vscode.Disposable {
 
     private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
         let returnCode: number = 0;
-        let runCTestImplArgs: Array<[CMakeDriver, string, string[], vscode.TestItem, boolean | undefined, OutputConsumer | undefined]> = [];
-        let driverSet = new Set<CMakeDriver>();
-        let ctestPathSet = new Set<string>();
-        let ctestArgsSet = new Set<string[]>();
-        let customizedTaskSet = new Set<boolean | undefined>();
-        let consumerSet = new Set<OutputConsumer | undefined>();
+        const runCTestImplArgs: [CMakeDriver, string, string[], vscode.TestItem, boolean | undefined, OutputConsumer | undefined][] = [];
+        const driverSet = new Set<CMakeDriver>();
+        const ctestPathSet = new Set<string>();
+        const ctestArgsSet = new Set<string[]>();
+        const customizedTaskSet = new Set<boolean | undefined>();
+        const consumerSet = new Set<OutputConsumer | undefined>();
 
         for (const test of tests) {
             let _driver: CMakeDriver | null;
@@ -451,7 +451,7 @@ export class CTestDriver implements vscode.Disposable {
                 run.started(test);
 
                 // Build a regex that select only the current test
-                let _ctestArgs = ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
+                const _ctestArgs = ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
                 const testResults = await this.runCTestImpl(driver, ctestPath, _ctestArgs, customizedTask, consumer);
 
                 if (testResults) {
@@ -461,20 +461,20 @@ export class CTestDriver implements vscode.Disposable {
                 }
             }
         } else {
-            let uniqueDriver: CMakeDriver = driverSet.values().next().value;
-            let uniqueCtestPath: string = ctestPathSet.values().next().value;
-            let uniqueCtestArgs: string[] = ctestArgsSet.values().next().value;
-            let uniqueCustomizedTask: boolean | undefined = customizedTaskSet.values().next().value;
-            let uniqueConsumer: OutputConsumer | undefined = consumerSet.values().next().value;
-            let nameToTestAssoc = new Map<string, vscode.TestItem>();
-            let processNumber = this.ws.config.ctestParallelJobs;
+            const uniqueDriver: CMakeDriver = driverSet.values().next().value;
+            const uniqueCtestPath: string = ctestPathSet.values().next().value;
+            const uniqueCtestArgs: string[] = ctestArgsSet.values().next().value;
+            const uniqueCustomizedTask: boolean | undefined = customizedTaskSet.values().next().value;
+            const uniqueConsumer: OutputConsumer | undefined = consumerSet.values().next().value;
+            const nameToTestAssoc = new Map<string, vscode.TestItem>();
+            const processNumber = this.ws.config.ctestParallelJobs;
 
             uniqueCtestArgs.push('-j', "" + processNumber, '-R');
             // Build a regex that select all the tests (i.e concatenation of all test names)
             let testsNamesRegex: string = "";
             for (const [driver, ctestPath, ctestArgs, _test, customizedTask, consumer] of runCTestImplArgs) {
                 run.started(_test);
-                testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(_test.id)}\$|`)
+                testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(_test.id)}\$|`);
                 nameToTestAssoc.set(_test.id, _test);
             }
             uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // removes last |
