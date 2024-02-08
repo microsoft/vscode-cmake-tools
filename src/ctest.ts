@@ -450,8 +450,8 @@ export class CTestDriver implements vscode.Disposable {
             for (const [driver, ctestPath, ctestArgs, test, customizedTask, consumer] of runCTestImplArgs) {
                 run.started(test);
 
-                ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
-                const testResults = await this.runCTestImpl(driver, ctestPath, ctestArgs, customizedTask, consumer);
+                let _ctestArgs = ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
+                const testResults = await this.runCTestImpl(driver, ctestPath, _ctestArgs, customizedTask, consumer);
 
                 let foundTestResult = false;
                 // Only show the first failure
