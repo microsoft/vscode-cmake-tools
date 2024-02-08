@@ -431,7 +431,8 @@ export class CTestDriver implements vscode.Disposable {
             } else {
                 run.started(test);
 
-                const testResults = await this.runCTestImpl(_driver, _ctestPath, _ctestArgs, test.id, customizedTask, consumer);
+                ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
+                const testResults = await this.runCTestImpl(driver, ctestPath, ctestArgs, customizedTask, consumer);
 
                 let foundTestResult = false;
                 // Only show the first failure
@@ -500,10 +501,9 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     };
 
-    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], testName: string, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
+    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
-            ctestPath,
-            ctestArgs.concat('-R', `^${util.escapeStringForRegex(testName)}\$`),
+            ctestPath, ctestArgs,
             ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
         const res = await child.result;
