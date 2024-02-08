@@ -522,7 +522,8 @@ export class CTestDriver implements vscode.Disposable {
             let uniqueCustomizedTask: boolean | undefined = customizedTaskSet.values().next().value;
             let uniqueConsumer: OutputConsumer | undefined = consumerSet.values().next().value;
             let nameToTestAssoc = new Map<string, vscode.TestItem>();
-            uniqueCtestArgs.push('-j', '20', '-R');
+            let processNumber = this.ws.config.ctestParallelJobs;
+            uniqueCtestArgs.push('-j', ""+processNumber, '-R');
             let testsNamesRegex: string = "";
             for (const [driver, ctestPath, ctestArgs, _test, customizedTask, consumer] of runCTestImplArgs) {
                 run.started(_test);
