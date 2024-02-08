@@ -450,6 +450,7 @@ export class CTestDriver implements vscode.Disposable {
 
                 run.started(test);
 
+                // Build a regex that select only the current test
                 let _ctestArgs = ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
                 const testResults = await this.runCTestImpl(driver, ctestPath, _ctestArgs, customizedTask, consumer);
 
@@ -467,7 +468,9 @@ export class CTestDriver implements vscode.Disposable {
             let uniqueConsumer: OutputConsumer | undefined = consumerSet.values().next().value;
             let nameToTestAssoc = new Map<string, vscode.TestItem>();
             let processNumber = this.ws.config.ctestParallelJobs;
+
             uniqueCtestArgs.push('-j', "" + processNumber, '-R');
+            // Build a regex that select all the tests (i.e concatenation of all test names)
             let testsNamesRegex: string = "";
             for (const [driver, ctestPath, ctestArgs, _test, customizedTask, consumer] of runCTestImplArgs) {
                 run.started(_test);
@@ -475,6 +478,7 @@ export class CTestDriver implements vscode.Disposable {
                 nameToTestAssoc.set(_test.id, _test);
             }
             uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // removes last |
+
             const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, uniqueCustomizedTask, uniqueConsumer);
 
             if (testResults) {
