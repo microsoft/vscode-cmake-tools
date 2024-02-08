@@ -446,7 +446,7 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        if (driverSet.size > 1 || ctestPathSet.size > 1 || ctestArgsSet.size > 1 || customizedTaskSet.size > 1 || consumerSet.size > 1) {
+        if (!this.ws.config.ctestAllowParallelJobs || driverSet.size > 1 || ctestPathSet.size > 1 || ctestArgsSet.size > 1 || customizedTaskSet.size > 1 || consumerSet.size > 1) {
             for (const [driver, ctestPath, ctestArgs, test, customizedTask, consumer] of runCTestImplArgs) {
                 run.started(test);
 
