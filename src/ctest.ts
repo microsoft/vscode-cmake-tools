@@ -384,11 +384,6 @@ export class CTestDriver implements vscode.Disposable {
         let consumerSet = new Set<OutputConsumer | undefined>();
 
         for (const test of tests) {
-            if (cancellation && cancellation.isCancellationRequested) {
-                run.skipped(test);
-                continue;
-            }
-
             let _driver: CMakeDriver | null;
             if (driver) {
                 _driver = driver;
@@ -448,6 +443,11 @@ export class CTestDriver implements vscode.Disposable {
 
         if (!this.ws.config.ctestAllowParallelJobs || driverSet.size > 1 || ctestPathSet.size > 1 || ctestArgsSet.size > 1 || customizedTaskSet.size > 1 || consumerSet.size > 1) {
             for (const [driver, ctestPath, ctestArgs, test, customizedTask, consumer] of runCTestImplArgs) {
+                if (cancellation && cancellation.isCancellationRequested) {
+                    run.skipped(test);
+                    continue;
+                }
+
                 run.started(test);
 
                 let _ctestArgs = ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
