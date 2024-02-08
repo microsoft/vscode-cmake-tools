@@ -453,12 +453,12 @@ export class CTestDriver implements vscode.Disposable {
                 let _ctestArgs = ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
                 const testResults = await this.runCTestImpl(driver, ctestPath, _ctestArgs, customizedTask, consumer);
 
-                let foundTestResult = false;
-                // Only show the first failure
-                let havefailures = false;
-                let duration: number | undefined;
                 if (testResults) {
                     for (let i = 0; i < testResults.site.testing.test.length; i++) {
+                        let foundTestResult = false;
+                        // Only show the first failure
+                        let havefailures = false;
+                        let duration: number | undefined;
                         const testName = testResults.site.testing.test[i].name;
                         if (testName === test.id) {
                             foundTestResult = true;
@@ -502,17 +502,16 @@ export class CTestDriver implements vscode.Disposable {
                             havefailures = true;
                             returnCode = -1;
                         }
+                        if (!foundTestResult && !havefailures) {
+                            this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
+                            havefailures = true;
+                            returnCode = -1;
+                        }
+
+                        if (!havefailures) {
+                            run.passed(test, duration);
+                        }
                     }
-                }
-
-                if (!foundTestResult && !havefailures) {
-                    this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
-                    havefailures = true;
-                    returnCode = -1;
-                }
-
-                if (!havefailures) {
-                    run.passed(test, duration);
                 }
             }
         } else {
