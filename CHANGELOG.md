@@ -24,10 +24,11 @@ Bug Fixes:
 - Avoid running tests after a build failure [#3366](https://github.com/microsoft/vscode-cmake-tools/issues/3366)
 - Make sure we clear the output on builds due to test when `Clear output before build` is enabled. [#1179](https://github.com/microsoft/vscode-cmake-tools/issues/1179)
 - Ensure that, when switching between presets, the CMake executable is modified. [#2791](https://github.com/microsoft/vscode-cmake-tools/issues/2791)
-- Fixed the key to reference the correct description for the `compact` option of the `cmake.options.advanced.variant.statusBarVisibility` setting. [#3511](https://github.com/microsoft/vscode-cmake-tools/issues/3511).
+- Fixed the key to reference the correct description for the `compact` option of the `cmake.options.advanced.variant.statusBarVisibility` setting. [#3511](https://github.com/microsoft/vscode-cmake-tools/issues/3511)
 - Fixed the parsing of C and CXX compiler cache variables when adding a new configure preset from existing compilers. [#2773](https://github.com/microsoft/vscode-cmake-tools/issues/2773)
-- Avoid the pitfalls of using `RegExp.exec()` in loops, replacing their usage with `string.matchAll()`. This change is applied to the expand.ts file which deals with expansion of variables in user provided strings. It may address the failures described in issue [#3469](https://github.com/microsoft/vscode-cmake-tools/issues/3469).
+- Avoid the pitfalls of using `RegExp.exec()` in loops, replacing their usage with `string.matchAll()`. This change is applied to the expand.ts file which deals with expansion of variables in user provided strings. It may address the failures described in issue. [#3469](https://github.com/microsoft/vscode-cmake-tools/issues/3469)
 - Fixed `compile_commands.json` file corruption with `copyCompileCommands` when value is equal to default path. [#3214](https://github.com/microsoft/vscode-cmake-tools/issues/3214) [@parniere](https://github.com/parniere)
+- Fixed status bar visibility options' `inherit` option default. [PR #3579](https://github.com/microsoft/vscode-cmake-tools/pull/3579)
 
 ## 1.16.32
 Improvements:
