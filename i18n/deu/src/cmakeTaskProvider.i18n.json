@@ -7,6 +7,8 @@
 	"build": "Erstellen",
 	"install": "Installieren",
 	"test": "Test",
+	"package": "Paket",
+	"workflow": "Workflow",
 	"configure": "Konfigurieren",
 	"clean": "reinigen",
 	"clean.rebuild": "sauberer Umbau",
@@ -37,5 +39,15 @@
 	"ctest.failed": "Testvoreinstellung {0} nicht gefunden. Fehler beim Test.",
 	"ctest.run.terminated": "Der CTest-Testlauf wurde beendet.",
 	"ctest.finished": "CTest abgeschlossen",
-	"test.failed": "Fehler beim Ausführen von CTest."
+	"test.failed": "Fehler beim Ausführen von CTest.",
+	"package.started": "Paketaufgabe gestartet...",
+	"package.preset.not.found": "Die Paketvoreinstellung wurde nicht gefunden.",
+	"cpack.failed": "Die Paketvoreinstellung {0} wurde nicht gefunden. Fehler bei CPack.",
+	"cpack.run.terminated": "CPack-Ausführung wurde beendet",
+	"cpack.finished": "CPack abgeschlossen",
+	"workflow.started": "Workflowaufgabe gestartet...",
+	"workflow.preset.not.found": "Die Workflowvoreinstellung wurde nicht gefunden.",
+	"workflow.failed": "Die Workflowvoreinstellung {0} wurde nicht gefunden. Fehler beim Workflow.",
+	"workflow.run.terminated": "Workflowausführung wurde beendet",
+	"workflow.finished": "Workflow beendet"
 }

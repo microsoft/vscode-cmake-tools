@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "Aucun test trouvé",
 	"ctest.path.not.set": "Le chemin de CTest n'est pas défini",
-	"test.preset.not.set": "La présélection de test n’est pas définie",
 	"ctest.run.terminated": "Exécution de CTest terminée",
 	"ctest.finished.with.code": "CTest s'est achevé avec le code de retour {0}",
 	"no.project.found": "Projet introuvable pour le dossier {0}",

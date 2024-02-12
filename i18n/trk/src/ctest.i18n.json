@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "Test bulunamadı",
 	"ctest.path.not.set": "CTest yolu ayarlanmadı",
-	"test.preset.not.set": "Test ön ayarı ayarlanmadı",
 	"ctest.run.terminated": "CTest çalıştırması sonlandırıldı",
 	"ctest.finished.with.code": "CTest, {0} dönüş koduyla tamamlandı",
 	"no.project.found": "{0} klasörü için proje bulunamadı",

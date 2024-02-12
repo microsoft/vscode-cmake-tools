@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "Nie znaleziono testów.",
 	"ctest.path.not.set": "Ścieżka narzędzia CTest nie jest ustawiona",
-	"test.preset.not.set": "Nie ustawiono predefiniowanego testu",
 	"ctest.run.terminated": "Praca narzędzia CTest została przerwana",
 	"ctest.finished.with.code": "Narzędzie CTest zakończyło pracę z kodem powrotnym {0}",
 	"no.project.found": "Nie znaleziono projektu dla folderu {0}",

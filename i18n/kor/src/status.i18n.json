@@ -17,6 +17,10 @@
 	"launch.tooltip": "터미널 창에서 선택한 대상 시작",
 	"run.ctest.tests.tooltip": "CTest 테스트 실행",
 	"run.ctest": "CTest 실행",
+	"run.cpack.tooltip": "CPack 실행",
+	"run.cpack": "CPack 실행",
+	"run.workflow.tooltip": "워크플로 실행",
+	"run.workflow": "워크플로 실행",
 	"build.tooltip": "선택한 대상 빌드",
 	"build": "빌드",
 	"stop": "중지",
@@ -25,5 +29,9 @@
 	"click.to.change.build.preset.tooltip": "클릭하여 활성 빌드 사전 설정 변경",
 	"no.build.preset.selected": "선택한 빌드 사전 설정 없음",
 	"click.to.change.test.preset.tooltip": "클릭하여 활성 테스트 사전 설정 변경",
-	"no.test.preset.selected": "선택한 테스트 사전 설정 없음"
+	"no.test.preset.selected": "선택한 테스트 사전 설정 없음",
+	"click.to.change.package.preset.tooltip": "클릭하여 활성 패키지 사전 설정 변경",
+	"no.package.preset.selected": "선택한 패키지 사전 설정 없음",
+	"click.to.change.workflow.preset.tooltip": "클릭하여 활성 워크플로 사전 설정 변경",
+	"no.workflow.preset.selected": "선택한 워크플로 사전 설정 없음"
 }

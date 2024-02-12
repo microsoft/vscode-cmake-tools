@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "Тесты не найдены",
 	"ctest.path.not.set": "Путь CTest не задан.",
-	"test.preset.not.set": "Предустановка теста не задана",
 	"ctest.run.terminated": "Запуск CTest был прерван.",
 	"ctest.finished.with.code": "CTest завершила работу с кодом возврата {0}.",
 	"no.project.found": "Не найден проект для папки {0}",
