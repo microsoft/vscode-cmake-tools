@@ -7,6 +7,8 @@
 	"build": "ビルド",
 	"install": "インストール",
 	"test": "テスト",
+	"package": "パッケージ",
+	"workflow": "ワークフロー",
 	"configure": "構成",
 	"clean": "クリーン",
 	"clean.rebuild": "クリーンしてリビルド",
@@ -37,5 +39,15 @@
 	"ctest.failed": "テスト プリセット {0} が見つかりません。テストに失敗しました。",
 	"ctest.run.terminated": "CTest の実行が終了しました",
 	"ctest.finished": "CTest が終了しました",
-	"test.failed": "CTest の実行に失敗しました。"
+	"test.failed": "CTest の実行に失敗しました。",
+	"package.started": "パッケージ タスクを開始されました...",
+	"package.preset.not.found": "パッケージ プリセットが見つかりません。",
+	"cpack.failed": "パッケージ プリセット {0} が見つかりません。CPack が失敗しました。",
+	"cpack.run.terminated": "CPack の実行が終了しました",
+	"cpack.finished": "CPack が終了しました",
+	"workflow.started": "ワークフロー タスクが開始されました...",
+	"workflow.preset.not.found": "ワークフロー プリセットが見つかりません。",
+	"workflow.failed": "ワークフロー プリセット {0} が見つかりません。ワークフローが失敗しました。",
+	"workflow.run.terminated": "ワークフローの実行が終了しました",
+	"workflow.finished": "ワークフローが終了しました"
 }

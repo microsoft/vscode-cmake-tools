@@ -13,6 +13,10 @@
 	"default.build.preset.description": "Una compilación preestablecida vacía que no agrega ningún argumento.",
 	"default.test.preset": "[Predeterminada]",
 	"default.test.preset.description": "Una prueba preestablecida vacía que no agrega ningún argumento.",
+	"default.package.preset": "[Predeterminado]",
+	"default.package.preset.description": "Un valor preestablecido de paquete vacío que no agrega ningún argumento",
+	"default.workflow.preset": "[Predeterminado]",
+	"default.workflow.preset.description": "Un valor preestablecido de flujo de trabajo vacío que no agrega ningún argumento",
 	"circular.inherits.in.config.preset": "Circular hereda en valores preestablecidos de configuración de {0}",
 	"binaryDir.undefined": "Configurar {0} preestablecido: no se especificó un binaryDir, se usará el valor predeterminado {1}",
 	"specified.vs.not.found": "Configurar el valor preestablecido {0}: no se encontró la instancia de Visual Studio especificada por {1}, revirtiendo al comportamiento de búsqueda de la instancia predeterminada.",
@@ -28,8 +32,12 @@
 	"property.unsupported.v2": "Configurar {0} preestablecido: la propiedad {1} no se admite en los valores prestablecidos V2",
 	"circular.inherits.in.build.preset": "Circular hereda en valores preestablecidos de compilación {0}",
 	"circular.inherits.in.test.preset": "Circular hereda en valores preestablecidos en prueba{0}",
+	"circular.inherits.in.package.preset": "Circular hereda en {0}preestablecidas del paquete",
+	"circular.inherits.in.workflow.preset": "Circular hereda en {0}preestablecidos de flujo de trabajo",
 	"build.preset.not.found": "No se ha encontrado la compilación preestablecida con el nombre {0}",
 	"test.preset.not.found": "No ha encontrado se la prueba preestablecida con el nombre {0}.",
+	"package.preset.not.found": "No se encontró el valor preestablecido del paquete con el nombre {0}",
+	"workflow.preset.not.found": "No se encontró el valor preestablecido de flujo de trabajo con el nombre {0}",
 	"clean.not.needed.no.prior.config.preset": "Limpieza no necesaria: no se ha seleccionado ninguna configuración preestablecida previa seleccionada",
 	"clean.needed.config.preset.changed": "Es necesario limpiar: configuración preestablecida cambiada"
 }

@@ -17,6 +17,10 @@
 	"launch.tooltip": "在终端窗口中启动所选目标",
 	"run.ctest.tests.tooltip": "运行 CTest 测试",
 	"run.ctest": "运行 CTest",
+	"run.cpack.tooltip": "运行 CPack",
+	"run.cpack": "运行 CPack",
+	"run.workflow.tooltip": "运行工作流",
+	"run.workflow": "运行工作流",
 	"build.tooltip": "生成所选目标",
 	"build": "生成",
 	"stop": "停止",
@@ -25,5 +29,9 @@
 	"click.to.change.build.preset.tooltip": "单击以更改活动的生成预设",
 	"no.build.preset.selected": "未选择生成预设",
 	"click.to.change.test.preset.tooltip": "单击以更改活动的测试预设",
-	"no.test.preset.selected": "未选择任何测试预设"
+	"no.test.preset.selected": "未选择任何测试预设",
+	"click.to.change.package.preset.tooltip": "单击以更改活动包预设",
+	"no.package.preset.selected": "未选择包预设",
+	"click.to.change.workflow.preset.tooltip": "单击以更改活动的工作流预设",
+	"no.workflow.preset.selected": "未选择工作流预设"
 }

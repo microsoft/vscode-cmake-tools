@@ -7,6 +7,8 @@
 	"build": "compilación",
 	"install": "instalar",
 	"test": "prueba",
+	"package": "paquete",
+	"workflow": "flujo de trabajo",
 	"configure": "configurar",
 	"clean": "limpiar",
 	"clean.rebuild": "recompilación limpia",
@@ -37,5 +39,15 @@
 	"ctest.failed": "El valor preestablecido de prueba {0} No se ha encontrado. Error en la prueba.",
 	"ctest.run.terminated": "La ejecución de CTest ha finalizado.",
 	"ctest.finished": "CTest finalizado",
-	"test.failed": "Error en la ejecución de CTest."
+	"test.failed": "Error en la ejecución de CTest.",
+	"package.started": "Tarea de paquete iniciada...",
+	"package.preset.not.found": "No se encontró el valor preestablecido del paquete.",
+	"cpack.failed": "No {0} encuentra el valor preestablecido del paquete. Error de CPack.",
+	"cpack.run.terminated": "La ejecución de CPack finalizó",
+	"cpack.finished": "CPack finalizado",
+	"workflow.started": "Tarea de flujo de trabajo iniciada...",
+	"workflow.preset.not.found": "No se encontró el valor preestablecido de flujo de trabajo.",
+	"workflow.failed": "No {0} encuentra el valor preestablecido del flujo de trabajo. Error en el flujo de trabajo.",
+	"workflow.run.terminated": "Finalizó la ejecución del flujo de trabajo",
+	"workflow.finished": "Flujo de trabajo finalizado"
 }

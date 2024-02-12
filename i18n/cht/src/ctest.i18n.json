@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "找不到任何測試",
 	"ctest.path.not.set": "未設定 CTest 路徑",
-	"test.preset.not.set": "未設定測試預設",
 	"ctest.run.terminated": "已終止 CTest 執行",
 	"ctest.finished.with.code": "CTest 已完成。傳回碼: {0}",
 	"no.project.found": "找不到資料夾 {0} 的專案",
