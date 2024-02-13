@@ -1143,7 +1143,6 @@ export class CMakeProject {
         this.statusMessage.set(localize('ready.status', 'Ready'));
 
         this.kitsController = await KitsController.init(this);
-
         this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
 
         await this.doUseCMakePresetsChange();
