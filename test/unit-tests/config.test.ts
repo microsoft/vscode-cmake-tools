@@ -72,7 +72,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         allowUnsupportedPresetsVersions: false,
         launchBehavior: 'reuseTerminal',
         ignoreCMakeListsMissing: false,
-        automaticReconfigure: false
+        automaticReconfigure: false,
+        enableKitScan: true
     });
     ret.updatePartial(conf);
     return ret;

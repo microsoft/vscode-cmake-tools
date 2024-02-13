@@ -3564,6 +3564,12 @@
           "description": "%cmake-tools.configuration.cmake.pinnedCommands.description%",
           "default": [],
           "scope": "resource"
+        },
+        "cmake.enableKitScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.enableKitScan.description%",
+          "scope": "resource"
         }
       }
     },
