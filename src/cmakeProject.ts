@@ -1144,9 +1144,6 @@ export class CMakeProject {
 
         this.kitsController = await KitsController.init(this);
 
-        // set to unspecfied here?
-        //await this.kitsController.setKitByName("");
-
         this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
 
         await this.doUseCMakePresetsChange();
