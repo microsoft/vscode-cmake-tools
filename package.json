@@ -3541,10 +3541,10 @@
           "default": [],
           "scope": "resource"
         },
-        "cmake.enableKitScan": {
+        "cmake.enableAutomaticKitScan": {
           "type": "boolean",
           "default": true,
-          "description": "%cmake-tools.configuration.cmake.enableKitScan.description%",
+          "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
         }
       }

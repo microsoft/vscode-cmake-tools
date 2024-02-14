@@ -426,9 +426,9 @@ export class ExtensionManager implements vscode.Disposable {
                 // We have an active kit. We're good.
                 return true;
             }
-            // // No kit? Is enable kit scan on?
-            if (!this.workspaceConfig.enableKitScan) {
-                await cmakeProject.kitsController.setKitByName("");
+            // No kit? Is enable kit scan on?
+            if (!this.workspaceConfig.enableAutomaticKitScan) {
+                await cmakeProject.kitsController.setKitByName("__unspec__");
                 return true;
             }
             // Ask the user what they want.
