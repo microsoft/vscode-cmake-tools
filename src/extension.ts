@@ -18,6 +18,7 @@ import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { ProjectController, FolderProjectType} from '@cmt/projectController';
 
 import {
+    SpecialKits,
     USER_KITS_FILEPATH,
     findCLCompilerPath,
     scanForKitsIfNeeded
@@ -428,7 +429,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             // No kit? Is enable kit scan on?
             if (!this.workspaceConfig.enableAutomaticKitScan) {
-                await cmakeProject.kitsController.setKitByName("__unspec__");
+                await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
                 return true;
             }
             // Ask the user what they want.
