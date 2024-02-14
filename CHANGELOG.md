@@ -12,6 +12,8 @@ Features:
 
 - Update `api.ts` to add the `getActiveFolderPath` method. [#3528](https://github.com/microsoft/vscode-cmake-tools/pull/3528) [@Kemaweyan](https://github.com/Kemaweyan)
 - Add a setting that allows users to enable/disable the Test Explorer integration. [#3145](https://github.com/microsoft/vscode-cmake-tools/issues/3145)
+- Add support for CMake Presets V6 (package presets to run CPack and workflow presets). [#2871](https://github.com/microsoft/vscode-cmake-tools/issues/2871)
+- Add support for pinning CMake commands to the side bar. [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
 
 Improvements:
 
@@ -53,7 +55,6 @@ Bug Fixes:
 Features:
 - Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
 - Add ability to get a test's `WORKING_DIRECTORY` in launch.json via `cmake.testWorkingDirectory` [PR #3336](https://github.com/microsoft/vscode-cmake-tools/pull/3336)
-- Add support for CMake Presets V6 (package presets to run CPack and workflow presets). [#2871](https://github.com/microsoft/vscode-cmake-tools/issues/2871)
 
 Improvements:
 - Updated debugging documentation to add the LLDB configuration needed for macOS. [PR #3332](https://github.com/microsoft/vscode-cmake-tools/pull/3332) [@slhck](https://github.com/slhck)
