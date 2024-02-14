@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.18
+
+Bug Fixes:
+
+- Fix an issue where we weren't able to run tests when not using Presets. [#3589](https://github.com/microsoft/vscode-cmake-tools/issues/3589)
+
 ## 1.17
 
 Features:
