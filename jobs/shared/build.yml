@@ -1,0 +1,120 @@
+parameters:
+- name: IsPreRelease
+  type: string
+  default: $(IsPreRelease)
+- name: ReleaseVersion
+  type: string
+  default: $(ReleaseVersion)
+
+steps:
+- task: MicroBuildSigningPlugin@3
+  displayName: Install MicroBuild Signing
+  inputs:
+    signType: $(SignType)
+    zipSources: false
+- task: NodeTool@0
+  displayName: Use Node 16.x
+  inputs:
+    versionSpec: 16.x
+- task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
+  displayName: Use Yarn 1.x
+- task: CmdLine@2
+  displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+  inputs:
+    script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+- task: Npm@0
+  displayName: npm install VSCE
+  inputs:
+    arguments: -g vsce
+- task: PowerShell@2
+  displayName: Update ReleaseVersion for pre-release builds
+  condition: eq(variables.IsPreRelease, '1')
+  inputs:
+    targetType: inline
+    script: |
+      #
+      # Query the Marketplace for the latest version of CMake Tools
+      # https://github.com/microsoft/vscode/blob/main/src/vs/platform/extensionManagement/common/extensionGalleryService.ts
+      #
+      $uri = 'https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery'
+      $contentType = 'application/json'
+      $headers = @{
+      "Accept" = "application/json; api-version=3.0-preview"
+      }
+      $data = '{"filters": [{"criteria": [{"filterType": 7, "value": "ms-vscode.cmake-tools"}]}], "flags": 529}'
+      $response = Invoke-WebRequest -Method 'POST' -Uri $uri -UseBasicParsing -ContentType $contentType -Headers $headers -Body $data
+      $newVersion = ''
+      if ($response.StatusCode.Equals(200)) {
+          $result = $response.Content | ConvertFrom-Json
+          # Check the $result.results[0].extensions.versions.properties for the 'Microsoft.VisualStudio.Code.PreRelease' key to make sure it's true,
+          # if not, we need to bump the .Minor version and reset .Build to 0
+          $index = $result.results[0].extensions.versions.properties.key.IndexOf("Microsoft.VisualStudio.Code.PreRelease")
+          $isPreRelease = "false"
+          if ($index -ge 0) {
+              $isPreRelease = $result.results[0].extensions.versions.properties.value[$index]
+          }
+          $v = [System.Version]::Parse($result.results[0].extensions.versions.version)
+          if ($isPreRelease.Equals('true')) { 
+              $newVersion = [System.Version]::new($v.Major, $v.Minor, $v.Build + 1).ToString()
+          } else {
+              $newVersion = [System.Version]::new($v.Major, $v.Minor + 1, 0).ToString()
+          }
+      }
+      Write-Host "New version is: $newVersion"
+      Write-Host "##vso[task.setvariable variable=ReleaseVersion]$newVersion"
+    ignoreLASTEXITCODE: true
+- task: PowerShell@2
+  displayName: Set build name
+  inputs:
+    targetType: inline
+    script: |-
+      $str = Get-Date -Format "yyMMdd-HHmm"
+      Write-Host "##vso[build.updatebuildnumber]${{parameters.ReleaseVersion}} - $str"
+- task: PowerShell@2
+  displayName: Update version in package.json
+  inputs:
+    targetType: inline
+    script: |-
+      $JsonData = Get-Content -Path .\package.json -raw | ConvertFrom-Json
+      $oldVersion = $JsonData.version
+      $newVersion = "${{parameters.ReleaseVersion}}"
+      $JsonData.version = $newVersion
+      $JsonData | ConvertTo-Json -Depth 20 | Set-Content -Path .\package.json
+      Write-Host "old version was: $oldVersion"
+      Write-Host "new version is: $newVersion"
+      Get-Content -Path .\package.json
+- task: CmdLine@2
+  displayName: Create release.flag/insiders.flag
+  inputs:
+    script: |
+      if "${{parameters.IsPreRelease}}"=="1" (type nul > "insiders.flag") else (type nul > "release.flag")
+- template: /jobs/shared/install-nuget.yml@self
+- script: nuget restore $(Build.SourcesDirectory)\jobs\signing\SignFiles.proj -PackagesDirectory $(Build.SourcesDirectory)\jobs\signing\packages
+  displayName: Restore MicroBuild Core
+- task: CmdLine@2
+  displayName: Build files
+  inputs:
+    script: |
+      npm run vscode:prepublish
+- task: MSBuild@1
+  displayName: Sign files
+  inputs:
+    solution: $(Build.SourcesDirectory)\jobs\signing\SignFiles.proj
+    msbuildArguments: /p:SignType=$(SignType)
+- task: CmdLine@2
+  displayName: vsce package
+  inputs:
+    script: |
+      mkdir $(Build.ArtifactStagingDirectory)\vsix
+      if "${{parameters.IsPreRelease}}"=="1" (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+- task: MSBuild@1
+  displayName: Sign VSIX
+  inputs:
+    solution: $(Build.SourcesDirectory)\jobs\signing\SignVsix.proj
+    msbuildArguments: /p:SignType=$(SignType)
+- task: CmdLine@2
+  displayName: Write the version to version.txt
+  inputs:
+    script: |
+      echo ${{parameters.ReleaseVersion}} >> version.txt
+      move version.txt $(Build.ArtifactStagingDirectory)\vsix\version.txt

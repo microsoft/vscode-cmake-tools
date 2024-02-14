@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "No se han encontrado pruebas.",
 	"ctest.path.not.set": "No se ha establecido la ruta de acceso de CTest.",
-	"test.preset.not.set": "La prueba preestablecida no está establecida",
 	"ctest.run.terminated": "La ejecución de CTest ha finalizado.",
 	"ctest.finished.with.code": "CTest finalizó con el código de retorno {0}",
 	"no.project.found": "No se ha encontrado ningún proyecto para la carpeta {0}",

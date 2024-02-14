@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "Nenašly se žádné testy.",
 	"ctest.path.not.set": "Cesta CTestu není nastavená.",
-	"test.preset.not.set": "Předvolba testování není nastavená.",
 	"ctest.run.terminated": "Běh CTestu se ukončil.",
 	"ctest.finished.with.code": "CTest skončil s návratovým kódem {0}.",
 	"no.project.found": "Pro složku {0} se nenašel žádný projekt.",

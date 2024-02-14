@@ -7,6 +7,8 @@
 	"build": "derleme",
 	"install": "yükleme",
 	"test": "test",
+	"package": "paket",
+	"workflow": "iş akışı",
 	"configure": "yapılandırma",
 	"clean": "temizle",
 	"clean.rebuild": "yeniden derlemeyi temizle",
@@ -37,5 +39,15 @@
 	"ctest.failed": "Test ön ayarı {0} bulunamadı. Test başarısız oldu.",
 	"ctest.run.terminated": "CTest çalıştırması sonlandırıldı",
 	"ctest.finished": "CTest tamamlandı",
-	"test.failed": "CTest çalıştırması başarısız oldu."
+	"test.failed": "CTest çalıştırması başarısız oldu.",
+	"package.started": "Paket görevi başlatıldı...",
+	"package.preset.not.found": "Paket ön ayarı bulunamadı.",
+	"cpack.failed": "{0} paket ön ayarı bulunamadı. CPack başarısız oldu.",
+	"cpack.run.terminated": "CPack çalıştırması sonlandırıldı",
+	"cpack.finished": "CPack tamamlandı",
+	"workflow.started": "İş akışı görevi başlatıldı...",
+	"workflow.preset.not.found": "İş akışı ön ayarı bulunamadı.",
+	"workflow.failed": "{0} iş akışı ön ayarı bulunamadı. İş akışı başarısız oldu.",
+	"workflow.run.terminated": "İş akışı çalıştırması sonlandırıldı",
+	"workflow.finished": "İş akışı bitti"
 }

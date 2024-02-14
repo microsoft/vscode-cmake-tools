@@ -17,6 +17,10 @@
 	"launch.tooltip": "Iniciar el destino seleccionado en la ventana de terminal",
 	"run.ctest.tests.tooltip": "Ejecutar pruebas de CTest",
 	"run.ctest": "Ejecutar CTest",
+	"run.cpack.tooltip": "Ejecutar CPack",
+	"run.cpack": "Ejecutar CPack",
+	"run.workflow.tooltip": "Ejecutar flujo de trabajo",
+	"run.workflow": "Ejecutar flujo de trabajo",
 	"build.tooltip": "Compilar el destino seleccionado",
 	"build": "Versión de compilación",
 	"stop": "Detener",
@@ -25,5 +29,9 @@
 	"click.to.change.build.preset.tooltip": "Hacer clic para cambiar la compilación preestablecida",
 	"no.build.preset.selected": "Compilación preestablecida no seleccionada",
 	"click.to.change.test.preset.tooltip": "Hacer clic para cambiar la prueba preestablecida",
-	"no.test.preset.selected": "No hay ninguna prueba preestablecida seleccionada"
+	"no.test.preset.selected": "No hay ninguna prueba preestablecida seleccionada",
+	"click.to.change.package.preset.tooltip": "Hacer clic para cambiar el valor preestablecido de paquete activo",
+	"no.package.preset.selected": "No se ha seleccionado ningún valor preestablecido de paquete",
+	"click.to.change.workflow.preset.tooltip": "Hacer clic para cambiar el valor preestablecido de flujo de trabajo activo",
+	"no.workflow.preset.selected": "No se ha seleccionado ningún valor preestablecido de flujo de trabajo"
 }
