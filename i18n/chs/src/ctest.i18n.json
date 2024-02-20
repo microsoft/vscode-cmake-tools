@@ -6,7 +6,6 @@
 {
 	"no.tests.found": "未找到测试",
 	"ctest.path.not.set": "未设置 CTest 路径",
-	"test.preset.not.set": "未设置测试预设",
 	"ctest.run.terminated": "CTest 运行已终止",
 	"ctest.finished.with.code": "CTest 已完成，返回代码 {0}",
 	"no.project.found": "找不到文件夹的项目 {0}",

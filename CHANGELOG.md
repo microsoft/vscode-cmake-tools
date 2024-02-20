@@ -1,12 +1,21 @@
 # What's New?
 
-## 1.17
+## 1.17.16
+
+Bug Fixes:
+
+- Fix an issue where we weren't able to run tests when not using Presets. [#3589](https://github.com/microsoft/vscode-cmake-tools/issues/3589)
+- Fix the order of preference for CMake Presets `inherit` field. [#3594](https://github.com/microsoft/vscode-cmake-tools/issues/3594)
+
+## 1.17.15
 
 Features:
 
 - Update `api.ts` to add the `getActiveFolderPath` method. [#3528](https://github.com/microsoft/vscode-cmake-tools/pull/3528) [@Kemaweyan](https://github.com/Kemaweyan)
 - Add a setting that allows users to enable/disable the Test Explorer integration. [#3145](https://github.com/microsoft/vscode-cmake-tools/issues/3145)
 - Allow ctests to run in parallel when launched through the Test Explorer. [#3122](https://github.com/microsoft/vscode-cmake-tools/issues/3322)
+- Add support for CMake Presets V6 (package presets to run CPack and workflow presets). [#2871](https://github.com/microsoft/vscode-cmake-tools/issues/2871)
+- Add support for pinning CMake commands to the side bar. [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
 
 Improvements:
 
@@ -25,10 +34,11 @@ Bug Fixes:
 - Avoid running tests after a build failure [#3366](https://github.com/microsoft/vscode-cmake-tools/issues/3366)
 - Make sure we clear the output on builds due to test when `Clear output before build` is enabled. [#1179](https://github.com/microsoft/vscode-cmake-tools/issues/1179)
 - Ensure that, when switching between presets, the CMake executable is modified. [#2791](https://github.com/microsoft/vscode-cmake-tools/issues/2791)
-- Fixed the key to reference the correct description for the `compact` option of the `cmake.options.advanced.variant.statusBarVisibility` setting. [#3511](https://github.com/microsoft/vscode-cmake-tools/issues/3511).
+- Fixed the key to reference the correct description for the `compact` option of the `cmake.options.advanced.variant.statusBarVisibility` setting. [#3511](https://github.com/microsoft/vscode-cmake-tools/issues/3511)
 - Fixed the parsing of C and CXX compiler cache variables when adding a new configure preset from existing compilers. [#2773](https://github.com/microsoft/vscode-cmake-tools/issues/2773)
-- Avoid the pitfalls of using `RegExp.exec()` in loops, replacing their usage with `string.matchAll()`. This change is applied to the expand.ts file which deals with expansion of variables in user provided strings. It may address the failures described in issue [#3469](https://github.com/microsoft/vscode-cmake-tools/issues/3469).
+- Avoid the pitfalls of using `RegExp.exec()` in loops, replacing their usage with `string.matchAll()`. This change is applied to the expand.ts file which deals with expansion of variables in user provided strings. It may address the failures described in issue. [#3469](https://github.com/microsoft/vscode-cmake-tools/issues/3469)
 - Fixed `compile_commands.json` file corruption with `copyCompileCommands` when value is equal to default path. [#3214](https://github.com/microsoft/vscode-cmake-tools/issues/3214) [@parniere](https://github.com/parniere)
+- Fixed status bar visibility options' `inherit` option default. [PR #3579](https://github.com/microsoft/vscode-cmake-tools/pull/3579)
 
 ## 1.16.32
 Improvements:
@@ -47,7 +57,6 @@ Bug Fixes:
 Features:
 - Support different debug config for different targets. [PR #2801](https://github.com/microsoft/vscode-cmake-tools/pull/2801) [@RichardLuo0](https://github.com/RichardLuo0)
 - Add ability to get a test's `WORKING_DIRECTORY` in launch.json via `cmake.testWorkingDirectory` [PR #3336](https://github.com/microsoft/vscode-cmake-tools/pull/3336)
-- Add support for CMake Presets V6 (package presets to run CPack and workflow presets). [#2871](https://github.com/microsoft/vscode-cmake-tools/issues/2871)
 
 Improvements:
 - Updated debugging documentation to add the LLDB configuration needed for macOS. [PR #3332](https://github.com/microsoft/vscode-cmake-tools/pull/3332) [@slhck](https://github.com/slhck)

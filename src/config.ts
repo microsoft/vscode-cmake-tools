@@ -70,13 +70,11 @@ export interface AdvancedOptionConfig {
         statusBarLength?: number;
     };
     packagePreset?: {
-        projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
         inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;
     };
     workflowPreset?: {
-        projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarOptionVisibility;
         inheritDefault?: StatusBarInheritOptionVisibility;
         statusBarLength?: number;

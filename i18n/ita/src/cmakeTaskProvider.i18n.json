@@ -7,6 +7,8 @@
 	"build": "compila",
 	"install": "installa",
 	"test": "test",
+	"package": "pacchetto",
+	"workflow": "flusso di lavoro",
 	"configure": "configura",
 	"clean": "pulizia",
 	"clean.rebuild": "ricompilazione pulita",
@@ -37,5 +39,15 @@
 	"ctest.failed": "Impossibile trovare il set di impostazioni di test {0}. Test non riuscito.",
 	"ctest.run.terminated": "L'esecuzione di CTest è stata terminata",
 	"ctest.finished": "CTest completato",
-	"test.failed": "Esecuzione dei test non riuscita."
+	"test.failed": "Esecuzione dei test non riuscita.",
+	"package.started": "Attività del pacchetto avviata...",
+	"package.preset.not.found": "Il set di impostazioni del pacchetto non è stato trovato.",
+	"cpack.failed": "Il set di impostazioni del pacchetto {0} non è stato trovato. CPack non riuscito.",
+	"cpack.run.terminated": "L'esecuzione di CPack è stata terminata.",
+	"cpack.finished": "CPack completato",
+	"workflow.started": "Attività del flusso di lavoro avviata...",
+	"workflow.preset.not.found": "Il set di impostazioni del flusso di lavoro non è stato trovato.",
+	"workflow.failed": "Non è possibile trovare il set di impostazioni del flusso di lavoro {0}.. Il flusso di lavoro non è riuscito.",
+	"workflow.run.terminated": "L'esecuzione del flusso di lavoro è stata terminata",
+	"workflow.finished": "Flusso di lavoro terminato."
 }

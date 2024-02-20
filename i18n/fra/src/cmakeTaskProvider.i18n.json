@@ -7,6 +7,8 @@
 	"build": "build",
 	"install": "installer",
 	"test": "test",
+	"package": "package",
+	"workflow": "workflow",
 	"configure": "configurer",
 	"clean": "nettoyer",
 	"clean.rebuild": "Nouvelle regénération",
@@ -37,5 +39,15 @@
 	"ctest.failed": "Présélection de test {0} introuvable. Échec du test.",
 	"ctest.run.terminated": "Exécution de CTest terminée",
 	"ctest.finished": "CTest terminé",
-	"test.failed": "Échec de CTest."
+	"test.failed": "Échec de CTest.",
+	"package.started": "Tâche de package démarrée...",
+	"package.preset.not.found": "Présélection de package introuvable.",
+	"cpack.failed": "Présélection de package {0} introuvable. Échec de CPack.",
+	"cpack.run.terminated": "L’exécution de CPack a été arrêtée",
+	"cpack.finished": "CPack terminé",
+	"workflow.started": "Tâche de flux de travail démarrée...",
+	"workflow.preset.not.found": "Présélection de workflow introuvable.",
+	"workflow.failed": "Présélection de workflow {0} introuvable. Échec du workflow.",
+	"workflow.run.terminated": "L’exécution du workflow a été interrompue",
+	"workflow.finished": "Flux de travail terminé."
 }

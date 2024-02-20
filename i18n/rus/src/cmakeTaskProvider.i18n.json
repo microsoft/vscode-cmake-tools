@@ -7,6 +7,8 @@
 	"build": "сборка",
 	"install": "установить",
 	"test": "тест",
+	"package": "пакет",
+	"workflow": "рабочий процесс",
 	"configure": "настроить",
 	"clean": "очистить",
 	"clean.rebuild": "очистка перестроения",
@@ -37,5 +39,15 @@
 	"ctest.failed": "Предустановка проверки {0} не найдена. Сбой проверки.",
 	"ctest.run.terminated": "Запуск CTest был прерван.",
 	"ctest.finished": "CTest завершен",
-	"test.failed": "Сбой тестового запуска."
+	"test.failed": "Сбой тестового запуска.",
+	"package.started": "Задача пакета запущена...",
+	"package.preset.not.found": "Предустановка пакета не найдена.",
+	"cpack.failed": "Предустановка пакета {0} не найдена. Сбой CPack.",
+	"cpack.run.terminated": "Запуск CPack был прерван.",
+	"cpack.finished": "CPack завершен",
+	"workflow.started": "Задача рабочего процесса запущена...",
+	"workflow.preset.not.found": "Предустановка рабочего процесса не найдена.",
+	"workflow.failed": "Предустановка рабочего процесса {0} не найдена. Сбой рабочего процесса.",
+	"workflow.run.terminated": "Запуск рабочего процесса был прерван",
+	"workflow.finished": "Рабочий процесс завершен"
 }

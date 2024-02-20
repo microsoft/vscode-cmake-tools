@@ -7,6 +7,8 @@
 	"build": "生成",
 	"install": "安装",
 	"test": "测试",
+	"package": "包",
+	"workflow": "工作流",
 	"configure": "配置",
 	"clean": "清理",
 	"clean.rebuild": "清理重新生成",
@@ -37,5 +39,15 @@
 	"ctest.failed": "未找到测试预设 {0}。测试失败。",
 	"ctest.run.terminated": "CTest 运行已终止",
 	"ctest.finished": "CTest 已完成",
-	"test.failed": "CTest 运行失败。"
+	"test.failed": "CTest 运行失败。",
+	"package.started": "包任务已启动...",
+	"package.preset.not.found": "未找到包预设。",
+	"cpack.failed": "未找到包预设 {0}。CPack 失败。",
+	"cpack.run.terminated": "CPack 运行已终止",
+	"cpack.finished": "CPack 已完成",
+	"workflow.started": "工作流任务已启动...",
+	"workflow.preset.not.found": "找不到工作流预设。",
+	"workflow.failed": "找不到工作流预设 {0}。工作流失败。",
+	"workflow.run.terminated": "工作流运行已终止",
+	"workflow.finished": "工作流已完成"
 }

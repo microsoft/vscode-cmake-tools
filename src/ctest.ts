@@ -318,7 +318,7 @@ export class CTestDriver implements vscode.Disposable {
 
         const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
 
-        if (!driver.testPreset) {
+        if (!driver.testPreset && driver.useCMakePresets) {
             log.error('test.preset.not.set', 'Test preset is not set');
             return -3;
         }

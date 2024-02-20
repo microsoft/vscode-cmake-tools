@@ -13,6 +13,10 @@
 	"default.build.preset.description": "Eine leere Buildvoreinstellung, die keine Argumente hinzufügt",
 	"default.test.preset": "[Standard]",
 	"default.test.preset.description": "Eine leere Testvoreinstellung, die keine Argumente hinzufügt",
+	"default.package.preset": "[Standard]",
+	"default.package.preset.description": "Eine leere Paketvoreinstellung, die keine Argumente hinzufügt",
+	"default.workflow.preset": "[Standard]",
+	"default.workflow.preset.description": "Eine leere Workflowvoreinstellung, die keine Argumente hinzufügt",
 	"circular.inherits.in.config.preset": "Kreisförmige Erbvorgänge in Konfigurationsvoreinstellung {0}",
 	"binaryDir.undefined": "Konfigurationsvoreinstellung {0}: Kein binaryDir angegeben, Standardwert wird verwendet:{1}",
 	"specified.vs.not.found": "Voreingestellte {0} konfigurieren: Visual Studio-Instanz, die durch {1} angegeben wurde, wurde nicht gefunden, was auf das Standardverhalten der Instanzsuche zurückgeht.",
@@ -28,8 +32,12 @@
 	"property.unsupported.v2": "Konfigurationsvoreinstellung {0}: Eigenschaft {1} nicht unterstützt in Voreinstellungen v2",
 	"circular.inherits.in.build.preset": "Kreisförmige Erbvorgänge in Buildvoreinstellung {0}",
 	"circular.inherits.in.test.preset": "Kreisförmige Erbvorgänge in Testvoreinstellung {0}",
+	"circular.inherits.in.package.preset": "Kreisförmige Erbvorgänge in Paketvoreinstellung {0}",
+	"circular.inherits.in.workflow.preset": "Kreisförmige Erbvorgänge in Workflowvoreinstellung {0}",
 	"build.preset.not.found": "Die Buildvoreinstellung mit dem Namen {0} wurde nicht gefunden",
 	"test.preset.not.found": "Die Testvoreinstellung mit dem Namen {0} wurde nicht gefunden",
+	"package.preset.not.found": "Die Paketvoreinstellung mit dem Namen {0} wurde nicht gefunden",
+	"workflow.preset.not.found": "Die Workflowvoreinstellung mit dem Namen {0} wurde nicht gefunden",
 	"clean.not.needed.no.prior.config.preset": "Bereinigung nicht erforderlich: Keine vorherige Konfigurationsvoreinstellung ausgewählt",
 	"clean.needed.config.preset.changed": "Bereinigung erforderlich: Konfigurationsvoreinstellung geändert"
 }

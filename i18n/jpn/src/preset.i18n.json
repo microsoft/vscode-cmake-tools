@@ -13,6 +13,10 @@
 	"default.build.preset.description": "引数を追加しない空のビルドの事前設定",
 	"default.test.preset": "[既定]",
 	"default.test.preset.description": "引数を追加しない空のテストの事前設定",
+	"default.package.preset": "[既定]",
+	"default.package.preset.description": "引数を追加しない空のパッケージ プリセット",
+	"default.workflow.preset": "[既定]",
+	"default.workflow.preset.description": "引数を追加しない空のワークフロー プリセット",
 	"circular.inherits.in.config.preset": "構成プリセット {0} での循環継承",
 	"binaryDir.undefined": "プリセット {0} の構成: binaryDir が指定されていません。既定値 {1} を使用しています",
 	"specified.vs.not.found": "事前設定 {0} を構成する: {1} で指定された Visual Studio インスタンスが見つからず、既定のインスタンスを参照する動作にフォールバックします。",
@@ -28,8 +32,12 @@
 	"property.unsupported.v2": "プリセット {0} の構成: プロパティ {1} はプリセット v2 ではサポートされていません",
 	"circular.inherits.in.build.preset": "ビルド プリセット {0} での循環継承",
 	"circular.inherits.in.test.preset": "テスト プリセット {0} での循環継承",
+	"circular.inherits.in.package.preset": "パッケージ プリセット {0} での循環継承",
+	"circular.inherits.in.workflow.preset": "ワークフロー プリセット {0} での循環継承",
 	"build.preset.not.found": "名前が {0} のビルドの事前設定が見つかりませんでした",
 	"test.preset.not.found": "名前が {0} のテストの事前設定が見つかりませんでした",
+	"package.preset.not.found": "名前が {0} のパッケージ プリセットが見つかりませんでした",
+	"workflow.preset.not.found": "名前が {0} のワークフロー プリセットが見つかりませんでした",
 	"clean.not.needed.no.prior.config.preset": "クリーンは不要: 構成の事前設定が選択されていない",
 	"clean.needed.config.preset.changed": "クリーンが必要: 構成の事前設定が変更された"
 }

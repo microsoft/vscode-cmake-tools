@@ -7,6 +7,8 @@
 	"build": "build",
 	"install": "instalar",
 	"test": "teste",
+	"package": "pacote",
+	"workflow": "fluxo de trabalho",
 	"configure": "configurar",
 	"clean": "limpar",
 	"clean.rebuild": "recompilação limpa",
@@ -37,5 +39,15 @@
 	"ctest.failed": "O teste predefinido de {0} não foi encontrado. O teste falhou.",
 	"ctest.run.terminated": "A execução do CTest foi terminada",
 	"ctest.finished": "CTest concluído",
-	"test.failed": "Execução de CTeste falhou."
+	"test.failed": "Execução de CTeste falhou.",
+	"package.started": "Tarefa do pacote iniciada...",
+	"package.preset.not.found": "Predefinição de pacote não encontrada.",
+	"cpack.failed": "Predefinição de pacote {0} não encontrada. O CPack falhou.",
+	"cpack.run.terminated": "A execução do CPack foi terminada.",
+	"cpack.finished": "CPack concluído",
+	"workflow.started": "Tarefa de fluxo de trabalho iniciada...",
+	"workflow.preset.not.found": "Predefinição de fluxo de trabalho não encontrada.",
+	"workflow.failed": "Predefinição de fluxo de trabalho {0} não encontrada. O fluxo de trabalho falhou.",
+	"workflow.run.terminated": "A execução de fluxo de trabalho foi terminada",
+	"workflow.finished": "Fluxo de trabalho concluído"
 }

@@ -7,6 +7,8 @@
 	"build": "kompiluj",
 	"install": "zainstaluj",
 	"test": "testuj",
+	"package": "pakiet",
+	"workflow": "przepływ pracy",
 	"configure": "konfiguruj",
 	"clean": "wyczyść",
 	"clean.rebuild": "wyczyść ponowną kompilację",
@@ -37,5 +39,15 @@
 	"ctest.failed": "Nie znaleziono ustawienia wstępnego testu {0}. Test nie powiódł się.",
 	"ctest.run.terminated": "Praca narzędzia CTest została przerwana",
 	"ctest.finished": "Zakończono testowanie CTest",
-	"test.failed": "Przebieg narzędzia CTest nie powiódł się."
+	"test.failed": "Przebieg narzędzia CTest nie powiódł się.",
+	"package.started": "Rozpoczęto zadanie pakietu...",
+	"package.preset.not.found": "Nie znaleziono ustawienia wstępnego pakietu.",
+	"cpack.failed": "Nie znaleziono ustawienia wstępnego {0} pakietu. Pakiet CPack nie powiódł się.",
+	"cpack.run.terminated": "Uruchamianie modułu CPack zostało przerwane",
+	"cpack.finished": "Zakończono wykonywanie pakietu CPack",
+	"workflow.started": "Rozpoczęto zadanie przepływu pracy...",
+	"workflow.preset.not.found": "Nie znaleziono ustawienia wstępnego przepływu pracy.",
+	"workflow.failed": "Nie znaleziono ustawienia wstępnego {0} przepływu pracy. Przepływ pracy nie powiódł się.",
+	"workflow.run.terminated": "Przebieg przepływu pracy został zakończony",
+	"workflow.finished": "Przepływ pracy ukończony"
 }

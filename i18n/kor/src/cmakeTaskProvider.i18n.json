@@ -7,6 +7,8 @@
 	"build": "빌드",
 	"install": "설치",
 	"test": "테스트",
+	"package": "패키지",
+	"workflow": "워크플로",
 	"configure": "구성",
 	"clean": "정리",
 	"clean.rebuild": "다시 빌드 정리",
@@ -37,5 +39,15 @@
 	"ctest.failed": "테스트 사전 설정 {0}을(를) 찾을 수 없습니다. 테스트에 실패했습니다.",
 	"ctest.run.terminated": "CTest 실행이 종료됨",
 	"ctest.finished": "CTest 완료",
-	"test.failed": "CT테스트 실행에 실패했습니다."
+	"test.failed": "CT테스트 실행에 실패했습니다.",
+	"package.started": "패키지 작업 시작됨...",
+	"package.preset.not.found": "패키지 사전 설정을 찾을 수 없습니다.",
+	"cpack.failed": "패키지 사전 설정 {0}을(를) 찾을 수 없습니다. CPack이 실패했습니다.",
+	"cpack.run.terminated": "CPack 실행이 종료됨",
+	"cpack.finished": "CPack 완료",
+	"workflow.started": "워크플로 작업 시작됨...",
+	"workflow.preset.not.found": "워크플로 사전 설정을 찾을 수 없습니다.",
+	"workflow.failed": "워크플로 사전 설정 {0}을(를) 찾을 수 없습니다. 워크플로가 실패했습니다.",
+	"workflow.run.terminated": "워크플로 실행이 종료됨",
+	"workflow.finished": "워크플로 완료"
 }

@@ -7,6 +7,8 @@
 	"build": "sestavení",
 	"install": "nainstalovat",
 	"test": "test",
+	"package": "balíček",
+	"workflow": "pracovní postup",
 	"configure": "konfigurovat",
 	"clean": "vyčistit",
 	"clean.rebuild": "vyčistit a znovu sestavit",
@@ -37,5 +39,15 @@
 	"ctest.failed": "Předvolba testování {0} se nenašla. Test se nezdařil.",
 	"ctest.run.terminated": "Běh CTestu se ukončil.",
 	"ctest.finished": "CTest dokončen",
-	"test.failed": "Spuštění CTest se nezdařilo."
+	"test.failed": "Spuštění CTest se nezdařilo.",
+	"package.started": "Úloha balíčku se spustila…",
+	"package.preset.not.found": "Předvolba balíčku se nenašla.",
+	"cpack.failed": "Předvolba balíčku {0} se nenašla. CPack selhal.",
+	"cpack.run.terminated": "Spuštění CPack se ukončilo.",
+	"cpack.finished": "CPack se dokončil.",
+	"workflow.started": "Úkol pracovního postupu se spustil…",
+	"workflow.preset.not.found": "Předvolba pracovního postupu se nenašla.",
+	"workflow.failed": "Předvolba pracovního postupu {0} se nenašla. Pracovní postup neproběhl úspěšně.",
+	"workflow.run.terminated": "Běh pracovního postupu se ukončil.",
+	"workflow.finished": "Pracovní postup byl dokončen."
 }
