@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.17.17
+
+Bug Fixes:
+
+- Fix the regression for inheritance of cache variables and other inheritable fields. [#3603](https://github.com/microsoft/vscode-cmake-tools/issues/3603)
+
 ## 1.17.16
 
 Bug Fixes:
