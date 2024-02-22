@@ -3453,7 +3453,7 @@
           "items": {
             "type": "string"
           },
-          "scope": "resource"
+          "scope": "machine-overridable"
         },
         "cmake.revealLog": {
           "type": "string",
