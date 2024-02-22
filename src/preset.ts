@@ -809,6 +809,25 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     if (preset.cacheVariables) {
         expandedPreset.cacheVariables = {};
+
+        // Lets infer the compiler from the environment, this might be overwritten later by a preset
+        if (preset.environment) {
+            const cxxCompiler = getStringValueFromCacheVar(preset.environment['CMAKE_CXX_COMPILER']);
+            const cCompiler = getStringValueFromCacheVar(preset.environment['CMAKE_C_COMPILER']);
+            if (cxxCompiler != null && util.isString(cxxCompiler)) {
+                const fixedPathToCompiler = util.fixPaths(cxxCompiler);
+                if (fixedPathToCompiler !== undefined) {
+                    expandedPreset.cacheVariables['CMAKE_CXX_COMPILER'] = fixedPathToCompiler;
+                }
+            }
+            if (cCompiler != null && util.isString(cCompiler)) {
+                const fixedPathToCompiler = util.fixPaths(cCompiler);
+                if (fixedPathToCompiler !== undefined) {
+                    expandedPreset.cacheVariables['CMAKE_C_COMPILER'] = fixedPathToCompiler;
+                }
+            }
+        }
+        
         for (const cacheVarName in preset.cacheVariables) {
             const cacheVar = preset.cacheVariables[cacheVarName];
             if (typeof cacheVar === 'boolean') {
@@ -836,11 +855,24 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
     // but they are not on PATH, then set the env automatically.
     if (process.platform === 'win32') {
-        if (preset.cacheVariables) {
-            const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-            const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
+        if (preset.cacheVariables && expandedPreset.cacheVariables) {
+            const cxxCompilerPath = getStringValueFromCacheVar(expandedPreset.cacheVariables['CMAKE_CXX_COMPILER']);
+            const cCompilerPath = getStringValueFromCacheVar(expandedPreset.cacheVariables['CMAKE_C_COMPILER']);
+            const cxxCompiler = path.basename(cxxCompilerPath||"").toLocaleLowerCase();
+            const cCompiler = path.basename(cCompilerPath||"").toLocaleLowerCase();
             // The env variables for the supported compilers are the same.
             const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+
+            // If CMake receives an absolute path to cl.exe it tries to perform a compiler check which is undesirable
+            if (compilerName)
+            {
+                if (cxxCompilerPath && expandedPreset.cacheVariables['CMAKE_C_COMPILER_WORKS'] === undefined) {
+                    expandedPreset.cacheVariables['CMAKE_C_COMPILER_WORKS'] = true;
+                }
+                if (cCompilerPath && expandedPreset.cacheVariables['CMAKE_CXX_COMPILER_WORKS'] === undefined) {
+                    expandedPreset.cacheVariables['CMAKE_CXX_COMPILER_WORKS'] = true;
+                }
+            }
 
             // find where.exe using process.env since we're on windows.
             let whereExecutable;
