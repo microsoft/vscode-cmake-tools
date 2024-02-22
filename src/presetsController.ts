@@ -1581,8 +1581,12 @@ export class PresetsController {
             schemaFile = './schemas/CMakePresets-v4-schema.json';
         } else if (presetsFile.version === 5) {
             schemaFile = './schemas/CMakePresets-v5-schema.json';
-        } else {
+        } else if (presetsFile.version === 6) {
             schemaFile = './schemas/CMakePresets-v6-schema.json';
+        } else if (presetsFile.version === 7) {
+            schemaFile = './schemas/CMakePresets-v7-schema.json';
+        } else {
+            schemaFile = './schemas/CMakePresets-v8-schema.json';
         }
 
         const validator = await loadSchema(schemaFile);

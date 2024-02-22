@@ -1106,20 +1106,6 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
                 return null;
             }
         }
-
-        if (preset.__file.version <= 4) {
-            if (preset.__file.include) {
-                log.error(localize('property.unsupported.include', 'Configure preset {0}: Property {1} is unsupported in presets v{2}', preset.name, '"include"', preset.__file.version));
-                return null;
-            }
-        }
-
-        if (preset.__file.version <= 6) {
-            if (preset.trace) {
-                log.error(localize('property.unsupported.trace', 'Configure preset {0}: Property {1} is unsupported in presets v{2}', preset.name, '"trace"', preset.__file.version));
-                return null;
-            }
-        }
     }
 
     const refs = referencedConfigurePresets.get(folder)!;
@@ -2016,8 +2002,12 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     if (preset.trace) {
         preset.trace.mode && (preset.trace.mode === TraceMode.On ? result.push('--trace') : preset.trace.mode === TraceMode.Expand ? result.push('--trace-expand') : false);
         preset.trace.format && (preset.trace.format === FormatMode.Human ? result.push('--trace-format=human') : preset.trace.format === FormatMode.Json ? result.push('--trace-format=json-v1') : false);
-        preset.trace.source && preset.trace.source.length > 0 && preset.trace.source.forEach(s => result.push(`--trace-source=${s}`));
-        preset.trace.redirect && result.push(`--trace-redirect=${preset.trace.redirect}`);
+        preset.trace.source && preset.trace.source.length > 0 && preset.trace.source.forEach(s => {
+            if (s.trim().length > 0) {
+                result.push(`--trace-source=${s}`);
+            }
+        });
+        preset.trace.redirect && preset.trace.redirect.length > 0 && result.push(`--trace-redirect=${preset.trace.redirect}`);
     }
 
     return result;
