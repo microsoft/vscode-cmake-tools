@@ -625,8 +625,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
         }
-        const reversedInherits = preset.inherits.slice().reverse();
-        for (const parent of reversedInherits) {
+        for (const parent of preset.inherits) {
             const parentVendor = getVendorForConfigurePresetImpl(folder, parent, allowUserPreset);
             if (parentVendor) {
                 for (const key in parentVendor) {
@@ -1111,12 +1110,11 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
         }
-        const reversedInherits = preset.inherits.slice().reverse();
-        for (const parentName of reversedInherits) {
+        for (const parentName of preset.inherits) {
             const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
             if (parent) {
                 // Inherit environment
-                inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, parent.environment]);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 // Inherit cache vars
                 for (const name in parent.cacheVariables) {
                     if (preset.cacheVariables[name] === undefined) {
@@ -1295,8 +1293,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
         }
-        const reversedInherits = preset.inherits.slice().reverse();
-        for (const parent of reversedInherits) {
+        for (const parent of preset.inherits) {
             const parentConfigurePreset = getConfigurePresetForPresetImpl(folder, parent, presetType, allowUserPreset);
             if (parentConfigurePreset) {
                 preset.configurePreset = parentConfigurePreset;
@@ -1418,8 +1415,7 @@ async function expandBuildPresetHelper(folder: string, preset: BuildPreset, work
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
         }
-        const reversedInherits = preset.inherits.slice().reverse();
-        for (const parentName of reversedInherits) {
+        for (const parentName of preset.inherits) {
             const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, allowUserPreset);
             if (parent) {
                 // Inherit environment
@@ -1604,8 +1600,7 @@ async function expandTestPresetHelper(folder: string, preset: TestPreset, worksp
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
         }
-        const reversedInherits = preset.inherits.slice().reverse();
-        for (const parentName of reversedInherits) {
+        for (const parentName of preset.inherits) {
             const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
             if (parent) {
                 // Inherit environment
@@ -1733,8 +1728,7 @@ async function expandPackagePresetHelper(folder: string, preset: PackagePreset, 
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
         }
-        const reversedInherits = preset.inherits.slice().reverse();
-        for (const parentName of reversedInherits) {
+        for (const parentName of preset.inherits) {
             const parent = await expandPackagePresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
             if (parent) {
                 // Inherit environment
@@ -1868,8 +1862,7 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
         if (util.isString(preset.inherits)) {
             preset.inherits = [preset.inherits];
         }
-        const reversedInherits = preset.inherits.slice().reverse();
-        for (const parentName of reversedInherits) {
+        for (const parentName of preset.inherits) {
             const parent = await expandWorkflowPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
             if (parent) {
                 // Inherit environment
