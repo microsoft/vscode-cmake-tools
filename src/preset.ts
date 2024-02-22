@@ -864,12 +864,11 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
             const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
 
             // If CMake receives an absolute path to cl.exe it tries to perform a compiler check which is undesirable
-            if (compilerName)
-            {
-                if (cxxCompilerPath && expandedPreset.cacheVariables['CMAKE_C_COMPILER_WORKS'] === undefined) {
+            if (compilerName) {
+                if (cxxCompilerPath && path.isAbsolute(cxxCompilerPath) && expandedPreset.cacheVariables['CMAKE_C_COMPILER_WORKS'] === undefined) {
                     expandedPreset.cacheVariables['CMAKE_C_COMPILER_WORKS'] = true;
                 }
-                if (cCompilerPath && expandedPreset.cacheVariables['CMAKE_CXX_COMPILER_WORKS'] === undefined) {
+                if (cCompilerPath && path.isAbsolute(cCompilerPath) && expandedPreset.cacheVariables['CMAKE_CXX_COMPILER_WORKS'] === undefined) {
                     expandedPreset.cacheVariables['CMAKE_CXX_COMPILER_WORKS'] = true;
                 }
             }
