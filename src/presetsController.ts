@@ -1568,11 +1568,7 @@ export class PresetsController {
 
         log.info(localize('validating.presets.file', 'Reading and validating the presets "file {0}"', file));
         let schemaFile;
-<<<<<<< HEAD
-        const maxSupportedVersion = 6;
-=======
         const maxSupportedVersion = 8;
->>>>>>> 16c897fa (Add most of what is needed for v7 and v8 support)
         const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
