@@ -20,7 +20,8 @@ import { ProjectController, FolderProjectType} from '@cmt/projectController';
 import {
     USER_KITS_FILEPATH,
     findCLCompilerPath,
-    scanForKitsIfNeeded
+    scanForKitsIfNeeded,
+    Kit
 } from '@cmt/kit';
 import { KitsController } from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
@@ -426,6 +427,21 @@ export class ExtensionManager implements vscode.Disposable {
                 // We have an active kit. We're good.
                 return true;
             }
+
+            // Get the name of kit name from settings.json
+            const default_kit_name = vscode.workspace.getConfiguration('cmake').get<string | null>('defaultKitName', null);
+
+            // Tro to use this kit
+            if (default_kit_name) {
+                // Check for existing compilers for "defaultKitName" kit
+                const newKit: Kit | undefined = cmakeProject.kitsController.availableKits.find(kit => kit.name === default_kit_name);
+                if (newKit?.compilers) {
+                    // Set active kit
+                    await this.setKitByName(default_kit_name, cmakeProject.workspaceFolder);
+                    return true;
+                }
+            }
+
             // No kit? Ask the user what they want.
             const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
             if (!didChooseKit && !cmakeProject.activeKit) {

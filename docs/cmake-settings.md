@@ -12,6 +12,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |
+| `cmake.defaultKitName` | Specify a default kit name that can be founded in cmake-kits.json. | `null` (no default kit name specified) | no |
 | `cmake.buildEnvironment`| An object containing `key:value` pairs of environment variables, which will be passed only to the compiler. | `null` (no environment variables specified) | yes |
 | `cmake.buildToolArgs` | An array of additional arguments to pass to the underlying build tool. | `[]` (empty array-no additional arguments) | yes |
 |  `cmake.cacheInit` | Path, or list of paths, to cache-initialization files. Passed to CMake via the `-C` command-line argument. | `[]` (empty array-no cache initializer files) | no |

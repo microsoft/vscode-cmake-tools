@@ -77,6 +77,7 @@ export enum ConfigureTrigger {
     workflow =  "workflow",
     badHomeDir = "badHomeDir",
     configureOnOpen = "configureOnOpen",
+    setKitByName = "setKitByName",
     configureWithCache = "configureWithCache",
     quickStart = "quickStart",
     setVariant = "setVariant",
