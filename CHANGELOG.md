@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.18
+
+Improvements:
+
+- Add option to enable launching CMake from a Visual Studio development environment. [#3497](https://github.com/microsoft/vscode-cmake-tools/issues/3497)
+
 ## 1.17
 
 Features:
