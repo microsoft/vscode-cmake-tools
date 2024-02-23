@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.18
+
+Improvements:
+
+- Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
+
 ## 1.17.17
 
 Bug Fixes:
@@ -28,7 +34,6 @@ Improvements:
 - Add option to disable "Not all open documents were saved" popup. [#2889](https://github.com/microsoft/vscode-cmake-tools/issues/2889)
 - Allow overriding of CMakePresets cache variables and arguments. [#1836](https://github.com/microsoft/vscode-cmake-tools/issues/1836)
 - Improve advanced status bar options configuration by adding an `inherit` option to the `statusBarVisibility` setting and by adding the `inheritDefault` setting. Look at the CMake Options Visibility Configuration docs for more information. [#3452](https://github.com/microsoft/vscode-cmake-tools/issues/3452)
-- Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 
 Bug Fixes:
 
