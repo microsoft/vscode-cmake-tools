@@ -1,6 +1,19 @@
 # What's New?
 
-## 1.17
+## 1.17.17
+
+Bug Fixes:
+
+- Fix the regression for inheritance of cache variables and other inheritable fields. [#3603](https://github.com/microsoft/vscode-cmake-tools/issues/3603)
+
+## 1.17.16
+
+Bug Fixes:
+
+- Fix an issue where we weren't able to run tests when not using Presets. [#3589](https://github.com/microsoft/vscode-cmake-tools/issues/3589)
+- Fix the order of preference for CMake Presets `inherit` field. [#3594](https://github.com/microsoft/vscode-cmake-tools/issues/3594)
+
+## 1.17.15
 
 Features:
 
