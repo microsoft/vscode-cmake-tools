@@ -764,6 +764,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     const expandedPreset: ConfigurePreset = { name };
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
 
+    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
         expandedPreset.environment = EnvironmentUtils.createPreserveNull();
@@ -1114,7 +1115,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
             if (parent) {
                 // Inherit environment
-                inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, parent.environment]);
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 // Inherit cache vars
                 for (const name in parent.cacheVariables) {
                     if (preset.cacheVariables[name] === undefined) {
@@ -1133,7 +1134,6 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
         }
     }
 
-    inheritedEnv = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv]);
     preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
 
     preset.__expanded = true;
