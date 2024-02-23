@@ -3540,6 +3540,12 @@
           "description": "%cmake-tools.configuration.cmake.pinnedCommands.description%",
           "default": [],
           "scope": "resource"
+        },
+        "cmake.enableVSDevEnv": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.enableVSDevEnv.description%",
+          "scope": "resource"
         }
       }
     },

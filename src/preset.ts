@@ -10,6 +10,7 @@ import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 import { defaultNumJobs } from './config';
+import * as vscode from 'vscode';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -867,7 +868,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
                     shell: true
                 }).result;
 
-                if (!compilerLocation.stdout) {
+                if (vscode.workspace.getConfiguration('cmake').get('enableVSDevEnv')) {
                     // Not on PATH, need to set env
                     const arch = getArchitecture(preset);
                     const toolset = getToolset(preset);
