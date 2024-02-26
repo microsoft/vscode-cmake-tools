@@ -862,12 +862,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
             }
 
             if (compilerName && whereExecutable) {
-                const compilerLocation = await execute(whereExecutable, [compilerName], null, {
-                    environment: EnvironmentUtils.create(expandedPreset.environment),
-                    silent: true,
-                    encoding: 'utf8',
-                    shell: true
-                }).result;
 
                 if (vscode.workspace.getConfiguration('cmake').get('enableVSDevEnv')) {
                     // Not on PATH, need to set env
