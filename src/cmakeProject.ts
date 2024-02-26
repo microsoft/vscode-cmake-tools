@@ -2491,13 +2491,11 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.appendBuildDirectoryToWorkspace` 
      */
-    async appendBuildDirectoryToWorkspace()
-    {
+    async appendBuildDirectoryToWorkspace() {
         const binaryDir = await this.buildDirectory();
-        if (binaryDir)
-        {
+        if (binaryDir) {
             const binaryDirUri = vscode.Uri.file(binaryDir);
-            vscode.workspace.updateWorkspaceFolders(0, 0 , {uri: binaryDirUri});
+            vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.length : 0, 0, { uri: binaryDirUri });
         } else {
             void vscode.window.showErrorMessage(localize('unable.to.get.build.directory', 'Unable to get the build directory.'));
         }
