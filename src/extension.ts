@@ -1827,6 +1827,14 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
+     * Appends the build directory of the active project to the current workspace
+     */
+    async appendBuildDirectoryToWorkspace()
+    {
+        await this.getActiveProject()?.appendBuildDirectoryToWorkspace();
+    }
+
+    /**
      * Show UI to allow the user to add an active configure preset
      */
     async addConfigurePreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
@@ -2132,6 +2140,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'activeWorkflowPresetName',
         "useCMakePresets",
         "openCMakePresets",
+        "appendBuildDirectoryToWorkspace",
         'addConfigurePreset',
         'addBuildPreset',
         'addTestPreset',

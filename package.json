@@ -819,6 +819,11 @@
         "title": "%cmake-tools.command.cmake.pinnedCommands.run.title%",
         "category": "CMake",
         "icon": "$(play-circle)"      
+      },
+      {
+        "command": "cmake.appendBuildDirectoryToWorkspace",
+        "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
+        "category": "CMake"
       }
     ],
     "taskDefinitions": [
@@ -1549,6 +1554,9 @@
         {
           "command": "cmake.projectStatus.setTestTarget",
           "when": "never"
+        },
+        {
+          "command": "cmake.openBuildDirectory"
         }
       ],
       "view/title": [
