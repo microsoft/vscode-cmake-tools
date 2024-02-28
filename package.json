@@ -2802,7 +2802,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
