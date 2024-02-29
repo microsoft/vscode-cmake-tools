@@ -2840,7 +2840,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
@@ -2878,7 +2878,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
@@ -2916,7 +2916,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
@@ -2954,7 +2954,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
@@ -2992,7 +2992,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
@@ -3063,7 +3063,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 },
@@ -3110,7 +3110,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
@@ -3187,7 +3187,7 @@
                   ]
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 }
@@ -3314,7 +3314,7 @@
                   "description": "%cmake-tools.configuration.cmake.options.advanced.ctest.color.description%"
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 },
@@ -3370,7 +3370,7 @@
                   "description": "%cmake-tools.configuration.cmake.options.advanced.cpack.color.description%"
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 },
@@ -3426,7 +3426,7 @@
                   "description": "%cmake-tools.configuration.cmake.options.advanced.workflow.color.description%"
                 },
                 "statusBarLength": {
-                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.description%",
+                  "description": "%cmake-tools.configuration.cmake.options.advanced.statusBarLength.markdownDescription%",
                   "type": "integer",
                   "default": 20
                 },
