@@ -6,6 +6,10 @@ Bug Fixes:
 
 - Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
 
+Improvements:
+
+- Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
+
 ## 1.17.17
 
 Bug Fixes:
