@@ -12,6 +12,10 @@ Improvements:
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 - Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
 
+Features:
+
+- Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)
+
 Bug Fixes:
 
 - Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
