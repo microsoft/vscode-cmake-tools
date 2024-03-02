@@ -808,26 +808,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     }
 
     if (preset.cacheVariables) {
-        expandedPreset.cacheVariables = {};
-
-        // Lets infer the compiler from the environment, this might be overwritten later by a preset
-        if (preset.environment) {
-            const cxxCompiler = getStringValueFromCacheVar(preset.environment['CMAKE_CXX_COMPILER']);
-            const cCompiler = getStringValueFromCacheVar(preset.environment['CMAKE_C_COMPILER']);
-            if (cxxCompiler != null && util.isString(cxxCompiler)) {
-                const fixedPathToCompiler = util.fixPaths(cxxCompiler);
-                if (fixedPathToCompiler !== undefined) {
-                    expandedPreset.cacheVariables['CMAKE_CXX_COMPILER'] = fixedPathToCompiler;
-                }
-            }
-            if (cCompiler != null && util.isString(cCompiler)) {
-                const fixedPathToCompiler = util.fixPaths(cCompiler);
-                if (fixedPathToCompiler !== undefined) {
-                    expandedPreset.cacheVariables['CMAKE_C_COMPILER'] = fixedPathToCompiler;
-                }
-            }
-        }
-        
+        expandedPreset.cacheVariables = {};        
         for (const cacheVarName in preset.cacheVariables) {
             const cacheVar = preset.cacheVariables[cacheVarName];
             if (typeof cacheVar === 'boolean') {
