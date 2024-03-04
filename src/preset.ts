@@ -915,6 +915,10 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
                     const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
                     compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
+                    // For vs dev env, we want to APPEND to the PATH, not replace it.
+                    if (expandedPreset.environment !== null && expandedPreset.environment !== undefined) {
+                        compilerEnv["PATH"] = expandedPreset.environment["PATH"]?.concat(";", compilerEnv["PATH"] ?? "");
+                    }
                     expandedPreset.environment = EnvironmentUtils.mergePreserveNull([expandedPreset.environment, compilerEnv]);
                 }
             }
