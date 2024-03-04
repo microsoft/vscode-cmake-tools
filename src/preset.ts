@@ -808,7 +808,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     }
 
     if (preset.cacheVariables) {
-        expandedPreset.cacheVariables = {};        
+        expandedPreset.cacheVariables = {};
         for (const cacheVarName in preset.cacheVariables) {
             const cacheVar = preset.cacheVariables[cacheVarName];
             if (typeof cacheVar === 'boolean') {
@@ -839,8 +839,8 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         if (preset.cacheVariables && expandedPreset.cacheVariables) {
             const cxxCompilerPath = getStringValueFromCacheVar(expandedPreset.cacheVariables['CMAKE_CXX_COMPILER']);
             const cCompilerPath = getStringValueFromCacheVar(expandedPreset.cacheVariables['CMAKE_C_COMPILER']);
-            const cxxCompiler = path.basename(cxxCompilerPath||"").toLocaleLowerCase();
-            const cCompiler = path.basename(cCompilerPath||"").toLocaleLowerCase();
+            const cxxCompiler = path.basename(cxxCompilerPath || "").toLocaleLowerCase();
+            const cCompiler = path.basename(cCompilerPath || "").toLocaleLowerCase();
             // The env variables for the supported compilers are the same.
             const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
 
