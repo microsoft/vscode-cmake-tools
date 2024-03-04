@@ -4,7 +4,7 @@
 
 Improvements:
 
-- Add option to enable launching CMake from a Visual Studio development environment. [#3497](https://github.com/microsoft/vscode-cmake-tools/issues/3497)
+- Add option to enable launching CMake from a Visual Studio development environment when using CMake Presets. [#3497](https://github.com/microsoft/vscode-cmake-tools/issues/3497)
 
 ## 1.17.17
 
