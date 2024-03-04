@@ -263,7 +263,7 @@
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
     "cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatically configure CMake project directories when the kit or the configuration preset is changed.",
     "cmake-tools.configuration.cmake.pinnedCommands.description":"List of CMake commands to pin.",
-    "cmake-tools.configuration.cmake.enableVSDevEnv.description":"Enables launching CMake from a Visual Studio development environment.",
+    "cmake-tools.configuration.cmake.enableVSDevEnv.description":"Enables launching CMake from a Visual Studio development environment when using CMake Presets.",
     "cmake-tools.debugger.pipeName.description": "Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.",
     "cmake-tools.debugger.clean.description": "Clean prior to configuring.",
     "cmake-tools.debugger.configureAll.description": "Configure for all projects.",
