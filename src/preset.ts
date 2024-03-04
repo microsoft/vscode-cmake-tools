@@ -764,7 +764,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     const expandedPreset: ConfigurePreset = { name };
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
 
-    // TODO: merge the vs dev environment on top of process.env
     preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
