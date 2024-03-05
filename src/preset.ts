@@ -4,7 +4,6 @@ import * as path from 'path';
 
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
-import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
