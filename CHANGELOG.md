@@ -4,7 +4,12 @@
 
 Improvements:
 
+- Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to enable launching CMake from a Visual Studio development environment when using CMake Presets. [#3497](https://github.com/microsoft/vscode-cmake-tools/issues/3497)
+
+Bug Fixes:
+
+- Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
 
 ## 1.17.17
 
