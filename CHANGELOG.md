@@ -5,6 +5,7 @@
 Bug Fixes:
 
 - Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
+- Remove incorrect validation which was breaking references from CMakeUserPresets to CMakePresets [#3636](https://github.com/microsoft/vscode-cmake-tools/issues/3636)
 
 Improvements:
 
