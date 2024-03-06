@@ -1648,22 +1648,6 @@ export class PresetsController {
             }
 
             for (const step of pr.steps) {
-                let searchInPresets: any[] | undefined;
-                switch (step.type) {
-                    case "configure":
-                        searchInPresets = presetsFile.configurePresets;
-                        break;
-                    case "build":
-                        searchInPresets = presetsFile.buildPresets;
-                        break;
-                    case "test":
-                        searchInPresets = presetsFile.testPresets;
-                        break;
-                    case "package":
-                        searchInPresets = presetsFile.packagePresets;
-                        break;
-                }
-
                 if (step.type === "configure" && step !== pr.steps[0]) {
                     log.error(localize('workflow.has.subsequent.configure.preset', 'The workflow preset "{0}" has another configure preset "{1}" besides the first step "{2}": ', pr.name, step.name, pr.steps[0].name));
                     return undefined;
