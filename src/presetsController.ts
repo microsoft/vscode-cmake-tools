@@ -1568,7 +1568,7 @@ export class PresetsController {
 
         log.info(localize('validating.presets.file', 'Reading and validating the presets "file {0}"', file));
         let schemaFile;
-        const maxSupportedVersion = 6;
+        const maxSupportedVersion = 8;
         const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
@@ -1581,8 +1581,12 @@ export class PresetsController {
             schemaFile = './schemas/CMakePresets-v4-schema.json';
         } else if (presetsFile.version === 5) {
             schemaFile = './schemas/CMakePresets-v5-schema.json';
-        } else {
+        } else if (presetsFile.version === 6) {
             schemaFile = './schemas/CMakePresets-v6-schema.json';
+        } else if (presetsFile.version === 7) {
+            schemaFile = './schemas/CMakePresets-v7-schema.json';
+        } else {
+            schemaFile = './schemas/CMakePresets-v8-schema.json';
         }
 
         const validator = await loadSchema(schemaFile);

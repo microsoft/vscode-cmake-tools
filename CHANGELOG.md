@@ -2,6 +2,10 @@
 
 ## 1.18
 
+Features:
+
+- Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
+
 Bug Fixes:
 
 - Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
