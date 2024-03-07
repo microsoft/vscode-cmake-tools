@@ -1043,7 +1043,13 @@ export class CTestDriver implements vscode.Disposable {
             testExplorer.createRunProfile(
                 'Debug Tests',
                 vscode.TestRunProfileKind.Debug,
-                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.debugTestHandler(request, cancellation));
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
+                    const testProject = this.projectController!.getAllCMakeProjects().filter(
+                        project => request.include![0].uri!.fsPath.includes(project.folderPath)
+                    );
+                    return testProject![0].cTestController.debugTestHandler(request, cancellation);
+                }
+            );
         }
         return testExplorer;
     }
