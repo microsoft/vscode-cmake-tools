@@ -3540,6 +3540,12 @@
           "description": "%cmake-tools.configuration.cmake.pinnedCommands.description%",
           "default": [],
           "scope": "resource"
+        },
+        "cmake.enableAutomaticKitScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
+          "scope": "resource"
         }
       }
     },
