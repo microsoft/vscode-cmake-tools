@@ -213,6 +213,7 @@ export interface ExtensionConfigurationSettings {
     ignoreCMakeListsMissing: boolean;
     automaticReconfigure: boolean;
     pinnedCommands: string[];
+    enableVSDevEnv: boolean;
 }
 
 type EmittersOf<T> = {
@@ -545,6 +546,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.automaticReconfigure;
     }
 
+    get enableVSDevEnv(): boolean {
+        return this.configData.enableVSDevEnv;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         cmakePath: new vscode.EventEmitter<string>(),
@@ -606,7 +611,8 @@ export class ConfigurationReader implements vscode.Disposable {
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>(),
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
-        pinnedCommands: new vscode.EventEmitter<string[]>()
+        pinnedCommands: new vscode.EventEmitter<string[]>(),
+        enableVSDevEnv: new vscode.EventEmitter<boolean>()
     };
 
     /**
