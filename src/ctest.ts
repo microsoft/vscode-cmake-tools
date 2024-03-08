@@ -602,13 +602,32 @@ export class CTestDriver implements vscode.Disposable {
             this.tests = JSON.parse(result.stdout) ?? undefined;
             if (this.tests && this.tests.kind === 'ctestInfo') {
                 this.tests.tests.forEach(test => {
-                    let testItem: vscode.TestItem;
+                    let testItem: vscode.TestItem | undefined;
                     if (test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
-                        const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
-                        const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
-                        testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
-                        if (testDefLine !== undefined) {
-                            testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                        // Use DEF_SOURCE_LINE CMake test property to find file and line number
+                        // Property must be set in the test's CMakeLists.txt file or its included modules for this to work
+                        const defSourceLineProperty = test.properties.filter(property => property.name === "DEF_SOURCE_LINE")[0];
+                        if (defSourceLineProperty && defSourceLineProperty.value && typeof defSourceLineProperty.value === 'string') {
+                            // Use RegEx to match the format "file_path:line" in value[0]
+                            const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
+                            if (match && match[1] && match[2]) {
+                                const testDefFile = match[1];
+                                const testDefLine = parseInt(match[2]);
+                                if (!isNaN(testDefLine)) {
+                                    testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
+                                    testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                                }
+                            }
+                        }
+                        if (!testItem) {
+                            // Use the backtrace graph to find the file and line number
+                            // This finds the CMake module's file and line number and not the test file and line number
+                            const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
+                            const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
+                            testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
+                            if (testDefLine !== undefined) {
+                                testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                            }
                         }
                     } else {
                         testItem = initializedTestExplorer.createTestItem(test.name, test.name);
@@ -1024,7 +1043,13 @@ export class CTestDriver implements vscode.Disposable {
             testExplorer.createRunProfile(
                 'Debug Tests',
                 vscode.TestRunProfileKind.Debug,
-                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.debugTestHandler(request, cancellation));
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
+                    const testProject = this.projectController!.getAllCMakeProjects().filter(
+                        project => request.include![0].uri!.fsPath.includes(project.folderPath)
+                    );
+                    return testProject![0].cTestController.debugTestHandler(request, cancellation);
+                }
+            );
         }
         return testExplorer;
     }

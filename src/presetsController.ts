@@ -1568,7 +1568,7 @@ export class PresetsController {
 
         log.info(localize('validating.presets.file', 'Reading and validating the presets "file {0}"', file));
         let schemaFile;
-        const maxSupportedVersion = 6;
+        const maxSupportedVersion = 8;
         const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
@@ -1581,8 +1581,12 @@ export class PresetsController {
             schemaFile = './schemas/CMakePresets-v4-schema.json';
         } else if (presetsFile.version === 5) {
             schemaFile = './schemas/CMakePresets-v5-schema.json';
-        } else {
+        } else if (presetsFile.version === 6) {
             schemaFile = './schemas/CMakePresets-v6-schema.json';
+        } else if (presetsFile.version === 7) {
+            schemaFile = './schemas/CMakePresets-v7-schema.json';
+        } else {
+            schemaFile = './schemas/CMakePresets-v8-schema.json';
         }
 
         const validator = await loadSchema(schemaFile);
@@ -1641,52 +1645,13 @@ export class PresetsController {
             }
         }
 
-        let allBuildTestPackagePresets: (preset.BuildPreset | preset.TestPreset | preset.PackagePreset)[] = presetsFile.buildPresets || [];
-        allBuildTestPackagePresets = allBuildTestPackagePresets.concat(presetsFile.testPresets || []);
-        allBuildTestPackagePresets = allBuildTestPackagePresets.concat(presetsFile.packagePresets || []);
-        for (const pr of allBuildTestPackagePresets) {
-            const cfgPr: preset.ConfigurePreset | undefined = presetsFile.configurePresets?.find(prs => (prs.name === pr.configurePreset));
-            if (pr.configurePreset && !cfgPr) {
-                log.error(localize('referenced.configure.preset.not.found', 'Configure preset "{0}" referenced in preset "{1}" was not found.', pr.configurePreset, pr.name));
-                return undefined;
-            }
-        }
-
         for (const pr of presetsFile.workflowPresets || []) {
             if (pr.steps.length < 1 || pr.steps[0].type !== "configure") {
                 log.error(localize('workflow.does.not.start.configure.step', 'The workflow preset "{0}" does not start with a configure step.', pr.name));
                 return undefined;
             }
 
-            const cfgPr: preset.ConfigurePreset | undefined = presetsFile.configurePresets?.find(prs => (prs.name === pr.steps[0].name));
-            if (!cfgPr) {
-                log.error(localize('referenced.configure.preset.not.found', 'Configure preset "{0}" referenced in workflow preset "{1}" was not found.', pr.steps[0].name, pr.name));
-                return undefined;
-            }
-
             for (const step of pr.steps) {
-                let searchInPresets: any[] | undefined;
-                switch (step.type) {
-                    case "configure":
-                        searchInPresets = presetsFile.configurePresets;
-                        break;
-                    case "build":
-                        searchInPresets = presetsFile.buildPresets;
-                        break;
-                    case "test":
-                        searchInPresets = presetsFile.testPresets;
-                        break;
-                    case "package":
-                        searchInPresets = presetsFile.packagePresets;
-                        break;
-                }
-
-                const refPr: any | undefined = searchInPresets?.find(prs => (prs.name === step.name));
-                if (!refPr) {
-                    log.error(localize('referenced.preset.not.resolved', 'The {0} preset "{1}" referenced in workflow preset "{2}" was not found.', step.type, step.name, pr.name));
-                    return undefined;
-                }
-
                 if (step.type === "configure" && step !== pr.steps[0]) {
                     log.error(localize('workflow.has.subsequent.configure.preset', 'The workflow preset "{0}" has another configure preset "{1}" besides the first step "{2}": ', pr.name, step.name, pr.steps[0].name));
                     return undefined;
