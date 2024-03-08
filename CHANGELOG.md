@@ -1,10 +1,21 @@
 # What's New?
 
 ## 1.18
+Features:
+
+- Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
 
 Improvements:
 
+- Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
+
+Bug Fixes:
+
+- Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
+- Remove incorrect validation which was breaking references from CMakeUserPresets to CMakePresets [#3636](https://github.com/microsoft/vscode-cmake-tools/issues/3636)
+- Fix 'Debug Test' from 'Test explorer' results in 'launch: property 'program' is missing or empty' [#3280]](https://github.com/microsoft/vscode-cmake-tools/issues/3280)
+- Fix "Go to source" in Testing activity + test panel without function [#3362]](https://github.com/microsoft/vscode-cmake-tools/issues/3362)
 
 ## 1.17.17
 
