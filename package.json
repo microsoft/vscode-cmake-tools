@@ -822,6 +822,7 @@
       },
       {
         "command": "cmake.appendBuildDirectoryToWorkspace",
+        "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
         "category": "CMake"
       }
@@ -1554,9 +1555,6 @@
         {
           "command": "cmake.projectStatus.setTestTarget",
           "when": "never"
-        },
-        {
-          "command": "cmake.openBuildDirectory"
         }
       ],
       "view/title": [
