@@ -3,6 +3,7 @@ import { expect } from '@test/util';
 
 function createConfig(conf: Partial<ExtensionConfigurationSettings>): ConfigurationReader {
     const ret = new ConfigurationReader({
+        enabled: true,
         autoSelectActiveFolder: false,
         cmakePath: '',
         buildDirectory: '',

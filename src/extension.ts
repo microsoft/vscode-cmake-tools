@@ -166,6 +166,7 @@ export class ExtensionManager implements vscode.Disposable {
                 this.codeModelUpdateSubs.set(project.folderPath, subs);
                 rollbar.takePromise('Post-folder-open', { folder: folder, project: project }, this.postWorkspaceOpen(project));
             }
+            await enableFullFeatureSet(this.workspaceHasAtLeastOneProject());
         });
 
         this.projectController.onBeforeRemoveFolder(async projects => {
@@ -183,7 +184,11 @@ export class ExtensionManager implements vscode.Disposable {
                 await this.updateActiveProject(undefined);
             } else {
                 if (this.activeFolderPath() === folder.uri.fsPath) {
-                    await this.updateActiveProject(vscode.workspace.workspaceFolders[0]);
+                    const firstEnabledWsf = vscode.workspace.workspaceFolders.find(wsf => {
+                        const workspaceContext = DirectoryContext.createForDirectory(wsf, new StateManager(this.extensionContext, wsf));
+                        return workspaceContext.config.enabled;
+                    });
+                    await this.updateActiveProject(firstEnabledWsf);
                 } else {
                     this.setupSubscriptions();
                 }
@@ -259,7 +264,14 @@ export class ExtensionManager implements vscode.Disposable {
             await this.projectController.loadAllProjects();
             isMultiProject = this.projectController.hasMultipleProjects;
             await setContextAndStore(multiProjectModeKey, isMultiProject);
-            this.projectOutline.addAllCurrentFolders();
+
+            const cmakeEnabledFolders = vscode.workspace.workspaceFolders.filter(wsf => {
+                const workspaceContext = DirectoryContext.createForDirectory(wsf, new StateManager(this.extensionContext, wsf));
+                return workspaceContext.config.enabled;
+            });
+
+            this.projectOutline.addFolders(cmakeEnabledFolders);
+
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
             }

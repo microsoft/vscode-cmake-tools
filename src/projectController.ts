@@ -29,6 +29,7 @@ const log = logging.createLogger('workspace');
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
     private readonly folderToProjectsMap = new Map<string, CMakeProject[]>();
+    private readonly enabledSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly sourceDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly buildDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
@@ -265,6 +266,7 @@ export class ProjectController implements vscode.Disposable {
         if (vscode.workspace.workspaceFolders) {
             for (const folder of vscode.workspace.workspaceFolders) {
                 await this.addFolder(folder);
+                await this.addWorkspaceFolderEnabledSub(folder);
             }
         }
     }
@@ -332,13 +334,16 @@ export class ProjectController implements vscode.Disposable {
      * @returns The newly created CMakeProject backend for the given folder
      */
     private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
+        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+        if (!workspaceContext.config.enabled) {
+            return [];
+        }
         this.beforeAddFolderEmitter.fire(folder);
         let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
         } else {
             // Load for the workspace.
-            const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
             projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext, this);
             this.folderToProjectsMap.set(folder.uri.fsPath, projects);
             const config: ConfigurationReader | undefined = workspaceContext.config;
@@ -513,6 +518,19 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
+    private async addWorkspaceFolderEnabledSub(folder: vscode.WorkspaceFolder) {
+        void this.enabledSub.get(folder)?.dispose();
+        this.enabledSub.delete(folder);
+        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+        this.enabledSub.set(folder, workspaceContext.config.onChange('enabled', async (enabled: boolean) => {
+            if (enabled) {
+                await this.doWorkspaceFolderChange({ added: [folder], removed: [] });
+            } else {
+                await this.doWorkspaceFolderChange({ added: [], removed: [folder] });
+            }
+        }));
+    }
+
     /**
      * Handle workspace change event.
      * @param event Workspace change event
@@ -530,6 +548,7 @@ export class ProjectController implements vscode.Disposable {
         // Load a new CMake Tools instance for each folder that has been added.
         for (const folder of event.added) {
             await this.addFolder(folder);
+            await this.addWorkspaceFolderEnabledSub(folder);
         }
     }
 

@@ -78,6 +78,7 @@
     "cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Open CMakeLists.txt",
     "cmake-tools.command.cmake.folders.setActiveFolder.title": "Set Active Folder",
     "cmake-tools.configuration.title": "CMake Tools configuration",
+    "cmake-tools.configuration.cmake.enabled.description": "Enable CMake Tools.",
     "cmake-tools.configuration.cmake.cmakePath.description": "Name/path of the CMake executable to use.",
     "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go.",
     "cmake-tools.configuration.cmake.installPrefix.description": "The directory where CMake installed files will go.",
