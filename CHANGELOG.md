@@ -9,6 +9,7 @@ Improvements:
 
 - Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
+- Allow CMake Tools to be disabled at folder scope to avoid running it on folders where it shouldn't [#2338](https://github.com/microsoft/vscode-cmake-tools/issues/2338)
 
 Bug Fixes:
 
