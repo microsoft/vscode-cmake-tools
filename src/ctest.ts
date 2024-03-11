@@ -369,7 +369,7 @@ export class CTestDriver implements vscode.Disposable {
         if (test.uri && test.range) {
             message.location = new vscode.Location(test.uri, test.range);
         } else {
-            log.info(message);
+            log.info(message.message);
         }
         run.failed(test, message, duration);
     }
