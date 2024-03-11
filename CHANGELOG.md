@@ -17,6 +17,7 @@ Bug Fixes:
 - Fix 'Debug Test' from 'Test explorer' results in 'launch: property 'program' is missing or empty' [#3280](https://github.com/microsoft/vscode-cmake-tools/issues/3280)
 - Fix "Go to source" in Testing activity + test panel without function [#3362](https://github.com/microsoft/vscode-cmake-tools/issues/3362)
 - Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
+- Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
 
 ## 1.17.17
 
