@@ -2045,7 +2045,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.clearOutputBeforeBuild.description%",
-          "scope": "window"
+          "scope": "resource"
         },
         "cmake.configureSettings": {
           "type": "object",
@@ -2198,7 +2198,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description%",
-          "scope": "application"
+          "scope": "machine-overridable"
         },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
@@ -2449,7 +2449,7 @@
             "test",
             "--output-on-failure"
           ],
-          "scope": "machine"
+          "scope": "machine-overridable"
         },
         "cmake.cpackArgs": {
           "type": "array",

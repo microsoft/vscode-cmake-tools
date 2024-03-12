@@ -19,6 +19,10 @@ Bug Fixes:
 - Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
 - Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
 
+Improvements:
+
+- Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
+
 ## 1.17.17
 
 Bug Fixes:
