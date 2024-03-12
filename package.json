@@ -401,11 +401,6 @@
         }
       },
       {
-        "command": "cmake.buildNamedTarget",
-        "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.buildNamedTarget.title%"
-      },
-      {
         "command": "cmake.compileFile",
         "title": "%cmake-tools.command.cmake.compileFile.title%",
         "category": "CMake",
