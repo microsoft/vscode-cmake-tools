@@ -25,8 +25,6 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
 - name: Codeql.Enabled
   value: true
-- name: Codeql.Cadence
-  value: 0
 - name: Codeql.Language
   value: javascript
 - name: TeamName
