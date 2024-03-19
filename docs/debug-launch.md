@@ -74,7 +74,7 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
                     "value": "Something something"
                 }
             ],
-            "console": "externalTerminal",
+            "externalConsole": true,
             "MIMode": "gdb",
             "setupCommands": [
                 {
@@ -113,7 +113,7 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
                     "value": "Something something"
                 }
             ],
-            "console": "externalTerminal",
+            "externalConsole": true,
             "MIMode": "lldb"
         }
     ]
@@ -145,7 +145,7 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
                     "value": "Something something"
                 }
             ],
-            "console": "externalTerminal"
+            "externalConsole": true
         }
     ]
 }
@@ -177,7 +177,7 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
                     "value": "Something something"
                 }
             ],
-            "console": "externalTerminal"
+            "externalConsole": true
         }
     ]
 }
