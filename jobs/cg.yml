@@ -25,6 +25,8 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
 - name: Codeql.Enabled
   value: true
+- name: Codeql.Cadence
+  value: 1
 - name: TeamName
   value: C++ Cross Platform and Cloud
 
