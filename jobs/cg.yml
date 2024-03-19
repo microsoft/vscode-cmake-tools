@@ -41,6 +41,7 @@ extends:
         image: AzurePipelinesWindows2022compliantGPT
         os: windows
       codeql:
+        runSourceLanguagesInSourceAnalysis: true
         sourceLanguages: javascript
     customBuildTags:
     - ES365AIMigrationTooling
