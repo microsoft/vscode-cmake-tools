@@ -27,6 +27,8 @@ variables:
   value: true
 - name: Codeql.Cadence
   value: 0
+- name: Codeql.Language
+  value: javascript
 - name: TeamName
   value: C++ Cross Platform and Cloud
 
@@ -42,11 +44,6 @@ extends:
         name: AzurePipelines-EO
         image: AzurePipelinesWindows2022compliantGPT
         os: windows
-      codeql:
-        compiled:
-          enabled: false
-        runSourceLanguagesInSourceAnalysis: true
-        sourceLanguages: javascript
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
