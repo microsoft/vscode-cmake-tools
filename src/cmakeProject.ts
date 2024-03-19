@@ -2768,11 +2768,14 @@ export class CMakeProject {
         }
 
         const mainListFile = path.join(this.sourceDir, 'CMakeLists.txt');
+        const mainPresetsFile = path.join(this.sourceDir, 'CMakePresets.json');
 
-        if (await fs.exists(mainListFile)) {
-            void vscode.window.showErrorMessage(localize('cmakelists.already.configured', 'A CMakeLists.txt is already configured!'));
+        if (await fs.exists(mainPresetsFile)) {
+            void vscode.window.showErrorMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured!'));
             return -1;
         }
+
+        const hasCMakeLists = await fs.exists(mainListFile);
 
         const projectName = await vscode.window.showInputBox({
             prompt: localize('new.project.name', 'Enter a name for the new project'),
@@ -2802,13 +2805,29 @@ export class CMakeProject {
             return -1;
         }
 
-        const targetType = (await vscode.window.showQuickPick([
-            {
-                label: 'Library',
-                description: localize('create.library', 'Create a library')
-            },
-            { label: 'Executable', description: localize('create.executable', 'Create an executable') }
-        ]));
+        // select current cpp files, if any. If none, or none are selected, create a new one by selecting the type of project
+        const files = await fs.readdir(this.sourceDir);
+        const cppFiles = files.filter(file => path.extname(file) === '.cpp');
+        let selectedFiles: string[] = [];
+        let targetType: vscode.QuickPickItem | undefined;
+
+        if (cppFiles.length > 0) {
+            selectedFiles = await vscode.window.showQuickPick(cppFiles, {
+                canPickMany: true,
+                placeHolder: localize('select.cpp.files', 'Select the C++ files to include in the project')
+            }) || [];
+        }
+        if (cppFiles.length === 0 || selectedFiles.length === 0) {
+            targetType = await vscode.window.showQuickPick([
+                {
+                    label: 'Library',
+                    description: localize('create.library', 'Create a library')
+                },
+                { label: 'Executable', description: localize('create.executable', 'Create an executable') }
+            ]);
+        } else {
+            targetType = { label: 'Executable', description: localize('create.executable', 'Create an executable') };
+        }
 
         if (!targetType) {
             return -1;
@@ -2818,6 +2837,17 @@ export class CMakeProject {
         const lang = targetLang.label;
         const langName = lang === "C++" ? "C CXX" : "C";
         const langExt  = lang === "C++" ? "cpp" : "c";
+
+        const addlOptions = (await vscode.window.showQuickPick([
+            {
+                label: 'CPack',
+                description: localize('cpack.support', 'CPack support')
+            },
+            {
+                label: 'CTest',
+                description: localize('ctest.support', 'CTest support')
+            }
+        ], { canPickMany: true }));
 
         const init = [
             'cmake_minimum_required(VERSION 3.0.0)',
@@ -2882,6 +2912,73 @@ export class CMakeProject {
         await fs.writeFile(mainListFile, init);
         const doc = await vscode.workspace.openTextDocument(mainListFile);
         await vscode.window.showTextDocument(doc);
+
+        const presetData = {
+            "version": 3,
+            "configurePresets": [
+                {
+                    "name": "windows-base",
+                    "hidden": true,
+                    "generator": "Ninja",
+                    "binaryDir": "${sourceDir}/out/build/${presetName}",
+                    "installDir": "${sourceDir}/out/install/${presetName}",
+                    "cacheVariables": {
+                        "CMAKE_C_COMPILER": "cl.exe",
+                        "CMAKE_CXX_COMPILER": "cl.exe"
+                    },
+                    "condition": {
+                        "type": "equals",
+                        "lhs": "${hostSystemName}",
+                        "rhs": "Windows"
+                    }
+                },
+                {
+                    "name": "x64-debug",
+                    "displayName": "x64 Debug",
+                    "inherits": "windows-base",
+                    "architecture": {
+                        "value": "x64",
+                        "strategy": "external"
+                    },
+                    "cacheVariables": {
+                        "CMAKE_BUILD_TYPE": "Debug"
+                    }
+                },
+                {
+                    "name": "x64-release",
+                    "displayName": "x64 Release",
+                    "inherits": "x64-debug",
+                    "cacheVariables": {
+                        "CMAKE_BUILD_TYPE": "Release"
+                    }
+                },
+                {
+                    "name": "x86-debug",
+                    "displayName": "x86 Debug",
+                    "inherits": "windows-base",
+                    "architecture": {
+                        "value": "x86",
+                        "strategy": "external"
+                    },
+                    "cacheVariables": {
+                        "CMAKE_BUILD_TYPE": "Debug"
+                    }
+                },
+                {
+                    "name": "x86-release",
+                    "displayName": "x86 Release",
+                    "inherits": "x86-debug",
+                    "cacheVariables": {
+                        "CMAKE_BUILD_TYPE": "Release"
+                    }
+                }
+            ]
+        };
+        const presetString = JSON.stringify(presetData, null, 2);
+
+        await fs.writeFile(mainPresetsFile, presetString);
+        const doc2 = await vscode.workspace.openTextDocument(mainPresetsFile);
+        await vscode.window.showTextDocument(doc2);
 
         // By now, quickStart is succesful in creating a valid CMakeLists.txt.
         // Regardless of the following configure return code,
