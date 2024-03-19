@@ -41,6 +41,8 @@ extends:
         image: AzurePipelinesWindows2022compliantGPT
         os: windows
       codeql:
+        compiled:
+          enabled: false
         runSourceLanguagesInSourceAnalysis: true
         sourceLanguages: javascript
     customBuildTags:
