@@ -25,6 +25,8 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
 - name: Codeql.Enabled
   value: true
+- name: Codeql.Language
+  value: javascript
 - name: TeamName
   value: C++ Cross Platform and Cloud
 
