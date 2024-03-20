@@ -2768,6 +2768,14 @@ export class CMakeProject {
         }
 
         const mainListFile = path.join(this.sourceDir, 'CMakeLists.txt');
+
+        if (!await fs.exists(mainListFile)) {
+            if (await this.createCMakeListsFile(mainListFile) !== 0) {
+                return -1;
+            }
+        }
+
+        // By now, we have a valid CMakeLists.txt so move onto CMakePresets
         const mainPresetsFile = path.join(this.sourceDir, 'CMakePresets.json');
 
         if (await fs.exists(mainPresetsFile)) {
@@ -2775,21 +2783,73 @@ export class CMakeProject {
             return -1;
         }
 
-        if (!await fs.exists(mainListFile)) {
+        // TODO: scan for compilers and use this to populate the CMakePresets.json
 
-            const projectName = await vscode.window.showInputBox({
-                prompt: localize('new.project.name', 'Enter a name for the new project'),
-                validateInput: (value: string): string => {
-                    if (!value.length) {
-                        return localize('project.name.required', 'A project name is required');
-                    }
-                    return '';
+        const presetData = {
+            "version": 3,
+            "configurePresets": []
+        };
+        const presetString = JSON.stringify(presetData, null, 2);
+
+        await fs.writeFile(mainPresetsFile, presetString);
+        const doc2 = await vscode.workspace.openTextDocument(mainPresetsFile);
+        await vscode.window.showTextDocument(doc2);
+
+        // Regardless of the following configure return code,
+        // we want full feature set view for the whole workspace.
+        await enableFullFeatureSet(true);
+        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).result;
+    }
+
+    private async createCMakeListsFile(mainListFile: string): Promise<Number> {
+        const projectName = await vscode.window.showInputBox({
+            prompt: localize('new.project.name', 'Enter a name for the new project'),
+            validateInput: (value: string): string => {
+                if (!value.length) {
+                    return localize('project.name.required', 'A project name is required');
                 }
-            });
-            if (!projectName) {
-                return -1;
+                return '';
             }
+        });
 
+        if (!projectName) {
+            return -1;
+        }
+
+        // select current c/cpp files, if any. If none, or none are selected, create a new one by selecting the type of project
+        const files = await fs.readdir(this.sourceDir);
+        const cppFiles = files.filter(file => path.extname(file) === '.cpp' || path.extname(file) === '.c');
+        let selectedFiles: string[] = [];
+
+        let type = '';
+        let lang = '';
+        let langName = '';
+        let langExt = '';
+
+        if (cppFiles.length > 0) {
+            selectedFiles = await vscode.window.showQuickPick(cppFiles, {
+                canPickMany: true,
+                placeHolder: localize('select.cpp.files', 'Select targets to include in the CMakeLists.txt file')
+            }) || [];
+        }
+
+        const targetType = await vscode.window.showQuickPick([
+            {
+                label: 'Library',
+                description: localize('create.library', 'Create a library')
+            },
+            {
+                label: 'Executable',
+                description: localize('create.executable', 'Create an executable')
+            }
+        ]);
+
+        if (!targetType) {
+            return -1;
+        }
+
+        // Create start c/cpp files if none are selected
+        if (selectedFiles.length === 0) {
             const targetLang = (await vscode.window.showQuickPick([
                 {
                     label: 'C++',
@@ -2805,87 +2865,10 @@ export class CMakeProject {
                 return -1;
             }
 
-            // select current c/cpp files, if any. If none, or none are selected, create a new one by selecting the type of project
-            const files = await fs.readdir(this.sourceDir);
-            const cppFiles = files.filter(file => path.extname(file) === '.cpp' || path.extname(file) === '.c');
-            let selectedFiles: string[] = [];
-            let targetType: vscode.QuickPickItem | undefined;
-
-            if (cppFiles.length > 0) {
-                selectedFiles = await vscode.window.showQuickPick(cppFiles, {
-                    canPickMany: true,
-                    placeHolder: localize('select.cpp.files', 'Select targets to include in the CMakeLists.txt file')
-                }) || [];
-            }
-            if (cppFiles.length === 0 || selectedFiles.length === 0) {
-                targetType = await vscode.window.showQuickPick([
-                    {
-                        label: 'Library',
-                        description: localize('create.library', 'Create a library')
-                    },
-                    {
-                        label: 'Executable',
-                        description: localize('create.executable', 'Create an executable')
-                    }
-                ]);
-            } else {
-                // TODO: Is this assumption correct?
-                targetType = {
-                    label: 'Executable',
-                    description: localize('create.executable', 'Create an executable')
-                };
-            }
-
-            if (!targetType) {
-                return -1;
-            }
-
-            const type = targetType.label;
-            const lang = targetLang.label;
-            const langName = lang === "C++" ? "C CXX" : "C";
-            const langExt  = lang === "C++" ? "cpp" : "c";
-
-            const addlOptions = (await vscode.window.showQuickPick([
-                {
-                    label: 'CPack',
-                    description: localize('cpack.support', 'CPack support')
-                },
-                {
-                    label: 'CTest',
-                    description: localize('ctest.support', 'CTest support')
-                }
-            ], { canPickMany: true }));
-
-            let init = [
-                'cmake_minimum_required(VERSION 3.0.0)',
-                `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
-                '\n'
-            ].join('\n');
-
-            if (addlOptions?.some(option => option.label === 'CTest')) {
-                init += [
-                    'include(CTest)',
-                    'enable_testing()',
-                    '\n'
-                ].join('\n');
-            }
-
-            init += [
-                type === 'Library' ? `add_library(${projectName} ${projectName}.${langExt})`
-                    : `add_executable(${projectName} `
-                    + (selectedFiles.length === 0 ? `main.${langExt}` : selectedFiles.join(' '))
-                    +  `)`,
-                '\n'
-            ].join('\n');
-
-            if (addlOptions?.some(option => option.label === 'CPack')) {
-                init += [
-                    'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
-                    'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
-                    'include(CPack)',
-                    '\n'
-                ].join('\n');
-            }
+            type = targetType.label;
+            lang = targetLang.label;
+            langName = lang === "C++" ? "C CXX" : "C";
+            langExt  = lang === "C++" ? "cpp" : "c";
 
             if (type === 'Library') {
                 if (!(await fs.exists(path.join(this.sourceDir, `${projectName}.${langExt}`)))) {
@@ -2908,7 +2891,7 @@ export class CMakeProject {
                                 ''
                             ])).join('\n'));
                 }
-            } else if (selectedFiles.length === 0) {
+            } else if (type === 'Executable') {
                 if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
                     await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
                         (lang === "C++" ?
@@ -2931,85 +2914,55 @@ export class CMakeProject {
                         ).join('\n'));
                 }
             }
-            await fs.writeFile(mainListFile, init);
-            const doc = await vscode.workspace.openTextDocument(mainListFile);
-            await vscode.window.showTextDocument(doc);
         }
 
-        // By now, quickStart is succesful in creating a valid CMakeLists.txt.
-        // Move onto CMakePresets
+        const addlOptions = (await vscode.window.showQuickPick([
+            {
+                label: 'CPack',
+                description: localize('cpack.support', 'CPack support')
+            },
+            {
+                label: 'CTest',
+                description: localize('ctest.support', 'CTest support')
+            }
+        ], { canPickMany: true }));
 
-        const presetData = {
-            "version": 3,
-            "configurePresets": [
-                {
-                    "name": "windows-base",
-                    "hidden": true,
-                    "generator": "Ninja",
-                    "binaryDir": "${sourceDir}/out/build/${presetName}",
-                    "installDir": "${sourceDir}/out/install/${presetName}",
-                    "cacheVariables": {
-                        "CMAKE_C_COMPILER": "cl.exe",
-                        "CMAKE_CXX_COMPILER": "cl.exe"
-                    },
-                    "condition": {
-                        "type": "equals",
-                        "lhs": "${hostSystemName}",
-                        "rhs": "Windows"
-                    }
-                },
-                {
-                    "name": "x64-debug",
-                    "displayName": "x64 Debug",
-                    "inherits": "windows-base",
-                    "architecture": {
-                        "value": "x64",
-                        "strategy": "external"
-                    },
-                    "cacheVariables": {
-                        "CMAKE_BUILD_TYPE": "Debug"
-                    }
-                },
-                {
-                    "name": "x64-release",
-                    "displayName": "x64 Release",
-                    "inherits": "x64-debug",
-                    "cacheVariables": {
-                        "CMAKE_BUILD_TYPE": "Release"
-                    }
-                },
-                {
-                    "name": "x86-debug",
-                    "displayName": "x86 Debug",
-                    "inherits": "windows-base",
-                    "architecture": {
-                        "value": "x86",
-                        "strategy": "external"
-                    },
-                    "cacheVariables": {
-                        "CMAKE_BUILD_TYPE": "Debug"
-                    }
-                },
-                {
-                    "name": "x86-release",
-                    "displayName": "x86 Release",
-                    "inherits": "x86-debug",
-                    "cacheVariables": {
-                        "CMAKE_BUILD_TYPE": "Release"
-                    }
-                }
-            ]
-        };
-        const presetString = JSON.stringify(presetData, null, 2);
+        let init = [
+            'cmake_minimum_required(VERSION 3.0.0)',
+            `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
+            '\n'
+        ].join('\n');
 
-        await fs.writeFile(mainPresetsFile, presetString);
-        const doc2 = await vscode.workspace.openTextDocument(mainPresetsFile);
-        await vscode.window.showTextDocument(doc2);
+        if (addlOptions?.some(option => option.label === 'CTest')) {
+            init += [
+                'include(CTest)',
+                'enable_testing()',
+                '\n'
+            ].join('\n');
+        }
 
-        // Regardless of the following configure return code,
-        // we want full feature set view for the whole workspace.
-        await enableFullFeatureSet(true);
-        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).result;
+        init += [
+            type === 'Library' ? `add_library(${projectName} ${projectName}.${langExt})`
+                : `add_executable(${projectName} `
+                + (selectedFiles.length === 0 ? `main.${langExt}` : selectedFiles.join(' '))
+                +  `)`,
+            '\n'
+        ].join('\n');
+
+        if (addlOptions?.some(option => option.label === 'CPack')) {
+            init += [
+                'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
+                'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
+                'include(CPack)',
+                '\n'
+            ].join('\n');
+        }
+
+        await fs.writeFile(mainListFile, init);
+        const doc = await vscode.workspace.openTextDocument(mainListFile);
+        await vscode.window.showTextDocument(doc);
+
+        return 0;
     }
 
     /**
