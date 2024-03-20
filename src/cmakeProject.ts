@@ -2768,6 +2768,7 @@ export class CMakeProject {
         }
 
         const mainListFile = path.join(this.sourceDir, 'CMakeLists.txt');
+        const mainPresetsFile = path.join(this.sourceDir, 'CMakePresets.json');
 
         if (!await fs.exists(mainListFile)) {
             if (await this.createCMakeListsFile(mainListFile) !== 0) {
@@ -2775,25 +2776,14 @@ export class CMakeProject {
             }
         }
 
-        // By now, we have a valid CMakeLists.txt so move onto CMakePresets
-        const mainPresetsFile = path.join(this.sourceDir, 'CMakePresets.json');
-
+        // By now, we have a valid CMakeLists.txt so move onto CMakePresets.json
         if (await fs.exists(mainPresetsFile)) {
             void vscode.window.showErrorMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured!'));
-            return -1;
+        } else {
+            if (!await this.presetsController.selectConfigurePreset()) {
+                // if we are on linux or mac we can add a default configure preset
+            }
         }
-
-        // TODO: scan for compilers and use this to populate the CMakePresets.json
-
-        const presetData = {
-            "version": 3,
-            "configurePresets": []
-        };
-        const presetString = JSON.stringify(presetData, null, 2);
-
-        await fs.writeFile(mainPresetsFile, presetString);
-        const doc2 = await vscode.workspace.openTextDocument(mainPresetsFile);
-        await vscode.window.showTextDocument(doc2);
 
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
@@ -2816,21 +2806,19 @@ export class CMakeProject {
             return -1;
         }
 
-        // select current c/cpp files, if any. If none, or none are selected, create a new one by selecting the type of project
-        const files = await fs.readdir(this.sourceDir);
-        const cppFiles = files.filter(file => path.extname(file) === '.cpp' || path.extname(file) === '.c');
-        let selectedFiles: string[] = [];
+        const targetLang = (await vscode.window.showQuickPick([
+            {
+                label: 'C++',
+                description: localize('create.cpp', 'Create a C++ project')
+            },
+            {
+                label: 'C',
+                description: localize('create.c', 'Create a C project')
+            }
+        ]));
 
-        let type = '';
-        let lang = '';
-        let langName = '';
-        let langExt = '';
-
-        if (cppFiles.length > 0) {
-            selectedFiles = await vscode.window.showQuickPick(cppFiles, {
-                canPickMany: true,
-                placeHolder: localize('select.cpp.files', 'Select targets to include in the CMakeLists.txt file')
-            }) || [];
+        if (!targetLang) {
+            return -1;
         }
 
         const targetType = await vscode.window.showQuickPick([
@@ -2848,28 +2836,25 @@ export class CMakeProject {
             return -1;
         }
 
-        // Create start c/cpp files if none are selected
+        // select current c/cpp files to add as targets, if any. If none, or none are selected, create a new one
+        const files = await fs.readdir(this.sourceDir);
+        const cppFiles = files.filter(file => path.extname(file) === '.cpp' || path.extname(file) === '.c');
+        let selectedFiles: string[] = [];
+
+        if (cppFiles.length > 0) {
+            selectedFiles = await vscode.window.showQuickPick(cppFiles, {
+                canPickMany: true,
+                placeHolder: localize('select.cpp.files', 'Select targets to include in the CMakeLists.txt file')
+            }) || [];
+        }
+
+        const type = targetType.label;
+        const lang = targetLang.label;
+        const langName = lang === "C++" ? "C CXX" : "C";
+        const langExt  = lang === "C++" ? "cpp" : "c";
+
+        // Create start c/cpp file if none are selected
         if (selectedFiles.length === 0) {
-            const targetLang = (await vscode.window.showQuickPick([
-                {
-                    label: 'C++',
-                    description: localize('create.cpp', 'Create a C++ project')
-                },
-                {
-                    label: 'C',
-                    description: localize('create.c', 'Create a C project')
-                }
-            ]));
-
-            if (!targetLang) {
-                return -1;
-            }
-
-            type = targetType.label;
-            lang = targetLang.label;
-            langName = lang === "C++" ? "C CXX" : "C";
-            langExt  = lang === "C++" ? "cpp" : "c";
-
             if (type === 'Library') {
                 if (!(await fs.exists(path.join(this.sourceDir, `${projectName}.${langExt}`)))) {
                     await fs.writeFile(path.join(this.sourceDir, `${projectName}.${langExt}`),
@@ -2954,7 +2939,7 @@ export class CMakeProject {
                 'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
                 'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
                 'include(CPack)',
-                '\n'
+                ''
             ].join('\n');
         }
 
