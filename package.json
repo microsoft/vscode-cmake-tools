@@ -819,6 +819,12 @@
         "title": "%cmake-tools.command.cmake.pinnedCommands.run.title%",
         "category": "CMake",
         "icon": "$(play-circle)"      
+      },
+      {
+        "command": "cmake.appendBuildDirectoryToWorkspace",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
+        "category": "CMake"
       }
     ],
     "taskDefinitions": [

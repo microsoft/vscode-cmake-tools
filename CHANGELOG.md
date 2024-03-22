@@ -10,6 +10,10 @@ Improvements:
 - Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 
+Features:
+
+- Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)
+
 Bug Fixes:
 
 - Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
