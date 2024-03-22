@@ -780,11 +780,12 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         return null;
     }
 
+    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
+
     // Expand strings under the context of current preset
     const expandedPreset: ConfigurePreset = { name };
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
 
-    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
         expandedPreset.environment = EnvironmentUtils.createPreserveNull();

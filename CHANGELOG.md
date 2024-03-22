@@ -19,6 +19,7 @@ Bug Fixes:
 - Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
 - Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
 - Fix issue where our searching for cl and ninja was repeatedly unnecessarily, impacting performance. [#3633](https://github.com/microsoft/vscode-cmake-tools/issues/3633)
+- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657) 
 
 Improvements:
 
