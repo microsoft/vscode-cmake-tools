@@ -51,6 +51,7 @@ import paths from './paths';
 import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
+import { VSCodeDebugConfiguration } from './debugger';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2514,7 +2515,7 @@ export class CMakeProject {
         }
 
         if (name) {
-            const found = (await this.executableTargets).find(e => e.name === name);
+            const found = (await this.executableTargets).find(e => path.parse(e.path).name === name);
             if (!found) {
                 return null;
             }
@@ -2573,10 +2574,17 @@ export class CMakeProject {
         return EnvironmentUtils.merge([env, configureEnv]);
     }
 
-    /**
-     * Implementation of `cmake.debugTarget`
-     */
-    async debugTarget(name?: string): Promise<vscode.DebugSession | null> {
+    async getDebugConfiguration(name?: string): Promise<VSCodeDebugConfiguration | null> {
+        const targetExecutable = await this.prepareLaunchTargetExecutable(name);
+        if (!targetExecutable) {
+            log.error(localize('failed.to.prepare.target', 'Failed to prepare executable target with name {0}', `"${name}"`));
+            return null;
+        }
+
+        if (!targetExecutable) {
+            return null;
+        }
+
         const drv = await this.getCMakeDriverInstance();
         if (!drv) {
             void vscode.window.showErrorMessage(localize('set.up.and.build.project.before.debugging', 'Set up and build your CMake project before debugging.'));
@@ -2593,12 +2601,6 @@ export class CMakeProject {
                         open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
                     }
                 });
-            return null;
-        }
-
-        const targetExecutable = await this.prepareLaunchTargetExecutable(name);
-        if (!targetExecutable) {
-            log.error(localize('failed.to.prepare.target', 'Failed to prepare executable target with name {0}', `"${name}"`));
             return null;
         }
 
@@ -2640,10 +2642,25 @@ export class CMakeProject {
             config: debugConfig
         }));
 
+        return debugConfig;
+    }
+
+    /**
+     * Implementation of `cmake.debugTarget`
+     */
+    async debugTarget(name?: string): Promise<vscode.DebugSession | null> {
+
+        const debugConfig = await this.getDebugConfiguration(name);
+
+        if (debugConfig === null) {
+            return null;
+        }
+
         const cfg = vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).inspect<object>('debugConfig');
         const customSetting = (cfg?.globalValue !== undefined || cfg?.workspaceValue !== undefined || cfg?.workspaceFolderValue !== undefined);
-        let dbg = debugConfig.MIMode?.toString();
-        if (!dbg && debugConfig.type === "cppvsdbg") {
+
+        let dbg = debugConfig?.MIMode?.toString();
+        if (!dbg && debugConfig?.type === "cppvsdbg") {
             dbg = "vsdbg";
         } else {
             dbg = "(unset)";
