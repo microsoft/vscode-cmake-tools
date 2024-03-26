@@ -313,7 +313,7 @@ async function asMingwKit(bin: string, kit: Kit): Promise<Kit> {
         ['/clangarm64', 'CLANGARM64'],
         ['/clang32', 'CLANG32'],
         ['/mingw64', 'MINGW64'],
-        ['/mingw32', 'MINGW32'],
+        ['/mingw32', 'MINGW32']
     ]);
 
     const binParentPath = path.dirname(bin);
@@ -336,16 +336,16 @@ async function asMingwKit(bin: string, kit: Kit): Promise<Kit> {
         const msysBasePath = path.dirname(prefixPath);
         const msysBinPath = path.join(msysBasePath, 'usr', 'bin');
         kit.environmentVariables = {
-            MT_MINGW_PATH: `${binParentPath}`,
+            CMT_MINGW_PATH: `${binParentPath}`,
             MSYSTEM: `${msysEnvironment}`,
             MSYSTEM_PREFIX: `${msysPrefix}`,
-            PATH: `${binParentPath}` + ';' + `${msysBinPath}` + ';${env:PATH}',
+            PATH: `${binParentPath}` + ';' + `${msysBinPath}` + ';${env:PATH}'
         };
     }
 
     if (mingwMakeExists) {
         // Check for working mingw32-make
-        const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: `${binParentPath}` }, timeout: 30000 }).result;
+        const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: kit.environmentVariables['CMT_MINGW_PATH'] }, timeout: 30000 }).result;
         if (execMake.retc !== 0) {
             log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ({0} returns non-zero): {1}', "\"-v\"", bin));
         } else {
