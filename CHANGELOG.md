@@ -4,6 +4,7 @@
 Features:
 
 - Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
+- Update `api.ts` to add the `onSelectedKitChanged` event. [#3671](https://github.com/microsoft/vscode-cmake-tools/pull/3671) [@OrkunTokdemir](https://github.com/OrkunTokdemir)
 
 Improvements:
 

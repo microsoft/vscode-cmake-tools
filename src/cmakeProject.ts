@@ -718,6 +718,14 @@ export class CMakeProject {
     }
     private readonly _codeModelChangedApiEventEmitter = new vscode.EventEmitter<void>();
 
+    public notifyOnSelectedKitChanged() {
+        this._onSelectedKitChangedApiEvent.fire();
+    }
+    get onSelectedKitChangedApiEvent() {
+        return this._onSelectedKitChangedApiEvent.event;
+    }
+    private readonly _onSelectedKitChangedApiEvent = new vscode.EventEmitter<void>();
+
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
         log.info(localize('communication.changed.restart.driver', "Restarting the CMake driver after a communication mode change."));
         return this.shutDownCMakeDriver();
