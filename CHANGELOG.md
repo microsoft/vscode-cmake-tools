@@ -7,6 +7,7 @@ Features:
 
 Improvements:
 
+- Properly set up environment for MSYS toolchains. [#2447](https://github.com/microsoft/vscode-cmake-tools/issues/2447) [@Steelskin](https://github.com/Steelskin)
 - Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 
