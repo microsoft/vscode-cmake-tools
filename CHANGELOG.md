@@ -1,14 +1,30 @@
 # What's New?
 
 ## 1.18
+Features:
+
+- Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
+
+Improvements:
+
+- Properly set up environment for MSYS toolchains. [#2447](https://github.com/microsoft/vscode-cmake-tools/issues/2447) [@Steelskin](https://github.com/Steelskin)
+- Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
+- Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 
 Bug Fixes:
 
 - Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
+- Remove incorrect validation which was breaking references from CMakeUserPresets to CMakePresets [#3636](https://github.com/microsoft/vscode-cmake-tools/issues/3636)
+- Fix 'Debug Test' from 'Test explorer' results in 'launch: property 'program' is missing or empty' [#3280](https://github.com/microsoft/vscode-cmake-tools/issues/3280)
+- Fix "Go to source" in Testing activity + test panel without function [#3362](https://github.com/microsoft/vscode-cmake-tools/issues/3362)
+- Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
+- Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
+- Fix issue where our searching for cl and ninja was repeatedly unnecessarily, impacting performance. [#3633](https://github.com/microsoft/vscode-cmake-tools/issues/3633)
+- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657) 
 
 Improvements:
 
-- Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
+- Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
 
 ## 1.17.17
 

@@ -401,11 +401,6 @@
         }
       },
       {
-        "command": "cmake.buildNamedTarget",
-        "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.buildNamedTarget.title%"
-      },
-      {
         "command": "cmake.compileFile",
         "title": "%cmake-tools.command.cmake.compileFile.title%",
         "category": "CMake",
@@ -2050,7 +2045,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.clearOutputBeforeBuild.description%",
-          "scope": "window"
+          "scope": "resource"
         },
         "cmake.configureSettings": {
           "type": "object",
@@ -2203,7 +2198,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description%",
-          "scope": "application"
+          "scope": "machine-overridable"
         },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
@@ -2454,7 +2449,7 @@
             "test",
             "--output-on-failure"
           ],
-          "scope": "machine"
+          "scope": "machine-overridable"
         },
         "cmake.cpackArgs": {
           "type": "array",
@@ -3540,6 +3535,12 @@
           "description": "%cmake-tools.configuration.cmake.pinnedCommands.description%",
           "default": [],
           "scope": "resource"
+        },
+        "cmake.enableAutomaticKitScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
+          "scope": "resource"
         }
       }
     },
@@ -3622,11 +3623,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-v6-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v8-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-v6-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v8-schema.json"
       }
     ]
   },
