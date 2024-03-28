@@ -7,6 +7,7 @@ Features:
 
 Improvements:
 
+- Properly set up environment for MSYS toolchains. [#2447](https://github.com/microsoft/vscode-cmake-tools/issues/2447) [@Steelskin](https://github.com/Steelskin)
 - Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 
@@ -19,6 +20,7 @@ Bug Fixes:
 - Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
 - Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
 - Fix issue where our searching for cl and ninja was repeatedly unnecessarily, impacting performance. [#3633](https://github.com/microsoft/vscode-cmake-tools/issues/3633)
+- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657) 
 
 Improvements:
 

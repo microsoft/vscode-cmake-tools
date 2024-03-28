@@ -308,10 +308,6 @@ export class ExtensionManager implements vscode.Disposable {
         this.extensionActiveCommandsInfo  = { contextUsed: this.contextValues ? {...this.contextValues} : {}, extensionActiveCommands: this.contextValues ? util.thisExtensionActiveCommands(this.contextValues) : [] } as ExtensionActiveCommandsInfo;
     }
 
-    public getFolderContext(folder: vscode.WorkspaceFolder): StateManager {
-        return new StateManager(this.extensionContext, folder);
-    }
-
     public showStatusBar(fullFeatureSet: boolean) {
         this.statusBar.setVisible(fullFeatureSet);
     }
