@@ -279,6 +279,7 @@ export class KitsController {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
                 const kitChanged = chosen_kit.kit !== this.project.activeKit;
                 if (kitChanged) {
+                    this.project.notifyOnSelectedKitChanged();
                     await this.setFolderActiveKit(chosen_kit.kit);
                 }
 
