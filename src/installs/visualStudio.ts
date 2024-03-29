@@ -168,6 +168,9 @@ export function getHostTargetArchString(hostArch: string, targetArch?: string, a
 
     if (!targetArch) {
         targetArch = hostArch;
+    } else {
+        const parsedTargetArch = targetArch.split(",")[0];
+        targetArch = parsedTargetArch.includes("=") ? hostArch : parsedTargetArch;
     }
 
     // CMake preferred generator platform requires 'win32', while vcvars are still using 'x86'.
