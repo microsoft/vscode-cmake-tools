@@ -76,12 +76,22 @@ extends:
               )
               exit /b 0
         - task: CmdLine@2
+          displayName: Check VerifyNotice
+          inputs:
+            script: |
+              @echo off
+              if "$(VerifyNotice)"=="no" (
+                  echo ^"VerifyNotice^" was not set. Set to 'yes' once the NOTICE.txt is confirmed to be up-to-date.
+                  exit /B 1
+              )
+              exit /b 0
+        - task: CmdLine@2
           displayName: Check VerifyChangelog
           inputs:
             script: |
               @echo off
               if "$(VerifyChangelog)"=="no" (
-                  echo ^"VerifyChangelog^" was not set. Set to 'yes' to verify the changelog is up-to-date.
+                  echo ^"VerifyChangelog^" was not set. Set to 'yes' once the CHANGELOG is confirmed to be up-to-date.
                   exit /B 1
               )
               exit /b 0
