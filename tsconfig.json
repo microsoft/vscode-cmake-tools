@@ -12,7 +12,10 @@
             "@test/*": ["test/*"]
         },
         "sourceMap": true,
-        "rootDir": ".",
+        "rootDirs": [
+            "src",
+            "test"
+        ],
         "strict": true,
         "experimentalDecorators": true,
         "noUnusedParameters": true,
