@@ -1829,8 +1829,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Appends the build directory of the active project to the current workspace
      */
-    async appendBuildDirectoryToWorkspace()
-    {
+    async appendBuildDirectoryToWorkspace() {
         await this.getActiveProject()?.appendBuildDirectoryToWorkspace();
     }
 

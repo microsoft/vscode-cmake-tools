@@ -2489,7 +2489,7 @@ export class CMakeProject {
     }
 
     /**
-     * Implementation of `cmake.appendBuildDirectoryToWorkspace` 
+     * Implementation of `cmake.appendBuildDirectoryToWorkspace`
      */
     async appendBuildDirectoryToWorkspace() {
         const binaryDir = await this.buildDirectory();
