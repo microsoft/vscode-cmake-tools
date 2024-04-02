@@ -37,7 +37,7 @@ const config = {
     module: {
         rules: [{
             test: /\.ts$/,
-            exclude: /node_modules|tools/,
+            exclude: /node_modules/,
             use: [{
                 // configure TypeScript loader:
                 // * enable sources maps for end-to-end source maps
