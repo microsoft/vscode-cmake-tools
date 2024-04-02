@@ -5,6 +5,8 @@ import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath } from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
+import { populateViewCodeModel } from './targetsViewCodeModel';
+import { fs } from '@cmt/pr';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -393,59 +395,65 @@ export class TargetNode extends BaseNode {
 }
 
 export class ProjectNode extends BaseNode {
-    constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDirectory: string) {
+    constructor(
+        readonly name: string,
+        readonly folder: vscode.WorkspaceFolder,
+        readonly sourceDirectory: string
+    ) {
         // id: project_name:project_directory
         super(`${name}:${sourceDirectory}`);
     }
 
-    private readonly _rootDir = new DirectoryNode<TargetNode>(this.id, '', '');
+    private readonly _rootDir = new Map<string, TargetNode>();
 
     getOrderTuple() {
         return [this.sourceDirectory, this.name];
     }
 
     getChildren() {
-        return this._rootDir.getChildren();
+        const children: BaseNode[] = [];
+        const targets = [...this._rootDir.values()].sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
+        children.push(...targets);
+        const cmakelists = new SourceFileNode(this.id, this.folder, this.sourceDirectory, path.join(this.sourceDirectory, "CMakeLists.txt"));
+        children.push(cmakelists);
+        const possiblePreset = path.join(this.sourceDirectory, "CMakePresets.json");
+        if (fs.existsSync(possiblePreset)) {
+            children.push(new SourceFileNode(this.id, this.folder, this.sourceDirectory, possiblePreset));
+        }
+        return children;
     }
 
     getTreeItem() {
-        const item = new vscode.TreeItem(this.name, vscode.TreeItemCollapsibleState.Expanded);
+        const item = new vscode.TreeItem(
+            this.name,
+            vscode.TreeItemCollapsibleState.Expanded
+        );
         if (this.getChildren().length === 0) {
-            item.label += ` — (${localize('empty.project', 'Empty project')})`;
+            item.label += ` — (${localize("empty.project", "Empty project")})`;
         }
         item.tooltip = `${this.name}\n${this.sourceDirectory}`;
-        item.contextValue = 'nodeType=project';
+        item.contextValue = "nodeType=project";
         return item;
     }
 
     update(pr: codeModel.CodeModelProject, ctx: TreeUpdateContext) {
-        if (pr.name !== this.name) {
-            rollbar.error(localize('update.project.with.mismatch', 'Update project with mismatching name property'), { newName: pr.name, oldName: this.name });
-        }
+        // TODO: Update. We need to
 
-        const tree: PathedTree<codeModel.CodeModelTarget> = {
-            pathPart: '',
-            children: [],
-            items: []
-        };
+        if (pr.name !== this.name) {
+            rollbar.error(
+                localize(
+                    "update.project.with.mismatch",
+                    "Update project with mismatching name property"
+                ),
+                { newName: pr.name, oldName: this.name }
+            );
+        }
 
         for (const target of pr.targets) {
-            const srcdir = target.sourceDirectory || '';
-            const relpath = path.relative(pr.sourceDirectory, srcdir);
-            addToTree(tree, relpath, target);
+            const node = new TargetNode(this.id, this.name, target, this.folder);
+            this._rootDir.set(target.name, node);
+            node.update(target, ctx);
         }
-        collapseTreeInplace(tree);
-
-        this._rootDir.update({
-            tree,
-            context: ctx,
-            update: (tgt, cm) => tgt.update(cm, ctx),
-            create: cm => {
-                const node = new TargetNode(this.id, this.name, cm, this.folder);
-                node.update(cm, ctx);
-                return node;
-            }
-        });
 
         // const target_tree = mapTreeItems(tree, target => TargetNode.fromCodeModel(pr.name, target));
         // this._rootDir = DirectoryNode.fromSimpleTree(pr.name, pr.sourceDirectory, target_tree);
@@ -501,20 +509,29 @@ export class WorkspaceFolderNode extends BaseNode {
     }
 
     updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
+        // TODO: We will need updates here. This can be used in multi-root scenarios. However, underneath this needs to be updated to respect the new
+        // flat targets list.
+
         if (!model || model.configurations.length < 1) {
             this.removeNodes(cmakeProject);
             ctx.nodesToUpdate.push(this);
             return;
         }
 
-        for (const modelProj of model.configurations[0].projects) {
-            let item = this.getNode(cmakeProject, modelProj.name);
-            if (!item) {
-                item = new ProjectNode(modelProj.name, this.wsFolder, cmakeProject.folderPath);
-                this.setNode(cmakeProject, modelProj.name, item);
-            }
-            item.update(modelProj, ctx);
+        if (model.configurations[0].projects.length === 0) {
+            this.removeNodes(cmakeProject);
+            ctx.nodesToUpdate.push(this);
+            return;
         }
+
+        const projectOutlineModel = populateViewCodeModel(model);
+        const rootProject = projectOutlineModel.project;
+        let item = this.getNode(cmakeProject, rootProject.name);
+        if (!item) {
+            item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
+            this.setNode(cmakeProject, rootProject.name, item);
+        }
+        item.update(rootProject, ctx);
     }
 
     getChildren() {
@@ -552,6 +569,13 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
     }
 
     updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null) {
+        // TODO: I think this is where we can insert a new type, which is the flat list of targets view.
+        // We want to parse the code model and get all targets from all projects.
+
+        // TODO: This will require updates to all of the nodes in the project outline.
+
+        // TODO: Figure out how to get all of the root projects for the folder.
+
         const folder = cmakeProject.workspaceContext.folder;
         let existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {

@@ -31,7 +31,7 @@ import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline';
+import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline/projectOutline';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/variant';
