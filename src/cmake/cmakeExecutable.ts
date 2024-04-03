@@ -36,7 +36,8 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         }
 
         try {
-            const execVersion = await proc.execute(path, ['--version']).result;
+            const execOpt: proc.ExecutionOptions = { showOutputOnError: true };
+            const execVersion = await proc.execute(path, ['--version'], null, execOpt).result;
             if (execVersion.retc === 0 && execVersion.stdout) {
                 console.assert(execVersion.stdout);
                 const regexVersion = /cmake.* version (.*?)\r?\n/;
@@ -50,7 +51,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
                 cmake.isFileApiModeSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalFileApiModeVersion);
                 cmake.isPresent = true;
             }
-            const debuggerPresent = await proc.execute(path, ['-E', 'capabilities']).result;
+            const debuggerPresent = await proc.execute(path, ['-E', 'capabilities'], null, execOpt).result;
             if (debuggerPresent.retc === 0 && debuggerPresent.stdout) {
                 console.assert(debuggerPresent.stdout);
                 const stdoutJson = JSON.parse(debuggerPresent.stdout);
