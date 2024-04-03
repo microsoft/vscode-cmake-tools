@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "./src",
-    "strict": true,
-    "forceConsistentCasingInFileNames": true
-  }
-}
