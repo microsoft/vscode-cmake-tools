@@ -173,7 +173,7 @@ export function getHostTargetArchString(hostArch: string, targetArch?: string, a
     }
 
     const parsedTargetArch = targetArch.split(",");
-    const version = parsedTargetArch.filter(a => a.includes("=")).map(a => a.split("=")[1]).join(" ").trimEnd();
+    const version = parsedTargetArch.filter(a => a.includes("version=")).map(a => a.split("=")[1]).join(" ").trimEnd();
     // The platform can only be first in the list: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_PLATFORM.html#variable:CMAKE_GENERATOR_PLATFORM
     // If the first entry in the list includes an "=", it is the version, so we need to use the host arch.
     targetArch = parsedTargetArch[0].includes("=") ? hostArch : parsedTargetArch[0];
