@@ -25,6 +25,10 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      # Delete NOTICE.txt because it's too big for yarn to handle.
+      - name: Delete NOTICE.txt
+        run: del ${{ github.workspace }}/NOTICE.txt 
+
       - name: Build the extension
         run: yarn compile-production
 
@@ -41,9 +45,6 @@ jobs:
           source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
           configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
           install-build: true
-
-      - name: Delete NOTICE.txt
-        run: del ${{ github.workspace }}/NOTICE.txt
 
       - name: Run backend tests
         run: yarn backendTests
