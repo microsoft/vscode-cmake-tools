@@ -404,7 +404,7 @@ export class ProjectNode extends BaseNode {
         super(`${name}:${sourceDirectory}`);
     }
 
-    private readonly _rootDir = new Map<string, TargetNode>();
+    private readonly _rootDir = new DirectoryNode<TargetNode>(this.id, '', '');
 
     getOrderTuple() {
         return [this.sourceDirectory, this.name];
@@ -412,11 +412,13 @@ export class ProjectNode extends BaseNode {
 
     getChildren() {
         const children: BaseNode[] = [];
-        const targets = [...this._rootDir.values()].sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
+        const targets = this._rootDir.getChildren();
+        const cmakelists = new SourceFileNode(this.id, this.folder, this.sourceDirectory, path.join(this.sourceDirectory, 'CMakeLists.txt'));
+
         children.push(...targets);
-        const cmakelists = new SourceFileNode(this.id, this.folder, this.sourceDirectory, path.join(this.sourceDirectory, "CMakeLists.txt"));
         children.push(cmakelists);
-        const possiblePreset = path.join(this.sourceDirectory, "CMakePresets.json");
+
+        const possiblePreset = path.join(this.sourceDirectory, 'CMakePresets.json');
         if (fs.existsSync(possiblePreset)) {
             children.push(new SourceFileNode(this.id, this.folder, this.sourceDirectory, possiblePreset));
         }
@@ -449,11 +451,22 @@ export class ProjectNode extends BaseNode {
             );
         }
 
-        for (const target of pr.targets) {
-            const node = new TargetNode(this.id, this.name, target, this.folder);
-            this._rootDir.set(target.name, node);
-            node.update(target, ctx);
-        }
+        const tree: PathedTree<codeModel.CodeModelTarget> = {
+            pathPart: '',
+            items: pr.targets,
+            children: []
+        };
+
+        this._rootDir.update({
+            tree,
+            context: ctx,
+            update: (tgt, cm) => tgt.update(cm, ctx),
+            create: newTgt => {
+                const node = new TargetNode(this.id, this.name, newTgt, this.folder);
+                node.update(newTgt, ctx);
+                return node;
+            }
+        });
 
         // const target_tree = mapTreeItems(tree, target => TargetNode.fromCodeModel(pr.name, target));
         // this._rootDir = DirectoryNode.fromSimpleTree(pr.name, pr.sourceDirectory, target_tree);
