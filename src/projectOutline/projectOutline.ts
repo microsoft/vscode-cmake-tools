@@ -284,7 +284,7 @@ export class ReferenceNode extends BaseNode {
         const item = new vscode.TreeItem(this.id);
         item.id = this.id;
         item.label = this.name;
-        item.label = item.contextValue = [
+        item.contextValue = [
             "nodeType=reference",
             `compilable=${false}`,
             `cmakelists=${false}`
@@ -411,6 +411,10 @@ export class TargetNode extends BaseNode {
             items: [],
             children: []
         };
+
+        for (const ref of cm.dependencies || []) {
+            addToTree(tree, 'References', new ReferenceNode(ref.id, this.id));
+        }
 
         for (const grp of cm.fileGroups || []) {
             if (!grp.isGenerated) {
