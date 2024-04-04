@@ -392,6 +392,8 @@ export class PresetsController {
             }
 
             if (newPreset) {
+
+                const before: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
                 const name = await this.showNameInputBox();
                 if (!name) {
                     return false;
@@ -411,6 +413,11 @@ export class PresetsController {
                         configuration: 'Debug'
                     };
                     await this.addPresetAddUpdate(buildPreset, 'buildPresets');
+                }
+
+                if (before.length === 0) {
+                    log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(newPreset.name)));
+                    await this.setConfigurePreset(newPreset.name);
                 }
             }
 
