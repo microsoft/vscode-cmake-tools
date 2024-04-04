@@ -271,8 +271,9 @@ export class ReferencesNode extends BaseNode {
 
 export class ReferenceNode extends BaseNode {
     constructor(id: string = "", parentTargetId: string) {
-        super(`${id.split("::")[0]}-${parentTargetId}`);
-        this.name = id;
+        const name = id.split("::")[0];
+        super(`${name}-${parentTargetId}`);
+        this.name = name;
     }
 
     readonly name: string;
