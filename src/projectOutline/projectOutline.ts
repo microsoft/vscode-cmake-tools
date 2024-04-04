@@ -251,6 +251,9 @@ export class ReferencesNode extends BaseNode {
     getTreeItem(): vscode.TreeItem {
         const item = new vscode.TreeItem(this.id);
         item.id = this.id;
+        if (this.getChildren().length) {
+            item.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        }
         item.label = localize('references', 'References');
         item.contextValue = ['nodeType=references', `compilable=${false}`, `cmakelists=${false}`].join(',');
         item.iconPath = new vscode.ThemeIcon('references');
@@ -263,7 +266,10 @@ export class ReferencesNode extends BaseNode {
     update(dependencies: CodeModelKind.Dependency[], targetId: string) {
         const new_refs = new Map<string, ReferenceNode>();
         for (const ref of dependencies) {
-            new_refs.set(ref.id, new ReferenceNode(ref.id, targetId));
+            // filter out dependecies that are found and don't have a defined backtrace
+            if (ref.backtrace !== undefined) {
+                new_refs.set(ref.id, new ReferenceNode(ref.id, targetId));
+            }
         }
         this._references = new_refs;
     }
@@ -320,10 +326,10 @@ export class TargetNode extends BaseNode {
     }
 
     private readonly _rootDir: DirectoryNode<SourceFileNode>;
+    private readonly _referencesNode = new ReferencesNode(this.id);
 
     getChildren() {
-        // Maybe create references node, and get the children, combine them, then return.
-        return [...this._rootDir.getChildren()];
+        return [this._referencesNode, ...this._rootDir.getChildren()];
     }
     getTreeItem() {
         try {
@@ -413,10 +419,6 @@ export class TargetNode extends BaseNode {
             children: []
         };
 
-        for (const ref of cm.dependencies || []) {
-            addToTree(tree, localize('outline.references', "References"), new ReferenceNode(ref.id, this.id));
-        }
-
         for (const grp of cm.fileGroups || []) {
             if (!grp.isGenerated) {
                 for (let src of grp.sources) {
@@ -440,6 +442,8 @@ export class TargetNode extends BaseNode {
             update: (_src, _cm) => {},
             create: newNode => newNode
         });
+
+        this._referencesNode.update(cm.dependencies || [], this.id);
     }
 
     async openInCMakeLists() {
