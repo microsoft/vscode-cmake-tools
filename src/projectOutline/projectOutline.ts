@@ -414,7 +414,7 @@ export class TargetNode extends BaseNode {
         };
 
         for (const ref of cm.dependencies || []) {
-            addToTree(tree, 'References', new ReferenceNode(ref.id, this.id));
+            addToTree(tree, localize('outline.references', "References"), new ReferenceNode(ref.id, this.id));
         }
 
         for (const grp of cm.fileGroups || []) {
