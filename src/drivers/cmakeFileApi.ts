@@ -149,6 +149,15 @@ export namespace CodeModelKind {
         isGenerated?: boolean;
     }
 
+    export interface Dependency {
+        backtrace: number;
+        id: string;
+    }
+
+    export interface Folder {
+        name: string;
+    }
+
     export interface TargetObject {
         name: string;
         type: string;
@@ -157,6 +166,8 @@ export namespace CodeModelKind {
         paths: PathInfo;
         sources: TargetSourcefile[];
         compileGroups?: CompileGroup[];
+        dependencies?: Dependency[];
+        folder?: Folder;
     }
 }
 
@@ -490,7 +501,9 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
             a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), rootPaths.build))
             : [],
         fileGroups,
-        sysroot
+        sysroot,
+        folder: targetObject.folder,
+        dependencies: targetObject.dependencies
     } as CodeModelTarget;
 }
 
