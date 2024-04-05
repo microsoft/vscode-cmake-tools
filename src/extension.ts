@@ -2348,7 +2348,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await extensionManager.init();
 
     // need the extensionManager to be initialized for this.
-    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig());
+    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
 
     return setup(context);
 }
