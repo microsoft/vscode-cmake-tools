@@ -2780,7 +2780,7 @@ export class CMakeProject {
         if (await fs.exists(mainPresetsFile)) {
             void vscode.window.showErrorMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured!'));
         } else {
-            if (!await this.presetsController.selectConfigurePreset()) {
+            if (!await this.presetsController.selectConfigurePreset(true)) {
                 // if we are on linux or mac we can add a default configure preset
             }
         }
