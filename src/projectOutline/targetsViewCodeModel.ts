@@ -1,4 +1,3 @@
-import CMakeProject from "@cmt/cmakeProject";
 import { CodeModelContent } from "@cmt/drivers/codeModel";
 import { CodeModel } from "vscode-cmake-tools";
 

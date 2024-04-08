@@ -7,7 +7,6 @@ import { lexicographicalCompare, splitPath } from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
 import { populateViewCodeModel } from './targetsViewCodeModel';
 import { fs } from '@cmt/pr';
-import { CodeModel } from 'vscode-cmake-tools';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
