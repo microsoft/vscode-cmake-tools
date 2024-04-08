@@ -537,9 +537,14 @@ export class ProjectNode extends BaseNode {
             children: []
         };
 
-        // TODO: We need to update the CodeModelTarget API to include the "folder" property.
         for (const t of pr.targets) {
             const target = t as codeModel.CodeModelTarget;
+
+            // Skip targets that the generator auto-created.
+            if (target.isGeneratorProvided) {
+                continue;
+            }
+
             if (target.folder) {
                 addToTree(tree, target.folder.name, target);
             } else {
@@ -612,9 +617,6 @@ export class WorkspaceFolderNode extends BaseNode {
     }
 
     updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null, ctx: TreeUpdateContext) {
-        // TODO: We will need updates here. This can be used in multi-root scenarios. However, underneath this needs to be updated to respect the new
-        // flat targets list.
-
         if (!model || model.configurations.length < 1) {
             this.removeNodes(cmakeProject);
             ctx.nodesToUpdate.push(this);
@@ -672,13 +674,6 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
     }
 
     updateCodeModel(cmakeProject: CMakeProject, model: codeModel.CodeModelContent | null) {
-        // TODO: I think this is where we can insert a new type, which is the flat list of targets view.
-        // We want to parse the code model and get all targets from all projects.
-
-        // TODO: This will require updates to all of the nodes in the project outline.
-
-        // TODO: Figure out how to get all of the root projects for the folder.
-
         const folder = cmakeProject.workspaceContext.folder;
         let existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {

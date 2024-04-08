@@ -168,6 +168,7 @@ export namespace CodeModelKind {
         compileGroups?: CompileGroup[];
         dependencies?: Dependency[];
         folder?: Folder;
+        isGeneratorProvided?: boolean;
     }
 }
 
@@ -503,7 +504,8 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
         fileGroups,
         sysroot,
         folder: targetObject.folder,
-        dependencies: targetObject.dependencies
+        dependencies: targetObject.dependencies,
+        isGeneratorProvided: targetObject.isGeneratorProvided
     } as CodeModelTarget;
 }
 
