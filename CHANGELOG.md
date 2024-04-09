@@ -13,6 +13,7 @@ Improvements:
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 - Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
 - Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
+- Allow CMake Tools to be disabled at folder scope to avoid running it on folders where it shouldn't [#2338](https://github.com/microsoft/vscode-cmake-tools/issues/2338)
 
 Bug Fixes:
 

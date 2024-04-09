@@ -1995,6 +1995,12 @@
       "type": "object",
       "title": "CMake Tools",
       "properties": {
+        "cmake.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.enabled.description%",
+          "scope": "resource"
+        },
         "cmake.autoSelectActiveFolder": {
           "type": "boolean",
           "default": true,
