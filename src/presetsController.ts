@@ -26,6 +26,7 @@ const log = logging.createLogger('presetController');
 type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefined) => void;
 
 export class PresetsController {
+    // NOTE: This watcher is specifically designed to watch the presets file for edits from the user.
     private _presetsWatcher: chokidar.FSWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
@@ -420,9 +421,6 @@ export class PresetsController {
 
                 newPreset.name = name;
                 await this.addPresetAddUpdate(newPreset, "configurePresets");
-
-                // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
-                await this.reapplyPresets();
 
                 if (isMultiConfigGenerator) {
                     const buildPreset: preset.BuildPreset = {
@@ -1744,7 +1742,7 @@ export class PresetsController {
         const presetsFilePath = isUserPresets ? this.userPresetsPath : this.presetsPath;
         const indent = this.getIndentationSettings();
         try {
-            await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));
+            await this.writePresetsFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));
         } catch (e: any) {
             rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
             return;
@@ -1753,9 +1751,21 @@ export class PresetsController {
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));
     }
 
+    private async writePresetsFile(presetsFilePath: string, content: string): Promise<void> {
+        await this.closePresetsChangeWatcher();
+        await fs.writeFile(presetsFilePath, content);
+        await this.reapplyPresets();
+        await this.watchPresetsChange();
+    };
+
+    /**
+     * This function is called when the presets file is changed, added or removed, specifically by the user.
+     * We turn off the listener when we are programatically updating the file and turn it back on after we
+     * update the file and call the handler. See the `writePresetsFile` method.
+     */
     private async watchPresetsChange() {
         if (this._presetsWatcher) {
-            this._presetsWatcher.close().then(() => {}, () => {});
+            await this._presetsWatcher.close();
         }
 
         const handler = () => {
@@ -1766,6 +1776,15 @@ export class PresetsController {
             .on('change', handler)
             .on('unlink', handler);
     };
+
+    /**
+     * This function is called before programatically writing to the presets file.
+     */
+    private async closePresetsChangeWatcher() {
+        if (this._presetsWatcher) {
+            await this._presetsWatcher.close();
+        }
+    }
 
     dispose() {
         if (this._presetsWatcher) {
