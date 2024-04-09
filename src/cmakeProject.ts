@@ -2788,7 +2788,7 @@ export class CMakeProject {
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
         await enableFullFeatureSet(true);
-        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).result;
+        return 0;
     }
 
     private async createCMakeListsFile(mainListFile: string): Promise<Number> {
