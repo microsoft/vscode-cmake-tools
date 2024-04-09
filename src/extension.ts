@@ -121,8 +121,13 @@ export class ExtensionManager implements vscode.Disposable {
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
+        let cmakePath = this.workspaceConfig.rawCMakePath;
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]) {
+            const workspaceContext = DirectoryContext.createForDirectory(vscode.workspace.workspaceFolders[0], new StateManager(this.extensionContext, vscode.workspace.workspaceFolders[0]));
+            cmakePath = await workspaceContext.getCMakePath() || '';
+        }
         // initialize the state of the cmake exe
-        await getCMakeExecutableInformation(this.workspaceConfig.rawCMakePath);
+        await getCMakeExecutableInformation(cmakePath);
 
         await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
         this.workspaceConfig.onChange("ctest", async (value) => {
@@ -1839,6 +1844,13 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
+     * Appends the build directory of the active project to the current workspace
+     */
+    async appendBuildDirectoryToWorkspace() {
+        await this.getActiveProject()?.appendBuildDirectoryToWorkspace();
+    }
+
+    /**
      * Show UI to allow the user to add an active configure preset
      */
     async addConfigurePreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
@@ -2144,6 +2156,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'activeWorkflowPresetName',
         "useCMakePresets",
         "openCMakePresets",
+        "appendBuildDirectoryToWorkspace",
         'addConfigurePreset',
         'addBuildPreset',
         'addTestPreset',

@@ -3,6 +3,7 @@
 ## 1.18
 Features:
 
+- Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)
 - Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
 
 Improvements:
@@ -11,6 +12,7 @@ Improvements:
 - Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 - Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
+- Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
 - Allow CMake Tools to be disabled at folder scope to avoid running it on folders where it shouldn't [#2338](https://github.com/microsoft/vscode-cmake-tools/issues/2338)
 
 Bug Fixes:
@@ -22,11 +24,10 @@ Bug Fixes:
 - Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
 - Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
 - Fix issue where our searching for cl and ninja was repeatedly unnecessarily, impacting performance. [#3633](https://github.com/microsoft/vscode-cmake-tools/issues/3633)
-- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657) 
+- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657)
+- Fix invocation of vcvarsall.bat script argument for targetArch. [#3672](https://github.com/microsoft/vscode-cmake-tools/issues/3672)
+- Ensure that we support ${workspaceFolder} when initializing cmake information. [#3658](https://github.com/microsoft/vscode-cmake-tools/issues/3658)
 
-Improvements:
-
-- Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
 
 ## 1.17.17
 

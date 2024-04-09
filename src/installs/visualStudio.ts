@@ -144,8 +144,10 @@ export function targetArchFromGeneratorPlatform(generatorPlatform?: string) {
  * @param hostArch The architecture of the host toolset
  * @param targetArch The architecture of the target
  * @param amd64Alias Whether amd64 is preferred over x64.
+ * @param includeVersion Whether to include the version. Since we use this method to get the name of the vcvars script in certain
+ *                     cases, we can't include the version in the name, only in the execution of the script when we're getting arguments.
  */
-export function getHostTargetArchString(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
+export function getHostTargetArchString(hostArch: string, targetArch?: string, amd64Alias: boolean = false, includeVersion: boolean = false): string {
     // There are cases when we don't want to use the 'x64' alias of the 'amd64' architecture,
     // like for older VS installs, for the VS kit names (for compatibility reasons)
     // or for arm/arm64 specific vcvars scripts.
@@ -170,6 +172,12 @@ export function getHostTargetArchString(hostArch: string, targetArch?: string, a
         targetArch = hostArch;
     }
 
+    const parsedTargetArch = targetArch.split(",");
+    const version = parsedTargetArch.filter(a => a.includes("version=")).map(a => a.split("=")[1]).join(" ").trimEnd();
+    // The platform can only be first in the list: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_PLATFORM.html#variable:CMAKE_GENERATOR_PLATFORM
+    // If the first entry in the list includes an "=", it is the version, so we need to use the host arch.
+    targetArch = parsedTargetArch[0].includes("=") ? hostArch : parsedTargetArch[0];
+
     // CMake preferred generator platform requires 'win32', while vcvars are still using 'x86'.
     // This function is called only for VS generators, so it is safe to overwrite
     // targetArch with the vcvars naming.
@@ -179,7 +187,8 @@ export function getHostTargetArchString(hostArch: string, targetArch?: string, a
     // because CMake host target does not have the same name mismatch with VS.
     targetArch = targetArchFromGeneratorPlatform(targetArch);
 
-    return (hostArch === targetArch) ? hostArch : `${hostArch}_${targetArch}`;
+    const archValue = (hostArch === targetArch) ? hostArch : `${hostArch}_${targetArch}`;
+    return  includeVersion ? `${archValue} ${version}` : archValue;
 }
 
 // Gets the MSVC toolsets installed for a given VS install.
@@ -463,7 +472,7 @@ export async function varsForVSInstallation(inst: VSInstallation, hostArch: stri
         return null;
     }
 
-    const devBatArgs = [getHostTargetArchString(hostArch, targetArch, majorVersion < 15)];
+    const devBatArgs = [getHostTargetArchString(hostArch, targetArch, majorVersion < 15, true)];
     if (toolsetVersion && majorVersion >= 15) {
         devBatArgs.push(`-vcvars_ver=${toolsetVersion}`);
     }

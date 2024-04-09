@@ -24,6 +24,7 @@ schedules:
 
 variables: 
   TeamName: C++ Cross Platform and Cloud
+  Codeql.Language: javascript
 
 extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
