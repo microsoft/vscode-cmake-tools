@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Delete NOTICE.txt
-        run: rm ${{ github.workspace }}/NOTICE.txt
-
       - name: Build the extension
         run: yarn compile-production
 

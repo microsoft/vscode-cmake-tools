@@ -25,10 +25,6 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      # Delete NOTICE.txt because it's too big for yarn to handle.
-      - name: Delete NOTICE.txt
-        run: del ${{ github.workspace }}/NOTICE.txt 
-
       - name: Build the extension
         run: yarn compile-production
 
