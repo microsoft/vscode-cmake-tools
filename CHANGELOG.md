@@ -14,6 +14,7 @@ Improvements:
 - Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
 - Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
 - Add the ability to pin CMake Commands to the sidebar [#2984](https://github.com/microsoft/vscode-cmake-tools/issues/2984) & [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
+- Make it easier for users to select a CMakeLists.txt or stop the quick pick from appearing (non-CMake projects) [#3588](https://github.com/microsoft/vscode-cmake-tools/issues/3588)
 
 Bug Fixes:
 

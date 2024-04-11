@@ -876,11 +876,13 @@ export class CMakeProject {
                         fullPath: file
                     })) : [];
                     const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
-                    items.push({ label: browse, fullPath: "", description: "Search for CMakeLists.txt on this computer" });
+                    const dontAskAgain: string = localize("do.not.ask.again", "[Do not ask again]");
+                    items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
+                    items.push({ label: dontAskAgain, fullPath: "", description: localize("do.not.ask.again.descriptoin", "Do not ask for CMakeLists.txt again in this folder. This will enable the cmake.ignoreCMakeListsMissing setting.") });
                     const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
                         placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
                     });
-                    telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel" : (selection.label === browse) ? "browse" : "pick";
+                    telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel" : (selection.label === browse) ? "browse" : (selection.label === dontAskAgain) ? "dontAskAgain" : "pick";
                     let selectedFile: string | undefined;
                     if (!selection) {
                         break; // User canceled it.
@@ -895,6 +897,10 @@ export class CMakeProject {
                         if (cmakeListsFile) {
                             // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
                             selectedFile = cmakeListsFile[0].fsPath;
+                        }
+                    } else if (selection.label === dontAskAgain)  {
+                        if (config !== undefined) {
+                            await vscode.workspace.getConfiguration('cmake', this.workspaceFolder).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
                         }
                     } else {
                         // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
