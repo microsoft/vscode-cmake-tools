@@ -421,10 +421,10 @@ export class PresetsController {
                 newPreset.name = name;
                 await this.addPresetAddUpdate(newPreset, 'configurePresets');
 
-                if (isMultiConfigGenerator) {
-                    // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
-                    await this.reapplyPresets();
+                // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
+                await this.reapplyPresets();
 
+                if (isMultiConfigGenerator) {
                     const buildPreset: preset.BuildPreset = {
                         name: `${newPreset.name}-debug`,
                         displayName: `${newPreset.displayName} - Debug`,
@@ -1464,7 +1464,7 @@ export class PresetsController {
     //-----
     async openCMakePresets(): Promise<vscode.TextEditor | undefined> {
         if (!await fs.exists(this.presetsPath)) {
-            return this.updatePresetsFile({ version: 2 });
+            return this.updatePresetsFile({ version: 7 });
         } else {
             return vscode.window.showTextDocument(vscode.Uri.file(this.presetsPath));
         }
@@ -1472,7 +1472,7 @@ export class PresetsController {
 
     async openCMakeUserPresets(): Promise<vscode.TextEditor | undefined> {
         if (!await fs.exists(this.userPresetsPath)) {
-            return this.updatePresetsFile({ version: 2 }, true);
+            return this.updatePresetsFile({ version: 7 }, true);
         } else {
             return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
         }
@@ -1705,7 +1705,7 @@ export class PresetsController {
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
-        const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 2 };
+        const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 7 };
         if (!originalPresetsFile[presetType]) {
             originalPresetsFile[presetType] = [];
         }
