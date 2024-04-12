@@ -1,5 +1,41 @@
 # What's New?
 
+## 1.18
+Features:
+
+- Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)
+- Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
+
+Improvements:
+
+- Allow ctests to run in parallel when launched through the Test Explorer. [#3122](https://github.com/microsoft/vscode-cmake-tools/issues/3322)
+- Properly set up environment for MSYS toolchains. [#2447](https://github.com/microsoft/vscode-cmake-tools/issues/2447) [@Steelskin](https://github.com/Steelskin)
+- Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
+- Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
+- Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
+- Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
+- Add the ability to pin CMake Commands to the sidebar [#2984](https://github.com/microsoft/vscode-cmake-tools/issues/2984) & [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
+
+Bug Fixes:
+
+- Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
+- Remove incorrect validation which was breaking references from CMakeUserPresets to CMakePresets [#3636](https://github.com/microsoft/vscode-cmake-tools/issues/3636)
+- Fix 'Debug Test' from 'Test explorer' results in 'launch: property 'program' is missing or empty' [#3280](https://github.com/microsoft/vscode-cmake-tools/issues/3280)
+- Fix "Go to source" in Testing activity + test panel without function [#3362](https://github.com/microsoft/vscode-cmake-tools/issues/3362)
+- Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
+- Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
+- Fix issue where our searching for cl and ninja was repeatedly unnecessarily, impacting performance. [#3633](https://github.com/microsoft/vscode-cmake-tools/issues/3633)
+- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657)
+- Fix invocation of vcvarsall.bat script argument for targetArch. [#3672](https://github.com/microsoft/vscode-cmake-tools/issues/3672)
+- Ensure that we support ${workspaceFolder} when initializing cmake information. [#3658](https://github.com/microsoft/vscode-cmake-tools/issues/3658)
+
+
+## 1.17.17
+
+Bug Fixes:
+
+- Fix the regression for inheritance of cache variables and other inheritable fields. [#3603](https://github.com/microsoft/vscode-cmake-tools/issues/3603)
+
 ## 1.17.16
 
 Bug Fixes:
@@ -13,7 +49,6 @@ Features:
 
 - Update `api.ts` to add the `getActiveFolderPath` method. [#3528](https://github.com/microsoft/vscode-cmake-tools/pull/3528) [@Kemaweyan](https://github.com/Kemaweyan)
 - Add a setting that allows users to enable/disable the Test Explorer integration. [#3145](https://github.com/microsoft/vscode-cmake-tools/issues/3145)
-- Allow ctests to run in parallel when launched through the Test Explorer. [#3122](https://github.com/microsoft/vscode-cmake-tools/issues/3322)
 - Add support for CMake Presets V6 (package presets to run CPack and workflow presets). [#2871](https://github.com/microsoft/vscode-cmake-tools/issues/2871)
 - Add support for pinning CMake commands to the side bar. [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
 

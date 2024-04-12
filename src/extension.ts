@@ -18,6 +18,7 @@ import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { ProjectController, FolderProjectType} from '@cmt/projectController';
 
 import {
+    SpecialKits,
     USER_KITS_FILEPATH,
     findCLCompilerPath,
     scanForKitsIfNeeded
@@ -120,8 +121,13 @@ export class ExtensionManager implements vscode.Disposable {
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
+        let cmakePath = this.workspaceConfig.rawCMakePath;
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]) {
+            const workspaceContext = DirectoryContext.createForDirectory(vscode.workspace.workspaceFolders[0], new StateManager(this.extensionContext, vscode.workspace.workspaceFolders[0]));
+            cmakePath = await workspaceContext.getCMakePath() || '';
+        }
         // initialize the state of the cmake exe
-        await getCMakeExecutableInformation(this.workspaceConfig.rawCMakePath);
+        await getCMakeExecutableInformation(cmakePath);
 
         await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
         this.workspaceConfig.onChange("ctest", async (value) => {
@@ -307,10 +313,6 @@ export class ExtensionManager implements vscode.Disposable {
         this.extensionActiveCommandsInfo  = { contextUsed: this.contextValues ? {...this.contextValues} : {}, extensionActiveCommands: this.contextValues ? util.thisExtensionActiveCommands(this.contextValues) : [] } as ExtensionActiveCommandsInfo;
     }
 
-    public getFolderContext(folder: vscode.WorkspaceFolder): StateManager {
-        return new StateManager(this.extensionContext, folder);
-    }
-
     public showStatusBar(fullFeatureSet: boolean) {
         this.statusBar.setVisible(fullFeatureSet);
     }
@@ -426,7 +428,12 @@ export class ExtensionManager implements vscode.Disposable {
                 // We have an active kit. We're good.
                 return true;
             }
-            // No kit? Ask the user what they want.
+            // No kit? Is enable kit scan on?
+            if (!this.workspaceConfig.enableAutomaticKitScan) {
+                await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
+                return true;
+            }
+            // Ask the user what they want.
             const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
             if (!didChooseKit && !cmakeProject.activeKit) {
                 // The user did not choose a kit and kit isn't set in other way such as setKitByName
@@ -1825,6 +1832,13 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
+     * Appends the build directory of the active project to the current workspace
+     */
+    async appendBuildDirectoryToWorkspace() {
+        await this.getActiveProject()?.appendBuildDirectoryToWorkspace();
+    }
+
+    /**
      * Show UI to allow the user to add an active configure preset
      */
     async addConfigurePreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
@@ -2130,6 +2144,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'activeWorkflowPresetName',
         "useCMakePresets",
         "openCMakePresets",
+        "appendBuildDirectoryToWorkspace",
         'addConfigurePreset',
         'addBuildPreset',
         'addTestPreset',
@@ -2338,7 +2353,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await extensionManager.init();
 
     // need the extensionManager to be initialized for this.
-    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig());
+    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
 
     return setup(context);
 }
