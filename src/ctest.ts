@@ -464,10 +464,10 @@ export class CTestDriver implements vscode.Disposable {
             uniqueCtestArgs.push('-R');
             // Build a regex that select all the tests (i.e concatenation of all test names)
             let testsNamesRegex: string = "";
-            for (const [driver, ctestPath, ctestArgs, _test, customizedTask, consumer] of runCTestImplArgs) {
-                run.started(_test);
-                testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(_test.id)}\$|`);
-                nameToTestAssoc.set(_test.id, _test);
+            for (const [_driver, _ctestPath, _ctestArgs, test, _customizedTask, _consumer] of runCTestImplArgs) {
+                run.started(test);
+                testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(test.id)}\$|`);
+                nameToTestAssoc.set(test.id, test);
             }
             uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // removes last |
 
