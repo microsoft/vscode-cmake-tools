@@ -25,6 +25,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         cpackPath: '',
         ctest: {
             parallelJobs: 0,
+            allowParallelJobs: true,
             testExplorerIntegrationEnabled: true
         },
         parseBuildDiagnostics: true,

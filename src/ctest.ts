@@ -431,36 +431,55 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        /**
-         * For each unique driver (i.e., driver.sourceDir), run the tests.
-         */
-        for (const driver of driverMap.values()) {
-            const uniqueDriver: CMakeDriver = driver.driver;
-            const uniqueCtestPath: string = driver.ctestPath;
-            const uniqueCtestArgs: string[] = driver.ctestArgs;
-            const uniqueCustomizedTask: boolean | undefined = customizedTask;
-            const uniqueConsumer: OutputConsumer | undefined = consumer;
-            const nameToTestAssoc = new Map<string, vscode.TestItem>();
-
-            //uniqueCtestArgs.push('-R');
-            // Build a regex that select all the tests (i.e concatenation of all test names)
-            let testsNamesRegex: string = "";
-            for (const t of driver.tests) {
-                run.started(t);
-                testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(t.id)}\$|`);
-                nameToTestAssoc.set(t.id, t);
-            }
-            //uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // removes last |
-
-            const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, uniqueCustomizedTask, uniqueConsumer);
-
-            if (testResults) {
-                for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                    const _test = nameToTestAssoc.get(testResults.site.testing.test[i].name);
-                    if (_test === undefined) {
-                        continue; // Not sure what to do.
+        if (!this.ws.config.ctestAllowParallelJobs) {
+            for (const driver of driverMap.values()) {
+                for (const test of driver.tests) {
+                    if (cancellation && cancellation.isCancellationRequested) {
+                        run.skipped(test);
+                        continue;
                     }
-                    returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, returnCode, run);
+
+                    run.started(test);
+
+                    const _ctestArgs = driver.ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
+                    const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, customizedTask, consumer);
+
+                    if (testResults) {
+                        for (let i = 0; i < testResults.site.testing.test.length; i++) {
+                            returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], test, returnCode, run);
+                        }
+                    }
+                }
+            }
+        } else {
+            /**
+             * For each unique driver (i.e., driver.sourceDir), run the tests.
+             * We do not need a regex because the invocation of ctest.exe with -T test will find and run all of the tests it knows about,
+             * which will match the list of tests
+             */
+            for (const driver of driverMap.values()) {
+                const uniqueDriver: CMakeDriver = driver.driver;
+                const uniqueCtestPath: string = driver.ctestPath;
+                const uniqueCtestArgs: string[] = driver.ctestArgs;
+
+                uniqueCtestArgs.push('-R');
+                let testsNamesRegex: string = "";
+                for (const t of driver.tests) {
+                    run.started(t);
+                    testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(t.id)}\$|`);
+                }
+                uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // Remove the last '|'
+
+                const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, customizedTask, consumer);
+
+                if (testResults) {
+                    for (let i = 0; i < testResults.site.testing.test.length; i++) {
+                        const _test = driver.tests.find(t => t.id === testResults.site.testing.test[i].name);
+                        if (_test === undefined) {
+                            continue; // This should never happen, we just constructed this list. For now, simply ignore and keep going.
+                        }
+                        returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, returnCode, run);
+                    }
                 }
             }
         }

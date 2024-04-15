@@ -171,7 +171,7 @@ export interface ExtensionConfigurationSettings {
     buildToolArgs: string[];
     parallelJobs: number | undefined;
     ctestPath: string;
-    ctest: { parallelJobs: number; testExplorerIntegrationEnabled: boolean };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -368,6 +368,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get ctestParallelJobs(): number | null {
         return this.configData.ctest.parallelJobs;
+    }
+    get ctestAllowParallelJobs(): boolean {
+        return this.configData.ctest.allowParallelJobs;
     }
     get testExplorerIntegrationEnabled(): boolean {
         return this.configData.ctest.testExplorerIntegrationEnabled;
@@ -568,7 +571,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         cpackPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number; testExplorerIntegrationEnabled: boolean }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),

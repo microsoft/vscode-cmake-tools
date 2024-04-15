@@ -2194,6 +2194,12 @@
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription%",
           "scope": "resource"
         },
+        "cmake.ctest.allowParallelJobs": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.ctest.allowParallelJobs.description%",
+          "scope": "resource"
+        },
         "cmake.ctest.testExplorerIntegrationEnabled": {
           "type": "boolean",
           "default": true,
