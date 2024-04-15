@@ -933,7 +933,7 @@ export class CTestDriver implements vscode.Disposable {
             .find(test => test.name === testName)?.properties
             .find(prop => prop.name === 'WORKING_DIRECTORY');
 
-        if (typeof (property?.value) === 'string') {
+        if (typeof(property?.value) === 'string') {
             return property.value;
         }
         return '';
