@@ -454,8 +454,6 @@ export class CTestDriver implements vscode.Disposable {
         } else {
             /**
              * For each unique driver (i.e., driver.sourceDir), run the tests.
-             * We do not need a regex because the invocation of ctest.exe with -T test will find and run all of the tests it knows about,
-             * which will match the list of tests
              */
             for (const driver of driverMap.values()) {
                 const uniqueDriver: CMakeDriver = driver.driver;
