@@ -285,24 +285,15 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             if (!testExplorer) {
-                log.info(localize('no.tests.found', 'No tests found'));
+                log.info(localize('test.explorer.not.enabled', 'ctest integration disabled. Please see the `cmake.ctest.testExplorerIntegrationEnabled` setting.'));
                 return -1;
             }
 
-            if (!this.ws.config.ctestAllowParallelJobs) {
-                const tests = this.testItemCollectionToArray(testExplorer.items);
-                const run = testExplorer.createTestRun(new vscode.TestRunRequest());
-                const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-                const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
-                run.end();
-                return returnCode;
-            } else {
-                const retc = await this.runCTestDirectly(driver, customizedTask, testPreset, consumer);
-
-                // not sure if direct comparison can be made to replace reloadTests with refreshTests
-                await this.refreshTests(driver);
-                return retc;
-            }
+            const tests = this.testItemCollectionToArray(testExplorer.items);
+            const run = testExplorer.createTestRun(new vscode.TestRunRequest());
+            const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
+            const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
+            return returnCode;
         } else {
             return this.runCTestDirectly(driver, customizedTask, testPreset, consumer);
         }
@@ -316,26 +307,27 @@ export class CTestDriver implements vscode.Disposable {
             return -2;
         }
 
-        const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
+        const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
 
         if (!driver.testPreset && driver.useCMakePresets) {
             log.error('test.preset.not.set', 'Test preset is not set');
             return -3;
         }
 
-        const child = driver.executeCommand(
-            ctestpath,
-            ctestArgs,
-            ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
-            { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
-        const res = await child.result;
-        if (res.retc === null) {
-            log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
-            return -1;
-        } else {
-            log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
+        const testResults = await this.runCTestImpl(driver, ctestpath, ctestArgs, customizedTask, consumer);
+
+        let returnCode: number = 0;
+        if (testResults) {
+            for (let i = 0; i < testResults.site.testing.test.length; i++) {
+                const status = testResults.site.testing.test[i].status;
+                if (status === "notrun" || status === "failed") {
+                    returnCode = -1;
+                    break;
+                }
+            }
         }
-        return res.retc;
+
+        return returnCode;
     }
 
     private ctestsEnqueued(tests: vscode.TestItem[], run: vscode.TestRun) {
@@ -441,7 +433,8 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        if (!this.ws.config.ctestAllowParallelJobs || driverSet.size > 1 || ctestPathSet.size > 1 || ctestArgsSet.size > 1 || customizedTaskSet.size > 1 || consumerSet.size > 1) {
+        // Naive check to ensure that this is a singular call for multiple tests. If not, only select current test. If so, go to else.
+        if (driverSet.size > 1 || ctestPathSet.size > 1 || ctestArgsSet.size > 1 || customizedTaskSet.size > 1 || consumerSet.size > 1) {
             for (const [driver, ctestPath, ctestArgs, test, customizedTask, consumer] of runCTestImplArgs) {
                 if (cancellation && cancellation.isCancellationRequested) {
                     run.skipped(test);
@@ -456,7 +449,7 @@ export class CTestDriver implements vscode.Disposable {
 
                 if (testResults) {
                     for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                        returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], test, run, returnCode);
+                        returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], test, returnCode, run);
                     }
                 }
             }
@@ -467,9 +460,8 @@ export class CTestDriver implements vscode.Disposable {
             const uniqueCustomizedTask: boolean | undefined = customizedTaskSet.values().next().value;
             const uniqueConsumer: OutputConsumer | undefined = consumerSet.values().next().value;
             const nameToTestAssoc = new Map<string, vscode.TestItem>();
-            const processNumber = this.ws.config.ctestParallelJobs;
 
-            uniqueCtestArgs.push('-j', "" + processNumber, '-R');
+            uniqueCtestArgs.push('-R');
             // Build a regex that select all the tests (i.e concatenation of all test names)
             let testsNamesRegex: string = "";
             for (const [driver, ctestPath, ctestArgs, _test, customizedTask, consumer] of runCTestImplArgs) {
@@ -487,7 +479,7 @@ export class CTestDriver implements vscode.Disposable {
                     if (_test === undefined) {
                         continue; // Not sure what to do.
                     }
-                    returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, run, returnCode);
+                    returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, returnCode, run);
                 }
             }
         }
@@ -495,7 +487,7 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     };
 
-    private testResultsAnalysis(testResult: Test, test: vscode.TestItem, run: vscode.TestRun, returnCode: number) {
+    private testResultsAnalysis(testResult: Test, test: vscode.TestItem, returnCode: number, run: vscode.TestRun) {
         let foundTestResult = false;
         let havefailures = false;
         let duration: number | undefined;
@@ -544,6 +536,7 @@ export class CTestDriver implements vscode.Disposable {
         }
         if (!foundTestResult && !havefailures) {
             this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
+
             havefailures = true;
             returnCode = -1;
         }
