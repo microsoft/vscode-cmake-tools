@@ -368,13 +368,11 @@ export class CTestDriver implements vscode.Disposable {
 
     private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
         let returnCode: number = 0;
-        const runCTestImplArgs: [CMakeDriver, string, string[], vscode.TestItem, boolean | undefined, OutputConsumer | undefined][] = [];
-        const driverSet = new Set<CMakeDriver>();
-        const ctestPathSet = new Set<string>();
-        const ctestArgsSet = new Set<string[]>();
-        const customizedTaskSet = new Set<boolean | undefined>();
-        const consumerSet = new Set<OutputConsumer | undefined>();
+        const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[]}>();
 
+        /**
+         * Loop through the tests and get the driver, ctestPath, ctestArgs for each test. Construct a map for each soure directory, mapping drivers to tests.
+         */
         for (const test of tests) {
             let _driver: CMakeDriver | null;
             if (driver) {
@@ -424,52 +422,35 @@ export class CTestDriver implements vscode.Disposable {
                 }
                 return returnCode;
             } else {
-                runCTestImplArgs.push([_driver, _ctestPath, _ctestArgs, test, customizedTask, consumer]);
-                driverSet.add(_driver);
-                ctestPathSet.add(_ctestPath);
-                ctestArgsSet.add(_ctestArgs);
-                customizedTaskSet.add(customizedTask);
-                consumerSet.add(consumer);
+                if (!driverMap.has(_driver.sourceDir)) {
+                    driverMap.set(_driver.sourceDir, { driver: _driver, ctestPath: _ctestPath, ctestArgs: _ctestArgs, tests: [test] });
+                } else {
+                    const d = driverMap.get(_driver.sourceDir);
+                    driverMap.set(_driver.sourceDir, { driver: d!.driver, ctestPath: d!.ctestPath, ctestArgs: d!.ctestArgs, tests: d!.tests.concat(test) });
+                }
             }
         }
 
-        // Naive check to ensure that this is a singular call for multiple tests. If not, only select current test. If so, go to else.
-        if (driverSet.size > 1 || ctestPathSet.size > 1 || ctestArgsSet.size > 1 || customizedTaskSet.size > 1 || consumerSet.size > 1) {
-            for (const [driver, ctestPath, ctestArgs, test, customizedTask, consumer] of runCTestImplArgs) {
-                if (cancellation && cancellation.isCancellationRequested) {
-                    run.skipped(test);
-                    continue;
-                }
-
-                run.started(test);
-
-                // Build a regex that select only the current test
-                const _ctestArgs = ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
-                const testResults = await this.runCTestImpl(driver, ctestPath, _ctestArgs, customizedTask, consumer);
-
-                if (testResults) {
-                    for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                        returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], test, returnCode, run);
-                    }
-                }
-            }
-        } else {
-            const uniqueDriver: CMakeDriver = driverSet.values().next().value;
-            const uniqueCtestPath: string = ctestPathSet.values().next().value;
-            const uniqueCtestArgs: string[] = ctestArgsSet.values().next().value;
-            const uniqueCustomizedTask: boolean | undefined = customizedTaskSet.values().next().value;
-            const uniqueConsumer: OutputConsumer | undefined = consumerSet.values().next().value;
+        /**
+         * For each unique driver (i.e., driver.sourceDir), run the tests.
+         */
+        for (const driver of driverMap.values()) {
+            const uniqueDriver: CMakeDriver = driver.driver;
+            const uniqueCtestPath: string = driver.ctestPath;
+            const uniqueCtestArgs: string[] = driver.ctestArgs;
+            const uniqueCustomizedTask: boolean | undefined = customizedTask;
+            const uniqueConsumer: OutputConsumer | undefined = consumer;
             const nameToTestAssoc = new Map<string, vscode.TestItem>();
 
-            uniqueCtestArgs.push('-R');
+            //uniqueCtestArgs.push('-R');
             // Build a regex that select all the tests (i.e concatenation of all test names)
             let testsNamesRegex: string = "";
-            for (const [_driver, _ctestPath, _ctestArgs, test, _customizedTask, _consumer] of runCTestImplArgs) {
-                run.started(test);
-                testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(test.id)}\$|`);
-                nameToTestAssoc.set(test.id, test);
+            for (const t of driver.tests) {
+                run.started(t);
+                testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(t.id)}\$|`);
+                nameToTestAssoc.set(t.id, t);
             }
-            uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // removes last |
+            //uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // removes last |
 
             const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, uniqueCustomizedTask, uniqueConsumer);
 
