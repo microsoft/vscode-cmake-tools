@@ -23,6 +23,7 @@ import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
 import { chokidarOnAnyChange, ProgressHandle, reportProgress } from '@cmt/util';
+import { ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -279,7 +280,7 @@ export class KitsController {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
                 const kitChanged = chosen_kit.kit !== this.project.activeKit;
                 if (kitChanged) {
-                    this.project.notifyOnSelectedKitChanged();
+                    this.project.notifyOnSelectedConfigurationChanged(ConfigurationType.Kit);
                     await this.setFolderActiveKit(chosen_kit.kit);
                 }
 

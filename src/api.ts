@@ -75,8 +75,8 @@ class CMakeProjectWrapper implements api.Project {
         return this.project.onCodeModelChangedApiEvent;
     }
 
-    get onSelectedKitChanged() {
-        return this.project.onSelectedKitChangedApiEvent;
+    get onSelectedConfigurationChanged() {
+        return this.project.onSelectedConfigurationChangedApiEvent;
     }
 
     configure(): Promise<void> {

@@ -51,6 +51,7 @@ import paths from './paths';
 import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
+import { ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -718,13 +719,13 @@ export class CMakeProject {
     }
     private readonly _codeModelChangedApiEventEmitter = new vscode.EventEmitter<void>();
 
-    public notifyOnSelectedKitChanged() {
-        this._onSelectedKitChangedApiEvent.fire();
+    public notifyOnSelectedConfigurationChanged(configurationType: ConfigurationType) {
+        this._onSelectedConfigurationChangedApiEvent.fire(configurationType);
     }
-    get onSelectedKitChangedApiEvent() {
-        return this._onSelectedKitChangedApiEvent.event;
+    get onSelectedConfigurationChangedApiEvent() {
+        return this._onSelectedConfigurationChangedApiEvent.event;
     }
-    private readonly _onSelectedKitChangedApiEvent = new vscode.EventEmitter<void>();
+    private readonly _onSelectedConfigurationChangedApiEvent = new vscode.EventEmitter<ConfigurationType>();
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
         log.info(localize('communication.changed.restart.driver', "Restarting the CMake driver after a communication mode change."));
