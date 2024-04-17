@@ -460,6 +460,10 @@ export class CTestDriver implements vscode.Disposable {
                 const uniqueCtestPath: string = driver.ctestPath;
                 const uniqueCtestArgs: string[] = driver.ctestArgs;
 
+                // Check if the user (or us programmatically) have already added a -j flag. If not, add it by default for parallel jobs.
+                if (uniqueCtestArgs.filter(arg => arg.startsWith("-j")).length === 0) {
+                    uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
+                }
                 uniqueCtestArgs.push('-R');
                 let testsNamesRegex: string = "";
                 for (const t of driver.tests) {
