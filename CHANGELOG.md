@@ -14,6 +14,7 @@ Improvements:
 - Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
 - Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
 - Refactor the Project Outline view to show a flat list of targets [#491](https://github.com/microsoft/vscode-cmake-tools/issues/491), [#3684](https://github.com/microsoft/vscode-cmake-tools/issues/3684)
+- Add the ability to pin CMake Commands to the sidebar [#2984](https://github.com/microsoft/vscode-cmake-tools/issues/2984) & [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
 
 Bug Fixes:
 
@@ -24,7 +25,10 @@ Bug Fixes:
 - Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
 - Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
 - Fix issue where our searching for cl and ninja was repeatedly unnecessarily, impacting performance. [#3633](https://github.com/microsoft/vscode-cmake-tools/issues/3633)
-- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657) 
+- Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657)
+- Fix invocation of vcvarsall.bat script argument for targetArch. [#3672](https://github.com/microsoft/vscode-cmake-tools/issues/3672)
+- Ensure that we support ${workspaceFolder} when initializing cmake information. [#3658](https://github.com/microsoft/vscode-cmake-tools/issues/3658)
+
 
 ## 1.17.17
 
