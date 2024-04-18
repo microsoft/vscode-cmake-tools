@@ -31,7 +31,7 @@ import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline';
+import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline/projectOutline';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/variant';
@@ -121,8 +121,13 @@ export class ExtensionManager implements vscode.Disposable {
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
+        let cmakePath = this.workspaceConfig.rawCMakePath;
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]) {
+            const workspaceContext = DirectoryContext.createForDirectory(vscode.workspace.workspaceFolders[0], new StateManager(this.extensionContext, vscode.workspace.workspaceFolders[0]));
+            cmakePath = await workspaceContext.getCMakePath() || '';
+        }
         // initialize the state of the cmake exe
-        await getCMakeExecutableInformation(this.workspaceConfig.rawCMakePath);
+        await getCMakeExecutableInformation(cmakePath);
 
         await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
         this.workspaceConfig.onChange("ctest", async (value) => {
@@ -306,10 +311,6 @@ export class ExtensionManager implements vscode.Disposable {
 
     public setExtensionActiveCommands() {
         this.extensionActiveCommandsInfo  = { contextUsed: this.contextValues ? {...this.contextValues} : {}, extensionActiveCommands: this.contextValues ? util.thisExtensionActiveCommands(this.contextValues) : [] } as ExtensionActiveCommandsInfo;
-    }
-
-    public getFolderContext(folder: vscode.WorkspaceFolder): StateManager {
-        return new StateManager(this.extensionContext, folder);
     }
 
     public showStatusBar(fullFeatureSet: boolean) {
@@ -1833,6 +1834,13 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
+     * Appends the build directory of the active project to the current workspace
+     */
+    async appendBuildDirectoryToWorkspace() {
+        await this.getActiveProject()?.appendBuildDirectoryToWorkspace();
+    }
+
+    /**
      * Show UI to allow the user to add an active configure preset
      */
     async addConfigurePreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
@@ -2138,6 +2146,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'activeWorkflowPresetName',
         "useCMakePresets",
         "openCMakePresets",
+        "appendBuildDirectoryToWorkspace",
         'addConfigurePreset',
         'addBuildPreset',
         'addTestPreset',
@@ -2346,7 +2355,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     await extensionManager.init();
 
     // need the extensionManager to be initialized for this.
-    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig());
+    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
 
     return setup(context);
 }

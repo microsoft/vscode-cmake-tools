@@ -7,6 +7,8 @@ import { ConfigurationReader } from '@cmt/config';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('pinnedCommands');
+const defaultTaskCommands: string[] = ["workbench.action.tasks.configureTaskRunner", "workbench.action.tasks.runTask"];
+const mementoKey = "pinDefaultTasks";
 
 interface PinnedCommandsQuickPickItem extends vscode.QuickPickItem {
     command: string;
@@ -37,8 +39,8 @@ export class PinnedCommands {
     private treeDataProvider: PinnedCommandsTreeDataProvider;
     protected disposables: vscode.Disposable[] = [];
 
-    constructor(configReader: ConfigurationReader) {
-        this.treeDataProvider = new PinnedCommandsTreeDataProvider(configReader);
+    constructor(configReader: ConfigurationReader, extensionContext: vscode.ExtensionContext) {
+        this.treeDataProvider = new PinnedCommandsTreeDataProvider(configReader, extensionContext);
         this.disposables.push(...[
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.pinnedCommands.add', async () => {
@@ -61,7 +63,7 @@ export class PinnedCommands {
      */
     async showPinnableCommands(): Promise<PinnedCommandsQuickPickItem | null> {
         const localization = getExtensionLocalizedStrings();
-        const items = getExtensionActiveCommands().map((x) => ({
+        const items = PinnedCommands.getPinnableCommands().map((x) => ({
             command: x,
             label: localization[`cmake-tools.command.${x}.title`]} as PinnedCommandsQuickPickItem));
         const chosenItem = await vscode.window.showQuickPick(items,
@@ -81,6 +83,11 @@ export class PinnedCommands {
         vscode.Disposable.from(...this.disposables).dispose();
         this.treeDataProvider.dispose();
     }
+
+    static getPinnableCommands(): string[] {
+        const commands = getExtensionActiveCommands();
+        return commands.concat(defaultTaskCommands);
+    }
 }
 
 class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCommandNode>, vscode.Disposable {
@@ -90,12 +97,16 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
     private config: vscode.WorkspaceConfiguration | null;
     private pinnedCommandsKey: string = "cmake.pinnedCommands";
     private isInitialized = false;
+    private pinDefaultTasks = true;
     private readonly _settingsSub ;
+    private extensionContext: vscode.ExtensionContext;
 
-    constructor(configReader: ConfigurationReader) {
+    constructor(configReader: ConfigurationReader, extensionContext: vscode.ExtensionContext) {
         this.treeView = vscode.window.createTreeView('cmake.pinnedCommands', { treeDataProvider: this });
         this._settingsSub = configReader.onChange('pinnedCommands', () => this.doConfigureSettingsChange());
         this.config = vscode.workspace.getConfiguration();
+        this.extensionContext = extensionContext;
+        this.pinDefaultTasks = this.extensionContext.globalState.get(mementoKey) === undefined; // the user has not unpinned any of the tasks commands yet.
         onExtensionActiveCommandsChanged(this.doConfigureSettingsChange, this);
     }
 
@@ -106,16 +117,28 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
     async initialize(): Promise<void> {
         this.config = vscode.workspace.getConfiguration();
         this.pinnedCommands = []; //reset to empty list.
+        const localization = getExtensionLocalizedStrings();
         if (this.config.has(this.pinnedCommandsKey)) {
-            const localization = getExtensionLocalizedStrings();
             const settingsPinnedCommands = this.config.get(this.pinnedCommandsKey) as string[];
-            const activeCommands = new Set<string>(getExtensionActiveCommands());
+            const activeCommands = new Set<string>(PinnedCommands.getPinnableCommands());
             for (const commandName of settingsPinnedCommands) {
                 const label = localization[`cmake-tools.command.${commandName}.title`];
                 if (this.findNode(label) === -1) {
                     // only show commands that are contained in the active commands for the extension.
                     this.pinnedCommands.push(new PinnedCommandNode(label, commandName, activeCommands.has(commandName)));
                 }
+            }
+        }
+
+        if (this.pinDefaultTasks) {
+            if (this.pinnedCommands.filter(x => defaultTaskCommands.includes(x.commandName)).length !== defaultTaskCommands.length) {
+                defaultTaskCommands.forEach((x) => {
+                    const label = localization[`cmake-tools.command.${x}.title`];
+                    if (this.findNode(label) === -1) {
+                        this.pinnedCommands.push(new PinnedCommandNode(label, x, true));
+                    }
+                });
+                await this.updateSettings();
             }
         }
         this.isInitialized = true;
@@ -150,6 +173,10 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
         if (index !== -1) {
             this.pinnedCommands.splice(index, 1);
             await this.refresh();
+        }
+        if (this.pinDefaultTasks && defaultTaskCommands.includes(node.commandName)) {
+            await this.extensionContext.globalState.update(mementoKey, false);
+            this.pinDefaultTasks = false;
         }
         await this.updateSettings();
     }
