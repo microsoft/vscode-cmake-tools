@@ -22,6 +22,7 @@
     },
     "exclude": [
         "node_modules",
+        "tools",
         ".vscode-test",
     ]
 }

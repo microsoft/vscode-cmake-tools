@@ -1,0 +1,23 @@
+{
+    "$schema": "https://json.schemastore.org/component-detection-manifest.json",
+    "Registrations": [
+        {
+            "Component": {
+                "Type": "git",
+                "git": {
+                    "repositoryUrl": "https://github.com/darthwalsh/vs.language.cmake",
+                    "commitHash": "25a6749b2dd233233be0ab0ebb1d04d41cef6387"
+                }
+            }
+        },
+        {
+            "Component": {
+                "Type": "git",
+                "git": {
+                    "repositoryUrl": "https://github.com/Kitware/CMake",
+                    "commitHash": "5e984bb35232116a54de7db39788cb162ca7c263"
+                }
+            }
+        }
+    ]
+}
