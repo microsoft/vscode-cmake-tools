@@ -104,7 +104,7 @@
         "message": "The number of parallel test jobs. Use zero to use the value of `#cmake.parallelJobs#`. This only applies when `#cmake.ctest.allowParallelJobs#` is set to `true`.",
         "comment": "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
     },
-    "cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result.",
+    "cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result and the Test Explorer may not accurately reflect test progress.",
     "cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "Whether or not the integration with the test explorer is enabled. This is helpful to disable if you prefer using a different extension for test integration.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
     "cmake-tools.configuration.cmake.enabledOutputParsers.description": {
@@ -311,5 +311,8 @@
     "cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Set Test Target",
     "cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Open Visibility Settings",
-    "cmake-tools.debugger.label": "CMake Debugger"
+    "cmake-tools.debugger.label": "CMake Debugger",
+    "cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Append Build Directory to Current Workspace",
+    "cmake-tools.command.workbench.action.tasks.configureTaskRunner.title":"Configure Task",
+    "cmake-tools.command.workbench.action.tasks.runTask.title":"Run Task"
 }
