@@ -5,6 +5,9 @@ import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath } from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
+import { populateViewCodeModel } from './targetsViewCodeModel';
+import { fs } from '@cmt/pr';
+import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -113,23 +116,6 @@ function iconForTargetType(type: codeModel.TargetTypeString): string {
             return 'library';
         case 'UTILITY':
             return 'tools';
-    }
-}
-
-function sortStringForType(type: codeModel.TargetTypeString): string {
-    switch (type) {
-        case 'EXECUTABLE':
-            return 'aaa';
-        case 'MODULE_LIBRARY':
-        case 'SHARED_LIBRARY':
-        case 'STATIC_LIBRARY':
-            return 'baa';
-        case 'UTILITY':
-            return 'caa';
-        case 'OBJECT_LIBRARY':
-            return 'daa';
-        case 'INTERFACE_LIBRARY':
-            return 'eaa';
     }
 }
 
@@ -247,6 +233,76 @@ export class SourceFileNode extends BaseNode {
     }
 }
 
+export class ReferencesNode extends BaseNode {
+    constructor(targetId: string) {
+        super(`${targetId}-references`);
+    }
+
+    get name() {
+        return this.id;
+    }
+
+    private _references = new Map<string, ReferenceNode>();
+
+    getChildren(): BaseNode[] {
+        return [...this._references.values()];
+    }
+    getTreeItem(): vscode.TreeItem {
+        const item = new vscode.TreeItem(this.id);
+        item.id = this.id;
+        if (this.getChildren().length) {
+            item.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+        }
+        item.label = localize('references', 'References');
+        item.contextValue = ['nodeType=references', `compilable=${false}`, `cmakelists=${false}`].join(',');
+        item.iconPath = new vscode.ThemeIcon('references');
+        return item;
+    }
+    getOrderTuple(): string[] {
+        return [this.id];
+    }
+
+    update(dependencies: CodeModelKind.Dependency[], targetId: string) {
+        const new_refs = new Map<string, ReferenceNode>();
+        for (const ref of dependencies) {
+            // filter out dependecies that are found and don't have a defined backtrace
+            if (ref.backtrace !== undefined) {
+                new_refs.set(ref.id, new ReferenceNode(ref.id, targetId));
+            }
+        }
+        this._references = new_refs;
+    }
+}
+
+export class ReferenceNode extends BaseNode {
+    constructor(id: string = "", parentTargetId: string) {
+        const name = id.split("::")[0];
+        super(`${name}-${parentTargetId}`);
+        this.name = name;
+    }
+
+    readonly name: string;
+
+    getChildren(): BaseNode[] {
+        return [];
+    }
+    getTreeItem(): vscode.TreeItem {
+        const item = new vscode.TreeItem(this.id);
+        item.id = this.id;
+        item.label = this.name;
+        item.contextValue = [
+            "nodeType=reference",
+            `compilable=${false}`,
+            `cmakelists=${false}`
+        ].join(",");
+        item.iconPath = new vscode.ThemeIcon("references");
+        return item;
+    }
+    getOrderTuple(): string[] {
+        return [this.id];
+    }
+}
+
 export class TargetNode extends BaseNode {
     constructor(readonly prefix: string, readonly projectName: string, cm: codeModel.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
         // id: {prefix}::target_name:artifact_name:target_path
@@ -265,13 +321,14 @@ export class TargetNode extends BaseNode {
     private _fsPath: string = '';
 
     getOrderTuple() {
-        return [sortStringForType(this._type), this.name];
+        return [this.name];
     }
 
     private readonly _rootDir: DirectoryNode<SourceFileNode>;
+    private readonly _referencesNode = new ReferencesNode(this.id);
 
     getChildren() {
-        return this._rootDir.getChildren();
+        return [this._referencesNode, ...this._rootDir.getChildren()];
     }
     getTreeItem() {
         try {
@@ -285,16 +342,23 @@ export class TargetNode extends BaseNode {
             if (this._isLaunch) {
                 item.label += ' 🚀';
             }
-            if (this._fullName !== this.name && this._fullName) {
-                item.label += ` [${this._fullName}]`;
-            }
-            if (this._type === 'INTERFACE_LIBRARY') {
-                item.label += ` — ${localize('interface.library', 'Interface library')}`;
-            } else if (this._type === 'UTILITY') {
-                item.label += ` — ${localize('utility', 'Utility')}`;
+
+            if (this._type === "STATIC_LIBRARY") {
+                item.label += ` (${localize('static.library', 'Static library')})`;
+            } else if (this._type === "MODULE_LIBRARY") {
+                item.label += ` (${localize('module.library', 'Module library')})`;
+            }  else if (this._type === "SHARED_LIBRARY") {
+                item.label += ` (${localize('shared.library', 'Shared library')})`;
             } else if (this._type === 'OBJECT_LIBRARY') {
-                item.label += ` — ${localize('object.library', 'Object library')}`;
+                item.label += ` (${localize('object.library', 'Object library')})`;
+            } else if (this._type === "EXECUTABLE") {
+                item.label += ` (${localize('executable', 'Executable')})`;
+            } else if (this._type === 'UTILITY') {
+                item.label += ` (${localize('utility', 'Utility')})`;
+            } else if (this._type === 'INTERFACE_LIBRARY') {
+                item.label += ` (${localize('interface.library', 'Interface library')})`;
             }
+
             item.resourceUri = vscode.Uri.file(this._fsPath);
             item.tooltip = localize('target.tooltip', 'Target {0}', this.name);
             if (this._isLaunch) {
@@ -355,13 +419,15 @@ export class TargetNode extends BaseNode {
         };
 
         for (const grp of cm.fileGroups || []) {
-            for (let src of grp.sources) {
-                if (!path.isAbsolute(src)) {
-                    src = path.join(this.sourceDir, src);
+            if (!grp.isGenerated) {
+                for (let src of grp.sources) {
+                    if (!path.isAbsolute(src)) {
+                        src = path.join(this.sourceDir, src);
+                    }
+                    const src_dir = path.dirname(src);
+                    const relpath = path.relative(this.sourceDir, src_dir);
+                    addToTree(tree, relpath, new SourceFileNode(this.id, this.folder, this.sourceDir, src, grp.language));
                 }
-                const src_dir = path.dirname(src);
-                const relpath = path.relative(this.sourceDir, src_dir);
-                addToTree(tree, relpath, new SourceFileNode(this.id, this.folder, this.sourceDir, src, grp.language));
             }
         }
 
@@ -375,6 +441,8 @@ export class TargetNode extends BaseNode {
             update: (_src, _cm) => {},
             create: newNode => newNode
         });
+
+        this._referencesNode.update(cm.dependencies || [], this.id);
     }
 
     async openInCMakeLists() {
@@ -393,56 +461,103 @@ export class TargetNode extends BaseNode {
 }
 
 export class ProjectNode extends BaseNode {
-    constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDirectory: string) {
+    constructor(
+        readonly name: string,
+        readonly folder: vscode.WorkspaceFolder,
+        readonly sourceDirectory: string
+    ) {
         // id: project_name:project_directory
         super(`${name}:${sourceDirectory}`);
     }
 
     private readonly _rootDir = new DirectoryNode<TargetNode>(this.id, '', '');
 
+    private sortProjectChildren(children: BaseNode[]): BaseNode[] {
+        return children.sort((a, b) => {
+            if (a instanceof TargetNode && b instanceof TargetNode) {
+                return lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple());
+            } else if (a instanceof TargetNode && b instanceof DirectoryNode) {
+                return -1;
+            } else if (a instanceof DirectoryNode && b instanceof TargetNode) {
+                return 1;
+            }
+
+            return 0;
+        });
+    }
+
     getOrderTuple() {
         return [this.sourceDirectory, this.name];
     }
 
     getChildren() {
-        return this._rootDir.getChildren();
+        const children: BaseNode[] = this.sortProjectChildren(this._rootDir.getChildren());
+
+        const cmakelists = new SourceFileNode(this.id, this.folder, this.sourceDirectory, path.join(this.sourceDirectory, 'CMakeLists.txt'));
+        children.push(cmakelists);
+
+        const possiblePreset = path.join(this.sourceDirectory, 'CMakePresets.json');
+        if (fs.existsSync(possiblePreset)) {
+            children.push(new SourceFileNode(this.id, this.folder, this.sourceDirectory, possiblePreset));
+        }
+
+        return children;
     }
 
     getTreeItem() {
-        const item = new vscode.TreeItem(this.name, vscode.TreeItemCollapsibleState.Expanded);
+        const item = new vscode.TreeItem(
+            this.name,
+            vscode.TreeItemCollapsibleState.Expanded
+        );
         if (this.getChildren().length === 0) {
-            item.label += ` — (${localize('empty.project', 'Empty project')})`;
+            item.label += ` — (${localize("empty.project", "Empty project")})`;
         }
         item.tooltip = `${this.name}\n${this.sourceDirectory}`;
-        item.contextValue = 'nodeType=project';
+        item.contextValue = "nodeType=project";
         return item;
     }
 
     update(pr: codeModel.CodeModelProject, ctx: TreeUpdateContext) {
+        // TODO: Update. We need to
+
         if (pr.name !== this.name) {
-            rollbar.error(localize('update.project.with.mismatch', 'Update project with mismatching name property'), { newName: pr.name, oldName: this.name });
+            rollbar.error(
+                localize(
+                    "update.project.with.mismatch",
+                    "Update project with mismatching name property"
+                ),
+                { newName: pr.name, oldName: this.name }
+            );
         }
 
         const tree: PathedTree<codeModel.CodeModelTarget> = {
             pathPart: '',
-            children: [],
-            items: []
+            items: [],
+            children: []
         };
 
-        for (const target of pr.targets) {
-            const srcdir = target.sourceDirectory || '';
-            const relpath = path.relative(pr.sourceDirectory, srcdir);
-            addToTree(tree, relpath, target);
+        for (const t of pr.targets) {
+            const target = t as codeModel.CodeModelTarget;
+
+            // Skip targets that the generator auto-created.
+            if (target.isGeneratorProvided) {
+                continue;
+            }
+
+            if (target.folder) {
+                addToTree(tree, target.folder.name, target);
+            } else {
+                addToTree(tree, '', target);
+            }
         }
-        collapseTreeInplace(tree);
 
         this._rootDir.update({
             tree,
             context: ctx,
             update: (tgt, cm) => tgt.update(cm, ctx),
-            create: cm => {
-                const node = new TargetNode(this.id, this.name, cm, this.folder);
-                node.update(cm, ctx);
+            create: newTgt => {
+                const node = new TargetNode(this.id, this.name, newTgt, this.folder);
+                node.update(newTgt, ctx);
                 return node;
             }
         });
@@ -507,14 +622,20 @@ export class WorkspaceFolderNode extends BaseNode {
             return;
         }
 
-        for (const modelProj of model.configurations[0].projects) {
-            let item = this.getNode(cmakeProject, modelProj.name);
-            if (!item) {
-                item = new ProjectNode(modelProj.name, this.wsFolder, cmakeProject.folderPath);
-                this.setNode(cmakeProject, modelProj.name, item);
-            }
-            item.update(modelProj, ctx);
+        if (model.configurations[0].projects.length === 0) {
+            this.removeNodes(cmakeProject);
+            ctx.nodesToUpdate.push(this);
+            return;
         }
+
+        const projectOutlineModel = populateViewCodeModel(model);
+        const rootProject = projectOutlineModel.project;
+        let item = this.getNode(cmakeProject, rootProject.name);
+        if (!item) {
+            item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
+            this.setNode(cmakeProject, rootProject.name, item);
+        }
+        item.update(rootProject, ctx);
     }
 
     getChildren() {

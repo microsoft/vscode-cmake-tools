@@ -14,6 +14,7 @@ Improvements:
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 - Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
 - Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
+- Refactor the Project Outline view to show a flat list of targets [#491](https://github.com/microsoft/vscode-cmake-tools/issues/491), [#3684](https://github.com/microsoft/vscode-cmake-tools/issues/3684)
 - Add the ability to pin CMake Commands to the sidebar [#2984](https://github.com/microsoft/vscode-cmake-tools/issues/2984) & [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
 
 Bug Fixes:
