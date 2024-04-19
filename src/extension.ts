@@ -49,6 +49,7 @@ import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from './debug/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from './ctest';
+import { glob } from 'glob';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -638,7 +639,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
         }
         if (!project.hasCMakeLists()) {
-            if (shouldConfigure === true) {
+            if (shouldConfigure === true && (await util.globForFileName("CMakeLists.txt", 3, project.folderPath))) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             }
         } else {
