@@ -428,8 +428,12 @@ export class ExtensionManager implements vscode.Disposable {
                 // We have an active kit. We're good.
                 return true;
             }
+
+            //TODO
+            const hascmakelist = await util.globForFileName("CMakeLists.txt", 3, cmakeProject.folderPath);
+
             // No kit? Is enable kit scan on?
-            if (!this.workspaceConfig.enableAutomaticKitScan) {
+            if (!this.workspaceConfig.enableAutomaticKitScan || !hascmakelist) {
                 await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
                 return true;
             }
