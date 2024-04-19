@@ -887,9 +887,11 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setActiveKitName(cmakeProject.activeKit ? cmakeProject.activeKit.name : '');
             this.activeConfigurePresetSub = cmakeProject.onActiveConfigurePresetChanged(FireNow, p => {
                 this.statusBar.setConfigurePresetName(p?.displayName || p?.name || '');
+                cmakeProject.notifyOnSelectedConfigurationChanged(api.ConfigurationType.ConfigurePreset);
             });
             this.activeBuildPresetSub = cmakeProject.onActiveBuildPresetChanged(FireNow, p => {
                 this.statusBar.setBuildPresetName(p?.displayName || p?.name || '');
+                cmakeProject.notifyOnSelectedConfigurationChanged(api.ConfigurationType.BuildPreset);
             });
             this.activeTestPresetSub = cmakeProject.onActiveTestPresetChanged(FireNow, p => {
                 this.statusBar.setTestPresetName(p?.displayName || p?.name || '');

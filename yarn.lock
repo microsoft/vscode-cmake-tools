@@ -6605,10 +6605,10 @@ vsce@^2.7.0:
     yauzl "^2.3.1"
     yazl "^2.2.2"
 
-vscode-cmake-tools@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/vscode-cmake-tools/-/vscode-cmake-tools-1.1.0.tgz#415da0e18e7dc08500a0e748708290efdbb19485"
-  integrity sha512-LVOSGrY2aHZBYg0t8mbcAtoYLR+xP4FaXiUx2lNmpK6bs+mK7FA15LgGrjUvgOo34UL5av3ZuAsJ7SROKUDGug==
+vscode-cmake-tools@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.npmjs.org/vscode-cmake-tools/-/vscode-cmake-tools-1.2.0.tgz#2dbdf515b0815a97607350f092812d8e01d81467"
+  integrity sha512-79K8i0l+AfPV28XPoCFCL1BgTVRTPrKZ7YY2KCPOJyy18G/CiriXVa1Gic7A2a16xOoIcsbZRRXoNO0BZTGp9w==
 
 vscode-cpptools@^6.1.0:
   version "6.1.0"
