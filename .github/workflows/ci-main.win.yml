@@ -42,9 +42,6 @@ jobs:
           configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
           install-build: true
 
-      - name: Delete NOTICE.txt
-        run: del ${{ github.workspace }}/NOTICE.txt
-
       - name: Run backend tests
         run: yarn backendTests
 
