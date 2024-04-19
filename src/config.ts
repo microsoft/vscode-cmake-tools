@@ -191,7 +191,7 @@ export interface ExtensionConfigurationSettings {
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
     loadCompileCommands: boolean;
-    configureOnOpen: boolean | null;
+    configureOnOpen: boolean;
     configureOnEdit: boolean;
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
@@ -424,9 +424,6 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.cpackArgs;
     }
     get configureOnOpen() {
-        if (util.isCodespaces() && this.configData.configureOnOpen === null) {
-            return true;
-        }
         return this.configData.configureOnOpen;
     }
     get configureOnEdit() {
@@ -590,7 +587,7 @@ export class ConfigurationReader implements vscode.Disposable {
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
-        configureOnOpen: new vscode.EventEmitter<boolean | null>(),
+        configureOnOpen: new vscode.EventEmitter<boolean>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),

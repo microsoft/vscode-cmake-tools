@@ -49,7 +49,6 @@ import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from './debug/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from './ctest';
-import { glob } from 'glob';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -591,60 +590,13 @@ export class ExtensionManager implements vscode.Disposable {
             vscode.workspace.workspaceFolders[0] === rootFolder &&
             await scanForKitsIfNeeded(project);
 
-        let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
-        if (shouldConfigure === null && !util.isTestMode()) {
-            interface Choice1 {
-                title: string;
-                doConfigure: boolean;
-            }
-            const chosen = await vscode.window.showInformationMessage<Choice1>(
-                localize('configure.this.project', 'Would you like to configure project {0}?', `"${rootFolder.name}"`),
-                {},
-                { title: localize('yes.button', 'Yes'), doConfigure: true },
-                { title: localize('not.now.button', 'Not now'), doConfigure: false }
-            );
-            if (!chosen) {
-                // User cancelled.
-                shouldConfigure = null;
-            } else {
-                const persistMessage = chosen.doConfigure ?
-                    localize('always.configure.on.open', 'Always configure projects upon opening?') :
-                    localize('never.configure.on.open', 'Configure projects on opening?');
-                const buttonMessages = chosen.doConfigure ?
-                    [localize('yes.button', 'Yes'), localize('no.button', 'No')] :
-                    [localize('never.button', 'Never'), localize('never.for.this.workspace.button', 'Not this workspace')];
-                interface Choice2 {
-                    title: string;
-                    persistMode: 'user' | 'workspace';
-                }
-                // Try to persist the user's selection to a `settings.json`
-                const prompt = vscode.window.showInformationMessage<Choice2>(
-                    persistMessage,
-                    {},
-                    { title: buttonMessages[0], persistMode: 'user' },
-                    { title: buttonMessages[1], persistMode: 'workspace' })
-                    .then(async choice => {
-                        if (!choice) {
-                            // Use cancelled. Do nothing.
-                            return;
-                        }
-                        const config = vscode.workspace.getConfiguration(undefined, rootFolder.uri);
-                        let configTarget = vscode.ConfigurationTarget.Global;
-                        if (choice.persistMode === 'workspace') {
-                            configTarget = vscode.ConfigurationTarget.WorkspaceFolder;
-                        }
-                        await config.update('cmake.configureOnOpen', chosen.doConfigure, configTarget);
-                    });
-                rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, prompt);
-                shouldConfigure = chosen.doConfigure;
-            }
-        }
+        const shouldConfigure = project.workspaceContext.config.configureOnOpen;
         if (!project.hasCMakeLists()) {
-            if (shouldConfigure === true && (await util.globForFileName("CMakeLists.txt", 3, project.folderPath))) {
+            if (shouldConfigure && (await util.globForFileName("CMakeLists.txt", 3, project.folderPath))) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             }
         } else {
-            if (shouldConfigure === true) {
+            if (shouldConfigure) {
                 // We've opened a new workspace folder, and the user wants us to
                 // configure it now.
                 log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', project.folderPath));
@@ -1298,7 +1250,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string) {
-        telemetry.logEvent("configure", { all: "false", debug: "false"});
         return this.runCMakeCommand(
             async cmakeProject => (await cmakeProject.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal)).result,
             folder, undefined, true, sourceDir);
@@ -1309,7 +1260,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string, trigger?: ConfigureTrigger) {
-        telemetry.logEvent("configure", { all: "false", debug: "true"});
         return this.runCMakeCommand(
             async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation)).result,
             folder, undefined, true, sourceDir);
@@ -1320,7 +1270,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAll() {
-        telemetry.logEvent("configure", { all: "true", debug: "false"});
         return this.runCMakeCommandForAll(async cmakeProject => ((await cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal)).result), undefined, true);
     }
 
@@ -1330,7 +1279,6 @@ export class ExtensionManager implements vscode.Disposable {
 
     configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
         // I need to add ConfigureTriggers that account for coming from the project status view or project outline.
-        telemetry.logEvent("configure", { all: "true", debug: "true"});
         return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation)).result, undefined, true);
     }
 
