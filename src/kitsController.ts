@@ -280,8 +280,8 @@ export class KitsController {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
                 const kitChanged = chosen_kit.kit !== this.project.activeKit;
                 if (kitChanged) {
-                    this.project.notifyOnSelectedConfigurationChanged(ConfigurationType.Kit);
                     await this.setFolderActiveKit(chosen_kit.kit);
+                    this.project.notifyOnSelectedConfigurationChanged(ConfigurationType.Kit);
                 }
 
                 if (chosen_kit.kit.name !== SpecialKits.Unspecified && kitChanged && this.project.workspaceContext.config.automaticReconfigure) {
