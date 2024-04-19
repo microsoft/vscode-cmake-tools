@@ -833,54 +833,22 @@ export class CTestDriver implements vscode.Disposable {
 
     private async debugCTestImpl(workspaceFolder: vscode.WorkspaceFolder, testName: string, cancellation: vscode.CancellationToken): Promise<void> {
         const magicValue = sessionNum++;
-        const launchConfig = vscode.workspace.getConfiguration(
-            'launch',
-            workspaceFolder.uri
-        );
-        const workspaceLaunchConfig = vscode.workspace.workspaceFile ? vscode.workspace.getConfiguration(
-            'launch',
-            vscode.workspace.workspaceFile
-        ) : undefined;
-        const configs = launchConfig.get<vscode.DebugConfiguration[]>('configurations') ?? [];
-        const workspaceConfigs = workspaceLaunchConfig?.get<vscode.DebugConfiguration[]>('configurations') ?? [];
-        if (configs.length === 0 && workspaceConfigs.length === 0) {
+
+        const testProgram = this.testProgram(testName);
+        const basename = path.parse(testProgram).name;
+        const debugConfig = await this.projectController?.getActiveCMakeProject()?.getDebugConfiguration(basename);
+
+        if (debugConfig === null || debugConfig === undefined) {
             log.error(localize('no.launch.config', 'No launch configurations found.'));
             return;
         }
 
-        interface ConfigItem extends vscode.QuickPickItem {
-            label: string;
-            config: vscode.DebugConfiguration;
-            detail: string;
-            // Undefined for workspace launch config
-            folder?: vscode.WorkspaceFolder;
-        }
-        let allConfigItems: ConfigItem[] = configs.map(config => ({ label: config.name, config, folder: workspaceFolder, detail: workspaceFolder.uri.fsPath }));
-        allConfigItems = allConfigItems.concat(workspaceConfigs.map(config => ({ label: config.name, config, detail: vscode.workspace.workspaceFile!.fsPath })));
-        let chosenConfig: ConfigItem | undefined;
-        if (allConfigItems.length === 1) {
-            chosenConfig = allConfigItems[0];
-        } else {
-            // TODO: we can remember the last choice once the CMake side panel work is done
-            const chosen = await vscode.window.showQuickPick(allConfigItems, { placeHolder: localize('choose.launch.config', 'Choose a launch configuration to debug the test with.') });
-            if (chosen) {
-                chosenConfig = chosen;
-            } else {
-                return;
-            }
-        }
-
-        // Commands can't be used to replace array (i.e., args); and both test program and test args requires folder and
-        // test name as parameters, which means one lauch config for each test. So replacing them here is a better way.
-        chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testProgram}', this.testProgram(testName));
-        chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
-
-        // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
-        // since we need to repalce the quotes as well.
-        chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
+        debugConfig.cwd = this.testWorkingDirectory(testName)!;
+        debugConfig.args = this.testArgs(testName)!;
 
         // Identify the session we started
-        chosenConfig.config[magicKey] = magicValue;
+        debugConfig[magicKey] = magicValue;
+
         let onDidStartDebugSession: vscode.Disposable | undefined;
         let onDidTerminateDebugSession: vscode.Disposable | undefined;
         let sessionId: string | undefined;
@@ -903,7 +871,7 @@ export class CTestDriver implements vscode.Disposable {
             log.info('debugSessionTerminated');
         });
 
-        const debugStarted = await vscode.debug.startDebugging(chosenConfig.folder, chosenConfig.config!);
+        const debugStarted = await vscode.debug.startDebugging(workspaceFolder, debugConfig!);
         if (debugStarted) {
             const session = await started;
             if (session) {
@@ -952,57 +920,6 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
         return [];
-    }
-
-    private replaceAllInObject<T>(obj: any, str: string, replace: string): T {
-        const regex = new RegExp(util.escapeStringForRegex(str), 'g');
-        if (util.isString(obj)) {
-            obj = obj.replace(regex, replace);
-        } else if (util.isArray(obj)) {
-            for (let i = 0; i < obj.length; i++) {
-                obj[i] = this.replaceAllInObject(obj[i], str, replace);
-            }
-        } else if (typeof obj === 'object') {
-            for (const key of Object.keys(obj)) {
-                obj[key] = this.replaceAllInObject(obj[key], str, replace);
-            }
-        }
-        return obj;
-    }
-
-    private replaceArrayItems(obj: any, str: string, replace: string[]) {
-        if (util.isArray(obj) && obj.length !== 0) {
-            const result: any[] = [];
-            for (let i = 0; i < obj.length; i++) {
-                if (util.isArray(obj[i]) || typeof obj[i] === 'object') {
-                    result.push(this.replaceArrayItems(obj[i], str, replace));
-                } else if (util.isString(obj[i])) {
-                    const replacedItem = this.replaceArrayItemsHelper(obj[i] as string, str, replace);
-                    if (util.isArray(replacedItem)) {
-                        result.push(...replacedItem);
-                    } else {
-                        result.push(replacedItem);
-                    }
-                } else {
-                    result.push(obj[i]);
-                }
-            }
-            return result;
-        }
-        if (typeof obj === 'object') {
-            for (const key of Object.keys(obj)) {
-                obj[key] = this.replaceArrayItems(obj[key], str, replace);
-            }
-            return obj;
-        }
-        return obj;
-    }
-
-    private replaceArrayItemsHelper(orig: string, str: string, replace: string[]): string | string[] {
-        if (orig === str) {
-            return replace;
-        }
-        return orig;
     }
 
     private async debugTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
