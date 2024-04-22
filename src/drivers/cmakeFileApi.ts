@@ -110,6 +110,15 @@ export namespace CodeModelKind {
         define: string;
     }
 
+    export interface InstallDestination {
+        path: string;
+    }
+
+    export interface InstallInfo {
+        IntallDestination: InstallDestination[];
+        prefix: string;
+    }
+
     export interface IncludeMetadata {
         path: string;
     }
@@ -157,6 +166,7 @@ export namespace CodeModelKind {
         paths: PathInfo;
         sources: TargetSourcefile[];
         compileGroups?: CompileGroup[];
+        InstallInfo?: InstallInfo;
     }
 }
 
