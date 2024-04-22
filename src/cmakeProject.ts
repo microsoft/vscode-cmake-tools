@@ -2910,7 +2910,7 @@ export class CMakeProject {
                 label: 'CTest',
                 description: localize('ctest.support', 'CTest support')
             }
-        ], { canPickMany: true }));
+        ], { canPickMany: true, placeHolder: localize('select.additional.options', 'Select additional options')}));
 
         let init = [
             'cmake_minimum_required(VERSION 3.0.0)',
