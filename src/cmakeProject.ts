@@ -2796,6 +2796,9 @@ export class CMakeProject {
                 if (!value.length) {
                     return localize('project.name.required', 'A project name is required');
                 }
+                if (value.includes(' ')) {
+                    return localize('project.name.no.spaces', 'Project name cannot contain spaces');
+                }
                 return '';
             }
         });
