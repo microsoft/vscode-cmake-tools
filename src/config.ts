@@ -424,6 +424,9 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.cpackArgs;
     }
     get configureOnOpen() {
+        if (this.configData.configureOnOpen === null) {
+            return true;
+        }
         return this.configData.configureOnOpen;
     }
     get configureOnEdit() {
