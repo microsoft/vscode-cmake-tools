@@ -2780,9 +2780,7 @@ export class CMakeProject {
         if (await fs.exists(mainPresetsFile)) {
             void vscode.window.showErrorMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured!'));
         } else {
-            if (!await this.presetsController.selectConfigurePreset(true)) {
-                // if we are on linux or mac we can add a default configure preset
-            }
+            await this.presetsController.selectConfigurePreset(true);
         }
 
         // Regardless of the following configure return code,
@@ -2835,6 +2833,17 @@ export class CMakeProject {
         if (!targetType) {
             return -1;
         }
+
+        const addlOptions = (await vscode.window.showQuickPick([
+            {
+                label: 'CPack',
+                description: localize('cpack.support', 'CPack support')
+            },
+            {
+                label: 'CTest',
+                description: localize('ctest.support', 'CTest support')
+            }
+        ], { canPickMany: true, placeHolder: localize('select.additional.options', 'Select additional options')}));
 
         // select current c/cpp files to add as targets, if any. If none, or none are selected, create a new one
         const files = await fs.readdir(this.sourceDir);
@@ -2900,17 +2909,6 @@ export class CMakeProject {
                 }
             }
         }
-
-        const addlOptions = (await vscode.window.showQuickPick([
-            {
-                label: 'CPack',
-                description: localize('cpack.support', 'CPack support')
-            },
-            {
-                label: 'CTest',
-                description: localize('ctest.support', 'CTest support')
-            }
-        ], { canPickMany: true, placeHolder: localize('select.additional.options', 'Select additional options')}));
 
         let init = [
             'cmake_minimum_required(VERSION 3.0.0)',

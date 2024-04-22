@@ -287,7 +287,7 @@ export class PresetsController {
                     // if we are calling from quick start and no compilers are found, exit out with an error message
                     if (quickStart && filteredKits.length === 1 && filteredKits[0].name === SpecialKits.ScanForKits) {
                         log.debug(localize('no.compilers.available.for.quick.start', 'No compilers available for Quick Start'));
-                        // TODO: write a better error message
+
                         void vscode.window.showErrorMessage(
                             localize('no.compilers.available', 'Cannot generate a CmakePresets.txt with Quick Start. No compilers available.'),
                             {

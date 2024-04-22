@@ -429,10 +429,11 @@ export class ExtensionManager implements vscode.Disposable {
                 return true;
             }
 
-            const hascmakelist = await util.globForFileName("CMakeLists.txt", 3, cmakeProject.folderPath);
+            const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, cmakeProject.folderPath);
 
-            // No kit selected? Is enable kit scan on? Or, is there a CMakeLists.txt?
-            if (!this.workspaceConfig.enableAutomaticKitScan || !hascmakelist) {
+            // No kit selected? Is enable kit scan on?
+            // Or, is this an empty workspace from QuickStart ie: no CMakeLists.txt
+            if (!this.workspaceConfig.enableAutomaticKitScan || !hascmakelists) {
                 await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
                 return true;
             }
