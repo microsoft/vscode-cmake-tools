@@ -32,6 +32,7 @@ variables:
   # VerifyNotice is set in the versions tab so it can be edited.
   # VerifyChangelog is set in the versions tab so it can be edited.
   TeamName: C++ Cross Platform and Cloud
+  Codeql.Language: javascript
   # If the user didn't override the signing type, then only real-sign on main.
   ${{ if ne(parameters.SignTypeOverride, 'default') }}:
     SignType: ${{ parameters.SignTypeOverride }}

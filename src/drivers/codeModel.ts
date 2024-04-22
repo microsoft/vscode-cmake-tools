@@ -10,7 +10,8 @@ export type CodeModelContent = api.CodeModel.Content;
 // TODO: Move framework definitions to the public API repo to avoid this intersection type.
 export type CodeModelFileGroup = api.CodeModel.FileGroup & { frameworks?: { path: string }[] };
 export type CodeModelProject = api.CodeModel.Project;
-export type CodeModelTarget = api.CodeModel.Target;
+// TODO: If requested, move folder, dependencies, and isGeneratorProvided definition to the public API repo to avoid this intersection type.
+export type CodeModelTarget = api.CodeModel.Target & { folder?: { name: string }; dependencies?: { backtrace: number; id: string }[]; isGeneratorProvided?: boolean};
 export type CodeModelToolchain = api.CodeModel.Toolchain;
 export type TargetTypeString = api.CodeModel.TargetType;
 
