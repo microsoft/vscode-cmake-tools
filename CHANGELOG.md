@@ -5,14 +5,18 @@ Features:
 
 - Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)
 - Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
+- Update `api.ts` to add the `onSelectedConfigurationChanged` event. [#3671](https://github.com/microsoft/vscode-cmake-tools/pull/3671) [@OrkunTokdemir](https://github.com/OrkunTokdemir)
+- Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
 
 Improvements:
 
+- Allow ctests to run in parallel when launched through the Test Explorer. [#3122](https://github.com/microsoft/vscode-cmake-tools/issues/3322)
 - Properly set up environment for MSYS toolchains. [#2447](https://github.com/microsoft/vscode-cmake-tools/issues/2447) [@Steelskin](https://github.com/Steelskin)
 - Allow for users to add `--warn-unused-cli`. This will override our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Add option to disable kit scan by default when a kit isn't selected. [#1461](https://github.com/microsoft/vscode-cmake-tools/issues/1461)
 - Show cmake output when version probe fails. [#3650](https://github.com/microsoft/vscode-cmake-tools/issues/3650)
 - Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
+- Refactor the Project Outline view to show a flat list of targets [#491](https://github.com/microsoft/vscode-cmake-tools/issues/491), [#3684](https://github.com/microsoft/vscode-cmake-tools/issues/3684)
 - Add the ability to pin CMake Commands to the sidebar [#2984](https://github.com/microsoft/vscode-cmake-tools/issues/2984) & [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
 - Improve CMake Tools experience when opening a folder [#3588](https://github.com/microsoft/vscode-cmake-tools/issues/3588)
 
@@ -28,7 +32,7 @@ Bug Fixes:
 - Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657)
 - Fix invocation of vcvarsall.bat script argument for targetArch. [#3672](https://github.com/microsoft/vscode-cmake-tools/issues/3672)
 - Ensure that we support ${workspaceFolder} when initializing cmake information. [#3658](https://github.com/microsoft/vscode-cmake-tools/issues/3658)
-
+- Fix issue where correcting `cmake.cmakePath` is still broken. [#3570](https://github.com/microsoft/vscode-cmake-tools/issues/3570)
 
 ## 1.17.17
 

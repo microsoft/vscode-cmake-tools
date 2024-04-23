@@ -31,7 +31,7 @@ import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline';
+import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline/projectOutline';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/variant';
@@ -840,9 +840,11 @@ export class ExtensionManager implements vscode.Disposable {
             this.statusBar.setActiveKitName(cmakeProject.activeKit ? cmakeProject.activeKit.name : '');
             this.activeConfigurePresetSub = cmakeProject.onActiveConfigurePresetChanged(FireNow, p => {
                 this.statusBar.setConfigurePresetName(p?.displayName || p?.name || '');
+                cmakeProject.notifyOnSelectedConfigurationChanged(api.ConfigurationType.ConfigurePreset);
             });
             this.activeBuildPresetSub = cmakeProject.onActiveBuildPresetChanged(FireNow, p => {
                 this.statusBar.setBuildPresetName(p?.displayName || p?.name || '');
+                cmakeProject.notifyOnSelectedConfigurationChanged(api.ConfigurationType.BuildPreset);
             });
             this.activeTestPresetSub = cmakeProject.onActiveTestPresetChanged(FireNow, p => {
                 this.statusBar.setTestPresetName(p?.displayName || p?.name || '');
@@ -2272,6 +2274,41 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
+
+    const CMAKE_LANGUAGE = "cmake";
+
+    vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
+        indentationRules: {
+            // ^(.*\*/)?\s*\}.*$
+            decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
+            // ^.*\{[^}"']*$
+            increaseIndentPattern: /^.*\{[^}"']*$/
+        },
+        wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
+        comments: {
+            lineComment: '#'
+        },
+        brackets: [
+            ['{', '}'],
+            ['(', ')']
+        ],
+
+        __electricCharacterSupport: {
+            brackets: [
+                { tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
+                { tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
+                { tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
+            ]
+        },
+
+        __characterPairSupport: {
+            autoClosingPairs: [
+                { open: '{', close: '}' },
+                { open: '(', close: ')' },
+                { open: '"', close: '"', notIn: ['string'] }
+            ]
+        }
+    });
 
     if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
         void vscode.window.showInformationMessage(

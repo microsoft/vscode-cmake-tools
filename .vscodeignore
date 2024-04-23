@@ -10,6 +10,7 @@ out/
 scripts/
 src/
 test/
+tools/
 vscode-extensions-localization-export/
 vscode-translations-import/
 **/*.map
