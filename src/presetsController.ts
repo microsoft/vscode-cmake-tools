@@ -413,11 +413,10 @@ export class PresetsController {
             if (newPreset) {
 
                 const before: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
-                const name = await this.showNameInputBox();
+                const name = await this.showNameInputBox() || newPreset.displayName || null;
                 if (!name) {
                     return false;
                 }
-
                 newPreset.name = name;
                 await this.addPresetAddUpdate(newPreset, 'configurePresets');
 
