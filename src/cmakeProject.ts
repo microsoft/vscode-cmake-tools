@@ -51,6 +51,7 @@ import paths from './paths';
 import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
+import { ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -717,6 +718,14 @@ export class CMakeProject {
         return this._codeModelChangedApiEventEmitter.event;
     }
     private readonly _codeModelChangedApiEventEmitter = new vscode.EventEmitter<void>();
+
+    public notifyOnSelectedConfigurationChanged(configurationType: ConfigurationType) {
+        this._onSelectedConfigurationChangedApiEvent.fire(configurationType);
+    }
+    get onSelectedConfigurationChangedApiEvent() {
+        return this._onSelectedConfigurationChangedApiEvent.event;
+    }
+    private readonly _onSelectedConfigurationChangedApiEvent = new vscode.EventEmitter<ConfigurationType>();
 
     private readonly communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
         log.info(localize('communication.changed.restart.driver', "Restarting the CMake driver after a communication mode change."));
@@ -2485,6 +2494,19 @@ export class CMakeProject {
             return binaryDir;
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Implementation of `cmake.appendBuildDirectoryToWorkspace`
+     */
+    async appendBuildDirectoryToWorkspace() {
+        const binaryDir = await this.buildDirectory();
+        if (binaryDir) {
+            const binaryDirUri = vscode.Uri.file(binaryDir);
+            vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.length : 0, 0, { uri: binaryDirUri });
+        } else {
+            void vscode.window.showErrorMessage(localize('unable.to.get.build.directory', 'Unable to get the build directory.'));
         }
     }
 

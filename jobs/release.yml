@@ -29,7 +29,10 @@ name: $(Date:yyyyMMdd).$(Rev:r)
 variables:
   IsPreRelease: 0
   # ReleaseVersion is set in the versions tab so it can be edited.
+  # VerifyNotice is set in the versions tab so it can be edited.
+  # VerifyChangelog is set in the versions tab so it can be edited.
   TeamName: C++ Cross Platform and Cloud
+  Codeql.Language: javascript
   # If the user didn't override the signing type, then only real-sign on main.
   ${{ if ne(parameters.SignTypeOverride, 'default') }}:
     SignType: ${{ parameters.SignTypeOverride }}
@@ -71,6 +74,26 @@ extends:
               @echo off
               if "$(ReleaseVersion)"=="unset" (
                   echo ^"ReleaseVersion^" was not set
+                  exit /B 1
+              )
+              exit /b 0
+        - task: CmdLine@2
+          displayName: Check VerifyNotice
+          inputs:
+            script: |
+              @echo off
+              if "$(VerifyNotice)"=="no" (
+                  echo ^"VerifyNotice^" was not set. Set to 'yes' once the NOTICE.txt is confirmed to be up-to-date.
+                  exit /B 1
+              )
+              exit /b 0
+        - task: CmdLine@2
+          displayName: Check VerifyChangelog
+          inputs:
+            script: |
+              @echo off
+              if "$(VerifyChangelog)"=="no" (
+                  echo ^"VerifyChangelog^" was not set. Set to 'yes' once the CHANGELOG is confirmed to be up-to-date.
                   exit /B 1
               )
               exit /b 0

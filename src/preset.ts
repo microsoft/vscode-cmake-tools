@@ -1040,7 +1040,14 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
                         // that supports the specified toolset.
                         if (!vsInstall) {
                             // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
-                            vsInstalls.sort((a, b) => -compareVersions(a.installationVersion, b.installationVersion));
+                            vsInstalls.sort((a, b) => {
+                                if (a.isPrerelease && !b.isPrerelease) {
+                                    return 1;
+                                } else if (!a.isPrerelease && b.isPrerelease) {
+                                    return -1;
+                                }
+                                return -compareVersions(a.installationVersion, b.installationVersion);
+                            });
 
                             for (const vs of vsInstalls) {
                                 // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
