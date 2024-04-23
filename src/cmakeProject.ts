@@ -876,9 +876,9 @@ export class CMakeProject {
                         fullPath: file
                     })) : [];
                     const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
-                    const dontAskAgain: string = localize("do.not.ask.again", "[Do not ask again]");
+                    const dontAskAgain: string = localize("do.not.ask.again", "[Don't Show Again]");
                     items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
-                    items.push({ label: dontAskAgain, fullPath: "", description: localize("do.not.ask.again.descriptoin", "Do not ask for CMakeLists.txt again in this folder. This will enable the cmake.ignoreCMakeListsMissing setting.") });
+                    items.push({ label: dontAskAgain, fullPath: "", description: localize("do.not.ask.again.description", "Do not ask for CMakeLists.txt again in this folder. This will enable the cmake.ignoreCMakeListsMissing setting.") });
                     const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
                         placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
                     });
@@ -1604,7 +1604,7 @@ export class CMakeProject {
                                         "yes.configureWithDebugger.button",
                                         "Debug"
                                     );
-                                    const doNotShowAgainTitle = localize('options.configureWithDebuggerOnFail.do.not.show', 'Do Not Show Again');
+                                    const doNotShowAgainTitle = localize('options.configureWithDebuggerOnFail.do.not.show', "Don't Show Again");
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         localize('configure.failed.tryWithDebugger', 'Configure failed. Would you like to attempt to configure with the CMake Debugger?'),
                                         {title: yesButtonTitle},
