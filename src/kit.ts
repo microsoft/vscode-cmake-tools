@@ -304,26 +304,48 @@ function isMingw(bin: string): boolean {
 }
 
 async function asMingwKit(bin: string, kit: Kit): Promise<Kit> {
+    // Attempt to derive the MSYS environment name from the compiler prefix.
+    // See https://www.msys2.org/docs/environments/
+    const PREFIX_TO_ENVIRONMENT = new Map<string, string>([
+        ['/usr', 'MSYS'],
+        ['/ucrt64', 'UCRT64'],
+        ['/clang64', 'CLANG64'],
+        ['/clangarm64', 'CLANGARM64'],
+        ['/clang32', 'CLANG32'],
+        ['/mingw64', 'MINGW64'],
+        ['/mingw32', 'MINGW32']
+    ]);
+
     const binParentPath = path.dirname(bin);
+    const prefixPath = path.dirname(binParentPath);
+    const msysPrefix = '/' + path.basename(prefixPath);
+    const msysEnvironment = PREFIX_TO_ENVIRONMENT.get(msysPrefix);
     const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
     const mingwMakeExists = await fs.exists(mingwMakePath);
 
-    // During a scan, binParentPath must be a directory already in the PATH.
-    // Therefore, we will assume that MinGW will remain in the user's PATH
-    // and do not need to record the current state of PATH (leave it to the
-    // user to rescan later or specify an explicit path to MinGW if this
-    // changes).  Additionally, caching the current state of PATH can cause
-    // complications on later invocation when using the kit environment
-    // because its PATH will take precedence.  If a user makes changes to
-    // their PATH later without rescanning for kits, then the kit's cached
-    // PATH will clobber the actual current PATH.  We will, however, record
-    // the MinGW path in case we want to use it later.
-    const ENV_PATH = `${binParentPath}`;
-    kit.environmentVariables = { CMT_MINGW_PATH: ENV_PATH };
+    // binParentPath may not already be in the PATH (for instance, scanning
+    // was done from the "additionalCompilerSearchDirs" property). In addition,
+    // in order to prevent problems during cmake configuration, we should make
+    // sure that the MSYS paths are set before the rest of the path. In
+    // particular, this can be a problem for setups with multiple MSYS
+    // installations. In order to limit the scope of the environment variable,
+    // we only override the PATH if the MSYS environment is known.
+    if (msysEnvironment === undefined) {
+        kit.environmentVariables = { CMT_MINGW_PATH: `${binParentPath}` };
+    } else {
+        const msysBasePath = path.dirname(prefixPath);
+        const msysBinPath = path.join(msysBasePath, 'usr', 'bin');
+        kit.environmentVariables = {
+            CMT_MINGW_PATH: `${binParentPath}`,
+            MSYSTEM: `${msysEnvironment}`,
+            MSYSTEM_PREFIX: `${msysPrefix}`,
+            PATH: `${binParentPath}` + ';' + `${msysBinPath}` + ';${env:PATH}'
+        };
+    }
 
     if (mingwMakeExists) {
         // Check for working mingw32-make
-        const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: ENV_PATH }, timeout: 30000 }).result;
+        const execMake = await proc.execute(mingwMakePath, ['-v'], null, { environment: { PATH: kit.environmentVariables['CMT_MINGW_PATH'] }, timeout: 30000 }).result;
         if (execMake.retc !== 0) {
             log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ({0} returns non-zero): {1}', "\"-v\"", bin));
         } else {

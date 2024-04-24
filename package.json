@@ -401,11 +401,6 @@
         }
       },
       {
-        "command": "cmake.buildNamedTarget",
-        "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.buildNamedTarget.title%"
-      },
-      {
         "command": "cmake.compileFile",
         "title": "%cmake-tools.command.cmake.compileFile.title%",
         "category": "CMake",
@@ -824,6 +819,12 @@
         "title": "%cmake-tools.command.cmake.pinnedCommands.run.title%",
         "category": "CMake",
         "icon": "$(play-circle)"      
+      },
+      {
+        "command": "cmake.appendBuildDirectoryToWorkspace",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
+        "category": "CMake"
       }
     ],
     "taskDefinitions": [
@@ -2056,7 +2057,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.clearOutputBeforeBuild.description%",
-          "scope": "window"
+          "scope": "resource"
         },
         "cmake.configureSettings": {
           "type": "object",
@@ -2209,7 +2210,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description%",
-          "scope": "application"
+          "scope": "machine-overridable"
         },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
@@ -2460,7 +2461,7 @@
             "test",
             "--output-on-failure"
           ],
-          "scope": "machine"
+          "scope": "machine-overridable"
         },
         "cmake.cpackArgs": {
           "type": "array",

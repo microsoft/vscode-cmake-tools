@@ -102,6 +102,7 @@ export interface ExecutionOptions {
     outputEncoding?: string;
     overrideLocale?: boolean;
     timeout?: number;
+    showOutputOnError?: boolean;
 }
 
 export function buildCmdStr(command: string, args?: string[]): string {
@@ -206,6 +207,16 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                     log.warning(localize({key: 'process.exit.with.signal', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
                 } else {
                     log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1}', `${cmdstr}`, `${code}`));
+                }
+                if (options?.showOutputOnError) {
+                    if (stdout_acc) {
+                        const output = stdout_acc.trimEnd().replace(/\n/g, '\n\t');
+                        log.warning(localize('process.exit.stdout', 'Command output on standard out: {0}', `${output}`));
+                    }
+                    if (stderr_acc) {
+                        const output = stderr_acc.trimEnd().replace(/\n/g, '\n\t');
+                        log.warning(localize('process.exit.stderr', 'Command output on standard error: {0}', `${output}`));
+                    }
                 }
             }
         });
