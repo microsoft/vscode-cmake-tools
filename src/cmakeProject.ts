@@ -2796,6 +2796,9 @@ export class CMakeProject {
             if (await this.createCMakeListsFile(mainListFile) !== 0) {
                 return -1;
             }
+            log.debug(localize('cmakelists.created', '[Quick Start] CmakeLists.txt created successfully.'));
+        } else {
+            log.debug(localize('cmakelists.exists', '[Quick Start] A CmakeLists.txt already exists, continuing...'));
         }
 
         // By now, we have a valid CMakeLists.txt so move onto CMakePresets.json
@@ -2935,7 +2938,7 @@ export class CMakeProject {
     /**
      * Creates a hello world C++ or C file in the source directory
      */
-    private async createCppFile(fileName: string, langExt: string, projType: string): Promise<Number>{
+    private async createCppFile(fileName: string, langExt: string, projType: string): Promise<Number> {
         if (projType === 'Library') {
             if (!(await fs.exists(path.join(this.sourceDir, `${fileName}.${langExt}`)))) {
                 await fs.writeFile(path.join(this.sourceDir, `${fileName}.${langExt}`),
