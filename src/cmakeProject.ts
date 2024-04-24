@@ -2889,55 +2889,22 @@ export class CMakeProject {
 
         // Create start c/cpp file if none are selected
         if (selectedFiles.length === 0) {
-            if (type === 'Library') {
-                if (!(await fs.exists(path.join(this.sourceDir, `${projectName}.${langExt}`)))) {
-                    await fs.writeFile(path.join(this.sourceDir, `${projectName}.${langExt}`),
-                        (lang === "C++" ?
-                            ([
-                                '#include <iostream>',
-                                '',
-                                'void say_hello(){',
-                                `    std::cout << "Hello, from ${projectName}!\\n";`,
-                                '}',
-                                ''
-                            ]) :
-                            ([
-                                '#include <stdio.h>',
-                                '',
-                                'void say_hello(){',
-                                `    printf("Hello, from ${projectName}!\\n");`,
-                                '}',
-                                ''
-                            ])).join('\n'));
-                }
-            } else if (type === 'Executable') {
-                if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
-                    await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
-                        (lang === "C++" ?
-                            ([
-                                '#include <iostream>',
-                                '',
-                                'int main(int, char**){',
-                                `    std::cout << "Hello, from ${projectName}!\\n";`,
-                                '}',
-                                ''
-                            ]) :
-                            ([
-                                '#include <stdio.h>',
-                                '',
-                                'int main(int, char**){',
-                                `    printf("Hello, from ${projectName}!\\n");`,
-                                '}',
-                                ''
-                            ])
-                        ).join('\n'));
-                }
+            if (await this.createCppFile(projectName, langExt, type) !== 0) {
+                return -1;
             }
         }
 
         let init = [
             'cmake_minimum_required(VERSION 3.0.0)',
             `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
+            '\n'
+        ].join('\n');
+
+        init += [
+            type === 'Library' ? `add_library(${projectName} ${projectName}.${langExt})`
+                : `add_executable(${projectName} `
+                + (selectedFiles.length === 0 ? `main.${langExt}` : selectedFiles.join(' '))
+                +  `)`,
             '\n'
         ].join('\n');
 
@@ -2948,14 +2915,6 @@ export class CMakeProject {
                 '\n'
             ].join('\n');
         }
-
-        init += [
-            type === 'Library' ? `add_library(${projectName} ${projectName}.${langExt})`
-                : `add_executable(${projectName} `
-                + (selectedFiles.length === 0 ? `main.${langExt}` : selectedFiles.join(' '))
-                +  `)`,
-            '\n'
-        ].join('\n');
 
         if (addlOptions?.some(option => option.label === 'CPack')) {
             init += [
@@ -2971,6 +2930,59 @@ export class CMakeProject {
         await vscode.window.showTextDocument(doc);
 
         return 0;
+    }
+
+    /**
+     * Creates a hello world C++ or C file in the source directory
+     */
+    private async createCppFile(fileName: string, langExt: string, projType: string): Promise<Number>{
+        if (projType === 'Library') {
+            if (!(await fs.exists(path.join(this.sourceDir, `${fileName}.${langExt}`)))) {
+                await fs.writeFile(path.join(this.sourceDir, `${fileName}.${langExt}`),
+                    (langExt === "C++" ?
+                        ([
+                            '#include <iostream>',
+                            '',
+                            'void say_hello(){',
+                            `    std::cout << "Hello, from ${fileName}!\\n";`,
+                            '}',
+                            ''
+                        ]) :
+                        ([
+                            '#include <stdio.h>',
+                            '',
+                            'void say_hello(){',
+                            `    printf("Hello, from ${fileName}!\\n");`,
+                            '}',
+                            ''
+                        ])).join('\n'));
+                return 0;
+            }
+        } else if (projType === 'Executable') {
+            if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
+                await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
+                    (langExt === "C++" ?
+                        ([
+                            '#include <iostream>',
+                            '',
+                            'int main(int, char**){',
+                            `    std::cout << "Hello, from ${fileName}!\\n";`,
+                            '}',
+                            ''
+                        ]) :
+                        ([
+                            '#include <stdio.h>',
+                            '',
+                            'int main(int, char**){',
+                            `    printf("Hello, from ${fileName}!\\n");`,
+                            '}',
+                            ''
+                        ])
+                    ).join('\n'));
+                return 0;
+            }
+        }
+        return -1;
     }
 
     /**

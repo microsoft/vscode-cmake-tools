@@ -289,7 +289,7 @@ export class PresetsController {
                         log.debug(localize('no.compilers.available.for.quick.start', 'No compilers available for Quick Start'));
 
                         void vscode.window.showErrorMessage(
-                            localize('no.compilers.available', 'Cannot generate a CmakePresets.txt with Quick Start. No compilers available.'),
+                            localize('no.compilers.available', 'Cannot generate a CmakePresets.json with Quick Start due to no compilers being available.'),
                             {
                                 title: localize('learn.about.installing.compilers', 'Learn About Installing Compilers') ,
                                 isLearnMore: true
@@ -413,7 +413,7 @@ export class PresetsController {
             if (newPreset) {
 
                 const before: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
-                const name = await this.showNameInputBox() || newPreset.displayName || null;
+                const name = await this.showNameInputBox() || newPreset.displayName || undefined;
                 if (!name) {
                     return false;
                 }
@@ -1463,7 +1463,7 @@ export class PresetsController {
     //-----
     async openCMakePresets(): Promise<vscode.TextEditor | undefined> {
         if (!await fs.exists(this.presetsPath)) {
-            return this.updatePresetsFile({ version: 7 });
+            return this.updatePresetsFile({ version: 8 });
         } else {
             return vscode.window.showTextDocument(vscode.Uri.file(this.presetsPath));
         }
@@ -1471,7 +1471,7 @@ export class PresetsController {
 
     async openCMakeUserPresets(): Promise<vscode.TextEditor | undefined> {
         if (!await fs.exists(this.userPresetsPath)) {
-            return this.updatePresetsFile({ version: 7 }, true);
+            return this.updatePresetsFile({ version: 8 }, true);
         } else {
             return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
         }
@@ -1704,7 +1704,7 @@ export class PresetsController {
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
-        const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 7 };
+        const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
         if (!originalPresetsFile[presetType]) {
             originalPresetsFile[presetType] = [];
         }
