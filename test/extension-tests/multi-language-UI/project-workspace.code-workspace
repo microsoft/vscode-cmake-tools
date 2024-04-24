@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "project-cmake"
+		},
+		{
+			"path": "project-python"
+		},
+		{
+			"path": "project-javascript"
+		}
+	],
+	"extensions": {
+		"recommendations": ["ms-python.python", "Orta.vscode-jest"]
+	},
+	"settings": {
+		"files.associations": {
+			"iostream": "cpp"
+		}
+	}
+}
