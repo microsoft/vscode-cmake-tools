@@ -32,6 +32,7 @@ Bug Fixes:
 - Fix invocation of vcvarsall.bat script argument for targetArch. [#3672](https://github.com/microsoft/vscode-cmake-tools/issues/3672)
 - Ensure that we support ${workspaceFolder} when initializing cmake information. [#3658](https://github.com/microsoft/vscode-cmake-tools/issues/3658)
 - Fix issue where correcting `cmake.cmakePath` is still broken. [#3570](https://github.com/microsoft/vscode-cmake-tools/issues/3570)
+- Fix CMakePresets.json schema validation. [#3651](https://github.com/microsoft/vscode-cmake-tools/issues/3651)
 
 ## 1.17.17
 
