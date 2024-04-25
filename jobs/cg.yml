@@ -42,6 +42,8 @@ extends:
         name: AzurePipelines-EO
         image: AzurePipelinesWindows2022compliantGPT
         os: windows
+      policheck:
+        enabled: true
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
