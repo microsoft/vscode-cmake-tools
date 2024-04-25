@@ -52,7 +52,7 @@ extends:
           codebaseName: vscode-cmake-tools
           tsaStamp: $(Tsa.AdoProject)
           tsaEnvironment: PROD
-          notificationAlias: $(Tsa.NotificationAliases)
+          notificationAliases: $(Tsa.NotificationAliases)
           codebaseAdmins: $(Tsa.CodebaseAdmins)
           instanceUrl: $(Tsa.AdoOrg)
           projectName: $(Tsa.AdoProject)
