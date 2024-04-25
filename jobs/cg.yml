@@ -57,7 +57,7 @@ extends:
           instanceUrl: $(Tsa.AdoOrg)
           projectName: $(Tsa.AdoProject)
           areaPath: $(Tsa.AreaPath)
-          iterationPath: $(Tsa.AreaPath)
+          iterationPath: $(Tsa.AdoProject)
           allTools: true
           repositoryName: vscode-cmake-tools
     customBuildTags:
