@@ -44,6 +44,21 @@ extends:
         os: windows
       policheck:
         enabled: true
+      tsa:
+        enabled: true
+        config:
+          codebase: NewOrUpdate
+          codebaseName: vscode-cmake-tools
+          tsaStamp: $(Pipeline.AdoProject)
+          tsaEnvironment: PROD
+          notificationAliases: $(Pipeline.NotificationAliases)
+          codebaseAdmins: $(Pipeline.CodebaseAdmins)
+          instanceUrl: $(Pipeline.AdoOrg)
+          projectName: $(Pipeline.AdoProject)
+          areaPath: $(Pipeline.AreaPath)
+          iterationPath: $(Pipeline.AreaPath)
+          allTools: true
+          repositoryName: vscode-cmake-tools
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
