@@ -47,6 +47,7 @@ extends:
       tsa:
         enabled: true
         config:
+          tsaVersion: TsaV2
           codebase: NewOrUpdate
           codebaseName: vscode-cmake-tools
           tsaStamp: $(Pipeline.AdoProject)
