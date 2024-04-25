@@ -50,14 +50,14 @@ extends:
           tsaVersion: TsaV2
           codebase: NewOrUpdate
           codebaseName: vscode-cmake-tools
-          tsaStamp: $(Pipeline.AdoProject)
+          tsaStamp: $(Tsa.AdoProject)
           tsaEnvironment: PROD
-          notificationAliases: $(Pipeline.NotificationAliases)
-          codebaseAdmins: $(Pipeline.CodebaseAdmins)
-          instanceUrl: $(Pipeline.AdoOrg)
-          projectName: $(Pipeline.AdoProject)
-          areaPath: $(Pipeline.AreaPath)
-          iterationPath: $(Pipeline.AreaPath)
+          notificationAlias: $(Tsa.NotificationAliases)
+          codebaseAdmins: $(Tsa.CodebaseAdmins)
+          instanceUrl: $(Tsa.AdoOrg)
+          projectName: $(Tsa.AdoProject)
+          areaPath: $(Tsa.AreaPath)
+          iterationPath: $(Tsa.AreaPath)
           allTools: true
           repositoryName: vscode-cmake-tools
     customBuildTags:
