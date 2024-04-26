@@ -42,6 +42,24 @@ extends:
         name: AzurePipelines-EO
         image: AzurePipelinesWindows2022compliantGPT
         os: windows
+      policheck:
+        enabled: true
+      tsa:
+        enabled: true
+        config:
+          tsaVersion: TsaV2
+          codebase: NewOrUpdate
+          codebaseName: vscode-cmake-tools
+          tsaStamp: $(Tsa.AdoProject)
+          tsaEnvironment: PROD
+          notificationAliases: $(Tsa.NotificationAliases)
+          codebaseAdmins: $(Tsa.CodebaseAdmins)
+          instanceUrl: $(Tsa.AdoOrg)
+          projectName: $(Tsa.AdoProject)
+          areaPath: $(Tsa.AreaPath)
+          iterationPath: $(Tsa.AdoProject)
+          allTools: true
+          repositoryName: vscode-cmake-tools
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
