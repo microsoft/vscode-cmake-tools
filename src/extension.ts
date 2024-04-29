@@ -594,7 +594,6 @@ export class ExtensionManager implements vscode.Disposable {
             vscode.workspace.workspaceFolders[0] === rootFolder &&
             await scanForKitsIfNeeded(project);
 
-        const newDefaultExperience = await(await telemetry.getExperimentationService())?.getTreatmentVariableAsync("cmake", "newDefaultExperience", false);
         let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
 
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
@@ -643,7 +642,6 @@ export class ExtensionManager implements vscode.Disposable {
                     });
                 rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, prompt);
                 shouldConfigure = chosen.doConfigure;
-            }
         }
 
         if (!project.hasCMakeLists()) {
