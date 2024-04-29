@@ -594,6 +594,7 @@ export class ExtensionManager implements vscode.Disposable {
             vscode.workspace.workspaceFolders[0] === rootFolder &&
             await scanForKitsIfNeeded(project);
 
+        const newDefaultExperience = await(await telemetry.getExperimentationService())?.getTreatmentVariableAsync("cmake", "newDefaultExperience", false);
         let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
 
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
@@ -609,7 +610,7 @@ export class ExtensionManager implements vscode.Disposable {
                 { title: localize('not.now.button', 'Not now'), doConfigure: false }
             );
             if (!chosen) {
-                // User cancelled.
+            // User cancelled.
                 shouldConfigure = null;
             } else {
                 const persistMessage = chosen.doConfigure ?
@@ -630,7 +631,7 @@ export class ExtensionManager implements vscode.Disposable {
                     { title: buttonMessages[1], persistMode: 'workspace' })
                     .then(async choice => {
                         if (!choice) {
-                            // Use cancelled. Do nothing.
+                        // Use cancelled. Do nothing.
                             return;
                         }
                         const config = vscode.workspace.getConfiguration(undefined, rootFolder.uri);
@@ -644,6 +645,7 @@ export class ExtensionManager implements vscode.Disposable {
                 shouldConfigure = chosen.doConfigure;
             }
         }
+
         if (!project.hasCMakeLists()) {
             if (shouldConfigure === true && (await util.globForFileName("CMakeLists.txt", 3, project.folderPath))) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
