@@ -2807,7 +2807,7 @@ export class CMakeProject {
 
         // By now, we have a valid CMakeLists.txt so move onto CMakePresets.json
         if (await fs.exists(mainPresetsFile)) {
-            void vscode.window.showErrorMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured!'));
+            void vscode.window.showInformationMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured.'));
         } else {
             await this.presetsController.selectConfigurePreset(true);
         }
@@ -2894,10 +2894,13 @@ export class CMakeProject {
         const langName = lang === "C++" ? "C CXX" : "C";
         const langExt  = lang === "C++" ? "cpp" : "c";
 
+        let failedToCreate = false;
+
         // Create start c/cpp file if none are selected
         if (selectedFiles.length === 0) {
             if (await this.createCppFile(projectName, langExt, type) !== 0) {
-                return -1;
+                void vscode.window.showErrorMessage(localize('create.file.failed', 'Failed to create a new {0} file. Update CMakeLists.txt.', langExt));
+                failedToCreate = true;
             }
         }
 
@@ -2908,10 +2911,10 @@ export class CMakeProject {
         ].join('\n');
 
         init += [
-            type === 'Library' ? `add_library(${projectName} ${projectName}.${langExt})`
+            type === 'Library' ? `add_library(${projectName} `
+                + (selectedFiles.length === 0 ? (failedToCreate ? `#[[Add source files here]]` : `${projectName}.${langExt}`) : selectedFiles.join(' ')) + `)`
                 : `add_executable(${projectName} `
-                + (selectedFiles.length === 0 ? `main.${langExt}` : selectedFiles.join(' '))
-                +  `)`,
+                + (selectedFiles.length === 0 ? (failedToCreate ? `#[[Add source files here]]` : `main.${langExt}`) : selectedFiles.join(' ')) + `)`,
             '\n'
         ].join('\n');
 
