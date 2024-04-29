@@ -2899,7 +2899,7 @@ export class CMakeProject {
         // Create start c/cpp file if none are selected
         if (selectedFiles.length === 0) {
             if (await this.createCppFile(projectName, langExt, type) !== 0) {
-                void vscode.window.showErrorMessage(localize('create.file.failed', 'Failed to create a new {0} file. Update CMakeLists.txt.', langExt));
+                void vscode.window.showErrorMessage(localize('create.file.failed', 'Failed to create a new {0} file. Add target to CMakeLists.txt.', langExt));
                 failedToCreate = true;
             }
         }
@@ -2910,13 +2910,15 @@ export class CMakeProject {
             '\n'
         ].join('\n');
 
-        init += [
-            type === 'Library' ? `add_library(${projectName} `
-                + (selectedFiles.length === 0 ? (failedToCreate ? `#[[Add source files here]]` : `${projectName}.${langExt}`) : selectedFiles.join(' ')) + `)`
-                : `add_executable(${projectName} `
-                + (selectedFiles.length === 0 ? (failedToCreate ? `#[[Add source files here]]` : `main.${langExt}`) : selectedFiles.join(' ')) + `)`,
-            '\n'
-        ].join('\n');
+        if (!failedToCreate) {
+            init += [
+                type === 'Library' ? `add_library(${projectName} `
+                    + (selectedFiles.length === 0 ? `${projectName}.${langExt}` : selectedFiles.join(' ')) + `)`
+                    : `add_executable(${projectName} `
+                    + (selectedFiles.length === 0 ? `main.${langExt}` : selectedFiles.join(' ')) + `)`,
+                '\n'
+            ].join('\n');
+        }
 
         if (addlOptions?.some(option => option.label === 'CTest')) {
             init += [
