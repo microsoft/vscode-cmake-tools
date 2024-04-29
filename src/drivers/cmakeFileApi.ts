@@ -114,9 +114,13 @@ export namespace CodeModelKind {
         path: string;
     }
 
+    export interface InstallPrefix {
+        path: string;
+    }
+
     export interface InstallInfo {
-        IntallDestination: InstallDestination[];
-        prefix: string;
+        destinations: InstallDestination[];
+        prefix: InstallPrefix;
     }
 
     export interface IncludeMetadata {
@@ -178,7 +182,7 @@ export namespace CodeModelKind {
         dependencies?: Dependency[];
         folder?: Folder;
         isGeneratorProvided?: boolean;
-        InstallInfo?: InstallInfo;
+        install?: InstallInfo;
     }
 }
 
@@ -400,10 +404,14 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
     }
 
     let executablePath;
+    const installPaths = [];
     if (targetObject.artifacts) {
         executablePath = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
         if (executablePath) {
             executablePath = convertToAbsolutePath(executablePath.path, buildDirectory);
+            if (targetObject.install) {
+                installPaths.push(...targetObject.install.destinations.map(dest => ({ path: convertToAbsolutePath(path.join(dest.path, targetObject.nameOnDisk), targetObject.install!.prefix.path), subPath: dest.path })));
+            }
         }
     }
 
@@ -411,7 +419,8 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
         name: targetObject.name,
         filepath: executablePath,
         targetType: targetObject.type,
-        type: 'rich' as 'rich'
+        type: 'rich' as 'rich',
+        installPaths: installPaths
     } as RichTarget;
 }
 
@@ -515,6 +524,7 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
         sysroot,
         folder: targetObject.folder,
         dependencies: targetObject.dependencies,
+        install: targetObject.install,
         isGeneratorProvided: targetObject.isGeneratorProvided
     } as CodeModelTarget;
 }

@@ -421,11 +421,26 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     get executableTargets(): ExecutableTarget[] {
-        return this.uniqueTargets.filter(t => t.type === 'rich' && (t as RichTarget).targetType === 'EXECUTABLE')
-            .map(t => ({
-                name: t.name,
-                path: (t as RichTarget).filepath
-            }));
+        const uniqueExecTargets = this.uniqueTargets.filter(t => t.type === 'rich' && (t as RichTarget).targetType === 'EXECUTABLE');
+        const executableTargetsWithInstall = uniqueExecTargets.map(t => ({
+            name: t.name,
+            path: (t as RichTarget).filepath,
+            isInstallTarget: false
+        }));
+
+        for (const t of uniqueExecTargets) {
+            const target = t as RichTarget;
+            if (target.installPaths && target.installPaths.length > 0) {
+                for (const installPath of target.installPaths) {
+                    executableTargetsWithInstall.push({
+                        name: target.name + ' (' + installPath.subPath + ')',
+                        path: installPath.path,
+                        isInstallTarget: true
+                    });
+                }
+            }
+        }
+        return executableTargetsWithInstall;
     }
 
     get cmakeFiles(): string[] {
