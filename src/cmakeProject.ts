@@ -2809,7 +2809,9 @@ export class CMakeProject {
         if (await fs.exists(mainPresetsFile)) {
             void vscode.window.showInformationMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured.'));
         } else {
-            await this.presetsController.selectConfigurePreset(true);
+            if (!await this.presetsController.selectConfigurePreset(true)) {
+                await this.kitsController.selectKit();
+            }
         }
 
         // Regardless of the following configure return code,
