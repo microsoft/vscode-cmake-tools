@@ -30,7 +30,7 @@ import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { FileDiagnostic, populateCollection } from './diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from './expand';
-import { CMakeGenerator, Kit } from './kit';
+import { CMakeGenerator, Kit, SpecialKits } from './kit';
 import * as logging from './logging';
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
@@ -1735,7 +1735,9 @@ export class CMakeProject {
         }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
-                throw new Error(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
+                await vscode.window.showErrorMessage(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
+                log.debug(localize('no.kit.abort', 'No kit selected. Abort configure'));
+                return { result: -1, resultType: ConfigureResultType.Other };
             }
             if (!this.variantManager.haveVariant) {
                 progress.report({ message: localize('waiting.on.variant', 'Waiting on variant selection') });
@@ -1746,7 +1748,9 @@ export class CMakeProject {
                 }
             }
         } else if (!this.configurePreset) {
-            throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
+            await vscode.window.showErrorMessage(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
+            log.debug(localize('no.preset.abort', 'No preset selected. Abort configure'));
+            return { result: -1, resultType: ConfigureResultType.Other };
         }
         log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
@@ -2810,7 +2814,7 @@ export class CMakeProject {
             void vscode.window.showInformationMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured.'));
         } else {
             if (!await this.presetsController.selectConfigurePreset(true)) {
-                await this.kitsController.selectKit();
+                await this.kitsController.setKitByName(SpecialKits.Unspecified);
             }
         }
 
