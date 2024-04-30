@@ -5,7 +5,7 @@
 
 # To fully customize the contents of this image, use the following Dockerfile instead:
 # https://github.com/microsoft/vscode-dev-containers/tree/v0.128.0/containers/typescript-node-10/.devcontainer/Dockerfile
-FROM mcr.microsoft.com/vscode/devcontainers/typescript-node:14
+FROM mcr.microsoft.com/vscode/devcontainers/typescript-node:16
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
