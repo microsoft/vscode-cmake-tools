@@ -264,6 +264,7 @@ export class ExtensionManager implements vscode.Disposable {
                 this.statusBar.setAutoSelectActiveProject(true);
             }
             await this.initActiveProject();
+            await this.selectDefaultProject();
         }
         const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject();
         await enableFullFeatureSet(isFullyActivated);
@@ -730,6 +731,27 @@ export class ExtensionManager implements vscode.Disposable {
         }
         await this.updateActiveProject(folder, vscode.window.activeTextEditor);
         return this.getActiveProject();
+    }
+
+    // Selects the configured default project base on workspace configuration
+    private async selectDefaultProject() {
+        const defaultActiveFolder = this.workspaceConfig.defaultActiveFolder;
+        if (!defaultActiveFolder) {
+            return;
+        }
+
+        let defaultProject: CMakeProject | undefined;
+        let projects = this.projectController.getAllCMakeProjects();
+
+        defaultProject = projects?.find(candidate => candidate.workspaceFolder.name === defaultActiveFolder);
+
+        if (defaultProject) {
+            // Ignore if user cancelled
+            await this.setActiveProject(defaultProject);
+            telemetry.logEvent("selectactivefolder");
+            const currentActiveFolderPath = this.activeFolderPath();
+            await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
+        }
     }
 
     // Update the active project

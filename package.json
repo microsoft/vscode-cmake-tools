@@ -2036,6 +2036,12 @@
           "description": "%cmake-tools.configuration.cmake.autoSelectActiveFolder.description%",
           "scope": "window"
         },
+        "cmake.defaultActiveFolder": {
+          "type": "string",
+          "default": "",
+          "description": "%cmake-tools.configuration.cmake.defaultActiveFolder.description%",
+          "scope": "window"
+        },
         "cmake.cmakePath": {
           "type": "string",
           "default": "cmake",
