@@ -2804,17 +2804,20 @@ export class CMakeProject {
             if (await this.createCMakeListsFile(mainListFile) !== 0) {
                 return -1;
             }
-            log.debug(localize('cmakelists.created', '[Quick Start] CmakeLists.txt created successfully.'));
+            log.info(localize('cmakelists.created', '[Quick Start] CmakeLists.txt created successfully.'));
         } else {
-            log.debug(localize('cmakelists.exists', '[Quick Start] A CmakeLists.txt already exists, continuing...'));
+            log.info(localize('cmakelists.exists', '[Quick Start] A CmakeLists.txt already exists, continuing...'));
         }
 
         // By now, we have a valid CMakeLists.txt so move onto CMakePresets.json
         if (await fs.exists(mainPresetsFile)) {
-            void vscode.window.showInformationMessage(localize('cmakepresets.already.configured', 'A CMakePresets.json is already configured.'));
+            log.info(localize('cmakepresets.already.configured', '[Quick Start] A CMakePresets.json is already configured.'));
         } else {
             if (!await this.presetsController.selectConfigurePreset(true)) {
                 await this.kitsController.setKitByName(SpecialKits.Unspecified);
+                log.info(localize('cmakepresets.not.created', '[Quick Start] CMakePresets.json not created.'));
+            } else {
+                log.info(localize('cmakepresets.created', '[Quick Start] CMakePresets.json created successfully.'));
             }
         }
 
