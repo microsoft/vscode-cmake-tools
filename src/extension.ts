@@ -595,7 +595,9 @@ export class ExtensionManager implements vscode.Disposable {
             await scanForKitsIfNeeded(project);
 
         let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
-        if (shouldConfigure === null && !util.isTestMode()) {
+
+        const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
+        if (shouldConfigure === null && !util.isTestMode() && hascmakelists) {
             interface Choice1 {
                 title: string;
                 doConfigure: boolean;
