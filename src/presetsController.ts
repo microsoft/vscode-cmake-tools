@@ -16,7 +16,6 @@ import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
-const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -291,12 +290,12 @@ export class PresetsController {
                         void vscode.window.showErrorMessage(
                             localize('no.compilers.available', 'Cannot generate a CmakePresets.json with Quick Start due to no compilers being available.'),
                             {
-                                title: localize('learn.about.installing.compilers', 'Learn About Installing Compilers') ,
+                                title: localize('learn.about.installing.compilers', 'Learn About Installing Compilers'),
                                 isLearnMore: true
                             })
-                            .then(item => {
+                            .then(async item => {
                                 if (item && item.isLearnMore) {
-                                    open('https://code.visualstudio.com/docs/languages/cpp#_install-a-compiler');
+                                    await vscode.env.openExternal(vscode.Uri.parse('https://code.visualstudio.com/docs/languages/cpp#_install-a-compiler'));
                                 }
                             });
                         return false;
