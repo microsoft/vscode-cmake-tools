@@ -2576,7 +2576,7 @@ export class CMakeProject {
     }
 
     isInstallTarget(target: string): boolean {
-        return target.split(' ').length !== 1;
+        return target.split(' (').length !== 1;
     }
 
     async getOrSelectLaunchTarget(): Promise<ExecutableTarget | null> {

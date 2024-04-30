@@ -428,12 +428,14 @@ export class CMakeFileApiDriver extends CMakeDriver {
             isInstallTarget: false
         }));
 
+        const installLoc = localize("cmake.install.name", "Install");
         for (const t of uniqueExecTargets) {
             const target = t as RichTarget;
             if (target.installPaths && target.installPaths.length > 0) {
+                const includePath = target.installPaths.length > 1;
                 for (const installPath of target.installPaths) {
                     executableTargetsWithInstall.push({
-                        name: target.name + ' (' + installPath.subPath + ')',
+                        name: `${target.name} (${installLoc}${includePath ? ` - ${installPath.subPath}` : ''})`,
                         path: installPath.path,
                         isInstallTarget: true
                     });
