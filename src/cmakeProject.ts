@@ -1111,10 +1111,14 @@ export class CMakeProject {
      * Reload/restarts the CMake Driver
      */
     private async reloadCMakeDriver() {
-        const drv = await this.cmakeDriver;
-        if (drv) {
-            log.debug(localize('reloading.driver', 'Reloading CMake driver'));
-            await drv.asyncDispose();
+        try {
+            const drv = await this.cmakeDriver;
+            if (drv) {
+                log.debug(localize('reloading.driver', 'Reloading CMake driver'));
+                await drv?.asyncDispose();
+                return this.cmakeDriver = this.startNewCMakeDriver(await this.getCMakeExecutable());
+            }
+        } catch {
             return this.cmakeDriver = this.startNewCMakeDriver(await this.getCMakeExecutable());
         }
     }
