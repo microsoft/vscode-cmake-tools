@@ -908,13 +908,7 @@ export class CMakeProject {
                             selectedFile = cmakeListsFile[0].fsPath;
                         }
                     } else if (selection.label === dontAskAgain)  {
-<<<<<<< HEAD
                         await vscode.workspace.getConfiguration('cmake', this.workspaceFolder).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
-=======
-                        if (config !== undefined) {
-                            await vscode.workspace.getConfiguration('cmake', this.workspaceFolder).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
-                        }
->>>>>>> 03b25148 (keep some changes from 3703)
                     } else {
                         // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
                         // selection.label is the relative path to the selected CMakeLists.txt.
