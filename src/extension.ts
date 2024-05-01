@@ -740,10 +740,8 @@ export class ExtensionManager implements vscode.Disposable {
             return;
         }
 
-        let defaultProject: CMakeProject | undefined;
-        let projects = this.projectController.getAllCMakeProjects();
-
-        defaultProject = projects?.find(candidate => candidate.workspaceFolder.name === defaultActiveFolder);
+        const projects = this.projectController.getAllCMakeProjects();
+        const defaultProject = projects?.find(candidate => candidate.workspaceFolder.name === defaultActiveFolder);
 
         if (defaultProject) {
             await this.setActiveProject(defaultProject);
