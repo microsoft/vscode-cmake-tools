@@ -20,6 +20,7 @@ Improvements:
 - Add the ability to pin CMake Commands to the sidebar [#2984](https://github.com/microsoft/vscode-cmake-tools/issues/2984) & [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
 - Add support for variable expansion in `debugConfig.environment` [#3711](https://github.com/microsoft/vscode-cmake-tools/issues/3711)
 - Add the ability to debug install targets [#532](https://github.com/microsoft/vscode-cmake-tools/issues/532)
+- Add a "Don't Show Again" option in the select CMakeLists.txt.
 
 Bug Fixes:
 
