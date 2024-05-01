@@ -89,6 +89,10 @@ export interface ExecutableTarget {
      * The absolute path to the build output.
      */
     path: string;
+    /**
+     * The install locations of the target.
+     */
+    isInstallTarget?: boolean;
 }
 
 /**
@@ -107,9 +111,15 @@ export interface RichTarget {
     name: string;
     filepath: string;
     targetType: string;
+    installPaths?: InstallPath[];
 }
 
 export type Target = NamedTarget | RichTarget;
+
+export interface InstallPath {
+    path: string;
+    subPath: string;
+}
 
 /**
  * Base class for CMake drivers.

@@ -2555,20 +2555,32 @@ export class CMakeProject {
 
         const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
         if (buildOnLaunch || isReconfigurationNeeded) {
-            const buildTargets = await this.getDefaultBuildTargets() || [];
-            const allTargetName = await this.allTargetName;
-            if (!buildTargets.includes(allTargetName) && !buildTargets.includes(chosen.name)) {
-                buildTargets.push(chosen.name);
+            if (this.isInstallTarget(chosen.name)) {
+                const installResult = await this.install();
+                if (installResult !== 0) {
+                    log.debug(localize('install.failed', 'Install failed'));
+                    return null;
+                }
+            } else {
+                const buildTargets = await this.getDefaultBuildTargets() || [];
+                const allTargetName = await this.allTargetName;
+                if (!buildTargets.includes(allTargetName) && !buildTargets.includes(chosen.name)) {
+                    buildTargets.push(chosen.name);
+                }
+
+                const buildResult = await this.build(buildTargets);
+                if (buildResult !== 0) {
+                    log.debug(localize('build.failed', 'Build failed'));
+                    return null;
+                }
             }
 
-            const buildResult = await this.build(buildTargets);
-            if (buildResult !== 0) {
-                log.debug(localize('build.failed', 'Build failed'));
-                return null;
-            }
         }
-
         return chosen;
+    }
+
+    isInstallTarget(target: string): boolean {
+        return target.split(' (').length !== 1;
     }
 
     async getOrSelectLaunchTarget(): Promise<ExecutableTarget | null> {
@@ -2659,6 +2671,14 @@ export class CMakeProject {
         // Add debug configuration from settings.
         const userConfig = this.workspaceContext.config.debugConfig;
         Object.assign(debugConfig, userConfig);
+
+        const options = await this.getExpansionOptions();
+        if (debugConfig.environment) {
+            for (const env of debugConfig.environment) {
+                env.value = await expandString(env.value, options);
+            }
+        }
+
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
         log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
