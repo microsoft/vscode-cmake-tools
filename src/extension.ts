@@ -746,7 +746,6 @@ export class ExtensionManager implements vscode.Disposable {
         defaultProject = projects?.find(candidate => candidate.workspaceFolder.name === defaultActiveFolder);
 
         if (defaultProject) {
-            // Ignore if user cancelled
             await this.setActiveProject(defaultProject);
             telemetry.logEvent("selectactivefolder");
             const currentActiveFolderPath = this.activeFolderPath();
