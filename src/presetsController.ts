@@ -852,7 +852,7 @@ export class PresetsController {
             if (this.project.workspaceContext.config.automaticReconfigure) {
                 await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
             }
-            return !addPreset;
+            return !addPreset || allPresets.length === 0;
         }
     }
 
