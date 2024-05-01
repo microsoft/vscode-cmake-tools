@@ -2671,6 +2671,14 @@ export class CMakeProject {
         // Add debug configuration from settings.
         const userConfig = this.workspaceContext.config.debugConfig;
         Object.assign(debugConfig, userConfig);
+
+        const options = await this.getExpansionOptions();
+        if (debugConfig.environment) {
+            for (const env of debugConfig.environment) {
+                env.value = await expandString(env.value, options);
+            }
+        }
+
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
         log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
