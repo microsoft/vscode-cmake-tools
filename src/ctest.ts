@@ -1092,6 +1092,10 @@ export class CTestDriver implements vscode.Disposable {
                 'Debug Tests',
                 vscode.TestRunProfileKind.Debug,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
+                    if (request.include === undefined) {
+                        return this.debugTestHandler(request, cancellation);
+                    }
+
                     const testProject = this.projectController!.getAllCMakeProjects().filter(
                         project => request.include![0].uri!.fsPath.includes(project.folderPath)
                     );
