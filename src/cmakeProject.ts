@@ -30,7 +30,7 @@ import { CMakeBuildConsumer } from './diagnostics/build';
 import { CMakeOutputConsumer } from './diagnostics/cmake';
 import { FileDiagnostic, populateCollection } from './diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from './expand';
-import { CMakeGenerator, Kit } from './kit';
+import { CMakeGenerator, Kit, SpecialKits } from './kit';
 import * as logging from './logging';
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
@@ -1739,7 +1739,9 @@ export class CMakeProject {
         }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
-                throw new Error(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
+                await vscode.window.showErrorMessage(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
+                log.debug(localize('no.kit.abort', 'No kit selected. Abort configure'));
+                return { result: -1, resultType: ConfigureResultType.Other };
             }
             if (!this.variantManager.haveVariant) {
                 progress.report({ message: localize('waiting.on.variant', 'Waiting on variant selection') });
@@ -1750,7 +1752,9 @@ export class CMakeProject {
                 }
             }
         } else if (!this.configurePreset) {
-            throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
+            await vscode.window.showErrorMessage(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
+            log.debug(localize('no.preset.abort', 'No preset selected. Abort configure'));
+            return { result: -1, resultType: ConfigureResultType.Other };
         }
         log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
@@ -2818,21 +2822,49 @@ export class CMakeProject {
         }
 
         const mainListFile = path.join(this.sourceDir, 'CMakeLists.txt');
+        const mainPresetsFile = path.join(this.sourceDir, 'CMakePresets.json');
 
-        if (await fs.exists(mainListFile)) {
-            void vscode.window.showErrorMessage(localize('cmakelists.already.configured', 'A CMakeLists.txt is already configured!'));
-            return -1;
+        if (!await fs.exists(mainListFile)) {
+            if (await this.createCMakeListsFile(mainListFile) !== 0) {
+                return -1;
+            }
+            log.info(localize('cmakelists.created', '[Quick Start] CmakeLists.txt created successfully.'));
+        } else {
+            log.info(localize('cmakelists.exists', '[Quick Start] A CmakeLists.txt already exists, continuing...'));
         }
 
+        // By now, we have a valid CMakeLists.txt so move onto CMakePresets.json
+        if (await fs.exists(mainPresetsFile)) {
+            log.info(localize('cmakepresets.already.configured', '[Quick Start] A CMakePresets.json is already configured.'));
+        } else {
+            if (!await this.presetsController.selectConfigurePreset(true)) {
+                await this.kitsController.setKitByName(SpecialKits.Unspecified);
+                log.info(localize('cmakepresets.not.created', '[Quick Start] CMakePresets.json not created.'));
+            } else {
+                log.info(localize('cmakepresets.created', '[Quick Start] CMakePresets.json created successfully.'));
+            }
+        }
+
+        // Regardless of the following configure return code,
+        // we want full feature set view for the whole workspace.
+        await enableFullFeatureSet(true);
+        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).result;
+    }
+
+    private async createCMakeListsFile(mainListFile: string): Promise<Number> {
         const projectName = await vscode.window.showInputBox({
             prompt: localize('new.project.name', 'Enter a name for the new project'),
             validateInput: (value: string): string => {
                 if (!value.length) {
                     return localize('project.name.required', 'A project name is required');
                 }
+                if (value.includes(' ')) {
+                    return localize('project.name.no.spaces', 'Project name cannot contain spaces');
+                }
                 return '';
             }
         });
+
         if (!projectName) {
             return -1;
         }
@@ -2852,16 +2884,42 @@ export class CMakeProject {
             return -1;
         }
 
-        const targetType = (await vscode.window.showQuickPick([
+        const targetType = await vscode.window.showQuickPick([
             {
                 label: 'Library',
                 description: localize('create.library', 'Create a library')
             },
-            { label: 'Executable', description: localize('create.executable', 'Create an executable') }
-        ]));
+            {
+                label: 'Executable',
+                description: localize('create.executable', 'Create an executable')
+            }
+        ]);
 
         if (!targetType) {
             return -1;
+        }
+
+        const addlOptions = (await vscode.window.showQuickPick([
+            {
+                label: 'CPack',
+                description: localize('cpack.support', 'CPack support')
+            },
+            {
+                label: 'CTest',
+                description: localize('ctest.support', 'CTest support')
+            }
+        ], { canPickMany: true, placeHolder: localize('select.additional.options', 'Select additional options')}));
+
+        // select current c/cpp files to add as targets, if any. If none, or none are selected, create a new one
+        const files = await fs.readdir(this.sourceDir);
+        const cppFiles = files.filter(file => path.extname(file) === '.cpp' || path.extname(file) === '.c');
+        let selectedFiles: string[] = [];
+
+        if (cppFiles.length > 0) {
+            selectedFiles = await vscode.window.showQuickPick(cppFiles, {
+                canPickMany: true,
+                placeHolder: localize('select.cpp.files', 'Select targets to include in the CMakeLists.txt file')
+            }) || [];
         }
 
         const type = targetType.label;
@@ -2869,75 +2927,107 @@ export class CMakeProject {
         const langName = lang === "C++" ? "C CXX" : "C";
         const langExt  = lang === "C++" ? "cpp" : "c";
 
-        const init = [
-            'cmake_minimum_required(VERSION 3.0.0)',
-            `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
-            '',
-            'include(CTest)',
-            'enable_testing()',
-            '',
-            type === 'Library' ? `add_library(${projectName} ${projectName}.${langExt})`
-                : `add_executable(${projectName} main.${langExt})`,
-            '',
-            'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
-            'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
-            'include(CPack)',
-            ''
-        ].join('\n');
+        let failedToCreate = false;
 
-        if (type === 'Library') {
-            if (!(await fs.exists(path.join(this.sourceDir, `${projectName}.${langExt}`)))) {
-                await fs.writeFile(path.join(this.sourceDir, `${projectName}.${langExt}`),
-                    (lang === "C++" ?
-                        ([
-                            '#include <iostream>',
-                            '',
-                            'void say_hello(){',
-                            `    std::cout << "Hello, from ${projectName}!\\n";`,
-                            '}',
-                            ''
-                        ]) :
-                        ([
-                            '#include <stdio.h>',
-                            '',
-                            'void say_hello(){',
-                            `    printf("Hello, from ${projectName}!\\n");`,
-                            '}',
-                            ''
-                        ])).join('\n'));
-            }
-        } else {
-            if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
-                await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
-                    (lang === "C++" ?
-                        ([
-                            '#include <iostream>',
-                            '',
-                            'int main(int, char**){',
-                            `    std::cout << "Hello, from ${projectName}!\\n";`,
-                            '}',
-                            ''
-                        ]) :
-                        ([
-                            '#include <stdio.h>',
-                            '',
-                            'int main(int, char**){',
-                            `    printf("Hello, from ${projectName}!\\n");`,
-                            '}',
-                            ''
-                        ])
-                    ).join('\n'));
+        // Create start c/cpp file if none are selected
+        if (selectedFiles.length === 0) {
+            if (await this.createCppFile(projectName, langExt, type) !== 0) {
+                void vscode.window.showErrorMessage(localize('create.file.failed', 'Failed to create a new {0} file. Add target to CMakeLists.txt.', langExt));
+                failedToCreate = true;
             }
         }
+
+        let init = [
+            'cmake_minimum_required(VERSION 3.0.0)',
+            `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
+            '\n'
+        ].join('\n');
+
+        if (!failedToCreate) {
+            init += [
+                type === 'Library' ? `add_library(${projectName} `
+                    + (selectedFiles.length === 0 ? `${projectName}.${langExt}` : selectedFiles.join(' ')) + `)`
+                    : `add_executable(${projectName} `
+                    + (selectedFiles.length === 0 ? `main.${langExt}` : selectedFiles.join(' ')) + `)`,
+                '\n'
+            ].join('\n');
+        }
+
+        if (addlOptions?.some(option => option.label === 'CTest')) {
+            init += [
+                'include(CTest)',
+                'enable_testing()',
+                '\n'
+            ].join('\n');
+        }
+
+        if (addlOptions?.some(option => option.label === 'CPack')) {
+            init += [
+                'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
+                'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
+                'include(CPack)',
+                ''
+            ].join('\n');
+        }
+
         await fs.writeFile(mainListFile, init);
         const doc = await vscode.workspace.openTextDocument(mainListFile);
         await vscode.window.showTextDocument(doc);
 
-        // By now, quickStart is succesful in creating a valid CMakeLists.txt.
-        // Regardless of the following configure return code,
-        // we want full feature set view for the whole workspace.
-        await enableFullFeatureSet(true);
-        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).result;
+        return 0;
+    }
+
+    /**
+     * Creates a hello world C++ or C file in the source directory
+     */
+    private async createCppFile(fileName: string, langExt: string, projType: string): Promise<Number> {
+        if (projType === 'Library') {
+            if (!(await fs.exists(path.join(this.sourceDir, `${fileName}.${langExt}`)))) {
+                await fs.writeFile(path.join(this.sourceDir, `${fileName}.${langExt}`),
+                    (langExt === "C++" ?
+                        ([
+                            '#include <iostream>',
+                            '',
+                            'void say_hello(){',
+                            `    std::cout << "Hello, from ${fileName}!\\n";`,
+                            '}',
+                            ''
+                        ]) :
+                        ([
+                            '#include <stdio.h>',
+                            '',
+                            'void say_hello(){',
+                            `    printf("Hello, from ${fileName}!\\n");`,
+                            '}',
+                            ''
+                        ])).join('\n'));
+                return 0;
+            }
+        } else if (projType === 'Executable') {
+            if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
+                await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
+                    (langExt === "C++" ?
+                        ([
+                            '#include <iostream>',
+                            '',
+                            'int main(int, char**){',
+                            `    std::cout << "Hello, from ${fileName}!\\n";`,
+                            '}',
+                            ''
+                        ]) :
+                        ([
+                            '#include <stdio.h>',
+                            '',
+                            'int main(int, char**){',
+                            `    printf("Hello, from ${fileName}!\\n");`,
+                            '}',
+                            ''
+                        ])
+                    ).join('\n'));
+                return 0;
+            }
+        }
+        return -1;
     }
 
     /**
