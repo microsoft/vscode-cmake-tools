@@ -86,6 +86,50 @@
         ]
       }
     ],
+    "icons": {
+      "cmake-tools-build": {
+        "description": "CMake build icon",
+        "default": {
+          "fontPath": "./res/product-icons.woff",
+          "fontCharacter": "\\E001"
+        }
+      },
+      "cmake-tools-clean-configure": {
+        "description": "CMake clean configure icon",
+        "default": {
+          "fontPath": "./res/product-icons.woff",
+          "fontCharacter": "\\E002"
+        }
+      },
+      "cmake-tools-clean": {
+        "description": "CMake clean icon",
+        "default": {
+          "fontPath": "./res/product-icons.woff",
+          "fontCharacter": "\\E003"
+        }
+      },
+      "cmake-tools-cmake-view-1": {
+        "description": "CMake view icon 1",
+        "default": {
+          "fontPath": "./res/product-icons.woff",
+          "fontCharacter": "\\E004"
+        }
+      },
+      "cmake-tools-cmake-view-2": {
+        "description": "CMake view icon 2",
+        "default": {
+          "fontPath": "./res/product-icons.woff",
+          "fontCharacter": "\\E005"
+        }
+      },
+      "cmake-tools-configure": {
+        "description": "CMake configure icon",
+        "default": {
+          "fontPath": "./res/product-icons.woff",
+          "fontCharacter": "\\E006"
+        }
+      }
+    },
     "commands": [
       {
         "command": "cmake.openCMakePresets",
@@ -318,18 +362,12 @@
       {
         "command": "cmake.outline.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
-        "icon": {
-          "dark": "res/dark/configure-icon.svg",
-          "light": "res/light/configure-icon.svg"
-        }
+        "icon": "$(cmake-tools-configure)"
       },
       {
         "command": "cmake.projectStatus.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
-        "icon": {
-          "dark": "res/dark/configure-icon.svg",
-          "light": "res/light/configure-icon.svg"
-        },
+        "icon": "$(cmake-tools-configure)",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
@@ -358,10 +396,7 @@
       {
         "command": "cmake.outline.configureAll",
         "title": "%cmake-tools.command.cmake.configureAll.title%",
-        "icon": {
-          "dark": "res/dark/configure-icon.svg",
-          "light": "res/light/configure-icon.svg"
-        }
+        "icon": "$(cmake-tools-configure)"
       },
       {
         "command": "cmake.outline.configureAllWithDebugger",
@@ -379,28 +414,19 @@
         "command": "cmake.outline.build",
         "title": "%cmake-tools.command.cmake.build.title%",
         "when": "cmake:enableFullFeatureSet",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "icon": "$(cmake-tools-build)"
       },
       {
         "command": "cmake.projectStatus.build",
         "title": "%cmake-tools.command.cmake.build.title%",
         "when": "cmake:enableFullFeatureSet",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "icon": "$(cmake-tools-build)"
       },
       {
         "command": "cmake.outline.buildTarget",
         "title": "%cmake-tools.command.cmake.build.title%",
         "when": "cmake:enableFullFeatureSet",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "icon": "$(cmake-tools-build)"
       },
       {
         "command": "cmake.showBuildCommand",
@@ -418,29 +444,20 @@
         "command": "cmake.outline.buildAll",
         "title": "%cmake-tools.command.cmake.buildAll.title%",
         "when": "cmake:enableFullFeatureSet",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "icon": "$(cmake-tools-build)"
       },
       {
         "command": "cmake.compileFile",
         "title": "%cmake-tools.command.cmake.compileFile.title%",
         "category": "CMake",
         "when": "cmake:enableFullFeatureSet",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "icon": "$(cmake-tools-build)"
       },
       {
         "command": "cmake.outline.compileFile",
         "title": "%cmake-tools.command.cmake.outline.compileFile.title%",
         "when": "cmake:enableFullFeatureSet",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "icon": "$(cmake-tools-build)"
       },
       {
         "command": "cmake.install",
@@ -492,30 +509,21 @@
         "title": "%cmake-tools.command.cmake.projectStatus.cleanConfigure.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake",
-        "icon": {
-          "dark": "res/dark/clean-configure-icon.svg",
-          "light": "res/light/clean-configure-icon.svg"
-        }
+        "icon": "$(cmake-tools-clean-configure)"
       },
       {
         "command": "cmake.projectStatus.openSettings",
         "title": "%cmake-tools.command.cmake.openSettings.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake",
-        "icon": {
-          "dark": "res/dark/settings-icon.svg",
-          "light": "res/light/settings-icon.svg"
-        }
+        "icon": "$(settings-gear)"
       },
       {
         "command": "cmake.projectStatus.openVisibilitySettings",
         "title": "%cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title%",
         "when": "cmake:enabelFullFeatureSet",
         "category": "CMake",
-        "icon": {
-          "dark": "res/dark/json-icon.svg",
-          "light": "res/light/json-icon.svg"
-        }
+        "icon": "$(json)"
       },
       {
         "command": "cmake.cleanConfigureWithDebugger",
@@ -558,10 +566,7 @@
         "command": "cmake.outline.clean",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.clean.title%",
-        "icon": {
-          "dark": "res/dark/clean-icon.svg",
-          "light": "res/light/clean-icon.svg"
-        }
+        "icon": "$(cmake-tools-clean)"
       },
       {
         "command": "cmake.cleanAll",
@@ -3612,7 +3617,7 @@
         {
           "id": "cmake-view",
           "title": "CMake",
-          "icon": "res/cmake-view-icon2.svg",
+          "icon": "$(cmake-tools-cmake-view-2)",
           "when": "cmake:enableFullFeatureSet"
         }
       ]
