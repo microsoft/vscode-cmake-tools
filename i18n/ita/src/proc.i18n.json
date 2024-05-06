@@ -9,6 +9,8 @@
 	"process.error": "Il comando: {0} non è riuscito con errore: {1}",
 	"process.exit.with.signal": "Il comando: {0} è terminato con codice: {1} e segnale: {2}",
 	"process.exit": "Uscita dal comando {0} con codice: {1}.",
+	"process.exit.stdout": "Output del comando in caso di output standard: {0}",
+	"process.exit.stderr": "Output del comando in caso di errore standard: {0}",
 	"processing.data.event.stdout": "Elaborazione dell'evento {0} di proc stdout",
 	"processing.data.event.stderr": "Elaborazione dell'evento {0} di proc stderr",
 	"resolving.close.event": "Risoluzione del processo dopo l'evento {0}"

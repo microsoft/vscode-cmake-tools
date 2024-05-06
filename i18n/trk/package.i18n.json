@@ -35,7 +35,6 @@
 	"cmake-tools.command.cmake.build.title": "Derleme",
 	"cmake-tools.command.cmake.buildAll.title": "Tüm Projeleri Derle",
 	"cmake-tools.command.cmake.showBuildCommand.title": "Derleme Komutunu Göster",
-	"cmake-tools.command.cmake.buildNamedTarget.title": "(İç) Ada Göre Bir Hedefi Derle",
 	"cmake-tools.command.cmake.compileFile.title": "Etkin Dosyayı Derle",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Dosyayı Derle",
 	"cmake-tools.command.cmake.install.title": "Yükle",
@@ -107,7 +106,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest yürütülebilir dosyasının yolu. Değer null ise cmake.cmakePath değerinden çıkarsanır. (null olarak bırakılması önerilir.)",
 	"cmake-tools.configuration.cmake.cpackPath.description": "CPack yürütülebilir dosyasının yolu. Değer null ise cmake.cmakePath değerinden çıkarsanır. (null olarak bırakılması önerilir.) Ön ayarlar yerine setler kullanıldığında yoksayılır.",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "Paralel test işlerinin sayısı. `#cmake.parallelJobs#` değerini kullanmak için sıfır kullanın. Bu yalnızca `#cmake.ctest.allowParallelJobs#` değeri `true` olarak ayarlandığında geçerlidir.",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "ctest'lerin paralel olarak çalıştırılmasına izin verir, ancak sonuç karışık çıkmış olabilir.",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Testlerin paralel olarak çalıştırılmasına izin verir, ancak bunun sonucunda sonuç çıktısı bozulabilir ve Test Gezgini test ilerlemesini doğru şekilde yansıtmayabilir.",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "Test gezginiyle tümleştirmenin etkinleştirilip etkinleştirilmediği. Test tümleştirmesi için farklı bir uzantı kullanmayı tercih ediyorsanız devre dışı bırakmak faydalıdır.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Uyarılar ve hatalar için derleyici çıkışını ayrıştır.",
 	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Kullanılacak çıkış ayrıştırıcıları. Desteklenen ayrıştırıcılar: GNULD stili bağlayıcı çıkışı için `cmake`, `gcc` ve `gnuld`, Microsoft Visual C++ için `msvc`, --no_wrap_diagnostics --brief_diagnostics içeren Green Hills derleyicisi için `ghs` ve Wind River Diab derleyicisi için `diab`.",
@@ -205,6 +204,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Bir hedefi başlattığınızda başlatma terminaline ne olacağını kontrol eder.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Set veya yapılandırma ön ayarı değiştirildiğinde CMake proje dizinlerini otomatik olarak yapılandır.",
 	"cmake-tools.configuration.cmake.pinnedCommands.description": "Sabitlenecek CMake komutlarının listesi.",
+	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Set seçilmediğinde setler için otomatik taramayı etkinleştirin. Bu, yalnızca CMake Önayarları kullanılmadığında devreye girer.",
 	"cmake-tools.debugger.pipeName.description": "Hata ayıklayıcı iletişimi için kullanılacak kanalın (Windows'da) veya etki alanı yuvasının (Unix üzerinde) adı.",
 	"cmake-tools.debugger.clean.description": "Yapılandırmadan önce temizleyin.",
 	"cmake-tools.debugger.configureAll.description": "Tüm projeler için yapılandırın.",
@@ -243,5 +243,8 @@
 	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Önbelleği Sil ve Yeniden Yapılandır",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Test Hedefini Ayarla",
 	"cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Görünürlük Ayarlarını Aç",
-	"cmake-tools.debugger.label": "CMake Hata Ayıklayıcısı"
+	"cmake-tools.debugger.label": "CMake Hata Ayıklayıcısı",
+	"cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Derleme Dizinini Geçerli Çalışma Alanına Ekleme",
+	"cmake-tools.command.workbench.action.tasks.configureTaskRunner.title": "Görevi Yapılandırma",
+	"cmake-tools.command.workbench.action.tasks.runTask.title": "Görevi Çalıştır"
 }

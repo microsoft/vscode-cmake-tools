@@ -428,8 +428,12 @@ export class ExtensionManager implements vscode.Disposable {
                 // We have an active kit. We're good.
                 return true;
             }
-            // No kit? Is enable kit scan on?
-            if (!this.workspaceConfig.enableAutomaticKitScan) {
+
+            const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, cmakeProject.folderPath);
+
+            // No kit selected? Is enable kit scan on?
+            // Or, is this an empty workspace from QuickStart ie: no CMakeLists.txt
+            if (!this.workspaceConfig.enableAutomaticKitScan || !hascmakelists) {
                 await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
                 return true;
             }
@@ -591,7 +595,9 @@ export class ExtensionManager implements vscode.Disposable {
             await scanForKitsIfNeeded(project);
 
         let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
-        if (shouldConfigure === null && !util.isTestMode()) {
+
+        const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
+        if (shouldConfigure === null && !util.isTestMode() && hascmakelists) {
             interface Choice1 {
                 title: string;
                 doConfigure: boolean;
@@ -639,7 +645,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
         }
         if (!project.hasCMakeLists()) {
-            if (shouldConfigure === true) {
+            if (shouldConfigure === true && (await util.globForFileName("CMakeLists.txt", 3, project.folderPath))) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             }
         } else {
