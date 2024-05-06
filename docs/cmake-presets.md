@@ -221,18 +221,13 @@ CMake Tools supports command substitution for launch commands when `CMakePresets
 
 ## Ignored settings
 
-`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test. This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line.
+`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test, except for settings that can be used as temporary overrides (see below). This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line. 
 
 The following settings in `settings.json` either duplicate options in `CMakePresets.json` or no longer apply. These settings will be ignored when `CMakePresets.json` integration is enabled.
 
 | Ignored setting in `settings.json` | `CMakePresets.json` equivalent |
 |--|--|
-| `cmake.buildArgs` | Various options in `buildPreset` |
 | `cmake.buildDirectory` | `configurePresets.binaryDir` |
-| `cmake.buildEnvironment` | `buildPresets.environment` |
-| `cmake.buildToolsArgs` | `buildPresets.nativeToolOptions` |
-| `cmake.configureArgs` | Various options in `configurePreset` |
-| `cmake.configureEnvironment` | `configurePresets.environment` |
 | `cmake.configureSettings` | `configurePresets.cacheVariables` |
 | `cmake.ctestParallelJobs` | `testPresets.execution.jobs` |
 | `cmake.ctestArgs` | Various options in `testPreset` |
@@ -245,7 +240,6 @@ The following settings in `settings.json` either duplicate options in `CMakePres
 | `cmake.platform` | `configurePresets.architecture` |
 | `cmake.preferredGenerators` | `configurePresets.generator` |
 | `cmake.setBuildTypeOnMultiConfig` | `configurePresets.cacheVariables.CMAKE_BUILD_TYPE` |
-| `cmake.testEnvironment` | `testPresets.environment` |
 | `cmake.toolset` | `configurePresets.toolset` |
 
 ## Settings that can be used to override CMakePresets.json settings for temporary testing
