@@ -609,7 +609,7 @@ export class ExtensionManager implements vscode.Disposable {
                 { title: localize('not.now.button', 'Not now'), doConfigure: false }
             );
             if (!chosen) {
-            // User cancelled.
+                // User cancelled.
                 shouldConfigure = null;
             } else {
                 const persistMessage = chosen.doConfigure ?
@@ -630,7 +630,7 @@ export class ExtensionManager implements vscode.Disposable {
                     { title: buttonMessages[1], persistMode: 'workspace' })
                     .then(async choice => {
                         if (!choice) {
-                        // Use cancelled. Do nothing.
+                            // Use cancelled. Do nothing.
                             return;
                         }
                         const config = vscode.workspace.getConfiguration(undefined, rootFolder.uri);
