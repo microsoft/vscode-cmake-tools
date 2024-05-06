@@ -70,6 +70,13 @@ extends:
         steps:
         - checkout: self
           fetchTags: false
+
+        - task: PoliCheck@2
+          displayName: Run PoliCheck
+          inputs:
+            targetType: 'F'
+            targetArgument: '$(Build.SourcesDirectory)'
+            optionsUEPATH: '$(Build.SourcesDirectory)\jobs\policheckExclusions.xml'
         
         - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
           displayName: Use Yarn 1.x
