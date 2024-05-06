@@ -35,7 +35,6 @@
 	"cmake-tools.command.cmake.build.title": "生成",
 	"cmake-tools.command.cmake.buildAll.title": "生成所有项目",
 	"cmake-tools.command.cmake.showBuildCommand.title": "显示生成命令",
-	"cmake-tools.command.cmake.buildNamedTarget.title": "(内部)按名称生成目标",
 	"cmake-tools.command.cmake.compileFile.title": "编译活动文件",
 	"cmake-tools.command.cmake.outline.compileFile.title": "编译文件",
 	"cmake-tools.command.cmake.install.title": "安装",
@@ -107,7 +106,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可执行文件的路径。如果为 null，则从 cmake.cmakePath 推理(建议保留为 null)。",
 	"cmake-tools.configuration.cmake.cpackPath.description": "CPack 可执行文件的路径。如果为 null，则将根据 cmake.cmakePath 推断(建议保留为 null)。当使用工具包而不是预设时，将会忽略。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "并行测试作业的数量。使用零可以使用 `#cmake.parallelJobs#` 的值。这仅适用于 `#cmake.ctest.allowParallelJobs#` 设置为 `true` 的情况。",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "允许 ctest 并行运行，但结果输出可能因此而出现乱码。",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "允许并行运行 ctest，但结果输出可能会因此而乱码，并且测试资源管理器可能无法准确地反映测试进度。",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "是否启用与测试资源管理器的集成。如果希望使用其他扩展进行测试集成，这有助于禁用。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "分析编译器输出以查找警告和错误。",
 	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "要使用的输出分析程序。支持的分析程序 `cmake`、`gcc`、`gnuld`(适用于 GNULD 样式的 inker 输出)、`msvc`(适用于 Microsoft Visual C++)、`ghs`(适用于 Green Hills 编译器，具有 --no_wrap_diagnostics --brief_diagnostics)，以及 `diab`(适用于 Wind River Diab 编译器)。",
@@ -205,6 +204,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.description": "控制启动目标时启动终端将执行的操作。",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "当工具包或配置预设发生更改时，将自动配置 CMake 项目目录。",
 	"cmake-tools.configuration.cmake.pinnedCommands.description": "要固定的 CMake 命令的列表。",
+	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "未选择工具包时启用工具包的自动扫描。这只会在未使用 CMake 预设时生效。",
 	"cmake-tools.debugger.pipeName.description": "用于调试器通信的管道(在 Windows 上)或域套接字(在 Unix 上)的名称。",
 	"cmake-tools.debugger.clean.description": "在配置之前清理。",
 	"cmake-tools.debugger.configureAll.description": "为所有项目配置。",
@@ -243,5 +243,8 @@
 	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "删除缓存并重新配置",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "设置测试目标",
 	"cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "打开可见性设置",
-	"cmake-tools.debugger.label": "CMake 调试程序"
+	"cmake-tools.debugger.label": "CMake 调试程序",
+	"cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "将生成目录追加到当前工作区",
+	"cmake-tools.command.workbench.action.tasks.configureTaskRunner.title": "配置任务",
+	"cmake-tools.command.workbench.action.tasks.runTask.title": "运行任务"
 }

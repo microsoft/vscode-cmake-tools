@@ -9,5 +9,6 @@
 	"unlink.failed": "未能删除缓存文件 {0}",
 	"cmake.debug.name": "CMake 调试程序",
 	"toolchains.object.unsupported": "此版本的 CMake 不支持 \"toolchains\" 对象类型。编译器路径将通过读取 CMakeCache.txt 来确定。",
-	"build.all.target": "用于生成所有可用目标的特殊目标"
+	"build.all.target": "用于生成所有可用目标的特殊目标",
+	"cmake.install.name": "安装"
 }
