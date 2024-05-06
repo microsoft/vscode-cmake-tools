@@ -7,6 +7,7 @@ Features:
 - Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
 - Update `api.ts` to add the `onSelectedConfigurationChanged` event. [#3671](https://github.com/microsoft/vscode-cmake-tools/pull/3671) [@OrkunTokdemir](https://github.com/OrkunTokdemir)
 - Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
+- Improve CMake QuickStart by allowing the user to dynamically create a CMakePresets.json file. [#3649](https://github.com/microsoft/vscode-cmake-tools/issues/3649)
 
 Improvements:
 
@@ -18,6 +19,9 @@ Improvements:
 - Improve various settings scopes [#3601](https://github.com/microsoft/vscode-cmake-tools/issues/3601)
 - Refactor the Project Outline view to show a flat list of targets [#491](https://github.com/microsoft/vscode-cmake-tools/issues/491), [#3684](https://github.com/microsoft/vscode-cmake-tools/issues/3684)
 - Add the ability to pin CMake Commands to the sidebar [#2984](https://github.com/microsoft/vscode-cmake-tools/issues/2984) & [#3296](https://github.com/microsoft/vscode-cmake-tools/issues/3296)
+- Add support for variable expansion in `debugConfig.environment` [#3711](https://github.com/microsoft/vscode-cmake-tools/issues/3711)
+- Add the ability to debug install targets [#532](https://github.com/microsoft/vscode-cmake-tools/issues/532)
+- Add a "Don't Show Again" option in the select CMakeLists.txt.
 
 Bug Fixes:
 - Fix localization issue in package.json. [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)

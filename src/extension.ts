@@ -428,8 +428,12 @@ export class ExtensionManager implements vscode.Disposable {
                 // We have an active kit. We're good.
                 return true;
             }
-            // No kit? Is enable kit scan on?
-            if (!this.workspaceConfig.enableAutomaticKitScan) {
+
+            const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, cmakeProject.folderPath);
+
+            // No kit selected? Is enable kit scan on?
+            // Or, is this an empty workspace from QuickStart ie: no CMakeLists.txt
+            if (!this.workspaceConfig.enableAutomaticKitScan || !hascmakelists) {
                 await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
                 return true;
             }
@@ -591,7 +595,9 @@ export class ExtensionManager implements vscode.Disposable {
             await scanForKitsIfNeeded(project);
 
         let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
-        if (shouldConfigure === null && !util.isTestMode()) {
+
+        const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
+        if (shouldConfigure === null && !util.isTestMode() && hascmakelists) {
             interface Choice1 {
                 title: string;
                 doConfigure: boolean;
@@ -639,7 +645,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
         }
         if (!project.hasCMakeLists()) {
-            if (shouldConfigure === true) {
+            if (shouldConfigure === true && (await util.globForFileName("CMakeLists.txt", 3, project.folderPath))) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             }
         } else {
@@ -1299,7 +1305,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string) {
-        telemetry.logEvent("configure", { all: "false", debug: "false"});
         return this.runCMakeCommand(
             async cmakeProject => (await cmakeProject.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal)).result,
             folder, undefined, true, sourceDir);
@@ -1310,7 +1315,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string, trigger?: ConfigureTrigger) {
-        telemetry.logEvent("configure", { all: "false", debug: "true"});
         return this.runCMakeCommand(
             async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation)).result,
             folder, undefined, true, sourceDir);
@@ -1321,7 +1325,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAll() {
-        telemetry.logEvent("configure", { all: "true", debug: "false"});
         return this.runCMakeCommandForAll(async cmakeProject => ((await cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal)).result), undefined, true);
     }
 
@@ -1331,7 +1334,6 @@ export class ExtensionManager implements vscode.Disposable {
 
     configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
         // I need to add ConfigureTriggers that account for coming from the project status view or project outline.
-        telemetry.logEvent("configure", { all: "true", debug: "true"});
         return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation)).result, undefined, true);
     }
 
