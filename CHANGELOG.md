@@ -24,19 +24,19 @@ Improvements:
 - Add a "Don't Show Again" option in the select CMakeLists.txt.
 
 Bug Fixes:
-
-- Fix localization issue in package.json [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
-- Remove incorrect validation which was breaking references from CMakeUserPresets to CMakePresets [#3636](https://github.com/microsoft/vscode-cmake-tools/issues/3636)
-- Fix 'Debug Test' from 'Test explorer' results in 'launch: property 'program' is missing or empty' [#3280](https://github.com/microsoft/vscode-cmake-tools/issues/3280)
-- Fix "Go to source" in Testing activity + test panel without function [#3362](https://github.com/microsoft/vscode-cmake-tools/issues/3362)
-- Remove an un-implemented "internal" command [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
-- Fix incorrect test output [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
+- Fix localization issue in package.json. [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
+- Remove incorrect validation which was breaking references from CMakeUserPresets to CMakePresets. [#3636](https://github.com/microsoft/vscode-cmake-tools/issues/3636)
+- Fix 'Debug Test' from 'Test explorer' results in 'launch: property 'program' is missing or empty'. [#3280](https://github.com/microsoft/vscode-cmake-tools/issues/3280)
+- Fix "Go to source" in Testing activity + test panel without function. [#3362](https://github.com/microsoft/vscode-cmake-tools/issues/3362)
+- Remove an un-implemented "internal" command. [#3596](https://github.com/microsoft/vscode-cmake-tools/issues/3596)
+- Fix incorrect test output. [#3591](https://github.com/microsoft/vscode-cmake-tools/issues/3591)
 - Fix issue where our searching for cl and ninja was repeatedly unnecessarily, impacting performance. [#3633](https://github.com/microsoft/vscode-cmake-tools/issues/3633)
 - Fix preset environment issue. [#3657](https://github.com/microsoft/vscode-cmake-tools/issues/3657)
 - Fix invocation of vcvarsall.bat script argument for targetArch. [#3672](https://github.com/microsoft/vscode-cmake-tools/issues/3672)
 - Ensure that we support ${workspaceFolder} when initializing cmake information. [#3658](https://github.com/microsoft/vscode-cmake-tools/issues/3658)
 - Fix issue where correcting `cmake.cmakePath` is still broken. [#3570](https://github.com/microsoft/vscode-cmake-tools/issues/3570)
 - Fix CMakePresets.json schema validation. [#3651](https://github.com/microsoft/vscode-cmake-tools/issues/3651)
+- Update what we use to create the workspace browse configuration to pass to cpp tools by filtering out extra file groups that are generated. [#3729](https://github.com/microsoft/vscode-cmake-tools/issues/3729)
 
 ## 1.17.17
 
