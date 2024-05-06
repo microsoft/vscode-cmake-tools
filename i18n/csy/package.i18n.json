@@ -35,7 +35,6 @@
 	"cmake-tools.command.cmake.build.title": "Build",
 	"cmake-tools.command.cmake.buildAll.title": "Sestavit všechny projekty",
 	"cmake-tools.command.cmake.showBuildCommand.title": "Zobrazení příkazu sestavení",
-	"cmake-tools.command.cmake.buildNamedTarget.title": "(Interní) Sestavit cíl podle názvu",
 	"cmake-tools.command.cmake.compileFile.title": "Zkompilovat aktivní soubor",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Zkompilovat soubor",
 	"cmake-tools.command.cmake.install.title": "Nainstalovat",
@@ -107,7 +106,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Cesta ke spustitelnému souboru CTest. Pokud je hodnota null, bude odvozena z parametru cmake.cmakePath (doporučeno ponechat hodnotu null).",
 	"cmake-tools.configuration.cmake.cpackPath.description": "Cesta ke spustitelnému souboru CPack. Pokud je hodnota null, odvodí se z parametru cmake.cmakePath (doporučuje se ponechat hodnotu null). Bude ignorováno, pokud se místo předvoleb použijí sady.",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "Počet paralelních testovacích úloh. Pokud chcete použít hodnotu `#cmake.parallelJobs#`, použijte nulu. Toto platí pouze v případě, že je hodnota `#cmake.ctest.allowParallelJobs#` nastavená na `true`.",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Umožňuje paralelní spouštění ctestů, výstup však může být nečitelný nebo poškozený.",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Umožňuje paralelní spouštění ctestů, avšak výstup výsledků může být v důsledku toho zkreslený a Průzkumník testů nemusí přesně odrážet průběh testu.",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "Určuje, jestli je povolená integrace s průzkumníkem testů. To je užitečné zakázat, pokud upřednostňujete použití jiného rozšíření pro integraci testů.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analyzovat výstup kompilátoru z hlediska upozornění a chyb",
 	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Výstupní analyzátory, které se mají použít. Podporované jsou analyzátory `cmake`, `gcc` a `gnuld` pro výstup linkeru ve stylu GNULD, `msvc` pro Microsoft Visual C++, `ghs` pro kompilátor Green Hills s parametry --no_wrap_diagnostics nebo --brief_diagnostics a `diab` pro kompilátor Wind River Diab.",
@@ -205,6 +204,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Určuje, co se stane se spouštěcím terminálem, když spustíte cíl.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Automaticky nakonfigurujte adresáře projektu CMake při změně sady nebo předvolby konfigurace.",
 	"cmake-tools.configuration.cmake.pinnedCommands.description": "Seznam příkazů CMake, které se mají připnout.",
+	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Umožňuje povolit automatické vyhledávání sad, když není vybrána sada. Bude to mít vliv jen v případě, že se nepoužívají předvolby CMake.",
 	"cmake-tools.debugger.pipeName.description": "Název kanálu (ve Windows) nebo soketu domény (v systému Unix), který se má použít pro komunikaci ladicího programu.",
 	"cmake-tools.debugger.clean.description": "Před konfigurací vyčistěte.",
 	"cmake-tools.debugger.configureAll.description": "Nakonfigurujte pro všechny projekty.",
@@ -243,5 +243,8 @@
 	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Odstranit mezipaměť a znovu nakonfigurovat",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Nastavit cíl testu",
 	"cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Otevřít nastavení viditelnosti",
-	"cmake-tools.debugger.label": "Ladicí program CMake"
+	"cmake-tools.debugger.label": "Ladicí program CMake",
+	"cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Připojit adresář sestavení k aktuálnímu pracovnímu prostoru",
+	"cmake-tools.command.workbench.action.tasks.configureTaskRunner.title": "Nakonfigurovat úlohu",
+	"cmake-tools.command.workbench.action.tasks.runTask.title": "Spustit úlohu"
 }

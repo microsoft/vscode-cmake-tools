@@ -9,6 +9,8 @@
 	"process.error": "Komut: {0}, şu hatayla başarısız oldu: {1}",
 	"process.exit.with.signal": "Komut: {0}, şu kodla çıkıldı: {1} ve sinyal: {2}",
 	"process.exit": "{0} komutundan {1} koduyla çıkıldı.",
+	"process.exit.stdout": "Standart çıkışta komut çıktısı: {0}",
+	"process.exit.stderr": "Standart hatada komut çıktısı: {0}",
 	"processing.data.event.stdout": "proc stdout konumundaki {0} olayı işleniyor",
 	"processing.data.event.stderr": "proc stderr konumundaki {0} olayı işleniyor",
 	"resolving.close.event": "{0} olayında işlem çözümleniyor"
