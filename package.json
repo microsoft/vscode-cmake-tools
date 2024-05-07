@@ -820,28 +820,28 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.projectStatus.update.title%",
         "category": "CMake",
-        "icon": "$(refresh)"      
+        "icon": "$(refresh)"
       },
       {
         "command": "cmake.pinnedCommands.add",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.pinnedCommands.add.title%",
         "category": "CMake",
-        "icon": "$(add)"      
+        "icon": "$(add)"
       },
       {
         "command": "cmake.pinnedCommands.remove",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.pinnedCommands.remove.title%",
         "category": "CMake",
-        "icon": "$(remove)"      
+        "icon": "$(remove)"
       },
       {
         "command": "cmake.pinnedCommands.run",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.pinnedCommands.run.title%",
         "category": "CMake",
-        "icon": "$(play-circle)"      
+        "icon": "$(play-circle)"
       },
       {
         "command": "cmake.appendBuildDirectoryToWorkspace",
@@ -1264,7 +1264,7 @@
           "when": "cmake:multiProject"
         },
         {
-          "command": "cmake.cleanConfigureWithDebugger", 
+          "command": "cmake.cleanConfigureWithDebugger",
           "when": "cmake:cmakeDebuggerAvailable"
         },
         {
@@ -3783,6 +3783,6 @@
     "xml2js": "^0.5.0",
     "tsconfig-paths*/json5": "^1.0.2",
     "minimatch": "^3.0.5"
-  }, 
+  },
   "packageManager": "yarn@1.22.19"
 }
