@@ -716,6 +716,11 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     await fs.unlink(script_path); // delete script file
     const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
+    if (res.retc !== 0) {
+        log.error(`Error running ${kit.environmentSetupScript} with:`, output);
+        return;
+    }
+
     let env = '';
     try {
         /* When the script failed, envpath would not exist */
