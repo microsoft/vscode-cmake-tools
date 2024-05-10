@@ -13,7 +13,7 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 /** Logging levels */
-export enum LogLevel {
+enum LogLevel {
     Trace,
     Debug,
     Info,
@@ -112,14 +112,14 @@ class OutputChannelManager implements vscode.Disposable {
 
 export const channelManager = new OutputChannelManager();
 
-export interface Stringable {
+interface Stringable {
     toString(): string;
     toLocaleString(): string;
 }
 
 let _LOGGER: NodeJS.WritableStream;
 
-export function logFilePath(): string {
+function logFilePath(): string {
     return path.join(paths.dataDir, 'log.txt');
 }
 
