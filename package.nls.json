@@ -249,7 +249,7 @@
     "cmake-tools.configuration.cmake.revealLog.focus.description": "The log appears and the output channel takes the cursor focus.",
     "cmake-tools.configuration.cmake.revealLog.always.description": "The log appears but the output channel doesn't take the cursor focus.",
     "cmake-tools.configuration.cmake.revealLog.never.description": "The log neither appears nor takes the focus.",
-    "cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json.",
+    "cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json. This only is used in Kits scenarios. In Presets scenarios, please set this by using CMakePresets.json",
     "cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json to configure drive CMake configure, build, and test. When using CMakePresets.json, kits, variants, and some settings in settings.json will be ignored.",
     "cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Allow the use of JSON extensions such as comments in CMakePresets.json. Please note that your CMakePresets.json file may be considered invalid by other IDEs or on the command line if you use non-standard JSON.",
     "cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Enables the use of presets files that are using features from the versions that CMake Tools extension doesn't currently support. Unknown properties and macros will be ignored.",
