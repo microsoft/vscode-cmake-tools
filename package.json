@@ -18,16 +18,14 @@
     "tools",
     "build",
     "c++",
-    "native",
-    "syntaxes"
+    "native"
   ],
   "engines": {
     "vscode": "^1.63.0"
   },
   "categories": [
     "Other",
-    "Debuggers",
-    "Programming Languages"
+    "Debuggers"
   ],
   "galleryBanner": {
     "color": "#13578c",
