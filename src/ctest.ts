@@ -528,7 +528,7 @@ export class CTestDriver implements vscode.Disposable {
         let output = testResult.output;
         // https://code.visualstudio.com/api/extension-guides/testing#test-output
         output = output.replace(/\r?\n/g, '\r\n');
-        run.appendOutput(output);
+        run.appendOutput(output, undefined, test);
 
         if (testResult.status !== 'passed' && !havefailures) {
             const failureDurationStr = testResult.measurements.get("Execution Time")?.value;
