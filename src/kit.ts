@@ -717,7 +717,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
     if (res.retc !== 0) {
-        log.error(`Error running ${kit.environmentSetupScript} with:`, output);
+        log.error(localize('error.running.setup.script', 'Error running {0} with: {1}', kit.environmentSetupScript, output));
         return;
     }
 
