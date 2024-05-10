@@ -526,9 +526,8 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         let output = testResult.output;
-        if (process.platform === 'win32') {
-            output = output.replace(/\r?\n/g, '\r\n');
-        }
+        // https://code.visualstudio.com/api/extension-guides/testing#test-output
+        output = output.replace(/\r?\n/g, '\r\n');
         run.appendOutput(output);
 
         if (testResult.status !== 'passed' && !havefailures) {
