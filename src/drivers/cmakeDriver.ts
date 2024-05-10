@@ -1387,14 +1387,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     public async generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): Promise<string[]> {
         // Cache flags will construct the command line for cmake.
-        const init_cache_flags = this.generateInitCacheFlags();
+        const init_cache_flags = await this.generateInitCacheFlags();
         // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
         return init_cache_flags.concat(preset.configureArgs(configPreset), await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()}))));
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
         // Cache flags will construct the command line for cmake.
-        const init_cache_flags = this.generateInitCacheFlags();
+        const init_cache_flags = await this.generateInitCacheFlags();
         const initial_common_flags = extra_args.concat(this.config.configureArgs);
         const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags : initial_common_flags.concat("--no-warn-unused-cli");
         const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
@@ -1614,7 +1614,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private generateInitCacheFlags(): string[] {
+    private async generateInitCacheFlags(): Promise<string[]> {
         const cache_init_conf = this.config.cacheInit;
         let cache_init: string[] = [];
         if (cache_init_conf === null) {
@@ -1626,7 +1626,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
 
         const flags: string[] = [];
+        const envOverride = await this.getConfigureEnvironment();
         for (let init of cache_init) {
+            init = await expand.expandString(init, { ...this.expansionOptions, envOverride });
             if (!path.isAbsolute(init)) {
                 init = path.join(this.sourceDir, init);
             }

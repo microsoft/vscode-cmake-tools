@@ -38,6 +38,7 @@ Bug Fixes:
 - Fix issue where correcting `cmake.cmakePath` is still broken. [#3570](https://github.com/microsoft/vscode-cmake-tools/issues/3570)
 - Fix CMakePresets.json schema validation. [#3651](https://github.com/microsoft/vscode-cmake-tools/issues/3651)
 - Update what we use to create the workspace browse configuration to pass to cpp tools by filtering out extra file groups that are generated. [#3729](https://github.com/microsoft/vscode-cmake-tools/issues/3729)
+- Fix issue where `cmake.cacheInit` isn't supporting absolute path in environment variables. [#2777](https://github.com/microsoft/vscode-cmake-tools/issues/2777)
 
 ## 1.17.17
 
