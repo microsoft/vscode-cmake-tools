@@ -528,7 +528,11 @@ export class CTestDriver implements vscode.Disposable {
         let output = testResult.output;
         // https://code.visualstudio.com/api/extension-guides/testing#test-output
         output = output.replace(/\r?\n/g, '\r\n');
-        run.appendOutput(output, undefined, test);
+        if (test.uri && test.range) {
+            run.appendOutput(output, new vscode.Location(test.uri, test.range.end), test);
+        } else {
+            run.appendOutput(output, undefined, test);
+        }
 
         if (testResult.status !== 'passed' && !havefailures) {
             const failureDurationStr = testResult.measurements.get("Execution Time")?.value;
@@ -961,7 +965,7 @@ export class CTestDriver implements vscode.Disposable {
             .find(test => test.name === testName)?.properties
             .find(prop => prop.name === 'WORKING_DIRECTORY');
 
-        if (typeof(property?.value) === 'string') {
+        if (typeof (property?.value) === 'string') {
             return property.value;
         }
         return '';
