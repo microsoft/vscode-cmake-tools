@@ -22,6 +22,7 @@ Improvements:
 - Add support for variable expansion in `debugConfig.environment` [#3711](https://github.com/microsoft/vscode-cmake-tools/issues/3711)
 - Add the ability to debug install targets [#532](https://github.com/microsoft/vscode-cmake-tools/issues/532)
 - Add a "Don't Show Again" option in the select CMakeLists.txt.
+- Log error statement if the environmentSetupScript fails. [#3566](https://github.com/microsoft/vscode-cmake-tools/issues/3566)
 - [Experiment] Improve CMake Tools experience when opening a folder [#3588](https://github.com/microsoft/vscode-cmake-tools/issues/3588)
 
 Bug Fixes:
