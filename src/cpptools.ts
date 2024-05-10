@@ -606,7 +606,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
                         const sysroot = target.sysroot;
                         this.targets.push({ name: target.name, type: target.type });
-                        for (const grp of target.fileGroups || []) {
+                        const filteredGroups = (target.fileGroups && target.fileGroups.filter(fg => !fg.isGenerated).length > 0) ? target.fileGroups.filter(fg => !fg.isGenerated) : target.fileGroups;
+                        for (const grp of filteredGroups || []) {
                             try {
                                 this.updateFileGroup(
                                     target.sourceDirectory || '',

@@ -35,7 +35,6 @@
 	"cmake-tools.command.cmake.build.title": "빌드",
 	"cmake-tools.command.cmake.buildAll.title": "모든 프로젝트 빌드",
 	"cmake-tools.command.cmake.showBuildCommand.title": "빌드 명령 표시",
-	"cmake-tools.command.cmake.buildNamedTarget.title": "(내부) 이름으로 대상 빌드",
 	"cmake-tools.command.cmake.compileFile.title": "활성 파일 컴파일",
 	"cmake-tools.command.cmake.outline.compileFile.title": "파일 컴파일",
 	"cmake-tools.command.cmake.install.title": "설치",
@@ -107,7 +106,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 실행 파일의 경로입니다. Null인 경우 cmake.cmakePath에서 유추됩니다(null을 유지하는 것이 좋음).",
 	"cmake-tools.configuration.cmake.cpackPath.description": "CPack 실행 파일의 경로입니다. Null인 경우 cmake.cmakePath에서 유추됩니다(null을 유지하는 것이 좋음). 사전 설정 대신 키트를 사용하는 경우 무시됩니다.",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "병렬 테스트 작업 수입니다. `#cmake.parallelJobs#` 값을 사용하려면 0을 사용합니다. 이는 `#cmake.ctest.allowParallelJobs#`이 `true`로 설정된 경우에만 적용됩니다.",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "ctest의 병렬 실행을 허용하지만 그 결과로 결과 출력이 왜곡될 수 있습니다.",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Ctest를 병렬로 실행할 수 있지만 그로 인해 결과 출력이 왜곡될 수 있으며 테스트 탐색기에 테스트 진행 상황이 정확하게 반영되지 않을 수 있습니다.",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "테스트 탐색기와의 통합을 사용할 수 있는지 여부입니다. 이는 테스트 통합에 다른 확장을 사용하려는 경우 사용하지 않도록 설정하는 데 유용합니다.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "경고 및 오류에 대한 컴파일러 출력을 구문 분석합니다.",
 	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "사용할 출력 파서입니다. 지원되는 파서: GNULD 스타일 링커 출력의 경우 `cmake`, `gcc`, `gnuld`, Microsoft Visual C++의 경우 `msvc`, Green Hills 컴파일러의 경우 `ghs`(--no_wrap_diagnostics --brief_diagnostics 포함), Wind River Diab 컴파일러의 경우 `diab`",
@@ -205,6 +204,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.description": "대상을 시작할 때 시작 터미널에서 수행되는 작업을 제어합니다.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "키트 또는 구성 사전 설정이 변경되면 CMake 프로젝트 디렉터리를 자동으로 구성합니다.",
 	"cmake-tools.configuration.cmake.pinnedCommands.description": "고정할 CMake 명령 목록입니다.",
+	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "키트를 선택하지 않은 경우 키트 자동 검사를 활성화합니다. CMake 사전 설정을 사용하지 않는 경우에만 적용됩니다.",
 	"cmake-tools.debugger.pipeName.description": "디버거 통신에 사용할 파이프(Windows) 또는 도메인 소켓(Unix의 경우)의 이름입니다.",
 	"cmake-tools.debugger.clean.description": "구성하기 전에 정리합니다.",
 	"cmake-tools.debugger.configureAll.description": "모든 프로젝트에 대해 구성합니다.",
@@ -243,5 +243,8 @@
 	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "캐시 삭제 및 다시 구성",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "테스트 대상 설정",
 	"cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "표시 유형 설정 열기",
-	"cmake-tools.debugger.label": "CMake 디버거"
+	"cmake-tools.debugger.label": "CMake 디버거",
+	"cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "현재 작업 영역에 빌드 디렉터리 추가",
+	"cmake-tools.command.workbench.action.tasks.configureTaskRunner.title": "작업 구성",
+	"cmake-tools.command.workbench.action.tasks.runTask.title": "작업 실행"
 }

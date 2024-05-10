@@ -9,6 +9,8 @@
 	"process.error": "Fehler beim Befehl {0}. Fehler: {1}",
 	"process.exit.with.signal": "Der Befehl: {0} wurde mit dem Code: {1} und dem Signal: {2} beendet.",
 	"process.exit": "Der Befehl \"{0}\" wurde mit dem Code \"{1}\" beendet.",
+	"process.exit.stdout": "Befehlsausgabe bei Standardausgabe: {0}",
+	"process.exit.stderr": "Befehlsausgabe bei Standardfehler: {0}",
 	"processing.data.event.stdout": "Das Ereignis {0} aus \"proc stdout\" wird verarbeitet.",
 	"processing.data.event.stderr": "Das Ereignis {0} aus \"proc stderr\" wird verarbeitet.",
 	"resolving.close.event": "Der Prozess wird beim Ereignis {0} aufgelöst."

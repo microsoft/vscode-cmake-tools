@@ -9,6 +9,8 @@
 	"process.error": "La commande : {0} a échoué avec l’erreur : {1}",
 	"process.exit.with.signal": "La commande : {0} s’est arrêtée avec le code suivant : {1} et signal : {2}",
 	"process.exit": "La commande « {0} » s’est arrêtée avec le code {1}.",
+	"process.exit.stdout": "Sortie de commande sur sortie standard : {0}",
+	"process.exit.stderr": "Sortie de commande en cas d’erreur standard : {0}",
 	"processing.data.event.stdout": "Traitement de l’événement {0} à partir de proc stdout",
 	"processing.data.event.stderr": "Traitement {0} événement à partir de proc stderr",
 	"resolving.close.event": "Résolution du processus sur {0} événement"

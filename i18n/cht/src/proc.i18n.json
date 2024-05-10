@@ -9,6 +9,8 @@
 	"process.error": "命令 {0} 失敗，錯誤為 {1}",
 	"process.exit.with.signal": "命令 {0} 已結束，代碼為 {1} 且訊號為 {2}",
 	"process.exit": "命令: {0} 結束，出現代碼: {1}。",
+	"process.exit.stdout": "standard out 上的命令輸出: {0}",
+	"process.exit.stderr": "standard error 上的命令輸出: {0}",
 	"processing.data.event.stdout": "正在處理來自流程 stdout 的 {0} 事件",
 	"processing.data.event.stderr": "正在處理來自流程 stderr 的 {0} 事件",
 	"resolving.close.event": "正在解決 {0} 事件上的流程"

@@ -9,6 +9,8 @@
 	"process.error": "다음 오류로 {0}이(가) 실패했습니다. {1}",
 	"process.exit.with.signal": "명령: {0} 종료된 코드: {1} 및 신호: {2}",
 	"process.exit": "명령 \"{0}\"이(가) 코드 {1}과(와) 함께 종료되었습니다.",
+	"process.exit.stdout": "표준 출력 시 명령 출력: {0}",
+	"process.exit.stderr": "표준 오류 시 명령 출력: {0}",
 	"processing.data.event.stdout": "proc stdout에서 {0} 이벤트 처리 중",
 	"processing.data.event.stderr": "proc stderr에서 {0} 이벤트 처리 중",
 	"resolving.close.event": "{0} 이벤트 해결 프로세스"

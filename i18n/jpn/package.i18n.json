@@ -35,7 +35,6 @@
 	"cmake-tools.command.cmake.build.title": "ビルド",
 	"cmake-tools.command.cmake.buildAll.title": "すべてのプロジェクトのビルド",
 	"cmake-tools.command.cmake.showBuildCommand.title": "ビルド コマンドの表示",
-	"cmake-tools.command.cmake.buildNamedTarget.title": "(内部) 名前でターゲットをビルドする",
 	"cmake-tools.command.cmake.compileFile.title": "アクティブ ファイルのコンパイル",
 	"cmake-tools.command.cmake.outline.compileFile.title": "ファイルのコンパイル",
 	"cmake-tools.command.cmake.install.title": "インストール",
@@ -107,7 +106,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 実行可能ファイルへのパス。null の場合、cmake.cmakePath から推論されます (null のままにすることをお勧めします)。",
 	"cmake-tools.configuration.cmake.cpackPath.description": "CPack 実行可能ファイルへのパス。null の場合、cmake.cmakePath から推論されます (null のままにすることをお勧めします)。キットがプリセットの代わりに使用される場合は無視されます。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "並列テスト ジョブの数。`#cmake.parallelJobs#` の値を使用するには、0 を使用します。これは、`#cmake.ctest.allowParallelJobs#` が `true` に設定されている場合にのみ適用されます。",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "ctest を並列で実行できますが、結果の出力が結果として文字化けする可能性があります。",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "ctest を並列で実行できますが、結果として結果出力が文字化けし、テスト エクスプローラーにテストの進行状況が正確に反映されない場合があります。",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "テスト エクスプローラーとの統合が有効になっているかどうか。テスト統合に別の拡張機能を使用する場合には、これを無効にすることが適しています。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "コンパイラ出力の警告とエラーを解析します。",
 	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "使用する出力パーサー。サポートされるパーサーは、GNULD スタイルのリンカー出力の場合は `cmake`、`gcc`、`gnuld`、Microsoft Visual C++ の場合は `msvc`、--no_wrap_diagnostics --brief_diagnostics を指定した Green Hills Compiler の場合は `ghs`、Wind River Diab Compiler の場合は `diab` です。",
@@ -205,6 +204,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.description": "ターゲットを起動するときの起動ターミナルの動作を制御します。",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "キットまたは構成プリセットが変更されたときに、CMake プロジェクト ディレクトリを自動的に構成します。",
 	"cmake-tools.configuration.cmake.pinnedCommands.description": "ピン留めする CMake コマンドの一覧。",
+	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "キットが選択されていない場合は、キットの自動スキャンを有効にします。これは、CMake プリセットが使用されていない場合にのみ影響します。",
 	"cmake-tools.debugger.pipeName.description": "デバッガー コミュニケーションに使用するパイプ (Windows 上) またはドメイン ソケット (Unix 上) の名前。",
 	"cmake-tools.debugger.clean.description": "構成する前にクリーンアップします。",
 	"cmake-tools.debugger.configureAll.description": "すべてのプロジェクトに対して構成します。",
@@ -243,5 +243,8 @@
 	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "キャッシュの削除と再構成",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "テストの対象の設定",
 	"cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "表示範囲設定を開く",
-	"cmake-tools.debugger.label": "CMake デバッガー"
+	"cmake-tools.debugger.label": "CMake デバッガー",
+	"cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "現在のワークスペースにビルド ディレクトリを追加する",
+	"cmake-tools.command.workbench.action.tasks.configureTaskRunner.title": "タスクの構成",
+	"cmake-tools.command.workbench.action.tasks.runTask.title": "タスクの実行"
 }

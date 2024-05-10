@@ -9,5 +9,6 @@
 	"unlink.failed": "Nie można usunąć {0} pliku pamięci podręcznej",
 	"cmake.debug.name": "Debuger CMake",
 	"toolchains.object.unsupported": "Ta wersja narzędzia CMake nie obsługuje rodzaju obiektu „toolchains”. Ścieżki kompilatora będą określane przez odczytanie pliku CMakeCache.txt.",
-	"build.all.target": "Specjalny element docelowy umożliwiający kompilowanie wszystkich dostępnych elementów docelowych"
+	"build.all.target": "Specjalny element docelowy umożliwiający kompilowanie wszystkich dostępnych elementów docelowych",
+	"cmake.install.name": "Instaluj"
 }

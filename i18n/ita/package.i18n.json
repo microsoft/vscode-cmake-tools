@@ -35,7 +35,6 @@
 	"cmake-tools.command.cmake.build.title": "Compila",
 	"cmake-tools.command.cmake.buildAll.title": "Compila tutti i progetti",
 	"cmake-tools.command.cmake.showBuildCommand.title": "Visualizza comando di compilazione",
-	"cmake-tools.command.cmake.buildNamedTarget.title": "(Interno) Compila una destinazione in base al nome",
 	"cmake-tools.command.cmake.compileFile.title": "Compila il file attivo",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Compila file",
 	"cmake-tools.command.cmake.install.title": "Installa",
@@ -107,7 +106,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Percorso dell'eseguibile di CTest. Se è Null, verrà dedotto da cmake.cmakePath (è consigliabile lasciare Null).",
 	"cmake-tools.configuration.cmake.cpackPath.description": "Percorso dell'eseguibile di CPack. Se è Null, verrà dedotto da cmake.cmakePath (è consigliabile lasciare Null). Verrà ignorato quando si usano i kit invece dei set di impostazioni.",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "Numero di processi di test paralleli. Usa zero per usare il valore di `#cmake.parallelJobs#`. Si applica solo quando `#cmake.ctest.allowParallelJobs#` è impostato su `true`.",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Consente l'esecuzione parallela di ctest, ma l'output dei risultati potrebbe risultare ileggibile.",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Consente di eseguire i ctest in parallelo, ma l'output dei risultati potrebbe essere illeggibile ed Esplora test potrebbe non riflettere accuratamente l'avanzamento del test.",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "Indica se l'integrazione con Esplora test è abilitata o meno. È utile disabilitare questa opzione se si preferisce usare un'estensione diversa per l'integrazione dei test.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analizza l'output del compilatore per individuare avvisi ed errori.",
 	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Parser di output da usare. Analizzatori supportati: `cmake`, `gcc`, `gnuld` per l'output del linker di tipo GNULD, `msvc` per Microsoft Visual C++, `ghs` per il compilatore Green Hills con --no_wrap_diagnostics --brief_diagnostics e `diab` per il compilatore Wind River Diab.",
@@ -205,6 +204,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Controlla cosa accade al terminale di avvio quando si avvia una destinazione.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Configurare automaticamente le directory del progetto CMake quando il kit o il set di impostazioni di configurazione viene modificato.",
 	"cmake-tools.configuration.cmake.pinnedCommands.description": "Elenco dei comandi CMake da bloccare.",
+	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Abilitare l'analisi automatica dei kit quando non è selezionato un kit. Questa operazione avrà effetto solo quando i set di impostazioni di CMake non vengono usati.",
 	"cmake-tools.debugger.pipeName.description": "Nome della pipe (in Windows) o del socket di dominio (su Unix) da utilizzare per la comunicazione del debugger.",
 	"cmake-tools.debugger.clean.description": "Pulisci prima di configurare.",
 	"cmake-tools.debugger.configureAll.description": "Configura per tutti i progetti.",
@@ -243,5 +243,8 @@
 	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Elimina la cache e riconfigura",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Impostare la destinazione test",
 	"cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Apri impostazioni visibilità",
-	"cmake-tools.debugger.label": "CMake Debugger"
+	"cmake-tools.debugger.label": "CMake Debugger",
+	"cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Accodare la directory di compilazione all'area di lavoro corrente",
+	"cmake-tools.command.workbench.action.tasks.configureTaskRunner.title": "Configurare attività",
+	"cmake-tools.command.workbench.action.tasks.runTask.title": "Esegui attività"
 }

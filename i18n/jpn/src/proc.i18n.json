@@ -9,6 +9,8 @@
 	"process.error": "コマンド: {0} 次のエラーで失敗しました: {1}",
 	"process.exit.with.signal": "コマンド: {0} 次で終了しました: コード {1} とシグナル {2}",
 	"process.exit": "コマンド {0} はコード {1} で終了しました",
+	"process.exit.stdout": "標準出力でのコマンド出力: {0}",
+	"process.exit.stderr": "標準エラー時のコマンド出力: {0}",
 	"processing.data.event.stdout": "proc StdOut から {0} イベントを処理しています",
 	"processing.data.event.stderr": "proc stderr から {0} イベントを処理しています",
 	"resolving.close.event": "{0} イベントのプロセスを解決しています"

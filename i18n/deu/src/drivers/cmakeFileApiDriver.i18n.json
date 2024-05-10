@@ -9,5 +9,6 @@
 	"unlink.failed": "Fehler beim Entfernen der Cachedatei {0}",
 	"cmake.debug.name": "CMake-Debugger",
 	"toolchains.object.unsupported": "Diese Version von CMake bietet keine Unterstützung für die Objektart \"toolchains\". Compilerpfade werden durch Lesen der „Datei CMakeCache.txt“ bestimmt.",
-	"build.all.target": "Ein spezielles Ziel zum Erstellen aller verfügbaren Ziele"
+	"build.all.target": "Ein spezielles Ziel zum Erstellen aller verfügbaren Ziele",
+	"cmake.install.name": "Installieren"
 }

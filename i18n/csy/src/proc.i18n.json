@@ -9,6 +9,8 @@
 	"process.error": "Příkaz: {0} selhal s chybou: {1}",
 	"process.exit.with.signal": "Příkaz: {0} ukončen s kódem: {1} a signálem: {2}",
 	"process.exit": "Příkaz {0} byl ukončen s kódem {1}.",
+	"process.exit.stdout": "Výstup příkazu na standardním výstupu: {0}",
+	"process.exit.stderr": "Výstup příkazu při standardní chybě: {0}",
 	"processing.data.event.stdout": "Zpracovává se událost {0} z ukazatele stdout procedury.",
 	"processing.data.event.stderr": "Zpracovává se událost {0} z ukazatele stderr procedury.",
 	"resolving.close.event": "Překládá se proces při události {0}."

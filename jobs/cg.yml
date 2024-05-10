@@ -42,8 +42,6 @@ extends:
         name: AzurePipelines-EO
         image: AzurePipelinesWindows2022compliantGPT
         os: windows
-      policheck:
-        enabled: true
       tsa:
         enabled: true
         config:
@@ -60,6 +58,9 @@ extends:
           iterationPath: $(Tsa.AdoProject)
           allTools: true
           repositoryName: vscode-cmake-tools
+      policheck:
+        enabled: true
+        exclusionsFile: $(Build.SourcesDirectory)\jobs\policheckExclusions.xml
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
