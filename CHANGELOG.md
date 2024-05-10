@@ -23,6 +23,7 @@ Improvements:
 - Add the ability to debug install targets [#532](https://github.com/microsoft/vscode-cmake-tools/issues/532)
 - Add a "Don't Show Again" option in the select CMakeLists.txt.
 - Log error statment if the environmentSetupScript fails. [#3566](https://github.com/microsoft/vscode-cmake-tools/issues/3566)
+- [Experiment] Improve CMake Tools experience when opening a folder [#3588](https://github.com/microsoft/vscode-cmake-tools/issues/3588)
 
 Bug Fixes:
 - Fix localization issue in package.json. [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
