@@ -18,16 +18,14 @@
     "tools",
     "build",
     "c++",
-    "native",
-    "syntaxes"
+    "native"
   ],
   "engines": {
     "vscode": "^1.63.0"
   },
   "categories": [
     "Other",
-    "Debuggers",
-    "Programming Languages"
+    "Debuggers"
   ],
   "galleryBanner": {
     "color": "#13578c",
@@ -62,30 +60,10 @@
     "workspaceContains:*/*/CMakeLists.txt",
     "workspaceContains:*/*/*/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json",
-    "onLanguage:cmake",
     "onFileSystem:cmake-tools-schema"
   ],
   "main": "./dist/main",
   "contributes": {
-    "languages": [
-      {
-        "id": "cmake",
-        "extensions": [
-          ".cmake"
-        ],
-        "filenames": ["CMakeLists.txt"],
-        "aliases": [
-          "CMake"
-        ]
-      },
-      {
-        "id": "cmake-cache",
-        "filenames": ["CMakeCache.txt"],
-        "aliases": [
-          "CMake Cache"
-        ]
-      }
-    ],
     "commands": [
       {
         "command": "cmake.openCMakePresets",
@@ -848,18 +826,6 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
         "category": "CMake"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "cmake",
-        "scopeName": "source.cmake",
-        "path": "./syntaxes/CMake.tmLanguage"
-      },
-      {
-        "language": "cmake-cache",
-        "scopeName": "source.cmakecache",
-        "path": "./syntaxes/CMakeCache.tmLanguage"
       }
     ],
     "taskDefinitions": [
@@ -3787,5 +3753,8 @@
     "tsconfig-paths*/json5": "^1.0.2",
     "minimatch": "^3.0.5"
   },
+  "extensionPack": [
+    "twxs.cmake"
+  ],
   "packageManager": "yarn@1.22.19"
 }
