@@ -21,6 +21,7 @@ Improvements:
 - Add support for variable expansion in `debugConfig.environment` [#3711](https://github.com/microsoft/vscode-cmake-tools/issues/3711)
 - Add the ability to debug install targets [#532](https://github.com/microsoft/vscode-cmake-tools/issues/532)
 - Add a "Don't Show Again" option in the select CMakeLists.txt.
+- [Experiment] Improve CMake Tools experience when opening a folder [#3588](https://github.com/microsoft/vscode-cmake-tools/issues/3588)
 
 Bug Fixes:
 - Fix localization issue in package.json. [#3616](https://github.com/microsoft/vscode-cmake-tools/issues/3616)
@@ -36,6 +37,7 @@ Bug Fixes:
 - Fix issue where correcting `cmake.cmakePath` is still broken. [#3570](https://github.com/microsoft/vscode-cmake-tools/issues/3570)
 - Fix CMakePresets.json schema validation. [#3651](https://github.com/microsoft/vscode-cmake-tools/issues/3651)
 - Update what we use to create the workspace browse configuration to pass to cpp tools by filtering out extra file groups that are generated. [#3729](https://github.com/microsoft/vscode-cmake-tools/issues/3729)
+- Fix issue where `cmake.cacheInit` isn't supporting absolute path in environment variables. [#2777](https://github.com/microsoft/vscode-cmake-tools/issues/2777)
 
 ## 1.17.17
 

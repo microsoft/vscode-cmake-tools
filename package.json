@@ -800,28 +800,28 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.projectStatus.update.title%",
         "category": "CMake",
-        "icon": "$(refresh)"      
+        "icon": "$(refresh)"
       },
       {
         "command": "cmake.pinnedCommands.add",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.pinnedCommands.add.title%",
         "category": "CMake",
-        "icon": "$(add)"      
+        "icon": "$(add)"
       },
       {
         "command": "cmake.pinnedCommands.remove",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.pinnedCommands.remove.title%",
         "category": "CMake",
-        "icon": "$(remove)"      
+        "icon": "$(remove)"
       },
       {
         "command": "cmake.pinnedCommands.run",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.pinnedCommands.run.title%",
         "category": "CMake",
-        "icon": "$(play-circle)"      
+        "icon": "$(play-circle)"
       },
       {
         "command": "cmake.appendBuildDirectoryToWorkspace",
@@ -1232,7 +1232,7 @@
           "when": "cmake:multiProject"
         },
         {
-          "command": "cmake.cleanConfigureWithDebugger", 
+          "command": "cmake.cleanConfigureWithDebugger",
           "when": "cmake:cmakeDebuggerAvailable"
         },
         {
@@ -2568,7 +2568,10 @@
           "type": "boolean",
           "default": null,
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
-          "scope": "resource"
+          "scope": "resource",
+          "tags": [
+            "experimental"
+          ]
         },
         "cmake.configureOnEdit": {
           "type": "boolean",
