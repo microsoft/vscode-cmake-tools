@@ -2047,8 +2047,11 @@ export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], temp
     }
 
     tempOverrideArgs && result.push(...tempOverrideArgs);
-    preset.nativeToolOptions && result.push('--', ...preset.nativeToolOptions);
-    tempOverrideBuildToolArgs && result.push(...tempOverrideBuildToolArgs);
+    if (preset.nativeToolOptions || tempOverrideBuildToolArgs) {
+        result.push('--');
+        preset.nativeToolOptions && result.push(...preset.nativeToolOptions);
+        tempOverrideBuildToolArgs && result.push(...tempOverrideBuildToolArgs);
+    }
 
     return result;
 }
