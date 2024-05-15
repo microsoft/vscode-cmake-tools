@@ -594,12 +594,13 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         for (const config of opts.codeModelContent.configurations) {
             // Update only the active build type variant.
             if (config.name === opts.activeBuildTypeVariant || (!opts.activeBuildTypeVariant && config.name === "")) {
-                for (const project of config.projects) {
-                    for (const target of project.targets) {
+                for (const project of config.projects.reverse()) {
+                    for (const target of project.targets.reverse()) {
                         // Now some shenanigans since header files don't have config data:
                         // 1. Accumulate some "defaults" based on the set of all options for each file group
                         // 2. Pass these "defaults" down when rebuilding the config data
                         // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+                        target.fileGroups?.reverse();
                         const grps = target.fileGroups || [];
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
                         const compileCommandFragments = [...util.first(grps, grp => grp.compileCommandFragments || [])];
