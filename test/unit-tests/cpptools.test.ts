@@ -235,12 +235,12 @@ suite('CppTools tests', () => {
 
         configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.contain('FLAG1');
+        expect(configurations[0].configuration.defines).to.contain('FLAG2');
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
         configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.contain('FLAG2');
+        expect(configurations[0].configuration.defines).to.contain('FLAG1');
         expect(configurations[0].configuration.compilerPath).to.eq('clang++');
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'all', activeBuildTypeVariant: 'Release', folder: here });
@@ -341,15 +341,15 @@ suite('CppTools tests', () => {
 
         configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.contain('DEFINE1');
-        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT1');
+        expect(configurations[0].configuration.defines).to.contain('DEFINE2');
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT2');
         expect(configurations[0].configuration.compilerArgs).to.be.empty;
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
         configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
-        expect(configurations[0].configuration.defines).to.contain('DEFINE2');
-        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT2');
+        expect(configurations[0].configuration.defines).to.contain('DEFINE1');
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT1');
         expect(configurations[0].configuration.compilerPath).to.eq('clang++');
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'all', activeBuildTypeVariant: 'Release', folder: here });
