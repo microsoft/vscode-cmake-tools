@@ -87,7 +87,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                     code_model = cm;
                 });
             }
-            expect(await driver.configure(ConfigureTrigger.runTests, args)).to.be.eq(0);
+            expect((await driver.configure(ConfigureTrigger.runTests, args)).result).to.be.eq(0);
             return code_model;
         }
 

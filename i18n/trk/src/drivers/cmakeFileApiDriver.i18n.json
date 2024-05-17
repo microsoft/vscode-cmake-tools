@@ -9,5 +9,6 @@
 	"unlink.failed": "Önbellek dosyası {0} kaldırılamadı",
 	"cmake.debug.name": "CMake Hata Ayıklayıcısı",
 	"toolchains.object.unsupported": "CMake'in bu sürümü \"toolchains\" nesne türünü desteklemiyor. Derleyici yolları CMakeCache.txt okunarak belirlenecek.",
-	"build.all.target": "Tüm kullanılabilir hedefleri derlemek için özel bir hedef"
+	"build.all.target": "Tüm kullanılabilir hedefleri derlemek için özel bir hedef",
+	"cmake.install.name": "Yükle"
 }

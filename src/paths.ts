@@ -225,6 +225,29 @@ class Paths {
         }
     }
 
+    async getCPackPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
+        const cpackPath = await this.expandStringPath(wsc.config.rawCPackPath, wsc);
+        if (!cpackPath || cpackPath === 'auto' || overWriteCMakePathSetting) {
+            const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
+            if (cmake === null) {
+                return null;
+            } else {
+                try {
+                    // Check if CPack is a sibling executable in the same directory
+                    const cpackName = process.platform === 'win32' ? 'cpack.exe' : 'cpack';
+                    const cpackSibling = path.join(path.dirname(cmake), cpackName);
+                    await fs.access(cpackSibling, fs.constants.X_OK);
+                    return cpackSibling;
+                } catch {
+                    // The best we can do.
+                    return 'cpack';
+                }
+            }
+        } else {
+            return cpackPath;
+        }
+    }
+
     async getCMakePath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
         this._ninjaPath = undefined;
 

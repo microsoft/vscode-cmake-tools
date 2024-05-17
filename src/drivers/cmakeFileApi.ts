@@ -110,6 +110,19 @@ export namespace CodeModelKind {
         define: string;
     }
 
+    export interface InstallDestination {
+        path: string;
+    }
+
+    export interface InstallPrefix {
+        path: string;
+    }
+
+    export interface InstallInfo {
+        destinations: InstallDestination[];
+        prefix: InstallPrefix;
+    }
+
     export interface IncludeMetadata {
         path: string;
     }
@@ -149,6 +162,15 @@ export namespace CodeModelKind {
         isGenerated?: boolean;
     }
 
+    export interface Dependency {
+        backtrace: number;
+        id: string;
+    }
+
+    export interface Folder {
+        name: string;
+    }
+
     export interface TargetObject {
         name: string;
         type: string;
@@ -157,6 +179,10 @@ export namespace CodeModelKind {
         paths: PathInfo;
         sources: TargetSourcefile[];
         compileGroups?: CompileGroup[];
+        dependencies?: Dependency[];
+        folder?: Folder;
+        isGeneratorProvided?: boolean;
+        install?: InstallInfo;
     }
 }
 
@@ -378,10 +404,14 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
     }
 
     let executablePath;
+    const installPaths = [];
     if (targetObject.artifacts) {
         executablePath = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
         if (executablePath) {
             executablePath = convertToAbsolutePath(executablePath.path, buildDirectory);
+            if (targetObject.install) {
+                installPaths.push(...targetObject.install.destinations.map(dest => ({ path: convertToAbsolutePath(path.join(dest.path, targetObject.nameOnDisk), targetObject.install!.prefix.path), subPath: dest.path })));
+            }
         }
     }
 
@@ -389,7 +419,8 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
         name: targetObject.name,
         filepath: executablePath,
         targetType: targetObject.type,
-        type: 'rich' as 'rich'
+        type: 'rich' as 'rich',
+        installPaths: installPaths
     } as RichTarget;
 }
 
@@ -490,7 +521,11 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
             a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), rootPaths.build))
             : [],
         fileGroups,
-        sysroot
+        sysroot,
+        folder: targetObject.folder,
+        dependencies: targetObject.dependencies,
+        install: targetObject.install,
+        isGeneratorProvided: targetObject.isGeneratorProvided
     } as CodeModelTarget;
 }
 

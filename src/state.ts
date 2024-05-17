@@ -62,6 +62,8 @@ export class StateManager {
         for (const preset of configurePresets) {
             await this.setBuildPresetName(folderName, preset, null, isMultiProject);
             await this.setTestPresetName(folderName, preset, null, isMultiProject);
+            await this.setPackagePresetName(folderName, preset, null, isMultiProject);
+            await this.setWorkflowPresetName(folderName, preset, null, isMultiProject);
         }
         return this._update('cachedConfigurePresets', null, folderName, isMultiProject);
     }
@@ -82,6 +84,24 @@ export class StateManager {
     async setTestPresetName(folderName: string, configurePreset: string, v: string | null, isMultiProject: boolean) {
         await this.addCachedConfigurePreset(folderName, configurePreset, isMultiProject);
         await this._update(`testPreset for ${configurePreset}`, v, folderName, isMultiProject);
+    }
+
+    getPackagePresetName(folderName: string, configurePreset: string, isMultiProject: boolean): string | null {
+        return this._get<string>(`packagePreset for ${configurePreset}`, folderName, isMultiProject) || null;
+    }
+
+    async setPackagePresetName(folderName: string, configurePreset: string, v: string | null, isMultiProject: boolean) {
+        await this.addCachedConfigurePreset(folderName, configurePreset, isMultiProject);
+        await this._update(`packagePreset for ${configurePreset}`, v, folderName, isMultiProject);
+    }
+
+    getWorkflowPresetName(folderName: string, configurePreset: string, isMultiProject: boolean): string | null {
+        return this._get<string>(`workflowPreset for ${configurePreset}`, folderName, isMultiProject) || null;
+    }
+
+    async setWorkflowPresetName(folderName: string, configurePreset: string, v: string | null, isMultiProject: boolean) {
+        await this.addCachedConfigurePreset(folderName, configurePreset, isMultiProject);
+        await this._update(`workflowPreset for ${configurePreset}`, v, folderName, isMultiProject);
     }
 
     /**

@@ -9,5 +9,6 @@
 	"unlink.failed": "キャッシュ ファイル {0} を削除できませんでした",
 	"cmake.debug.name": "CMake デバッガー",
 	"toolchains.object.unsupported": "このバージョンの CMake では、\"ツールチェーン\" オブジェクトの種類はサポートされていません。コンパイラのパスは、CMakeCache.txt を読み取ることによって決まります。",
-	"build.all.target": "すべての使用可能なターゲットをビルドする特別なターゲット"
+	"build.all.target": "すべての使用可能なターゲットをビルドする特別なターゲット",
+	"cmake.install.name": "インストール"
 }

@@ -16,8 +16,10 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
 import { CodeModelContent } from './codeModel';
+import { ConfigureTrigger } from '@cmt/cmakeProject';
+import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -42,8 +44,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
     }
 
     private _needsReconfigure = true;
-    doConfigureSettingsChange() {
+    async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
+        await onConfigureSettingsChange();
     }
     async checkNeedsReconfigure(): Promise<boolean> {
         return this._needsReconfigure;
@@ -70,12 +73,20 @@ export class CMakeLegacyDriver extends CMakeDriver {
         return cb();
     }
 
+    doSetPackagePreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
+    doSetWorkflowPreset(cb: () => Promise<void>): Promise<void> {
+        return cb();
+    }
+
     // Legacy disposal does nothing
     async asyncDispose() {
         this._cacheWatcher.dispose();
     }
 
-    async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
+    async doConfigure(args_: string[], _trigger?: ConfigureTrigger, outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean, defaultConfigurePresetName?: string, configurePreset?: ConfigurePreset | null, options?: proc.ExecutionOptions): Promise<number> {
         // Ensure the binary directory exists
         const binaryDir = configurePreset?.binaryDir ?? this.binaryDir;
         await fs.mkdir_p(binaryDir);
@@ -159,6 +170,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
         testPreset: TestPreset | null,
+        packagePreset: PackagePreset | null,
+        workflowPreset: WorkflowPreset | null,
         workspaceFolder: string,
         preconditionHandler: CMakePreconditionProblemSolver,
         preferredGenerators: CMakeGenerator[]): Promise<CMakeLegacyDriver> {
@@ -169,6 +182,8 @@ export class CMakeLegacyDriver extends CMakeDriver {
             configurePreset,
             buildPreset,
             testPreset,
+            packagePreset,
+            workflowPreset,
             preferredGenerators);
     }
 

@@ -18,7 +18,7 @@ suite('Smoke test: good project', () => {
                 }
             });
             suite.smokeTest('Successful configure', async () => {
-                expect(await cmakeProject.configure()).to.eq(0);
+                expect((await cmakeProject.configure()).result).to.eq(0);
             });
         });
     });

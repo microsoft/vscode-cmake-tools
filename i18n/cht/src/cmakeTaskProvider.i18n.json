@@ -7,6 +7,8 @@
 	"build": "組建",
 	"install": "安裝",
 	"test": "測試",
+	"package": "封裝",
+	"workflow": "工作流程",
 	"configure": "設定",
 	"clean": "清除",
 	"clean.rebuild": "清除重建",
@@ -37,5 +39,15 @@
 	"ctest.failed": "找不到測試預設 {0}。測試失敗。",
 	"ctest.run.terminated": "已終止 CTest 執行",
 	"ctest.finished": "CTest 已完成",
-	"test.failed": "CTest 執行失敗。"
+	"test.failed": "CTest 執行失敗。",
+	"package.started": "套件工作已開始...",
+	"package.preset.not.found": "未找到封裝預設。",
+	"cpack.failed": "未找到封裝預設 {0}。CPack 已失敗。",
+	"cpack.run.terminated": "CPack 執行已終止",
+	"cpack.finished": "CPack 已完成",
+	"workflow.started": "工作流程工作已開始...",
+	"workflow.preset.not.found": "找不到工作流程預設。",
+	"workflow.failed": "找不到工作流程預設 {0}。工作流程失敗。",
+	"workflow.run.terminated": "工作流程執行已終止",
+	"workflow.finished": "工作流程已完成"
 }

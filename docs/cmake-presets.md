@@ -35,7 +35,7 @@ You can configure and build your CMake project by using a series of commands. Op
 
 ### CMake: Select Configure Preset
 
-**CMake: Select Configure Preset** lists the union of non-hidden Configure Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. Select a Configure Preset to make it the active Configure Preset. This is the `configurePreset` value that's used when CMake is invoked to generate the project build system. The active Configure Preset appears on the status bar.
+**CMake: Select Configure Preset** lists the union of non-hidden Configure Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. Select a Configure Preset to make it the active Configure Preset. This is the `configurePreset` value that's used when CMake is invoked to generate the project build system. The active Configure Preset appears in the Project Status View on the CMake Tools sidebar.
 
 CMake Tools uses the value of `hostOS` in the Microsoft Visual Studio Settings vendor map to hide Configure Presets that don't apply to your platform. For more information, see the entry for `hostOS` in the table under [Visual Studio Settings vendor map](https://docs.microsoft.com/cpp/build/cmake-presets-json-reference#visual-studio-settings-vendor-map).
 
@@ -48,7 +48,7 @@ To configure the project, run **CMake: Configure** from the command palette. Thi
 
 ### CMake: Select Build Preset
 
-**CMake: Select Build Preset** lists the Default Build Preset and the union of non-hidden Build Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The Default Build Preset is equivalent to passing `cmake --build` with no additional arguments from the command line. Select a Build Preset to make it the active Build Preset. This is the `buildPreset` value that's used when CMake is invoked to build the project. The active Build Preset is displayed on the status bar.
+**CMake: Select Build Preset** lists the Default Build Preset and the union of non-hidden Build Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The Default Build Preset is equivalent to passing `cmake --build` with no additional arguments from the command line. Select a Build Preset to make it the active Build Preset. This is the `buildPreset` value that's used when CMake is invoked to build the project. The active Build Preset is displayed in the Project Status View on the CMake Tools sidebar.
 
 All Build Presets must specify an associated `configurePreset` value. CMake Tools hides Build Presets that don't apply to the active Configure Preset. For more information, see the [list of Build Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#build-preset).
 
@@ -66,21 +66,22 @@ CTest is the CMake test driver program and is integrated with the CMake Tools ex
 
 **CMake: Select Test Preset** lists the default Test Preset and the union of non-hidden Test Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The default Test Preset is the same as invoking `ctest` with no other arguments from the command line.
 
-Select a Test Preset to make it the active Test Preset. This is the `testPreset` value that will be used when you invoke CTest to run tests. The active Test Preset appears on the status bar.
+Select a Test Preset to make it the active Test Preset. This is the `testPreset` value that will be used when you invoke CTest to run tests. The active Test Preset appears in the Project Status View on the CMake Tools sidebar.
 
 All Test Presets must specify an associated `configurePreset` value. CMake Tools will hide Test Presets that don't apply to the active Configure Preset. For more information, see the [list of Test Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#test-preset).
 
 ### CMake: Run Tests
 
-To invoke CTest, run **CMake: Run Tests from the command palette**. This is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
+To invoke CTest, run **CMake: Run Tests** from the command palette. 
+When integration with the test explorer is enabled, using `cmake.ctest.testExplorerIntegrationEnabled`, the method of test execution will depend on `cmake.ctest.allowParallelJobs`. With `cmake.ctest.allowParallelJobs` disabled, each test will be run individually so that we can accurately track progress in the Test Explorer. When it is enabled, they will all be run in parallel, which is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
 
-### Status bar behavior
+### CMake Tools side bar Project Status View behavior
 
-The status bar displays the active Configure Preset, Build Preset, and Test Preset:
+The CMake Tools Project Status View in the sidebar displays the active Configure Preset, Build Preset, and Test Preset under their respective Configure, Build, and Test Nodes. You can select each option to change the active preset:
 
-![Screenshot of the Visual Studio Code status bar, showing the active Configure Preset, Build Preset, and Test Preset.](images/status_bar_preset_status.png)
+![Screenshot of the CMake sidebar Project Status View, showing the active Configure Preset, Build Preset, and Test Preset.](images/cmake-presets.png)
 
-To show or hide individual status bar icons, you can modify `cmake.statusbar.advanced` in `settings.json`.
+To show or hide individual status bar icons, you can modify `cmake.options.advanced` in `settings.json`. For more information on how to configure your view, please see our [CMake view configuration docs](cmake-options-configuration.md)
 
 ## Add new presets
 
@@ -221,19 +222,13 @@ CMake Tools supports command substitution for launch commands when `CMakePresets
 
 ## Ignored settings
 
-`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test. This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line.
+`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test, except for settings that can be used as temporary overrides (see below). This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line. 
 
-The following settings in `settings.json` either duplicate options in `CMakePresets.json` or no longer apply. These settings will be ignored when `CMakePresets.json` integration is enabled. Ignored settings will be logged to the Output Window when you run **CMake: Configure**.
+The following settings in `settings.json` either duplicate options in `CMakePresets.json` or no longer apply. These settings will be ignored when `CMakePresets.json` integration is enabled.
 
 | Ignored setting in `settings.json` | `CMakePresets.json` equivalent |
 |--|--|
-| `cmake.buildArgs` | Various options in `buildPreset` |
 | `cmake.buildDirectory` | `configurePresets.binaryDir` |
-| `cmake.buildEnvironment` | `buildPresets.environment` |
-| `cmake.buildToolsArgs` | `buildPresets.nativeToolOptions` |
-| `cmake.cmakePath` | `configurePresets.cmakeExecutable` |
-| `cmake.configureArgs` | Various options in `configurePreset` |
-| `cmake.configureEnvironment` | `configurePresets.environment` |
 | `cmake.configureSettings` | `configurePresets.cacheVariables` |
 | `cmake.ctestParallelJobs` | `testPresets.execution.jobs` |
 | `cmake.ctestArgs` | Various options in `testPreset` |
@@ -246,8 +241,20 @@ The following settings in `settings.json` either duplicate options in `CMakePres
 | `cmake.platform` | `configurePresets.architecture` |
 | `cmake.preferredGenerators` | `configurePresets.generator` |
 | `cmake.setBuildTypeOnMultiConfig` | `configurePresets.cacheVariables.CMAKE_BUILD_TYPE` |
-| `cmake.testEnvironment` | `testPresets.environment` |
 | `cmake.toolset` | `configurePresets.toolset` |
+
+## Settings that can be used to override CMakePresets.json settings for temporary testing
+
+The following settings can be used temporarily when CMakePresets integration is enabled.
+
+| Setting in `settings.json` | `CMakePresets.json` equivalent |
+|--|--|
+| `cmake.buildArgs` | Various options in `buildPreset` |
+| `cmake.buildEnvironment` | `buildPresets.environment` |
+| `cmake.buildToolsArgs` | `buildPresets.nativeToolOptions` |
+| `cmake.configureArgs` | Various options in `configurePreset` |
+| `cmake.configureEnvironment` | `configurePresets.environment` |
+| `cmake.testEnvironment` | `testPresets.environment` |
 
 ## Unsupported commands
 

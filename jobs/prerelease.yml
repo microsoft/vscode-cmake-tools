@@ -1,0 +1,62 @@
+# ==================================================================================
+# Pipeline for prerelease
+# ==================================================================================
+
+trigger: none
+schedules:
+- cron: 0 4 * * 1,2,3,4,5
+  branches:
+    include:
+    - refs/heads/main
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+  - repository: MicroBuildTemplate
+    type: git
+    name: 1ESPipelineTemplates/MicroBuildTemplate
+    ref: refs/tags/release
+
+name: $(Date:yyyyMMdd).$(Rev:r)
+
+variables:
+- name: IsPreRelease
+  value: 1
+- name: ReleaseVersion
+  value: unset
+- name: TeamName
+  value: C++ Cross Platform and Cloud
+- name: SignType
+  value: real
+- name: Codeql.Language
+  value: javascript
+
+extends:
+  template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
+  parameters:
+    pool:
+      name: VSEngSS-MicroBuild2022-1ES
+    sdl:
+      sourceAnalysisPool:
+        name: VSEngSS-MicroBuild2022-1ES
+    customBuildTags:
+    - ES365AIMigrationTooling
+    stages:
+    - stage: stage
+      jobs:
+      - job: Job_1
+        displayName: Build pre-release
+        templateContext:
+          outputs:
+          - output: pipelineArtifact
+            displayName: 'Publish VSIX'
+            targetPath: $(Build.ArtifactStagingDirectory)/vsix
+            artifactName: vsix
+            sbomBuildDropPath: $(Build.ArtifactStagingDirectory)
+        steps:
+        - checkout: self
+          clean: true
+          fetchTags: false
+        - template: /jobs/shared/build.yml@self

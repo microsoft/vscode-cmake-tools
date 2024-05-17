@@ -1,0 +1,102 @@
+# ==================================================================================
+# Pipeline for CG
+# ==================================================================================
+
+trigger: none
+
+schedules:
+- cron: 0 6 * * 0
+  branches:
+    include:
+    - main
+  always: true
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+  - repository: MicroBuildTemplate
+    type: git
+    name: 1ESPipelineTemplates/MicroBuildTemplate
+    ref: refs/tags/release
+
+name: $(Date:yyyyMMdd).$(Rev:r)
+variables:
+- name: Codeql.Enabled
+  value: true
+- name: Codeql.Language
+  value: javascript
+- name: TeamName
+  value: C++ Cross Platform and Cloud
+
+extends:
+  template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
+  parameters:
+    pool:
+      name: AzurePipelines-EO
+      image: AzurePipelinesWindows2022compliantGPT
+      os: windows
+    sdl:
+      sourceAnalysisPool: 
+        name: AzurePipelines-EO
+        image: AzurePipelinesWindows2022compliantGPT
+        os: windows
+      tsa:
+        enabled: true
+        config:
+          tsaVersion: TsaV2
+          codebase: NewOrUpdate
+          codebaseName: vscode-cmake-tools
+          tsaStamp: $(Tsa.AdoProject)
+          tsaEnvironment: PROD
+          notificationAliases: $(Tsa.NotificationAliases)
+          codebaseAdmins: $(Tsa.CodebaseAdmins)
+          instanceUrl: $(Tsa.AdoOrg)
+          projectName: $(Tsa.AdoProject)
+          areaPath: $(Tsa.AreaPath)
+          iterationPath: $(Tsa.AdoProject)
+          allTools: true
+          repositoryName: vscode-cmake-tools
+      policheck:
+        enabled: true
+        exclusionsFile: $(Build.SourcesDirectory)\jobs\policheckExclusions.xml
+    customBuildTags:
+    - ES365AIMigrationTooling
+    stages:
+    - stage: stage
+      jobs:
+      - job: Job_1
+        displayName: Agent job 1
+        steps:
+        - checkout: self
+          fetchTags: false
+        
+        - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
+          displayName: Use Yarn 1.x
+        
+        - task: Npm@0
+          displayName: npm install vsce
+          inputs:
+            arguments: -g vsce
+        
+        - task: CmdLine@2
+          displayName: Run VSCE to package vsix
+          inputs:
+            script: |-
+              echo Building VSIX
+              vsce package --yarn -o $(Build.StagingDirectory)\cmake-tools.vsix
+        
+        - task: Npm@0
+          displayName: npm uninstall vsce
+          inputs:
+            command: uninstall
+            arguments: -g vsce
+        
+        - task: DeleteFiles@1
+          displayName: Remove non-source code
+          inputs:
+            Contents: |-
+              node_modules
+              dist
+              i18n

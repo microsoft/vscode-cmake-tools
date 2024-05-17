@@ -3,6 +3,7 @@ import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
 import * as preset from './preset';
 import { runCommand } from './util';
+import { OptionConfig, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -10,8 +11,10 @@ const noKitSelected = localize('no.kit.selected', '[No Kit Selected]');
 const noConfigPresetSelected = localize('no.configure.preset.selected', '[No Configure Preset Selected]');
 const noBuildPresetSelected = localize('no.build.preset.selected', '[No Build Preset Selected]');
 const noTestPresetSelected = localize('no.test.preset.selected', '[No Test Preset Selected]');
+const noPackagePresetSelected = localize('no.package.preset.selected', '[No Package Preset Selected]');
+const noWorkflowPresetSelected = localize('no.workflow.preset.selected', '[No Workflow Preset Selected]');
 
-let treeDataProvider: TreeDataProvider;
+export let treeDataProvider: TreeDataProvider;
 
 export class ProjectStatus {
 
@@ -31,6 +34,9 @@ export class ProjectStatus {
             vscode.commands.registerCommand('cmake.projectStatus.openSettings', async(_node: Node) => {
                 await runCommand('openSettings');
             }),
+            vscode.commands.registerCommand('cmake.projectStatus.openVisibilitySettings', async(_node: Node) => {
+                await this.openVisibilitySettings();
+            }),
             vscode.commands.registerCommand('cmake.projectStatus.selectKit', async (_node: Node) => {
                 await runCommand('selectKit');
                 await this.refresh();
@@ -38,6 +44,9 @@ export class ProjectStatus {
             vscode.commands.registerCommand('cmake.projectStatus.selectConfigurePreset', async (node: Node) => {
                 await runCommand('selectConfigurePreset');
                 await this.refresh(node);
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.viewConfigureSettings', async (_node: Node) => {
+                await runCommand('viewConfigureSettings');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.configure', async (_node: Node) => {
                 void runCommand('configure');
@@ -57,14 +66,34 @@ export class ProjectStatus {
                 await runCommand('selectBuildPreset');
                 await this.refresh(node);
             }),
+            vscode.commands.registerCommand('cmake.projectStatus.viewBuildSettings', async (_node: Node) => {
+                await runCommand('viewBuildSettings');
+            }),
             vscode.commands.registerCommand('cmake.projectStatus.ctest', async (_node: Node) => {
                 void runCommand('ctest');
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.cpack', async (_node: Node) => {
+                void runCommand('cpack');
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.workflow', async (_node: Node) => {
+                void runCommand('workflow');
             }),
             vscode.commands.registerCommand('cmake.projectStatus.setTestTarget', async (_node: Node) => {
                 // Do nothing
             }),
             vscode.commands.registerCommand('cmake.projectStatus.selectTestPreset', async (node: Node) => {
                 await runCommand('selectTestPreset');
+                await this.refresh(node);
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.viewTestSettings', async (_node: Node) => {
+                await runCommand('viewTestSettings');
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.selectPackagePreset', async (node: Node) => {
+                await runCommand('selectPackagePreset');
+                await this.refresh(node);
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.selectWorkflowPreset', async (node: Node) => {
+                await runCommand('selectWorkflowPreset');
                 await this.refresh(node);
             }),
             vscode.commands.registerCommand('cmake.projectStatus.debugTarget', async (_node: Node) => {
@@ -91,9 +120,13 @@ export class ProjectStatus {
         ]);
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
+    async openVisibilitySettings(): Promise<void> {
+        await vscode.commands.executeCommand('workbench.action.openSettingsJson', { revealSetting: { key: 'cmake.options.advanced' }});
+    }
+
+    async updateActiveProject(cmakeProject?: CMakeProject, options?: OptionConfig): Promise<void> {
         // Update Active Project
-        await treeDataProvider.updateActiveProject(cmakeProject);
+        await treeDataProvider.updateActiveProject(cmakeProject, options);
     }
 
     refresh(node?: Node): Promise<any> {
@@ -125,8 +158,8 @@ export class ProjectStatus {
         await treeDataProvider.setIsBusy(isBusy);
     }
 
-    async doStatusBarChange() {
-        await treeDataProvider.doStatusBarChange();
+    async doStatusChange(options: OptionConfig) {
+        await treeDataProvider.doStatusChange(options);
     }
 
 }
@@ -136,10 +169,20 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     private treeView: vscode.TreeView<Node>;
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     private activeCMakeProject?: CMakeProject;
+    private isFolderButtonHidden: boolean = false;
+    private isConfigButtonHidden: boolean = false;
     private isBuildButtonHidden: boolean = false;
+    private isTestButtonHidden: boolean = false;
+    private isPackageButtonHidden: boolean = false;
+    private isWorkflowButtonHidden: boolean = false;
     private isDebugButtonHidden: boolean = false;
     private isLaunchButtonHidden: boolean = false;
     private isBusy: boolean = false;
+    private configNode: ConfigNode | undefined;
+    private buildNode: BuildNode | undefined;
+    private testNode: TestNode | undefined;
+    private packageNode: PackageNode | undefined;
+    private workflowNode: WorkflowNode | undefined;
 
     get onDidChangeTreeData(): vscode.Event<Node | undefined> {
         return this._onDidChangeTreeData.event;
@@ -153,23 +196,49 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         return this.activeCMakeProject;
     }
 
-    async updateActiveProject(cmakeProject?: CMakeProject): Promise<void> {
+    async updateActiveProject(cmakeProject?: CMakeProject, options?: OptionConfig): Promise<void> {
         // Use project to create the tree
         if (cmakeProject) {
             this.activeCMakeProject = cmakeProject;
-            // this.isBuildButtonHidden = cmakeProject.hideBuildButton;
-            // this.isDebugButtonHidden = cmakeProject.hideDebugButton;
-            // this.isLaunchButtonHidden = cmakeProject.hideLaunchButton;
-            // temporary to not allow status bar settings to affect side bar view
-            this.isBuildButtonHidden = false;
-            this.isDebugButtonHidden = false;
-            this.isLaunchButtonHidden = false;
+            await this.doStatusChange(options);
         } else {
+            this.isConfigButtonHidden = false;
+            this.isFolderButtonHidden = false;
             this.isBuildButtonHidden = false;
+            this.isTestButtonHidden = false;
+            this.isPackageButtonHidden = false;
+            this.isWorkflowButtonHidden = false;
             this.isDebugButtonHidden = false;
             this.isLaunchButtonHidden = false;
         }
         await this.refresh();
+    }
+
+    public async refreshNode(node: ConfigNode | BuildNode | TestNode | PackageNode | WorkflowNode | undefined): Promise<any> {
+        if (node) {
+            await node.refresh();
+            this._onDidChangeTreeData.fire(node);
+        }
+    }
+
+    public async refreshConfigNode(): Promise<any> {
+        await this.refreshNode(this.configNode);
+    }
+
+    public async refreshBuildNode(): Promise<any> {
+        await this.refreshNode(this.buildNode);
+    }
+
+    public async refreshTestNode(): Promise<any> {
+        await this.refreshNode(this.testNode);
+    }
+
+    public async refreshPackageNode(): Promise<any> {
+        await this.refreshNode(this.packageNode);
+    }
+
+    public async refreshWorkflowNode(): Promise<any> {
+        await this.refreshNode(this.workflowNode);
     }
 
     public async refresh(node?: Node): Promise<any> {
@@ -200,60 +269,129 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
         } else {
             // Initializing the tree for the first time
             const nodes: Node[] = [];
-            const projectNode = new ProjectNode();
-            await projectNode.initialize();
-            nodes.push(projectNode);
-            const configNode = new ConfigNode();
-            await configNode.initialize();
-            if (this.isBusy) {
-                configNode.convertToStopCommand();
+            if (!this.isFolderButtonHidden) {
+                const folderNode = new FolderNode();
+                await folderNode.initialize();
+                if (this.isBusy) {
+                    folderNode.convertToStopCommand();
+                }
+                nodes.push(folderNode);
             }
-            nodes.push(configNode);
+            if (!this.isConfigButtonHidden) {
+                const configNode = new ConfigNode();
+                this.configNode = configNode;
+                await configNode.initialize();
+                if (this.isBusy) {
+                    configNode.convertToStopCommand();
+                }
+                nodes.push(configNode);
+            }
             if (!this.isBuildButtonHidden) {
                 const buildNode = new BuildNode();
+                this.buildNode = buildNode;
                 await buildNode.initialize();
                 if (this.isBusy) {
                     buildNode.convertToStopCommand();
                 }
                 nodes.push(buildNode);
             }
-            const testNode = new TestNode();
-            await testNode.initialize();
-            nodes.push(testNode);
+            if (!this.isTestButtonHidden) {
+                const testNode = new TestNode();
+                this.testNode = testNode;
+                await testNode.initialize();
+                if (this.isBusy) {
+                    testNode.convertToStopCommand();
+                }
+                nodes.push(testNode);
+            }
+            if (this.cmakeProject?.useCMakePresets) {
+                if (!this.isPackageButtonHidden) {
+                    const packageNode = new PackageNode();
+                    this.packageNode = packageNode;
+                    await packageNode.initialize();
+                    if (this.isBusy) {
+                        packageNode.convertToStopCommand();
+                    }
+                    nodes.push(packageNode);
+                }
+                if (!this.isWorkflowButtonHidden) {
+                    const workflowNode = new WorkflowNode();
+                    this.workflowNode = workflowNode;
+                    await workflowNode.initialize();
+                    if (this.isBusy) {
+                        workflowNode.convertToStopCommand();
+                    }
+                    nodes.push(workflowNode);
+                }
+            }
             if (!this.isDebugButtonHidden) {
                 const debugNode = new DebugNode();
                 await debugNode.initialize();
+                if (this.isBusy) {
+                    debugNode.convertToStopCommand();
+                }
                 nodes.push(debugNode);
             }
             if (!this.isLaunchButtonHidden) {
                 const launchNode = new LaunchNode();
                 await launchNode.initialize();
+                if (this.isBusy) {
+                    launchNode.convertToStopCommand();
+                }
                 nodes.push(launchNode);
             }
             return nodes;
         }
     }
 
-    public async doStatusBarChange() {
-        // temporary change to prevent status bar settings from affecting side bar
-        // let didChange: boolean = false;
-        // if (this.activeCMakeProject) {
-        //     if (this.isBuildButtonHidden !== this.activeCMakeProject.hideBuildButton) {
-        //         didChange = true;
-        //         this.isBuildButtonHidden = this.activeCMakeProject.hideBuildButton;
-        //     }
-        //     if (this.isDebugButtonHidden !== this.activeCMakeProject.hideDebugButton) {
-        //         didChange = true;
-        //         this.isDebugButtonHidden = this.activeCMakeProject.hideDebugButton;
-        //     }
-        //     if (this.isLaunchButtonHidden !== this.activeCMakeProject.hideLaunchButton) {
-        //         didChange = true;
-        //         this.isLaunchButtonHidden = this.activeCMakeProject.hideLaunchButton;
-        //     }
-        // if (didChange) {
-        //     await this.refresh();
-        // }
-        // }
+    // TODO: get rid of undefined?
+    public async doStatusChange(options: OptionConfig | undefined) {
+        let didChange: boolean = false;
+        if (this.activeCMakeProject) {
+            const folderVisibility = options?.advanced?.folder?.projectStatusVisibility !== "hidden";
+            if (folderVisibility === this.isFolderButtonHidden) {
+                didChange = true;
+                this.isFolderButtonHidden = !folderVisibility;
+            }
+            const configureVisibility = options?.advanced?.configure?.projectStatusVisibility !== "hidden";
+            if (configureVisibility === this.isConfigButtonHidden) {
+                didChange = true;
+                this.isConfigButtonHidden = !configureVisibility;
+            }
+            const buildVisibility = options?.advanced?.build?.projectStatusVisibility !== "hidden";
+            if (buildVisibility === this.isBuildButtonHidden) {
+                didChange = true;
+                this.isBuildButtonHidden = !buildVisibility;
+            }
+            const testVisibility = options?.advanced?.ctest?.projectStatusVisibility !== "hidden";
+            if (testVisibility === this.isTestButtonHidden) {
+                didChange = true;
+                this.isTestButtonHidden = !testVisibility;
+            }
+            const packageVisibility = options?.advanced?.cpack?.projectStatusVisibility !== "hidden";
+            if (packageVisibility === this.isPackageButtonHidden) {
+                didChange = true;
+                this.isPackageButtonHidden = !packageVisibility;
+            }
+            const workflowVisibility = options?.advanced?.workflow?.projectStatusVisibility !== "hidden";
+            if (workflowVisibility === this.isWorkflowButtonHidden) {
+                didChange = true;
+                this.isWorkflowButtonHidden = !workflowVisibility;
+            }
+            const debugVisibility = options?.advanced?.debug?.projectStatusVisibility !== "hidden";
+            if (debugVisibility === this.isDebugButtonHidden) {
+                didChange = true;
+                this.isDebugButtonHidden = !debugVisibility;
+            }
+            const launchVisibility = options?.advanced?.launch?.projectStatusVisibility !== "hidden";
+            if (launchVisibility === this.isLaunchButtonHidden) {
+                didChange = true;
+                this.isLaunchButtonHidden = !launchVisibility;
+            }
+        }
+        if (didChange) {
+            await this.refresh();
+        }
     }
 
     public async hideBuildButton(isHidden: boolean) {
@@ -376,6 +514,10 @@ class ConfigNode extends Node {
         return this.initialize();
     }
 
+    async refresh(): Promise<void> {
+        await this.configPreset?.refresh();
+    }
+
 }
 
 class BuildNode extends Node {
@@ -428,6 +570,10 @@ class BuildNode extends Node {
         return this.initialize();
     }
 
+    async refresh(): Promise<void> {
+        await this.buildPreset?.refresh();
+    }
+
 }
 
 class TestNode extends Node {
@@ -468,6 +614,106 @@ class TestNode extends Node {
         } else {
             return [this.testPreset!];
         }
+    }
+
+    async refresh(): Promise<void> {
+        await this.testPreset?.refresh();
+    }
+
+}
+
+class PackageNode extends Node {
+    private packagePreset?: PackagePreset;
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = localize('Package', 'Package');
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        this.contextValue = "package";
+        await this.InitializeChildren();
+    }
+
+    async InitializeChildren(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        if (treeDataProvider.cmakeProject.useCMakePresets) {
+            this.packagePreset = new PackagePreset();
+            await this.packagePreset.initialize();
+        }
+    }
+
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
+            return [];
+        }
+        if (treeDataProvider.cmakeProject.useCMakePresets) {
+            return [this.packagePreset!];
+        } else {
+            return [];
+        }
+    }
+
+    convertToStopCommand(): void {
+        this.label = localize("cpack.running", "CPack (packaging)");
+        const title: string = localize('Stop', 'Stop');
+        this.tooltip = title;
+        this.contextValue = "stop";
+    }
+
+    convertToOriginalCommand(): Promise<void> {
+        return this.initialize();
+    }
+
+}
+
+class WorkflowNode extends Node {
+    private workflowPreset?: WorkflowPreset;
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = localize('Workflow', 'Workflow');
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        this.contextValue = "workflow";
+        await this.InitializeChildren();
+    }
+
+    async InitializeChildren(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        if (treeDataProvider.cmakeProject.useCMakePresets) {
+            this.workflowPreset = new WorkflowPreset();
+            await this.workflowPreset.initialize();
+        }
+    }
+
+    getChildren(): Node[] {
+        if (!treeDataProvider.cmakeProject) {
+            return [];
+        }
+        if (treeDataProvider.cmakeProject.useCMakePresets) {
+            return [this.workflowPreset!];
+        } else {
+            return [];
+        }
+    }
+
+    convertToStopCommand(): void {
+        this.label = localize("workflow.running", "Workflow (Running)");
+        const title: string = localize('Stop', 'Stop');
+        this.tooltip = title;
+        this.contextValue = "stop";
+    }
+
+    convertToOriginalCommand(): Promise<void> {
+        return this.initialize();
     }
 
 }
@@ -536,7 +782,7 @@ class LaunchNode extends Node {
 
 }
 
-class ProjectNode extends Node {
+class FolderNode extends Node {
 
     private project?: Project;
 
@@ -544,8 +790,8 @@ class ProjectNode extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = localize('Project', 'Project');
-        this.tooltip = localize('active.project', 'Active project');
+        this.label = localize('Folder', 'Folder');
+        this.tooltip = localize('active.folder', 'Active Folder');
         this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         await this.InitializeChildren();
     }
@@ -573,17 +819,33 @@ class ConfigPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName ?? treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName || treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
         this.tooltip = 'Change Configure Preset';
         this.contextValue = 'configPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        await this.updateDescription();
     }
 
     async refresh() {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName ?? treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName || treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkConfigureOverridesPresent(config)) {
+            this.description = "Override settings applied";
+            this.contextValue = 'configPreset - overrides present';
+        } else {
+            this.description = "";
+            this.contextValue = 'configPreset';
+        }
     }
 }
 
@@ -593,20 +855,37 @@ class BuildPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName ?? treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName || treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
         if (this.label === preset.defaultBuildPreset.name) {
             this.label = preset.defaultBuildPreset.displayName;
         }
         this.tooltip = 'Change Build Preset';
         this.contextValue = 'buildPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        await this.updateDescription();
     }
 
     async refresh() {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName ?? treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.buildPreset?.displayName || treeDataProvider.cmakeProject.buildPreset?.name) || noBuildPresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkBuildOverridesPresent(config)) {
+            this.description = "Override settings applied";
+            this.contextValue = 'buildPreset - overrides present';
+        } else {
+            this.description = "";
+            this.contextValue = 'buildPreset';
+        }
     }
 }
 
@@ -616,12 +895,93 @@ class TestPreset extends Node {
         if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName ?? treeDataProvider.cmakeProject.testPreset?.name) || noTestPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName || treeDataProvider.cmakeProject.testPreset?.name) || noTestPresetSelected;
         if (this.label === preset.defaultTestPreset.name) {
             this.label = preset.defaultTestPreset.displayName;
         }
         this.tooltip = 'Change Test Preset';
         this.contextValue = 'testPreset';
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        await this.updateDescription();
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName || treeDataProvider.cmakeProject.testPreset?.name) || noTestPresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkTestOverridesPresent(config)) {
+            this.description = "Override settings applied";
+            this.contextValue = 'testPreset - overrides present';
+        } else {
+            this.description = "";
+            this.contextValue = 'testPreset';
+        }
+    }
+}
+
+class PackagePreset extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
+            return;
+        }
+        this.label = (treeDataProvider.cmakeProject.packagePreset?.displayName || treeDataProvider.cmakeProject.packagePreset?.name)  || noPackagePresetSelected;
+        if (this.label === preset.defaultPackagePreset.name) {
+            this.label = preset.defaultPackagePreset.displayName;
+        }
+        this.tooltip = 'Change Package Preset';
+        this.contextValue = 'packagePreset';
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+
+        await this.updateDescription();
+    }
+
+    async refresh() {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+        this.label = (treeDataProvider.cmakeProject.packagePreset?.displayName || treeDataProvider.cmakeProject.packagePreset?.name)  || noPackagePresetSelected;
+        await this.updateDescription();
+    }
+
+    private async updateDescription(): Promise<void> {
+        if (!treeDataProvider.cmakeProject) {
+            return;
+        }
+
+        const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
+        if (config && checkPackageOverridesPresent(config)) {
+            this.description = "Override settings applied";
+            this.contextValue = 'packagePreset - overrides present';
+        } else {
+            this.description = "";
+            this.contextValue = 'packagePreset';
+        }
+    }
+}
+
+class WorkflowPreset extends Node {
+
+    async initialize(): Promise<void> {
+        if (!treeDataProvider.cmakeProject || !treeDataProvider.cmakeProject.useCMakePresets) {
+            return;
+        }
+        this.label = (treeDataProvider.cmakeProject.workflowPreset?.displayName || treeDataProvider.cmakeProject.workflowPreset?.name) || noWorkflowPresetSelected;
+        if (this.label === preset.defaultWorkflowPreset.name) {
+            this.label = preset.defaultWorkflowPreset.displayName;
+        }
+        this.tooltip = 'Change Workflow Preset';
+        this.contextValue = 'workflowPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
     }
 
@@ -629,7 +989,7 @@ class TestPreset extends Node {
         if (!treeDataProvider.cmakeProject) {
             return;
         }
-        this.label = (treeDataProvider.cmakeProject.testPreset?.displayName ?? treeDataProvider.cmakeProject.testPreset?.name)  || noTestPresetSelected;
+        this.label = (treeDataProvider.cmakeProject.workflowPreset?.displayName || treeDataProvider.cmakeProject.workflowPreset?.name) || noWorkflowPresetSelected;
     }
 }
 
@@ -701,7 +1061,7 @@ class DebugTarget extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
-        const title: string = localize('set.debug.target', 'Set debug target');
+        const title: string = localize('set.debug.target', 'Set Debug Target');
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'debugTarget';
@@ -743,7 +1103,7 @@ class Project extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.folderName;
-        const title: string = localize('select.active.project', 'Select active project');
+        const title: string = localize('select.active.folder', 'Select Active Folder');
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'activeProject';
@@ -756,6 +1116,7 @@ class Project extends Node {
         this.label = treeDataProvider.cmakeProject.folderName;
     }
 }
+
 class Variant extends Node {
 
     async initialize(): Promise<void> {
@@ -774,5 +1135,4 @@ class Variant extends Node {
         }
         this.label = treeDataProvider.cmakeProject.activeVariantName || "Debug";
     }
-
 }

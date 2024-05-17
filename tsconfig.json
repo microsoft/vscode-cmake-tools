@@ -15,13 +15,14 @@
         "rootDir": ".",
         "strict": true,
         "experimentalDecorators": true,
-        "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noImplicitThis": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
     },
     "exclude": [
         "node_modules",
+        "tools",
         ".vscode-test",
     ]
 }

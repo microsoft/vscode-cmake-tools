@@ -18,11 +18,14 @@ const log = logging.createLogger('preset');
 
 export interface PresetsFile {
     version: number;
+    schema?: string;
     cmakeMinimumRequired?: util.Version;
     include?: string[];
     configurePresets?: ConfigurePreset[];
     buildPresets?: BuildPreset[];
     testPresets?: TestPreset[];
+    packagePresets?: PackagePreset[];
+    workflowPresets?: WorkflowPreset[];
 
     __path?: string; // Private field holding the path to the file.
 }
@@ -40,6 +43,7 @@ export interface Preset {
     condition?: Condition | boolean | null;
     isUserPreset?: boolean;
 
+    __vsDevEnvApplied?: boolean; // Private field to indicate if we have already applied the VS Dev Env.
     __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
     __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
     __file?: PresetsFile; // Private field to indicate the file where this preset was defined.
@@ -67,6 +71,24 @@ export interface DebugOptions {
     output?: boolean;
     tryCompile?: boolean;
     find?: boolean;
+}
+
+enum TraceMode {
+    On = "on",
+    Off = "off",
+    Expand = "expand"
+}
+
+enum FormatMode {
+    Human = "human",
+    Json = "json-v1"
+}
+
+export interface TraceOptions {
+    mode?: string;
+    format?: string;
+    source?: string[];
+    redirect: string;
 }
 
 export interface Condition {
@@ -180,11 +202,12 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
 }
 
 export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], references?: Set<string>): boolean | undefined {
-    if (!evaluateInheritedPresetConditions(preset, allPresets, references || new Set<string>())) {
+    const condition = preset.condition;
+
+    if (condition === undefined && !evaluateInheritedPresetConditions(preset, allPresets, references || new Set<string>())) {
         return false;
     }
 
-    const condition = preset.condition;
     if (condition === undefined || condition === null) {
         return true;
     } else if (typeof condition === 'boolean') {
@@ -233,6 +256,7 @@ export interface ConfigurePreset extends Preset {
     warnings?: WarningOptions;
     errors?: ErrorOptions;
     debug?: DebugOptions;
+    trace?: TraceOptions;
     vendor?: VendorVsSettings | VendorType;
     toolchainFile?: string;
     installDir?: string;
@@ -270,6 +294,7 @@ export interface OutputOptions {
     outputOnFailure?: boolean;
     quiet?: boolean;
     outputLogFile?: string;
+    outputJUnitFile?: string;
     labelSummary?: boolean;
     subprojectSummary?: boolean;
     maxPassedTestOutputSize?: number;
@@ -324,6 +349,42 @@ export interface TestPreset extends Preset {
     __generator?: string; // Getting this from the config preset
 }
 
+export interface PackageOutputOptions {
+    debug?: boolean;
+    verbose?: boolean;
+}
+
+export interface PackagePreset extends Preset {
+    configurePreset?: string;
+    inheritConfigureEnvironment?: boolean; // Defaults to true
+    configurations?: string[];
+    generators?: string[];
+    variables?: { [key: string]: string | null | undefined };
+    configFile?: string;
+    output?: PackageOutputOptions;
+    packageName?: string;
+    packageVersion?: string;
+    packageDirectory?: string;
+    vendorName?: string;
+
+    // Private fields
+    __binaryDir?: string; // Getting this from the config preset
+    __generator?: string; // Getting this from the config preset
+}
+
+export interface WorkflowStepsOptions {
+    type: string;
+    name: string;
+}
+
+export interface WorkflowPreset extends Preset {
+    name: string;
+    displayName?: string;
+    description?: string;
+    vendor?: VendorType;
+    steps: WorkflowStepsOptions[];
+}
+
 // Interface for toolset options specified here: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html
 // The key names (left of '=') are removed and just the values are stored.
 interface Toolset {
@@ -337,10 +398,22 @@ interface Toolset {
 /**
  * Should NOT cache anything. Need to make a copy if any fields need to be changed.
  */
+
 export const defaultTestPreset: TestPreset = {
     name: '__defaultTestPreset__',
     displayName: localize('default.test.preset', '[Default]'),
     description: localize('default.test.preset.description', 'An empty test preset that does not add any arguments')
+};
+export const defaultPackagePreset: PackagePreset = {
+    name: '__defaultPackagePreset__',
+    displayName: localize('default.package.preset', '[Default]'),
+    description: localize('default.package.preset.description', 'An empty package preset that does not add any arguments')
+};
+export const defaultWorkflowPreset: WorkflowPreset = {
+    name: '__defaultWorkflowPreset__',
+    steps: [{type: "configure", name: "_placeholder_"}],
+    displayName: localize('default.workflow.preset', '[Default]'),
+    description: localize('default.workflow.preset.description', 'An empty workflow preset that does not add any arguments')
 };
 
 // presetsFiles are stored here because expansions require access to other presets.
@@ -453,11 +526,41 @@ export function allTestPresets(folder: string) {
     return testPresets(folder).concat(userTestPresets(folder));
 }
 
+export function packagePresets(folder: string) {
+    return presetsFiles.get(folder)?.packagePresets || [];
+}
+
+export function userPackagePresets(folder: string) {
+    return userPresetsFiles.get(folder)?.packagePresets || [];
+}
+
+/**
+* Don't use this function if you need to keep any changes in the presets
+*/
+export function allPackagePresets(folder: string) {
+    return packagePresets(folder).concat(userPackagePresets(folder));
+}
+
+export function workflowPresets(folder: string) {
+    return presetsFiles.get(folder)?.workflowPresets || [];
+}
+
+export function userWorkflowPresets(folder: string) {
+    return userPresetsFiles.get(folder)?.workflowPresets || [];
+}
+
+/**
+* Don't use this function if you need to keep any changes in the presets
+*/
+export function allWorkflowPresets(folder: string) {
+    return workflowPresets(folder).concat(userWorkflowPresets(folder));
+}
+
 export function getPresetByName<T extends Preset>(presets: T[], name: string): T | null {
     return presets.find(preset => preset.name === name) ?? null;
 }
 
-function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof TestPreset) {
+function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof TestPreset | keyof PackagePreset | keyof WorkflowPreset) {
     return key !== 'name' && key !== 'hidden' && key !== 'inherits' && key !== 'description' && key !== 'displayName';
 }
 
@@ -672,10 +775,13 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         refs.clear();
     }
 
-    const preset = await expandConfigurePresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset);
+    let preset = await expandConfigurePresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset);
     if (!preset) {
         return null;
     }
+    preset = await tryApplyVsDevEnv(preset);
+
+    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
 
     // Expand strings under the context of current preset
     const expandedPreset: ConfigurePreset = { name };
@@ -840,13 +946,13 @@ function parseToolset(toolset: string): Toolset {
 async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
-        return expandConfigurePresetHelper(folder, name, preset, workspaceFolder, sourceDir);
+        return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userConfigurePresets(folder), name);
         if (preset) {
-            return expandConfigurePresetHelper(folder, name, preset, workspaceFolder, sourceDir, true);
+            return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir, true);
         }
     }
 
@@ -854,20 +960,169 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
     return null;
 }
 
-async function expandConfigurePresetHelper(folder: string, name: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
+async function tryApplyVsDevEnv(preset: ConfigurePreset) {
+    if (!preset.__vsDevEnvApplied) {
+        let compilerEnv = EnvironmentUtils.createPreserveNull();
+        // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
+        // but they are not on PATH, then set the env automatically.
+        if (process.platform === 'win32') {
+            if (preset.cacheVariables) {
+                const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
+                const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
+                // The env variables for the supported compilers are the same.
+                const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+
+                // find where.exe using process.env since we're on windows.
+                let whereExecutable;
+                // assume in this call that it exists
+                const whereOutput = await execute('where.exe', ['where.exe'], null, {
+                    environment: process.env,
+                    silent: true,
+                    encoding: 'utf-8',
+                    shell: true
+                }).result;
+
+                // now we have a valid where.exe
+
+                if (whereOutput.stdout) {
+                    const locations = whereOutput.stdout.split('\r\n');
+                    if (locations.length > 0) {
+                        whereExecutable = locations[0];
+                    }
+                }
+
+                if (compilerName && whereExecutable) {
+                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                        environment: EnvironmentUtils.create(preset.environment),
+                        silent: true,
+                        encoding: 'utf8',
+                        shell: true
+                    }).result;
+
+                    if (!compilerLocation.stdout) {
+                        // Not on PATH, need to set env
+                        const arch = getArchitecture(preset);
+                        const toolset = getToolset(preset);
+
+                        // Get version info for all VS instances.
+                        const vsInstalls = await vsInstallations();
+
+                        // The VS installation to grab developer environment from.
+                        let vsInstall: VSInstallation | undefined;
+
+                        // VS generators starting with Visual Studio 15 2017 support CMAKE_GENERATOR_INSTANCE.
+                        // If supported, we should respect this value when defined. If not defined, we should
+                        // set it to ensure CMake chooses the same VS instance as we use here.
+                        // Note that if the user sets this in a toolchain file we won't know about it,
+                        // which could cause configuration to fail. However the user can workaround this by launching
+                        // vscode from the dev prompt of their desired instance.
+                        // https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_INSTANCE.html
+                        let vsGeneratorVersion: number | undefined;
+                        const matches = preset.generator?.match(/Visual Studio (?<version>\d+)/);
+                        if (matches && matches.groups?.version) {
+                            vsGeneratorVersion = parseInt(matches.groups.version);
+                            const useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
+                            const cmakeGeneratorInstance = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_GENERATOR_INSTANCE']);
+                            if (useCMakeGeneratorInstance && cmakeGeneratorInstance) {
+                                const cmakeGeneratorInstanceNormalized = path.normalize(cmakeGeneratorInstance);
+                                vsInstall = vsInstalls.find((vs) => vs.installationPath
+                                        && path.normalize(vs.installationPath) === cmakeGeneratorInstanceNormalized);
+
+                                if (!vsInstall) {
+                                    log.warning(localize('specified.vs.not.found',
+                                        "Configure preset {0}: Visual Studio instance specified by {1} was not found, falling back on default instance lookup behavior.",
+                                        preset.name, `CMAKE_GENERATOR_INSTANCE="${cmakeGeneratorInstance}"`));
+                                }
+                            }
+                        }
+
+                        // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
+                        // that supports the specified toolset.
+                        if (!vsInstall) {
+                            // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
+                            vsInstalls.sort((a, b) => {
+                                if (a.isPrerelease && !b.isPrerelease) {
+                                    return 1;
+                                } else if (!a.isPrerelease && b.isPrerelease) {
+                                    return -1;
+                                }
+                                return -compareVersions(a.installationVersion, b.installationVersion);
+                            });
+
+                            for (const vs of vsInstalls) {
+                                // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
+                                // toolset.host will be set by getToolset.
+                                if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
+                                    // If a toolset version is specified then check to make sure this vs instance has it installed.
+                                    if (toolset.version) {
+                                        const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
+                                        // forcing non-null due to false positive (toolset.version is checked in conditional)
+                                        if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
+                                            vsInstall = vs;
+                                            break;
+                                        }
+                                    } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
+                                        // If no toolset version specified then choose the latest VS instance for the given generator
+                                        vsInstall = vs;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!vsInstall) {
+                            log.error(localize('specified.cl.not.found',
+                                "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
+                                preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
+                        } else {
+                            log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
+                            const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
+                            compilerEnv = vsEnv ?? EnvironmentUtils.create();
+
+                            // if ninja isn't on path, try to look for it in a VS install
+                            const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                                environment: EnvironmentUtils.create(preset.environment),
+                                silent: true,
+                                encoding: 'utf8',
+                                shell: true
+                            }).result;
+                            if (!ninjaLoc.stdout) {
+                                const vsCMakePaths = await paths.vsCMakePaths(vsInstall.instanceId);
+                                if (vsCMakePaths.ninja) {
+                                    log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
+                                    compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
+                                }
+                            }
+
+                            preset.environment = EnvironmentUtils.mergePreserveNull([preset.environment, compilerEnv]);
+                        }
+                    }
+                }
+            }
+        }
+
+        preset.__vsDevEnvApplied = true;
+    }
+
+    return preset;
+}
+
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
 
-    if (preset.__file && preset.__file.version <= 2) {
-        // toolchainFile and installDir added in presets v3
-        if (preset.toolchainFile) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
-            return null;
-        }
-        if (preset.installDir) {
-            log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
-            return null;
+    if (preset.__file) {
+        if (preset.__file.version <= 2) {
+            // toolchainFile and installDir added in presets v3
+            if (preset.toolchainFile) {
+                log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
+                return null;
+            }
+            if (preset.installDir) {
+                log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
+                return null;
+            }
         }
     }
 
@@ -918,132 +1173,7 @@ async function expandConfigurePresetHelper(folder: string, name: string, preset:
         }
     }
 
-    inheritedEnv = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv]);
-
-    let compilerEnv = EnvironmentUtils.createPreserveNull();
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
-    expansionOpts.envOverride = inheritedEnv;
-
     preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
-
-    // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
-    // but they are not on PATH, then set the env automatically.
-    if (process.platform === 'win32') {
-        if (preset.cacheVariables) {
-            const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-            const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-            // The env variables for the supported compilers are the same.
-            const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
-            const expandedPreset: ConfigurePreset = { name };
-            const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
-            if (compilerName) {
-                expandedPreset.environment = EnvironmentUtils.createPreserveNull();
-                for (const key in preset.environment) {
-                    if (preset.environment[key]) {
-                        expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
-                    }
-                }
-                const compilerLocation = await execute('where.exe', [compilerName], null, {
-                    environment: EnvironmentUtils.create(expandedPreset.environment),
-                    silent: true,
-                    encoding: 'utf8',
-                    shell: true
-                }).result;
-                if (!compilerLocation.stdout) {
-                    // Not on PATH, need to set env
-                    const arch = getArchitecture(preset);
-                    const toolset = getToolset(preset);
-
-                    // Get version info for all VS instances.
-                    const vsInstalls = await vsInstallations();
-
-                    // The VS installation to grab developer environment from.
-                    let vsInstall: VSInstallation | undefined;
-
-                    // VS generators starting with Visual Studio 15 2017 support CMAKE_GENERATOR_INSTANCE.
-                    // If supported, we should respect this value when defined. If not defined, we should
-                    // set it to ensure CMake chooses the same VS instance as we use here.
-                    // Note that if the user sets this in a toolchain file we won't know about it,
-                    // which could cause configuration to fail. However the user can workaround this by launching
-                    // vscode from the dev prompt of their desired instance.
-                    // https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_INSTANCE.html
-                    let vsGeneratorVersion: number | undefined;
-                    const matches = preset.generator?.match(/Visual Studio (?<version>\d+)/);
-                    if (matches && matches.groups?.version) {
-                        vsGeneratorVersion = parseInt(matches.groups.version);
-                        const useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
-                        const cmakeGeneratorInstance = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_GENERATOR_INSTANCE']);
-                        if (useCMakeGeneratorInstance && cmakeGeneratorInstance) {
-                            const cmakeGeneratorInstanceNormalized = path.normalize(cmakeGeneratorInstance);
-                            vsInstall = vsInstalls.find((vs) => vs.installationPath
-                                    && path.normalize(vs.installationPath) === cmakeGeneratorInstanceNormalized);
-
-                            if (!vsInstall) {
-                                log.warning(localize('specified.vs.not.found',
-                                    "Configure preset {0}: Visual Studio instance specified by {1} was not found, falling back on default instance lookup behavior.",
-                                    preset.name, `CMAKE_GENERATOR_INSTANCE="${cmakeGeneratorInstance}"`));
-                            }
-                        }
-                    }
-
-                    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
-                    // that supports the specified toolset.
-                    if (!vsInstall) {
-                        // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
-                        vsInstalls.sort((a, b) => -compareVersions(a.installationVersion, b.installationVersion));
-
-                        for (const vs of vsInstalls) {
-                            // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
-                            // toolset.host will be set by getToolset.
-                            if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
-                                // If a toolset version is specified then check to make sure this vs instance has it installed.
-                                if (toolset.version) {
-                                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
-                                    // forcing non-null due to false positive (toolset.version is checked in conditional)
-                                    if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
-                                        vsInstall = vs;
-                                        break;
-                                    }
-                                } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
-                                    // If no toolset version specified then choose the latest VS instance for the given generator
-                                    vsInstall = vs;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (!vsInstall) {
-                        log.error(localize('specified.cl.not.found',
-                            "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
-                            preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
-                    } else {
-                        log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
-                        const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
-                        compilerEnv = vsEnv ?? EnvironmentUtils.create();
-
-                        // if ninja isn't on path, try to look for it in a VS install
-                        const ninjaLoc = await execute('where.exe', ['ninja'], null, {
-                            environment: EnvironmentUtils.create(preset.environment),
-                            silent: true,
-                            encoding: 'utf8',
-                            shell: true
-                        }).result;
-                        if (!ninjaLoc.stdout) {
-                            const vsCMakePaths = await paths.vsCMakePaths(vsInstall.instanceId);
-                            if (vsCMakePaths.ninja) {
-                                log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
-                                compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    compilerEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, compilerEnv]);
-    preset.environment = EnvironmentUtils.mergePreserveNull([compilerEnv, preset.environment]);
 
     preset.__expanded = true;
     return preset;
@@ -1059,7 +1189,7 @@ const referencedBuildPresets: Map<string, Set<string>> = new Map();
  * They should NOT be used together.
  * They should Not call each other.
  */
-export function expandConfigurePresetForPresets(folder: string, presetType: 'build' | 'test'): void {
+export function expandConfigurePresetForPresets(folder: string, presetType: 'build' | 'test' | 'package' | 'workflow'): void {
     if (presetType === 'build') {
         for (const preset of buildPresets(folder)) {
             getConfigurePresetForPreset(folder, preset.name, presetType);
@@ -1067,17 +1197,31 @@ export function expandConfigurePresetForPresets(folder: string, presetType: 'bui
         for (const preset of userBuildPresets(folder)) {
             getConfigurePresetForPreset(folder, preset.name, presetType, true);
         }
-    } else {
+    } else if (presetType === 'test') {
         for (const preset of testPresets(folder)) {
             getConfigurePresetForPreset(folder, preset.name, presetType);
         }
         for (const preset of userTestPresets(folder)) {
             getConfigurePresetForPreset(folder, preset.name, presetType, true);
         }
+    } else if (presetType === 'package') {
+        for (const preset of packagePresets(folder)) {
+            getConfigurePresetForPreset(folder, preset.name, presetType);
+        }
+        for (const preset of userPackagePresets(folder)) {
+            getConfigurePresetForPreset(folder, preset.name, presetType, true);
+        }
+    } else if (presetType === 'workflow') {
+        for (const preset of workflowPresets(folder)) {
+            getConfigurePresetForPreset(folder, preset.name, presetType);
+        }
+        for (const preset of userWorkflowPresets(folder)) {
+            getConfigurePresetForPreset(folder, preset.name, presetType, true);
+        }
     }
 }
 
-function getConfigurePresetForPreset(folder: string, name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
+function getConfigurePresetForPreset(folder: string, name: string, presetType: 'build' | 'test' | 'package' | 'workflow', allowUserPreset: boolean = false): string | null {
     if (presetType === 'build') {
         const refs = referencedBuildPresets.get(folder);
         if (!refs) {
@@ -1085,24 +1229,44 @@ function getConfigurePresetForPreset(folder: string, name: string, presetType: '
         } else {
             refs.clear();
         }
-    } else {
+    } else if (presetType === 'test') {
         const refs = referencedTestPresets.get(folder);
         if (!refs) {
             referencedTestPresets.set(folder, new Set());
         } else {
             refs.clear();
         }
+    } else if (presetType === 'package') {
+        const refs = referencedPackagePresets.get(folder);
+        if (!refs) {
+            referencedPackagePresets.set(folder, new Set());
+        } else {
+            refs.clear();
+        }
+    } else if (presetType === 'workflow') {
+        const refs = referencedWorkflowPresets.get(folder);
+        if (!refs) {
+            referencedWorkflowPresets.set(folder, new Set());
+        } else {
+            refs.clear();
+        }
     }
+
     return getConfigurePresetForPresetImpl(folder, name, presetType, allowUserPreset);
 }
 
-function getConfigurePresetForPresetImpl(folder: string, name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
-    let preset: BuildPreset | TestPreset | null;
+function getConfigurePresetForPresetImpl(folder: string, name: string, presetType: 'build' | 'test' | 'package' | 'workflow', allowUserPreset: boolean = false): string | null {
+    let preset: BuildPreset | TestPreset | PackagePreset | WorkflowPreset | null = null;
     if (presetType === 'build') {
         preset = getPresetByName(buildPresets(folder), name);
-    } else {
+    } else if (presetType === 'test') {
         preset = getPresetByName(testPresets(folder), name);
+    } else if (presetType === 'package') {
+        preset = getPresetByName(packagePresets(folder), name);
+    } else if (presetType === 'workflow') {
+        preset = getPresetByName(workflowPresets(folder), name);
     }
+
     if (preset) {
         return getConfigurePresetForPresetHelper(folder, preset, presetType);
     }
@@ -1121,7 +1285,7 @@ function getConfigurePresetForPresetImpl(folder: string, name: string, presetTyp
     return null;
 }
 
-function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset | TestPreset, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
+function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset | TestPreset, presetType: 'build' | 'test' | 'package' | 'workflow', allowUserPreset: boolean = false): string | null {
     if (preset.configurePreset) {
         return preset.configurePreset;
     }
@@ -1139,10 +1303,26 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
         }
 
         refs.add(preset.name);
-    } else {
+    } else if (presetType === 'test') {
         const refs = referencedTestPresets.get(folder)!;
         if (refs.has(preset.name)) {
             log.error(localize('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name));
+            return null;
+        }
+
+        refs.add(preset.name);
+    } else if (presetType === 'package') {
+        const refs = referencedPackagePresets.get(folder)!;
+        if (refs.has(preset.name)) {
+            log.error(localize('circular.inherits.in.package.preset', 'Circular inherits in package preset {0}', preset.name));
+            return null;
+        }
+
+        refs.add(preset.name);
+    } else if (presetType === 'workflow') {
+        const refs = referencedWorkflowPresets.get(folder)!;
+        if (refs.has(preset.name)) {
+            log.error(localize('circular.inherits.in.workflow.preset', 'Circular inherits in workflow preset {0}', preset.name));
             return null;
         }
 
@@ -1355,6 +1535,10 @@ export async function expandTestPreset(folder: string, name: string, workspaceFo
         expandedPreset.output = { outputLogFile: util.lightNormalizePath(await expandString(preset.output.outputLogFile, expansionOpts)) };
         merge(expandedPreset.output, preset.output);
     }
+    if (preset.output?.outputJUnitFile) {
+        expandedPreset.output = { outputJUnitFile: util.lightNormalizePath(await expandString(preset.output.outputJUnitFile, expansionOpts)) };
+        merge(expandedPreset.output, preset.output);
+    }
     if (preset.filter) {
         expandedPreset.filter = {};
         if (preset.filter.include) {
@@ -1494,6 +1678,292 @@ async function expandTestPresetHelper(folder: string, preset: TestPreset, worksp
     return preset;
 }
 
+// Map<fsPath, Set<referencedPresets>>
+const referencedPackagePresets: Map<string, Set<string>> = new Map();
+
+export async function expandPackagePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<PackagePreset | null> {
+    const refs = referencedPackagePresets.get(folder);
+    if (!refs) {
+        referencedPackagePresets.set(folder, new Set());
+    } else {
+        refs.clear();
+    }
+
+    const preset = await expandPackagePresetImpl(folder, name, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, configurePreset);
+    if (!preset) {
+        return null;
+    }
+
+    const expandedPreset: PackagePreset = { name };
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+
+    // Expand environment vars first since other fields may refer to them
+    if (preset.environment) {
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
+        for (const key in preset.environment) {
+            if (preset.environment[key]) {
+                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+            }
+        }
+    }
+
+    expansionOpts.envOverride = expandedPreset.environment;
+
+    // According to CMake docs, no other fields support macro expansion in a package preset.
+    merge(expandedPreset, preset);
+    return expandedPreset;
+}
+
+async function expandPackagePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<PackagePreset | null> {
+    let preset = getPresetByName(packagePresets(folder), name);
+    if (preset) {
+        return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
+    }
+
+    if (allowUserPreset) {
+        preset = getPresetByName(userPackagePresets(folder), name);
+        if (preset) {
+            return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+        }
+    }
+
+    if (name === defaultPackagePreset.name) {
+        // Construct the default package preset every time since it should NOT be cached
+        preset = {
+            name: defaultPackagePreset.name,
+            displayName: defaultPackagePreset.displayName,
+            description: defaultPackagePreset.description,
+            configurePreset
+        };
+        return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+    }
+
+    log.error(localize('package.preset.not.found', 'Could not find package preset with name {0}', name));
+    return null;
+}
+
+async function expandPackagePresetHelper(folder: string, preset: PackagePreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName: string | undefined, allowUserPreset: boolean = false) {
+    if (preset.__expanded) {
+        return preset;
+    }
+
+    const refs = referencedPackagePresets.get(folder)!;
+
+    if (refs.has(preset.name) && !preset.__expanded) {
+        // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+        log.error(localize('circular.inherits.in.package.preset', 'Circular inherits in package preset {0}', preset.name));
+        return null;
+    }
+
+    refs.add(preset.name);
+
+    // Init env to empty if not specified to avoid null checks later
+    if (!preset.environment) {
+        preset.environment = EnvironmentUtils.createPreserveNull();
+    }
+    let inheritedEnv = EnvironmentUtils.createPreserveNull();
+
+    // Expand inherits
+    if (preset.inherits) {
+        if (util.isString(preset.inherits)) {
+            preset.inherits = [preset.inherits];
+        }
+        for (const parentName of preset.inherits) {
+            const parent = await expandPackagePresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
+            if (parent) {
+                // Inherit environment
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                // Inherit other fields
+                let key: keyof PackagePreset;
+                for (key in parent) {
+                    if (isInheritable(key) && preset[key] === undefined) {
+                        // 'as never' to bypass type check
+                        preset[key] = parent[key] as never;
+                    }
+                }
+            }
+        }
+    }
+
+    // Expand configure preset. Evaluate this after inherits since it may come from parents
+    if (preset.configurePreset) {
+        const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
+        if (configurePreset) {
+            preset.__binaryDir = configurePreset.binaryDir;
+            preset.__generator = configurePreset.generator;
+
+            if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, configurePreset.environment]);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv, preset.environment]);
+
+    preset.__expanded = true;
+    return preset;
+}
+
+// Map<fsPath, Set<referencedPresets>>
+const referencedWorkflowPresets: Map<string, Set<string>> = new Map();
+
+export async function expandWorkflowPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<WorkflowPreset | null> {
+    const refs = referencedWorkflowPresets.get(folder);
+    if (!refs) {
+        referencedWorkflowPresets.set(folder, new Set());
+    } else {
+        refs.clear();
+    }
+
+    const preset = await expandWorkflowPresetImpl(folder, name, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, configurePreset);
+    if (!preset) {
+        return null;
+    }
+
+    const expandedPreset: WorkflowPreset = { name, steps: [{type: "configure", name: "_placeholder_"}] };
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+
+    // Expand environment vars first since other fields may refer to them
+    if (preset.environment) {
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
+        for (const key in preset.environment) {
+            if (preset.environment[key]) {
+                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+            }
+        }
+    }
+
+    expansionOpts.envOverride = expandedPreset.environment;
+
+    // According to CMake docs, no other fields support macro expansion in a workflow preset.
+    merge(expandedPreset, preset);
+    expandedPreset.steps = preset.steps;
+    return expandedPreset;
+}
+
+async function expandWorkflowPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<WorkflowPreset | null> {
+    let preset = getPresetByName(workflowPresets(folder), name);
+    if (preset) {
+        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
+    }
+
+    if (allowUserPreset) {
+        preset = getPresetByName(userWorkflowPresets(folder), name);
+        if (preset) {
+            return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+        }
+    }
+
+    if (name === defaultWorkflowPreset.name) {
+        // Construct the default workflow preset every time since it should NOT be cached
+        preset = {
+            name: defaultWorkflowPreset.name,
+            displayName: defaultWorkflowPreset.displayName,
+            description: defaultWorkflowPreset.description,
+            steps: [
+                {
+                    type: "Configure",
+                    name: configurePreset ? configurePreset : "_placeholder_configure_preset_"
+                }
+            ]
+        };
+        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+    }
+
+    log.error(localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name));
+    return null;
+}
+
+async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName: string | undefined, allowUserPreset: boolean = false) {
+    if (preset.__expanded) {
+        return preset;
+    }
+
+    const refs = referencedWorkflowPresets.get(folder)!;
+
+    if (refs.has(preset.name) && !preset.__expanded) {
+        // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+        log.error(localize('circular.inherits.in.workflow.preset', 'Circular inherits in workflow preset {0}', preset.name));
+        return null;
+    }
+
+    refs.add(preset.name);
+
+    // Init env to empty if not specified to avoid null checks later
+    if (!preset.environment) {
+        preset.environment = EnvironmentUtils.createPreserveNull();
+    }
+    let inheritedEnv = EnvironmentUtils.createPreserveNull();
+
+    // Expand inherits
+    if (preset.inherits) {
+        if (util.isString(preset.inherits)) {
+            preset.inherits = [preset.inherits];
+        }
+        for (const parentName of preset.inherits) {
+            const parent = await expandWorkflowPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
+            if (parent) {
+                // Inherit environment
+                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                // Inherit other fields
+                let key: keyof WorkflowPreset;
+                for (key in parent) {
+                    if (isInheritable(key) && preset[key] === undefined) {
+                        // 'as never' to bypass type check
+                        preset[key] = parent[key] as never;
+                    }
+                }
+            }
+        }
+    }
+
+    // Expand configure preset. Evaluate this after inherits since it may come from parents
+    const workflowConfigurePreset = preset.steps[0].name;
+    if (workflowConfigurePreset) {
+        const configurePreset = await expandConfigurePreset(folder, workflowConfigurePreset, workspaceFolder, sourceDir, allowUserPreset);
+        if (configurePreset) {
+            // The below is critical when the workflow step0 configure preset is different than the
+            // configure preset selected for the project.
+            // Something that occurs during the usual configure of the project does not happen
+            // when we configure on the fly and temporary for step0.
+            for (const step of preset.steps) {
+                switch (step.type) {
+                    case "build":
+                        const buildStepPr = getPresetByName(allBuildPresets(folder), step.name);
+                        if (buildStepPr) {
+                            buildStepPr.__binaryDir = configurePreset.binaryDir;
+                            buildStepPr.__generator = configurePreset.generator;
+                        }
+                        break;
+                    case "test":
+                        const testStepPr = getPresetByName(allTestPresets(folder), step.name);
+                        if (testStepPr) {
+                            testStepPr.__binaryDir = configurePreset.binaryDir;
+                            testStepPr.__generator = configurePreset.generator;
+                        }
+                        break;
+                    case "package":
+                        const packageStepPr = getPresetByName(allPackagePresets(folder), step.name);
+                        if (packageStepPr) {
+                            packageStepPr.__binaryDir = configurePreset.binaryDir;
+                            packageStepPr.__generator = configurePreset.generator;
+                        }
+                        break;
+                }
+            };
+        } else {
+            return null;
+        }
+    }
+
+    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv, preset.environment]);
+
+    preset.__expanded = true;
+    return preset;
+}
+
 export function configureArgs(preset: ConfigurePreset): string[] {
     const result: string[] = [];
 
@@ -1546,10 +2016,22 @@ export function configureArgs(preset: ConfigurePreset): string[] {
         preset.debug.find && result.push('--debug-find');
     }
 
+    // Trace
+    if (preset.trace) {
+        preset.trace.mode && (preset.trace.mode === TraceMode.On ? result.push('--trace') : preset.trace.mode === TraceMode.Expand ? result.push('--trace-expand') : false);
+        preset.trace.format && (preset.trace.format === FormatMode.Human ? result.push('--trace-format=human') : preset.trace.format === FormatMode.Json ? result.push('--trace-format=json-v1') : false);
+        preset.trace.source && preset.trace.source.length > 0 && preset.trace.source.forEach(s => {
+            if (s.trim().length > 0) {
+                result.push(`--trace-source=${s}`);
+            }
+        });
+        preset.trace.redirect && preset.trace.redirect.length > 0 && result.push(`--trace-redirect=${preset.trace.redirect}`);
+    }
+
     return result;
 }
 
-export function buildArgs(preset: BuildPreset): string[] {
+export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], tempOverrideBuildToolArgs?: string[]): string[] {
     const result: string[] = [];
 
     preset.__binaryDir && result.push('--build', preset.__binaryDir);
@@ -1564,7 +2046,9 @@ export function buildArgs(preset: BuildPreset): string[] {
         result.push('--target', ...preset.__targets);
     }
 
+    tempOverrideArgs && result.push(...tempOverrideArgs);
     preset.nativeToolOptions && result.push('--', ...preset.nativeToolOptions);
+    tempOverrideBuildToolArgs && result.push(...tempOverrideBuildToolArgs);
 
     return result;
 }
@@ -1588,6 +2072,7 @@ export function testArgs(preset: TestPreset): string[] {
         preset.output.outputOnFailure && result.push('--output-on-failure');
         preset.output.quiet && result.push('--quiet');
         preset.output.outputLogFile && result.push('--output-log', preset.output.outputLogFile);
+        preset.output.outputJUnitFile && result.push('--output-junit', preset.output.outputJUnitFile);
         preset.output.labelSummary === false && result.push('--no-label-summary');
         preset.output.subprojectSummary === false && result.push('--no-subproject-summary');
         preset.output.maxPassedTestOutputSize && result.push('--test-output-size-passed', preset.output.maxPassedTestOutputSize.toString());
@@ -1633,6 +2118,37 @@ export function testArgs(preset: TestPreset): string[] {
         preset.execution.scheduleRandom && result.push('--schedule-random');
         preset.execution.timeout && result.push('--timeout', preset.execution.timeout.toString());
         preset.execution.noTestsAction && preset.execution.noTestsAction !== 'default' && result.push('--no-tests=' + preset.execution.noTestsAction);
+    }
+
+    return result;
+}
+
+export function packageArgs(preset: PackagePreset): string[] {
+    const result: string[] = [];
+
+    // -C semicolon;separated;list;of;configurations;to;pack
+    const configurations: string | undefined = preset.configurations?.join(";");
+    configurations && result.push(`-C ${configurations}`); // should this be 2 args or 1 with space in between -C and configurations list?
+    // -G semicolon;separated;list;of;generators;used
+    const generators: string | undefined = preset.generators?.join(";");
+    generators && result.push(`-G ${generators}`); // should this be 2 args or 1 with space in between -G and generators list?
+
+    // cpack variables: -D var=val
+    if (preset.variables) {
+        util.objectPairs(preset.variables).forEach(([key, value]) => {
+            result.push(`-D ${key}=${value}`);
+        });
+    }
+
+    preset.configFile && result.push('--config', preset.configFile);
+    preset.packageName && result.push('-P', preset.packageName);
+    preset.packageVersion && result.push('-R', preset.packageVersion);
+    preset.packageDirectory && result.push('-B', preset.packageDirectory);
+
+    // Output
+    if (preset.output) {
+        preset.output.verbose && result.push('-V');
+        preset.output.debug && result.push('--debug');
     }
 
     return result;

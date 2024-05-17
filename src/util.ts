@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as os from 'os';
+import * as contex from './contextKeyExpr';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -12,9 +13,24 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
 import { expandString, ExpansionOptions } from './expand';
 import { ExtensionManager } from './extension';
+import * as glob from "glob";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+const parser = new contex.Parser({ regexParsingWithErrorRecovery: false });
+
+class Context implements contex.IContext {
+
+    protected _value: {[key: string]: any};
+
+    constructor(dictionary: {[key: string]: any}) {
+        this._value = dictionary;
+    }
+    public getValue<T>(key: string): T | undefined {
+        const ret = this._value[key];
+        return ret;
+    }
+}
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -479,6 +495,53 @@ export function thisExtensionPackage(): PackageJSON {
     };
 }
 
+export async function getExtensionLocalizedPackageJson(): Promise<{[key: string]: any}> {
+    let localizedFilePath: string = path.join(thisExtensionPath(), `package.nls.${getLocaleId()}.json`);
+    const fileExists: boolean = await checkFileExists(localizedFilePath);
+    if (!fileExists) {
+        localizedFilePath = path.join(thisExtensionPath(), "package.nls.json");
+    }
+    const localizedStrings = fs.readFileSync(localizedFilePath, "utf8");
+    return JSON.parse(localizedStrings);
+}
+
+interface CommandPalette {
+    command: string;
+    when: string | null;
+}
+
+/*
+ * This works in our simple conditio case. would need to expand if our context conditions start getting more complex - including parentheses, other expressions that are not booleans.
+*/
+function evaluateExpression(expression: string | null, context: contex.IContext): boolean {
+    if (expression === null || expression === undefined) {
+        return true;
+    } else if (expression === "never") {
+        return false;
+    }
+
+    try {
+        const constExpr = parser.parse(expression);
+        return constExpr ? constExpr.evaluate(context) : false;
+    } catch (e) {
+        console.error("Invalid expression:", e);
+        return false;
+    }
+}
+
+export function thisExtensionActiveCommands(context: {[key: string]: any}): string [] {
+    const pkg = thisExtension().packageJSON;
+    const allCommands = pkg.contributes.menus.commandPalette as CommandPalette[];
+    const contextObj = new Context(context);
+    const activeCommands = allCommands.map((commandP) => {
+        if (evaluateExpression(commandP.when, contextObj)) {
+            return commandP.command;
+        }
+        return null;
+    });
+    return activeCommands.filter(x => x !== null) as string[];
+}
+
 export function thisExtensionPath(): string {
     return thisExtension().extensionPath;
 }
@@ -738,7 +801,7 @@ export function isNullOrUndefined(x?: any): x is null | undefined {
     return (x === null || x === undefined);
 }
 
-export function isWorkspaceFolder(x?: any): boolean {
+export function isWorkspaceFolder(x?: any): x is vscode.WorkspaceFolder {
     return 'uri' in x && 'name' in x && 'index' in x;
 }
 
@@ -910,4 +973,31 @@ export function getHostArchitecture() {
 // Util for the special commands to forward to real commands
 export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
     return vscode.commands.executeCommand(`cmake.${key}`, ...args);
+}
+
+export async function globForFileName(fileName: string, depth: number, cwd: string): Promise<boolean> {
+    let starString = "*";
+    for (let i = 1; i <= depth; i++) {
+        if (await globWrapper(`${starString}/${fileName}`, cwd)) {
+            return true;
+        }
+        starString += "/*";
+    }
+    return false;
+}
+
+function globWrapper(globPattern: string, cwd: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        glob(globPattern, { cwd }, (err, files) => {
+            if (err) {
+                return reject(false);
+            }
+
+            if (files.length > 0) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    });
 }
