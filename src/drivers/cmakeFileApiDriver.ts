@@ -335,7 +335,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     private toolchainWarningProvided: boolean = false;
     private async updateCodeModel(binaryDir?: string): Promise<boolean> {
-        const reply_path = this.getCMakeReplyPath(binaryDir).replace('~', process.env.HOME || ".");
+        const reply_path = this.getCMakeReplyPath(binaryDir).replace('~', process.env.HOME || "./");
         const indexFile = await loadIndexFile(reply_path);
         if (indexFile) {
             this._generatorInformation = indexFile.cmake.generator;
