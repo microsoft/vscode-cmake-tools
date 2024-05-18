@@ -85,10 +85,10 @@ extends:
         - checkout: self
           clean: true
           fetchTags: false
-        - ${{ if not(eq(parameters.ReleaseVersion, 'yes')) }}:
-          - 'ReleaseVersion needs to be set before scheduling the pipeline.'
         - ${{ if not(eq(parameters.VerifyChangelog, 'yes')) }}:
           - 'CHANGELOG.md should be updated before scheduling the pipeline.'
         - ${{ if not(eq(parameters.VerifyNotice, 'yes')) }}:
           - 'Third party notices should be updated before scheduling the pipeline.'
+        - ${{ if not(eq(parameters.ReleaseVersion, 'yes')) }}:
+          - 'ReleaseVersion needs to be set before scheduling the pipeline.'
         - template: /jobs/shared/build.yml@self
