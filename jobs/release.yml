@@ -12,21 +12,21 @@ parameters:
     - test
     - real
 - name: VerifyChangelog
-  displayName: Verify Changelog
+  displayName: Attest that CHANGELOG.md is up-to-date.
   type: string
   default: no
   values:
     - yes
     - no
 - name: VerifyNotice
-  displayName: Verify Notice
+  displayName: Attest that all NOTICE files are up-to-date.
   type: string
   default: no
   values:
     - yes
     - no
 - name: ReleaseVersion
-  displayName: Release Version
+  displayName: Release Version to set in the vsix package
   type: string
   default: unset
 
