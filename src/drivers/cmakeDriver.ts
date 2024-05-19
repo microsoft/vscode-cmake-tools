@@ -1085,6 +1085,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
             captureGroup: 1
         },
         {
+            name: "chesscc",
+            versionSwitch: "--version",
+            versionOutputRegexp: "version ([^\\s]+)",
+            captureGroup: 1
+        },
+        {
             name: "g++",
             versionSwitch: "-v",
             versionOutputRegexp: "version ([^\\s]+)",
