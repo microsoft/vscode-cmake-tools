@@ -599,13 +599,14 @@ export class CTestDriver implements vscode.Disposable {
         return undefined;
     }
 
-    private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri) {
+    private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri) : { testItem: vscode.TestItem, parentSuiteItem: vscode.TestItem } {
         let parentSuiteItem = testExplorerRoot;
         let testLabel = testName;
 
         // If a suite delimiter is set, create a suite tree
-        if (this.ws.config.testSuiteDelimiter ) {
-            const parts = testName.split(this.ws.config.testSuiteDelimiter);
+        if (this.ws.config.testSuiteDelimiter) {
+            let delimiterRegExp = new RegExp(this.ws.config.testSuiteDelimiter);
+            const parts = testName.split(delimiterRegExp);
             testLabel = parts.pop() || testName; // The last part is the test label
 
             // Create a suite item for each suite ID part if it doesn't exist yet at that tree level
