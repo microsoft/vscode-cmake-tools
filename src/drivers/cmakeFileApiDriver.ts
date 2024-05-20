@@ -271,7 +271,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
             return 0;
         } else if (this.isMultiConfig && trigger === ConfigureTrigger.setVariant) {
             this._needsReconfigure = false;
-            log.debug("No re-configure 'cmake' command needed to run when changing variant for a multi-config generator.");
             await this.updateCodeModel(binaryDir);
             return 0;
         } else {
