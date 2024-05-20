@@ -254,7 +254,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         for (const term of this._compileTerms.values()) {
             term.dispose();
         }
-        for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._packEnvSub, this._generalEnvSub]) {
+        for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._packEnvSub, this._packArgsSub, this._generalEnvSub]) {
             sub.dispose();
         }
         rollbar.invokeAsync(localize('async.disposing.cmake.driver', 'Async disposing CMake driver'), () => this.asyncDispose());
@@ -1085,6 +1085,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
             captureGroup: 1
         },
         {
+            name: "chesscc",
+            versionSwitch: "--version",
+            versionOutputRegexp: "version ([^\\s]+)",
+            captureGroup: 1
+        },
+        {
             name: "g++",
             versionSwitch: "-v",
             versionOutputRegexp: "version ([^\\s]+)",
@@ -1827,6 +1833,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         await onTestSettingsChange();
     });
     private readonly _packEnvSub = this.config.onChange('cpackEnvironment', async () => {
+        await onPackageSettingsChange();
+    });
+    private readonly _packArgsSub = this.config.onChange('cpackArgs', async () => {
         await onPackageSettingsChange();
     });
     private readonly _generalEnvSub = this.config.onChange('environment', async () => {

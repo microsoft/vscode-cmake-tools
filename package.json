@@ -1738,7 +1738,7 @@
         },
         {
           "command": "cmake.projectStatus.selectPackagePreset",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'packagePreset'",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem =~ /packagePreset/",
           "group": "inline"
         },
         {

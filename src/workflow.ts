@@ -2,6 +2,7 @@ import { DirectoryContext } from '@cmt/workspace';
 import * as vscode from 'vscode';
 import { CMakeDriver } from '@cmt/drivers/drivers';
 import * as nls from 'vscode-nls';
+import { ConfigureType } from './cmakeProject';
 import { WorkflowPreset, ConfigurePreset, BuildPreset, TestPreset, PackagePreset, getPresetByName, allConfigurePresets, allBuildPresets, allTestPresets, allPackagePresets } from './preset';
 import * as proc from '@cmt/proc';
 import { ProjectController } from './projectController';
@@ -51,16 +52,25 @@ export class WorkflowDriver implements vscode.Disposable {
         let newTestPreset: TestPreset | null = null ;
         let newPackagePreset: PackagePreset | null = null;
         const workflowSteps = workflowPreset?.steps || [];
+        let cleanWorkflowConfigure: boolean = false;
         for (const step of workflowSteps) {
             switch (step.type) {
                 case "configure":
                     newConfigurePreset = getPresetByName(allConfigurePresets(driver.workspaceFolder), step.name);
                     if (newConfigurePreset?.name !== oldConfigurePreset?.name) {
                         await prj.setConfigurePreset(newConfigurePreset?.name || null);
+                        // If the workflow configure preset is different than the current project configure preset
+                        // it is better to re-configure clean.
+                        cleanWorkflowConfigure = true;
                     }
 
-                    log.info(localize('workflow.configuring', 'Configuring project with the {0} configure preset of the workflow.', newConfigurePreset?.name));
-                    await prj.configureInternal(ConfigureTrigger.workflow);
+                    if (cleanWorkflowConfigure) {
+                        log.info(localize('workflow.configuring.clean', 'Configuring clean project with the {0} configure preset of the workflow.', newConfigurePreset?.name));
+                        await prj.configureInternal(ConfigureTrigger.workflow, [], ConfigureType.Clean);
+                    } else {
+                        log.info(localize('workflow.configuring', 'Configuring project with the {0} configure preset of the workflow.', newConfigurePreset?.name));
+                        await prj.configureInternal(ConfigureTrigger.workflow);
+                    }
 
                     break;
 
@@ -102,7 +112,11 @@ export class WorkflowDriver implements vscode.Disposable {
         if (newConfigurePreset?.name !== oldConfigurePreset?.name && oldConfigurePreset) {
             await prj.setConfigurePreset(oldConfigurePreset?.name);
             log.info(localize('workflow.restore.configuring', 'Workflow finished. Restore the original {0} configure preset and reconfigure.', oldConfigurePreset?.name ?? ""));
-            await prj.configureInternal(ConfigureTrigger.workflow);
+            if (cleanWorkflowConfigure) {
+                await prj.configureInternal(ConfigureTrigger.workflow, [], ConfigureType.Clean);
+            } else {
+                await prj.configureInternal(ConfigureTrigger.workflow);
+            }
         }
 
         if (newBuildPreset?.name !== oldBuildPreset?.name && oldBuildPreset) {
