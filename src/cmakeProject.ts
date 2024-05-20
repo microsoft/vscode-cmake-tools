@@ -1982,7 +1982,7 @@ export class CMakeProject {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir) : [];
+                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir) : [];
                         if (fileDiags) {
                             populateCollection(collections.build, fileDiags);
                         }
