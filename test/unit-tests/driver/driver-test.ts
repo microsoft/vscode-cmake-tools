@@ -85,7 +85,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             const allTargetName = driver.allTargetName;
 
             expect(allTargetName).to.eq('all');
@@ -96,7 +96,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             expect(driver.binaryDir).to.endsWith('test/unit-tests/driver/workspace/test_project/build');
         }).timeout(60000);
 
@@ -104,7 +104,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, badCommandWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, badCommandWorkspaceFolder, async () => {}, []);
             expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).result).to.be.eq(1);
         }).timeout(90000);
 
@@ -112,7 +112,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).result).to.be.eq(0);
             expect(await driver.build([driver.allTargetName])).to.be.eq(0);
 
@@ -133,7 +133,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const kit = { name: 'GCC', preferredGenerator: { name: 'invalid Name' } } as Kit;
 
             try {
-                await driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {return true}, []);
+                await driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []);
                 expect(false, 'configure did not detect the invalid generator').to.be.true;
             } catch (e) {
                 if (!(e instanceof NoGeneratorError)) {
@@ -145,7 +145,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
         test('Test compiler name reporting for telemetry', async () => {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
 
             // A few path examples that would exercise through the telemetry reporting rules:
             // - any name that is not recognized is reported as "other"
@@ -172,7 +172,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
 
             // Set kit without a preferred generator
             await driver.setKit({ name: 'GCC', isTrusted: true }, []);
@@ -195,7 +195,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
                 expect(e).to.be.eq(CMakePreconditionProblems.MissingCMakeListsFile);
                 called = true;
-                return true;
             };
             driver = await driver_generator(executable, config, ninjaKitDefault, emptyWorkspaceFolder, checkPreconditionHelper, []);
             expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).result).to.be.eq(-2);
@@ -210,7 +209,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
                 expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
                 called = true;
-                return true;
             };
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
             const configure1 = driver.configure(ConfigureTrigger.runTests, []);
@@ -229,7 +227,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
                 expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
                 called = true;
-                return true;
             };
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
@@ -250,7 +247,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
                     called = true;
                 }
-                return true;
             };
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
@@ -272,7 +268,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 if (e === CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
                     called = true;
                 }
-                return true;
             };
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
@@ -294,7 +289,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
                     called = true;
                 }
-                return true;
             };
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
@@ -316,7 +310,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 if (e === CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
                     called = true;
                 }
-                return true;
             };
             driver
                 = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
@@ -337,7 +330,6 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
                     called = true;
                 }
-                return true;
             };
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
             expect((await driver.configure(ConfigureTrigger.runTests, [])).result).to.be.equal(0);
@@ -353,12 +345,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, secondaryKit, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, secondaryKit, defaultWorkspaceFolder, async () => {}, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
             await driver.asyncDispose();
 
             driver = null;
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             expect((await driver.configure(ConfigureTrigger.runTests, [])).result).to.be.eq(0);
 
             const expFileApi = driver instanceof CMakeFileApiDriver;
@@ -376,7 +368,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
             expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
 
@@ -405,7 +397,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, secondaryKit, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, secondaryKit, defaultWorkspaceFolder, async () => {}, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
             expect(await driver.build(['all'])).to.be.eq(0, 'Automatic correction of all target failed');
         }).timeout(90000);
@@ -417,7 +409,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
             expect(await driver.build(['ALL_BUILD'])).to.be.eq(0, 'Automatic correction of ALL_BUILD target failed');
         }).timeout(90000);
@@ -426,7 +418,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             await driver.configure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
             expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')?.value).to.be.eq('Hallo');
         }).timeout(90000);
@@ -435,7 +427,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {return true}, []);
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => {}, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
             expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')?.value).to.be.eq('Hallo');
         }).timeout(90000);
