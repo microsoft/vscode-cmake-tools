@@ -1404,7 +1404,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const initial_common_flags = extra_args.concat(this.config.configureArgs);
         const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags : initial_common_flags.concat("--no-warn-unused-cli");
         const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
-        const final_flags = common_flags.concat(define_flags, init_cache_flags);
+        const final_flags = define_flags.concat(common_flags, init_cache_flags);
 
         // Get expanded configure environment
         const expanded_configure_env = await this.getConfigureEnvironment();
