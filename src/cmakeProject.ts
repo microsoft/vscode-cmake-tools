@@ -1897,7 +1897,7 @@ export class CMakeProject {
      */
     async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
         if (!showCommandOnly) {
-            log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
+            log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
         if (showCommandOnly) {
