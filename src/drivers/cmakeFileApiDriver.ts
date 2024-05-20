@@ -269,6 +269,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.showChannel();
             log.info(proc.buildCmdStr(this.cmake.path, args));
             return 0;
+        } else if (this.isMultiConfig && trigger === ConfigureTrigger.setVariant) {
+            this._needsReconfigure = false;
+            await this.updateCodeModel(binaryDir);
+            return 0;
         } else {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
