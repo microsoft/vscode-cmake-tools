@@ -1522,6 +1522,8 @@ export class CMakeProject {
             const result: ConfigureResult = await drv.configure(trigger, []);
             if (result.result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
+            } else {
+                log.showChannel(true);
             }
             await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
@@ -1533,7 +1535,7 @@ export class CMakeProject {
             return { result: -1, resultType: ConfigureResultType.NoCache };
         }
 
-        return vscode.window.withProgress(
+        const res = await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Window,
                 title: localize('configuring.project', 'Configuring project'),
@@ -1655,6 +1657,11 @@ export class CMakeProject {
                 }
             }
         );
+        // check if the an error occured during the configuration
+        if (res.result !== 0) {
+            log.showChannel(true);
+        }
+        return res;
     }
 
     /**
