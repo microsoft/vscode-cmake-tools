@@ -2592,8 +2592,11 @@
         "cmake.deleteBuildDirOnCleanConfigure": {
           "type": "boolean",
           "default": false,
-          "description": "%cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description%",
-          "scope": "resource"
+          "description": "%cmake-tools.configuration.cmake.deleteBuildDirOnCleanCconfigure.description%",
+          "scope": "resource",
+          "tags": [
+            "experimental"
+          ]
         },
         "cmake.setBuildTypeOnMultiConfig": {
           "type": "boolean",
