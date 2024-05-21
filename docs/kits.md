@@ -122,6 +122,21 @@ Keys:
 > **Note:**
 > To use Visual C++, both `visualStudio` and `visualStudioArchitecture` must be specified. Omitting either one won't work.
 
+## Unsupported commands
+
+The following commands are not supported when kits and variants are active:
+- **CMake: Scan for Compilers**
+- **CMake: Add Configure Preset**
+- **CMake: Add Build Preset**
+- **CMake: Add Test Preset**
+- **CMake: Add Package Preset**
+- **CMake: Add Workflow Preset**
+- **CMake: Select Configure Preset**
+- **CMake: Select Build Preset**
+- **CMake: Select Test Preset**
+- **CMake: Select Package Preset**
+- **CMake: Select Workflow Preset**
+
 ### General options
 
 The following additional options may be specified:
