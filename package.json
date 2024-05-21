@@ -3466,12 +3466,14 @@
           "enum": [
             "focus",
             "always",
-            "never"
+            "never",
+            "on error"
           ],
           "enumDescriptions": [
             "%cmake-tools.configuration.cmake.revealLog.focus.description%",
             "%cmake-tools.configuration.cmake.revealLog.always.description%",
-            "%cmake-tools.configuration.cmake.revealLog.never.description%"
+            "%cmake-tools.configuration.cmake.revealLog.never.description%",
+            "%cmake-tools.configuration.cmake.revealLog.onError.description%"
           ],
           "description": "%cmake-tools.configuration.cmake.revealLog.description%"
         },
