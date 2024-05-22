@@ -2244,7 +2244,7 @@
         "cmake.ctest.testSuiteDelimiter": {
           "type": "string",
           "default": null,
-          "description": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription%",
           "scope": "machine-overridable"
         },
         "cmake.parseBuildDiagnostics": {
@@ -3729,7 +3729,6 @@
     "chai-string": "^1.5.0",
     "eslint": "^8.15.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jsdoc": "^39.6.4",
     "event-stream": "^4.0.1",
     "fs-extra": "^9.1.0",
     "glob": "^7.1.6",
