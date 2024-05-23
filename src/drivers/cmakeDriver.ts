@@ -71,7 +71,7 @@ export interface ConfigureResult {
     resultType: ConfigureResultType;
 }
 
-export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<boolean | void>;
+export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<boolean>;
 
 function nullableValueToString(arg: any | null | undefined): string {
     return arg === null ? 'empty' : arg;
@@ -547,7 +547,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected async _cleanPriorConfiguration() {
         const build_dir = this.binaryDir;
         const cache = this.cachePath;
-        const cmake_files = this.config.deleteBuildDirOnCleanConfigure ? build_dir : path.join(build_dir, 'CMakeFiles');
+        const cmake_files = path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', cache));
             try {
@@ -1802,12 +1802,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const cmake_list = this.mainListFile;
         if (!await fs.exists(cmake_list)) {
             log.debug(localize('not.configuring', 'Not configuring: There is no {0}', cmake_list));
-            const res = await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile, this.config);
-            if (res) {
-                return res;
-            } else {
-                return false;
-            }
+            /*const res =*/return this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile, this.config);
+            // if (res) {
+            //     return res;
+            // } else {
+            //     return false;
+            // }
         }
 
         return true;
