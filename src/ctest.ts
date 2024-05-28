@@ -262,6 +262,13 @@ export class CTestDriver implements vscode.Disposable {
             }
             // Add a few more args so we can show the result in status bar
             ctestArgs = ctestArgs.concat(testArgs(driver.testPreset));
+
+            // When no test preset exists (the default scenario) we can still deduce the -C (or --build-config) ctest argument
+            // out of the driver current build type, which takes into consideration all calculations about single/multi-config
+            // and the current user selection of build type.
+            if (driver.testPreset.name === "__defaultTestPreset__") {
+                ctestArgs = ['-C', driver.currentBuildType].concat(ctestArgs);
+            }
         } else {
             const configuration = driver.currentBuildType;
             const jobs = await expandString(this.ws.config.numCTestJobs, opts);
