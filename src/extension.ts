@@ -1014,9 +1014,13 @@ export class ExtensionManager implements vscode.Disposable {
         return Array.from(result);
     }
 
+    viewPackageSettings(): void {
+        void vscode.commands.executeCommand('workbench.action.openSettings', '@id:cmake.cpackArgs, @id:cmake.cpackEnvironment, @id:cmake.environment');
+    }
+
     /**
-     * Show UI to allow the user to select an active kit
-     */
+    * Show UI to allow the user to select an active kit
+    */
     async selectKit(folder?: vscode.WorkspaceFolder): Promise<boolean> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
@@ -2161,6 +2165,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'selectTestPreset',
         'viewTestSettings',
         'selectPackagePreset',
+        'viewPackageSettings',
         'selectWorkflowPreset',
         'selectActiveFolder',
         'editKits',

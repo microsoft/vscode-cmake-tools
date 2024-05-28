@@ -269,6 +269,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.showChannel();
             log.info(proc.buildCmdStr(this.cmake.path, args));
             return 0;
+        } else if (this.isMultiConfig && trigger === ConfigureTrigger.setVariant) {
+            this._needsReconfigure = false;
+            await this.updateCodeModel(binaryDir);
+            return 0;
         } else {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
@@ -335,7 +339,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     private toolchainWarningProvided: boolean = false;
     private async updateCodeModel(binaryDir?: string): Promise<boolean> {
-        const reply_path = this.getCMakeReplyPath(binaryDir);
+        const reply_path = this.getCMakeReplyPath(binaryDir).replace('~', process.env.HOME || "./");
         const indexFile = await loadIndexFile(reply_path);
         if (indexFile) {
             this._generatorInformation = indexFile.cmake.generator;
