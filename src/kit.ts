@@ -716,6 +716,11 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     await fs.unlink(script_path); // delete script file
     const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
+    if (res.retc !== 0) {
+        log.error(localize('error.running.setup.script', 'Error running {0} with: {1}', kit.environmentSetupScript, output));
+        return;
+    }
+
     let env = '';
     try {
         /* When the script failed, envpath would not exist */
@@ -959,7 +964,14 @@ async function getVSInstallForKit(kit: Kit): Promise<VSInstallation | undefined>
         // Clang for VS kit format
         (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
 
-    return installs.find(match);
+    const inst = installs.find(match);
+    if (!inst) {
+        log.warning(localize('vs.instance.not.found.run.scan.kits',
+            'VS installation instance not found for kit {1}. It is recommended you re-scan the kits.',
+            kit?.visualStudio));
+    }
+
+    return inst;
 }
 
 export async function getVSKitEnvironment(kit: Kit): Promise<Environment | null> {

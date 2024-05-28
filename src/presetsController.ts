@@ -206,7 +206,7 @@ export class PresetsController {
         return platmap[process.platform];
     }
 
-    async addConfigurePreset(): Promise<boolean> {
+    async addConfigurePreset(quickStart?: boolean): Promise<boolean> {
         interface AddPresetQuickPickItem extends vscode.QuickPickItem {
             name: string;
         }
@@ -281,6 +281,24 @@ export class PresetsController {
                         if (!duplicate) {
                             filteredKits.push(kit);
                         }
+                    }
+
+                    // if we are calling from quick start and no compilers are found, exit out with an error message
+                    if (quickStart && filteredKits.length === 1 && filteredKits[0].name === SpecialKits.ScanForKits) {
+                        log.debug(localize('no.compilers.available.for.quick.start', 'No compilers available for Quick Start'));
+
+                        void vscode.window.showErrorMessage(
+                            localize('no.compilers.available', 'Cannot generate a CmakePresets.json with Quick Start due to no compilers being available.'),
+                            {
+                                title: localize('learn.about.installing.compilers', 'Learn About Installing Compilers'),
+                                isLearnMore: true
+                            })
+                            .then(async item => {
+                                if (item && item.isLearnMore) {
+                                    await vscode.env.openExternal(vscode.Uri.parse('https://code.visualstudio.com/docs/languages/cpp#_install-a-compiler'));
+                                }
+                            });
+                        return false;
                     }
 
                     log.debug(localize('start.selection.of.compilers', 'Start selection of compilers. Found {0} compilers.', filteredKits.length));
@@ -392,18 +410,19 @@ export class PresetsController {
             }
 
             if (newPreset) {
-                const name = await this.showNameInputBox();
+
+                const before: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
+                const name = await this.showNameInputBox() || newPreset.displayName || undefined;
                 if (!name) {
                     return false;
                 }
-
                 newPreset.name = name;
                 await this.addPresetAddUpdate(newPreset, 'configurePresets');
 
-                if (isMultiConfigGenerator) {
-                    // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
-                    await this.reapplyPresets();
+                // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
+                await this.reapplyPresets();
 
+                if (isMultiConfigGenerator) {
                     const buildPreset: preset.BuildPreset = {
                         name: `${newPreset.name}-debug`,
                         displayName: `${newPreset.displayName} - Debug`,
@@ -411,6 +430,11 @@ export class PresetsController {
                         configuration: 'Debug'
                     };
                     await this.addPresetAddUpdate(buildPreset, 'buildPresets');
+                }
+
+                if (before.length === 0) {
+                    log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(newPreset.name)));
+                    await this.setConfigurePreset(newPreset.name);
                 }
             }
 
@@ -788,7 +812,7 @@ export class PresetsController {
         return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
     }
 
-    async selectConfigurePreset(): Promise<boolean> {
+    async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
         const allPresets: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
         const presets = allPresets.filter(
             _preset => {
@@ -819,7 +843,7 @@ export class PresetsController {
         } else {
             const addPreset = chosenPreset === PresetsController._addPreset;
             if (addPreset) {
-                await this.addConfigurePreset();
+                await this.addConfigurePreset(quickStart);
             } else {
                 log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
                 await this.setConfigurePreset(chosenPreset);
@@ -828,7 +852,7 @@ export class PresetsController {
             if (this.project.workspaceContext.config.automaticReconfigure) {
                 await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
             }
-            return !addPreset;
+            return !addPreset || allPresets.length === 0;
         }
     }
 
@@ -1438,7 +1462,7 @@ export class PresetsController {
     //-----
     async openCMakePresets(): Promise<vscode.TextEditor | undefined> {
         if (!await fs.exists(this.presetsPath)) {
-            return this.updatePresetsFile({ version: 2 });
+            return this.updatePresetsFile({ version: 8 });
         } else {
             return vscode.window.showTextDocument(vscode.Uri.file(this.presetsPath));
         }
@@ -1446,7 +1470,7 @@ export class PresetsController {
 
     async openCMakeUserPresets(): Promise<vscode.TextEditor | undefined> {
         if (!await fs.exists(this.userPresetsPath)) {
-            return this.updatePresetsFile({ version: 2 }, true);
+            return this.updatePresetsFile({ version: 8 }, true);
         } else {
             return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
         }
@@ -1679,7 +1703,7 @@ export class PresetsController {
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
-        const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 2 };
+        const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
         if (!originalPresetsFile[presetType]) {
             originalPresetsFile[presetType] = [];
         }

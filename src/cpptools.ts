@@ -600,13 +600,15 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         // 1. Accumulate some "defaults" based on the set of all options for each file group
                         // 2. Pass these "defaults" down when rebuilding the config data
                         // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+                        target.fileGroups?.reverse();
                         const grps = target.fileGroups || [];
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
                         const compileCommandFragments = [...util.first(grps, grp => grp.compileCommandFragments || [])];
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
                         const sysroot = target.sysroot;
                         this.targets.push({ name: target.name, type: target.type });
-                        for (const grp of target.fileGroups || []) {
+                        const filteredGroups = (target.fileGroups && target.fileGroups.filter(fg => !fg.isGenerated).length > 0) ? target.fileGroups.filter(fg => !fg.isGenerated) : target.fileGroups;
+                        for (const grp of filteredGroups || []) {
                             try {
                                 this.updateFileGroup(
                                     target.sourceDirectory || '',

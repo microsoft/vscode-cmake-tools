@@ -35,7 +35,6 @@
 	"cmake-tools.command.cmake.build.title": "Kompilacja",
 	"cmake-tools.command.cmake.buildAll.title": "Kompiluj wszystkie projekty",
 	"cmake-tools.command.cmake.showBuildCommand.title": "Pokaż polecenie kompilacji",
-	"cmake-tools.command.cmake.buildNamedTarget.title": "(Wewnętrzne) Kompiluj element docelowy według nazwy",
 	"cmake-tools.command.cmake.compileFile.title": "Kompiluj aktywny plik",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Kompiluj plik",
 	"cmake-tools.command.cmake.install.title": "Zainstaluj",
@@ -107,7 +106,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Ścieżka do pliku wykonywalnego narzędzia CTest. Jeśli wartość jest równa null, zostanie określona na podstawie parametru cmake.cmakePath (zaleca się pozostawienie wartości null).",
 	"cmake-tools.configuration.cmake.cpackPath.description": "Ścieżka do pliku wykonywalnego CPack. Jeśli wartość null, zostanie wywnioskowana z elementu cmake.cmakePath (rekomenduje się pozostawienie wartości null). Będą ignorowane, gdy zestawy są używane zamiast ustawień wstępnych.",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "Liczba równoległych zadań testowych. Użyj wartości zero, aby użyć wartości `#cmake.parallelJobs#`. Ma to zastosowanie tylko wtedy, gdy właściwość `#cmake.ctest.allowParallelJobs#` ma wartość `true`.",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Umożliwia równoległe uruchamianie testów ctests, jednak wynikowe dane wyjściowe mogą być zniekształcone w wyniku.",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Umożliwia równoległe uruchamianie testów ctest, jednak dane wyjściowe wyniku może być w efekcie uszkodzony, a Eksplorator testów może nie odzwierciedlać dokładnie postępu testu.",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "Określa, czy integracja z eksploratorem testów jest włączona. Jest to przydatne do wyłączenia, jeśli wolisz używać innego rozszerzenia do integracji testów.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analizuj dane wyjściowe kompilatora pod kątem ostrzeżeń i błędów.",
 	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Analizatory danych wyjściowych do użycia. Obsługiwane analizatory to `cmake`, `gcc`, `gnuld` dla danych wyjściowych konsolidatora typu GNULD, `msvc` dla programu Microsoft Visual C++, `ghs` dla kompilatora Green Hills z parametrami --no_wrap_diagnostics --brief_diagnostics oraz `diab` dla kompilatora Wind River Diab.",
@@ -205,6 +204,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Określa, co się dzieje z terminalem uruchamiania po uruchomieniu elementu docelowego.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatycznie konfiguruj katalogi projektu narzędzia CMake po zmianie zestawu lub ustawienia wstępnego konfiguracji.",
 	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista poleceń narzędzia CMake do przypięcia.",
+	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Włącz automatyczne skanowanie w poszukiwaniu zestawów, gdy zestaw nie jest wybrany. Będzie to miało wpływ tylko wtedy, gdy nie są używane ustawienia wstępne narzędzia CMake.",
 	"cmake-tools.debugger.pipeName.description": "Nazwa potoku (w systemie Windows) lub gniazda domeny (w systemie Unix) do użycia na potrzeby komunikacji debugera.",
 	"cmake-tools.debugger.clean.description": "Wyczyść przed skonfigurowaniem.",
 	"cmake-tools.debugger.configureAll.description": "Skonfiguruj dla wszystkich projektów.",
@@ -243,5 +243,8 @@
 	"cmake-tools.command.cmake.projectStatus.cleanConfigure.title": "Usuń pamięć podręczną i skonfiguruj ponownie",
 	"cmake-tools.command.cmake.projectStatus.selectTestPreset.title": "Ustawianie docelowego elementu testu",
 	"cmake-tools.command.cmake.projectStatus.openVisibilitySettings.title": "Otwórz ustawienia widoczności",
-	"cmake-tools.debugger.label": "Debuger CMake"
+	"cmake-tools.debugger.label": "Debuger CMake",
+	"cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Dołącz katalog kompilacji do bieżącego obszaru roboczego",
+	"cmake-tools.command.workbench.action.tasks.configureTaskRunner.title": "Skonfiguruj zadanie",
+	"cmake-tools.command.workbench.action.tasks.runTask.title": "Uruchom zadanie"
 }

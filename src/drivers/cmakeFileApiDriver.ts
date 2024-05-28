@@ -269,6 +269,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.showChannel();
             log.info(proc.buildCmdStr(this.cmake.path, args));
             return 0;
+        } else if (this.isMultiConfig && trigger === ConfigureTrigger.setVariant) {
+            this._needsReconfigure = false;
+            await this.updateCodeModel(binaryDir);
+            return 0;
         } else {
             log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
@@ -335,7 +339,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     private toolchainWarningProvided: boolean = false;
     private async updateCodeModel(binaryDir?: string): Promise<boolean> {
-        const reply_path = this.getCMakeReplyPath(binaryDir);
+        const reply_path = this.getCMakeReplyPath(binaryDir).replace('~', process.env.HOME || "./");
         const indexFile = await loadIndexFile(reply_path);
         if (indexFile) {
             this._generatorInformation = indexFile.cmake.generator;
@@ -421,11 +425,28 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     get executableTargets(): ExecutableTarget[] {
-        return this.uniqueTargets.filter(t => t.type === 'rich' && (t as RichTarget).targetType === 'EXECUTABLE')
-            .map(t => ({
-                name: t.name,
-                path: (t as RichTarget).filepath
-            }));
+        const uniqueExecTargets = this.uniqueTargets.filter(t => t.type === 'rich' && (t as RichTarget).targetType === 'EXECUTABLE');
+        const executableTargetsWithInstall = uniqueExecTargets.map(t => ({
+            name: t.name,
+            path: (t as RichTarget).filepath,
+            isInstallTarget: false
+        }));
+
+        const installLoc = localize("cmake.install.name", "Install");
+        for (const t of uniqueExecTargets) {
+            const target = t as RichTarget;
+            if (target.installPaths && target.installPaths.length > 0) {
+                const includePath = target.installPaths.length > 1;
+                for (const installPath of target.installPaths) {
+                    executableTargetsWithInstall.push({
+                        name: `${target.name} (${installLoc}${includePath ? ` - ${installPath.subPath}` : ''})`,
+                        path: installPath.path,
+                        isInstallTarget: true
+                    });
+                }
+            }
+        }
+        return executableTargetsWithInstall;
     }
 
     get cmakeFiles(): string[] {

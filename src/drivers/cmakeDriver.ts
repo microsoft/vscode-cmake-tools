@@ -89,6 +89,10 @@ export interface ExecutableTarget {
      * The absolute path to the build output.
      */
     path: string;
+    /**
+     * The install locations of the target.
+     */
+    isInstallTarget?: boolean;
 }
 
 /**
@@ -107,9 +111,15 @@ export interface RichTarget {
     name: string;
     filepath: string;
     targetType: string;
+    installPaths?: InstallPath[];
 }
 
 export type Target = NamedTarget | RichTarget;
+
+export interface InstallPath {
+    path: string;
+    subPath: string;
+}
 
 /**
  * Base class for CMake drivers.
@@ -244,7 +254,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         for (const term of this._compileTerms.values()) {
             term.dispose();
         }
-        for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._packEnvSub, this._generalEnvSub]) {
+        for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._packEnvSub, this._packArgsSub, this._generalEnvSub]) {
             sub.dispose();
         }
         rollbar.invokeAsync(localize('async.disposing.cmake.driver', 'Async disposing CMake driver'), () => this.asyncDispose());
@@ -1075,6 +1085,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
             captureGroup: 1
         },
         {
+            name: "chesscc",
+            versionSwitch: "--version",
+            versionOutputRegexp: "version ([^\\s]+)",
+            captureGroup: 1
+        },
+        {
             name: "g++",
             versionSwitch: "-v",
             versionOutputRegexp: "version ([^\\s]+)",
@@ -1377,18 +1393,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     public async generateConfigArgsFromPreset(configPreset: preset.ConfigurePreset): Promise<string[]> {
         // Cache flags will construct the command line for cmake.
-        const init_cache_flags = this.generateInitCacheFlags();
+        const init_cache_flags = await this.generateInitCacheFlags();
         // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
         return init_cache_flags.concat(preset.configureArgs(configPreset), await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()}))));
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
         // Cache flags will construct the command line for cmake.
-        const init_cache_flags = this.generateInitCacheFlags();
+        const init_cache_flags = await this.generateInitCacheFlags();
         const initial_common_flags = extra_args.concat(this.config.configureArgs);
         const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags : initial_common_flags.concat("--no-warn-unused-cli");
         const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
-        const final_flags = common_flags.concat(define_flags, init_cache_flags);
+        const final_flags = define_flags.concat(common_flags, init_cache_flags);
 
         // Get expanded configure environment
         const expanded_configure_env = await this.getConfigureEnvironment();
@@ -1604,7 +1620,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
-    private generateInitCacheFlags(): string[] {
+    private async generateInitCacheFlags(): Promise<string[]> {
         const cache_init_conf = this.config.cacheInit;
         let cache_init: string[] = [];
         if (cache_init_conf === null) {
@@ -1616,7 +1632,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
 
         const flags: string[] = [];
+        const envOverride = await this.getConfigureEnvironment();
         for (let init of cache_init) {
+            init = await expand.expandString(init, { ...this.expansionOptions, envOverride });
             if (!path.isAbsolute(init)) {
                 init = path.join(this.sourceDir, init);
             }
@@ -1815,6 +1833,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         await onTestSettingsChange();
     });
     private readonly _packEnvSub = this.config.onChange('cpackEnvironment', async () => {
+        await onPackageSettingsChange();
+    });
+    private readonly _packArgsSub = this.config.onChange('cpackArgs', async () => {
         await onPackageSettingsChange();
     });
     private readonly _generalEnvSub = this.config.onChange('environment', async () => {

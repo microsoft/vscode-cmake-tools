@@ -12,7 +12,7 @@ Explore the [CMake Tools documentation](README.md)
 
 ## What about CMake language support?
 
-We support CMake language support natively in the CMake Tools extension.
+CMake Tools was created separately from the [CMake extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake), which provides language coloring and autocompletion support.
 
 ## How do I learn about CMake?
 
