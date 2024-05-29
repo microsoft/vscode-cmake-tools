@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.19
+
+Features:
+
+- Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
+
 ## 1.18
 Features:
 
