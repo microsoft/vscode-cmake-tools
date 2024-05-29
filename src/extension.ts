@@ -2333,6 +2333,41 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
 
+    const CMAKE_LANGUAGE = "cmake";
+
+    vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
+        indentationRules: {
+            // ^(.*\*/)?\s*\}.*$
+            decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
+            // ^.*\{[^}"']*$
+            increaseIndentPattern: /^.*\{[^}"']*$/
+        },
+        wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
+        comments: {
+            lineComment: '#'
+        },
+        brackets: [
+            ['{', '}'],
+            ['(', ')']
+        ],
+
+        __electricCharacterSupport: {
+            brackets: [
+                { tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
+                { tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
+                { tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
+            ]
+        },
+
+        __characterPairSupport: {
+            autoClosingPairs: [
+                { open: '{', close: '}' },
+                { open: '(', close: ')' },
+                { open: '"', close: '"', notIn: ['string'] }
+            ]
+        }
+    });
+
     if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
         void vscode.window.showInformationMessage(
             localize('options.moved.notification.body', "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools sidebar. You can customize your view with the 'cmake.options' property in settings."),
