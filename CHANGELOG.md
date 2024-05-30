@@ -6,6 +6,10 @@ Features:
 
 - Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
 
+Bug Fixes:
+- Add setting for deleting entire build dir when clean configuring. [#3515](https://github.com/microsoft/vscode-cmake-tools/issues/3515)
+
+
 ## 1.18
 Features:
 
