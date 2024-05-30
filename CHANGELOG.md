@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.19
+
+Features:
+
+- Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
+
 ## 1.18
 Features:
 
@@ -22,6 +28,7 @@ Improvements:
 - Add the ability to debug install targets [#532](https://github.com/microsoft/vscode-cmake-tools/issues/532)
 - Add a "Don't Show Again" option in the select CMakeLists.txt.
 - Log error statement if the environmentSetupScript fails. [#3566](https://github.com/microsoft/vscode-cmake-tools/issues/3566)
+- Sort CMakeLists.txt by depth during selection [#3789](https://github.com/microsoft/vscode-cmake-tools/pull/3789) [@jmigual](https://github.com/jmigual)
 - [Experiment] Improve CMake Tools experience when opening a folder [#3588](https://github.com/microsoft/vscode-cmake-tools/issues/3588)
 
 Bug Fixes:
