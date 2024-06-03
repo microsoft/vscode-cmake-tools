@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "El registro aparece y el canal de salida detecta el foco del cursor.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "El registro aparece, pero el canal de salida no detecta el foco del cursor.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "El registro no aparece ni detecta el foco.",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita la exportación de compile_commands.json.",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita la exportación de compile_commands.json. Esto solo se usa en escenarios de kits. En escenarios de valores preestablecidos, establézcalo mediante CMakePresets.json",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json para configurar, compilar y probar la unidad CMake. Cuando use CMakePresets.json, los kits, las variantes y algunos valores de configuración de settings.json se omitirán.",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Permitir el uso de extensiones JSON como comentarios en CMakePresets.json. Tenga en cuenta que el archivo CMakePresets.json puede considerarse no válido por otros IDE o en la línea de comandos si usa JSON no estándar.",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Habilita el uso de archivos preestablecidos que usan características de las versiones que la extensión herramientas de CMake no admite actualmente. Se omitirán las propiedades y macros desconocidas.",

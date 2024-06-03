@@ -7,8 +7,8 @@
 	"circular.variable.reference": "Trovato riferimento alla variabile circolare: {0}",
 	"reached.max.recursion": "Ha raggiunto la ricorsione di espansione massima delle stringhe. Possibile riferimento circolare.",
 	"exception.expanding.string": "Eccezione durante l'espansione della stringa {0}: {1}",
-	"expand.expandstringhelper": "espansione di {0}",
 	"invalid.variable.reference": "Riferimento a variabile {0} non valido nella stringa: {1}",
 	"command.not.supported": "I comandi non sono supportati per la stringa: {0}",
-	"exception.executing.command": "Si è verificata un'eccezione durante l'esecuzione del comando {0} per la stringa: {1} {2}"
+	"exception.executing.command": "Si è verificata un'eccezione durante l'esecuzione del comando {0} per la stringa: {1} {2}",
+	"expand.expandstringhelper": "Espansa {0}"
 }

@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "No se ha establecido el valor preestablecido de flujo de trabajo",
 	"no.project.found": "No se ha encontrado ningún proyecto para la carpeta {0}",
+	"workflow.configuring.clean": "Configurando el proyecto limpio con el valor preestablecido de configuración de {0} del flujo de trabajo.",
 	"workflow.configuring": "Configurando el proyecto con el valor preestablecido de configuración de {0} del flujo de trabajo.",
 	"workflow.building": "Compilando un proyecto con el valor preestablecido de compilación {0} del paso de flujo de trabajo.",
 	"workflow.running.ctest": "Ejecutando ctest para el valor preestablecido de prueba de {0} del paso de flujo de trabajo.",
