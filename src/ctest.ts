@@ -471,13 +471,21 @@ export class CTestDriver implements vscode.Disposable {
                 if (uniqueCtestArgs.filter(arg => arg.startsWith("-j")).length === 0) {
                     uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
                 }
-                uniqueCtestArgs.push('-R');
-                let testsNamesRegex: string = "";
-                for (const t of driver.tests) {
-                    run.started(t);
-                    testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(t.id)}\$|`);
+
+                // If we have the test explorer enabled, then there may be a scenario when we have a subset of tests selected.
+                // In this case, we should specifically use the -R flag to select the exact tests.
+                // Otherwise, we can leave it to the -T flag to run all tests.
+                if (testExplorer && this._tests && this._tests.tests.length !== driver.tests.length) {
+                    uniqueCtestArgs.push("-R");
+                    let testsNamesRegex: string = "";
+                    for (const t of driver.tests) {
+                        run.started(t);
+                        testsNamesRegex = testsNamesRegex.concat(
+                            `^${util.escapeStringForRegex(t.id)}\$|`
+                        );
+                    }
+                    uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // Remove the last '|'
                 }
-                uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // Remove the last '|'
 
                 const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, customizedTask, consumer);
 
