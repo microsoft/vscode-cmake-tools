@@ -7,8 +7,8 @@
 	"circular.variable.reference": "Našel se cyklický odkaz na proměnnou: {0}",
 	"reached.max.recursion": "Dosáhlo se maximální rekurze rozšiřování řetězce. Možná vznikl cyklický odkaz.",
 	"exception.expanding.string": "Při rozbalování řetězce {0} došlo k výjimce: {1}",
-	"expand.expandstringhelper": "rozbalování {0}",
 	"invalid.variable.reference": "Neplatný odkaz na proměnnou {0} v řetězci: {1}",
 	"command.not.supported": "Pro řetězec se nepodporují příkazy: {0}",
-	"exception.executing.command": "Výjimka při provádění příkazu {0} pro řetězec: {1} {2}"
+	"exception.executing.command": "Výjimka při provádění příkazu {0} pro řetězec: {1} {2}",
+	"expand.expandstringhelper": "rozbaleno: {0}"
 }

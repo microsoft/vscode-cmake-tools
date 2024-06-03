@@ -7,8 +7,8 @@
 	"circular.variable.reference": "Найдена циклическая ссылка на переменную: {0}",
 	"reached.max.recursion": "Достигнуто максимальное число рекурсий расширения строки. Возможна циклическая ссылка.",
 	"exception.expanding.string": "Исключение при развертывании строки {0}: {1}",
-	"expand.expandstringhelper": "развертывание строки {0}",
 	"invalid.variable.reference": "Недопустимая ссылка на переменную {0} в строке: {1}",
 	"command.not.supported": "Команды не поддерживаются для строк: {0}",
-	"exception.executing.command": "Исключение при выполнении команды {0} для строки: {1} {2}"
+	"exception.executing.command": "Исключение при выполнении команды {0} для строки: {1} {2}",
+	"expand.expandstringhelper": "развернуто {0}"
 }
