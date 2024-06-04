@@ -596,8 +596,6 @@ export class ExtensionManager implements vscode.Disposable {
 
         let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
 
-        // if configureOnOpen is null, we assume first time user.
-
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
         if (shouldConfigure === null && !util.isTestMode() && hascmakelists) {
             const popupTelemetryProperties: telemetry.Properties = {};
