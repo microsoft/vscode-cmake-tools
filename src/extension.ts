@@ -631,7 +631,6 @@ export class ExtensionManager implements vscode.Disposable {
                     title: string;
                     persistMode: 'user' | 'workspace';
                 }
-
                 // Try to persist the user's selection to a `settings.json`
                 const prompt = vscode.window.showInformationMessage<Choice2>(
                     persistMessage,
