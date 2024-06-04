@@ -619,6 +619,8 @@ export class ExtensionManager implements vscode.Disposable {
                 telemetry.logEvent(popupTelemetryString, popupTelemetryProperties);
             } else {
                 popupTelemetryProperties["ignored"] = "false";
+                popupTelemetryProperties["resultingConfigureOnOpen"] = String(chosen.doConfigure);
+
                 const persistMessage = chosen.doConfigure ?
                     localize('always.configure.on.open', 'Always configure projects upon opening?') :
                     localize('never.configure.on.open', 'Configure projects on opening?');
@@ -629,6 +631,7 @@ export class ExtensionManager implements vscode.Disposable {
                     title: string;
                     persistMode: 'user' | 'workspace';
                 }
+
                 // Try to persist the user's selection to a `settings.json`
                 const prompt = vscode.window.showInformationMessage<Choice2>(
                     persistMessage,
@@ -639,7 +642,6 @@ export class ExtensionManager implements vscode.Disposable {
                         if (!choice) {
                             // Use cancelled. Do nothing.
                             popupTelemetryProperties["persisted"] = "false";
-                            popupTelemetryProperties["resultingConfigureOnOpen"] = String(chosen.doConfigure);
                             telemetry.logEvent(popupTelemetryString, popupTelemetryProperties);
                             return;
                         }
@@ -651,7 +653,6 @@ export class ExtensionManager implements vscode.Disposable {
                         await config.update('cmake.configureOnOpen', chosen.doConfigure, configTarget);
                         popupTelemetryProperties["persisted"] = "true";
                         popupTelemetryProperties["persistedTarget"] = choice.persistMode;
-                        popupTelemetryProperties["resultingConfigureOnOpen"] = String(chosen.doConfigure);
                         telemetry.logEvent(popupTelemetryString, popupTelemetryProperties);
                     });
                 rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, prompt);
