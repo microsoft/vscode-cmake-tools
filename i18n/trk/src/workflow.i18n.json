@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "İş akışı ön ayarı ayarlanmadı",
 	"no.project.found": "{0} klasörü için proje bulunamadı",
+	"workflow.configuring.clean": "Temiz proje, iş akışının {0} yapılandırma ön ayarıyla yapılandırılıyor.",
 	"workflow.configuring": "Proje, iş akışının {0} yapılandırma ön ayarıyla yapılandırılıyor.",
 	"workflow.building": "İş akışı adımının {0} derleme ön ayarıyla proje derleniyor.",
 	"workflow.running.ctest": "İş akışı adımının {0} test ön ayarı için ctest çalıştırılıyor.",

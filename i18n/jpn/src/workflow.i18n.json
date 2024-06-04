@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "ワークフロー プリセットが設定されていません",
 	"no.project.found": "フォルダー {0} のプロジェクトが見つかりません",
+	"workflow.configuring.clean": "ワークフローの {0} 構成プリセットを使用してクリーン プロジェクトを構成しています。",
 	"workflow.configuring": "ワークフローの {0} 構成プリセットを使用してプロジェクトを構成しています。",
 	"workflow.building": "ワークフロー ステップの {0} ビルド プリセットを使用してプロジェクトをビルドしています。",
 	"workflow.running.ctest": "ワークフロー ステップの {0} テスト プリセットに対して ctest を実行しています。",

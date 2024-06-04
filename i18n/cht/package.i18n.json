@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "記錄已顯示，且輸出通道取得游標焦點。",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "記錄已顯示，但輸出通道未取得游標焦點。",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "記錄沒有顯示，也無法取得焦點。",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "啟用匯出 compile_commands.json。",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "啟用匯出 compile_commands.json。這僅適用於套件案例。在預設案例中，請使用 CMakePresets.json 進行設定",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakePresets.json 來設定 CMake 設定、建置和測試的磁碟機。使用 CMakePresets.json 時，settings.json 中的套件、變體和某些設定會被忽略。",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "允許使用 JSON 延伸模組，例如 CMakePresets.json 中的註解。請注意，如果您使用非標準的 JSON，其他 IDE 或命令列可能會將您的 CMakePresets.json 檔案視為無效。",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "啟用使用來自 CMake Tools 延伸模組目前不支援之功能的預設檔案。將忽略未知的屬性和巨集。",

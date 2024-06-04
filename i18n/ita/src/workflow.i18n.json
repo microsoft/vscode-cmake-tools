@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "Il set di impostazioni del flusso di lavoro non è impostato",
 	"no.project.found": "Non sono stati trovati progetti per la cartella {0}",
+	"workflow.configuring.clean": "Configurazione del progetto pulito con il set di impostazioni di configurazione {0} del flusso di lavoro.",
 	"workflow.configuring": "Configurazione del progetto con il set di impostazioni di configurazione {0} del flusso di lavoro.",
 	"workflow.building": "Compilazione del progetto con il set di impostazioni di compilazione {0} del passaggio del flusso di lavoro.",
 	"workflow.running.ctest": "Esecuzione di ctest per il set di impostazioni di test {0} del passaggio del flusso di lavoro.",

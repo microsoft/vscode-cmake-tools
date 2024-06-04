@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "A predefinição do fluxo de trabalho não está definida",
 	"no.project.found": "Nenhum projeto encontrado na pasta {0}",
+	"workflow.configuring.clean": "Configurando o projeto limpo com a predefinição de configuração {0} do fluxo de trabalho.",
 	"workflow.configuring": "Configurando o projeto com a predefinição de configuração {0} do fluxo de trabalho.",
 	"workflow.building": "Criando o projeto com a predefinição de compilação {0} da etapa do fluxo de trabalho.",
 	"workflow.running.ctest": "Executando o Ctest para a predefinição de teste {0} da etapa do fluxo de trabalho.",

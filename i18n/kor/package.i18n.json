@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "로그가 나타나고 출력 채널이 커서 포커스를 받습니다.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "로그가 나타나지만 출력 채널은 커서 포커스를 받지 않습니다.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "로그가 나타나지도 않고 초점을 맞추지 않습니다.",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json 내보내기를 사용하도록 설정합니다.",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json 내보내기를 사용하도록 설정합니다. 키트 시나리오에서만 사용됩니다. 사전 설정 시나리오에서는 CMakePresets.json을 사용하여 설정하세요.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMakePresets.json을 사용하여 드라이브 CMake 구성, 빌드 및 테스트를 구성합니다. CMakePresets.json을 사용할 때, 키트, 변형 및 settings.json의 일부 설정이 무시됩니다.",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "CMakePresets.json의 설명과 같은 JSON 확장 사용을 허용합니다. CMakePresets.json 파일은 다른 IDE에서 또는 비표준 JSON을 사용하는 경우 명령줄에서 유효하지 않은 것으로 간주될 수 있습니다.",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "CMake Tools 확장에서 현재 지원하지 않는 버전의 기능을 사용하는 사전 설정 파일을 사용하도록 설정합니다. 알 수 없는 속성 및 매크로는 무시됩니다.",
