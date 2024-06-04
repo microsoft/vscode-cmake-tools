@@ -477,7 +477,8 @@ export class CTestDriver implements vscode.Disposable {
                     uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
                 }
 
-                // If we have the test explorer enabled, then there may be a scenario when we have a subset of tests selected.
+                // If we have the test explorer enabled and this method was called from a test explorer entry point,
+                // then there may be a scenario when the user requested only a subset of tests to be ran.
                 // In this case, we should specifically use the -R flag to select the exact tests.
                 // Otherwise, we can leave it to the -T flag to run all tests.
                 if (entryPoint === RunCTestHelperEntryPoint.TestExplorer && testExplorer && this._tests && this._tests.tests.length !== driver.tests.length) {
