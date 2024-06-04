@@ -596,8 +596,12 @@ export class ExtensionManager implements vscode.Disposable {
 
         let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
 
+        // if configureOnOpen is null, we assume first time user.
+
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
         if (shouldConfigure === null && !util.isTestMode() && hascmakelists) {
+            const popupTelemetryProperties: telemetry.Properties = {};
+
             interface Choice1 {
                 title: string;
                 doConfigure: boolean;
@@ -611,7 +615,11 @@ export class ExtensionManager implements vscode.Disposable {
             if (!chosen) {
                 // User cancelled.
                 shouldConfigure = null;
+                popupTelemetryProperties["ignored"] = "true";
+                popupTelemetryProperties["resultingConfigureOnOpen"] = "null";
+                telemetry.logEvent("configurePopup", popupTelemetryProperties);
             } else {
+                popupTelemetryProperties["ignored"] = "false";
                 const persistMessage = chosen.doConfigure ?
                     localize('always.configure.on.open', 'Always configure projects upon opening?') :
                     localize('never.configure.on.open', 'Configure projects on opening?');
@@ -631,6 +639,9 @@ export class ExtensionManager implements vscode.Disposable {
                     .then(async choice => {
                         if (!choice) {
                             // Use cancelled. Do nothing.
+                            popupTelemetryProperties["persisted"] = "false";
+                            popupTelemetryProperties["resultingConfigureOnOpen"] = String(chosen.doConfigure);
+                            telemetry.logEvent("configurePopup", popupTelemetryProperties);
                             return;
                         }
                         const config = vscode.workspace.getConfiguration(undefined, rootFolder.uri);
@@ -639,6 +650,10 @@ export class ExtensionManager implements vscode.Disposable {
                             configTarget = vscode.ConfigurationTarget.WorkspaceFolder;
                         }
                         await config.update('cmake.configureOnOpen', chosen.doConfigure, configTarget);
+                        popupTelemetryProperties["persisted"] = "true";
+                        popupTelemetryProperties["persistedTarget"] = choice.persistMode;
+                        popupTelemetryProperties["resultingConfigureOnOpen"] = String(chosen.doConfigure);
+                        telemetry.logEvent("configurePopup", popupTelemetryProperties);
                     });
                 rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, prompt);
                 shouldConfigure = chosen.doConfigure;
