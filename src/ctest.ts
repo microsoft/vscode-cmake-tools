@@ -61,6 +61,11 @@ export interface SiteData {
 
 export interface CTestResults { site: SiteData }
 
+export enum RunCTestHelperEntryPoint {
+    TestExplorer, // Test Explorer integration
+    RunTests // Run tests command
+}
+
 interface EncodedMeasurementValue {
     $: { encoding?: BufferEncoding; compression?: string };
     _: string;
@@ -373,7 +378,7 @@ export class CTestDriver implements vscode.Disposable {
         run.failed(test, message, duration);
     }
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
         let returnCode: number = 0;
         const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[]}>();
 
@@ -475,7 +480,7 @@ export class CTestDriver implements vscode.Disposable {
                 // If we have the test explorer enabled, then there may be a scenario when we have a subset of tests selected.
                 // In this case, we should specifically use the -R flag to select the exact tests.
                 // Otherwise, we can leave it to the -T flag to run all tests.
-                if (testExplorer && this._tests && this._tests.tests.length !== driver.tests.length) {
+                if (entryPoint === RunCTestHelperEntryPoint.TestExplorer && testExplorer && this._tests && this._tests.tests.length !== driver.tests.length) {
                     uniqueCtestArgs.push("-R");
                     let testsNamesRegex: string = "";
                     for (const t of driver.tests) {
@@ -802,7 +807,7 @@ export class CTestDriver implements vscode.Disposable {
         this.ctestsEnqueued(tests, run);
         const buildSucceeded = await this.buildTests(tests, run);
         if (buildSucceeded) {
-            await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+            await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
         } else {
             log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
         }
