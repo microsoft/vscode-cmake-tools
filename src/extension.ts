@@ -599,6 +599,7 @@ export class ExtensionManager implements vscode.Disposable {
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
         if (shouldConfigure === null && !util.isTestMode() && hascmakelists) {
             const popupTelemetryProperties: telemetry.Properties = {};
+            const popupTelemetryString = "configurePopup";
 
             interface Choice1 {
                 title: string;
@@ -615,7 +616,7 @@ export class ExtensionManager implements vscode.Disposable {
                 shouldConfigure = null;
                 popupTelemetryProperties["ignored"] = "true";
                 popupTelemetryProperties["resultingConfigureOnOpen"] = "null";
-                telemetry.logEvent("configurePopup", popupTelemetryProperties);
+                telemetry.logEvent(popupTelemetryString, popupTelemetryProperties);
             } else {
                 popupTelemetryProperties["ignored"] = "false";
                 const persistMessage = chosen.doConfigure ?
@@ -639,7 +640,7 @@ export class ExtensionManager implements vscode.Disposable {
                             // Use cancelled. Do nothing.
                             popupTelemetryProperties["persisted"] = "false";
                             popupTelemetryProperties["resultingConfigureOnOpen"] = String(chosen.doConfigure);
-                            telemetry.logEvent("configurePopup", popupTelemetryProperties);
+                            telemetry.logEvent(popupTelemetryString, popupTelemetryProperties);
                             return;
                         }
                         const config = vscode.workspace.getConfiguration(undefined, rootFolder.uri);
@@ -651,7 +652,7 @@ export class ExtensionManager implements vscode.Disposable {
                         popupTelemetryProperties["persisted"] = "true";
                         popupTelemetryProperties["persistedTarget"] = choice.persistMode;
                         popupTelemetryProperties["resultingConfigureOnOpen"] = String(chosen.doConfigure);
-                        telemetry.logEvent("configurePopup", popupTelemetryProperties);
+                        telemetry.logEvent(popupTelemetryString, popupTelemetryProperties);
                     });
                 rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, prompt);
                 shouldConfigure = chosen.doConfigure;
