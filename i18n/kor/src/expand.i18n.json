@@ -7,8 +7,8 @@
 	"circular.variable.reference": "순환 변수 참조 발견: {0}",
 	"reached.max.recursion": "최대 문자열 확장 재귀에 도달했습니다. 순환 참조가 발생할 수 있습니다.",
 	"exception.expanding.string": "{0} 문자열 확장 중 예외 발생: {1}",
-	"expand.expandstringhelper": "{0} 확장 중",
 	"invalid.variable.reference": "문자열의 잘못된 변수 참조 {0}: {1}",
 	"command.not.supported": "문자열에 대해 명령이 지원되지 않음: {0}",
-	"exception.executing.command": "문자열에 대해 명령 {0}을(를) 실행하는 동안 예외 발생: {1} {2}"
+	"exception.executing.command": "문자열에 대해 명령 {0}을(를) 실행하는 동안 예외 발생: {1} {2}",
+	"expand.expandstringhelper": "{0} 확장됨"
 }

@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "Workflowvoreinstellung nicht festgelegt",
 	"no.project.found": "Für den Ordner {0} wurde kein Projekt gefunden.",
+	"workflow.configuring.clean": "Das Projekt wird mit der {0}-Konfigurationsvoreinstellung des Workflows konfiguriert.",
 	"workflow.configuring": "Das Projekt wird mit dem {0} Konfigurationsvoreinstellung des Workflows konfiguriert.",
 	"workflow.building": "Projekt mit der {0} Buildvoreinstellung des Workflowschritts wird erstellt.",
 	"workflow.running.ctest": "ctest wird für die {0} Testvoreinstellung des Workflowschritts ausgeführt.",

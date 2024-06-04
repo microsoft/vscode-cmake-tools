@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "未設定工作流程預設",
 	"no.project.found": "找不到資料夾 {0} 的專案",
+	"workflow.configuring.clean": "正在使用工作流程的 {0} 設定預設來設定未修改的專案。",
 	"workflow.configuring": "正在使用工作流程的 {0} 設定預設來設定專案。",
 	"workflow.building": "正在使用工作流程步驟的 {0} 建置預設建置專案。",
 	"workflow.running.ctest": "為工作流程步驟的 {0} 測試預設執行 ctest。",
