@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "워크플로 사전 설정이 설정되지 않았습니다.",
 	"no.project.found": "{0} 폴더에 대한 프로젝트를 찾을 수 없습니다.",
+	"workflow.configuring.clean": "워크플로의 {0} 구성 사전 설정으로 정리 프로젝트를 구성합니다.",
 	"workflow.configuring": "워크플로의 {0} 구성 사전 설정으로 프로젝트를 구성합니다.",
 	"workflow.building": "워크플로 단계의 {0} 빌드 사전 설정으로 프로젝트를 빌드합니다.",
 	"workflow.running.ctest": "워크플로 단계의 {0} 테스트 사전 설정에 대해 ctest를 실행합니다.",

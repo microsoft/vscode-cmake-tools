@@ -7,8 +7,8 @@
 	"circular.variable.reference": "找到循環變數參考: {0}",
 	"reached.max.recursion": "已達到字串展開遞迴的最大值。可能的循環參考。",
 	"exception.expanding.string": "展開字串 {0} 時發生例外狀況: {1}",
-	"expand.expandstringhelper": "正在展開 {0}",
 	"invalid.variable.reference": "字串中的變數參考 {0} 無效: {1}",
 	"command.not.supported": "字串不支援命令: {0}",
-	"exception.executing.command": "執行字串的命令 {0} 時發生例外狀況: {1} {2}"
+	"exception.executing.command": "執行字串的命令 {0} 時發生例外狀況: {1} {2}",
+	"expand.expandstringhelper": "已展開 {0}"
 }
