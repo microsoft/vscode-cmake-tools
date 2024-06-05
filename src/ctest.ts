@@ -1117,10 +1117,16 @@ export class CTestDriver implements vscode.Disposable {
                         return this.debugTestHandler(request, cancellation);
                     }
 
-                    const testProject = this.projectController!.getAllCMakeProjects().filter(
-                        project => request.include![0].uri!.fsPath.includes(project.folderPath)
-                    );
-                    return testProject![0].cTestController.debugTestHandler(request, cancellation);
+                    // Try to find the specific test controller, if we hit any errors, fall back to the default test handler.
+                    // There are cases where our assumptions about include and uri are incorrect, so we need to handle those.
+                    try {
+                        const testProject = this.projectController!.getAllCMakeProjects().filter(
+                            project => request.include![0].uri!.fsPath.includes(project.folderPath)
+                        );
+                        return testProject![0].cTestController.debugTestHandler(request, cancellation);
+                    } catch (e) {
+                        return this.debugTestHandler(request, cancellation);
+                    }
                 }
             );
         }
