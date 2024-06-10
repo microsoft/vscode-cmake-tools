@@ -7,8 +7,8 @@
 	"circular.variable.reference": "Referencia de variable circular encontrada: {0}",
 	"reached.max.recursion": "Se ha alcanzado la recursividad de expansión de cadena máxima. Posible referencia circular.",
 	"exception.expanding.string": "Excepción al expandir la cadena {0}: {1}",
-	"expand.expandstringhelper": "expandir {0}",
 	"invalid.variable.reference": "Referencia de variable {0} no válida en la cadena: {1}",
 	"command.not.supported": "Comandos no admitidos para la cadena: {0}",
-	"exception.executing.command": "Excepción al ejecutar el comando {0} para la cadena: {1} {2}"
+	"exception.executing.command": "Excepción al ejecutar el comando {0} para la cadena: {1} {2}",
+	"expand.expandstringhelper": "Se ha expandido {0}"
 }

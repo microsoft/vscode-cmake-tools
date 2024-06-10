@@ -1014,9 +1014,13 @@ export class ExtensionManager implements vscode.Disposable {
         return Array.from(result);
     }
 
+    viewPackageSettings(): void {
+        void vscode.commands.executeCommand('workbench.action.openSettings', '@id:cmake.cpackArgs, @id:cmake.cpackEnvironment, @id:cmake.environment');
+    }
+
     /**
-     * Show UI to allow the user to select an active kit
-     */
+    * Show UI to allow the user to select an active kit
+    */
     async selectKit(folder?: vscode.WorkspaceFolder): Promise<boolean> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
@@ -2161,6 +2165,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'selectTestPreset',
         'viewTestSettings',
         'selectPackagePreset',
+        'viewPackageSettings',
         'selectWorkflowPreset',
         'selectActiveFolder',
         'editKits',
@@ -2327,6 +2332,41 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
+
+    const CMAKE_LANGUAGE = "cmake";
+
+    vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
+        indentationRules: {
+            // ^(.*\*/)?\s*\}.*$
+            decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
+            // ^.*\{[^}"']*$
+            increaseIndentPattern: /^.*\{[^}"']*$/
+        },
+        wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
+        comments: {
+            lineComment: '#'
+        },
+        brackets: [
+            ['{', '}'],
+            ['(', ')']
+        ],
+
+        __electricCharacterSupport: {
+            brackets: [
+                { tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
+                { tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
+                { tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
+            ]
+        },
+
+        __characterPairSupport: {
+            autoClosingPairs: [
+                { open: '{', close: '}' },
+                { open: '(', close: ')' },
+                { open: '"', close: '"', notIn: ['string'] }
+            ]
+        }
+    });
 
     if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
         void vscode.window.showInformationMessage(

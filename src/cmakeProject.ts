@@ -884,6 +884,15 @@ export class CMakeProject {
                         label: util.getRelativePath(file, this.folderPath) + "/CMakeLists.txt",
                         fullPath: file
                     })) : [];
+
+                    // Sort files by depth. In general the user may want to select the top-most CMakeLists.txt
+                    items.sort((a, b) => {
+                        const aDepth = a.fullPath.split(path.sep).length;
+                        const bDepth = b.fullPath.split(path.sep).length;
+
+                        return aDepth - bDepth;
+                    });
+
                     const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
                     const dontAskAgain: string = localize("do.not.ask.again", "[Don't Show Again]");
                     items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
@@ -1897,7 +1906,7 @@ export class CMakeProject {
      */
     async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
         if (!showCommandOnly) {
-            log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
+            log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
         if (showCommandOnly) {

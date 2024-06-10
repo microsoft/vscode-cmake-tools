@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Le journal apparaît et le canal de sortie prend le focus sur le curseur.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Le journal apparaît mais le canal de sortie ne prend pas le focus sur le curseur.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Le journal n’apparaît ni ne prend le focus.",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Permet l'exportation de compile_commands.json.",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Permet l'exportation de compile_commands.json. Cette option est utilisée uniquement dans les scénarios Kits. Dans les scénarios de préréglages, veuillez définir cela à l'aide de CMakePresets.json",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Utilisez CMakePresets.json pour configurer la configuration du lecteur CMake, son build et son test. Lorsque vous utilisez CMakePresets.json, les kits, les variantes et certains paramètres de settings.json seront ignorés.",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Autoriser l’utilisation d’extensions JSON telles que des commentaires dans CMakePresets.jsactivé. Notez que votre CMakePresets.jssur le fichier peut être considérée comme non valide par d’autres IDE ou sur la ligne de commande si vous utilisez un JSON non standard.",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Active l’utilisation de fichiers prédéfinies qui utilisent des fonctionnalités des versions que l’extension CMake Tools ne prend pas en charge actuellement. Les propriétés et macros inconnues seront ignorées.",
