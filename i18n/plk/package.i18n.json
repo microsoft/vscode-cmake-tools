@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Dziennik jest wyświetlany, a kanał wyjściowy przyjmuje fokus kursora.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Dziennik jest wyświetlany, ale kanał wyjściowy nie przyjmuje fokusu kursora.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Dziennik nie pojawia się ani nie przyjmuje fokusu.",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umożliwia eksportowanie pliku compile_commands.js.",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umożliwia eksportowanie pliku compile_commands.json. Jest to używane tylko w scenariuszach Zestawy. W scenariuszach Ustawienia wstępne ustaw to przy użyciu pliku CMakePresets.json",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Użyj pliku CMakePresets.json, aby ustawić konfigurację, kompilowanie i test dysku CMake. Przy korzystaniu z pliku CMakePresets.json zestawy, warianty i niektóre ustawienia w pliku settings.json zostaną pominięte.",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Zezwalaj na używanie rozszerzeń JSON, takich jak komentarze w CMakePresets.json. Pamiętaj, że plik CMakePresets.json może być uznany za nieprawidłowy przez inne środowiska IDE lub w wierszu polecenia, jeśli używasz niestandardowego kodu JSON.",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Umożliwia korzystanie z plików ustawień wstępnych używających funkcji z wersji, których rozszerzenie Narzędzia CMake obecnie nie obsługuje. Nieznane właściwości i makra zostaną zignorowane.",

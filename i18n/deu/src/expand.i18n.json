@@ -7,8 +7,8 @@
 	"circular.variable.reference": "Kreisförmiger Variablenverweis gefunden: {0}",
 	"reached.max.recursion": "Die maximale Rekursion für die Zeichenfolgenerweiterung wurde erreicht. Möglicher Zirkelbezug.",
 	"exception.expanding.string": "Ausnahme beim Erweitern der Zeichenfolge {0}: {1}",
-	"expand.expandstringhelper": "{0} wird erweitert",
 	"invalid.variable.reference": "Ungültiger Variablenverweis {0} in folgender Zeichenfolge: {1}",
 	"command.not.supported": "Befehle werden für die Zeichenfolge nicht unterstützt: {0}",
-	"exception.executing.command": "Ausnahme beim Ausführen des Befehls {0} für folgende Zeichenfolge: {1} {2}"
+	"exception.executing.command": "Ausnahme beim Ausführen des Befehls {0} für folgende Zeichenfolge: {1} {2}",
+	"expand.expandstringhelper": "{0} erweitert"
 }
