@@ -5,7 +5,7 @@
         "version"
     ],
     "properties": {
-        "schema": {
+        "$schema": {
             "type": "string",
             "description": "The schema against which to verify this document."
         },
