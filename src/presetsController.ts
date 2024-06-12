@@ -1704,23 +1704,35 @@ export class PresetsController {
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
         const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
-        if (!originalPresetsFile[presetType]) {
-            originalPresetsFile[presetType] = [];
+        const originalUserPresetsFile: preset.PresetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
+        let presetsFile: preset.PresetsFile;
+        let isUserPreset = false;
+        // If the new configure preset inherits from a user preset, it should be added to the user presets file.
+        if (presetType === 'configurePresets' && newPreset.inherits &&
+            originalUserPresetsFile.configurePresets?.find(p =>
+                Array.isArray(newPreset.inherits)
+                    ? newPreset.inherits.some(inherit => inherit === p.name)
+                    : newPreset.inherits === p.name)) {
+            presetsFile = originalUserPresetsFile;
+            isUserPreset = true;
+        } else {
+            presetsFile = originalPresetsFile;
         }
-
+        if (!presetsFile[presetType]) {
+            presetsFile[presetType] = [];
+        }
         switch (presetType) {
             case "configurePresets":
             case "buildPresets":
             case "testPresets":
             case "packagePresets":
-                originalPresetsFile[presetType]!.push(newPreset);
+                presetsFile[presetType]!.push(newPreset);
                 break;
             case "workflowPresets":
-                originalPresetsFile[presetType]!.push(newPreset as preset.WorkflowPreset);
+                presetsFile[presetType]!.push(newPreset as preset.WorkflowPreset);
                 break;
         }
-
-        await this.updatePresetsFile(originalPresetsFile);
+        await this.updatePresetsFile(presetsFile, isUserPreset);
     }
 
     private getIndentationSettings() {
