@@ -564,6 +564,31 @@ function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof Te
     return key !== 'name' && key !== 'hidden' && key !== 'inherits' && key !== 'description' && key !== 'displayName';
 }
 
+export function inheritsFromUserPreset(preset: ConfigurePreset | BuildPreset | TestPreset | PackagePreset | WorkflowPreset,
+    presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets', folderPath: string): boolean {
+
+    const originalUserPresetsFile: PresetsFile = getOriginalUserPresetsFile(folderPath) || { version: 8 };
+
+    if (presetType === 'configurePresets' && preset.inherits &&
+    originalUserPresetsFile.configurePresets?.find(p =>
+        Array.isArray(preset.inherits)
+            ? preset.inherits.some(inherit => inherit === p.name)
+            : preset.inherits === p.name)) {
+        return true;
+    } else if (presetType === 'buildPresets' && (preset as BuildPreset).inheritConfigureEnvironment &&
+        originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as BuildPreset).configurePreset)) {
+        return true;
+    } else if (presetType === 'testPresets' && (preset as TestPreset).inheritConfigureEnvironment &&
+        originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as TestPreset).configurePreset)) {
+        return true;
+    } else if (presetType === 'packagePresets' && (preset as PackagePreset).inheritConfigureEnvironment &&
+        originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as PackagePreset).configurePreset)) {
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * Shallow copy if a key in base doesn't exist in target
  */

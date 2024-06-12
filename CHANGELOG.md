@@ -6,6 +6,9 @@ Features:
 
 - Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
 
+Bug Fixes:
+- 
+
 ## 1.18.42
 
 Bug Fixes:
