@@ -370,7 +370,7 @@ export class PresetsController {
                 }
                 case SpecialOptions.InheritConfigurationPreset: {
                     const placeHolder = localize('select.one.or.more.config.preset.placeholder', 'Select one or more configure presets');
-                    const presets = preset.configurePresets(this.folderPath);
+                    const presets = preset.allConfigurePresets(this.folderPath);
                     const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
                     break;
