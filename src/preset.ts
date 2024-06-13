@@ -10,6 +10,7 @@ import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 import { defaultNumJobs } from './config';
+import { UnevaluatedItemsError } from 'ajv/dist/vocabularies/unevaluated/unevaluatedItems';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -262,9 +263,12 @@ export interface ConfigurePreset extends Preset {
     installDir?: string;
 }
 
-export interface BuildPreset extends Preset {
+export interface ConfigureInheritPreset extends Preset {
     configurePreset?: string;
     inheritConfigureEnvironment?: boolean; // Defaults to true
+}
+
+export interface BuildPreset extends ConfigureInheritPreset {
     jobs?: number;
     targets?: string | string[];
     configuration?: string;
@@ -335,9 +339,7 @@ export interface ExecutionOptions {
     noTestsAction?: 'default' | 'error' | 'ignore';
 }
 
-export interface TestPreset extends Preset {
-    configurePreset?: string;
-    inheritConfigureEnvironment?: boolean; // Defaults to true
+export interface TestPreset extends ConfigureInheritPreset {
     configuration?: string;
     overwriteConfigurationFile?: string[];
     output?: OutputOptions;
@@ -354,9 +356,7 @@ export interface PackageOutputOptions {
     verbose?: boolean;
 }
 
-export interface PackagePreset extends Preset {
-    configurePreset?: string;
-    inheritConfigureEnvironment?: boolean; // Defaults to true
+export interface PackagePreset extends ConfigureInheritPreset {
     configurations?: string[];
     generators?: string[];
     variables?: { [key: string]: string | null | undefined };
@@ -569,20 +569,17 @@ export function inheritsFromUserPreset(preset: ConfigurePreset | BuildPreset | T
 
     const originalUserPresetsFile: PresetsFile = getOriginalUserPresetsFile(folderPath) || { version: 8 };
 
-    if (presetType === 'configurePresets' && preset.inherits &&
-    originalUserPresetsFile.configurePresets?.find(p =>
-        Array.isArray(preset.inherits)
-            ? preset.inherits.some(inherit => inherit === p.name)
-            : preset.inherits === p.name)) {
+    const presetInherits = (presets: Preset[] | undefined, inherits: string | string[]) => presets?.find(p =>
+        Array.isArray(inherits)
+            ? inherits.some(inherit => inherit === p.name)
+            : inherits === p.name
+    );
+
+    if ((presetType === 'buildPresets' || presetType === 'testPresets' || presetType === 'packagePresets') &&
+        ((preset as ConfigureInheritPreset).configurePreset &&
+            originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as ConfigureInheritPreset).configurePreset))) {
         return true;
-    } else if (presetType === 'buildPresets' && (preset as BuildPreset).inheritConfigureEnvironment &&
-        originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as BuildPreset).configurePreset)) {
-        return true;
-    } else if (presetType === 'testPresets' && (preset as TestPreset).inheritConfigureEnvironment &&
-        originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as TestPreset).configurePreset)) {
-        return true;
-    } else if (presetType === 'packagePresets' && (preset as PackagePreset).inheritConfigureEnvironment &&
-        originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as PackagePreset).configurePreset)) {
+    } else if (preset.inherits && presetInherits(originalUserPresetsFile[presetType], preset.inherits)) {
         return true;
     }
 

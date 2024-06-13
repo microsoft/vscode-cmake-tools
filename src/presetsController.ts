@@ -476,7 +476,7 @@ export class PresetsController {
             label: localize('create.build.from.config.preset', 'Create from Configure Preset'),
             description: localize('description.create.build.from.config.preset', 'Create a new build preset')
         }];
-        if (preset.buildPresets(this.folderPath).length > 0) {
+        if (preset.allBuildPresets(this.folderPath).length > 0) {
             items.push({
                 name: SpecialOptions.InheritBuildPreset,
                 label: localize('inherit.build.preset', 'Inherit from Build Preset'),
@@ -506,7 +506,7 @@ export class PresetsController {
                 }
                 case SpecialOptions.InheritBuildPreset: {
                     const placeHolder = localize('select.one.or.more.build.preset.placeholder', 'Select one or more build presets');
-                    const presets = preset.buildPresets(this.folderPath);
+                    const presets = preset.allBuildPresets(this.folderPath);
                     const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
                     break;
@@ -553,7 +553,7 @@ export class PresetsController {
             label: localize('create.test.from.config.preset', 'Create from Configure Preset'),
             description: localize('description.create.test.from.config.preset', 'Create a new test preset')
         }];
-        if (preset.testPresets(this.folderPath).length > 0) {
+        if (preset.allTestPresets(this.folderPath).length > 0) {
             items.push({
                 name: SpecialOptions.InheritTestPreset,
                 label: localize('inherit.test.preset', 'Inherit from Test Preset'),
@@ -583,7 +583,7 @@ export class PresetsController {
                 }
                 case SpecialOptions.InheritTestPreset: {
                     const placeHolder = localize('select.one.or.more.test.preset.placeholder', 'Select one or more test presets');
-                    const presets = preset.testPresets(this.folderPath);
+                    const presets = preset.allTestPresets(this.folderPath);
                     const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
                     break;
@@ -711,7 +711,7 @@ export class PresetsController {
             label: localize('create.workflow.from.config.preset', 'Create from Configure Preset'),
             description: localize('description.create.workflow.from.config.preset', 'Create a new workflow preset')
         }];
-        if (preset.workflowPresets(this.folderPath).length > 0) {
+        if (preset.allWorkflowPresets(this.folderPath).length > 0) {
             items.push({
                 name: SpecialOptions.CreateFromWorkflowPreset,
                 label: localize('create.workflow.preset', 'Create from Workflow Preset'),
@@ -745,7 +745,7 @@ export class PresetsController {
                 }
                 case SpecialOptions.CreateFromWorkflowPreset: {
                     const placeHolder = localize('select.one.workflow.preset.placeholder', 'Select one workflow base preset');
-                    const presets = preset.workflowPresets(this.folderPath);
+                    const presets = preset.allWorkflowPresets(this.folderPath);
                     const workflowBasePresetName = await this.selectNonHiddenPreset(presets, presets, { placeHolder, canPickMany: false });
                     const workflowBasePreset = presets.find(pr => pr.name === workflowBasePresetName);
                     newPreset = { name: '__placeholder__', description: '', displayName: '', steps: workflowBasePreset?.steps || [{type: "configure", name: "_placeholder_"}] };
@@ -1705,7 +1705,7 @@ export class PresetsController {
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
         let presetsFile: preset.PresetsFile;
         let isUserPreset = false;
-        // If the new configure preset inherits from a user preset, it should be added to the user presets file.
+        // If the new preset inherits from a user preset, it should be added to the user presets file.
         if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
             presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
             isUserPreset = true;
