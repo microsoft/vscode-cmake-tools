@@ -1705,12 +1705,13 @@ export class PresetsController {
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
         let presetsFile: preset.PresetsFile;
         // If the new preset inherits from a user preset, it should be added to the user presets file and marked as a user preset.
+        let isUserPreset = false;
         if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
             presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
-            newPreset.isUserPreset = true;
+            isUserPreset = true;
         } else {
             presetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
-            newPreset.isUserPreset = false;
+            isUserPreset = false;
         }
 
         if (!presetsFile[presetType]) {
@@ -1727,7 +1728,7 @@ export class PresetsController {
                 presetsFile[presetType]!.push(newPreset as preset.WorkflowPreset);
                 break;
         }
-        await this.updatePresetsFile(presetsFile, newPreset.isUserPreset);
+        await this.updatePresetsFile(presetsFile, isUserPreset);
     }
 
     private getIndentationSettings() {
