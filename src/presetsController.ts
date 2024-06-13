@@ -1703,9 +1703,10 @@ export class PresetsController {
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
+        // If the new preset inherits from a user preset, it should be added to the user presets file.
         let presetsFile: preset.PresetsFile;
-        // If the new preset inherits from a user preset, it should be added to the user presets file and marked as a user preset.
         let isUserPreset = false;
+
         if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
             presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
             isUserPreset = true;

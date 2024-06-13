@@ -7,7 +7,7 @@ Features:
 - Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
 
 Bug Fixes:
-- 
+- Fixes issue where new presets couldn't `inherit` from presets in CmakeUserPresets.json, and adds these presets to CmakeUserPresets.json instead of CmakePresets.json. [#3725](https://github.com/microsoft/vscode-cmake-tools/issues/3725)
 
 ## 1.18.42
 
