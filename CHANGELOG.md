@@ -10,7 +10,13 @@ Bug Fixes:
 
 - Update localized strings for Project Status UI and quick pick dropdowns. [#3803](https://github.com/microsoft/vscode-cmake-tools/issues/3803), [#3802](https://github.com/microsoft/vscode-cmake-tools/issues/3802)
 
-## 1.18
+## 1.18.42
+
+Bug Fixes:
+- Fix schema validation for `$schema`. [#3809](https://github.com/microsoft/vscode-cmake-tools/pull/3809)
+- Fix tests having too long of a command-line. [#3814](https://github.com/microsoft/vscode-cmake-tools/pull/3814)
+
+## 1.18.41
 Features:
 
 - Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)

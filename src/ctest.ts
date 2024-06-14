@@ -61,6 +61,11 @@ export interface SiteData {
 
 export interface CTestResults { site: SiteData }
 
+export enum RunCTestHelperEntryPoint {
+    TestExplorer, // Test Explorer integration
+    RunTests // Run tests command
+}
+
 interface EncodedMeasurementValue {
     $: { encoding?: BufferEncoding; compression?: string };
     _: string;
@@ -373,7 +378,7 @@ export class CTestDriver implements vscode.Disposable {
         run.failed(test, message, duration);
     }
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
         let returnCode: number = 0;
         const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[]}>();
 
@@ -471,13 +476,22 @@ export class CTestDriver implements vscode.Disposable {
                 if (uniqueCtestArgs.filter(arg => arg.startsWith("-j")).length === 0) {
                     uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
                 }
-                uniqueCtestArgs.push('-R');
-                let testsNamesRegex: string = "";
-                for (const t of driver.tests) {
-                    run.started(t);
-                    testsNamesRegex = testsNamesRegex.concat(`^${util.escapeStringForRegex(t.id)}\$|`);
+
+                // If we have the test explorer enabled and this method was called from a test explorer entry point,
+                // then there may be a scenario when the user requested only a subset of tests to be ran.
+                // In this case, we should specifically use the -R flag to select the exact tests.
+                // Otherwise, we can leave it to the -T flag to run all tests.
+                if (entryPoint === RunCTestHelperEntryPoint.TestExplorer && testExplorer && this._tests && this._tests.tests.length !== driver.tests.length) {
+                    uniqueCtestArgs.push("-R");
+                    let testsNamesRegex: string = "";
+                    for (const t of driver.tests) {
+                        run.started(t);
+                        testsNamesRegex = testsNamesRegex.concat(
+                            `^${util.escapeStringForRegex(t.id)}\$|`
+                        );
+                    }
+                    uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // Remove the last '|'
                 }
-                uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // Remove the last '|'
 
                 const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, customizedTask, consumer);
 
@@ -794,7 +808,7 @@ export class CTestDriver implements vscode.Disposable {
         this.ctestsEnqueued(tests, run);
         const buildSucceeded = await this.buildTests(tests, run);
         if (buildSucceeded) {
-            await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation);
+            await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
         } else {
             log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
         }
@@ -1103,10 +1117,16 @@ export class CTestDriver implements vscode.Disposable {
                         return this.debugTestHandler(request, cancellation);
                     }
 
-                    const testProject = this.projectController!.getAllCMakeProjects().filter(
-                        project => request.include![0].uri!.fsPath.includes(project.folderPath)
-                    );
-                    return testProject![0].cTestController.debugTestHandler(request, cancellation);
+                    // Try to find the specific test controller, if we hit any errors, fall back to the default test handler.
+                    // There are cases where our assumptions about include and uri are incorrect, so we need to handle those.
+                    try {
+                        const testProject = this.projectController!.getAllCMakeProjects().filter(
+                            project => request.include![0].uri!.fsPath.includes(project.folderPath)
+                        );
+                        return testProject![0].cTestController.debugTestHandler(request, cancellation);
+                    } catch (e) {
+                        return this.debugTestHandler(request, cancellation);
+                    }
                 }
             );
         }
