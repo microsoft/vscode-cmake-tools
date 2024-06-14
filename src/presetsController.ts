@@ -997,10 +997,8 @@ export class PresetsController {
             const workflowPresets = preset.allWorkflowPresets(this.folderPath);
             for (const workflowPreset of workflowPresets) {
                 // Set active workflow preset as the first valid workflow preset (matching the selected configure preset is not a requirement as for the other presets types)
-                if (!workflowPreset.hidden) {
-                    await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                    currentWorkflowPreset = this.project.workflowPreset?.name;
-                }
+                await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                currentWorkflowPreset = this.project.workflowPreset?.name;
                 if (currentWorkflowPreset) {
                     break;
                 }

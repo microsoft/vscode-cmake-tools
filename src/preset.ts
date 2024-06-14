@@ -1837,7 +1837,7 @@ async function expandPackagePresetHelper(folder: string, preset: PackagePreset, 
 // Map<fsPath, Set<referencedPresets>>
 const referencedWorkflowPresets: Map<string, Set<string>> = new Map();
 
-export async function expandWorkflowPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<WorkflowPreset | null> {
+export async function expandWorkflowPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<WorkflowPreset | null> {
     const refs = referencedWorkflowPresets.get(folder);
     if (!refs) {
         referencedWorkflowPresets.set(folder, new Set());
@@ -1845,7 +1845,7 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
         refs.clear();
     }
 
-    const preset = await expandWorkflowPresetImpl(folder, name, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, configurePreset);
+    const preset = await expandWorkflowPresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
     if (!preset) {
         return null;
     }
@@ -1858,16 +1858,16 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
     return expandedPreset;
 }
 
-async function expandWorkflowPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<WorkflowPreset | null> {
+async function expandWorkflowPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string): Promise<WorkflowPreset | null> {
     let preset = getPresetByName(workflowPresets(folder), name);
     if (preset) {
-        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
+        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir);
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userWorkflowPresets(folder), name);
         if (preset) {
-            return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+            return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
         }
     }
 
@@ -1884,14 +1884,14 @@ async function expandWorkflowPresetImpl(folder: string, name: string, workspaceF
                 }
             ]
         };
-        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
+        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
     }
 
     log.error(localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name));
     return null;
 }
 
-async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset, workspaceFolder: string, sourceDir: string, preferredGeneratorName: string | undefined, allowUserPreset: boolean = false) {
+async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
