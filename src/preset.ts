@@ -376,12 +376,22 @@ export interface WorkflowStepsOptions {
     name: string;
 }
 
-export interface WorkflowPreset extends Preset {
+export interface WorkflowPreset {
     name: string;
     displayName?: string;
     description?: string;
+    hidden?: boolean;
+    environment?: EnvironmentWithNull;
     vendor?: VendorType;
+    condition?: Condition | boolean | null;
+    isUserPreset?: boolean;
+
     steps: WorkflowStepsOptions[];
+
+    __vsDevEnvApplied?: boolean; // Private field to indicate if we have already applied the VS Dev Env.
+    __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
+    __file?: PresetsFile; // Private field to indicate the file where this preset was defined.
+
 }
 
 // Interface for toolset options specified here: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html
@@ -567,22 +577,23 @@ export function inheritsFromUserPreset(preset: ConfigurePreset | BuildPreset | T
     presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets', folderPath: string): boolean {
 
     const originalUserPresetsFile: PresetsFile = getOriginalUserPresetsFile(folderPath) || { version: 8 };
-
-    const presetInherits = (presets: Preset[] | undefined, inherits: string | string[]) => presets?.find(p =>
+    const presetInherits = (presets: Preset[] | undefined, inherits: string | string[] | undefined) => presets?.find(p =>
         Array.isArray(inherits)
             ? inherits.some(inherit => inherit === p.name)
             : inherits === p.name
     );
 
-    if ((presetType === 'buildPresets' || presetType === 'testPresets' || presetType === 'packagePresets') &&
-        ((preset as InheritsConfigurePreset).configurePreset &&
-            originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as InheritsConfigurePreset).configurePreset))) {
-        return true;
-    } else if (preset.inherits && presetInherits(originalUserPresetsFile[presetType], preset.inherits)) {
+    if (presetType !== 'workflowPresets' && (preset as Preset).inherits &&
+        presetInherits(originalUserPresetsFile[presetType], (preset as Preset).inherits)) {
         return true;
     }
 
-    return false;
+    // first step of a Workflow Preset must be a configure preset
+    const inheritedConfigurePreset = presetType === 'workflowPresets' ? (preset as WorkflowPreset).steps[0]?.name :
+        presetType !== 'configurePresets' ? (preset as InheritsConfigurePreset).configurePreset : undefined;
+
+    return inheritedConfigurePreset ?
+        !!originalUserPresetsFile.configurePresets?.find(p => p.name === inheritedConfigurePreset) : false;
 }
 
 /**
