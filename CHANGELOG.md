@@ -8,6 +8,7 @@ Features:
 
 Bug Fixes:
 
+- Fix issue with "Test Results Not Found" when `cmake.ctest.allowParallelJobs` is disabled. [#3798](https://github.com/microsoft/vscode-cmake-tools/issues/3798)
 - Update localized strings for Project Status UI and quick pick dropdowns. [#3803](https://github.com/microsoft/vscode-cmake-tools/issues/3803), [#3802](https://github.com/microsoft/vscode-cmake-tools/issues/3802)
 
 ## 1.18.42
