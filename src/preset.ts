@@ -262,12 +262,12 @@ export interface ConfigurePreset extends Preset {
     installDir?: string;
 }
 
-export interface ConfigurePresetInheritPreset extends Preset {
+export interface InheritsConfigurePreset extends Preset {
     configurePreset?: string;
     inheritConfigureEnvironment?: boolean; // Defaults to true
 }
 
-export interface BuildPreset extends ConfigurePresetInheritPreset {
+export interface BuildPreset extends InheritsConfigurePreset {
     jobs?: number;
     targets?: string | string[];
     configuration?: string;
@@ -338,7 +338,7 @@ export interface ExecutionOptions {
     noTestsAction?: 'default' | 'error' | 'ignore';
 }
 
-export interface TestPreset extends ConfigurePresetInheritPreset {
+export interface TestPreset extends InheritsConfigurePreset {
     configuration?: string;
     overwriteConfigurationFile?: string[];
     output?: OutputOptions;
@@ -355,7 +355,7 @@ export interface PackageOutputOptions {
     verbose?: boolean;
 }
 
-export interface PackagePreset extends ConfigurePresetInheritPreset {
+export interface PackagePreset extends InheritsConfigurePreset {
     configurations?: string[];
     generators?: string[];
     variables?: { [key: string]: string | null | undefined };
@@ -575,8 +575,8 @@ export function inheritsFromUserPreset(preset: ConfigurePreset | BuildPreset | T
     );
 
     if ((presetType === 'buildPresets' || presetType === 'testPresets' || presetType === 'packagePresets') &&
-        ((preset as ConfigurePresetInheritPreset).configurePreset &&
-            originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as ConfigurePresetInheritPreset).configurePreset))) {
+        ((preset as InheritsConfigurePreset).configurePreset &&
+            originalUserPresetsFile.configurePresets?.find(p => p.name === (preset as InheritsConfigurePreset).configurePreset))) {
         return true;
     } else if (preset.inherits && presetInherits(originalUserPresetsFile[presetType], preset.inherits)) {
         return true;
