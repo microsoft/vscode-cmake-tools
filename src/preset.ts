@@ -380,12 +380,8 @@ export interface WorkflowPreset {
     name: string;
     displayName?: string;
     description?: string;
-    hidden?: boolean;
-    environment?: EnvironmentWithNull;
     vendor?: VendorType;
-    condition?: Condition | boolean | null;
     isUserPreset?: boolean;
-
     steps: WorkflowStepsOptions[];
 
     __vsDevEnvApplied?: boolean; // Private field to indicate if we have already applied the VS Dev Env.
@@ -1855,19 +1851,6 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
     }
 
     const expandedPreset: WorkflowPreset = { name, steps: [{type: "configure", name: "_placeholder_"}] };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
-
-    // Expand environment vars first since other fields may refer to them
-    if (preset.environment) {
-        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
-        for (const key in preset.environment) {
-            if (preset.environment[key]) {
-                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
-            }
-        }
-    }
-
-    expansionOpts.envOverride = expandedPreset.environment;
 
     // According to CMake docs, no other fields support macro expansion in a workflow preset.
     merge(expandedPreset, preset);
@@ -1923,34 +1906,6 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
 
     refs.add(preset.name);
 
-    // Init env to empty if not specified to avoid null checks later
-    if (!preset.environment) {
-        preset.environment = EnvironmentUtils.createPreserveNull();
-    }
-    let inheritedEnv = EnvironmentUtils.createPreserveNull();
-
-    // Expand inherits
-    if (preset.inherits) {
-        if (util.isString(preset.inherits)) {
-            preset.inherits = [preset.inherits];
-        }
-        for (const parentName of preset.inherits) {
-            const parent = await expandWorkflowPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
-            if (parent) {
-                // Inherit environment
-                inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
-                // Inherit other fields
-                let key: keyof WorkflowPreset;
-                for (key in parent) {
-                    if (isInheritable(key) && preset[key] === undefined) {
-                        // 'as never' to bypass type check
-                        preset[key] = parent[key] as never;
-                    }
-                }
-            }
-        }
-    }
-
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     const workflowConfigurePreset = preset.steps[0].name;
     if (workflowConfigurePreset) {
@@ -1989,8 +1944,6 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
             return null;
         }
     }
-
-    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv, preset.environment]);
 
     preset.__expanded = true;
     return preset;
