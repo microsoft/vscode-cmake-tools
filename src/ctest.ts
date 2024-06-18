@@ -203,6 +203,12 @@ class CTestOutputLogger implements OutputConsumer {
     }
 }
 
+// A test item and its parent test suite item in the test explorer
+interface TestAndParentSuite {
+    test: vscode.TestItem;
+    parentSuite: vscode.TestItem;
+}
+
 export class CTestDriver implements vscode.Disposable {
     /**
      * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
@@ -599,13 +605,13 @@ export class CTestDriver implements vscode.Disposable {
         return undefined;
     }
 
-    private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri) : { testItem: vscode.TestItem, parentSuiteItem: vscode.TestItem } {
+    private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri) : TestAndParentSuite {
         let parentSuiteItem = testExplorerRoot;
         let testLabel = testName;
 
         // If a suite delimiter is set, create a suite tree
         if (this.ws.config.testSuiteDelimiter) {
-            let delimiterRegExp = new RegExp(this.ws.config.testSuiteDelimiter);
+            const delimiterRegExp = new RegExp(this.ws.config.testSuiteDelimiter);
             const parts = testName.split(delimiterRegExp);
             testLabel = parts.pop() || testName; // The last part is the test label
 
@@ -620,7 +626,7 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
         const testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
-        return { testItem, parentSuiteItem };
+        return { test: testItem, parentSuite: parentSuiteItem };
     }
 
     /**
@@ -714,7 +720,7 @@ export class CTestDriver implements vscode.Disposable {
                                 testDefLine = parseInt(match[2]);
                                 if (isNaN(testDefLine)) {
                                     testDefLine = undefined;
-                                    testDefFile = undefined
+                                    testDefFile = undefined;
                                 }
                             }
                         }
@@ -727,7 +733,9 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     }
 
-                    const { testItem, parentSuiteItem } = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer,  testDefFile ? vscode.Uri.file(testDefFile) : undefined);
+                    const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer,  testDefFile ? vscode.Uri.file(testDefFile) : undefined);
+                    const testItem = testAndParentSuite.test;
+                    const parentSuiteItem = testAndParentSuite.parentSuite;
 
                     if (testDefLine !== undefined) {
                         testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
