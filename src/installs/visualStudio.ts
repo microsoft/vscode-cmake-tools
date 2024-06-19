@@ -407,7 +407,7 @@ async function collectDevBatVars(hostArch: string, devBat: string, args: string[
     } catch (err) {
         log.error(`Parse '${WindowsSDKVersion}' failed`);
     }
-    if (util.compareVersion(WindowsSDKVersionParsed, { major: 10, minor: 0, patch: 14393 }) >= 0) {
+    if (majorVersion === 14 && util.compareVersion(WindowsSDKVersionParsed, { major: 10, minor: 0, patch: 14393 }) >= 0) {
         const WindowsSdkDir = vars['WindowsSdkDir'] ?? '';
         const existPath = vars['PATH'] ?? '';
         const oldWinSdkBinPath = path.join(WindowsSdkDir, 'bin', hostArch);
