@@ -605,7 +605,7 @@ export class CTestDriver implements vscode.Disposable {
         return undefined;
     }
 
-    private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri) : TestAndParentSuite {
+    private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri): TestAndParentSuite {
         let parentSuiteItem = testExplorerRoot;
         let testLabel = testName;
 
