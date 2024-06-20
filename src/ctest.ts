@@ -457,8 +457,12 @@ export class CTestDriver implements vscode.Disposable {
                     const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, customizedTask, consumer);
 
                     if (testResults) {
-                        for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                            returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], test, returnCode, run);
+                        const testResult = testResults.site.testing.test.find(t => t.name === test.id);
+                        if (testResult) {
+                            returnCode = this.testResultsAnalysis(testResult, test, returnCode, run);
+                        } else {
+                            this.ctestErrored(test, run, { message: localize('test.results.not.found', 'Test results not found.') });
+                            returnCode = -1;
                         }
                     }
                 }
