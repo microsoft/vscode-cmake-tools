@@ -41,6 +41,9 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 void executeScriptWithDebugger(script, args, env, debuggerInformation);
             } else {
                 logCMakeDebuggerTelemetry(originatedFromLaunchConfiguration, cmakeDebugType);
+
+                // TODO: Check the session.configuration.trigger, assuming it's not undefined, against our known Trigger types/values, and if it's not valid, send undefined.
+
                 if (session.configuration.clean) {
                     if (session.configuration.configureAll) {
                         void extensionManager?.cleanConfigureAllWithDebuggerInternal(
@@ -62,7 +65,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                     } else {
                         void extensionManager?.configureWithDebuggerInternal(
                             debuggerInformation,
-                            session.configuration.folder, session.configuration.showCommandOnly, session.configuration.sourceDir, session.configuration.trigger
+                            session.configuration.folder, session.configuration.sourceDir, session.configuration.trigger
                         );
                     }
                 }

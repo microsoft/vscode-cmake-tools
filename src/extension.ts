@@ -1333,7 +1333,10 @@ export class ExtensionManager implements vscode.Disposable {
             request: "launch",
             type: "cmake",
             cmakeDebugType: "configure",
-            pipeName: getDebuggerPipeName()
+            pipeName: getDebuggerPipeName(),
+            folder,
+            sourceDir,
+            trigger
         });
     }
 
