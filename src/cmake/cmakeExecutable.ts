@@ -29,10 +29,12 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         const normalizedPath = util.platformNormalizePath(path);
         if (cmakeInfo.has(normalizedPath)) {
             const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
-            await setCMakeDebuggerAvailableContext(
-                cmakeExe.isDebuggerSupported?.valueOf() ?? false
-            );
-            return cmakeExe;
+            if (cmakeExe.isPresent) {
+                await setCMakeDebuggerAvailableContext(
+                    cmakeExe.isDebuggerSupported?.valueOf() ?? false
+                );
+                return cmakeExe;
+            }
         }
 
         try {

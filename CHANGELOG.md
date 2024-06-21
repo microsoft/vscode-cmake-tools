@@ -11,6 +11,7 @@ Bug Fixes:
 - Fix issue with "Test Results Not Found" when `cmake.ctest.allowParallelJobs` is disabled. [#3798](https://github.com/microsoft/vscode-cmake-tools/issues/3798)
 - Update localized strings for Project Status UI and quick pick dropdowns. [#3803](https://github.com/microsoft/vscode-cmake-tools/issues/3803), [#3802](https://github.com/microsoft/vscode-cmake-tools/issues/3802)
 - Fix issue where new presets couldn't inherit from presets in CmakeUserPresets.json. These presets are now added to CmakeUserPresets.json instead of CmakePresets.json. [#3725](https://github.com/microsoft/vscode-cmake-tools/issues/3725)
+- Fix issue where CMakeTools does not recheck CMake Path to see if user installed CMake after launching VS Code. [3811](https://github.com/microsoft/vscode-cmake-tools/issues/3811)
 
 ## 1.18.42
 
