@@ -203,6 +203,12 @@ class CTestOutputLogger implements OutputConsumer {
     }
 }
 
+// A test item and its parent test suite item in the test explorer
+interface TestAndParentSuite {
+    test: vscode.TestItem;
+    parentSuite: vscode.TestItem;
+}
+
 export class CTestDriver implements vscode.Disposable {
     /**
      * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
@@ -390,7 +396,7 @@ export class CTestDriver implements vscode.Disposable {
             if (driver) {
                 _driver = driver;
             } else {
-                const folder = test.parent ? test.parent.id : test.id;
+                const folder = this.getTestRootFolder(test);
                 const project = await this.projectController?.getProjectForFolder(folder);
                 if (!project) {
                     this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
@@ -429,7 +435,7 @@ export class CTestDriver implements vscode.Disposable {
             if (test.children.size > 0) {
                 // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
                 const children = this.testItemCollectionToArray(test.children);
-                if (await this.runCTestHelper(children, run, _driver, _ctestPath, _ctestArgs, cancellation, customizedTask, consumer)) {
+                if (await this.runCTestHelper(children, run, _driver, _ctestPath, _ctestArgs, cancellation, customizedTask, consumer, entryPoint)) {
                     returnCode = -1;
                 }
                 return returnCode;
@@ -599,6 +605,30 @@ export class CTestDriver implements vscode.Disposable {
         return undefined;
     }
 
+    private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri): TestAndParentSuite {
+        let parentSuiteItem = testExplorerRoot;
+        let testLabel = testName;
+
+        // If a suite delimiter is set, create a suite tree
+        if (this.ws.config.testSuiteDelimiter) {
+            const delimiterRegExp = new RegExp(this.ws.config.testSuiteDelimiter);
+            const parts = testName.split(delimiterRegExp);
+            testLabel = parts.pop() || testName; // The last part is the test label
+
+            // Create a suite item for each suite ID part if it doesn't exist yet at that tree level
+            for (const suiteId of parts) {
+                let suiteItem = parentSuiteItem.children.get(suiteId);
+                if (!suiteItem) {
+                    suiteItem = initializedTestExplorer.createTestItem(suiteId, suiteId);
+                    parentSuiteItem.children.add(suiteItem);
+                }
+                parentSuiteItem = suiteItem;
+            }
+        }
+        const testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        return { test: testItem, parentSuite: parentSuiteItem };
+    }
+
     /**
      * @brief Refresh the list of CTest tests
      * @returns 0 when successful
@@ -675,7 +705,9 @@ export class CTestDriver implements vscode.Disposable {
             this.tests = JSON.parse(result.stdout) ?? undefined;
             if (this.tests && this.tests.kind === 'ctestInfo') {
                 this.tests.tests.forEach(test => {
-                    let testItem: vscode.TestItem | undefined;
+                    let testDefFile: string | undefined;
+                    let testDefLine: number | undefined;
+
                     if (test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
                         // Use DEF_SOURCE_LINE CMake test property to find file and line number
                         // Property must be set in the test's CMakeLists.txt file or its included modules for this to work
@@ -684,26 +716,29 @@ export class CTestDriver implements vscode.Disposable {
                             // Use RegEx to match the format "file_path:line" in value[0]
                             const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
                             if (match && match[1] && match[2]) {
-                                const testDefFile = match[1];
-                                const testDefLine = parseInt(match[2]);
-                                if (!isNaN(testDefLine)) {
-                                    testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
-                                    testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                                testDefFile = match[1];
+                                testDefLine = parseInt(match[2]);
+                                if (isNaN(testDefLine)) {
+                                    testDefLine = undefined;
+                                    testDefFile = undefined;
                                 }
                             }
                         }
-                        if (!testItem) {
+
+                        if (!testDefFile) {
                             // Use the backtrace graph to find the file and line number
                             // This finds the CMake module's file and line number and not the test file and line number
-                            const testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
-                            const testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
-                            testItem = initializedTestExplorer.createTestItem(test.name, test.name, vscode.Uri.file(testDefFile));
-                            if (testDefLine !== undefined) {
-                                testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
-                            }
+                            testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
+                            testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
                         }
-                    } else {
-                        testItem = initializedTestExplorer.createTestItem(test.name, test.name);
+                    }
+
+                    const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer,  testDefFile ? vscode.Uri.file(testDefFile) : undefined);
+                    const testItem = testAndParentSuite.test;
+                    const parentSuiteItem = testAndParentSuite.parentSuite;
+
+                    if (testDefLine !== undefined) {
+                        testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
                     }
 
                     const testTags: vscode.TestTag[] = [];
@@ -723,7 +758,7 @@ export class CTestDriver implements vscode.Disposable {
                         testItem.tags = [...testItem.tags, ...testTags];
                     }
 
-                    testExplorerRoot.children.add(testItem);
+                    parentSuiteItem.children.add(testItem);
                 });
             };
         }
@@ -778,7 +813,7 @@ export class CTestDriver implements vscode.Disposable {
         let presetMayChange = false;
         for (const test of tests) {
             if (test.id === testPresetRequired) {
-                const folder = test.parent ? test.parent.id : test.id;
+                const folder = this.getTestRootFolder(test);
                 const project = await this.projectController?.getProjectForFolder(folder);
                 if (!project) {
                     log.error(localize('no.project.found', 'No project found for folder {0}', folder));
@@ -832,7 +867,7 @@ export class CTestDriver implements vscode.Disposable {
                 continue;
             }
 
-            const folder = test.parent ? test.parent.id : test.id;
+            const folder = this.getTestRootFolder(test);
             const project = await this.projectController?.getProjectForFolder(folder);
             if (!project) {
                 this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
@@ -1050,12 +1085,20 @@ export class CTestDriver implements vscode.Disposable {
         run.end();
     };
 
+    private getTestRootFolder(test: vscode.TestItem): string {
+        let currentTestItem = test;
+        while (currentTestItem.parent !== undefined) {
+            currentTestItem = currentTestItem.parent;
+        }
+        return currentTestItem.id;
+    }
+
     private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
         // Folder => status
         const builtFolder = new Map<string, number>();
         let status: number = 0;
         for (const test of tests) {
-            const folder = test.parent ? test.parent.id : test.id;
+            const folder = this.getTestRootFolder(test);
             if (!builtFolder.has(folder)) {
                 const project = await this.projectController?.getProjectForFolder(folder);
                 if (!project) {
