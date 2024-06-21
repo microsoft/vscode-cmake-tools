@@ -582,7 +582,6 @@ export class CMakeProject {
             workflowPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
-            this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
         if (!expandedWorkflowPreset) {
