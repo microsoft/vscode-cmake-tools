@@ -7,6 +7,10 @@ Features:
 - Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
 - Upgrade `cmake_minimum_required` version 3.0.0 -> 3.5.0. [#3793](https://github.com/microsoft/vscode-cmake-tools/issues/3793)
 
+Improvements:
+
+- Add setting for deleting entire build dir when clean configuring. [#3515](https://github.com/microsoft/vscode-cmake-tools/issues/3515)
+
 Bug Fixes:
 
 - Fix issue "Logs are unavailable when running tests from the Test Explorer" and display properly the test output. [#3140](https://github.com/microsoft/vscode-cmake-tools/issues/3140)

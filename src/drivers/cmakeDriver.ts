@@ -541,7 +541,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected async _cleanPriorConfiguration() {
         const build_dir = this.binaryDir;
         const cache = this.cachePath;
-        const cmake_files = path.join(build_dir, 'CMakeFiles');
+        const cmake_files = this.config.deleteBuildDirOnCleanConfigure ? build_dir : path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', cache));
             try {

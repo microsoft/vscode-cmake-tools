@@ -172,6 +172,7 @@
     "cmake-tools.configuration.cmake.copyCompileCommands.description": "Copy compile_commands.json to this location after a successful configure.",
     "cmake-tools.configuration.cmake.configureOnOpen.description": "Automatically configure CMake project directories when they are opened.",
     "cmake-tools.configuration.cmake.configureOnEdit.description": "Automatically configure CMake project directories when cmake.sourceDirectory or CMakeLists.txt content are saved.",
+    "cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "Delete the entire build directory when a clean configure is invoked.",
     "cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description": "Set CMAKE_BUILD_TYPE also on multi config generators.",
     "cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "Skip over the configure process if cache is present.",
     "cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake.",
