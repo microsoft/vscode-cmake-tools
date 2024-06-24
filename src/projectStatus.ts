@@ -826,7 +826,7 @@ class ConfigPreset extends Node {
             return;
         }
         this.label = (treeDataProvider.cmakeProject.configurePreset?.displayName || treeDataProvider.cmakeProject.configurePreset?.name) || noConfigPresetSelected;
-        this.tooltip = 'Change Configure Preset';
+        this.tooltip = localize("configPreset.change", "Change Configure Preset");
         this.contextValue = 'configPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         await this.updateDescription();
@@ -865,7 +865,7 @@ class BuildPreset extends Node {
         if (this.label === preset.defaultBuildPreset.name) {
             this.label = preset.defaultBuildPreset.displayName;
         }
-        this.tooltip = 'Change Build Preset';
+        this.tooltip = localize("buildPreset.change", "Change Build Preset");
         this.contextValue = 'buildPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         await this.updateDescription();
@@ -905,7 +905,7 @@ class TestPreset extends Node {
         if (this.label === preset.defaultTestPreset.name) {
             this.label = preset.defaultTestPreset.displayName;
         }
-        this.tooltip = 'Change Test Preset';
+        this.tooltip = localize("testPreset.change", "Change Test Preset");
         this.contextValue = 'testPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         await this.updateDescription();
@@ -945,7 +945,7 @@ class PackagePreset extends Node {
         if (this.label === preset.defaultPackagePreset.name) {
             this.label = preset.defaultPackagePreset.displayName;
         }
-        this.tooltip = 'Change Package Preset';
+        this.tooltip = localize("packagePreset.change", "Change Package Preset");
         this.contextValue = 'packagePreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
 
@@ -986,7 +986,7 @@ class WorkflowPreset extends Node {
         if (this.label === preset.defaultWorkflowPreset.name) {
             this.label = preset.defaultWorkflowPreset.displayName;
         }
-        this.tooltip = 'Change Workflow Preset';
+        this.tooltip = localize("workflowPreset.change", "Change Workflow Preset");
         this.contextValue = 'workflowPreset';
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
     }
@@ -1006,7 +1006,7 @@ class Kit extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.activeKit?.name || noKitSelected;
-        this.tooltip = "Change Kit";
+        this.tooltip = localize("kit.change", "Change Kit");
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'kit';
     }
@@ -1130,7 +1130,7 @@ class Variant extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.activeVariantName || "Debug";
-        this.tooltip = "Set variant";
+        this.tooltip = localize("set.variant", "Set variant");
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'variant';
     }

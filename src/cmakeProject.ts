@@ -582,7 +582,6 @@ export class CMakeProject {
             workflowPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
-            this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
         if (!expandedWorkflowPreset) {
@@ -2961,7 +2960,7 @@ export class CMakeProject {
         }
 
         let init = [
-            'cmake_minimum_required(VERSION 3.0.0)',
+            'cmake_minimum_required(VERSION 3.5.0)',
             `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
             '\n'
         ].join('\n');

@@ -26,7 +26,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         ctest: {
             parallelJobs: 0,
             allowParallelJobs: false,
-            testExplorerIntegrationEnabled: true
+            testExplorerIntegrationEnabled: true,
+            testSuiteDelimiter: ''
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
@@ -48,6 +49,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         loadCompileCommands: true,
         configureOnOpen: null,
         configureOnEdit: true,
+        deleteBuildDirOnCleanConfigure: false,
         skipConfigureIfCachePresent: null,
         useCMakeServer: true,
         cmakeCommunicationMode: 'automatic',
