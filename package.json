@@ -2241,6 +2241,12 @@
           "description": "%cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description%",
           "scope": "machine-overridable"
         },
+        "cmake.ctest.testSuiteDelimiter": {
+          "type": "string",
+          "default": null,
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription%",
+          "scope": "machine-overridable"
+        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,
@@ -3766,7 +3772,7 @@
     "string.prototype.matchall": "^4.0.10",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^6.1.0",
-    "@vscode/extension-telemetry": "^0.6.2",
+    "@vscode/extension-telemetry": "^0.9.6",
     "vscode-nls": "^5.0.0",
     "vscode-tas-client": "^0.1.45",
     "which": "~2.0.2",
