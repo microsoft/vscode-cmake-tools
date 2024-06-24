@@ -370,16 +370,18 @@ export class PresetsController {
                 }
                 case SpecialOptions.InheritConfigurationPreset: {
                     const placeHolder = localize('select.one.or.more.config.preset.placeholder', 'Select one or more configure presets');
-                    const presets = preset.configurePresets(this.folderPath);
+                    const presets = preset.allConfigurePresets(this.folderPath);
                     const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
                     break;
                 }
                 case SpecialOptions.ToolchainFile: {
+                    const displayName = localize("custom.configure.preset.toolchain.file", "Configure preset using toolchain file");
+                    const description = localize("description.custom.configure.preset", "Sets Ninja generator, build and install directory");
                     newPreset = {
                         name: '__placeholder__',
-                        displayName: `Configure preset using toolchain file`,
-                        description: 'Sets Ninja generator, build and install directory',
+                        displayName,
+                        description,
                         generator: 'Ninja',
                         binaryDir: '${sourceDir}/out/build/${presetName}',
                         cacheVariables: {
@@ -391,10 +393,12 @@ export class PresetsController {
                     break;
                 }
                 case SpecialOptions.Custom: {
+                    const displayName = localize("custom.configure.preset", "Custom configure preset");
+                    const description = localize("description.custom.configure.preset", "Sets Ninja generator, build and install directory");
                     newPreset = {
                         name: '__placeholder__',
-                        displayName: `Custom configure preset`,
-                        description: 'Sets Ninja generator, build and install directory',
+                        displayName,
+                        description,
                         generator: 'Ninja',
                         binaryDir: '${sourceDir}/out/build/${presetName}',
                         cacheVariables: {
@@ -457,7 +461,7 @@ export class PresetsController {
     }
 
     async addBuildPreset(): Promise<boolean> {
-        if (preset.configurePresets(this.folderPath).length === 0) {
+        if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
 
@@ -476,7 +480,7 @@ export class PresetsController {
             label: localize('create.build.from.config.preset', 'Create from Configure Preset'),
             description: localize('description.create.build.from.config.preset', 'Create a new build preset')
         }];
-        if (preset.buildPresets(this.folderPath).length > 0) {
+        if (preset.allBuildPresets(this.folderPath).length > 0) {
             items.push({
                 name: SpecialOptions.InheritBuildPreset,
                 label: localize('inherit.build.preset', 'Inherit from Build Preset'),
@@ -499,14 +503,14 @@ export class PresetsController {
             switch (chosenItem.name) {
                 case SpecialOptions.CreateFromConfigurationPreset: {
                     const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
-                    const presets = preset.configurePresets(this.folderPath);
+                    const presets = preset.allConfigurePresets(this.folderPath);
                     const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
                     break;
                 }
                 case SpecialOptions.InheritBuildPreset: {
                     const placeHolder = localize('select.one.or.more.build.preset.placeholder', 'Select one or more build presets');
-                    const presets = preset.buildPresets(this.folderPath);
+                    const presets = preset.allBuildPresets(this.folderPath);
                     const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
                     break;
@@ -534,7 +538,7 @@ export class PresetsController {
     }
 
     async addTestPreset(): Promise<boolean> {
-        if (preset.configurePresets(this.folderPath).length === 0) {
+        if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
 
@@ -553,7 +557,7 @@ export class PresetsController {
             label: localize('create.test.from.config.preset', 'Create from Configure Preset'),
             description: localize('description.create.test.from.config.preset', 'Create a new test preset')
         }];
-        if (preset.testPresets(this.folderPath).length > 0) {
+        if (preset.allTestPresets(this.folderPath).length > 0) {
             items.push({
                 name: SpecialOptions.InheritTestPreset,
                 label: localize('inherit.test.preset', 'Inherit from Test Preset'),
@@ -576,14 +580,14 @@ export class PresetsController {
             switch (chosenItem.name) {
                 case SpecialOptions.CreateFromConfigurationPreset: {
                     const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
-                    const presets = preset.configurePresets(this.folderPath);
+                    const presets = preset.allConfigurePresets(this.folderPath);
                     const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
                     break;
                 }
                 case SpecialOptions.InheritTestPreset: {
                     const placeHolder = localize('select.one.or.more.test.preset.placeholder', 'Select one or more test presets');
-                    const presets = preset.testPresets(this.folderPath);
+                    const presets = preset.allTestPresets(this.folderPath);
                     const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
                     break;
@@ -610,7 +614,7 @@ export class PresetsController {
     }
 
     async addPackagePreset(): Promise<boolean> {
-        if (preset.configurePresets(this.folderPath).length === 0) {
+        if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
 
@@ -652,7 +656,7 @@ export class PresetsController {
             switch (chosenItem.name) {
                 case SpecialOptions.CreateFromConfigurationPreset: {
                     const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
-                    const presets = preset.configurePresets(this.folderPath);
+                    const presets = preset.allConfigurePresets(this.folderPath);
                     const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
                     newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
                     break;
@@ -686,7 +690,7 @@ export class PresetsController {
     }
 
     async addWorkflowPreset(): Promise<boolean> {
-        if (preset.configurePresets(this.folderPath).length === 0) {
+        if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
 
@@ -711,7 +715,7 @@ export class PresetsController {
             label: localize('create.workflow.from.config.preset', 'Create from Configure Preset'),
             description: localize('description.create.workflow.from.config.preset', 'Create a new workflow preset')
         }];
-        if (preset.workflowPresets(this.folderPath).length > 0) {
+        if (preset.allWorkflowPresets(this.folderPath).length > 0) {
             items.push({
                 name: SpecialOptions.CreateFromWorkflowPreset,
                 label: localize('create.workflow.preset', 'Create from Workflow Preset'),
@@ -734,7 +738,7 @@ export class PresetsController {
             switch (chosenItem.name) {
                 case SpecialOptions.CreateFromConfigurationPreset: {
                     const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
-                    const presets = preset.configurePresets(this.folderPath);
+                    const presets = preset.allConfigurePresets(this.folderPath);
                     const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
                     if (configurePreset) {
                         newPreset = { name: '__placeholder__', description: '', displayName: '',
@@ -745,7 +749,7 @@ export class PresetsController {
                 }
                 case SpecialOptions.CreateFromWorkflowPreset: {
                     const placeHolder = localize('select.one.workflow.preset.placeholder', 'Select one workflow base preset');
-                    const presets = preset.workflowPresets(this.folderPath);
+                    const presets = preset.allWorkflowPresets(this.folderPath);
                     const workflowBasePresetName = await this.selectNonHiddenPreset(presets, presets, { placeHolder, canPickMany: false });
                     const workflowBasePreset = presets.find(pr => pr.name === workflowBasePresetName);
                     newPreset = { name: '__placeholder__', description: '', displayName: '', steps: workflowBasePreset?.steps || [{type: "configure", name: "_placeholder_"}] };
@@ -997,10 +1001,8 @@ export class PresetsController {
             const workflowPresets = preset.allWorkflowPresets(this.folderPath);
             for (const workflowPreset of workflowPresets) {
                 // Set active workflow preset as the first valid workflow preset (matching the selected configure preset is not a requirement as for the other presets types)
-                if (!workflowPreset.hidden) {
-                    await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
-                    currentWorkflowPreset = this.project.workflowPreset?.name;
-                }
+                await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+                currentWorkflowPreset = this.project.workflowPreset?.name;
                 if (currentWorkflowPreset) {
                     break;
                 }
@@ -1703,24 +1705,33 @@ export class PresetsController {
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
-        const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
-        if (!originalPresetsFile[presetType]) {
-            originalPresetsFile[presetType] = [];
+        // If the new preset inherits from a user preset, it should be added to the user presets file.
+        let presetsFile: preset.PresetsFile;
+        let isUserPreset = false;
+
+        if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
+            presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
+            isUserPreset = true;
+        } else {
+            presetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
+            isUserPreset = false;
         }
 
+        if (!presetsFile[presetType]) {
+            presetsFile[presetType] = [];
+        }
         switch (presetType) {
             case "configurePresets":
             case "buildPresets":
             case "testPresets":
             case "packagePresets":
-                originalPresetsFile[presetType]!.push(newPreset);
+                presetsFile[presetType]!.push(newPreset);
                 break;
             case "workflowPresets":
-                originalPresetsFile[presetType]!.push(newPreset as preset.WorkflowPreset);
+                presetsFile[presetType]!.push(newPreset as preset.WorkflowPreset);
                 break;
         }
-
-        await this.updatePresetsFile(originalPresetsFile);
+        await this.updatePresetsFile(presetsFile, isUserPreset);
     }
 
     private getIndentationSettings() {
