@@ -8,6 +8,7 @@ Features:
 
 Bug Fixes:
 
+- Fix issue "Logs are unavailable when running tests from the Test Explorer" and display properly the test output. [#3140](https://github.com/microsoft/vscode-cmake-tools/issues/3140)
 - Fix issue with "Test Results Not Found" when `cmake.ctest.allowParallelJobs` is disabled. [#3798](https://github.com/microsoft/vscode-cmake-tools/issues/3798)
 - Update localized strings for Project Status UI and quick pick dropdowns. [#3803](https://github.com/microsoft/vscode-cmake-tools/issues/3803), [#3802](https://github.com/microsoft/vscode-cmake-tools/issues/3802)
 - Fix issue where new presets couldn't inherit from presets in CmakeUserPresets.json. These presets are now added to CmakeUserPresets.json instead of CmakePresets.json. [#3725](https://github.com/microsoft/vscode-cmake-tools/issues/3725)
