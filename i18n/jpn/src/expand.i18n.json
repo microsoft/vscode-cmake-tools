@@ -7,8 +7,8 @@
 	"circular.variable.reference": "循環変数参照が見つかりました: {0}",
 	"reached.max.recursion": "文字列展開の再帰の最大数に達しました。循環参照の可能性があります。",
 	"exception.expanding.string": "文字列 {0} の展開中に例外が発生しました: {1}",
-	"expand.expandstringhelper": "{0} を展開しています",
 	"invalid.variable.reference": "文字列に無効な変数参照 {0} があります: {1}",
 	"command.not.supported": "コマンドは文字列ではサポートされていません: {0}",
-	"exception.executing.command": "文字列に対してコマンド {0} を実行中に例外が発生しました: {1} {2}"
+	"exception.executing.command": "文字列に対してコマンド {0} を実行中に例外が発生しました: {1} {2}",
+	"expand.expandstringhelper": "{0} を展開しました"
 }

@@ -26,7 +26,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         ctest: {
             parallelJobs: 0,
             allowParallelJobs: false,
-            testExplorerIntegrationEnabled: true
+            testExplorerIntegrationEnabled: true,
+            testSuiteDelimiter: ''
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],

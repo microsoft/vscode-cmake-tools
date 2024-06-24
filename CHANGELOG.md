@@ -5,12 +5,28 @@
 Features:
 
 - Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
+- Upgrade `cmake_minimum_required` version 3.0.0 -> 3.5.0. [#3793](https://github.com/microsoft/vscode-cmake-tools/issues/3793)
 
-Bug Fixes:
+Improvements:
+
 - Add setting for deleting entire build dir when clean configuring. [#3515](https://github.com/microsoft/vscode-cmake-tools/issues/3515)
 
+Bug Fixes:
 
-## 1.18
+- Fix issue "Logs are unavailable when running tests from the Test Explorer" and display properly the test output. [#3140](https://github.com/microsoft/vscode-cmake-tools/issues/3140)
+- Fix issue with "Test Results Not Found" when `cmake.ctest.allowParallelJobs` is disabled. [#3798](https://github.com/microsoft/vscode-cmake-tools/issues/3798)
+- Update localized strings for Project Status UI and quick pick dropdowns. [#3803](https://github.com/microsoft/vscode-cmake-tools/issues/3803), [#3802](https://github.com/microsoft/vscode-cmake-tools/issues/3802)
+- Fix issue where new presets couldn't inherit from presets in CmakeUserPresets.json. These presets are now added to CmakeUserPresets.json instead of CmakePresets.json. [#3725](https://github.com/microsoft/vscode-cmake-tools/issues/3725)
+- Fix issue where CMakeTools does not recheck CMake Path to see if user installed CMake after launching VS Code. [3811](https://github.com/microsoft/vscode-cmake-tools/issues/3811)
+- Fix issue where `cmake.buildToolArgs` was sometimes applied incorrectly when presets are used [#3754](https://github.com/microsoft/vscode-cmake-tools/issues/3754)
+
+## 1.18.42
+
+Bug Fixes:
+- Fix schema validation for `$schema`. [#3809](https://github.com/microsoft/vscode-cmake-tools/pull/3809)
+- Fix tests having too long of a command-line. [#3814](https://github.com/microsoft/vscode-cmake-tools/pull/3814)
+
+## 1.18.41
 Features:
 
 - Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)

@@ -106,6 +106,12 @@
     },
     "cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result and the Test Explorer may not accurately reflect test progress.",
     "cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "Whether or not the integration with the test explorer is enabled. This is helpful to disable if you prefer using a different extension for test integration.",
+    "cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription": {
+        "message": "Optional delimiter used to separate test suite names and group tests hierarchically in the Test Explorer. This string is used in a Regular Expression, so some delimiters may need escaping. Examples: `-` ( One delimiter: `-`), `\\.|::` (Two delimiters: `.` or `::`. Note that `.` needs to be escaped.)",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    }, 
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
     "cmake-tools.configuration.cmake.enabledOutputParsers.description": {
         "message": "Output parsers to use. Supported parsers `cmake`, `gcc`, `gnuld` for GNULD-style linker output, `msvc` for Microsoft Visual C++, `ghs` for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics, and `diab` for the Wind River Diab compiler.",
