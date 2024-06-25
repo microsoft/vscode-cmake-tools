@@ -7,6 +7,7 @@ import * as logging from '../logging';
 import * as nls from "vscode-nls";
 import { fs } from "../pr";
 import { logCMakeDebuggerTelemetry, originatedFromLaunchConfiguration } from "./cmakeDebuggerTelemetry";
+import { ConfigureTrigger } from "@cmt/cmakeProject";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -42,7 +43,9 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
             } else {
                 logCMakeDebuggerTelemetry(originatedFromLaunchConfiguration, cmakeDebugType);
 
-                // TODO: Check the session.configuration.trigger, assuming it's not undefined, against our known Trigger types/values, and if it's not valid, send undefined.
+                if (session.configuration.trigger && !Object.values(ConfigureTrigger).includes(session.configuration.trigger)) {
+                    session.configuration.trigger = undefined;
+                }
 
                 if (session.configuration.clean) {
                     if (session.configuration.configureAll) {
