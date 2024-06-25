@@ -1010,7 +1010,11 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     if (process.platform === 'win32') {
         if (kit.visualStudio && kit.visualStudioArchitecture) {
             const vs_vars = await getVSKitEnvironment(kit);
+            const kitPath = env['PATH'];
             env = EnvironmentUtils.merge([env, vs_vars]);
+            if (kitPath) {
+                env['PATH'] = [kitPath, env['PATH']].join(';');
+            }
         } else {
             const path_list: string[] = [];
             const cCompiler = kit.compilers?.C;
