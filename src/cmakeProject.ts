@@ -1530,6 +1530,8 @@ export class CMakeProject {
             const result: ConfigureResult = await drv.configure(trigger, []);
             if (result.result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
+            } else {
+                log.showChannel(true);
             }
             await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
@@ -1541,7 +1543,7 @@ export class CMakeProject {
             return { result: -1, resultType: ConfigureResultType.NoCache };
         }
 
-        return vscode.window.withProgress(
+        const res = await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Window,
                 title: localize('configuring.project', 'Configuring project'),
@@ -1619,6 +1621,7 @@ export class CMakeProject {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
                                 } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && result.resultType === ConfigureResultType.NormalOperation) {
+                                    log.showChannel(true);
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
                                         "Debug"
@@ -1662,6 +1665,11 @@ export class CMakeProject {
                 }
             }
         );
+        // check if the an error occured during the configuration
+        if (res.result !== 0) {
+            log.showChannel(true);
+        }
+        return res;
     }
 
     /**
@@ -1955,6 +1963,9 @@ export class CMakeProject {
                 buildLogger.info(localize('starting.build', 'Starting build'));
                 await setContextAndStore(isBuildingKey, true);
                 rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
+                if (rc !== 0) {
+                    log.showChannel(true); // in case build has failed
+                }
                 await setContextAndStore(isBuildingKey, false);
                 if (rc === null) {
                     buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -1985,6 +1996,9 @@ export class CMakeProject {
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
                         await setContextAndStore(isBuildingKey, false);
+                        if (rc !== 0) {
+                            log.showChannel(true); // in case build has failed
+                        }
                         if (rc === null) {
                             buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
                         } else {
