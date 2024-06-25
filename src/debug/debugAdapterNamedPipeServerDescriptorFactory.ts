@@ -6,7 +6,7 @@ import { executeScriptWithDebugger } from "./debuggerScriptDriver";
 import * as logging from '../logging';
 import * as nls from "vscode-nls";
 import { fs } from "../pr";
-import { logCMakeDebuggerTelemetry, originatedFromLaunchConfiguration } from "./cmakeDebuggerTelemetry";
+import { logCMakeDebuggerTelemetry, originatedFromLaunchConfiguration, originatedFromCommand } from "./cmakeDebuggerTelemetry";
 import { ConfigureTrigger } from "@cmt/cmakeProject";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -18,6 +18,8 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
     async createDebugAdapterDescriptor(session: vscode.DebugSession, _executable: vscode.DebugAdapterExecutable | undefined): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
         const pipeName =
             session.configuration.pipeName ?? getDebuggerPipeName();
+        const origin =
+            session.configuration.fromCommand ? originatedFromCommand : originatedFromLaunchConfiguration;
 
         const debuggerInformation: DebuggerInformation = {
             pipeName,
@@ -38,10 +40,10 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 }
                 const args: string[] = session.configuration.scriptArgs ?? [];
                 const env = new Map<string, string>(session.configuration.scriptEnv?.map((e: {name: string; value: string}) => [e.name, e.value])) ?? new Map();
-                logCMakeDebuggerTelemetry(originatedFromLaunchConfiguration, cmakeDebugType);
+                logCMakeDebuggerTelemetry(origin, cmakeDebugType);
                 void executeScriptWithDebugger(script, args, env, debuggerInformation);
             } else {
-                logCMakeDebuggerTelemetry(originatedFromLaunchConfiguration, cmakeDebugType);
+                logCMakeDebuggerTelemetry(origin, cmakeDebugType);
 
                 if (session.configuration.trigger && !Object.values(ConfigureTrigger).includes(session.configuration.trigger)) {
                     session.configuration.trigger = undefined;
@@ -76,7 +78,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
 
             await promise;
         } else if (cmakeDebugType === "external") {
-            logCMakeDebuggerTelemetry(originatedFromLaunchConfiguration, cmakeDebugType);
+            logCMakeDebuggerTelemetry(origin, cmakeDebugType);
         }
 
         logger.info(localize('debugger.create.descriptor', 'Connecting debugger on named pipe: \"{0}\"', pipeName));
