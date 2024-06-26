@@ -812,8 +812,9 @@ export class PresetsController {
 
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
         preset.expandVendorForConfigurePresets(this.folderPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
-        return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        const allConfigurePresets = preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+        return allConfigurePresets;
     }
 
     async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
@@ -1051,7 +1052,7 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'build');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, "");
 
         const allPresets = preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, _preset).buildPresetCompatible);
@@ -1210,7 +1211,7 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'test');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, "");
 
         const allPresets = preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, _preset).testPresetCompatible);
@@ -1303,7 +1304,7 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'package');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, "");
 
         const allPresets = preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, this.project.testPreset, _preset).packagePresetCompatible);
@@ -1386,7 +1387,7 @@ export class PresetsController {
         // which to be the same as in step0. This is verified by CMakePresets.json validation in validatePresetsFile.
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, "");
 
         const allPresets = preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
         allPresets.push(preset.defaultWorkflowPreset);

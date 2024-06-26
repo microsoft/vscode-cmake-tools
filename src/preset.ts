@@ -774,11 +774,15 @@ async function expandCondition(condition: boolean | Condition | null | undefined
     return undefined;
 }
 
-export async function expandConditionsForPresets(folder: string, sourceDir: string) {
+export async function expandConditionsForPresets(folder: string, sourceDir: string, workspaceFolder: string) {
+    const allConfigPresets = allConfigurePresets(folder);
     for (const preset of allConfigurePresets(folder)) {
         if (preset.condition) {
-            const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, preset);
-            preset.condition = await expandCondition(preset.condition, opts);
+            const expandedPreset = await expandConfigurePreset(folder, preset.name, workspaceFolder, sourceDir, true);
+            if (expandedPreset) {
+                const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
+                preset.condition = await expandCondition(preset.condition, opts);
+            }
         }
     }
     for (const preset of allBuildPresets(folder)) {
