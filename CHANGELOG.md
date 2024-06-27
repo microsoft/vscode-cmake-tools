@@ -19,6 +19,7 @@ Bug Fixes:
 - Fix issue where new presets couldn't inherit from presets in CmakeUserPresets.json. These presets are now added to CmakeUserPresets.json instead of CmakePresets.json. [#3725](https://github.com/microsoft/vscode-cmake-tools/issues/3725)
 - Fix issue where CMakeTools does not recheck CMake Path to see if user installed CMake after launching VS Code. [3811](https://github.com/microsoft/vscode-cmake-tools/issues/3811)
 - Fix issue where `cmake.buildToolArgs` was sometimes applied incorrectly when presets are used [#3754](https://github.com/microsoft/vscode-cmake-tools/issues/3754)
+- Ensure `useCMakePresets` context is set after making a CMakePreset.json with `Quick Start`. [#3734](https://github.com/microsoft/vscode-cmake-tools/issues/3734)
 
 ## 1.18.42
 
