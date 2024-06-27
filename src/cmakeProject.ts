@@ -2847,9 +2847,7 @@ export class CMakeProject {
         if (await fs.exists(mainPresetsFile)) {
             log.info(localize('cmakepresets.already.configured', '[Quick Start] A CMakePresets.json is already configured.'));
         } else {
-            await this.setUseCMakePresets(true);
             if (!await this.presetsController.selectConfigurePreset(true)) {
-            //if (!await extensionManager?.selectConfigurePreset(true)) {
                 await this.kitsController.setKitByName(SpecialKits.Unspecified);
                 log.info(localize('cmakepresets.not.created', '[Quick Start] CMakePresets.json not created.'));
             } else {
@@ -2857,8 +2855,7 @@ export class CMakeProject {
             }
         }
 
-        //await this.projectController?.updateActiveProject(this.workspaceFolder);
-        await this.projectController?.setActiveProject(this);
+        await this.projectController?.updateActiveProject(this.workspaceFolder);
 
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.

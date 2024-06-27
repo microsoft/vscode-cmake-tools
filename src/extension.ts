@@ -418,7 +418,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.configurePreset) {
                 return true;
             }
-            const didChoosePreset = await this.selectConfigurePreset(false, cmakeProject.workspaceFolder);
+            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
             if (!didChoosePreset && !cmakeProject.configurePreset) {
                 return false;
             }
@@ -1935,7 +1935,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active configure preset
      */
-    async selectConfigurePreset(quickstart?: boolean, folder?: vscode.WorkspaceFolder): Promise<boolean> {
+    async selectConfigurePreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.config.preset.in.test.mode', 'Running CMakeTools in test mode. selectConfigurePreset is disabled.'));
             return false;
@@ -1951,7 +1951,7 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        const presetSelected = await project.presetsController.selectConfigurePreset(quickstart);
+        const presetSelected = await project.presetsController.selectConfigurePreset();
         const configurePreset = project.configurePreset;
         this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
