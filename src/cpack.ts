@@ -89,13 +89,6 @@ export class CPackDriver implements vscode.Disposable {
             }
         }
 
-        const opts = driver.expansionOptions;
-        const args = [];
-        for (const value of this.ws.config.cpackArgs) {
-            args.push(await expandString(value, opts));
-        }
-
-        cpackArgs = cpackArgs.concat(args);
         return cpackArgs;
     }
 
