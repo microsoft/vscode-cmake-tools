@@ -1286,7 +1286,14 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureWithDebugger(folder?: vscode.WorkspaceFolder) {
-        return this.cleanConfigureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            folder
+        });
     }
 
     cleanConfigureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder) {
@@ -1300,7 +1307,14 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureAllWithDebugger(trigger?: ConfigureTrigger) {
-        return this.cleanConfigureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            trigger
+        });
     }
 
     cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
@@ -1315,7 +1329,16 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureWithDebugger(folder?: vscode.WorkspaceFolder, sourceDir?: string, trigger?: ConfigureTrigger) {
-        return this.configureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder, undefined, sourceDir, trigger);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            folder,
+            sourceDir,
+            trigger
+        });
     }
 
     configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string, trigger?: ConfigureTrigger) {
@@ -1333,7 +1356,14 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAllWithDebugger(trigger?: ConfigureTrigger) {
-        return this.configureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            trigger
+        });
     }
 
     configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
