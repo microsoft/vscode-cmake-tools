@@ -6,7 +6,7 @@ import { executeScriptWithDebugger } from "./debuggerScriptDriver";
 import * as logging from '../logging';
 import * as nls from "vscode-nls";
 import { fs } from "../pr";
-import { logCMakeDebuggerTelemetry, originatedFromLaunchConfiguration, originatedFromCommand } from "./cmakeDebuggerTelemetry";
+import { DebugOrigin, logCMakeDebuggerTelemetry} from "./cmakeDebuggerTelemetry";
 import { ConfigureTrigger } from "@cmt/cmakeProject";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -19,7 +19,7 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         const pipeName =
             session.configuration.pipeName ?? getDebuggerPipeName();
         const origin =
-            session.configuration.fromCommand ? originatedFromCommand : originatedFromLaunchConfiguration;
+            session.configuration.fromCommand ? DebugOrigin.originatedFromCommand : DebugOrigin.originatedFromLaunchConfiguration;
 
         const debuggerInformation: DebuggerInformation = {
             pipeName,
