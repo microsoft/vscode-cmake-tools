@@ -809,6 +809,10 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     }
     preset = await tryApplyVsDevEnv(preset);
 
+    // For vs dev env, we want to APPEND to the PATH, not replace it.
+    if (preset.environment !== null && preset.environment !== undefined && preset.environment["PATH"] !== undefined) {
+        preset.environment["PATH"] = preset.environment["PATH"]?.concat(";", process.env["PATH"] ?? "");
+    }
     preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
 
     // Expand strings under the context of current preset
@@ -1105,7 +1109,8 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
                     } else {
                         log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
                         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
-                        compilerEnv = compilerLocation.stdout ? EnvironmentUtils.create() : vsEnv ?? EnvironmentUtils.create();
+                        // compilerEnv = compilerLocation.stdout ? EnvironmentUtils.create() : vsEnv ?? EnvironmentUtils.create();
+                        compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
                         // if ninja isn't on path, try to look for it in a VS install
                         const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
@@ -1120,11 +1125,6 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
                                 log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
                                 compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
                             }
-                        }
-
-                        // For vs dev env, we want to APPEND to the PATH, not replace it. -- assuming we already know where the compiler is (possibly change this later)
-                        if (preset.environment !== null && preset.environment !== undefined && compilerLocation.stdout) {
-                            compilerEnv["PATH"] = `${preset.environment['PATH']};${compilerEnv['PATH']}`;
                         }
 
                         preset.environment = EnvironmentUtils.mergePreserveNull([preset.environment, compilerEnv]);
