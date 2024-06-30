@@ -43,7 +43,7 @@ Start a debugging session on the active target by running the *CMake: Debug* com
 
 You can specify the working directory or command line arguments for debugging, or use another debugger than the one included with Microsoft's `vscode-ms-vscode.cpptools`, by creating a `launch.json` file.
 
-You'll need to know the path to the executable binary, which may be difficult to know in advance. CMake Tools can help by using [command substitution](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/cmake-settings.md#command-substitution) in the `launch.json` file. This is already used by things like process selection when attaching to a running process. It works by specifying a command-based substitution in the appropriate field of `launch.json`.
+You'll need to know the path to the executable binary, which may be difficult to know in advance. CMake Tools can help by using [command substitution](cmake-settings.md#command-substitution) in the `launch.json` file. This is already used by things like process selection when attaching to a running process. It works by specifying a command-based substitution in the appropriate field of `launch.json`.
 
 Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetPath` and `cmake.getLaunchTargetDirectory` to start a debugger on the active launch target:
 

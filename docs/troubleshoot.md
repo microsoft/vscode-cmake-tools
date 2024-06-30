@@ -40,6 +40,6 @@ This file is user-local, not workspace-local. This file includes all log entries
 
 ## Get help
 
-Check the [CMake Tools issue tracker](https://github.com/vector-of-bool/vscode-cmake-tools/issues) and [What's New](https://github.com/microsoft/vscode-cmake-tools/blob/main/CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report. Feel free to open an issue if your problem hasn't been reported.
+Check the [CMake Tools issue tracker](https://github.com/microsoft/vscode-cmake-tools/issues) and [What's New](../CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report. Feel free to open an issue if your problem hasn't been reported.
 
 Please visit [the support chat](https://gitter.im/vscode-cmake-tools/support). This is a community chat. Microsoft does not monitor it.
