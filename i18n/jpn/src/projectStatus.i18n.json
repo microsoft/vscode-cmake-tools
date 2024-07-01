@@ -24,8 +24,15 @@
 	"Launch": "起動",
 	"Folder": "フォルダー",
 	"active.folder": "アクティブなフォルダー",
+	"configPreset.change": "Change Configure Preset",
+	"buildPreset.change": "Change Build Preset",
+	"testPreset.change": "Change Test Preset",
+	"packagePreset.change": "Change Package Preset",
+	"workflowPreset.change": "Change Workflow Preset",
+	"kit.change": "Change Kit",
 	"set.build.target": "ビルド ターゲットの設定",
 	"set.debug.target": "デバッグ ターゲットの設定",
 	"set.launch.target": "起動ターゲットの設定",
-	"select.active.folder": "アクティブなフォルダーの選択"
+	"select.active.folder": "アクティブなフォルダーの選択",
+	"set.variant": "Set variant"
 }

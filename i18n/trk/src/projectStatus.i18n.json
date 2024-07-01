@@ -24,8 +24,15 @@
 	"Launch": "Başlat",
 	"Folder": "Klasör",
 	"active.folder": "Etkin Klasör",
+	"configPreset.change": "Yapılandırma Ön Ayarını Değiştir",
+	"buildPreset.change": "Derleme Ön Ayarını Değiştir",
+	"testPreset.change": "Test Ön Ayarını Değiştir",
+	"packagePreset.change": "Paket Ön Ayarını Değiştir",
+	"workflowPreset.change": "İş Akışı Ön Ayarını Değiştir",
+	"kit.change": "Seti Değiştir",
 	"set.build.target": "Derleme Hedefini Ayarla",
 	"set.debug.target": "Hata Ayıklama Hedefini Ayarla",
 	"set.launch.target": "Hedefi Başlat",
-	"select.active.folder": "Etkin Klasör Seç"
+	"select.active.folder": "Etkin Klasör Seç",
+	"set.variant": "Değişkeni ayarla"
 }

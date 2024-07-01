@@ -24,8 +24,15 @@
 	"Launch": "Spustit",
 	"Folder": "Složka",
 	"active.folder": "Aktivní složka",
+	"configPreset.change": "Change Configure Preset",
+	"buildPreset.change": "Change Build Preset",
+	"testPreset.change": "Change Test Preset",
+	"packagePreset.change": "Change Package Preset",
+	"workflowPreset.change": "Change Workflow Preset",
+	"kit.change": "Change Kit",
 	"set.build.target": "Nastavit cíl sestavení",
 	"set.debug.target": "Nastavit cíl ladění",
 	"set.launch.target": "Nastavit cíl spuštění",
-	"select.active.folder": "Vybrat aktivní složku"
+	"select.active.folder": "Vybrat aktivní složku",
+	"set.variant": "Set variant"
 }

@@ -24,8 +24,15 @@
 	"Launch": "Lançamento",
 	"Folder": "Pasta",
 	"active.folder": "Pasta Ativa",
+	"configPreset.change": "Alterar Predefinição de Configuração",
+	"buildPreset.change": "Alterar Predefinição de Build",
+	"testPreset.change": "Alterar Predefinição de Teste",
+	"packagePreset.change": "Alterar Predefinição de Pacote",
+	"workflowPreset.change": "Alterar Predefinição de Fluxo de Trabalho",
+	"kit.change": "Alterar Kit",
 	"set.build.target": "Definir o Destino de Compilação",
 	"set.debug.target": "Definir o Destino de Depuração",
 	"set.launch.target": "Definir Destino de Inicialização",
-	"select.active.folder": "Selecionar a Pasta Ativa"
+	"select.active.folder": "Selecionar a Pasta Ativa",
+	"set.variant": "Definir variante"
 }

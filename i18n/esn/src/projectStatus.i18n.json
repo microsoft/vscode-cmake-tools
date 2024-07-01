@@ -24,8 +24,15 @@
 	"Launch": "Iniciar",
 	"Folder": "Carpeta",
 	"active.folder": "Carpeta activa",
+	"configPreset.change": "Cambie configuración preestablecida",
+	"buildPreset.change": "Cambie valor preestablecido de compilación",
+	"testPreset.change": "Cambiar valor preestablecido de prueba",
+	"packagePreset.change": "Cambie el valor preestablecido del paquete",
+	"workflowPreset.change": "Cambiar valor preestablecido de flujo de trabajo",
+	"kit.change": "Cambie kit",
 	"set.build.target": "Establecer el destino de compilación",
 	"set.debug.target": "Establecer el destino de depuración",
 	"set.launch.target": "Establecer destino de inicio",
-	"select.active.folder": "Seleccionar la carpeta activa"
+	"select.active.folder": "Seleccionar la carpeta activa",
+	"set.variant": "Establece variante"
 }

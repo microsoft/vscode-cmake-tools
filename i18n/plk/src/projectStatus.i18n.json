@@ -24,8 +24,15 @@
 	"Launch": "Uruchom",
 	"Folder": "Folder",
 	"active.folder": "Aktywny folder",
+	"configPreset.change": "Change Configure Preset",
+	"buildPreset.change": "Change Build Preset",
+	"testPreset.change": "Change Test Preset",
+	"packagePreset.change": "Change Package Preset",
+	"workflowPreset.change": "Change Workflow Preset",
+	"kit.change": "Change Kit",
 	"set.build.target": "Ustaw docelowy element kompilacji",
 	"set.debug.target": "Ustaw element docelowy debugowania",
 	"set.launch.target": "Ustaw element docelowy uruchamiania",
-	"select.active.folder": "Wybierz aktywny folder"
+	"select.active.folder": "Wybierz aktywny folder",
+	"set.variant": "Set variant"
 }
