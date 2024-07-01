@@ -10,6 +10,7 @@ Features:
 Improvements:
 
 - Add setting for deleting entire build dir when clean configuring. [#3515](https://github.com/microsoft/vscode-cmake-tools/issues/3515)
+- Always apply VS developer environment, appending to the PATH so variables on PATH take priorrity, but if compilers or generators cannot be find they are looked for in the VS deverloper environment. [#3497](https://github.com/microsoft/vscode-cmake-tools/issues/3497)
 
 Bug Fixes:
 

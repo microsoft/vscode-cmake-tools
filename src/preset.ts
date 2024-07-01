@@ -1024,15 +1024,7 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
                 }
 
                 if (compilerName && whereExecutable) {
-                    // const compilerLocation = await execute(whereExecutable, [compilerName], null, {
-                    //     environment: EnvironmentUtils.create(preset.environment),
-                    //     silent: true,
-                    //     encoding: 'utf8',
-                    //     shell: true
-                    // }).result;
 
-                    //if (!compilerLocation.stdout) {
-                    // Not on PATH, need to set env
                     const arch = getArchitecture(preset);
                     const toolset = getToolset(preset);
 
@@ -1109,7 +1101,6 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
                     } else {
                         log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
                         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
-                        // compilerEnv = compilerLocation.stdout ? EnvironmentUtils.create() : vsEnv ?? EnvironmentUtils.create();
                         compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
                         // if ninja isn't on path, try to look for it in a VS install
@@ -1129,7 +1120,6 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
 
                         preset.environment = EnvironmentUtils.mergePreserveNull([preset.environment, compilerEnv]);
                     }
-                    //}
                 }
             }
         }
