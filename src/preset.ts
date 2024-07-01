@@ -1024,12 +1024,12 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
                 }
 
                 if (compilerName && whereExecutable) {
-                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
-                        environment: EnvironmentUtils.create(preset.environment),
-                        silent: true,
-                        encoding: 'utf8',
-                        shell: true
-                    }).result;
+                    // const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                    //     environment: EnvironmentUtils.create(preset.environment),
+                    //     silent: true,
+                    //     encoding: 'utf8',
+                    //     shell: true
+                    // }).result;
 
                     //if (!compilerLocation.stdout) {
                     // Not on PATH, need to set env
