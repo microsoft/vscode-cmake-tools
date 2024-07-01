@@ -24,8 +24,15 @@
 	"Launch": "시작",
 	"Folder": "폴더",
 	"active.folder": "활성 폴더",
+	"configPreset.change": "Change Configure Preset",
+	"buildPreset.change": "Change Build Preset",
+	"testPreset.change": "Change Test Preset",
+	"packagePreset.change": "Change Package Preset",
+	"workflowPreset.change": "Change Workflow Preset",
+	"kit.change": "Change Kit",
 	"set.build.target": "빌드 대상 설정",
 	"set.debug.target": "디버그 대상 설정",
 	"set.launch.target": "시작 대상 설정",
-	"select.active.folder": "활성 폴더 선택"
+	"select.active.folder": "활성 폴더 선택",
+	"set.variant": "Set variant"
 }

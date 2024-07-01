@@ -24,8 +24,15 @@
 	"Launch": "Запуск",
 	"Folder": "Папка",
 	"active.folder": "Активная папка",
+	"configPreset.change": "Изменить предустановку конфигурации",
+	"buildPreset.change": "Изменить предустановку сборки",
+	"testPreset.change": "Изменить предустановку теста",
+	"packagePreset.change": "Изменить предустановку пакета",
+	"workflowPreset.change": "Изменить предустановку рабочего процесса",
+	"kit.change": "Изменить набор",
 	"set.build.target": "Задание целевого объекта сборки",
 	"set.debug.target": "Задать целевой объект отладки",
 	"set.launch.target": "Установить целевой объект",
-	"select.active.folder": "Выбор активной папки"
+	"select.active.folder": "Выбор активной папки",
+	"set.variant": "Настроить вариант"
 }
