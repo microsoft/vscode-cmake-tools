@@ -618,7 +618,7 @@ const referencedConfigurePresets: Map<string, Set<string>> = new Map();
  * They should NOT be used together.
  * They should Not call each other.
  */
-export function expandVendorForConfigurePresets(folder: string, sourceDir: string, workspaceFolder: string): void {
+export function expandVendorForConfigurePresets(folder: string): void {
     for (const preset of configurePresets(folder)) {
         getVendorForConfigurePreset(folder, preset.name);
     }
@@ -637,10 +637,10 @@ function getVendorForConfigurePreset(folder: string, name: string): VendorType |
     return getVendorForConfigurePresetImpl(folder, name);
 }
 
-async function getVendorForConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): Promise<VendorType | VendorVsSettings | null> {
+function getVendorForConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): VendorType | VendorVsSettings | null {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
-        const expandedPreset = await expandConfigurePresetImpl(folder, name);
+        const expandedPreset = expandConfigurePresetImpl(folder, name);
         if (expandedPreset) {
             return getVendorForConfigurePresetHelper(folder, expandedPreset, allowUserPreset);
         }
@@ -649,7 +649,7 @@ async function getVendorForConfigurePresetImpl(folder: string, name: string, all
     if (allowUserPreset) {
         preset = getPresetByName(userConfigurePresets(folder), name);
         if (preset) {
-            const expandedPreset = await expandConfigurePresetImpl(folder, name, allowUserPreset);
+            const expandedPreset = expandConfigurePresetImpl(folder, name, allowUserPreset);
             if (expandedPreset) {
                 return getVendorForConfigurePresetHelper(folder, expandedPreset, allowUserPreset);
             }
@@ -659,7 +659,7 @@ async function getVendorForConfigurePresetImpl(folder: string, name: string, all
     return null;
 }
 
-async function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false): Promise<VendorType | VendorVsSettings | null> {
+function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | VendorVsSettings | null {
     if (preset.__expanded) {
         return preset.vendor || null;
     }
@@ -681,7 +681,7 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
             preset.inherits = [preset.inherits];
         }
         for (const parent of preset.inherits) {
-            const parentVendor = await getVendorForConfigurePresetImpl(folder, parent, allowUserPreset);
+            const parentVendor = getVendorForConfigurePresetImpl(folder, parent, allowUserPreset);
             if (parentVendor) {
                 for (const key in parentVendor) {
                     if (preset.vendor[key] === undefined) {
@@ -784,7 +784,7 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
     const allConfigPresets = allConfigurePresets(folder);
     for (const preset of allConfigurePresets(folder)) {
         if (preset.condition) {
-            const expandedPreset = await expandConfigurePresetImpl(folder, preset.name, true);
+            const expandedPreset = expandConfigurePresetImpl(folder, preset.name, true);
             if (expandedPreset) {
                 const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
                 preset.condition = await expandCondition(preset.condition, opts);
@@ -819,7 +819,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         refs.clear();
     }
 
-    let preset = await expandConfigurePresetImpl(folder, name, allowUserPreset);
+    let preset = expandConfigurePresetImpl(folder, name, allowUserPreset);
     if (!preset) {
         return null;
     }
@@ -987,7 +987,7 @@ function parseToolset(toolset: string): Toolset {
     return result;
 }
 
-async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): ConfigurePreset | null {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
         return expandConfigurePresetHelper(folder, preset);
@@ -1151,7 +1151,7 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
     return preset;
 }
 
-async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false) {
+function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1195,7 +1195,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset);
+            const parent = expandConfigurePresetImpl(folder, parentName, allowUserPreset);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
