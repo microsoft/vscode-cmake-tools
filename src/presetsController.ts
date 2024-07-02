@@ -811,7 +811,7 @@ export class PresetsController {
     }
 
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
-        preset.expandVendorForConfigurePresets(this.folderPath);
+        preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         const allConfigurePresets = preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
         return allConfigurePresets;
