@@ -431,6 +431,8 @@ const originalPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const originalUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const presetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const userPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
+const expandedPresetsFile: Map<string, PresetsFile | undefined> = new Map();
+const expandedUserPresetsFile: Map<string, PresetsFile | undefined> = new Map();
 
 export function getOriginalPresetsFile(folder: string) {
     return originalPresetsFiles.get(folder);
@@ -471,6 +473,31 @@ export function setUserPresetsFile(folder: string, presets: PresetsFile | undefi
         }
     }
     userPresetsFiles.set(folder, presets);
+}
+
+export function setExpandedPresetsFile(folder: string, presets: PresetsFile | undefined) {
+    expandedPresetsFile.set(folder, presets);
+}
+
+export function setUserExpandedPresetsFile(folder: string, presets: PresetsFile | undefined) {
+    if (presets) {
+        if (presets.configurePresets) {
+            for (const configPreset of presets.configurePresets) {
+                configPreset.isUserPreset = true;
+            }
+        }
+        if (presets.buildPresets) {
+            for (const buildPreset of presets.buildPresets) {
+                buildPreset.isUserPreset = true;
+            }
+        }
+        if (presets.testPresets) {
+            for (const testPreset of presets.testPresets) {
+                testPreset.isUserPreset = true;
+            }
+        }
+    }
+    expandedUserPresetsFile.set(folder, presets);
 }
 
 export function minCMakeVersion(folder: string) {
@@ -787,6 +814,7 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
     }
     for (const preset of allBuildPresets(folder)) {
         if (preset.condition) {
+            const expandedPreset = await expandBuildPreset(folder, preset.name, workspaceFolder, sourceDir, 0, "", true, preset.configurePreset);
             const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, preset);
             preset.condition = await expandCondition(preset.condition, opts);
         }
@@ -807,7 +835,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         refs.clear();
     }
 
-    let preset = await expandConfigurePresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset);
+    let preset = await expandConfigurePresetImpl(folder, name, allowUserPreset);
     if (!preset) {
         return null;
     }
@@ -975,16 +1003,16 @@ function parseToolset(toolset: string): Toolset {
     return result;
 }
 
-async function expandConfigurePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
-        return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
+        return expandConfigurePresetHelper(folder, preset);
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userConfigurePresets(folder), name);
         if (preset) {
-            return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir, true);
+            return expandConfigurePresetHelper(folder, preset, true);
         }
     }
 
@@ -1139,7 +1167,7 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
     return preset;
 }
 
-async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1183,7 +1211,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
+            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
