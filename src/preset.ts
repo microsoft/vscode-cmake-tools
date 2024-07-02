@@ -642,7 +642,7 @@ function getVendorForConfigurePresetImpl(folder: string, name: string, allowUser
     if (preset) {
         const expandedPreset = expandConfigurePresetImpl(folder, name);
         if (expandedPreset) {
-            return getVendorForConfigurePresetHelper(folder, expandedPreset, allowUserPreset);
+            return getVendorForConfigurePresetHelper(folder, expandedPreset);
         }
     }
 
@@ -781,7 +781,6 @@ async function expandCondition(condition: boolean | Condition | null | undefined
 }
 
 export async function expandConditionsForPresets(folder: string, sourceDir: string, workspaceFolder: string) {
-    const allConfigPresets = allConfigurePresets(folder);
     for (const preset of allConfigurePresets(folder)) {
         if (preset.condition) {
             const expandedPreset = expandConfigurePresetImpl(folder, preset.name, true);

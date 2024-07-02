@@ -170,9 +170,6 @@ export class PresetsController {
         this.populatePrivatePresetsFields(presetsFile, file);
         await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
 
-        // TODO: I should test performance here, but I think we should go ahead and expand all presets here, so we don't have to do it every time we need a preset.
-        // This could avoid having to do it on the fly when a preset is selected, as well as avoid having to do one-offs when we need to populate the presets list.
-
         // TODO: more validation (or move some of the per file validation here when all entries are merged.
         // Like unresolved preset reference or duplicates).
         setPresetsFile(this.folderPath, presetsFile);
@@ -815,10 +812,9 @@ export class PresetsController {
     }
 
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
-        preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        preset.expandVendorForConfigurePresets(this.folderPath);
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
-        const allConfigurePresets = preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
-        return allConfigurePresets;
+        return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
     }
 
     async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
