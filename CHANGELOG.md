@@ -20,6 +20,7 @@ Bug Fixes:
 - Fix issue where CMakeTools does not recheck CMake Path to see if user installed CMake after launching VS Code. [3811](https://github.com/microsoft/vscode-cmake-tools/issues/3811)
 - Fix issue where `cmake.buildToolArgs` was sometimes applied incorrectly when presets are used [#3754](https://github.com/microsoft/vscode-cmake-tools/issues/3754)
 - Fix issue where `preferredGenerator.platform` wasn't being compared between the old and new kit to trigger a clean configure on a kit selection change. [#2699](https://github.com/microsoft/vscode-cmake-tools/issues/2699)
+- Still allow for users to add `--warn-unused-cli`. Now instead of overriding, it will remove our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 
 ## 1.18.42
 
