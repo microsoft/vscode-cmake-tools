@@ -169,6 +169,10 @@ export class PresetsController {
         // Private fields must be set after validation, otherwise validation would fail.
         this.populatePrivatePresetsFields(presetsFile, file);
         await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
+
+        // TODO: I should test performance here, but I think we should go ahead and expand all presets here, so we don't have to do it every time we need a preset.
+        // This could avoid having to do it on the fly when a preset is selected, as well as avoid having to do one-offs when we need to populate the presets list.
+
         // TODO: more validation (or move some of the per file validation here when all entries are merged.
         // Like unresolved preset reference or duplicates).
         setPresetsFile(this.folderPath, presetsFile);
