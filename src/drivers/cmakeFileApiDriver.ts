@@ -290,23 +290,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
                         await new Promise(resolve => setTimeout(resolve, 50));
                     }
 
-                    // if there isn't a `debuggerIsReady` callback provided, this means that this invocation was
-                    // started by a command, rather than by a launch configuration, and the debug session will start from here.
-                    if (debuggerInformation.debuggerIsReady) {
-                        // This cmake debug invocation came from a launch configuration. All telemetry is handled in the createDebugAdapterDescriptor handler.
-                        debuggerInformation.debuggerIsReady();
-                    } else {
-                        const cmakeDebugType = "configure";
-                        logCMakeDebuggerTelemetry(trigger ?? "", cmakeDebugType);
-                        await vscode.debug.startDebugging(undefined, {
-                            name: localize("cmake.debug.name", "CMake Debugger"),
-                            request: "launch",
-                            type: "cmake",
-                            cmakeDebugType,
-                            pipeName: debuggerInformation.pipeName,
-                            fromCommand: true
-                        });
-                    }
+                    // This cmake debug invocation was started from a startDebugging command.
+                    // All telemetry is handled in the createDebugAdapterDescriptor handler.
+                    debuggerInformation.debuggerIsReady();
                 }
             }
 

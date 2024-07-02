@@ -1,0 +1,107 @@
+[1mdiff --git a/src/cmakeProject.ts b/src/cmakeProject.ts[m
+[1mindex 74e5a469..95b18180 100644[m
+[1m--- a/src/cmakeProject.ts[m
+[1m+++ b/src/cmakeProject.ts[m
+[36m@@ -1632,10 +1632,15 @@[m [mexport class CMakeProject {[m
+                                         .then(async chosen => {[m
+                                             if (chosen) {[m
+                                                 if (chosen.title === yesButtonTitle) {[m
+[31m-                                                    await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {[m
+[31m-                                                        pipeName: getDebuggerPipeName()[m
+[32m+[m[32m                                                    return vscode.debug.startDebugging(undefined, {[m
+[32m+[m[32m                                                        name: localize("cmake.debug.name", "CMake Debugger"),[m
+[32m+[m[32m                                                        request: "launch",[m
+[32m+[m[32m                                                        type: "cmake",[m
+[32m+[m[32m                                                        cmakeDebugType: "configure",[m
+[32m+[m[32m                                                        pipeName: getDebuggerPipeName(),[m
+[32m+[m[32m                                                        trigger: ConfigureTrigger.configureFailedConfigureWithDebuggerButton,[m
+[32m+[m[32m                                                        fromCommand: true[m
+                                                     });[m
+[31m-                                                } else if (chosen.title === doNotShowAgainTitle) {[m
+                                                     await cmakeConfiguration.update(showDebuggerConfigurationString, false, vscode.ConfigurationTarget.Global);[m
+                                                 }[m
+                                             }[m
+[1mdiff --git a/src/debug/debuggerConfigureDriver.ts b/src/debug/debuggerConfigureDriver.ts[m
+[1mindex e54cf03d..20397c8b 100644[m
+[1m--- a/src/debug/debuggerConfigureDriver.ts[m
+[1m+++ b/src/debug/debuggerConfigureDriver.ts[m
+[36m@@ -4,7 +4,7 @@[m [mimport * as vscode from "vscode";[m
+ export interface DebuggerInformation {[m
+     pipeName: string;[m
+     dapLog?: string;[m
+[31m-    debuggerIsReady?(): void;[m
+[32m+[m[32m    debuggerIsReady(): void;[m
+ }[m
+ [m
+ export function getDebuggerPipeName(): string {[m
+[1mdiff --git a/src/drivers/cmakeFileApiDriver.ts b/src/drivers/cmakeFileApiDriver.ts[m
+[1mindex 95156b9f..fca195a4 100644[m
+[1m--- a/src/drivers/cmakeFileApiDriver.ts[m
+[1m+++ b/src/drivers/cmakeFileApiDriver.ts[m
+[36m@@ -292,21 +292,7 @@[m [mexport class CMakeFileApiDriver extends CMakeDriver {[m
+ [m
+                     // if there isn't a `debuggerIsReady` callback provided, this means that this invocation was[m
+                     // started by a command, rather than by a launch configuration, and the debug session will start from here.[m
+[31m-                    if (debuggerInformation.debuggerIsReady) {[m
+[31m-                        // This cmake debug invocation came from a launch configuration. All telemetry is handled in the createDebugAdapterDescriptor handler.[m
+[31m-                        debuggerInformation.debuggerIsReady();[m
+[31m-                    } else {[m
+[31m-                        const cmakeDebugType = "configure";[m
+[31m-                        logCMakeDebuggerTelemetry(trigger ?? "", cmakeDebugType);[m
+[31m-                        await vscode.debug.startDebugging(undefined, {[m
+[31m-                            name: localize("cmake.debug.name", "CMake Debugger"),[m
+[31m-                            request: "launch",[m
+[31m-                            type: "cmake",[m
+[31m-                            cmakeDebugType,[m
+[31m-                            pipeName: debuggerInformation.pipeName,[m
+[31m-                            fromCommand: true[m
+[31m-                        });[m
+[31m-                    }[m
+[32m+[m[32m                    debuggerInformation.debuggerIsReady();[m
+                 }[m
+             }[m
+ [m
+[1mdiff --git a/src/extension.ts b/src/extension.ts[m
+[1mindex 9e79529e..0c0db7aa 100644[m
+[1m--- a/src/extension.ts[m
+[1m+++ b/src/extension.ts[m
+[36m@@ -1292,7 +1292,8 @@[m [mexport class ExtensionManager implements vscode.Disposable {[m
+             type: "cmake",[m
+             cmakeDebugType: "configure",[m
+             pipeName: getDebuggerPipeName(),[m
+[31m-            folder[m
+[32m+[m[32m            folder,[m
+[32m+[m[32m            fromCommand: true[m
+         });[m
+     }[m
+ [m
+[36m@@ -1313,7 +1314,8 @@[m [mexport class ExtensionManager implements vscode.Disposable {[m
+             type: "cmake",[m
+             cmakeDebugType: "configure",[m
+             pipeName: getDebuggerPipeName(),[m
+[31m-            trigger[m
+[32m+[m[32m            trigger,[m
+[32m+[m[32m            fromCommand: true[m
+         });[m
+     }[m
+ [m
+[36m@@ -1337,7 +1339,8 @@[m [mexport class ExtensionManager implements vscode.Disposable {[m
+             pipeName: getDebuggerPipeName(),[m
+             folder,[m
+             sourceDir,[m
+[31m-            trigger[m
+[32m+[m[32m            trigger,[m
+[32m+[m[32m            fromCommand: true[m
+         });[m
+     }[m
+ [m
+[36m@@ -1362,7 +1365,8 @@[m [mexport class ExtensionManager implements vscode.Disposable {[m
+             type: "cmake",[m
+             cmakeDebugType: "configure",[m
+             pipeName: getDebuggerPipeName(),[m
+[31m-            trigger[m
+[32m+[m[32m            trigger,[m
+[32m+[m[32m            fromCommand: true[m
+         });[m
+     }[m
+ [m

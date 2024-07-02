@@ -1292,7 +1292,8 @@ export class ExtensionManager implements vscode.Disposable {
             type: "cmake",
             cmakeDebugType: "configure",
             pipeName: getDebuggerPipeName(),
-            folder
+            folder,
+            fromCommand: true
         });
     }
 
@@ -1313,7 +1314,8 @@ export class ExtensionManager implements vscode.Disposable {
             type: "cmake",
             cmakeDebugType: "configure",
             pipeName: getDebuggerPipeName(),
-            trigger
+            trigger,
+            fromCommand: true
         });
     }
 
@@ -1337,7 +1339,8 @@ export class ExtensionManager implements vscode.Disposable {
             pipeName: getDebuggerPipeName(),
             folder,
             sourceDir,
-            trigger
+            trigger,
+            fromCommand: true
         });
     }
 
@@ -1362,7 +1365,8 @@ export class ExtensionManager implements vscode.Disposable {
             type: "cmake",
             cmakeDebugType: "configure",
             pipeName: getDebuggerPipeName(),
-            trigger
+            trigger,
+            fromCommand: true
         });
     }
 
