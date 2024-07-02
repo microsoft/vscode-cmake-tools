@@ -1370,7 +1370,9 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit | null): boolean {
         vs: k.visualStudio,
         vsArch: k.visualStudioArchitecture,
         tc: k.toolchainFile,
-        preferredGenerator: k.preferredGenerator ? k.preferredGenerator.name : null
+        preferredGeneratorName: k.preferredGenerator ? k.preferredGenerator.name : null,
+        preferredGeneratorPlatform: k.preferredGenerator && k.preferredGenerator.platform ? k.preferredGenerator.platform : null,
+        preferredGeneratorToolset: k.preferredGenerator && k.preferredGenerator.toolset ? k.preferredGenerator.toolset : null
     });
     const new_imp = important_params(newKit);
     const old_imp = important_params(oldKit);
