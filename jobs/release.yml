@@ -92,3 +92,5 @@ extends:
         - ${{ if eq(parameters.ReleaseVersion, 'unset') }}:
           - 'ReleaseVersion needs to be set before scheduling the pipeline.'
         - template: /jobs/shared/build.yml@self
+          parameters:
+            ReleaseVersion: ${{ parameters.ReleaseVersion }}
