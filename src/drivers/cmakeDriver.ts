@@ -740,7 +740,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 name: this.config.generator,
                 platform: this.config.platform || undefined,
                 toolset: this.config.toolset || undefined
-            })
+            });
         }
 
         this._generator = await this.findBestGenerator(preferredGenerators);
