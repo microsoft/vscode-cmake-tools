@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.19
+
+Bug Fixes:
+
+- Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
+
 ## 1.18.43
 
 Features:
