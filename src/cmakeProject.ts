@@ -139,6 +139,7 @@ export class CMakeProject {
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
+    private projectController: ProjectController | undefined;
     public readonly cTestController: CTestDriver;
     public readonly cPackageController: CPackDriver;
     public readonly workflowController: WorkflowDriver;
@@ -154,6 +155,7 @@ export class CMakeProject {
     private constructor(readonly workspaceContext: DirectoryContext, projectController?: ProjectController, readonly isMultiProjectFolder: boolean = false) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
+        this.projectController = projectController;
         this.cTestController = new CTestDriver(workspaceContext, projectController);
         this.cPackageController = new CPackDriver(workspaceContext);
         this.workflowController = new WorkflowDriver(workspaceContext, projectController);
@@ -582,7 +584,6 @@ export class CMakeProject {
             workflowPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
-            this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
         if (!expandedWorkflowPreset) {
@@ -884,6 +885,15 @@ export class CMakeProject {
                         label: util.getRelativePath(file, this.folderPath) + "/CMakeLists.txt",
                         fullPath: file
                     })) : [];
+
+                    // Sort files by depth. In general the user may want to select the top-most CMakeLists.txt
+                    items.sort((a, b) => {
+                        const aDepth = a.fullPath.split(path.sep).length;
+                        const bDepth = b.fullPath.split(path.sep).length;
+
+                        return aDepth - bDepth;
+                    });
+
                     const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
                     const dontAskAgain: string = localize("do.not.ask.again", "[Don't Show Again]");
                     items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
@@ -1897,7 +1907,7 @@ export class CMakeProject {
      */
     async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
         if (!showCommandOnly) {
-            log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
+            log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
         if (showCommandOnly) {
@@ -2845,6 +2855,8 @@ export class CMakeProject {
             }
         }
 
+        await this.projectController?.updateActiveProject(this.workspaceFolder);
+
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
         await enableFullFeatureSet(true);
@@ -2938,7 +2950,7 @@ export class CMakeProject {
         }
 
         let init = [
-            'cmake_minimum_required(VERSION 3.0.0)',
+            'cmake_minimum_required(VERSION 3.5.0)',
             `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
             '\n'
         ].join('\n');

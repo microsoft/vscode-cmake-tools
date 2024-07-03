@@ -67,7 +67,7 @@ export function activate(extensionContext: vscode.ExtensionContext): void {
             const packageInfo: IPackageInfo = getPackageInfo();
             if (packageInfo) {
                 const targetPopulation: TargetPopulation = TargetPopulation.Public;
-                experimentationTelemetry = new ExperimentationTelemetry(new TelemetryReporter(packageInfo.name, packageInfo.version, appInsightsKey));
+                experimentationTelemetry = new ExperimentationTelemetry(new TelemetryReporter(appInsightsKey));
                 initializationPromise = getExperimentationServiceAsync(packageInfo.name, packageInfo.version, targetPopulation, experimentationTelemetry, extensionContext.globalState);
             }
         }

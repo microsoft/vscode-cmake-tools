@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "Předvolba pracovního postupu není nastavená.",
 	"no.project.found": "Pro složku {0} se nenašel žádný projekt.",
+	"workflow.configuring.clean": "Vyčištění projektu se konfiguruje pomocí předvolby konfigurace {0} pracovního postupu.",
 	"workflow.configuring": "Projekt se konfiguruje pomocí předvolby konfigurace {0} pracovního postupu.",
 	"workflow.building": "Sestavování projektu pomocí předvolby sestavení {0} kroku pracovního postupu.",
 	"workflow.running.ctest": "Spouští se ctest pro předvolbu testování {0} kroku pracovního postupu.",
