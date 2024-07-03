@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "将显示日志，并且输出通道会占用光标焦点。",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "将显示日志，但输出通道不会占用光标焦点。",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "日志既不显示也不占据焦点。",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "启用导出 compile_commands.json。",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "支持导出 compile_commands.json。仅在工具包场景中使用。在预设场景中，请使用 CMakePresets.json 设置它",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakePresets.json 配置驱动器 CMake 配置、生成和测试。使用 CMakePresets.json 时，将忽略工具包、变量和 settings.json 中的某些设置。",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "允许使用 JSON 扩展，如 CMakePresets.json 中的注释。请注意，如果使用非标准 JSON，则其他 IDE 或命令行可能认为 CMakePresets.json 文件无效。",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "支持使用预设文件，这些文件使用的是 CMake Tools 扩展当前不支持的版本中的功能。将忽略未知属性和宏。",

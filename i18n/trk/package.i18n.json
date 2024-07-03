@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Günlük görünür ve çıkış kanalı imlecin odağında olur.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Günlük görünür ancak çıkış kanalı imlecin odağında olmaz.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Günlük görünmez ve odakta olmaz.",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.js dosyasının dışarı aktarılmasını sağlar.",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.js dosyasının dışarı aktarılmasını sağlar. Bu yalnızca Kits senaryolarında kullanılır. Önayar senaryolarında bunu lütfen CMakePresets.json kullanarak ayarlayın.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMake yapılandırma, derleme ve test sürücüsünü yapılandırmak için CMakePresets.json kullanın. CMakePresets.json kullanılırken kitler, çeşitler ve settings.json'daki bazı ayarla yoksayılır.",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "CMakePresets.json'daki yorumlar gibi JSON uzantılarının kullanımına izin verin. Standart olmayan JSON kullanıyorsanız, CMakePresets.json dosyanızın diğer IDE'ler tarafından veya komut satırında geçersiz sayılabileceğini lütfen unutmayın.",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "CMake Araçları uzantısının şu anda desteklemediği sürümlerdeki özellikleri kullanan ön ayar dosyalarının kullanımını etkinleştirir. Bilinmeyen özellikler ve makrolar yoksayılır.",

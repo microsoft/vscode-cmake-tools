@@ -7,8 +7,8 @@
 	"circular.variable.reference": "Döngüsel değişken başvurusu bulundu: {0}",
 	"reached.max.recursion": "En yüksek dize genişletme özyinelemesine ulaşıldı. Olası döngüsel başvuru.",
 	"exception.expanding.string": "{0}: {1} dizesi genişletilirken özel durum",
-	"expand.expandstringhelper": "{0} genişletiliyor",
 	"invalid.variable.reference": "{1} dizesinde geçersiz {0} değişken başvurusu",
 	"command.not.supported": "Şu dize için komutlar desteklenmiyor: {0}",
-	"exception.executing.command": "Dizesi için {0} komutu yürütülürken özel durum oluştu: {1} {2}"
+	"exception.executing.command": "Dizesi için {0} komutu yürütülürken özel durum oluştu: {1} {2}",
+	"expand.expandstringhelper": "genişletilmiş {0}"
 }

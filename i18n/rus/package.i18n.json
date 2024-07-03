@@ -196,7 +196,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Журнал отображается и выходной канал фокусируется курсором.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Журнал отображается, но выходной канал не фокусируется курсором.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Журнал не отображается и не фокусируется.",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Включает exporting compile_commands.json.",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Разрешает экспортировать compile_commands.json. Это используется только в сценариях комплектов. В сценариях предварительных установок установите это с помощью CMakePresets.json.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Используйте CMakePresets.json для настройки конфигурации, сборки и тестирования CMake диска. При использовании CMakePresets.json наборы, варианты и некоторые параметры в settings.json будут пропущены.",
 	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Разрешить использование расширений JSON, таких как комментарии, в CMakePresets.json. Обратите внимание, что файл CMakePresets.json может считаться недействительным в других IDE или в командной строке, если вы используете нестандартный JSON.",
 	"cmake-tools.configuration.cmake.allowUnsupportedPresetsVersions.description": "Позволяет использовать предустановленные файлы, использующие функции из версий, которые сейчас не поддерживаются расширением CMake Tools. Неизвестные свойства и макросы будут игнорироваться.",

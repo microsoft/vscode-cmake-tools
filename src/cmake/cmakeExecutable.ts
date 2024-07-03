@@ -1,6 +1,13 @@
 import * as proc from '../proc';
 import * as util from '../util';
 import {setContextAndStore} from '../extension';
+import * as logging from '@cmt/logging';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
+const log = logging.createLogger('cmakeExecutable');
 
 export interface CMakeExecutable {
     path: string;
@@ -29,10 +36,14 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         const normalizedPath = util.platformNormalizePath(path);
         if (cmakeInfo.has(normalizedPath)) {
             const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
-            await setCMakeDebuggerAvailableContext(
-                cmakeExe.isDebuggerSupported?.valueOf() ?? false
-            );
-            return cmakeExe;
+            if (cmakeExe.isPresent) {
+                await setCMakeDebuggerAvailableContext(
+                    cmakeExe.isDebuggerSupported?.valueOf() ?? false
+                );
+                return cmakeExe;
+            } else {
+                log.error(localize('cmake.exe.not.found.in.cache', 'CMake executable not found in cache. Checking again.'));
+            }
         }
 
         try {

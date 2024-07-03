@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "La présélection de workflow n’est pas définie",
 	"no.project.found": "Projet introuvable pour le dossier {0}",
+	"workflow.configuring.clean": "Configuration d’un projet propre avec le {0} configurer la présélection du flux de travail.",
 	"workflow.configuring": "Configuration du projet avec la présélection de configuration {0} du workflow.",
 	"workflow.building": "Génération du projet avec la présélection de build {0} de l’étape de workflow.",
 	"workflow.running.ctest": "Exécution de ctest pour la présélection de test {0} de l’étape de workflow.",

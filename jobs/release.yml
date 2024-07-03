@@ -11,6 +11,24 @@ parameters:
     - default
     - test
     - real
+- name: VerifyChangelog
+  displayName: Attest that CHANGELOG.md is up-to-date.
+  type: string
+  default: no
+  values:
+    - yes
+    - no
+- name: VerifyNotice
+  displayName: Attest that all NOTICE files are up-to-date.
+  type: string
+  default: no
+  values:
+    - yes
+    - no
+- name: ReleaseVersion
+  displayName: Release Version to set in the vsix package
+  type: string
+  default: unset
 
 trigger: none
 
@@ -67,34 +85,10 @@ extends:
         - checkout: self
           clean: true
           fetchTags: false
-        - task: CmdLine@2
-          displayName: Check ReleaseVersion
-          inputs:
-            script: |-
-              @echo off
-              if "$(ReleaseVersion)"=="unset" (
-                  echo ^"ReleaseVersion^" was not set
-                  exit /B 1
-              )
-              exit /b 0
-        - task: CmdLine@2
-          displayName: Check VerifyNotice
-          inputs:
-            script: |
-              @echo off
-              if "$(VerifyNotice)"=="no" (
-                  echo ^"VerifyNotice^" was not set. Set to 'yes' once the NOTICE.txt is confirmed to be up-to-date.
-                  exit /B 1
-              )
-              exit /b 0
-        - task: CmdLine@2
-          displayName: Check VerifyChangelog
-          inputs:
-            script: |
-              @echo off
-              if "$(VerifyChangelog)"=="no" (
-                  echo ^"VerifyChangelog^" was not set. Set to 'yes' once the CHANGELOG is confirmed to be up-to-date.
-                  exit /B 1
-              )
-              exit /b 0
+        - ${{ if not(eq(parameters.VerifyChangelog, 'yes')) }}:
+          - 'CHANGELOG.md should be updated before scheduling the pipeline.'
+        - ${{ if not(eq(parameters.VerifyNotice, 'yes')) }}:
+          - 'Third party notices should be updated before scheduling the pipeline.'
+        - ${{ if not(eq(parameters.ReleaseVersion, 'yes')) }}:
+          - 'ReleaseVersion needs to be set before scheduling the pipeline.'
         - template: /jobs/shared/build.yml@self
