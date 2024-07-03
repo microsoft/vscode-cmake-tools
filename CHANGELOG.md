@@ -158,6 +158,7 @@ Features:
 Improvements:
 - When using CMake presets, the Project Status View now shows the build target along with the build preset. [PR #3241](https://github.com/microsoft/vscode-cmake-tools/pull/3241)
 - IntelliSense resolves headers coming from MacOS frameworks. CMake 3.27 or later is required. [#2324](https://github.com/microsoft/vscode-cmake-tools/issues/2324)
+- Support variable expansion in sourceDirectory setting related to various kit info. [#1914](https://github.com/microsoft/vscode-cmake-tools/issues/1914)
 - Allow configure settings to override the usual arguments the extension is usually passing to cmake. Don't have unremovable options. [#1639](https://github.com/microsoft/vscode-cmake-tools/issues/1639)
 - Allow a way to run CTests in parallel by setting `cmake.ctest.allowParallelJobs` to `true`. [#3091](https://github.com/microsoft/vscode-cmake-tools/issues/3091)
 - When clicking `Run CTests` from the status bar view, it now will bypass the Test Explorer and directly run the CTests. [#3151](https://github.com/microsoft/vscode-cmake-tools/issues/3151)
