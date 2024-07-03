@@ -139,6 +139,7 @@ export class CMakeProject {
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
+    private projectController: ProjectController | undefined;
     public readonly cTestController: CTestDriver;
     public readonly cPackageController: CPackDriver;
     public readonly workflowController: WorkflowDriver;
@@ -154,6 +155,7 @@ export class CMakeProject {
     private constructor(readonly workspaceContext: DirectoryContext, projectController?: ProjectController, readonly isMultiProjectFolder: boolean = false) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
+        this.projectController = projectController;
         this.cTestController = new CTestDriver(workspaceContext, projectController);
         this.cPackageController = new CPackDriver(workspaceContext);
         this.workflowController = new WorkflowDriver(workspaceContext, projectController);
@@ -2858,6 +2860,8 @@ export class CMakeProject {
                 log.info(localize('cmakepresets.created', '[Quick Start] CMakePresets.json created successfully.'));
             }
         }
+
+        await this.projectController?.updateActiveProject(this.workspaceFolder);
 
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.

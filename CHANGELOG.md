@@ -4,7 +4,6 @@
 
 Features:
 
-- Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
 - Upgrade `cmake_minimum_required` version 3.0.0 -> 3.5.0. [#3793](https://github.com/microsoft/vscode-cmake-tools/issues/3793)
 
 Improvements:
@@ -19,6 +18,9 @@ Bug Fixes:
 - Fix issue where new presets couldn't inherit from presets in CmakeUserPresets.json. These presets are now added to CmakeUserPresets.json instead of CmakePresets.json. [#3725](https://github.com/microsoft/vscode-cmake-tools/issues/3725)
 - Fix issue where CMakeTools does not recheck CMake Path to see if user installed CMake after launching VS Code. [3811](https://github.com/microsoft/vscode-cmake-tools/issues/3811)
 - Fix issue where `cmake.buildToolArgs` was sometimes applied incorrectly when presets are used [#3754](https://github.com/microsoft/vscode-cmake-tools/issues/3754)
+- Fix issue where `preferredGenerator.platform` and `preferredGenerator.toolset` wasn't being compared between the old and new kit to trigger a clean configure on a kit selection change. [#2699](https://github.com/microsoft/vscode-cmake-tools/issues/2699)
+- Still allow for users to add `--warn-unused-cli`. Now instead of overriding, it will remove our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
+- Ensure `useCMakePresets` context is set after making a CMakePreset.json with `Quick Start`. [#3734](https://github.com/microsoft/vscode-cmake-tools/issues/3734)
 - Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
 
 ## 1.18.42

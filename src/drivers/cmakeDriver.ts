@@ -1402,7 +1402,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = await this.generateInitCacheFlags();
         const initial_common_flags = extra_args.concat(this.config.configureArgs);
-        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags : initial_common_flags.concat("--no-warn-unused-cli");
+        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags.filter(f => f !== "--warn-unused-cli") : initial_common_flags.concat("--no-warn-unused-cli");
         const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
         const final_flags = define_flags.concat(common_flags, init_cache_flags);
 
