@@ -31,7 +31,6 @@ import * as nls from 'vscode-nls';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
-import { logCMakeDebuggerTelemetry } from '@cmt/debug/cmakeDebuggerTelemetry';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
