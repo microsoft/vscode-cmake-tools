@@ -24,8 +24,15 @@
 	"Launch": "Starten",
 	"Folder": "Ordner",
 	"active.folder": "Aktiver Ordner",
+	"configPreset.change": "Konfigurationsvoreinstellung ändern",
+	"buildPreset.change": "Buildvoreinstellung ändern",
+	"testPreset.change": "Testvoreinstellung ändern",
+	"packagePreset.change": "Paketvoreinstellung ändern",
+	"workflowPreset.change": "Workflowvoreinstellung ändern",
+	"kit.change": "Kit ändern",
 	"set.build.target": "Buildziel festlegen",
 	"set.debug.target": "Debugziel festlegen",
 	"set.launch.target": "Startziel festlegen",
-	"select.active.folder": "Aktiven Ordner auswählen"
+	"select.active.folder": "Aktiven Ordner auswählen",
+	"set.variant": "Variante festlegen"
 }
