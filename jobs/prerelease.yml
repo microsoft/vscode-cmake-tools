@@ -98,4 +98,4 @@ extends:
             ignoreLASTEXITCODE: true
         - template: /jobs/shared/build.yml@self
           parameters:
-            ReleaseVersion: ${{ variables.ReleaseVersion }}
+            ReleaseVersion: $(ReleaseVersion)
