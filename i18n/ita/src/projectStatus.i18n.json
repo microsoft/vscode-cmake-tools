@@ -24,8 +24,15 @@
 	"Launch": "Avvia",
 	"Folder": "Cartella",
 	"active.folder": "Cartella attiva",
+	"configPreset.change": "Cambia set di impostazioni di configurazione",
+	"buildPreset.change": "Cambia set di impostazioni di compilazione",
+	"testPreset.change": "Cambia set di impostazioni di test",
+	"packagePreset.change": "Cambia set di impostazioni del pacchetto",
+	"workflowPreset.change": "Cambia set di impostazioni del flusso di lavoro",
+	"kit.change": "Cambia kit",
 	"set.build.target": "Imposta la destinazione di compilazione",
 	"set.debug.target": "Imposta la destinazione di debug",
 	"set.launch.target": "Impostare destinazione di avvio",
-	"select.active.folder": "Seleziona la cartella attiva"
+	"select.active.folder": "Seleziona la cartella attiva",
+	"set.variant": "Imposta variante"
 }

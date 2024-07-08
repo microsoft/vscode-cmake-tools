@@ -24,8 +24,15 @@
 	"Launch": "시작",
 	"Folder": "폴더",
 	"active.folder": "활성 폴더",
+	"configPreset.change": "사전 설정 구성 변경",
+	"buildPreset.change": "빌드 사전 설정 변경",
+	"testPreset.change": "테스트 사전 설정 변경",
+	"packagePreset.change": "패키지 사전 설정 변경",
+	"workflowPreset.change": "워크플로 사전 설정 변경",
+	"kit.change": "키트 변경",
 	"set.build.target": "빌드 대상 설정",
 	"set.debug.target": "디버그 대상 설정",
 	"set.launch.target": "시작 대상 설정",
-	"select.active.folder": "활성 폴더 선택"
+	"select.active.folder": "활성 폴더 선택",
+	"set.variant": "변형 설정"
 }
