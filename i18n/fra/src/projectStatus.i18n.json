@@ -24,8 +24,15 @@
 	"Launch": "Lancer",
 	"Folder": "Dossier",
 	"active.folder": "Dossier actif",
+	"configPreset.change": "Modifier la présélection de configuration",
+	"buildPreset.change": "Modifier la présélection de build",
+	"testPreset.change": "Modifier la présélection de test",
+	"packagePreset.change": "Modifier la présélection de package",
+	"workflowPreset.change": "Modifier la présélection de flux de travail",
+	"kit.change": "Modifier le kit",
 	"set.build.target": "Définir la cible de build",
 	"set.debug.target": "Définir la cible de débogage",
 	"set.launch.target": "Définir la cible de lancement",
-	"select.active.folder": "Sélectionnez le dossier actif"
+	"select.active.folder": "Sélectionnez le dossier actif",
+	"set.variant": "Définir une variante"
 }
