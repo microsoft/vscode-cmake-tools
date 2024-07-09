@@ -84,7 +84,7 @@ class RollbarController {
      */
     error(what: string, additional: object = {}): void {
         log.error(what, JSON.stringify(additional));
-        debugger;
+        // debugger;
     }
 
     info(what: string, additional: object = {}): void {
