@@ -689,7 +689,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset) {
+async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset, envOverride?: EnvironmentWithNull) {
     const generator = 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined);
@@ -708,7 +708,7 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
             sourceDirName: path.basename(sourceDir),
             presetName: preset.name
         },
-        envOverride: preset.environment,
+        envOverride: envOverride ?? preset.environment,
         recursive: true,
         // Don't support commands since expansion might be called on activation. If there is
         // an extension depending on us, and there is a command in this extension is invoked,
@@ -803,12 +803,23 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         refs.clear();
     }
 
-    let preset = await expandConfigurePresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset);
+    const preset = await expandConfigurePresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset);
+
+    // I think we need to do some special stuff for the vs dev env and the PATH application. Below lists what I think we need to do.
+    // At the current line, preset.environment has the user modifications, not expanded, and without process.env.
+    // Steps I think we should do to get everything right:
+    // 1. Establish process.env.
+    // 2. Expand the environment variables in the preset with process.env as the envOverride.
+    // 3. Merge preset.environment on top of process.env
+
+    // Maybe we can add a parentEnvironment override, because essentially we want to act like we opened from a devenv, which means modifying the parent environment override.
+
     if (!preset) {
         return null;
     }
-    preset = await tryApplyVsDevEnv(preset);
+    //preset = await tryApplyVsDevEnv(preset);
 
+    // I don't think we should do this, because we might want to reference other env variables from preset.environment.
     preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
 
     // Expand strings under the context of current preset
@@ -817,13 +828,15 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
-        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull(); // process.env
         for (const key in preset.environment) {
             if (preset.environment[key]) {
                 expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
             }
         }
     }
+
+    // We need to have environment figured out at this point.
 
     expansionOpts.envOverride = expandedPreset.environment;
 
@@ -988,7 +1001,7 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
     return null;
 }
 
-async function tryApplyVsDevEnv(preset: ConfigurePreset) {
+async function tryApplyVsDevEnv(preset: ConfigurePreset): Promise<Preset> {
     if (!preset.__vsDevEnvApplied) {
         let compilerEnv = EnvironmentUtils.createPreserveNull();
         // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
@@ -1020,6 +1033,7 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
                 }
 
                 if (compilerName && whereExecutable) {
+                    // why are we using preset.environment here? Pretty sure we should at least have the process.env, preset.environment could very well be empty.
                     const compilerLocation = await execute(whereExecutable, [compilerName], null, {
                         environment: EnvironmentUtils.create(preset.environment),
                         silent: true,
