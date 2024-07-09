@@ -4,6 +4,8 @@
 
 Bug Fixes:
 
+- Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
+- Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
 - Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
 
 ## 1.18.43
@@ -27,7 +29,6 @@ Bug Fixes:
 - Fix issue where `preferredGenerator.platform` and `preferredGenerator.toolset` wasn't being compared between the old and new kit to trigger a clean configure on a kit selection change. [#2699](https://github.com/microsoft/vscode-cmake-tools/issues/2699)
 - Still allow for users to add `--warn-unused-cli`. Now instead of overriding, it will remove our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
 - Ensure `useCMakePresets` context is set after making a CMakePreset.json with `Quick Start`. [#3734](https://github.com/microsoft/vscode-cmake-tools/issues/3734)
-- Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
 
 ## 1.18.42
 
