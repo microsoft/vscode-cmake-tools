@@ -2415,9 +2415,14 @@
           "description": "%cmake-tools.configuration.cmake.defaultVariants.overall.description%",
           "default": {
             "buildType": {
-              "default": "debug",
+              "default": "unspecified",
               "description": "%cmake-tools.configuration.cmake.defaultVariants.buildType.description%",
               "choices": {
+                "unspecified": {
+                  "short": "Unspecified",
+                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.unspecified.long%",
+                  "buildType": "Unspecified"
+                },
                 "debug": {
                   "short": "Debug",
                   "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.debug.long%",

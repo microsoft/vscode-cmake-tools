@@ -1654,8 +1654,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         const allowBuildTypeOnMultiConfig = config.get<boolean>("setBuildTypeOnMultiConfig") || false;
 
-        if (!this.isMultiConfFast || (this.isMultiConfFast && allowBuildTypeOnMultiConfig)) {
-            // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
+        if ((!this.isMultiConfFast || (this.isMultiConfFast && allowBuildTypeOnMultiConfig)) && (this.currentBuildType !== "Unspecified")) {
+            // Mutliconf generators do not need the CMAKE_BUILD_TYPE property.
+            // Also, do not set CMAKE_BUILD_TYPE when the user has not
+            // specified the build type.
             settingMap.CMAKE_BUILD_TYPE = util.cmakeify(this.currentBuildType);
         }
 
