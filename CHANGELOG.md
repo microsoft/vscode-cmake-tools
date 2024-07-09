@@ -6,6 +6,7 @@ Bug Fixes:
 
 - Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
 - Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
+- Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
 
 ## 1.18.43
 
