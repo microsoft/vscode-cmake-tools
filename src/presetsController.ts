@@ -184,6 +184,8 @@ export class PresetsController {
         await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
         await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
 
+        // reset all expanded presets storage.
+
         this._referencedFiles = Array.from(referencedFiles);
 
         this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
@@ -416,7 +418,7 @@ export class PresetsController {
 
             if (newPreset) {
 
-                const before: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
+                const before: preset.ConfigurePreset[] = preset.allConfigurePresets(this.folderPath);
                 const name = await this.showNameInputBox() || newPreset.displayName || undefined;
                 if (!name) {
                     return false;
