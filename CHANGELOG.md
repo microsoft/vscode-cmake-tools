@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.19
+
+Bug Fixes:
+
+- Attempt to fix stringifying the extension context. [#3797](https://github.com/microsoft/vscode-cmake-tools/issues/3797)
+
 ## 1.18.43
 
 Features:
