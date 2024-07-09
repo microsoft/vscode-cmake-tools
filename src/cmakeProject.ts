@@ -823,18 +823,20 @@ export class CMakeProject {
     }
 
     private getPreferredGenerators(): CMakeGenerator[] {
-        // User can override generator with a setting
+        const userPreferred: CMakeGenerator[] = this.workspaceContext.config.preferredGenerators
+            .map(g => ({ name: g }));
+
+        // The generator setting is placed at the front of user preferred generators
         const userGenerator = this.workspaceContext.config.generator;
         if (userGenerator) {
             log.debug(localize('using.user.generator', 'Using generator from user configuration: {0}', userGenerator));
-            return [{
+            userPreferred.unshift({
                 name: userGenerator,
                 platform: this.workspaceContext.config.platform || undefined,
                 toolset: this.workspaceContext.config.toolset || undefined
-            }];
+            });
         }
 
-        const userPreferred = this.workspaceContext.config.preferredGenerators.map(g => ({ name: g }));
         return userPreferred;
     }
 
