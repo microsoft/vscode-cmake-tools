@@ -218,7 +218,7 @@ If you're already using a CMake toolchain file and want to enable vcpkg integrat
 
 ## Substitute commands in `launch.json` and `settings.json`
 
-CMake Tools supports command substitution for launch commands when `CMakePresets.json` integration is enabled. For more information, see [Command substitution](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/cmake-settings.md#command-substitution).
+CMake Tools supports command substitution for launch commands when `CMakePresets.json` integration is enabled. For more information, see [Command substitution](cmake-settings.md#command-substitution).
 
 ## Ignored settings
 
