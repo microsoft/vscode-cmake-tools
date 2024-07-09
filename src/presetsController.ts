@@ -1685,6 +1685,15 @@ export class PresetsController {
             }
         }
 
+        for (const preset of presetsFile.configurePresets || []) {
+            for (const key in preset.environment) {
+                if (preset.environment[key]?.includes('$env{' + key + '}')) {
+                    log.error(localize('circular.variable.reference', 'Invalid preset: {0}. Invalid macro expansion for environment variable {1}', preset.name, key));
+                    return undefined;
+                }
+            }
+        }
+
         log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
         return presetsFile;
     }
