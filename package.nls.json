@@ -64,7 +64,7 @@
     "cmake-tools.command.cmake.debugTargetAll.title": "Debug All Projects",
     "cmake-tools.command.cmake.launchTarget.title": "Run Without Debugging",
     "cmake-tools.command.cmake.launchTargetAll.title": "Run All Projects Without Debugging",
-    "cmake-tools.command.cmake.selectLaunchTarget.title": "Set Debug Target",
+    "cmake-tools.command.cmake.selectLaunchTarget.title": "Set Launch/Debug Target",
     "cmake-tools.command.cmake.stop.title": "Cancel Build",
     "cmake-tools.command.cmake.stopAll.title": "Cancel Build for All Projects",
     "cmake-tools.command.cmake.resetState.title": "Reset CMake Tools Extension State (For troubleshooting)",
