@@ -812,9 +812,33 @@ export class PresetsController {
     }
 
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
-        preset.expandVendorForConfigurePresets(this.folderPath);
+        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+    }
+
+    async getAllBuildPresets(): Promise<preset.BuildPreset[]> {
+        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        return preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
+    }
+
+    async getAllTestPresets(): Promise<preset.TestPreset[]> {
+        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        return preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
+    }
+
+    async getAllPackagePresets(): Promise<preset.PackagePreset[]> {
+        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        return preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
+    }
+
+    async getAllWorkflowPresets(): Promise<preset.WorkflowPreset[]> {
+        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        return preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
     }
 
     async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
@@ -927,7 +951,15 @@ export class PresetsController {
         let currentBuildPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'build');
-            const buildPresets = preset.allBuildPresets(this.folderPath);
+            const allPresets = preset.allBuildPresets(this.folderPath);
+            const buildPresets = (await this.getAllBuildPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const buildPreset of buildPresets) {
                 // Set active build preset as the first valid build preset matches the selected configure preset
                 if (buildPreset.configurePreset === selectedConfigurePreset && !buildPreset.hidden) {
@@ -951,7 +983,15 @@ export class PresetsController {
         let currentTestPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'test');
-            const testPresets = preset.allTestPresets(this.folderPath);
+            const allPresets = preset.allTestPresets(this.folderPath);
+            const testPresets = (await this.getAllTestPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const testPreset of testPresets) {
                 // Set active test preset as the first valid test preset matches the selected configure preset
                 if (testPreset.configurePreset === selectedConfigurePreset && !testPreset.hidden) {
@@ -975,7 +1015,15 @@ export class PresetsController {
         let currentPackagePreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'package');
-            const packagePresets = preset.allPackagePresets(this.folderPath);
+            const allPresets = preset.allPackagePresets(this.folderPath);
+            const packagePresets = (await this.getAllPackagePresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const packagePreset of packagePresets) {
                 // Set active package preset as the first valid package preset matches the selected configure preset
                 if (packagePreset.configurePreset === selectedConfigurePreset && !packagePreset.hidden) {
@@ -999,7 +1047,15 @@ export class PresetsController {
         let currentWorkflowPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
-            const workflowPresets = preset.allWorkflowPresets(this.folderPath);
+            const allPresets = preset.allWorkflowPresets(this.folderPath);
+            const workflowPresets = (await this.getAllWorkflowPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const workflowPreset of workflowPresets) {
                 // Set active workflow preset as the first valid workflow preset (matching the selected configure preset is not a requirement as for the other presets types)
                 await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
