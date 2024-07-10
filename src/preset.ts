@@ -9,7 +9,7 @@ import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
-import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
+import { Environment, EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 import { defaultNumJobs, UseVSEnvironment } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -820,13 +820,10 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         return null;
     }
 
-    const useVSEnvironment = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get("useVSEnvironment") as UseVSEnvironment;
-
-    if (useVSEnvironment !== "never") {
-        const vsDeveloperEnvironment = await tryGetVsDevEnv(preset, workspaceFolder, sourceDir, useVSEnvironment);
-        if (vsDeveloperEnvironment) {
-            preset.__vsDevEnvApplied = true;
-        }
+    // TODO: I've accidentally removed our check that prohibits us from constantly calling where.exe and stuff on our presets, I need to add it back.
+    const vsDeveloperEnvironment = await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
+    if (vsDeveloperEnvironment) {
+        preset.__vsDevEnvApplied = true;
     }
 
     const combinedEnvironment = EnvironmentUtils.mergePreserveNull([process.env, vsDeveloperEnvironment]);
@@ -1012,175 +1009,197 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
     return null;
 }
 
-async function tryGetVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, useVSEnvironmentMode: UseVSEnvironment): Promise<EnvironmentWithNull | undefined> {
-    let environment;
-    if (useVSEnvironmentMode === "always" || useVSEnvironmentMode === "auto") {
-        if (!preset.__vsDevEnvApplied) {
-            let compilerEnv = EnvironmentUtils.createPreserveNull();
-            // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
-            // but they are not on PATH, then set the env automatically.
-            if (process.platform === 'win32') {
-                let shouldApplyDevenv = useVSEnvironmentMode === "always";
-                if (preset.cacheVariables && useVSEnvironmentMode === "auto") {
-                    const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-                    const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-                    // The env variables for the supported compilers are the same.
-                    const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+export interface VsDevEnvOptions {
+    preset: ConfigurePreset;
+    shouldInterrogateForNinja: boolean;
+    compilerName?: string; // Only will have a value when `useVSEnvironmentMode` is "auto"
+}
 
-                    // find where.exe using process.env since we're on windows.
-                    let whereExecutable;
-                    // assume in this call that it exists
-                    const whereOutput = await execute('where.exe', ['where.exe'], null, {
-                        environment: process.env,
-                        silent: true,
-                        encoding: 'utf-8',
-                        shell: true
-                    }).result;
+/**
+ * @param opts Options to control the behavior of obtaining the VS developer environment.
+ * @returns Either the VS developer environment or undefined if it could not be obtained.
+ */
+async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull | undefined> {
+    const arch = getArchitecture(opts.preset);
+    const toolset = getToolset(opts.preset);
 
-                    // now we have a valid where.exe
+    // Get version info for all VS instances.
+    const vsInstalls = await vsInstallations();
 
-                    if (whereOutput.stdout) {
-                        const locations = whereOutput.stdout.split('\r\n');
-                        if (locations.length > 0) {
-                            whereExecutable = locations[0];
-                        }
-                    }
+    // The VS installation to grab developer environment from.
+    let vsInstall: VSInstallation | undefined;
 
-                    if (compilerName && whereExecutable) {
-                    // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
-                    // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
-                        const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
-                        const presetEnv = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
-                        if (presetEnv) {
-                            for (const key in presetEnv) {
-                                if (presetEnv[key]) {
-                                    presetEnv[key] = await expandString(presetEnv[key]!, expansionOpts);
-                                }
-                            }
-                        }
-
-                        const compilerLocation = await execute(whereExecutable, [compilerName], null, {
-                            environment: EnvironmentUtils.create(presetEnv),
-                            silent: true,
-                            encoding: 'utf8',
-                            shell: true
-                        }).result;
-
-                        // if ninja isn't on path, try to look for it in a VS install
-                        const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
-                            environment: EnvironmentUtils.create(presetEnv),
-                            silent: true,
-                            encoding: 'utf8',
-                            shell: true
-                        }).result;
-
-                        const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
-                        const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
-
-                        shouldApplyDevenv = !compilerLocation.stdout || shouldInterrogateForNinja;
-
-                        if (!compilerLocation.stdout || shouldInterrogateForNinja) {
-                        // Not on PATH, need to set env
-
-                        }
-                    }
-                }
-
-                if (shouldApplyDevenv) {
-                    const arch = getArchitecture(preset);
-                    const toolset = getToolset(preset);
-
-                    // Get version info for all VS instances.
-                    const vsInstalls = await vsInstallations();
-
-                    // The VS installation to grab developer environment from.
-                    let vsInstall: VSInstallation | undefined;
-
-                    // VS generators starting with Visual Studio 15 2017 support CMAKE_GENERATOR_INSTANCE.
-                    // If supported, we should respect this value when defined. If not defined, we should
-                    // set it to ensure CMake chooses the same VS instance as we use here.
-                    // Note that if the user sets this in a toolchain file we won't know about it,
-                    // which could cause configuration to fail. However the user can workaround this by launching
-                    // vscode from the dev prompt of their desired instance.
-                    // https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_INSTANCE.html
-                    let vsGeneratorVersion: number | undefined;
-                    const matches = preset.generator?.match(/Visual Studio (?<version>\d+)/);
-                    if (matches && matches.groups?.version && preset.cacheVariables) {
-                        vsGeneratorVersion = parseInt(matches.groups.version);
-                        const useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
-                        const cmakeGeneratorInstance = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_GENERATOR_INSTANCE']);
-                        if (useCMakeGeneratorInstance && cmakeGeneratorInstance) {
-                            const cmakeGeneratorInstanceNormalized = path.normalize(cmakeGeneratorInstance);
-                            vsInstall = vsInstalls.find((vs) => vs.installationPath
+    // VS generators starting with Visual Studio 15 2017 support CMAKE_GENERATOR_INSTANCE.
+    // If supported, we should respect this value when defined. If not defined, we should
+    // set it to ensure CMake chooses the same VS instance as we use here.
+    // Note that if the user sets this in a toolchain file we won't know about it,
+    // which could cause configuration to fail. However the user can workaround this by launching
+    // vscode from the dev prompt of their desired instance.
+    // https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_INSTANCE.html
+    let vsGeneratorVersion: number | undefined;
+    const matches = opts.preset.generator?.match(/Visual Studio (?<version>\d+)/);
+    if (opts.preset.cacheVariables && matches && matches.groups?.version) {
+        vsGeneratorVersion = parseInt(matches.groups.version);
+        const useCMakeGeneratorInstance = !isNaN(vsGeneratorVersion) && vsGeneratorVersion >= 15;
+        const cmakeGeneratorInstance = getStringValueFromCacheVar(opts.preset.cacheVariables['CMAKE_GENERATOR_INSTANCE']);
+        if (useCMakeGeneratorInstance && cmakeGeneratorInstance) {
+            const cmakeGeneratorInstanceNormalized = path.normalize(cmakeGeneratorInstance);
+            vsInstall = vsInstalls.find((vs) => vs.installationPath
                                         && path.normalize(vs.installationPath) === cmakeGeneratorInstanceNormalized);
 
-                            if (!vsInstall) {
-                                log.warning(localize('specified.vs.not.found',
-                                    "Configure preset {0}: Visual Studio instance specified by {1} was not found, falling back on default instance lookup behavior.",
-                                    preset.name, `CMAKE_GENERATOR_INSTANCE="${cmakeGeneratorInstance}"`));
-                            }
-                        }
+            if (!vsInstall) {
+                log.warning(localize('specified.vs.not.found',
+                    "Configure preset {0}: Visual Studio instance specified by {1} was not found, falling back on default instance lookup behavior.",
+                    opts.preset.name, `CMAKE_GENERATOR_INSTANCE="${cmakeGeneratorInstance}"`));
+            }
+        }
+    }
+
+    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
+    // that supports the specified toolset.
+    if (!vsInstall) {
+        // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
+        vsInstalls.sort((a, b) => {
+            if (a.isPrerelease && !b.isPrerelease) {
+                return 1;
+            } else if (!a.isPrerelease && b.isPrerelease) {
+                return -1;
+            }
+            return -compareVersions(a.installationVersion, b.installationVersion);
+        });
+
+        for (const vs of vsInstalls) {
+            // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
+            // toolset.host will be set by getToolset.
+            if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
+                // If a toolset version is specified then check to make sure this vs instance has it installed.
+                if (toolset.version) {
+                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
+                    // forcing non-null due to false positive (toolset.version is checked in conditional)
+                    if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
+                        vsInstall = vs;
+                        break;
                     }
-
-                    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
-                    // that supports the specified toolset.
-                    if (!vsInstall) {
-                        // sort VS installs in order of descending version. This ensures we choose the latest supported install first.
-                        vsInstalls.sort((a, b) => {
-                            if (a.isPrerelease && !b.isPrerelease) {
-                                return 1;
-                            } else if (!a.isPrerelease && b.isPrerelease) {
-                                return -1;
-                            }
-                            return -compareVersions(a.installationVersion, b.installationVersion);
-                        });
-
-                        for (const vs of vsInstalls) {
-                            // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
-                            // toolset.host will be set by getToolset.
-                            if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
-                                // If a toolset version is specified then check to make sure this vs instance has it installed.
-                                if (toolset.version) {
-                                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
-                                    // forcing non-null due to false positive (toolset.version is checked in conditional)
-                                    if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
-                                        vsInstall = vs;
-                                        break;
-                                    }
-                                } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
-                                    // If no toolset version specified then choose the latest VS instance for the given generator
-                                    vsInstall = vs;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (!vsInstall) {
-                        log.error(localize('specified.cl.not.found',
-                            "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
-                            preset.name, `"${compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
-                    } else {
-                        log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
-                        const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
-                        compilerEnv = vsEnv ?? EnvironmentUtils.create();
-
-                        if (shouldInterrogateForNinja) {
-                            const vsCMakePaths = await paths.vsCMakePaths(vsInstall.instanceId);
-                            if (vsCMakePaths.ninja) {
-                                log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
-                                compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
-                            }
-                        }
-
-                        environment = compilerEnv;
-                    }
+                } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
+                    // If no toolset version specified then choose the latest VS instance for the given generator
+                    vsInstall = vs;
+                    break;
                 }
             }
         }
     }
 
-    return environment;
+    if (!vsInstall) {
+        // I don't think we want to do this anymore, or at least it's conditional on the mode being "auto". If it's "always", we just want to report that we couldn't find a vs isntallation.
+        // I think this is fine for when we've done it in auto, but when we
+        if (opts.compilerName) {
+            log.error(localize('specified.cl.not.found',
+                "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
+                opts.preset.name, `"${opts.compilerName}.exe"`, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
+        } else {
+            log.error(localize('vs.not.found', "Configure preset {0}: No Visual Studio installation found that supports the specified toolset {1} and architecture {2}, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
+                opts.preset.name, toolset.version ? `"${toolset.version},${toolset.host}"` : `"${toolset.host}"`, `"${arch}"`));
+        }
+    } else {
+        log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
+        const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
+        const compilerEnv = vsEnv ?? EnvironmentUtils.create();
+
+        if (opts.shouldInterrogateForNinja) {
+            const vsCMakePaths = await paths.vsCMakePaths(vsInstall.instanceId);
+            if (vsCMakePaths.ninja) {
+                log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
+                compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
+            }
+        }
+
+        return compilerEnv;
+    }
+}
+
+async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<EnvironmentWithNull | undefined> {
+    const useVSEnvironmentMode = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get("useVSEnvironment") as UseVSEnvironment;
+    if (useVSEnvironmentMode === "never") {
+        return undefined;
+    }
+
+    // [Windows Only] We only support VS Dev Env on Windows.
+    if (process.platform === "win32") {
+        if (useVSEnvironmentMode === "auto") {
+            if (preset.cacheVariables) {
+                const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
+                const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
+                // The env variables for the supported compilers are the same.
+                const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+
+                // find where.exe using process.env since we're on windows.
+                let whereExecutable;
+                // assume in this call that it exists
+                const whereOutput = await execute('where.exe', ['where.exe'], null, {
+                    environment: process.env,
+                    silent: true,
+                    encoding: 'utf-8',
+                    shell: true
+                }).result;
+
+                // now we have a valid where.exe
+
+                if (whereOutput.stdout) {
+                    const locations = whereOutput.stdout.split('\r\n');
+                    if (locations.length > 0) {
+                        whereExecutable = locations[0];
+                    }
+                }
+
+                if (compilerName && whereExecutable) {
+                // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
+                // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
+                    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+                    const presetEnv = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
+                    if (presetEnv) {
+                        for (const key in presetEnv) {
+                            if (presetEnv[key]) {
+                                presetEnv[key] = await expandString(presetEnv[key]!, expansionOpts);
+                            }
+                        }
+                    }
+
+                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                        environment: EnvironmentUtils.create(presetEnv),
+                        silent: true,
+                        encoding: 'utf8',
+                        shell: true
+                    }).result;
+
+                    // if ninja isn't on path, try to look for it in a VS install
+                    const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                        environment: EnvironmentUtils.create(presetEnv),
+                        silent: true,
+                        encoding: 'utf8',
+                        shell: true
+                    }).result;
+
+                    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
+                    const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
+
+                    if (!compilerLocation.stdout || shouldInterrogateForNinja) {
+                        return getVsDevEnv({
+                            preset,
+                            shouldInterrogateForNinja,
+                            compilerName
+                        });
+                    }
+                }
+            }
+        } else if (useVSEnvironmentMode === "always") {
+            return getVsDevEnv({
+                preset,
+                shouldInterrogateForNinja: true
+            });
+        }
+    }
+
+    return undefined;
 }
 
 async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
