@@ -6,16 +6,17 @@ The main way to create a variant is via a `cmake-variants.json` or `cmake-varian
 
 Variants are a different concept than toolchains or toolsets. Those are handled by [CMake kits](kits.md).
 
-By default, if a variants file isn't present, CMake Tools loads four variants that correspond to default CMake build types: **Release**, **Debug**, **MinSizeRel**, and **RelWithDebInfo**. These variants do the following:
+By default, if a variants file isn't present, CMake Tools loads five options. Four options are variants that correspond to the default CMake build types: **Release**, **Debug**, **MinSizeRel**, and **RelWithDebInfo**. One **Unspecified** option lets CMake select the build type itself. The options do the following:
 
-|Option  | Description  |
+| Option | Description |
 |---------|---------|
-|`Debug`  | Disables optimizations and includes debug info.|
-|`Release`| Includes optimizations but no debug info.|
-|`MinSizeRel`| Optimizes for size. No debug info.|
-|`RelWithDebInfo` | Optimizes for speed but also includes debug info. |
+| `Debug` | Variant - Disables optimizations and includes debug info. |
+| `Release` | Variant - Includes optimizations but no debug info. |
+| `MinSizeRel` | Variant - Optimizes for size. No debug info. |
+| `RelWithDebInfo`  | Variant - Optimizes for speed but also includes debug info. |
+| `Unspecified` | Lets CMake select a default build type. |
 
-Selecting one of these variants configures and builds using the corresponding build type.
+Selecting one of the variants configures and builds using the corresponding build type.
 
 > **Important:**
 > CMake Tools does not respect `CMAKE_CONFIGURATION_TYPES`. Only the default configuration types listed above are present. A custom variant file is required to load other build types.
