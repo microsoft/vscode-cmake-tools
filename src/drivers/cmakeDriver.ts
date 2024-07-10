@@ -733,7 +733,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (preferredGenerators.length === 0
             && !(this.usingFileApi
                 && (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, this.cmake.minimalDefaultGeneratorVersion))
-                && kit.name === "Unspecified")
+                && kit.name === "__unspec__")
         ) {
             preferredGenerators.push({ name: "Ninja" });
             preferredGenerators.push({ name: "Unix Makefiles" });
