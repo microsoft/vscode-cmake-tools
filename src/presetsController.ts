@@ -156,7 +156,6 @@ export class PresetsController {
 
         // Record the file as referenced, even if the file does not exist.
         referencedFiles.add(file);
-
         let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
         if (presetsFile) {
             // Parse again so we automatically have a copy by value
@@ -164,6 +163,10 @@ export class PresetsController {
         } else {
             setOriginalPresetsFile(this.folderPath, undefined);
         }
+
+        // TODO: expand presets here, so we can validate the expanded values!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // check for cycles in the presets etc here
+        await this.getAllConfigurePresets();
 
         presetsFile = await this.validatePresetsFile(presetsFile, file);
         // Private fields must be set after validation, otherwise validation would fail.
@@ -1744,14 +1747,15 @@ export class PresetsController {
             }
         }
 
-        for (const preset of presetsFile.configurePresets || []) {
-            for (const key in preset.environment) {
-                if (preset.environment[key]?.includes('$env{' + key + '}')) {
-                    log.error(localize('circular.variable.reference', 'Invalid preset: {0}. Invalid macro expansion for environment variable {1}', preset.name, key));
-                    return undefined;
-                }
-            }
-        }
+        // TODO: this is an extemely lazy fix, need to find a better way to handle this
+        // for (const preset of presetsFile.configurePresets || []) {
+        //     for (const key in preset.environment) {
+        //         if (preset.environment[key]?.includes('$env{' + key + '}')) {
+        //             log.error(localize('circular.variable.reference', 'Invalid preset: {0}. Invalid macro expansion for environment variable {1}', preset.name, key));
+        //             return undefined;
+        //         }
+        //     }
+        // }
 
         log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
         return presetsFile;

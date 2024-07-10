@@ -91,6 +91,15 @@ export interface ExpansionOptions {
     doNotSupportCommands?: boolean;
 }
 
+export interface ExpansionErrorHandling {
+    error: ExpansionError | undefined;
+}
+
+export enum ExpansionError {
+    errorFromCircularReference = "circularReference",
+    maxRecursion = "maxRecursion"
+}
+
 /**
  * Replace ${variable} references in the given string with their corresponding
  * values.
@@ -98,7 +107,7 @@ export interface ExpansionOptions {
  * @param opts Options for the expansion process
  * @returns A string with the variable references replaced
  */
-export async function expandString<T>(input: string | T, opts: ExpansionOptions): Promise<string | T> {
+export async function expandString<T>(input: string | T, opts: ExpansionOptions, _errorHandler: ExpansionErrorHandling | undefined = undefined): Promise<string | T> {
     if (typeof input !== 'string') {
         return input;
     }
@@ -123,8 +132,14 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
 
         if (circularReference) {
             log.error(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
+            if (_errorHandler) {
+                _errorHandler.error = ExpansionError.errorFromCircularReference;
+            }
         } else if (i === maxRecursion) {
             log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
+            if (_errorHandler) {
+                _errorHandler.error = ExpansionError.maxRecursion;
+            }
         }
 
         return replaceAll(result, '${dollar}', '$');

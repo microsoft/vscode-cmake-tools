@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
 import { execute } from '@cmt/proc';
-import { expandString, ExpansionOptions } from '@cmt/expand';
+import { expandString, ExpansionError, ExpansionErrorHandling, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
@@ -735,7 +735,7 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
     return expansionOpts;
 }
 
-async function expandCondition(condition: boolean | Condition | null | undefined, expansionOpts: ExpansionOptions): Promise<boolean | Condition | undefined> {
+async function expandCondition(condition: boolean | Condition | null | undefined, expansionOpts: ExpansionOptions, _expansionFailure: ExpansionErrorHandling | undefined = undefined): Promise<boolean | Condition | undefined> {
     if (util.isNullOrUndefined(condition)) {
         return undefined;
     }
@@ -745,18 +745,18 @@ async function expandCondition(condition: boolean | Condition | null | undefined
     if (condition.type) {
         const result: Condition = { type: condition.type };
         if (condition.lhs) {
-            result.lhs = await expandString(condition.lhs, expansionOpts);
+            result.lhs = await expandString(condition.lhs, expansionOpts, _expansionFailure);
         }
         if (condition.rhs) {
-            result.rhs = await expandString(condition.rhs, expansionOpts);
+            result.rhs = await expandString(condition.rhs, expansionOpts, _expansionFailure);
         }
         if (condition.string) {
-            result.string = await expandString(condition.string, expansionOpts);
+            result.string = await expandString(condition.string, expansionOpts, _expansionFailure);
         }
         if (condition.list) {
             result.list = [];
             for (const value of condition.list) {
-                result.list.push(await expandString(value, expansionOpts));
+                result.list.push(await expandString(value, expansionOpts, _expansionFailure));
             }
         }
         if (condition.condition) {
@@ -811,6 +811,9 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
 }
 
 export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true): Promise<ConfigurePreset | null> {
+
+    // eslint-disable-next-line prefer-const
+    let expansionFailure: ExpansionErrorHandling = { error: undefined };
     // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
@@ -838,7 +841,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         expandedPreset.environment = EnvironmentUtils.createPreserveNull();
         for (const key in preset.environment) {
             if (preset.environment[key]) {
-                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts, expansionFailure);
             }
         }
     }
@@ -857,22 +860,22 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     // Expand other fields
     if (preset.binaryDir) {
-        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
+        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts, expansionFailure));
         if (!path.isAbsolute(expandedPreset.binaryDir)) {
             expandedPreset.binaryDir = util.resolvePath(expandedPreset.binaryDir, sourceDir);
         }
     }
 
     if (preset.cmakeExecutable) {
-        expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts));
+        expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts, expansionFailure));
     }
 
     if (preset.installDir) {
-        expandedPreset.installDir = util.lightNormalizePath(await expandString(preset.installDir, expansionOpts));
+        expandedPreset.installDir = util.lightNormalizePath(await expandString(preset.installDir, expansionOpts, expansionFailure));
     }
 
     if (preset.toolchainFile) {
-        expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts));
+        expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts, expansionFailure));
     }
 
     if (preset.cacheVariables) {
@@ -883,9 +886,9 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
                 expandedPreset.cacheVariables[cacheVarName] = cacheVar;
             } else if (cacheVar || cacheVar === "") {
                 if (util.isString(cacheVar)) {
-                    expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
+                    expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts, expansionFailure);
                 } else if (util.isString(cacheVar.value)) {
-                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts) };
+                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts, expansionFailure) };
                 } else {
                     expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
                 }
@@ -894,7 +897,11 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     }
 
     if (preset.condition) {
-        expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts);
+        expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, expansionFailure);
+    }
+
+    if (expansionFailure.error) {
+        return null;
     }
 
     // Other fields can be copied by reference for simplicity
