@@ -2,6 +2,10 @@
 
 ## 1.19
 
+Improvements:
+
+- Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
+
 Bug Fixes:
 
 - Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
