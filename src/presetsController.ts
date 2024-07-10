@@ -9,13 +9,14 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
+import { ExpansionErrorHandling, ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
+import { configurePresets, expandConfigurePreset, getPresetByName } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -164,14 +165,12 @@ export class PresetsController {
             setOriginalPresetsFile(this.folderPath, undefined);
         }
 
-        // TODO: expand presets here, so we can validate the expanded values!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // check for cycles in the presets etc here
-        await this.getAllConfigurePresets();
-
         presetsFile = await this.validatePresetsFile(presetsFile, file);
         // Private fields must be set after validation, otherwise validation would fail.
         this.populatePrivatePresetsFields(presetsFile, file);
         await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
+
+        presetsFile = await this.expandPresetsFile(presetsFile);
 
         // TODO: more validation (or move some of the per file validation here when all entries are merged.
         // Like unresolved preset reference or duplicates).
@@ -1647,6 +1646,58 @@ export class PresetsController {
             // Recursively merge included files
             await this.mergeIncludeFiles(rootPresetsFile, includeFile, fullIncludePath, referencedFiles);
         }
+    }
+
+    /**
+     * Expands the presets file by including all the included files
+     * Needs to do all the work that get all configure presets currently does BUT
+     * Also needs to return the presets file as well as any errors
+     * We cant set the presets file in the project until we have validated it by checking if there are any errors
+     */
+    private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
+
+        if (!presetsFile) {
+            return undefined;
+        }
+
+        log.debug(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
+
+        // eslint-disable-next-line prefer-const
+        let expansionErrors: ExpansionErrorHandling = { errorList: []};
+
+        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
+        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
+
+        // eslint-disable-next-line prefer-const
+        let presets: preset.ConfigurePreset[] = [];
+        // go through all the configure presets and expand them
+        for (const configurePreset of presetsFile?.configurePresets || []) {
+            const expandedPreset = await expandConfigurePreset(
+                this.folderPath,
+                configurePreset.name,
+                this._sourceDir,
+                this.workspaceFolder.uri.fsPath,
+                true,
+                false,
+                expansionErrors);
+
+            if (expandedPreset) {
+                presets.push(expandedPreset);
+            }
+        }
+        presetsFile.configurePresets = presets;
+
+        if (expansionErrors.errorList.length > 0) {
+            log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
+            for (const error of expansionErrors.errorList) {
+                log.error(error);
+            }
+            return undefined;
+        } else {
+            return presetsFile;
+        }
+
+        //return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
     }
 
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {

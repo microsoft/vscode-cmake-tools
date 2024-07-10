@@ -618,40 +618,40 @@ const referencedConfigurePresets: Map<string, Set<string>> = new Map();
  * They should NOT be used together.
  * They should Not call each other.
  */
-export async function expandVendorForConfigurePresets(folder: string, sourceDir: string, workspaceFolder: string): Promise<void> {
+export async function expandVendorForConfigurePresets(folder: string, sourceDir: string, workspaceFolder: string, _expansionErrors: ExpansionErrorHandling | undefined = undefined): Promise<void> {
     for (const preset of configurePresets(folder)) {
-        await getVendorForConfigurePreset(folder, preset.name, sourceDir, workspaceFolder);
+        await getVendorForConfigurePreset(folder, preset.name, sourceDir, workspaceFolder, _expansionErrors);
     }
     for (const preset of userConfigurePresets(folder)) {
-        await getVendorForConfigurePreset(folder, preset.name, sourceDir, workspaceFolder);
+        await getVendorForConfigurePreset(folder, preset.name, sourceDir, workspaceFolder, _expansionErrors);
     }
 }
 
-async function getVendorForConfigurePreset(folder: string, name: string, sourceDir: string, workspaceFolder: string): Promise<VendorType | VendorVsSettings | null> {
+async function getVendorForConfigurePreset(folder: string, name: string, sourceDir: string, workspaceFolder: string, _expansionErrors: ExpansionErrorHandling | undefined = undefined): Promise<VendorType | VendorVsSettings | null> {
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
         referencedConfigurePresets.set(folder, new Set());
     } else {
         refs.clear();
     }
-    return getVendorForConfigurePresetImpl(folder, name, sourceDir, workspaceFolder);
+    return getVendorForConfigurePresetImpl(folder, name, sourceDir, workspaceFolder, false, _expansionErrors);
 }
 
-async function getVendorForConfigurePresetImpl(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false): Promise<VendorType | VendorVsSettings | null> {
+async function getVendorForConfigurePresetImpl(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, _expansionErrors: ExpansionErrorHandling | undefined = undefined): Promise<VendorType | VendorVsSettings | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
-        const expandedPreset = await expandConfigurePreset(folder, name, workspaceFolder, sourceDir, false, false);
+        const expandedPreset = await expandConfigurePreset(folder, name, workspaceFolder, sourceDir, false, false, _expansionErrors);
         if (expandedPreset) {
-            return getVendorForConfigurePresetHelper(folder, expandedPreset, sourceDir, workspaceFolder);
+            return getVendorForConfigurePresetHelper(folder, expandedPreset, sourceDir, workspaceFolder, false, _expansionErrors);
         }
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userConfigurePresets(folder), name);
         if (preset) {
-            const expandedPreset = await expandConfigurePreset(folder, name, workspaceFolder, sourceDir, allowUserPreset, false);
+            const expandedPreset = await expandConfigurePreset(folder, name, workspaceFolder, sourceDir, allowUserPreset, false, _expansionErrors);
             if (expandedPreset) {
-                return getVendorForConfigurePresetHelper(folder, expandedPreset, sourceDir, workspaceFolder, allowUserPreset);
+                return getVendorForConfigurePresetHelper(folder, expandedPreset, sourceDir, workspaceFolder, allowUserPreset, _expansionErrors);
             }
         }
     }
@@ -659,7 +659,7 @@ async function getVendorForConfigurePresetImpl(folder: string, name: string, sou
     return null;
 }
 
-async function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false): Promise<VendorType | VendorVsSettings | null> {
+async function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, _expansionErrors: ExpansionErrorHandling | undefined = undefined): Promise<VendorType | VendorVsSettings | null> {
     if (preset.__expanded) {
         return preset.vendor || null;
     }
@@ -669,6 +669,9 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
     if (refs.has(preset.name)) {
         // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
         log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
+        if (_expansionErrors) {
+            _expansionErrors.errorList.push([ExpansionError.errorFromCircularReference, preset.name]);
+        }
         return null;
     }
 
@@ -780,13 +783,13 @@ async function expandCondition(condition: boolean | Condition | null | undefined
     return undefined;
 }
 
-export async function expandConditionsForPresets(folder: string, sourceDir: string, workspaceFolder: string) {
+export async function expandConditionsForPresets(folder: string, sourceDir: string, workspaceFolder: string, _expansionErrors: ExpansionErrorHandling | undefined = undefined) {
     for (const preset of allConfigurePresets(folder)) {
         if (preset.condition) {
-            const expandedPreset = await expandConfigurePreset(folder, preset.name, sourceDir, workspaceFolder, true, false);
+            const expandedPreset = await expandConfigurePreset(folder, preset.name, sourceDir, workspaceFolder, true, false, _expansionErrors);
             if (expandedPreset) {
                 const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
-                preset.condition = await expandCondition(preset.condition, opts);
+                preset.condition = await expandCondition(preset.condition, opts, _expansionErrors);
             }
         }
     }
@@ -795,7 +798,7 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
             const expandedPreset = await expandBuildPreset(folder, preset.name, workspaceFolder, sourceDir, undefined, undefined, true, preset.configurePreset, false);
             if (expandedPreset) {
                 const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
-                preset.condition = await expandCondition(preset.condition, opts);
+                preset.condition = await expandCondition(preset.condition, opts, _expansionErrors);
             }
         }
     }
@@ -804,16 +807,14 @@ export async function expandConditionsForPresets(folder: string, sourceDir: stri
             const expandedPreset = await expandTestPreset(folder, preset.name, workspaceFolder, sourceDir, undefined, true, preset.configurePreset, false);
             if (expandedPreset) {
                 const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
-                preset.condition = await expandCondition(preset.condition, opts);
+                preset.condition = await expandCondition(preset.condition, opts, _expansionErrors);
             }
         }
     }
 }
 
-export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true): Promise<ConfigurePreset | null> {
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true, _expansionErrors: ExpansionErrorHandling | undefined = undefined): Promise<ConfigurePreset | null> {
 
-    // eslint-disable-next-line prefer-const
-    let expansionFailure: ExpansionErrorHandling = { error: undefined };
     // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
@@ -841,7 +842,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         expandedPreset.environment = EnvironmentUtils.createPreserveNull();
         for (const key in preset.environment) {
             if (preset.environment[key]) {
-                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts, expansionFailure);
+                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts, _expansionErrors);
             }
         }
     }
@@ -860,22 +861,22 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     // Expand other fields
     if (preset.binaryDir) {
-        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts, expansionFailure));
+        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts, _expansionErrors));
         if (!path.isAbsolute(expandedPreset.binaryDir)) {
             expandedPreset.binaryDir = util.resolvePath(expandedPreset.binaryDir, sourceDir);
         }
     }
 
     if (preset.cmakeExecutable) {
-        expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts, expansionFailure));
+        expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts, _expansionErrors));
     }
 
     if (preset.installDir) {
-        expandedPreset.installDir = util.lightNormalizePath(await expandString(preset.installDir, expansionOpts, expansionFailure));
+        expandedPreset.installDir = util.lightNormalizePath(await expandString(preset.installDir, expansionOpts, _expansionErrors));
     }
 
     if (preset.toolchainFile) {
-        expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts, expansionFailure));
+        expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts, _expansionErrors));
     }
 
     if (preset.cacheVariables) {
@@ -886,9 +887,9 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
                 expandedPreset.cacheVariables[cacheVarName] = cacheVar;
             } else if (cacheVar || cacheVar === "") {
                 if (util.isString(cacheVar)) {
-                    expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts, expansionFailure);
+                    expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts, _expansionErrors);
                 } else if (util.isString(cacheVar.value)) {
-                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts, expansionFailure) };
+                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts, _expansionErrors) };
                 } else {
                     expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
                 }
@@ -897,11 +898,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     }
 
     if (preset.condition) {
-        expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, expansionFailure);
-    }
-
-    if (expansionFailure.error) {
-        return null;
+        expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, _expansionErrors);
     }
 
     // Other fields can be copied by reference for simplicity
