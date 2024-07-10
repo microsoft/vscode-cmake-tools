@@ -501,6 +501,11 @@ export class ProjectNode extends BaseNode {
             children.push(new SourceFileNode(this.id, this.folder, this.sourceDirectory, possiblePreset));
         }
 
+        const possibleUserPreset = path.join(this.sourceDirectory, 'CMakeUserPresets.json');
+        if (fs.existsSync(possibleUserPreset)) {
+            children.push(new SourceFileNode(this.id, this.folder, this.sourceDirectory, possibleUserPreset));
+        }
+
         return children;
     }
 

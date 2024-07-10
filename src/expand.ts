@@ -122,7 +122,7 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
         } while (i < maxRecursion && opts.recursive && didReplacement && !circularReference);
 
         if (circularReference) {
-            log.warning(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
+            log.error(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
         } else if (i === maxRecursion) {
             log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
         }
