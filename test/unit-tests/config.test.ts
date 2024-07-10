@@ -70,6 +70,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             statusBarVisibility: "visible"
         },
         useCMakePresets: 'never',
+        useVSEnvironment: 'auto',
         allowCommentsInPresetsFile: false,
         allowUnsupportedPresetsVersions: false,
         launchBehavior: 'reuseTerminal',

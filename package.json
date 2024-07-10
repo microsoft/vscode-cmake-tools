@@ -3505,6 +3505,17 @@
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%",
           "scope": "resource"
         },
+        "cmake.useVSEnvironment": {
+            "type": "string",
+            "enum": [
+                "always",
+                "never",
+                "auto"
+            ],
+            "default": "auto",
+            "description": "%cmake-tools.configuration.cmake.useVSEnvironment.description%",
+            "scope": "resource"
+        },
         "cmake.allowCommentsInPresetsFile": {
           "type": "boolean",
           "default": false,
