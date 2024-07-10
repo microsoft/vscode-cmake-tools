@@ -1059,7 +1059,18 @@ async function tryGetVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, 
                         shell: true
                     }).result;
 
-                    if (!compilerLocation.stdout) {
+                    // if ninja isn't on path, try to look for it in a VS install
+                    const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                        environment: EnvironmentUtils.create(presetEnv),
+                        silent: true,
+                        encoding: 'utf8',
+                        shell: true
+                    }).result;
+
+                    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
+                    const shouldInterrogateForNinja = generatorIsNinja && !ninjaLoc.stdout;
+
+                    if (!compilerLocation.stdout || shouldInterrogateForNinja) {
                         // Not on PATH, need to set env
                         const arch = getArchitecture(preset);
                         const toolset = getToolset(preset);
@@ -1139,14 +1150,7 @@ async function tryGetVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, 
                             const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
                             compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
-                            // if ninja isn't on path, try to look for it in a VS install
-                            const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
-                                environment: EnvironmentUtils.create(presetEnv),
-                                silent: true,
-                                encoding: 'utf8',
-                                shell: true
-                            }).result;
-                            if (!ninjaLoc.stdout) {
+                            if (shouldInterrogateForNinja) {
                                 const vsCMakePaths = await paths.vsCMakePaths(vsInstall.instanceId);
                                 if (vsCMakePaths.ninja) {
                                     log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
