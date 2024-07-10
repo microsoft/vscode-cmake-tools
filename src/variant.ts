@@ -238,14 +238,16 @@ export class VariantManager implements vscode.Disposable {
         this.customVariantsFileExists = false;
         const validate = await loadSchema('./schemas/variants-schema.json');
 
-        if (!filepath || !await fs.exists(filepath)) {
-            const workspaceFolder: string = this.workspaceFolder.uri.fsPath;
-            const candidates = [
-                path.join(workspaceFolder, 'cmake-variants.json'),
-                path.join(workspaceFolder, 'cmake-variants.yaml'),
-                path.join(workspaceFolder, '.vscode/cmake-variants.json'),
-                path.join(workspaceFolder, '.vscode/cmake-variants.yaml')
-            ];
+        // Variants file should be one of these four options
+        const workspaceFolder: string = this.workspaceFolder.uri.fsPath;
+        const candidates = [
+            path.join(workspaceFolder, 'cmake-variants.json'),
+            path.join(workspaceFolder, 'cmake-variants.yaml'),
+            path.join(workspaceFolder, '.vscode/cmake-variants.json'),
+            path.join(workspaceFolder, '.vscode/cmake-variants.yaml')
+        ];
+
+        if (!filepath || !await fs.exists(filepath) || !candidates.includes(filepath)) {
             for (const testpath of candidates) {
                 if (await fs.exists(testpath)) {
                     filepath = testpath;
