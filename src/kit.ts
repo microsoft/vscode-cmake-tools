@@ -1029,10 +1029,12 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
         }
     } else {
         const vs_vars = await getVSKitEnvironment(kit);
-        env = EnvironmentUtils.merge([env, vs_vars]);
-        const expandOptions: expand.ExpansionOptions = opts ? {...opts, envOverride: env } : {
+        const penv = EnvironmentUtils.merge([env, vs_vars]);
+        env = EnvironmentUtils.merge([penv, kit_env]);
+        const expandOptions: expand.ExpansionOptions = opts ? {...opts, envOverride: env, penvOverride: penv } : {
             vars: {} as expand.KitContextVars,
-            envOverride: env
+            envOverride: env,
+            penvOverride: penv
         };
         for (const env_var of Object.keys(kit_env)) {
             env[env_var] = await expand.expandString(kit_env[env_var], expandOptions);
