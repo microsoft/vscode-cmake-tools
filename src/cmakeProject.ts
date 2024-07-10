@@ -1636,8 +1636,14 @@ export class CMakeProject {
                                         .then(async chosen => {
                                             if (chosen) {
                                                 if (chosen.title === yesButtonTitle) {
-                                                    await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
-                                                        pipeName: getDebuggerPipeName()
+                                                    await vscode.debug.startDebugging(undefined, {
+                                                        name: localize("cmake.debug.name", "CMake Debugger"),
+                                                        request: "launch",
+                                                        type: "cmake",
+                                                        cmakeDebugType: "configure",
+                                                        pipeName: getDebuggerPipeName(),
+                                                        trigger: ConfigureTrigger.configureFailedConfigureWithDebuggerButton,
+                                                        fromCommand: true
                                                     });
                                                 } else if (chosen.title === doNotShowAgainTitle) {
                                                     await cmakeConfiguration.update(showDebuggerConfigurationString, false, vscode.ConfigurationTarget.Global);
