@@ -38,7 +38,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cmakefileapi-driver');
 /**
- * The CMake driver with FileApi of CMake >= 3.15.0
+ * The CMake driver with FileApi of CMake >= 3.14.0
  */
 export class CMakeFileApiDriver extends CMakeDriver {
 
@@ -52,7 +52,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         isMultiProject: boolean,
         workspaceRootPath: string,
         preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler);
+        super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler, true);
     }
 
     static async create(cmake: CMakeExecutable,
@@ -148,7 +148,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
             this._generatorInformation = this.generator;
         }
-        if (!this.generator && !this.useCMakePresets) {
+        if (!this.cmake.isDefaultGeneratorSupported && !this.generator && !this.useCMakePresets) {
             throw new NoGeneratorError();
         }
 
@@ -169,7 +169,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     async doSetKit(cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
         await cb();
-        if (!this.generator) {
+        if (!this.cmake.isDefaultGeneratorSupported && !this.generator) {
             throw new NoGeneratorError();
         }
     }
