@@ -4,10 +4,11 @@
 
 Bug Fixes:
 
-- Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
-- Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
+- Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist. [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
+- Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception. [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
 - Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
 - Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
+- Fix issue where we don't let CMake select a default generator when the selected kit is `__unspec__` and the CMake version supports setting an internal default generator (>=3.15.0). [#3405](https://github.com/microsoft/vscode-cmake-tools/issues/3405)
 
 ## 1.18.43
 
