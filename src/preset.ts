@@ -689,7 +689,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset, envOverride?: EnvironmentWithNull) {
+async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset, penvOverride?: EnvironmentWithNull) {
     const generator = 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined);
@@ -708,7 +708,8 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
             sourceDirName: path.basename(sourceDir),
             presetName: preset.name
         },
-        envOverride: envOverride ?? preset.environment,
+        envOverride: preset.environment,
+        penvOverride: penvOverride,
         recursive: true,
         // Don't support commands since expansion might be called on activation. If there is
         // an extension depending on us, and there is a command in this extension is invoked,
@@ -817,14 +818,21 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     if (!preset) {
         return null;
     }
-    //preset = await tryApplyVsDevEnv(preset);
 
-    // I don't think we should do this, because we might want to reference other env variables from preset.environment.
-    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
+    const vsDeveloperEnvironment = await tryGetVsDevEnv(preset, workspaceFolder, sourceDir);
+    if (vsDeveloperEnvironment) {
+        preset.__vsDevEnvApplied = true;
+    }
 
-    // Expand strings under the context of current preset
+    const combinedEnvironment = EnvironmentUtils.mergePreserveNull([process.env, vsDeveloperEnvironment]);
+
+    // Put the preset.environment on top of combined environment (which might have devenv)
+    preset.environment = EnvironmentUtils.mergePreserveNull([combinedEnvironment, preset.environment]);
+
+    // Expand strings under the context of current preset, also, pass combinedEnvironment as a penvOverride since we want to
+    // treat combinedEnvironment (which might have devenv) as the parent environment.
     const expandedPreset: ConfigurePreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, combinedEnvironment);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
@@ -835,8 +843,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
             }
         }
     }
-
-    // We need to have environment figured out at this point.
 
     expansionOpts.envOverride = expandedPreset.environment;
 
@@ -1001,7 +1007,8 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
     return null;
 }
 
-async function tryApplyVsDevEnv(preset: ConfigurePreset): Promise<Preset> {
+async function tryGetVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<EnvironmentWithNull | undefined> {
+    let environment;
     if (!preset.__vsDevEnvApplied) {
         let compilerEnv = EnvironmentUtils.createPreserveNull();
         // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
@@ -1033,9 +1040,20 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset): Promise<Preset> {
                 }
 
                 if (compilerName && whereExecutable) {
-                    // why are we using preset.environment here? Pretty sure we should at least have the process.env, preset.environment could very well be empty.
+                    // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
+                    // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
+                    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+                    const presetEnv = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
+                    if (presetEnv) {
+                        for (const key in presetEnv) {
+                            if (presetEnv[key]) {
+                                presetEnv[key] = await expandString(presetEnv[key]!, expansionOpts);
+                            }
+                        }
+                    }
+
                     const compilerLocation = await execute(whereExecutable, [compilerName], null, {
-                        environment: EnvironmentUtils.create(preset.environment),
+                        environment: EnvironmentUtils.create(presetEnv),
                         silent: true,
                         encoding: 'utf8',
                         shell: true
@@ -1123,7 +1141,7 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset): Promise<Preset> {
 
                             // if ninja isn't on path, try to look for it in a VS install
                             const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
-                                environment: EnvironmentUtils.create(preset.environment),
+                                environment: EnvironmentUtils.create(presetEnv),
                                 silent: true,
                                 encoding: 'utf8',
                                 shell: true
@@ -1136,17 +1154,15 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset): Promise<Preset> {
                                 }
                             }
 
-                            preset.environment = EnvironmentUtils.mergePreserveNull([preset.environment, compilerEnv]);
+                            environment = compilerEnv;
                         }
                     }
                 }
             }
         }
-
-        preset.__vsDevEnvApplied = true;
     }
 
-    return preset;
+    return environment;
 }
 
 async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
