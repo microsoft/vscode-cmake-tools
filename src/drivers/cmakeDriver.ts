@@ -761,7 +761,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * The CMAKE_BUILD_TYPE to use
      */
-    private _variantBuildType: string = 'Debug';
+    private _variantBuildType: string = 'Unspecified';
 
     /**
      * The arguments to pass to CMake during a configuration according to the current variant
