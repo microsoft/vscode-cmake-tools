@@ -101,6 +101,8 @@ export enum ExpansionError {
     maxRecursion = "maxRecursion",
     exception = "exception",
     invalidVariableReference = "invalidVariableReference",
+    presetNotFoundError = "presetNotFoundError",
+    unsupportedProperty = "unsupportedProperty",
 }
 
 /**

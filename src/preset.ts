@@ -823,7 +823,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         refs.clear();
     }
 
-    let preset = await expandConfigurePresetImpl(folder, name, allowUserPreset);
+    let preset = await expandConfigurePresetImpl(folder, name, allowUserPreset, _expansionErrors);
     if (!preset) {
         return null;
     }
@@ -993,20 +993,23 @@ function parseToolset(toolset: string): Toolset {
     return result;
 }
 
-async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false, _expansionErrors: ExpansionErrorHandling | undefined = undefined): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
-        return expandConfigurePresetHelper(folder, preset);
+        return expandConfigurePresetHelper(folder, preset, false, _expansionErrors);
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userConfigurePresets(folder), name);
         if (preset) {
-            return expandConfigurePresetHelper(folder, preset, true);
+            return expandConfigurePresetHelper(folder, preset, true, _expansionErrors);
         }
     }
 
     log.error(localize('config.preset.not.found', 'Could not find configure preset with name {0}', name));
+    if (_expansionErrors) {
+        _expansionErrors.errorList.push([ExpansionError.presetNotFoundError, name]);
+    }
     return null;
 }
 
@@ -1157,7 +1160,7 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
     return preset;
 }
 
-async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false) {
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false, _expansionErrors: ExpansionErrorHandling | undefined = undefined) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1167,10 +1170,16 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             // toolchainFile and installDir added in presets v3
             if (preset.toolchainFile) {
                 log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
+                if (_expansionErrors) {
+                    _expansionErrors.errorList.push([ExpansionError.unsupportedProperty, preset.name]);
+                }
                 return null;
             }
             if (preset.installDir) {
                 log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
+                if (_expansionErrors) {
+                    _expansionErrors.errorList.push([ExpansionError.unsupportedProperty, preset.name]);
+                }
                 return null;
             }
         }
@@ -1181,6 +1190,9 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
     if (refs.has(preset.name) && !preset.__expanded) {
         // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
         log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
+        if (_expansionErrors) {
+            _expansionErrors.errorList.push([ExpansionError.circularRefError, preset.name]);
+        }
         return null;
     }
 
@@ -1201,7 +1213,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset);
+            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset, _expansionErrors);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);

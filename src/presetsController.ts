@@ -1658,7 +1658,7 @@ export class PresetsController {
      * Also needs to return the presets file
      * We cant set the presets file in the project until we have validated it by checking if there are any errors
      * print out errrors here, and then return undefined if there are any errors
-     * // TODO: do this for all presets? Not just configure presets?
+     * // TODO: do this for all presets once i have configure presets fully working
      */
     private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
 
@@ -1691,6 +1691,7 @@ export class PresetsController {
                 presets.push(expandedPreset);
             }
         }
+        // TODO: pretty sure this is wrong
         presetsFile.configurePresets = presets;
 
         // TODO: make this much neater, but I can do that later
