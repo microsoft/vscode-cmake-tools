@@ -97,7 +97,7 @@ export interface ExpansionErrorHandling {
 }
 
 export enum ExpansionError {
-    errorFromCircularReference = "circularReference",
+    circularRefError = "circularReference",
     maxRecursion = "maxRecursion",
     exception = "exception",
     invalidVariableReference = "invalidVariableReference",
@@ -136,7 +136,7 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions,
         if (circularReference) {
             log.error(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
             if (_errorHandler) {
-                _errorHandler.errorList.push([ExpansionError.errorFromCircularReference, inputString]);
+                _errorHandler.errorList.push([ExpansionError.circularRefError, inputString]);
             }
         } else if (i === maxRecursion) {
             log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));

@@ -170,6 +170,10 @@ export class PresetsController {
         this.populatePrivatePresetsFields(presetsFile, file);
         await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
 
+        // set the pre-expanded version so we can call expandPresetsFile on it later
+        // TODO: check why this is necessary
+        setPresetsFile(this.folderPath, presetsFile);
+
         presetsFile = await this.expandPresetsFile(presetsFile);
 
         // TODO: more validation (or move some of the per file validation here when all entries are merged.
@@ -816,8 +820,8 @@ export class PresetsController {
     }
 
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
-        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        //await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
+        //await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
     }
 
@@ -1651,8 +1655,10 @@ export class PresetsController {
     /**
      * Expands the presets file by including all the included files
      * Needs to do all the work that get all configure presets currently does BUT
-     * Also needs to return the presets file as well as any errors
+     * Also needs to return the presets file
      * We cant set the presets file in the project until we have validated it by checking if there are any errors
+     * print out errrors here, and then return undefined if there are any errors
+     * // TODO: do this for all presets? Not just configure presets?
      */
     private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
 
@@ -1677,7 +1683,7 @@ export class PresetsController {
                 configurePreset.name,
                 this._sourceDir,
                 this.workspaceFolder.uri.fsPath,
-                true,
+                true,   // should this always be true?
                 false,
                 expansionErrors);
 
@@ -1687,6 +1693,7 @@ export class PresetsController {
         }
         presetsFile.configurePresets = presets;
 
+        // TODO: make this much neater, but I can do that later
         if (expansionErrors.errorList.length > 0) {
             log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
             for (const error of expansionErrors.errorList) {
@@ -1694,10 +1701,9 @@ export class PresetsController {
             }
             return undefined;
         } else {
+            log.debug(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
             return presetsFile;
         }
-
-        //return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
     }
 
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {
@@ -1797,16 +1803,6 @@ export class PresetsController {
                 }
             }
         }
-
-        // TODO: this is an extemely lazy fix, need to find a better way to handle this
-        // for (const preset of presetsFile.configurePresets || []) {
-        //     for (const key in preset.environment) {
-        //         if (preset.environment[key]?.includes('$env{' + key + '}')) {
-        //             log.error(localize('circular.variable.reference', 'Invalid preset: {0}. Invalid macro expansion for environment variable {1}', preset.name, key));
-        //             return undefined;
-        //         }
-        //     }
-        // }
 
         log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
         return presetsFile;

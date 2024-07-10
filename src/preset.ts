@@ -670,7 +670,7 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
         // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
         log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
         if (_expansionErrors) {
-            _expansionErrors.errorList.push([ExpansionError.errorFromCircularReference, preset.name]);
+            _expansionErrors.errorList.push([ExpansionError.circularRefError, preset.name]);
         }
         return null;
     }
