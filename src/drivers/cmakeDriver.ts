@@ -214,7 +214,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         protected sourceDirUnexpanded: string, // The un-expanded original source directory path, where the CMakeLists.txt exists.
         private readonly isMultiProject: boolean,
         private readonly __workspaceFolder: string,
-        readonly preconditionHandler: CMakePreconditionProblemSolver) {
+        readonly preconditionHandler: CMakePreconditionProblemSolver,
+        private readonly usingFileApi: boolean = false
+    ) {
         this.sourceDir = this.sourceDirUnexpanded;
         // We have a cache of file-compilation terminals. Wipe them out when the
         // user closes those terminals.
@@ -374,6 +376,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * classes from resetting the kit back to `null`.
      */
     private _kit: Kit | null = null;
+
+    get kit(): Kit | null {
+        return this._kit;
+    }
 
     private _kitDetect: KitDetect | null = null;
 
@@ -728,7 +734,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         // If no preferred generator is defined by the current kit or the user settings,
         // it's time to consider the defaults.
-        if (preferredGenerators.length === 0) {
+        if (preferredGenerators.length === 0
+            && !(this.usingFileApi
+                && (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, this.cmake.minimalDefaultGeneratorVersion))
+                && kit.name === "__unspec__")
+        ) {
             preferredGenerators.push({ name: "Ninja" });
             preferredGenerators.push({ name: "Unix Makefiles" });
         }
