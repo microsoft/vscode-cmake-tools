@@ -10,6 +10,7 @@ Features:
 Improvements:
 
 - Add setting for deleting entire build dir when clean configuring. [#3515](https://github.com/microsoft/vscode-cmake-tools/issues/3515)
+- Add setting to only show the cmake log on target failure. [#3785](https://github.com/microsoft/vscode-cmake-tools/pull/3785) [@stepeos](https://github.com/stepeos)
 
 Bug Fixes:
 

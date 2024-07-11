@@ -3513,7 +3513,7 @@
             "focus",
             "always",
             "never",
-            "on error"
+            "error"
           ],
           "enumDescriptions": [
             "%cmake-tools.configuration.cmake.revealLog.focus.description%",
