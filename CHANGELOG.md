@@ -2,8 +2,13 @@
 
 ## 1.19
 
+Improvements:
+
+- Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
+
 Bug Fixes:
 
+- Attempt to fix stringifying the extension context. [#3797](https://github.com/microsoft/vscode-cmake-tools/issues/3797)
 - Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
 - Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
 - Fix issue where `cmakeUserPresets.json` not showing up in project outline. [#3832](https://github.com/microsoft/vscode-cmake-tools/issues/3832)
