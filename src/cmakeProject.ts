@@ -3032,7 +3032,7 @@ export class CMakeProject {
         if (projType === 'Library') {
             if (!(await fs.exists(path.join(this.sourceDir, `${fileName}.${langExt}`)))) {
                 await fs.writeFile(path.join(this.sourceDir, `${fileName}.${langExt}`),
-                    (langExt === "C++" ?
+                    (langExt === "cpp" ?
                         ([
                             '#include <iostream>',
                             '',
@@ -3054,7 +3054,7 @@ export class CMakeProject {
         } else if (projType === 'Executable') {
             if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
                 await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
-                    (langExt === "C++" ?
+                    (langExt === "cpp" ?
                         ([
                             '#include <iostream>',
                             '',
