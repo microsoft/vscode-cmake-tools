@@ -146,14 +146,9 @@ export function processVariantFileData(root: VarFileRoot): VariantCollection {
 
 export const DEFAULT_VARIANTS: VarFileRoot = {
     buildType: {
-        default: 'unspecified',
+        default: 'debug',
         description: localize('build.type.description', 'The build type'),
         choices: {
-            unspecified: {
-                short: 'Unspecified',
-                long: localize('unspec.build.type', 'Let CMake pick the default build type'),
-                buildType: 'Unspecified'
-            },
             debug: {
                 short: 'Debug',
                 long: localize('emit.debug.without.optimizations', 'Emit debug information without performing optimizations'),
@@ -173,6 +168,11 @@ export const DEFAULT_VARIANTS: VarFileRoot = {
                 short: 'RelWithDebInfo',
                 long: localize('optimize.and.debug', 'Perform optimizations AND include debugging information'),
                 buildType: 'RelWithDebInfo'
+            },
+            unspecified: {
+                short: 'Unspecified',
+                long: localize('unspec.build.type', 'Let CMake pick the default build type'),
+                buildType: 'Unspecified'
             }
         }
     }

@@ -2415,14 +2415,9 @@
           "description": "%cmake-tools.configuration.cmake.defaultVariants.overall.description%",
           "default": {
             "buildType": {
-              "default": "unspecified",
+              "default": "debug",
               "description": "%cmake-tools.configuration.cmake.defaultVariants.buildType.description%",
               "choices": {
-                "unspecified": {
-                  "short": "Unspecified",
-                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.unspecified.long%",
-                  "buildType": "Unspecified"
-                },
                 "debug": {
                   "short": "Debug",
                   "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.debug.long%",
@@ -2442,6 +2437,11 @@
                   "short": "RelWithDebInfo",
                   "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long%",
                   "buildType": "RelWithDebInfo"
+                },
+                "unspecified": {
+                  "short": "Unspecified",
+                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.unspecified.long%",
+                  "buildType": "Unspecified"
                 }
               }
             }
