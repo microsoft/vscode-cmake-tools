@@ -195,6 +195,11 @@ export class VariantManager implements vscode.Disposable {
     private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true, followSymlinks: false });
     private customVariantsFileExists: boolean = false;
 
+    /**
+     * Whether the variant manager has been initialized
+     */
+    private initialized: boolean = false;
+
     dispose() {
         void this._variantFileWatcher.close();
         this._activeVariantChanged.dispose();
@@ -336,7 +341,7 @@ export class VariantManager implements vscode.Disposable {
         const invalid_variant = {
             key: '__invalid__',
             short: 'Unknown',
-            long: 'Unknwon'
+            long: 'Unknown'
         };
         const kws = this.stateManager.getActiveVariantSettings(this.folderName, this.isMultiProject);
         if (!kws) {
@@ -440,5 +445,11 @@ export class VariantManager implements vscode.Disposable {
             const defaultChoices = this.findDefaultChoiceCombination();
             await this.publishActiveKeywordSettings(defaultChoices);
         }
+
+        this.initialized = true;
+    }
+
+    hasInitialized(): boolean {
+        return this.initialized;
     }
 }
