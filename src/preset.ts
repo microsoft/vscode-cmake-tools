@@ -1129,81 +1129,79 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string
     }
 
     let developerEnvironment: EnvironmentWithNull | undefined;
-    if (!preset.__parentEnvironment) {
-        // [Windows Only] We only support VS Dev Env on Windows.
-        if (process.platform === "win32") {
-            if (useVsDeveloperEnvironmentMode === "auto") {
-                if (preset.cacheVariables) {
-                    const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-                    const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-                    // The env variables for the supported compilers are the same.
-                    const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+    // [Windows Only] We only support VS Dev Env on Windows.
+    if (!preset.__parentEnvironment && process.platform === "win32") {
+        if (useVsDeveloperEnvironmentMode === "auto") {
+            if (preset.cacheVariables) {
+                const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
+                const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
+                // The env variables for the supported compilers are the same.
+                const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
 
-                    // find where.exe using process.env since we're on windows.
-                    let whereExecutable;
-                    // assume in this call that it exists
-                    const whereOutput = await execute('where.exe', ['where.exe'], null, {
-                        environment: process.env,
+                // find where.exe using process.env since we're on windows.
+                let whereExecutable;
+                // assume in this call that it exists
+                const whereOutput = await execute('where.exe', ['where.exe'], null, {
+                    environment: process.env,
+                    silent: true,
+                    encoding: 'utf-8',
+                    shell: true
+                }).result;
+
+                // now we have a valid where.exe
+
+                if (whereOutput.stdout) {
+                    const locations = whereOutput.stdout.split('\r\n');
+                    if (locations.length > 0) {
+                        whereExecutable = locations[0];
+                    }
+                }
+
+                if (compilerName && whereExecutable) {
+                    // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
+                    // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
+                    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+                    const presetEnv = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
+                    if (presetEnv) {
+                        for (const key in presetEnv) {
+                            if (presetEnv[key]) {
+                                presetEnv[key] = await expandString(presetEnv[key]!, expansionOpts);
+                            }
+                        }
+                    }
+
+                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                        environment: EnvironmentUtils.create(presetEnv),
                         silent: true,
-                        encoding: 'utf-8',
+                        encoding: 'utf8',
                         shell: true
                     }).result;
 
-                    // now we have a valid where.exe
+                    // if ninja isn't on path, try to look for it in a VS install
+                    const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                        environment: EnvironmentUtils.create(presetEnv),
+                        silent: true,
+                        encoding: 'utf8',
+                        shell: true
+                    }).result;
 
-                    if (whereOutput.stdout) {
-                        const locations = whereOutput.stdout.split('\r\n');
-                        if (locations.length > 0) {
-                            whereExecutable = locations[0];
-                        }
-                    }
+                    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
+                    const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
 
-                    if (compilerName && whereExecutable) {
-                        // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
-                        // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
-                        const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
-                        const presetEnv = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
-                        if (presetEnv) {
-                            for (const key in presetEnv) {
-                                if (presetEnv[key]) {
-                                    presetEnv[key] = await expandString(presetEnv[key]!, expansionOpts);
-                                }
-                            }
-                        }
-
-                        const compilerLocation = await execute(whereExecutable, [compilerName], null, {
-                            environment: EnvironmentUtils.create(presetEnv),
-                            silent: true,
-                            encoding: 'utf8',
-                            shell: true
-                        }).result;
-
-                        // if ninja isn't on path, try to look for it in a VS install
-                        const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
-                            environment: EnvironmentUtils.create(presetEnv),
-                            silent: true,
-                            encoding: 'utf8',
-                            shell: true
-                        }).result;
-
-                        const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
-                        const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
-
-                        if (!compilerLocation.stdout || shouldInterrogateForNinja) {
-                            developerEnvironment = await getVsDevEnv({
-                                preset,
-                                shouldInterrogateForNinja,
-                                compilerName
-                            });
-                        }
+                    if (!compilerLocation.stdout || shouldInterrogateForNinja) {
+                        developerEnvironment = await getVsDevEnv({
+                            preset,
+                            shouldInterrogateForNinja,
+                            compilerName
+                        });
                     }
                 }
-            } else if (useVsDeveloperEnvironmentMode === "always") {
-                developerEnvironment = await getVsDevEnv({
-                    preset,
-                    shouldInterrogateForNinja: true
-                });
             }
+        } else if (useVsDeveloperEnvironmentMode === "always") {
+            developerEnvironment = await getVsDevEnv({
+                preset,
+                shouldInterrogateForNinja: true
+            });
         }
     }
 
