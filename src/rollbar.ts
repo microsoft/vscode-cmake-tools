@@ -12,6 +12,14 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('rollbar');
 
+function stringifyReplacer(key: any, value: any) {
+    if (key === "extensionContext") {
+        return undefined;
+    }
+
+    return value;
+}
+
 /**
  * Remove filesystem information from stack traces before logging telemetry
  * @param stack The call stack string
@@ -68,7 +76,7 @@ class RollbarController {
      * @returns The LogResult if we are enabled. `null` otherwise.
      */
     exception(what: string, exception: Error, additional: object = {}): void {
-        log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional));
+        log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
         const callstack = cleanStack(exception.stack);
         const message = cleanString(exception.message);
         logEvent('exception2', { message, callstack });
@@ -83,12 +91,12 @@ class RollbarController {
      * @returns The LogResult if we are enabled. `null` otherwise.
      */
     error(what: string, additional: object = {}): void {
-        log.error(what, JSON.stringify(additional));
+        log.error(what, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
         debugger;
     }
 
     info(what: string, additional: object = {}): void {
-        log.info(what, JSON.stringify(additional));
+        log.info(what, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
     }
 
     /**
