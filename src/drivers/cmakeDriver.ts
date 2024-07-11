@@ -860,7 +860,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     /**
-     * Get the current build type, according to the current selected variant.
+     * Get the current build type, according to the current selected preset or variant.
      *
      * This is the value passed to CMAKE_BUILD_TYPE or --config for multiconf
      */

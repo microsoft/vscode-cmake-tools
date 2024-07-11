@@ -2,6 +2,10 @@
 
 ## 1.19
 
+Improvements:
+
+- Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
+
 Bug Fixes:
 
 - Attempt to fix stringifying the extension context. [#3797](https://github.com/microsoft/vscode-cmake-tools/issues/3797)
