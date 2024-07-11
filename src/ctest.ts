@@ -705,7 +705,13 @@ export class CTestDriver implements vscode.Disposable {
                 log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
                 return result.retc || -3;
             }
-            this.tests = JSON.parse(result.stdout) ?? undefined;
+
+            try {
+                this.tests = JSON.parse(result.stdout.slice(result.stdout.indexOf("{"))) ?? undefined;
+            } catch {
+                this.tests = undefined;
+            }
+
             if (this.tests && this.tests.kind === 'ctestInfo') {
                 this.tests.tests.forEach(test => {
                     let testDefFile: string | undefined;
