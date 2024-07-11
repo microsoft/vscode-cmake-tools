@@ -846,7 +846,7 @@ class ConfigPreset extends Node {
         }
         const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
         if (config && checkConfigureOverridesPresent(config)) {
-            this.description = "Override settings applied";
+            this.description = localize("override.settings.applied", "Override settings applied");
             this.contextValue = 'configPreset - overrides present';
         } else {
             this.description = "";
@@ -886,7 +886,7 @@ class BuildPreset extends Node {
 
         const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
         if (config && checkBuildOverridesPresent(config)) {
-            this.description = "Override settings applied";
+            this.description = localize("override.settings.applied", "Override settings applied");
             this.contextValue = 'buildPreset - overrides present';
         } else {
             this.description = "";
@@ -926,7 +926,7 @@ class TestPreset extends Node {
 
         const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
         if (config && checkTestOverridesPresent(config)) {
-            this.description = "Override settings applied";
+            this.description = localize("override.settings.applied", "Override settings applied");
             this.contextValue = 'testPreset - overrides present';
         } else {
             this.description = "";
@@ -967,7 +967,7 @@ class PackagePreset extends Node {
 
         const config = (await treeDataProvider.cmakeProject.getCMakeDriverInstance())?.config;
         if (config && checkPackageOverridesPresent(config)) {
-            this.description = "Override settings applied";
+            this.description = localize("override.settings.applied", "Override settings applied");
             this.contextValue = 'packagePreset - overrides present';
         } else {
             this.description = "";
