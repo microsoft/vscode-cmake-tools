@@ -377,6 +377,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     private _kit: Kit | null = null;
 
+    get kit(): Kit | null {
+        return this._kit;
+    }
+
     private _kitDetect: KitDetect | null = null;
 
     private _useCMakePresets: boolean = true;

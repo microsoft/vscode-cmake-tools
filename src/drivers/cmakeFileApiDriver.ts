@@ -148,7 +148,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
             this._generatorInformation = this.generator;
         }
-        if (!this.cmake.isDefaultGeneratorSupported && !this.generator && !this.useCMakePresets) {
+        if (!(this.cmake.isDefaultGeneratorSupported && this.kit?.name === '__unspec__') && !this.generator && !this.useCMakePresets) {
             throw new NoGeneratorError();
         }
 
@@ -169,7 +169,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     async doSetKit(cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
         await cb();
-        if (!this.cmake.isDefaultGeneratorSupported && !this.generator) {
+        if (!(this.cmake.isDefaultGeneratorSupported && this.kit?.name === '__unspec__') && !this.generator) {
             throw new NoGeneratorError();
         }
     }
