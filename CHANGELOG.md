@@ -15,6 +15,7 @@ Bug Fixes:
 - Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
 - Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
 - Fix custom kit PATH being overriden [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
+- Fix debug variables being overriden [#3806](https://github.com/microsoft/vscode-cmake-tools/issues/3806)
 
 ## 1.18.43
 
