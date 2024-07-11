@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "未设置工作流预设",
 	"no.project.found": "找不到文件夹的项目 {0}",
+	"workflow.configuring.clean": "正在使用工作流的 {0} 配置预设来配置干净项目。",
 	"workflow.configuring": "使用工作流的 {0} 配置预设来配置项目。",
 	"workflow.building": "使用工作流步骤的 {0} 生成预设来生成项目。",
 	"workflow.running.ctest": "为工作流步骤的 {0} 测试预设运行 ctest。",

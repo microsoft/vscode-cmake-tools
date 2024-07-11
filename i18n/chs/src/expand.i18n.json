@@ -7,8 +7,8 @@
 	"circular.variable.reference": "已找到循环变量引用: {0}",
 	"reached.max.recursion": "已达到最大字符串扩展递归。可能存在循环引用。",
 	"exception.expanding.string": "展开字符串 {0} 时出现异常: {1}",
-	"expand.expandstringhelper": "正在展开 {0}",
 	"invalid.variable.reference": "字符串中的变量引用 {0} 无效: {1}",
 	"command.not.supported": "命令不支持字符串: {0}",
-	"exception.executing.command": "对字符串执行命令 {0} 时出现异常: {1} {2}"
+	"exception.executing.command": "对字符串执行命令 {0} 时出现异常: {1} {2}",
+	"expand.expandstringhelper": "已展开 {0}"
 }

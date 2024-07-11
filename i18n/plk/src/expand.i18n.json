@@ -7,8 +7,8 @@
 	"circular.variable.reference": "Znaleziono odwołanie do zmiennej cyklicznej: {0}",
 	"reached.max.recursion": "Osiągnięto maksymalną rekursję rozszerzenia ciągu. Możliwe odwołanie cykliczne.",
 	"exception.expanding.string": "Wyjątek podczas rozwijania ciągu {0}: {1}",
-	"expand.expandstringhelper": "rozwijanie {0}",
 	"invalid.variable.reference": "Nieprawidłowe odwołanie do zmiennej {0} w ciągu: {1}",
 	"command.not.supported": "Polecenia nie są obsługiwane w przypadku ciągu: {0}",
-	"exception.executing.command": "Wyjątek podczas wykonywania polecenia {0} dla ciągu: {1} {2}"
+	"exception.executing.command": "Wyjątek podczas wykonywania polecenia {0} dla ciągu: {1} {2}",
+	"expand.expandstringhelper": "rozwinięto {0}"
 }

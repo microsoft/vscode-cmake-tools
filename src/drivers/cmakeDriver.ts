@@ -541,7 +541,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected async _cleanPriorConfiguration() {
         const build_dir = this.binaryDir;
         const cache = this.cachePath;
-        const cmake_files = path.join(build_dir, 'CMakeFiles');
+        const cmake_files = this.config.deleteBuildDirOnCleanConfigure ? build_dir : path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', cache));
             try {
@@ -721,8 +721,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
         this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
+        // Place a kit preferred generator at the front of the list
         if (kit.preferredGenerator) {
-            preferredGenerators.push(kit.preferredGenerator);
+            preferredGenerators.unshift(kit.preferredGenerator);
         }
 
         // If no preferred generator is defined by the current kit or the user settings,
@@ -732,17 +733,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
             preferredGenerators.push({ name: "Unix Makefiles" });
         }
 
-        // Use the "best generator" selection logic only if the user did not define already
-        // in settings (via "cmake.generator") a particular generator to be used.
+        // If a generator is set in the "cmake.generator" setting, push it to the front
+        // of the "best generator" logic
         if (this.config.generator) {
-            this._generator = {
+            preferredGenerators.unshift({
                 name: this.config.generator,
                 platform: this.config.platform || undefined,
                 toolset: this.config.toolset || undefined
-            };
-        } else {
-            this._generator = await this.findBestGenerator(preferredGenerators);
+            });
         }
+
+        this._generator = await this.findBestGenerator(preferredGenerators);
     }
 
     protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -1003,10 +1004,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
                     return gen;
                 }
-                // If it is not a common generator that we can find, but it is a known cmake generator (cmakeGenerators), return it.
-                if (this.cmakeGenerators.indexOf(gen.name) >= 0 && !this.isCommonGenerator(gen.name)) {
-                    return gen;
-                }
+
+                // If the generator isn't found, move on to the next one
                 continue;
             } else {
                 return gen;
@@ -1402,7 +1401,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = await this.generateInitCacheFlags();
         const initial_common_flags = extra_args.concat(this.config.configureArgs);
-        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags : initial_common_flags.concat("--no-warn-unused-cli");
+        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags.filter(f => f !== "--warn-unused-cli") : initial_common_flags.concat("--no-warn-unused-cli");
         const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
         const final_flags = define_flags.concat(common_flags, init_cache_flags);
 

@@ -967,8 +967,8 @@ async function getVSInstallForKit(kit: Kit): Promise<VSInstallation | undefined>
     const inst = installs.find(match);
     if (!inst) {
         log.warning(localize('vs.instance.not.found.run.scan.kits',
-            'VS installation instance not found for kit {1}. It is recommended you re-scan the kits.',
-            kit?.visualStudio));
+            'VS installation instance not found for kit "{0}" - ({1}). It is recommended you re-scan the kits and also remove any user-local entries that are not present anymore on the system.',
+            kit.name, kit?.visualStudio));
     }
 
     return inst;
@@ -1000,18 +1000,17 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     }
     let env = EnvironmentUtils.create(host_env);
     const kit_env = EnvironmentUtils.create(kit.environmentVariables);
-    const expandOptions: expand.ExpansionOptions = {
-        vars: {} as expand.KitContextVars,
-        envOverride: host_env
-    };
-    for (const env_var of Object.keys(kit_env)) {
-        env[env_var] = await expand.expandString(kit_env[env_var], opts ?? expandOptions);
-    }
-    if (process.platform === 'win32') {
-        if (kit.visualStudio && kit.visualStudioArchitecture) {
-            const vs_vars = await getVSKitEnvironment(kit);
-            env = EnvironmentUtils.merge([env, vs_vars]);
-        } else {
+    const getVSKitEnv = process.platform === 'win32' && kit.visualStudio && kit.visualStudioArchitecture;
+    if (!getVSKitEnv) {
+        const expandOptions: expand.ExpansionOptions = {
+            vars: {} as expand.KitContextVars,
+            envOverride: host_env
+        };
+        for (const env_var of Object.keys(kit_env)) {
+            env[env_var] = await expand.expandString(kit_env[env_var], opts ?? expandOptions);
+        }
+
+        if (process.platform === 'win32') {
             const path_list: string[] = [];
             const cCompiler = kit.compilers?.C;
             /* Force add the compiler executable dir to the PATH env */
@@ -1027,6 +1026,18 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
                 path_list.push(env['PATH'] ?? '');
                 env['PATH'] = path_list.join(';');
             }
+        }
+    } else {
+        const vs_vars = await getVSKitEnvironment(kit);
+        const penv = EnvironmentUtils.merge([env, vs_vars]);
+        env = EnvironmentUtils.merge([penv, kit_env]);
+        const expandOptions: expand.ExpansionOptions = opts ? {...opts, envOverride: env, penvOverride: penv } : {
+            vars: {} as expand.KitContextVars,
+            envOverride: env,
+            penvOverride: penv
+        };
+        for (const env_var of Object.keys(kit_env)) {
+            env[env_var] = await expand.expandString(kit_env[env_var], expandOptions);
         }
     }
     log.debug(localize('kit.env', 'The environment for kit {0}: {1}', `'${kit.name}'`, JSON.stringify(env, null, 2)));
@@ -1370,7 +1381,9 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit | null): boolean {
         vs: k.visualStudio,
         vsArch: k.visualStudioArchitecture,
         tc: k.toolchainFile,
-        preferredGenerator: k.preferredGenerator ? k.preferredGenerator.name : null
+        preferredGeneratorName: k.preferredGenerator ? k.preferredGenerator.name : null,
+        preferredGeneratorPlatform: k.preferredGenerator && k.preferredGenerator.platform ? k.preferredGenerator.platform : null,
+        preferredGeneratorToolset: k.preferredGenerator && k.preferredGenerator.toolset ? k.preferredGenerator.toolset : null
     });
     const new_imp = important_params(newKit);
     const old_imp = important_params(oldKit);

@@ -139,6 +139,7 @@ export class CMakeProject {
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
+    private projectController: ProjectController | undefined;
     public readonly cTestController: CTestDriver;
     public readonly cPackageController: CPackDriver;
     public readonly workflowController: WorkflowDriver;
@@ -154,6 +155,7 @@ export class CMakeProject {
     private constructor(readonly workspaceContext: DirectoryContext, projectController?: ProjectController, readonly isMultiProjectFolder: boolean = false) {
         // Handle the active kit changing. We want to do some updates and teardown
         log.debug(localize('constructing.cmakeproject', 'Constructing new CMakeProject instance'));
+        this.projectController = projectController;
         this.cTestController = new CTestDriver(workspaceContext, projectController);
         this.cPackageController = new CPackDriver(workspaceContext);
         this.workflowController = new WorkflowDriver(workspaceContext, projectController);
@@ -582,7 +584,6 @@ export class CMakeProject {
             workflowPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
-            this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
         if (!expandedWorkflowPreset) {
@@ -822,18 +823,20 @@ export class CMakeProject {
     }
 
     private getPreferredGenerators(): CMakeGenerator[] {
-        // User can override generator with a setting
+        const userPreferred: CMakeGenerator[] = this.workspaceContext.config.preferredGenerators
+            .map(g => ({ name: g }));
+
+        // The generator setting is placed at the front of user preferred generators
         const userGenerator = this.workspaceContext.config.generator;
         if (userGenerator) {
             log.debug(localize('using.user.generator', 'Using generator from user configuration: {0}', userGenerator));
-            return [{
+            userPreferred.unshift({
                 name: userGenerator,
                 platform: this.workspaceContext.config.platform || undefined,
                 toolset: this.workspaceContext.config.toolset || undefined
-            }];
+            });
         }
 
-        const userPreferred = this.workspaceContext.config.preferredGenerators.map(g => ({ name: g }));
         return userPreferred;
     }
 
@@ -884,6 +887,15 @@ export class CMakeProject {
                         label: util.getRelativePath(file, this.folderPath) + "/CMakeLists.txt",
                         fullPath: file
                     })) : [];
+
+                    // Sort files by depth. In general the user may want to select the top-most CMakeLists.txt
+                    items.sort((a, b) => {
+                        const aDepth = a.fullPath.split(path.sep).length;
+                        const bDepth = b.fullPath.split(path.sep).length;
+
+                        return aDepth - bDepth;
+                    });
+
                     const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
                     const dontAskAgain: string = localize("do.not.ask.again", "[Don't Show Again]");
                     items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
@@ -1624,8 +1636,14 @@ export class CMakeProject {
                                         .then(async chosen => {
                                             if (chosen) {
                                                 if (chosen.title === yesButtonTitle) {
-                                                    await this.configureInternal(ConfigureTrigger.configureFailedConfigureWithDebuggerButton, extraArgs, ConfigureType.NormalWithDebugger, {
-                                                        pipeName: getDebuggerPipeName()
+                                                    await vscode.debug.startDebugging(undefined, {
+                                                        name: localize("cmake.debug.name", "CMake Debugger"),
+                                                        request: "launch",
+                                                        type: "cmake",
+                                                        cmakeDebugType: "configure",
+                                                        pipeName: getDebuggerPipeName(),
+                                                        trigger: ConfigureTrigger.configureFailedConfigureWithDebuggerButton,
+                                                        fromCommand: true
                                                     });
                                                 } else if (chosen.title === doNotShowAgainTitle) {
                                                     await cmakeConfiguration.update(showDebuggerConfigurationString, false, vscode.ConfigurationTarget.Global);
@@ -2845,6 +2863,8 @@ export class CMakeProject {
             }
         }
 
+        await this.projectController?.updateActiveProject(this.workspaceFolder);
+
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
         await enableFullFeatureSet(true);
@@ -2938,7 +2958,7 @@ export class CMakeProject {
         }
 
         let init = [
-            'cmake_minimum_required(VERSION 3.0.0)',
+            'cmake_minimum_required(VERSION 3.5.0)',
             `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
             '\n'
         ].join('\n');
