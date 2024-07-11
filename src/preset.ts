@@ -826,7 +826,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
-        expandedPreset.environment = EnvironmentUtils.createPreserveNull(); // process.env
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
         for (const key in preset.environment) {
             if (preset.environment[key]) {
                 expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
