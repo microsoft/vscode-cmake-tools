@@ -168,6 +168,11 @@ export const DEFAULT_VARIANTS: VarFileRoot = {
                 short: 'RelWithDebInfo',
                 long: localize('optimize.and.debug', 'Perform optimizations AND include debugging information'),
                 buildType: 'RelWithDebInfo'
+            },
+            unspecified: {
+                short: 'Unspecified',
+                long: localize('unspec.build.type', 'Let CMake pick the default build type'),
+                buildType: 'Unspecified'
             }
         }
     }
