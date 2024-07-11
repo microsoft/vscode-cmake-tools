@@ -9,12 +9,12 @@ Improvements:
 Bug Fixes:
 
 - Attempt to fix stringifying the extension context. [#3797](https://github.com/microsoft/vscode-cmake-tools/issues/3797)
-- Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
-- Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
+- Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist. [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
+- Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception. [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
 - Fix issue where `cmakeUserPresets.json` not showing up in project outline. [#3832](https://github.com/microsoft/vscode-cmake-tools/issues/3832)
 - Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
 - Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
-- Fix custom kit PATH being overriden [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
+- Fix custom kit PATH being overriden. [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
 
 ## 1.18.43
 
