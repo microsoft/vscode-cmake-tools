@@ -10,7 +10,7 @@ import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { Environment, EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
-import { defaultNumJobs, UseVSEnvironment } from './config';
+import { defaultNumJobs, UseVsDeveloperEnvironment } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -44,7 +44,7 @@ export interface Preset {
     condition?: Condition | boolean | null;
     isUserPreset?: boolean;
 
-    __vsDevEnvApplied?: boolean; // Private field to indicate if we have already applied the VS Dev Env.
+    __parentEnvironment?: EnvironmentWithNull; // Private field that contains the parent environment, which might be a modified VS Dev Env, or simply process.env.
     __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
     __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
     __file?: PresetsFile; // Private field to indicate the file where this preset was defined.
@@ -820,21 +820,19 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         return null;
     }
 
-    // TODO: I've accidentally removed our check that prohibits us from constantly calling where.exe and stuff on our presets, I need to add it back.
-    const vsDeveloperEnvironment = await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
-    if (vsDeveloperEnvironment) {
-        preset.__vsDevEnvApplied = true;
-    }
+    // modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
+    await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
 
-    const combinedEnvironment = EnvironmentUtils.mergePreserveNull([process.env, vsDeveloperEnvironment]);
-
-    // Put the preset.environment on top of combined environment (which might have devenv)
-    preset.environment = EnvironmentUtils.mergePreserveNull([combinedEnvironment, preset.environment]);
+    // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
+    // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
+    // NOTE: Based on logic in `tryApplyVsDevEnv`, this should never be undefined at this point.
+    preset.environment = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
 
     // Expand strings under the context of current preset, also, pass combinedEnvironment as a penvOverride since we want to
     // treat combinedEnvironment (which might have devenv) as the parent environment.
+    // `preset.__parentEnvironment` is allowed to be undefined here because in expansion, it will default to process.env.
     const expandedPreset: ConfigurePreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, combinedEnvironment);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, preset.__parentEnvironment);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
@@ -1012,7 +1010,7 @@ async function expandConfigurePresetImpl(folder: string, name: string, workspace
 export interface VsDevEnvOptions {
     preset: ConfigurePreset;
     shouldInterrogateForNinja: boolean;
-    compilerName?: string; // Only will have a value when `useVSEnvironmentMode` is "auto"
+    compilerName?: string; // Only will have a value when `useVsDeveloperEnvironmentMode` is "auto"
 }
 
 /**
@@ -1117,89 +1115,99 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
     }
 }
 
-async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<EnvironmentWithNull | undefined> {
-    const useVSEnvironmentMode = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get("useVSEnvironment") as UseVSEnvironment;
-    if (useVSEnvironmentMode === "never") {
-        return undefined;
+/**
+ * This method tries to apply, based on the useVsDeveloperEnvironment setting value and, in "auto" mode, whether certain preset compilers/generators are used and not found, the VS Dev Env.
+ * @param preset Preset to modify the parentEnvironment of. If the developer environment should be applied, the preset.environment is modified by reference.
+ * @param workspaceFolder The workspace folder of the CMake project.
+ * @param sourceDir The source dir of the CMake project.
+ * @returns Void. We don't return as we are modifying the preset by reference.
+ */
+async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<void> {
+    const useVsDeveloperEnvironmentMode = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get("useVsDeveloperEnvironment") as UseVsDeveloperEnvironment;
+    if (useVsDeveloperEnvironmentMode === "never") {
+        return;
     }
 
-    // [Windows Only] We only support VS Dev Env on Windows.
-    if (process.platform === "win32") {
-        if (useVSEnvironmentMode === "auto") {
-            if (preset.cacheVariables) {
-                const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-                const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-                // The env variables for the supported compilers are the same.
-                const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+    let developerEnvironment: EnvironmentWithNull | undefined;
+    if (!preset.__parentEnvironment) {
+        // [Windows Only] We only support VS Dev Env on Windows.
+        if (process.platform === "win32") {
+            if (useVsDeveloperEnvironmentMode === "auto") {
+                if (preset.cacheVariables) {
+                    const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
+                    const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
+                    // The env variables for the supported compilers are the same.
+                    const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
 
-                // find where.exe using process.env since we're on windows.
-                let whereExecutable;
-                // assume in this call that it exists
-                const whereOutput = await execute('where.exe', ['where.exe'], null, {
-                    environment: process.env,
-                    silent: true,
-                    encoding: 'utf-8',
-                    shell: true
-                }).result;
+                    // find where.exe using process.env since we're on windows.
+                    let whereExecutable;
+                    // assume in this call that it exists
+                    const whereOutput = await execute('where.exe', ['where.exe'], null, {
+                        environment: process.env,
+                        silent: true,
+                        encoding: 'utf-8',
+                        shell: true
+                    }).result;
 
-                // now we have a valid where.exe
+                    // now we have a valid where.exe
 
-                if (whereOutput.stdout) {
-                    const locations = whereOutput.stdout.split('\r\n');
-                    if (locations.length > 0) {
-                        whereExecutable = locations[0];
-                    }
-                }
-
-                if (compilerName && whereExecutable) {
-                // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
-                // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
-                    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
-                    const presetEnv = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
-                    if (presetEnv) {
-                        for (const key in presetEnv) {
-                            if (presetEnv[key]) {
-                                presetEnv[key] = await expandString(presetEnv[key]!, expansionOpts);
-                            }
+                    if (whereOutput.stdout) {
+                        const locations = whereOutput.stdout.split('\r\n');
+                        if (locations.length > 0) {
+                            whereExecutable = locations[0];
                         }
                     }
 
-                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
-                        environment: EnvironmentUtils.create(presetEnv),
-                        silent: true,
-                        encoding: 'utf8',
-                        shell: true
-                    }).result;
+                    if (compilerName && whereExecutable) {
+                        // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
+                        // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
+                        const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+                        const presetEnv = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
+                        if (presetEnv) {
+                            for (const key in presetEnv) {
+                                if (presetEnv[key]) {
+                                    presetEnv[key] = await expandString(presetEnv[key]!, expansionOpts);
+                                }
+                            }
+                        }
 
-                    // if ninja isn't on path, try to look for it in a VS install
-                    const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
-                        environment: EnvironmentUtils.create(presetEnv),
-                        silent: true,
-                        encoding: 'utf8',
-                        shell: true
-                    }).result;
+                        const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                            environment: EnvironmentUtils.create(presetEnv),
+                            silent: true,
+                            encoding: 'utf8',
+                            shell: true
+                        }).result;
 
-                    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
-                    const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
+                        // if ninja isn't on path, try to look for it in a VS install
+                        const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                            environment: EnvironmentUtils.create(presetEnv),
+                            silent: true,
+                            encoding: 'utf8',
+                            shell: true
+                        }).result;
 
-                    if (!compilerLocation.stdout || shouldInterrogateForNinja) {
-                        return getVsDevEnv({
-                            preset,
-                            shouldInterrogateForNinja,
-                            compilerName
-                        });
+                        const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
+                        const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
+
+                        if (!compilerLocation.stdout || shouldInterrogateForNinja) {
+                            developerEnvironment = await getVsDevEnv({
+                                preset,
+                                shouldInterrogateForNinja,
+                                compilerName
+                            });
+                        }
                     }
                 }
+            } else if (useVsDeveloperEnvironmentMode === "always") {
+                developerEnvironment = await getVsDevEnv({
+                    preset,
+                    shouldInterrogateForNinja: true
+                });
             }
-        } else if (useVSEnvironmentMode === "always") {
-            return getVsDevEnv({
-                preset,
-                shouldInterrogateForNinja: true
-            });
         }
     }
 
-    return undefined;
+    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, developerEnvironment]);
 }
 
 async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {

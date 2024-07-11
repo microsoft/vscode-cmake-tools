@@ -34,7 +34,7 @@ export type StatusBarInheritIconOptionVisibility = "visible" | "hidden" | "inher
 export type ProjectStatusOptionVisibility = "visible" | "hidden";
 export type TouchBarOptionVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
-export type UseVSEnvironment = 'always' | 'never' | 'auto';
+export type UseVsDeveloperEnvironment = 'always' | 'never' | 'auto';
 
 export interface AdvancedTouchBarConfig {
     configure?: TouchBarOptionVisibility;
@@ -209,7 +209,7 @@ export interface ExtensionConfigurationSettings {
     showOptionsMovedNotification: boolean;
     options: OptionConfig;
     useCMakePresets: UseCMakePresets;
-    useVSEnvironment: UseVSEnvironment;
+    useVsDeveloperEnvironment: UseVsDeveloperEnvironment;
     allowCommentsInPresetsFile: boolean;
     allowUnsupportedPresetsVersions: boolean;
     launchBehavior: string;
@@ -454,8 +454,8 @@ export class ConfigurationReader implements vscode.Disposable {
     get useCMakePresets(): UseCMakePresets {
         return this.configData.useCMakePresets;
     }
-    get useVSEnvironment(): UseVSEnvironment {
-        return this.configData.useVSEnvironment;
+    get useVsDeveloperEnvironment(): UseVsDeveloperEnvironment {
+        return this.configData.useVsDeveloperEnvironment;
     }
     get allowCommentsInPresetsFile(): boolean {
         return this.configData.allowCommentsInPresetsFile;
@@ -619,7 +619,7 @@ export class ConfigurationReader implements vscode.Disposable {
         showOptionsMovedNotification: new vscode.EventEmitter<boolean>(),
         options: new vscode.EventEmitter<OptionConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
-        useVSEnvironment: new vscode.EventEmitter<UseVSEnvironment>(),
+        useVsDeveloperEnvironment: new vscode.EventEmitter<UseVsDeveloperEnvironment>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
