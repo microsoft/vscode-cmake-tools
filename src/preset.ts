@@ -9,7 +9,7 @@ import { execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
-import { Environment, EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
+import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 import { defaultNumJobs, UseVsDeveloperEnvironment } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
