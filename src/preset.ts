@@ -807,15 +807,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     const preset = await expandConfigurePresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset);
 
-    // I think we need to do some special stuff for the vs dev env and the PATH application. Below lists what I think we need to do.
-    // At the current line, preset.environment has the user modifications, not expanded, and without process.env.
-    // Steps I think we should do to get everything right:
-    // 1. Establish process.env.
-    // 2. Expand the environment variables in the preset with process.env as the envOverride.
-    // 3. Merge preset.environment on top of process.env
-
-    // Maybe we can add a parentEnvironment override, because essentially we want to act like we opened from a devenv, which means modifying the parent environment override.
-
     if (!preset) {
         return null;
     }
@@ -825,11 +816,10 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
     // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
-    // NOTE: Based on logic in `tryApplyVsDevEnv`, this should never be undefined at this point.
+    // NOTE: Based on logic in `tryApplyVsDevEnv`, `preset.__parentEnvironment` should never be undefined at this point.
     preset.environment = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
 
-    // Expand strings under the context of current preset, also, pass combinedEnvironment as a penvOverride since we want to
-    // treat combinedEnvironment (which might have devenv) as the parent environment.
+    // Expand strings under the context of current preset, also, pass preset.__parentEnvironment as a penvOverride so we include devenv if present.
     // `preset.__parentEnvironment` is allowed to be undefined here because in expansion, it will default to process.env.
     const expandedPreset: ConfigurePreset = { name };
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, preset.__parentEnvironment);
