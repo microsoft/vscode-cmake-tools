@@ -822,26 +822,18 @@ export class PresetsController {
     }
 
     async getAllBuildPresets(): Promise<preset.BuildPreset[]> {
-        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         return preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
     }
 
     async getAllTestPresets(): Promise<preset.TestPreset[]> {
-        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         return preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
     }
 
     async getAllPackagePresets(): Promise<preset.PackagePreset[]> {
-        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         return preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
     }
 
     async getAllWorkflowPresets(): Promise<preset.WorkflowPreset[]> {
-        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath);
         return preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
     }
 
@@ -1668,10 +1660,7 @@ export class PresetsController {
         let expansionErrors: ExpansionErrorHandling = { errorList: []};
 
         await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
-        // TODO: should wewrite this to file right away bc other presets will inherit from them, and if they are invalid we dont need to continue?
-        // or do it at the end becuase we need to see if theres in any of the other presets
         const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
             preset.expandConfigurePreset(
                 this.folderPath,
@@ -1737,9 +1726,13 @@ export class PresetsController {
                 expansionErrors)
         ))).filter(preset => preset !== null);
 
-        // TODO: cache everything that we just expaneded?
-        // can def do this for configure presets, but for the others, there was a comment saying that we shouldnt do this?
-        //presetsFile.configurePresets = expandedConfigurePresets;
+        // cache everything that we just expanded
+        // we'll only need to expand again on set preset - to apply the vs dev env if needed
+        presetsFile.configurePresets = expandedConfigurePresets;
+        presetsFile.buildPresets = expandedBuildPresets;
+        presetsFile.testPresets = expandedTestPresets;
+        presetsFile.packagePresets = expandedPackagePresets;
+        presetsFile.workflowPresets = expandedWorkflowPresets;
 
         // TODO: make this much neater, but I can do that later
         if (expansionErrors.errorList.length > 0) {

@@ -895,6 +895,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         }
     }
 
+    // TODO: make sure im expanding conditions and vendors
     if (preset.condition) {
         expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
     }
