@@ -16,7 +16,6 @@ import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
-import { configurePresets, expandConfigurePreset, getPresetByName } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -173,7 +172,6 @@ export class PresetsController {
         // set the pre-expanded version so we can call expandPresetsFile on it later
         // TODO: check why this is necessary
         setPresetsFile(this.folderPath, presetsFile);
-
         presetsFile = await this.expandPresetsFile(presetsFile);
 
         // TODO: more validation (or move some of the per file validation here when all entries are merged.
@@ -1672,25 +1670,76 @@ export class PresetsController {
         await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
         await preset.expandConditionsForPresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
-        // eslint-disable-next-line prefer-const
-        let presets: preset.ConfigurePreset[] = [];
-        // go through all the configure presets and expand them
-        for (const configurePreset of presetsFile?.configurePresets || []) {
-            const expandedPreset = await expandConfigurePreset(
+        // TODO: should wewrite this to file right away bc other presets will inherit from them, and if they are invalid we dont need to continue?
+        // or do it at the end becuase we need to see if theres in any of the other presets
+        const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
+            preset.expandConfigurePreset(
                 this.folderPath,
                 configurePreset.name,
                 this._sourceDir,
                 this.workspaceFolder.uri.fsPath,
-                true,   // should this always be true?
+                true,
                 false,
-                expansionErrors);
+                expansionErrors)
+        ))).filter(preset => preset !== null);
 
-            if (expandedPreset) {
-                presets.push(expandedPreset);
-            }
-        }
-        // TODO: pretty sure this is wrong
-        presetsFile.configurePresets = presets;
+        // TODO: do the above, but for all the other presets
+        // build, test, package, workflow
+        const expandedBuildPresets = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
+            preset.expandBuildPreset(
+                this.folderPath,
+                buildPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                undefined,
+                true,   // should this always be true?
+                buildPreset.configurePreset,
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null);
+
+        const expandedPackagePresets = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
+            preset.expandPackagePreset(
+                this.folderPath,
+                packagePreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,   // should this always be true?
+                packagePreset.configurePreset,
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null);
+
+        const expandedTestPresets = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
+            preset.expandTestPreset(
+                this.folderPath,
+                testPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,   // should this always be true?
+                testPreset.configurePreset,
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null);
+
+        const expandedWorkflowPresets = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
+            preset.expandWorkflowPreset(
+                this.folderPath,
+                workflowPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                true,   // should this always be true?
+                undefined,  // should this always be undefined?
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null);
+
+        // TODO: cache everything that we just expaneded?
+        // can def do this for configure presets, but for the others, there was a comment saying that we shouldnt do this?
+        //presetsFile.configurePresets = expandedConfigurePresets;
 
         // TODO: make this much neater, but I can do that later
         if (expansionErrors.errorList.length > 0) {
