@@ -2653,7 +2653,7 @@ export class CMakeProject {
      * This is also the point to fixing the issue #1987
      */
     async getTargetLaunchEnvironment(drv: CMakeDriver | null, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
-        const env = util.fromDebuggerEnvironmentVars(debugEnv);
+        let env = util.fromDebuggerEnvironmentVars(debugEnv);
 
         // Add environment variables from ConfigureEnvironment.
         const configureEnv = await drv?.getConfigureEnvironment();
@@ -2662,7 +2662,15 @@ export class CMakeProject {
             log.info(localize('launch.with.overrides', `NOTE: You are launching a target and there are some environment overrides being applied from your VS Code settings.`));
         }
 
-        return EnvironmentUtils.merge([env, configureEnv]);
+        env = EnvironmentUtils.merge([configureEnv, env]);
+
+        if (debugEnv) {
+            const options = {... await this.getExpansionOptions(), envOverride: env, penvOverride: configureEnv };
+            for (const envPair of debugEnv) {
+                env[envPair.name] = await expandString(envPair.value, options);
+            }
+        }
+        return env;
     }
 
     /**
@@ -2725,13 +2733,6 @@ export class CMakeProject {
         // Add debug configuration from settings.
         const userConfig = this.workspaceContext.config.debugConfig;
         Object.assign(debugConfig, userConfig);
-
-        const options = await this.getExpansionOptions();
-        if (debugConfig.environment) {
-            for (const env of debugConfig.environment) {
-                env.value = await expandString(env.value, options);
-            }
-        }
 
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
@@ -3032,7 +3033,7 @@ export class CMakeProject {
         if (projType === 'Library') {
             if (!(await fs.exists(path.join(this.sourceDir, `${fileName}.${langExt}`)))) {
                 await fs.writeFile(path.join(this.sourceDir, `${fileName}.${langExt}`),
-                    (langExt === "C++" ?
+                    (langExt === "cpp" ?
                         ([
                             '#include <iostream>',
                             '',
@@ -3054,7 +3055,7 @@ export class CMakeProject {
         } else if (projType === 'Executable') {
             if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
                 await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
-                    (langExt === "C++" ?
+                    (langExt === "cpp" ?
                         ([
                             '#include <iostream>',
                             '',
