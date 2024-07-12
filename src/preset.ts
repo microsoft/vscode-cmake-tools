@@ -900,8 +900,9 @@ export function getArchitecture(preset: ConfigurePreset) {
     } else if (preset.architecture && preset.architecture.value) {
         return preset.architecture.value;
     }
-    log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
-    return 'x86';
+    const fallbackArchitecture = util.getHostArchitecture();
+    log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using {1} by default', preset.name, fallbackArchitecture));
+    return fallbackArchitecture;
 }
 
 export function getToolset(preset: ConfigurePreset): Toolset {
@@ -912,21 +913,22 @@ export function getToolset(preset: ConfigurePreset): Toolset {
         result = parseToolset(preset.toolset.value);
     }
 
-    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using {1} by default", preset.name, '"host=x86"');
+    const fallbackArchitecture = util.getHostArchitecture();
+    const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using {1} by default", preset.name, `"host=${fallbackArchitecture}"`);
     if (result) {
         if (result.name === 'x86' || result.name === 'x64') {
             log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified {1}, did you mean {2}?", preset.name, `"${result.name}"`, `"host=${result.name}"`));
         }
         if (!result.host) {
             log.warning(noToolsetArchWarning);
-            result.host = 'x86';
+            result.host = fallbackArchitecture;
         }
         if (!result.version && result.name !== latestToolsetName) {
             log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
         }
     } else {
         log.warning(noToolsetArchWarning);
-        result = { host: 'x86' };
+        result = { host: fallbackArchitecture };
     }
     return result;
 }
