@@ -1660,7 +1660,7 @@ export class PresetsController {
         log.debug(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
         // eslint-disable-next-line prefer-const
-        let expansionErrors: ExpansionErrorHandling = { errorList: []};
+        let expansionErrors: ExpansionErrorHandling = { errorList: [], tempErrorList: []};
 
         await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
@@ -1752,8 +1752,8 @@ export class PresetsController {
         for (const error of expansionErrors.errorList) {
             const diagnostic: Diagnostic = {
                 severity: DiagnosticSeverity.Error,
-                message: error[0],
-                source: 'ex',
+                message: error[1],
+                source: error[0],
                 range: new Range(new Position(0, 0), new Position(0, 0))
             };
             // create a file diagnostic
