@@ -1078,8 +1078,6 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
     }
 
     if (!vsInstall) {
-        // I don't think we want to do this anymore, or at least it's conditional on the mode being "auto". If it's "always", we just want to report that we couldn't find a vs isntallation.
-        // I think this is fine for when we've done it in auto, but when we
         if (opts.compilerName) {
             log.error(localize('specified.cl.not.found',
                 "Configure preset {0}: Compiler {1} with toolset {2} and architecture {3} was not found, you may need to run the 'CMake: Scan for Compilers' command if this toolset exists on your computer.",
