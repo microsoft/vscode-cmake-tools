@@ -9,7 +9,6 @@ import { replaceAll, fixPaths, errorToString } from './util';
 import * as nls from 'vscode-nls';
 import { EnvironmentWithNull, EnvironmentUtils } from './environmentVariables';
 import * as matchAll from 'string.prototype.matchall';
-import { ConfigurePreset } from './preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

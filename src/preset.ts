@@ -895,7 +895,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         }
     }
 
-    // TODO: make sure im expanding conditions and vendors
+    // TODO: make sure im expanding vendors - does it need to happen all at once or can i do it here?
     if (preset.condition) {
         expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
     }
