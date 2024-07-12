@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
 import { execute } from '@cmt/proc';
-import { expandString, ExpansionError, ExpansionErrorHandling, ExpansionOptions } from '@cmt/expand';
+import { expandString, ExpansionErrorHandling, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
@@ -669,7 +669,7 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
     if (refs.has(preset.name)) {
         // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
         log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
-        errorHandler?.errorList.push([ExpansionError.circularRefError, preset.name]);
+        errorHandler?.errorList.push([localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name), preset.name]);
         return null;
     }
 
@@ -1006,7 +1006,7 @@ async function expandConfigurePresetImpl(folder: string, name: string, allowUser
     }
 
     log.error(localize('config.preset.not.found', 'Could not find configure preset with name {0}', name));
-    errorHandler?.errorList.push([ExpansionError.presetNotFoundError, name]);
+    errorHandler?.errorList.push([localize('config.preset.not.found', 'Could not find configure preset with name {0}', name), name]);
     return null;
 }
 
@@ -1167,12 +1167,12 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             // toolchainFile and installDir added in presets v3
             if (preset.toolchainFile) {
                 log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'));
-                errorHandler?.errorList.push([ExpansionError.unsupportedProperty, preset.name]);
+                errorHandler?.errorList.push([localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"toolchainFile"'), preset.name]);
                 return null;
             }
             if (preset.installDir) {
                 log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'));
-                errorHandler?.errorList.push([ExpansionError.unsupportedProperty, preset.name]);
+                errorHandler?.errorList.push([localize('property.unsupported.v2', 'Configure preset {0}: Property {1} is unsupported in presets v2', preset.name, '"installDir"'), preset.name]);
                 return null;
             }
         }
@@ -1183,7 +1183,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
     if (refs.has(preset.name) && !preset.__expanded) {
         // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
         log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
-        errorHandler?.errorList.push([ExpansionError.circularRefError, preset.name]);
+        errorHandler?.errorList.push([localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name), preset.name]);
         return null;
     }
 
@@ -1477,7 +1477,7 @@ async function expandBuildPresetImpl(folder: string, name: string, workspaceFold
     }
 
     log.error(localize('build.preset.not.found', 'Could not find build preset with name {0}', name));
-    errorHandler?.errorList.push([ExpansionError.presetNotFoundError, name]);
+    errorHandler?.errorList.push([localize('build.preset.not.found', 'Could not find build preset with name {0}', name), name]);
     return null;
 }
 
@@ -1493,7 +1493,7 @@ async function expandBuildPresetHelper(folder: string, preset: BuildPreset, work
         // Notice that we check !preset.__expanded here but not in getConfigurePresetForBuildPresetHelper because
         // multiple parents could all point to the same parent.
         log.error(localize('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name));
-        errorHandler?.errorList.push([ExpansionError.circularRefError, preset.name]);
+        errorHandler?.errorList.push([localize('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name), preset.name]);
         return null;
     }
 
@@ -1666,7 +1666,7 @@ async function expandTestPresetImpl(folder: string, name: string, workspaceFolde
     }
 
     log.error(localize('test.preset.not.found', 'Could not find test preset with name {0}', name));
-    errorHandler?.errorList.push([ExpansionError.presetNotFoundError, name]);
+    errorHandler?.errorList.push([localize('test.preset.not.found', 'Could not find test preset with name {0}', name), name]);
     return null;
 }
 
@@ -1680,7 +1680,7 @@ async function expandTestPresetHelper(folder: string, preset: TestPreset, worksp
     if (refs.has(preset.name) && !preset.__expanded) {
         // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
         log.error(localize('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name));
-        errorHandler?.errorList.push([ExpansionError.presetNotFoundError, preset.name]);
+        errorHandler?.errorList.push([localize('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name), preset.name]);
         return null;
     }
 
@@ -1796,7 +1796,7 @@ async function expandPackagePresetImpl(folder: string, name: string, workspaceFo
     }
 
     log.error(localize('package.preset.not.found', 'Could not find package preset with name {0}', name));
-    errorHandler?.errorList.push([ExpansionError.presetNotFoundError, name]);
+    errorHandler?.errorList.push([localize('package.preset.not.found', 'Could not find package preset with name {0}', name), name]);
     return null;
 }
 
@@ -1810,7 +1810,7 @@ async function expandPackagePresetHelper(folder: string, preset: PackagePreset, 
     if (refs.has(preset.name) && !preset.__expanded) {
         // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
         log.error(localize('circular.inherits.in.package.preset', 'Circular inherits in package preset {0}', preset.name));
-        errorHandler?.errorList.push([ExpansionError.presetNotFoundError, preset.name]);
+        errorHandler?.errorList.push([localize('circular.inherits.in.package.preset', 'Circular inherits in package preset {0}', preset.name), preset.name]);
         return null;
     }
 
@@ -1919,7 +1919,7 @@ async function expandWorkflowPresetImpl(folder: string, name: string, workspaceF
     }
 
     log.error(localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name));
-    errorHandler?.errorList.push([ExpansionError.presetNotFoundError, name]);
+    errorHandler?.errorList.push([localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name), name]);
     return null;
 }
 
@@ -1933,7 +1933,7 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
     if (refs.has(preset.name) && !preset.__expanded) {
         // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
         log.error(localize('circular.inherits.in.workflow.preset', 'Circular inherits in workflow preset {0}', preset.name));
-        errorHandler?.errorList.push([ExpansionError.presetNotFoundError, preset.name]);
+        errorHandler?.errorList.push([localize('circular.inherits.in.workflow.preset', 'Circular inherits in workflow preset {0}', preset.name), preset.name]);
         return null;
     }
 

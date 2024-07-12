@@ -16,6 +16,9 @@ import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
+import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
+import { FileDiagnostic, populateCollection } from './diagnostics/util';
+import collections from './diagnostics/collections';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1672,8 +1675,6 @@ export class PresetsController {
                 expansionErrors)
         ))).filter(preset => preset !== null);
 
-        // TODO: do the above, but for all the other presets
-        // build, test, package, workflow
         const expandedBuildPresets = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
             preset.expandBuildPreset(
                 this.folderPath,
@@ -1734,17 +1735,40 @@ export class PresetsController {
         presetsFile.packagePresets = expandedPackagePresets;
         presetsFile.workflowPresets = expandedWorkflowPresets;
 
-        // TODO: make this much neater, but I can do that later
         if (expansionErrors.errorList.length > 0) {
-            log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
-            for (const error of expansionErrors.errorList) {
-                log.error(error);
-            }
+            await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
             return undefined;
         } else {
             log.debug(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
             return presetsFile;
         }
+    }
+
+    // TODO: report all expansion errors in the problems panel
+    private async reportPresetsFileErrors(path: string = " ", expansionErrors: ExpansionErrorHandling) {
+        log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
+        // eslint-disable-next-line prefer-const
+        let diagnostics: FileDiagnostic[] = [];
+        for (const error of expansionErrors.errorList) {
+            const diagnostic: Diagnostic = {
+                severity: DiagnosticSeverity.Error,
+                message: error[0],
+                source: 'ex',
+                range: new Range(new Position(0, 0), new Position(0, 0))
+            };
+            // create a file diagnostic
+            const fileDiagnostic: FileDiagnostic = {
+                filepath: path,
+                diag: diagnostic
+            };
+            diagnostics.push(fileDiagnostic);
+        }
+
+        // Send the diagnostics to VS Code without overwriting the existing diagnostics
+        const existingDiagnostics = vscode.languages.getDiagnostics();
+        const newDiagnostics = [...existingDiagnostics, ...diagnostics];
+
+        populateCollection(collections.cmake, diagnostics);
     }
 
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {

@@ -100,16 +100,7 @@ export interface ExpansionOptions {
 }
 
 export interface ExpansionErrorHandling {
-    errorList: [ExpansionError, String][];
-}
-
-export enum ExpansionError {
-    circularRefError = "circularReference",
-    maxRecursion = "maxRecursion",
-    exception = "exception",
-    invalidVariableReference = "invalidVariableReference",
-    presetNotFoundError = "presetNotFoundError",
-    unsupportedProperty = "unsupportedProperty",
+    errorList: [string, string][];
 }
 
 /**
@@ -144,17 +135,17 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions,
 
         if (circularReference) {
             log.error(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
-            errorHandler?.errorList.push([ExpansionError.circularRefError, inputString]);
+            errorHandler?.errorList.push([localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference), inputString]);
         } else if (i === maxRecursion) {
             log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
-            errorHandler?.errorList.push([ExpansionError.maxRecursion, inputString]);
+            errorHandler?.errorList.push([localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'), inputString]);
         }
 
         return replaceAll(result, '${dollar}', '$');
     } catch (e) {
         log.warning(localize('exception.expanding.string', 'Exception while expanding string {0}: {1}', inputString, errorToString(e)));
         if (errorHandler) {
-            errorHandler.errorList.push([ExpansionError.exception, errorToString(e)]);
+            errorHandler.errorList.push([localize('exception.expanding.string', 'Exception while expanding string {0}: {1}', inputString, errorToString(e)), inputString]);
         }
     }
 
@@ -188,7 +179,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions, errorHa
             const replacement = replacements[key];
             if (!replacement) {
                 log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input));
-                errorHandler?.errorList.push([ExpansionError.invalidVariableReference, full]);
+                errorHandler?.errorList.push([localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input), full]);
             } else {
                 subs.set(full, replacement);
             }
@@ -274,7 +265,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions, errorHa
             subs.set(full, `${result}`);
         } catch (e) {
             log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} {2}', command, input, errorToString(e)));
-            errorHandler?.errorList.push([ExpansionError.exception, errorToString(e)]);
+            errorHandler?.errorList.push([localize('exception.executing.command', 'Exception while executing command {0} for string: {1}', command, input), errorToString(e)]);
         }
     }
 
