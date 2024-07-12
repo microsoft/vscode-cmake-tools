@@ -18,6 +18,7 @@ Bug Fixes:
 - Fix custom kit PATH being overriden [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
 - Fix debug variables being overriden [#3806](https://github.com/microsoft/vscode-cmake-tools/issues/3806)
 - Fix issue in Quick Start where a C file was generated in place of a C++ file. [#3856](https://github.com/microsoft/vscode-cmake-tools/issues/3856)
+- Fix custom build tasks not showing up [#3622](https://github.com/microsoft/vscode-cmake-tools/issues/3622)
 
 ## 1.18.43
 
