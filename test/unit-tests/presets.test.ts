@@ -1,5 +1,6 @@
 import { Condition, evaluateCondition, getArchitecture, getToolset } from '../../src/preset';
 import { expect } from '@test/util';
+import * as os from "os";
 
 suite('Preset tests', () => {
     test('Parse architecture', () => {
@@ -7,7 +8,11 @@ suite('Preset tests', () => {
         expect(getArchitecture({ name: 'test', architecture: 'amd64' })).to.eq('amd64');
         expect(getArchitecture({ name: 'test', architecture: { value: 'arm', strategy: 'set' } })).to.eq('arm');
         expect(getArchitecture({ name: 'test', architecture: { value: 'arm64', strategy: 'external' } })).to.eq('arm64');
-        expect(getArchitecture({ name: 'test' })).to.eq('x64');
+        if (os.platform() === "win32") {
+            expect(getArchitecture({ name: "test" })).to.eq("x64");
+        } else {
+            expect(getArchitecture({ name: "test" })).to.eq("arm64");
+        }
         expect(getArchitecture({ name: 'test', architecture: 'bogus' })).to.eq('bogus');
     });
 
