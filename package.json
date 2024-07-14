@@ -2437,6 +2437,11 @@
                   "short": "RelWithDebInfo",
                   "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long%",
                   "buildType": "RelWithDebInfo"
+                },
+                "unspecified": {
+                  "short": "Unspecified",
+                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.unspecified.long%",
+                  "buildType": "Unspecified"
                 }
               }
             }
@@ -2587,7 +2592,7 @@
         "cmake.deleteBuildDirOnCleanConfigure": {
           "type": "boolean",
           "default": false,
-          "description": "%cmake-tools.configuration.cmake.deleteBuildDirOnCleanCconfigure.description%",
+          "description": "%cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description%",
           "scope": "resource"
         },
         "cmake.setBuildTypeOnMultiConfig": {

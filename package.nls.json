@@ -151,6 +151,7 @@
     "cmake-tools.configuration.cmake.debugConfig.setupCommands.description.description": "Description of the command.",
     "cmake-tools.configuration.cmake.defaultVariants.overall.description": "Configure the default variant settings.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.description": "The build type.",
+    "cmake-tools.configuration.cmake.defaultVariants.buildType.unspecified.long": "Let CMake pick the default build type.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.debug.long": "Disable optimizations - include debug information.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.release.long": "Optimize for speed - exclude debug information.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Optimize for smallest binary size - exclude debug information.",

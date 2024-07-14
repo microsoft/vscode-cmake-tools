@@ -1069,7 +1069,16 @@ export class CMakeProject {
             this.statusMessage.set(localize('ready.status', 'Ready'));
         }
 
-        await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
+        // Set variant in driver when not using presets
+        if (!this.useCMakePresets) {
+            // Make sure the variant manager is initialized first
+            if (!this.variantManager.hasInitialized()) {
+                await this.variantManager.initialize(this.folderName);
+            }
+
+            await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
+        }
+
         const newTargetName = this.defaultBuildTarget || (this.useCMakePresets ? this.targetsInPresetName : drv.allTargetName);
         if (this.targetName.value !== newTargetName) {
             this.targetName.set(newTargetName);
@@ -1146,14 +1155,28 @@ export class CMakeProject {
         log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
         this.doStatusChange(this.workspaceContext.config.options);
-        // Start up the variant manager
-        await this.variantManager.initialize(this.folderName);
-        // Set the status bar message
-        this.activeVariant.set(this.variantManager.activeVariantOptions.short);
         // Restore the debug target
         this._launchTargetName.set(this.workspaceContext.state.getLaunchTargetName(this.folderName, this.isMultiProjectFolder) || '');
 
         // Hook up event handlers
+        this.cTestController.onTestingEnabledChanged(enabled => this._ctestEnabled.set(enabled));
+        this.cPackageController.onPackagingEnabledChanged(enabled => this._cpackEnabled.set(enabled));
+
+        this.statusMessage.set(localize('ready.status', 'Ready'));
+
+        this.kitsController = await KitsController.init(this);
+        this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
+
+        await this.doUseCMakePresetsChange();
+
+        // Only initialize the variant manager when not using presets
+        if (!this.useCMakePresets) {
+            // Start up the variant manager
+            await this.variantManager.initialize(this.folderName);
+            // Set the status bar message
+            this.activeVariant.set(this.variantManager.activeVariantOptions.short);
+        }
+
         // Listen for the variant to change
         this.variantManager.onActiveVariantChanged(() => {
             log.debug(localize('active.build.variant.changed', 'Active build variant changed'));
@@ -1166,15 +1189,6 @@ export class CMakeProject {
                 }
             });
         });
-        this.cTestController.onTestingEnabledChanged(enabled => this._ctestEnabled.set(enabled));
-        this.cPackageController.onPackagingEnabledChanged(enabled => this._cpackEnabled.set(enabled));
-
-        this.statusMessage.set(localize('ready.status', 'Ready'));
-
-        this.kitsController = await KitsController.init(this);
-        this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
-
-        await this.doUseCMakePresetsChange();
 
         this.disposables.push(this.onPresetsChanged(() => this.doUseCMakePresetsChange()));
         this.disposables.push(this.onUserPresetsChanged(() => this.doUseCMakePresetsChange()));
@@ -1761,6 +1775,10 @@ export class CMakeProject {
                 log.debug(localize('no.kit.abort', 'No kit selected. Abort configure'));
                 return { result: -1, resultType: ConfigureResultType.Other };
             }
+            // Make sure variant manager has initialized before checking for variant
+            if (!this.variantManager.hasInitialized()) {
+                await this.variantManager.initialize(this.folderName);
+            }
             if (!this.variantManager.haveVariant) {
                 progress.report({ message: localize('waiting.on.variant', 'Waiting on variant selection') });
                 await this.variantManager.selectVariant();
@@ -2286,6 +2304,11 @@ export class CMakeProject {
      */
     async setVariant(name?: string) {
         // Make this function compatibile with return code style...
+        // Make sure the variant manager is initialized first
+        if (!this.variantManager.hasInitialized()) {
+            await this.variantManager.initialize(this.folderName);
+        }
+
         if (await this.variantManager.selectVariant(name)) {
             if (this.workspaceContext.config.automaticReconfigure) {
                 await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
@@ -2510,6 +2533,11 @@ export class CMakeProject {
                 buildType = preset.getStringValueFromCacheVar(this.configurePreset.cacheVariables["CMAKE_BUILD_TYPE"]);
             }
         } else {
+            // Make sure the variant manager is initialized first
+            if (!this.variantManager.hasInitialized()) {
+                await this.variantManager.initialize(this.folderName);
+            }
+
             buildType = this.variantManager.activeVariantOptions.buildType || null;
         }
         return buildType;
@@ -2625,7 +2653,7 @@ export class CMakeProject {
      * This is also the point to fixing the issue #1987
      */
     async getTargetLaunchEnvironment(drv: CMakeDriver | null, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
-        const env = util.fromDebuggerEnvironmentVars(debugEnv);
+        let env = util.fromDebuggerEnvironmentVars(debugEnv);
 
         // Add environment variables from ConfigureEnvironment.
         const configureEnv = await drv?.getConfigureEnvironment();
@@ -2634,7 +2662,15 @@ export class CMakeProject {
             log.info(localize('launch.with.overrides', `NOTE: You are launching a target and there are some environment overrides being applied from your VS Code settings.`));
         }
 
-        return EnvironmentUtils.merge([env, configureEnv]);
+        env = EnvironmentUtils.merge([configureEnv, env]);
+
+        if (debugEnv) {
+            const options = {... await this.getExpansionOptions(), envOverride: env, penvOverride: configureEnv };
+            for (const envPair of debugEnv) {
+                env[envPair.name] = await expandString(envPair.value, options);
+            }
+        }
+        return env;
     }
 
     /**
@@ -2697,13 +2733,6 @@ export class CMakeProject {
         // Add debug configuration from settings.
         const userConfig = this.workspaceContext.config.debugConfig;
         Object.assign(debugConfig, userConfig);
-
-        const options = await this.getExpansionOptions();
-        if (debugConfig.environment) {
-            for (const env of debugConfig.environment) {
-                env.value = await expandString(env.value, options);
-            }
-        }
 
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
@@ -3004,7 +3033,7 @@ export class CMakeProject {
         if (projType === 'Library') {
             if (!(await fs.exists(path.join(this.sourceDir, `${fileName}.${langExt}`)))) {
                 await fs.writeFile(path.join(this.sourceDir, `${fileName}.${langExt}`),
-                    (langExt === "C++" ?
+                    (langExt === "cpp" ?
                         ([
                             '#include <iostream>',
                             '',
@@ -3026,7 +3055,7 @@ export class CMakeProject {
         } else if (projType === 'Executable') {
             if (!(await fs.exists(path.join(this.sourceDir, `main.${langExt}`)))) {
                 await fs.writeFile(path.join(this.sourceDir, `main.${langExt}`),
-                    (langExt === "C++" ?
+                    (langExt === "cpp" ?
                         ([
                             '#include <iostream>',
                             '',
