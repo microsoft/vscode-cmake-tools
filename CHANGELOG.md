@@ -6,6 +6,7 @@ Improvements:
 
 - Add `Unspecified` option for selecting a kit variant to allow CMake itself to select the build type. [#3821](https://github.com/microsoft/vscode-cmake-tools/issues/3821)
 - Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
+- Resolve diagnostics files relative to workspace and build directory, fixes [#1401](https://github.com/microsoft/vscode-cmake-tools/issues/1401) [@fargies](https://github.com/fargies)
 
 Bug Fixes:
 
