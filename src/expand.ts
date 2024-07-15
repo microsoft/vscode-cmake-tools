@@ -101,7 +101,7 @@ export interface ExpansionOptions {
 
 export interface ExpansionErrorHandling {
     errorList: [string, string][];
-    tempErrorList: string[];
+    tempErrorList: [string, string][];
 }
 
 /**
@@ -134,17 +134,16 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions,
         } while (i < maxRecursion && opts.recursive && didReplacement && !circularReference);
 
         if (circularReference) {
-            log.error(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
-            errorHandler?.tempErrorList.push(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
+            log.error(localize('circular.variable.reference.full', 'Circular variable reference found: {0}', circularReference));
         } else if (i === maxRecursion) {
             log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
-            errorHandler?.tempErrorList.push(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
+            errorHandler?.tempErrorList.push([localize('max.recursion', 'Max string expansion recursion'), ""]);
         }
 
         return replaceAll(result, '${dollar}', '$');
     } catch (e) {
-        log.warning(localize('exception.expanding.string', 'Exception while expanding string {0}: {1}', inputString, errorToString(e)));
-        errorHandler?.tempErrorList.push(localize('exception.expanding.string', 'Exception while expanding string {0}', inputString));
+        log.warning(localize('exception.expanding.string.full', 'Exception while expanding string {0}: {1}', inputString, errorToString(e)));
+        errorHandler?.tempErrorList.push([localize('exception.expanding.string', 'Exception expanding string'), inputString]);
     }
 
     return input;
@@ -176,8 +175,8 @@ async function expandStringHelper(input: string, opts: ExpansionOptions, errorHa
             // Replace dollar sign at the very end of the expanding process
             const replacement = replacements[key];
             if (!replacement) {
-                log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input));
-                errorHandler?.tempErrorList.push(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input));
+                log.warning(localize('invalid.variable.reference.full', 'Invalid variable reference {0} in string: {1}', full, input));
+                errorHandler?.tempErrorList.push([localize('invalid.variable.reference', 'Invalid variable reference'), input]);
             } else {
                 subs.set(full, replacement);
             }
@@ -214,6 +213,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions, errorHa
         const varNameReplacement = mat2 ? mat2[1] : undefined;
         if (varNameReplacement && varNameReplacement === varName) {
             circularReference = `\"${varName}\" : \"${input}\"`;
+            errorHandler?.tempErrorList.push([localize('circular.variable.reference', 'Circular variable reference'), full]);
             break;
         }
         subs.set(full, replacement);
@@ -262,8 +262,8 @@ async function expandStringHelper(input: string, opts: ExpansionOptions, errorHa
             const result = await vscode.commands.executeCommand(command, opts.vars.workspaceFolder);
             subs.set(full, `${result}`);
         } catch (e) {
-            log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} {2}', command, input, errorToString(e)));
-            errorHandler?.tempErrorList.push(localize('exception.executing.command', 'Exception while executing command {0} for string: {1}', command, input, errorToString(e)));
+            log.warning(localize('exception.executing.command.full', 'Exception while executing command {0} for string: {1} {2}', command, input, errorToString(e)));
+            errorHandler?.tempErrorList.push([localize('exception.executing.command', 'Exception executing command'), input]);
         }
     }
 

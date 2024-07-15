@@ -900,10 +900,9 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
     }
 
-    // TODO: clear out temp error list, add preset name and move to full errorList
     if (errorHandler) {
         for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error, preset.name]);
+            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
         }
         errorHandler.tempErrorList = [];
     }
@@ -1013,8 +1012,8 @@ async function expandConfigurePresetImpl(folder: string, name: string, allowUser
         }
     }
 
-    log.error(localize('config.preset.not.found', 'Could not find configure preset with name {0}', name));
-    errorHandler?.errorList.push([localize('config.preset.not.found', 'Could not find configure preset'), name]);
+    log.error(localize('config.preset.not.found.full', 'Could not find configure preset with name {0}', name));
+    errorHandler?.tempErrorList.push([localize('config.preset.not.found', 'Could not find configure preset'), name]);
     return null;
 }
 
@@ -1456,10 +1455,9 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
 
-    // TODO: clear out temp error list, add preset name and move to full errorList
     if (errorHandler) {
         for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error, preset.name]);
+            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
         }
         errorHandler.tempErrorList = [];
     }
@@ -1492,8 +1490,8 @@ async function expandBuildPresetImpl(folder: string, name: string, workspaceFold
         return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
     }
 
-    log.error(localize('build.preset.not.found', 'Could not find build preset with name {0}', name));
-    errorHandler?.errorList.push([localize('build.preset.not.found', 'Could not find build preset'), name]);
+    log.error(localize('build.preset.not.found.full', 'Could not find build preset with name {0}', name));
+    errorHandler?.tempErrorList.push([localize('build.preset.not.found', 'Could not find build preset'), name]);
     return null;
 }
 
@@ -1654,10 +1652,9 @@ export async function expandTestPreset(folder: string, name: string, workspaceFo
 
     merge(expandedPreset, preset);
 
-    // TODO: clear out temp error list, add preset name and move to full errorList
     if (errorHandler) {
         for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error, preset.name]);
+            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
         }
         errorHandler.tempErrorList = [];
     }
@@ -1689,8 +1686,8 @@ async function expandTestPresetImpl(folder: string, name: string, workspaceFolde
         return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
     }
 
-    log.error(localize('test.preset.not.found', 'Could not find test preset with name {0}', name));
-    errorHandler?.errorList.push([localize('test.preset.not.found', 'Could not find test preset with name'), name]);
+    log.error(localize('test.preset.not.found.full', 'Could not find test preset with name {0}', name));
+    errorHandler?.tempErrorList.push([localize('test.preset.not.found', 'Could not find test preset'), name]);
     return null;
 }
 
@@ -1790,10 +1787,9 @@ export async function expandPackagePreset(folder: string, name: string, workspac
 
     expansionOpts.envOverride = expandedPreset.environment;
 
-    // TODO: clear out temp error list, add preset name and move to full errorList
     if (errorHandler) {
         for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error, preset.name]);
+            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
         }
         errorHandler.tempErrorList = [];
     }
@@ -1827,8 +1823,8 @@ async function expandPackagePresetImpl(folder: string, name: string, workspaceFo
         return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
     }
 
-    log.error(localize('package.preset.not.found', 'Could not find package preset with name {0}', name));
-    errorHandler?.errorList.push([localize('package.preset.not.found', 'Could not find package preset with name {0}', name), name]);
+    log.error(localize('package.preset.not.found.full', 'Could not find package preset with name {0}', name));
+    errorHandler?.errorList.push([localize('package.preset.not.found', 'Could not find package preset'), name]);
     return null;
 }
 
@@ -1915,6 +1911,13 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
 
     const expandedPreset: WorkflowPreset = { name, steps: [{type: "configure", name: "_placeholder_"}] };
 
+    if (errorHandler) {
+        for (const error of errorHandler.tempErrorList || []) {
+            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
+        }
+        errorHandler.tempErrorList = [];
+    }
+
     // According to CMake docs, no other fields support macro expansion in a workflow preset.
     merge(expandedPreset, preset);
     expandedPreset.steps = preset.steps;
@@ -1951,7 +1954,7 @@ async function expandWorkflowPresetImpl(folder: string, name: string, workspaceF
     }
 
     log.error(localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name));
-    errorHandler?.errorList.push([localize('workflow.preset.not.found', 'Could not find workflow preset'), name]);
+    errorHandler?.tempErrorList.push([localize('workflow.preset.not.found', 'Could not find workflow preset'), name]);
     return null;
 }
 

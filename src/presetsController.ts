@@ -1664,7 +1664,7 @@ export class PresetsController {
 
         await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
-        const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
+        const expandedConfigurePresets: preset.ConfigurePreset[] = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
             preset.expandConfigurePreset(
                 this.folderPath,
                 configurePreset.name,
@@ -1675,7 +1675,7 @@ export class PresetsController {
                 expansionErrors)
         ))).filter(preset => preset !== null);
 
-        const expandedBuildPresets = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
+        const expandedBuildPresets: preset.BuildPreset[] = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
             preset.expandBuildPreset(
                 this.folderPath,
                 buildPreset.name,
@@ -1689,7 +1689,7 @@ export class PresetsController {
                 expansionErrors)
         ))).filter(preset => preset !== null);
 
-        const expandedPackagePresets = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
+        const expandedPackagePresets: preset.PackagePreset[] = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
             preset.expandPackagePreset(
                 this.folderPath,
                 packagePreset.name,
@@ -1702,7 +1702,7 @@ export class PresetsController {
                 expansionErrors)
         ))).filter(preset => preset !== null);
 
-        const expandedTestPresets = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
+        const expandedTestPresets: preset.TestPreset[] = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
             preset.expandTestPreset(
                 this.folderPath,
                 testPreset.name,
@@ -1715,7 +1715,7 @@ export class PresetsController {
                 expansionErrors)
         ))).filter(preset => preset !== null);
 
-        const expandedWorkflowPresets = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
+        const expandedWorkflowPresets: preset.WorkflowPreset[] = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
             preset.expandWorkflowPreset(
                 this.folderPath,
                 workflowPreset.name,
@@ -1744,17 +1744,17 @@ export class PresetsController {
         }
     }
 
-    // TODO: report all expansion errors in the problems panel
     private async reportPresetsFileErrors(path: string = " ", expansionErrors: ExpansionErrorHandling) {
         log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
         // eslint-disable-next-line prefer-const
         let diagnostics: FileDiagnostic[] = [];
         for (const error of expansionErrors.errorList) {
+            // message - error type, source - details & the preset name it's from
             const diagnostic: Diagnostic = {
                 severity: DiagnosticSeverity.Error,
-                message: error[1],
-                source: error[0],
-                range: new Range(new Position(0, 0), new Position(0, 0))
+                message: error[0],
+                source: error[1],
+                range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error
             };
             // create a file diagnostic
             const fileDiagnostic: FileDiagnostic = {
@@ -1764,10 +1764,7 @@ export class PresetsController {
             diagnostics.push(fileDiagnostic);
         }
 
-        // Send the diagnostics to VS Code without overwriting the existing diagnostics
-        const existingDiagnostics = vscode.languages.getDiagnostics();
-        const newDiagnostics = [...existingDiagnostics, ...diagnostics];
-
+        // TODO: Send the diagnostics to VS Code without overwriting the existing diagnostics -- need to write a different poopulate collection function
         populateCollection(collections.cmake, diagnostics);
     }
 
