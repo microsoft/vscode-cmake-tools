@@ -807,9 +807,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     if (!preset) {
         return null;
     }
-    if (preset.installDir) {
-        preset.installDir = util.resolvePath(preset.installDir, sourceDir);
-    }
     preset = await tryApplyVsDevEnv(preset);
 
     preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
@@ -853,7 +850,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     }
 
     if (preset.installDir) {
-        expandedPreset.installDir = util.lightNormalizePath(await expandString(preset.installDir, expansionOpts));
+        expandedPreset.installDir = util.resolvePath(await expandString(preset.installDir, expansionOpts), sourceDir);
     }
 
     if (preset.toolchainFile) {
