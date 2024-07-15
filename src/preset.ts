@@ -807,6 +807,9 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     if (!preset) {
         return null;
     }
+    if (preset.installDir) {
+        preset.installDir = util.resolvePath(preset.installDir, sourceDir);
+    }
     preset = await tryApplyVsDevEnv(preset);
 
     preset.environment = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
@@ -1137,9 +1140,6 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset) {
 
 async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false) {
     if (preset.__expanded) {
-        if (preset.installDir) {
-            preset.installDir = util.resolvePath(preset.installDir, sourceDir);
-        }
         return preset;
     }
 
@@ -1207,9 +1207,6 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
     preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
 
     preset.__expanded = true;
-    if (preset.installDir) {
-        preset.installDir = util.resolvePath(preset.installDir, sourceDir);
-    }
     return preset;
 }
 
