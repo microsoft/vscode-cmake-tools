@@ -1643,12 +1643,8 @@ export class PresetsController {
     }
 
     /**
-     * Expands the presets file by including all the included files
-     * Needs to do all the work that get all configure presets currently does BUT
-     * Also needs to return the presets file
-     * We cant set the presets file in the project until we have validated it by checking if there are any errors
-     * print out errrors here, and then return undefined if there are any errors
-     * // TODO: do this for all presets once i have configure presets fully working
+     * Returns the expanded presets file if there are no errors, otherwise returns undefined
+     * Does not apply vsdevenv to the presets file
      */
     private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
 
@@ -1725,25 +1721,26 @@ export class PresetsController {
                 expansionErrors)
         ))).filter(preset => preset !== null) as preset.WorkflowPreset[];
 
-        // cache everything that we just expanded
-        // we'll only need to expand again on set preset - to apply the vs dev env if needed
-        presetsFile.configurePresets = expandedConfigurePresets;
-        presetsFile.buildPresets = expandedBuildPresets;
-        presetsFile.testPresets = expandedTestPresets;
-        presetsFile.packagePresets = expandedPackagePresets;
-        presetsFile.workflowPresets = expandedWorkflowPresets;
-
         if (expansionErrors.errorList.length > 0) {
             await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
             return undefined;
         } else {
             log.debug(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
+            // cache everything that we just expanded
+            // we'll only need to expand again on set preset - to apply the vs dev env if needed
+            presetsFile.configurePresets = expandedConfigurePresets;
+            presetsFile.buildPresets = expandedBuildPresets;
+            presetsFile.testPresets = expandedTestPresets;
+            presetsFile.packagePresets = expandedPackagePresets;
+            presetsFile.workflowPresets = expandedWorkflowPresets;
+
             return presetsFile;
         }
     }
 
     private async reportPresetsFileErrors(path: string = " ", expansionErrors: ExpansionErrorHandler) {
         log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
+
         const diagnostics: Diagnostic[] = [];
         for (const error of expansionErrors.errorList) {
             // message - error type, source - details & the preset name it's from
@@ -1753,7 +1750,10 @@ export class PresetsController {
                 source: error[1],
                 range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error
             };
-            diagnostics.push(diagnostic);
+            // avoid duplicate diagnostics
+            if (!diagnostics.find(d => d.message === diagnostic.message && d.source === diagnostic.source)) {
+                diagnostics.push(diagnostic);
+            }
         }
 
         collections.presets.set(vscode.Uri.file(path), diagnostics);
