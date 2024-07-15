@@ -1664,7 +1664,7 @@ export class PresetsController {
 
         await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
-        const expandedConfigurePresets: preset.ConfigurePreset[] = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
+        const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
             preset.expandConfigurePreset(
                 this.folderPath,
                 configurePreset.name,
@@ -1673,9 +1673,9 @@ export class PresetsController {
                 true,
                 false,
                 expansionErrors)
-        ))).filter(preset => preset !== null);
+        ))).filter(preset => preset !== null)  as preset.ConfigurePreset[];
 
-        const expandedBuildPresets: preset.BuildPreset[] = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
+        const expandedBuildPresets = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
             preset.expandBuildPreset(
                 this.folderPath,
                 buildPreset.name,
@@ -1687,9 +1687,9 @@ export class PresetsController {
                 buildPreset.configurePreset,
                 false,
                 expansionErrors)
-        ))).filter(preset => preset !== null);
+        ))).filter(preset => preset !== null) as preset.BuildPreset[];
 
-        const expandedPackagePresets: preset.PackagePreset[] = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
+        const expandedPackagePresets = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
             preset.expandPackagePreset(
                 this.folderPath,
                 packagePreset.name,
@@ -1700,9 +1700,9 @@ export class PresetsController {
                 packagePreset.configurePreset,
                 false,
                 expansionErrors)
-        ))).filter(preset => preset !== null);
+        ))).filter(preset => preset !== null) as preset.PackagePreset[];
 
-        const expandedTestPresets: preset.TestPreset[] = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
+        const expandedTestPresets = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
             preset.expandTestPreset(
                 this.folderPath,
                 testPreset.name,
@@ -1713,9 +1713,9 @@ export class PresetsController {
                 testPreset.configurePreset,
                 false,
                 expansionErrors)
-        ))).filter(preset => preset !== null);
+        ))).filter(preset => preset !== null) as preset.TestPreset[];
 
-        const expandedWorkflowPresets: preset.WorkflowPreset[] = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
+        const expandedWorkflowPresets = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
             preset.expandWorkflowPreset(
                 this.folderPath,
                 workflowPreset.name,
@@ -1725,7 +1725,7 @@ export class PresetsController {
                 undefined,  // should this always be undefined?
                 false,
                 expansionErrors)
-        ))).filter(preset => preset !== null);
+        ))).filter(preset => preset !== null) as preset.WorkflowPreset[];
 
         // cache everything that we just expanded
         // we'll only need to expand again on set preset - to apply the vs dev env if needed
