@@ -99,7 +99,7 @@ export interface ExpansionOptions {
     doNotSupportCommands?: boolean;
 }
 
-export interface ExpansionErrorHandling {
+export interface ExpansionErrorHandler {
     errorList: [string, string][];
     tempErrorList: [string, string][];
 }
@@ -111,7 +111,7 @@ export interface ExpansionErrorHandling {
  * @param opts Options for the expansion process
  * @returns A string with the variable references replaced
  */
-export async function expandString<T>(input: string | T, opts: ExpansionOptions, errorHandler?: ExpansionErrorHandling): Promise<string | T> {
+export async function expandString<T>(input: string | T, opts: ExpansionOptions, errorHandler?: ExpansionErrorHandler): Promise<string | T> {
     if (typeof input !== 'string') {
         return input;
     }
@@ -154,7 +154,7 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions,
 // as few times as possible, expanding as needed (lazy)
 const varValueRegexp = ".+?";
 
-async function expandStringHelper(input: string, opts: ExpansionOptions, errorHandler?: ExpansionErrorHandling) {
+async function expandStringHelper(input: string, opts: ExpansionOptions, errorHandler?: ExpansionErrorHandler) {
     const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
     const env = EnvironmentUtils.create(envPreNormalize);
     const replacements = opts.vars;

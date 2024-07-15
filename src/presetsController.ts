@@ -9,7 +9,7 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { ExpansionErrorHandling, ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
+import { ExpansionErrorHandler, ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
@@ -1660,7 +1660,7 @@ export class PresetsController {
         log.debug(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
         // eslint-disable-next-line prefer-const
-        let expansionErrors: ExpansionErrorHandling = { errorList: [], tempErrorList: []};
+        let expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
         await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
@@ -1744,7 +1744,7 @@ export class PresetsController {
         }
     }
 
-    private async reportPresetsFileErrors(path: string = " ", expansionErrors: ExpansionErrorHandling) {
+    private async reportPresetsFileErrors(path: string = " ", expansionErrors: ExpansionErrorHandler) {
         log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
         // eslint-disable-next-line prefer-const
         let diagnostics: FileDiagnostic[] = [];
