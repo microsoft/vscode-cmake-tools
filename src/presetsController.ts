@@ -17,7 +17,6 @@ import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
-import { FileDiagnostic, populateCollection } from './diagnostics/util';
 import collections from './diagnostics/collections';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -1659,8 +1658,7 @@ export class PresetsController {
 
         log.debug(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
-        // eslint-disable-next-line prefer-const
-        let expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
+        const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
         await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
@@ -1746,8 +1744,7 @@ export class PresetsController {
 
     private async reportPresetsFileErrors(path: string = " ", expansionErrors: ExpansionErrorHandler) {
         log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
-        // eslint-disable-next-line prefer-const
-        let diagnostics: FileDiagnostic[] = [];
+        const diagnostics: Diagnostic[] = [];
         for (const error of expansionErrors.errorList) {
             // message - error type, source - details & the preset name it's from
             const diagnostic: Diagnostic = {
@@ -1756,16 +1753,10 @@ export class PresetsController {
                 source: error[1],
                 range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error
             };
-            // create a file diagnostic
-            const fileDiagnostic: FileDiagnostic = {
-                filepath: path,
-                diag: diagnostic
-            };
-            diagnostics.push(fileDiagnostic);
+            diagnostics.push(diagnostic);
         }
 
-        // TODO: Send the diagnostics to VS Code without overwriting the existing diagnostics -- need to write a different poopulate collection function
-        populateCollection(collections.cmake, diagnostics);
+        collections.presets.set(vscode.Uri.file(path), diagnostics);
     }
 
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {
