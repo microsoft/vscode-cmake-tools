@@ -850,7 +850,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     }
 
     if (preset.installDir) {
-        expandedPreset.installDir = util.lightNormalizePath(await expandString(preset.installDir, expansionOpts));
+        expandedPreset.installDir = util.resolvePath(await expandString(preset.installDir, expansionOpts), sourceDir);
     }
 
     if (preset.toolchainFile) {
