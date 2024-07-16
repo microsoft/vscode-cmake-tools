@@ -5,6 +5,8 @@ on:
 
 jobs:
     close_fixed_pending_release:
+        permissions:
+            issues: write
         runs-on: ubuntu-latest
         steps:
             - name: Close issues marked 'fixed-pending-release'
