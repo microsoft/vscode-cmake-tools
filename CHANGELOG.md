@@ -19,10 +19,12 @@ Bug Fixes:
 - Fix issue where `cmakeUserPresets.json` not showing up in project outline. [#3832](https://github.com/microsoft/vscode-cmake-tools/issues/3832)
 - Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
 - Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
-- Fix custom kit PATH being overriden [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
-- Fix debug variables being overriden [#3806](https://github.com/microsoft/vscode-cmake-tools/issues/3806)
+- Fix custom kit PATH being overriden. [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
+- Fix debug variables being overriden. [#3806](https://github.com/microsoft/vscode-cmake-tools/issues/3806)
 - Fix issue in Quick Start where a C file was generated in place of a C++ file. [#3856](https://github.com/microsoft/vscode-cmake-tools/issues/3856)
-- Fix custom build tasks not showing up [#3622](https://github.com/microsoft/vscode-cmake-tools/issues/3622)
+- Fix custom build tasks not showing up. [#3622](https://github.com/microsoft/vscode-cmake-tools/issues/3622)
+- Fix the bug where if a relative path specified for `installDir`, it is not calculated relative to the source directory, which is how it should be according to the CMake `installDir` docs [here](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset). [#3871](https://github.com/microsoft/vscode-cmake-tools/issues/3871)
+- Fix issue with CMakeLists.txt depth search. [#3901](https://github.com/microsoft/vscode-cmake-tools/issues/3901)
 
 ## 1.18.43
 
