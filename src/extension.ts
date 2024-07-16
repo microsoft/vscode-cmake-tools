@@ -2344,7 +2344,7 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
         console.assert(uri.path[0] === '/', "A preceeding slash is expected on schema uri path");
         const fileName: string = uri.path.substr(1);
         const locale: string = util.getLocaleId();
-        let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, fileName);
+        let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, "schemas", fileName);
         const fileExists: boolean = await util.checkFileExists(localizedFilePath);
         if (!fileExists) {
             localizedFilePath = path.join(util.thisExtensionPath(), "schemas", fileName);
