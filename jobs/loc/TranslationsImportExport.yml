@@ -65,11 +65,11 @@ extends:
           displayName: 'Set OneLocBuildToken'
           enabled: true
           inputs:
-            azureSubscription: 'VSEng-AzureDevOps-ceapex-OneLocBuild'   # Azure DevOps service connection
+            azureSubscription: '$(AzureSubscription)'   # Azure DevOps service connection
             scriptType: 'pscore'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              $token = az account get-access-token --query accessToken --resource 499b84ac-1321-427f-aa17-267ca6975798 -o tsv
+              $token = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AzDO.OneLocBuildToken;issecret=true]${token}"    
         
         - task: OneLocBuild@2
