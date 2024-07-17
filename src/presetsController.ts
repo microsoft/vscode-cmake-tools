@@ -1657,7 +1657,7 @@ export class PresetsController {
             return undefined;
         }
 
-        log.debug(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
+        log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
         const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
@@ -1730,7 +1730,7 @@ export class PresetsController {
             await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
             return undefined;
         } else {
-            log.debug(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
+            log.info(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
             // cache everything that we just expanded
             // we'll only need to expand again on set preset - to apply the vs dev env if needed
             presetsFile.configurePresets = expandedConfigurePresets;
