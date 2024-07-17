@@ -89,7 +89,7 @@ To get CMake Tools to do a clean configure, run **CMake: Delete Cache and Reconf
 
 A clean configure deletes the `CMakeCache.txt` file and `CMakeFiles` directory from the build directory. This resets all of CMake's default state.
 
-A clean configure is required for certain build system changes, such as when the active kit changes, but may als be convenient as a reset if you have changed configuration settings outside of CMake Tools.
+A clean configure is required for certain build system changes, such as when the active kit changes, but may also be convenient as a reset if you have changed configuration settings outside of CMake Tools.
 
 CMake Tools will do a clean configure automatically if you change the active kit.
 
