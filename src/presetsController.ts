@@ -1739,11 +1739,14 @@ export class PresetsController {
             presetsFile.packagePresets = expandedPackagePresets;
             presetsFile.workflowPresets = expandedWorkflowPresets;
 
+            // clear out the errors since there are none now
+            collections.presets.set(vscode.Uri.file(presetsFile.__path || ""), undefined);
+
             return presetsFile;
         }
     }
 
-    private async reportPresetsFileErrors(path: string = " ", expansionErrors: ExpansionErrorHandler) {
+    private async reportPresetsFileErrors(path: string = "", expansionErrors: ExpansionErrorHandler) {
         log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
 
         const diagnostics: Diagnostic[] = [];
