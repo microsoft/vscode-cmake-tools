@@ -255,7 +255,8 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         let matchingTargetTasks: CMakeTask[];
 
         if (presetName) {
-            matchingTargetTasks = buildTasks.filter(task => task.definition.preset === presetName);
+            matchingTargetTasks = buildTasks.filter(task => task.definition.preset === presetName
+                || task.definition.preset === "${command:cmake.activeBuildPresetName}");
         } else {
             matchingTargetTasks = buildTasks.filter(task => {
                 const taskTargets: string[] = task.definition.targets || [];

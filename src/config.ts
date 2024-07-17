@@ -34,6 +34,7 @@ export type StatusBarInheritIconOptionVisibility = "visible" | "hidden" | "inher
 export type ProjectStatusOptionVisibility = "visible" | "hidden";
 export type TouchBarOptionVisibility = "default" | "hidden";
 export type UseCMakePresets = 'always' | 'never' | 'auto';
+export type UseVsDeveloperEnvironment = 'always' | 'never' | 'auto';
 
 export interface AdvancedTouchBarConfig {
     configure?: TouchBarOptionVisibility;
@@ -171,7 +172,7 @@ export interface ExtensionConfigurationSettings {
     buildToolArgs: string[];
     parallelJobs: number | undefined;
     ctestPath: string;
-    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -193,6 +194,7 @@ export interface ExtensionConfigurationSettings {
     loadCompileCommands: boolean;
     configureOnOpen: boolean | null;
     configureOnEdit: boolean;
+    deleteBuildDirOnCleanConfigure: boolean;
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
     cmakeCommunicationMode: CMakeCommunicationMode;
@@ -207,6 +209,7 @@ export interface ExtensionConfigurationSettings {
     showOptionsMovedNotification: boolean;
     options: OptionConfig;
     useCMakePresets: UseCMakePresets;
+    useVsDeveloperEnvironment: UseVsDeveloperEnvironment;
     allowCommentsInPresetsFile: boolean;
     allowUnsupportedPresetsVersions: boolean;
     launchBehavior: string;
@@ -375,6 +378,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get testExplorerIntegrationEnabled(): boolean {
         return this.configData.ctest.testExplorerIntegrationEnabled;
     }
+    get testSuiteDelimiter(): string {
+        return this.configData.ctest.testSuiteDelimiter;
+    }
     get parseBuildDiagnostics(): boolean {
         return !!this.configData.parseBuildDiagnostics;
     }
@@ -432,6 +438,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get configureOnEdit() {
         return this.configData.configureOnEdit;
     }
+    get deleteBuildDirOnCleanConfigure() {
+        return this.configData.deleteBuildDirOnCleanConfigure;
+    }
     get skipConfigureIfCachePresent() {
         return this.configData.skipConfigureIfCachePresent;
     }
@@ -444,6 +453,9 @@ export class ConfigurationReader implements vscode.Disposable {
      */
     get useCMakePresets(): UseCMakePresets {
         return this.configData.useCMakePresets;
+    }
+    get useVsDeveloperEnvironment(): UseVsDeveloperEnvironment {
+        return this.configData.useVsDeveloperEnvironment;
     }
     get allowCommentsInPresetsFile(): boolean {
         return this.configData.allowCommentsInPresetsFile;
@@ -571,7 +583,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         cpackPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
@@ -592,6 +604,7 @@ export class ConfigurationReader implements vscode.Disposable {
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean | null>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
+        deleteBuildDirOnCleanConfigure: new vscode.EventEmitter<boolean>(),
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),
         cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
@@ -606,6 +619,7 @@ export class ConfigurationReader implements vscode.Disposable {
         showOptionsMovedNotification: new vscode.EventEmitter<boolean>(),
         options: new vscode.EventEmitter<OptionConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
+        useVsDeveloperEnvironment: new vscode.EventEmitter<UseVsDeveloperEnvironment>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),

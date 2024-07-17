@@ -1286,7 +1286,15 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureWithDebugger(folder?: vscode.WorkspaceFolder) {
-        return this.cleanConfigureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            folder,
+            fromCommand: true
+        });
     }
 
     cleanConfigureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder) {
@@ -1300,7 +1308,15 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     cleanConfigureAllWithDebugger(trigger?: ConfigureTrigger) {
-        return this.cleanConfigureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            trigger,
+            fromCommand: true
+        });
     }
 
     cleanConfigureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
@@ -1315,7 +1331,17 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureWithDebugger(folder?: vscode.WorkspaceFolder, sourceDir?: string, trigger?: ConfigureTrigger) {
-        return this.configureWithDebuggerInternal({pipeName: getDebuggerPipeName()}, folder, undefined, sourceDir, trigger);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            folder,
+            sourceDir,
+            trigger,
+            fromCommand: true
+        });
     }
 
     configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string, trigger?: ConfigureTrigger) {
@@ -1333,7 +1359,15 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAllWithDebugger(trigger?: ConfigureTrigger) {
-        return this.configureAllWithDebuggerInternal({pipeName: getDebuggerPipeName()}, trigger);
+        return vscode.debug.startDebugging(undefined, {
+            name: localize("cmake.debug.name", "CMake Debugger"),
+            request: "launch",
+            type: "cmake",
+            cmakeDebugType: "configure",
+            pipeName: getDebuggerPipeName(),
+            trigger,
+            fromCommand: true
+        });
     }
 
     configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
@@ -2310,7 +2344,7 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
         console.assert(uri.path[0] === '/', "A preceeding slash is expected on schema uri path");
         const fileName: string = uri.path.substr(1);
         const locale: string = util.getLocaleId();
-        let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, fileName);
+        let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, "schemas", fileName);
         const fileExists: boolean = await util.checkFileExists(localizedFilePath);
         if (!fileExists) {
             localizedFilePath = path.join(util.thisExtensionPath(), "schemas", fileName);
@@ -2332,41 +2366,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
-
-    const CMAKE_LANGUAGE = "cmake";
-
-    vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
-        indentationRules: {
-            // ^(.*\*/)?\s*\}.*$
-            decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
-            // ^.*\{[^}"']*$
-            increaseIndentPattern: /^.*\{[^}"']*$/
-        },
-        wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
-        comments: {
-            lineComment: '#'
-        },
-        brackets: [
-            ['{', '}'],
-            ['(', ')']
-        ],
-
-        __electricCharacterSupport: {
-            brackets: [
-                { tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
-                { tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
-                { tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
-            ]
-        },
-
-        __characterPairSupport: {
-            autoClosingPairs: [
-                { open: '{', close: '}' },
-                { open: '(', close: ')' },
-                { open: '"', close: '"', notIn: ['string'] }
-            ]
-        }
-    });
 
     if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
         void vscode.window.showInformationMessage(

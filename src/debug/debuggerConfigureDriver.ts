@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 export interface DebuggerInformation {
     pipeName: string;
     dapLog?: string;
-    debuggerIsReady?(): void;
+    debuggerIsReady(): void;
 }
 
 export function getDebuggerPipeName(): string {

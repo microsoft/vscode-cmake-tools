@@ -26,8 +26,7 @@
   },
   "categories": [
     "Other",
-    "Debuggers",
-    "Programming Languages"
+    "Debuggers"
   ],
   "galleryBanner": {
     "color": "#13578c",
@@ -62,30 +61,10 @@
     "workspaceContains:*/*/CMakeLists.txt",
     "workspaceContains:*/*/*/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json",
-    "onFileSystem:cmake-tools-schema",
-    "onLanguage:cmake"
+    "onFileSystem:cmake-tools-schema"
   ],
   "main": "./dist/main",
   "contributes": {
-    "languages": [
-      {
-        "id": "cmake",
-        "extensions": [
-          ".cmake"
-        ],
-        "filenames": ["CMakeLists.txt"],
-        "aliases": [
-          "CMake"
-        ]
-      },
-      {
-        "id": "cmake-cache",
-        "filenames": ["CMakeCache.txt"],
-        "aliases": [
-          "CMake Cache"
-        ]
-      }
-    ],
     "commands": [
       {
         "command": "cmake.openCMakePresets",
@@ -848,18 +827,6 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
         "category": "CMake"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "cmake",
-        "scopeName": "source.cmake",
-        "path": "./syntaxes/CMake.tmLanguage"
-      },
-      {
-        "language": "cmake-cache",
-        "scopeName": "source.cmakecache",
-        "path": "./syntaxes/CMakeCache.tmLanguage"
       }
     ],
     "taskDefinitions": [
@@ -2241,6 +2208,12 @@
           "description": "%cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description%",
           "scope": "machine-overridable"
         },
+        "cmake.ctest.testSuiteDelimiter": {
+          "type": "string",
+          "default": null,
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription%",
+          "scope": "machine-overridable"
+        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,
@@ -2464,6 +2437,11 @@
                   "short": "RelWithDebInfo",
                   "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long%",
                   "buildType": "RelWithDebInfo"
+                },
+                "unspecified": {
+                  "short": "Unspecified",
+                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.unspecified.long%",
+                  "buildType": "Unspecified"
                 }
               }
             }
@@ -2609,6 +2587,12 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
+          "scope": "resource"
+        },
+        "cmake.deleteBuildDirOnCleanConfigure": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description%",
           "scope": "resource"
         },
         "cmake.setBuildTypeOnMultiConfig": {
@@ -3526,6 +3510,17 @@
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%",
           "scope": "resource"
         },
+        "cmake.useVsDeveloperEnvironment": {
+            "type": "string",
+            "enum": [
+                "always",
+                "never",
+                "auto"
+            ],
+            "default": "auto",
+            "description": "%cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description%",
+            "scope": "resource"
+        },
         "cmake.allowCommentsInPresetsFile": {
           "type": "boolean",
           "default": false,
@@ -3766,7 +3761,7 @@
     "string.prototype.matchall": "^4.0.10",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^6.1.0",
-    "@vscode/extension-telemetry": "^0.6.2",
+    "@vscode/extension-telemetry": "^0.9.6",
     "vscode-nls": "^5.0.0",
     "vscode-tas-client": "^0.1.45",
     "which": "~2.0.2",
@@ -3785,7 +3780,11 @@
     "yargs-parser": "^20.2.4",
     "xml2js": "^0.5.0",
     "tsconfig-paths*/json5": "^1.0.2",
-    "minimatch": "^3.0.5"
+    "minimatch": "^3.0.5",
+    "**/braces": "^3.0.3"
   },
+  "extensionPack": [
+    "twxs.cmake"
+  ],
   "packageManager": "yarn@1.22.19"
 }
