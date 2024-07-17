@@ -61,7 +61,7 @@ When CMake Tools runs the configure step, it takes the following into considerat
     4. `CMAKE_BUILD_TYPE` is set based on [variant options](variants.md#variants-options).
     5. `CMAKE_INSTALL_PREFIX` is set based on [cmake.installPrefix](cmake-settings.md#cmake-settings).
     6. `CMAKE_TOOLCHAIN_FILE` is set for [toolchain](kits.md#specify-a-toolchain).
-    7. The [cmakeSettings](kits.md#generic-options) attribute on the active kit.
+    7. The [cmakeSettings](kits.md#general-options) attribute on the active kit.
 
     Additionally, [cmake.configureArgs](cmake-settings.md#cmake-settings) are passed before any of the above.
 
