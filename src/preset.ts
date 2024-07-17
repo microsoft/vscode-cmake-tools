@@ -1606,7 +1606,7 @@ async function expandBuildPresetHelper(folder: string, preset: BuildPreset, work
     }
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
-    if (preset.configurePreset && enableTryApplyDevEnv) {
+    if (preset.configurePreset) {
         const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler);
         if (configurePreset) {
             preset.__binaryDir = configurePreset.binaryDir;
@@ -1800,7 +1800,7 @@ async function expandTestPresetHelper(folder: string, preset: TestPreset, worksp
     }
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
-    if (preset.configurePreset && enableTryApplyDevEnv) { // TODO: check if all changes like this are valid
+    if (preset.configurePreset) {
         const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler);
         if (configurePreset) {
             preset.__binaryDir = configurePreset.binaryDir;
@@ -1937,7 +1937,7 @@ async function expandPackagePresetHelper(folder: string, preset: PackagePreset, 
     }
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
-    if (preset.configurePreset && enableTryApplyDevEnv) {
+    if (preset.configurePreset) {
         const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler); // TODO: i dont think i need to pass error handler here?
         if (configurePreset) {
             preset.__binaryDir = configurePreset.binaryDir;
