@@ -460,7 +460,7 @@ export class ProjectController implements vscode.Disposable {
         }
     }
 
-    private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets: string): Promise<void> {
+    private async doUseCMakePresetsChange(folder: vscode.WorkspaceFolder, useCMakePresets?: string): Promise<void> {
         const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
             for (const project of projects) {
@@ -542,6 +542,11 @@ export class ProjectController implements vscode.Disposable {
 
     private async doSaveTextDocument(textDocument: vscode.TextDocument): Promise<void> {
         await this.doCMakeFileChangeReconfigure(textDocument.uri);
+
+        if (textDocument.fileName.endsWith("CMakePreset.json")) {
+            log.debug(localize('cmake.preset.file.save', 'CMake Preset file saved: {0}', textDocument.fileName));
+            await this.updateActiveProject(this.activeProject?.workspaceFolder);
+        }
     }
 
     private async onDidRenameFiles(renamedFileEvt: vscode.FileRenameEvent): Promise<void> {

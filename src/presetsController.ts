@@ -26,6 +26,7 @@ type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefin
 
 export class PresetsController {
     private _presetsWatcher: chokidar.FSWatcher | undefined;
+    private _presetCreatedWatcher: chokidar.FSWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _presetsFileExists = false;
@@ -1761,23 +1762,37 @@ export class PresetsController {
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));
     }
 
+    // TODO: update this for when a new preset file is added!
     private async watchPresetsChange() {
         if (this._presetsWatcher) {
             this._presetsWatcher.close().then(() => {}, () => {});
+        }
+        if (this._presetCreatedWatcher) {
+            this._presetCreatedWatcher.close().then(() => {}, () => {});
         }
 
         const handler = () => {
             void this.reapplyPresets();
         };
         this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
-            .on('add', handler)
             .on('change', handler)
             .on('unlink', handler);
+
+        const handler2 = () => {
+            log.debug(localize('preset.created', 'A new preset file was created!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'));
+            void this.reapplyPresets();
+        };
+        this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
+            .on('add', handler2);
+        this._presetCreatedWatcher?.add("CMakePresets.json");
     };
 
     dispose() {
         if (this._presetsWatcher) {
             this._presetsWatcher.close().then(() => {}, () => {});
+        }
+        if (this._presetCreatedWatcher) {
+            this._presetCreatedWatcher.close().then(() => {}, () => {});
         }
         if (this._sourceDirChangedSub) {
             this._sourceDirChangedSub.dispose();
