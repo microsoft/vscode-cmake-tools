@@ -89,6 +89,8 @@ extends:
           - 'CHANGELOG.md should be updated before scheduling the pipeline.'
         - ${{ if not(eq(parameters.VerifyNotice, 'yes')) }}:
           - 'Third party notices should be updated before scheduling the pipeline.'
-        - ${{ if not(eq(parameters.ReleaseVersion, 'yes')) }}:
+        - ${{ if eq(parameters.ReleaseVersion, 'unset') }}:
           - 'ReleaseVersion needs to be set before scheduling the pipeline.'
         - template: /jobs/shared/build.yml@self
+          parameters:
+            ReleaseVersion: ${{ parameters.ReleaseVersion }}

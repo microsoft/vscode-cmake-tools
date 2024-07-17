@@ -24,8 +24,15 @@
 	"Launch": "啟動",
 	"Folder": "資料夾",
 	"active.folder": "作用中資料夾",
+	"configPreset.change": "變更設定預設",
+	"buildPreset.change": "變更建置預設",
+	"testPreset.change": "變更測試預設",
+	"packagePreset.change": "變更套件預設",
+	"workflowPreset.change": "變更工作流程預設",
+	"kit.change": "變更套件",
 	"set.build.target": "設定組建目標",
 	"set.debug.target": "設定偵錯目標",
 	"set.launch.target": "設定啟動目標",
-	"select.active.folder": "選取作用中資料夾"
+	"select.active.folder": "選取作用中資料夾",
+	"set.variant": "設定變體"
 }

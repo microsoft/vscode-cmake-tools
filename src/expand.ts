@@ -78,6 +78,14 @@ export interface ExpansionOptions {
      */
     envOverride?: EnvironmentWithNull;
     /**
+     * Override the values used in `${penv:var}`-style and `${penv.var}`-style expansions.
+     *
+     * Note that setting this property will disable expansion of environment
+     * variables for the running process. Only environment variables in this key
+     * will be expanded.
+     */
+    penvOverride?: EnvironmentWithNull;
+    /**
      * Variables for `${variant:var}`-style expansions.
      */
     variantVars?: { [key: string]: string };
@@ -122,7 +130,7 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
         } while (i < maxRecursion && opts.recursive && didReplacement && !circularReference);
 
         if (circularReference) {
-            log.warning(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
+            log.error(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
         } else if (i === maxRecursion) {
             log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
         }
@@ -203,7 +211,7 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         subs.set(full, replacement);
     }
 
-    getParentEnvSubstitutions(input, subs);
+    getParentEnvSubstitutions(input, subs, opts.penvOverride);
 
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
         const folderRegex = RegExp(`\\$\\{workspaceFolder:(${varValueRegexp})\\}`, "g");
@@ -278,12 +286,13 @@ export function substituteAll(input: string, subs: Map<string, string>) {
     return { result: finalString, didReplacement };
 }
 
-export function getParentEnvSubstitutions(input: string, subs: Map<string, string>): Map<string, string> {
+export function getParentEnvSubstitutions(input: string, subs: Map<string, string>, penvOverride?: EnvironmentWithNull): Map<string, string> {
     const parentEnvRegex = RegExp(`\\$penv\\{(${varValueRegexp})\\}`, "g");
     for (const mat of matchAll(input, parentEnvRegex)) {
         const full = mat[0];
         const varName = mat[1];
-        const replacement = fixPaths(process.env[varName]) || '';
+        const replacementValue = penvOverride ? penvOverride[varName] : process.env[varName];
+        const replacement = fixPaths(replacementValue === null ? undefined : replacementValue) || '';
         subs.set(full, replacement);
     }
 

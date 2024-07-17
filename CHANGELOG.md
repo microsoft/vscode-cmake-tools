@@ -4,7 +4,33 @@
 
 Features:
 
-- Add support for CMake Language Support natively in this extension. [#3559](https://github.com/microsoft/vscode-cmake-tools/issues/3559)
+- Add setting `cmake.useVsDeveloperEnvironment` to allow for more user control on when the Visual Studio Developer Enviornment is attempted to be added to the CMake Presets environment. [#3892](https://github.com/microsoft/vscode-cmake-tools/pull/3892)
+
+Improvements:
+
+- Add `Unspecified` option for selecting a kit variant to allow CMake itself to select the build type. [#3821](https://github.com/microsoft/vscode-cmake-tools/issues/3821)
+- Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
+
+Bug Fixes:
+
+- Attempt to fix stringifying the extension context. [#3797](https://github.com/microsoft/vscode-cmake-tools/issues/3797)
+- Fix issue where `cmake.preferredGenerators` wasn't falling back to the next entry when the first entry didn't exist. [#2709](https://github.com/microsoft/vscode-cmake-tools/issues/2709)
+- Potential fix for attempting to load a non-variants file as a variants file and throwing a parse exception. [#3727](https://github.com/microsoft/vscode-cmake-tools/issues/3727)
+- Fix issue where `cmakeUserPresets.json` not showing up in project outline. [#3832](https://github.com/microsoft/vscode-cmake-tools/issues/3832)
+- Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
+- Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
+- Fix custom kit PATH being overriden. [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
+- Fix debug variables being overriden. [#3806](https://github.com/microsoft/vscode-cmake-tools/issues/3806)
+- Fix issue in Quick Start where a C file was generated in place of a C++ file. [#3856](https://github.com/microsoft/vscode-cmake-tools/issues/3856)
+- Fix custom build tasks not showing up. [#3622](https://github.com/microsoft/vscode-cmake-tools/issues/3622)
+- Fix the bug where if a relative path specified for `installDir`, it is not calculated relative to the source directory, which is how it should be according to the CMake `installDir` docs [here](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset). [#3871](https://github.com/microsoft/vscode-cmake-tools/issues/3871)
+- Fix issue with CMakeLists.txt depth search. [#3901](https://github.com/microsoft/vscode-cmake-tools/issues/3901)
+- Fix localized file path for schema files. [#3872](https://github.com/microsoft/vscode-cmake-tools/issues/3872)
+
+## 1.18.43
+
+Features:
+
 - Upgrade `cmake_minimum_required` version 3.0.0 -> 3.5.0. [#3793](https://github.com/microsoft/vscode-cmake-tools/issues/3793)
 
 Improvements:
@@ -19,7 +45,10 @@ Bug Fixes:
 - Update localized strings for Project Status UI and quick pick dropdowns. [#3803](https://github.com/microsoft/vscode-cmake-tools/issues/3803), [#3802](https://github.com/microsoft/vscode-cmake-tools/issues/3802)
 - Fix issue where new presets couldn't inherit from presets in CmakeUserPresets.json. These presets are now added to CmakeUserPresets.json instead of CmakePresets.json. [#3725](https://github.com/microsoft/vscode-cmake-tools/issues/3725)
 - Fix issue where CMakeTools does not recheck CMake Path to see if user installed CMake after launching VS Code. [3811](https://github.com/microsoft/vscode-cmake-tools/issues/3811)
-- Fix issue where `cmake.buildToolArgs` was sometimes applied incorrectly when presets are used [#3754](https://github.com/microsoft/vscode-cmake-tools/issues/3754)
+- Fix issue where `cmake.buildToolArgs` was sometimes applied incorrectly when presets are used. [#3754](https://github.com/microsoft/vscode-cmake-tools/issues/3754)
+- Fix issue where `preferredGenerator.platform` and `preferredGenerator.toolset` wasn't being compared between the old and new kit to trigger a clean configure on a kit selection change. [#2699](https://github.com/microsoft/vscode-cmake-tools/issues/2699)
+- Still allow for users to add `--warn-unused-cli`. Now instead of overriding, it will remove our default `--no-warn-unused-cli`. [#1090](https://github.com/microsoft/vscode-cmake-tools/issues/1090)
+- Ensure `useCMakePresets` context is set after making a CMakePreset.json with `Quick Start`. [#3734](https://github.com/microsoft/vscode-cmake-tools/issues/3734)
 
 ## 1.18.42
 
@@ -30,7 +59,7 @@ Bug Fixes:
 ## 1.18.41
 Features:
 
-- Add the possibility to open the current build directory in the Explorer [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)
+- Add the possibility to open the current build directory in the Explorer. [#1451](https://github.com/microsoft/vscode-cmake-tools/issues/1451)
 - Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
 - Update `api.ts` to add the `onSelectedConfigurationChanged` event. [#3671](https://github.com/microsoft/vscode-cmake-tools/pull/3671) [@OrkunTokdemir](https://github.com/OrkunTokdemir)
 - Improve CMake QuickStart by allowing the user to dynamically create a CMakePresets.json file. [#3649](https://github.com/microsoft/vscode-cmake-tools/issues/3649)

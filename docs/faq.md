@@ -6,13 +6,13 @@ Please visit [the end-user support chat](https://gitter.im/vscode-cmake-tools/su
 
 Also look in the [Troubleshooting guide](troubleshoot.md).
 
-Check the [CMake Tools issue tracker](https://github.com/vector-of-bool/vscode-cmake-tools/issues) and [What's New](https://github.com/microsoft/vscode-cmake-tools/blob/main/CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report. Feel free to [Open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) if your problem hasn't been reported.
+Check the [CMake Tools issue tracker](https://github.com/microsoft/vscode-cmake-tools/issues) and [What's New](../CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report. Feel free to [Open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) if your problem hasn't been reported.
 
 Explore the [CMake Tools documentation](README.md)
 
 ## What about CMake language support?
 
-We support CMake language support natively in the CMake Tools extension.
+CMake Tools was created separately from the [CMake extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake), which provides language coloring and autocompletion support.
 
 ## How do I learn about CMake?
 

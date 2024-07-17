@@ -87,6 +87,11 @@ export class PresetsController {
             await presetsController.reapplyPresets();
         });
 
+        // We need to reapply presets to reassess whether the VS Developer Environment should be used.
+        project.workspaceContext.config.onChange('useVsDeveloperEnvironment', async () => {
+            await presetsController.reapplyPresets();
+        });
+
         return presetsController;
     }
 
@@ -1623,7 +1628,7 @@ export class PresetsController {
                 logFunc(localize('unsupported.presets', 'Unsupported presets detected in {0}. Support is limited to features defined by version {1}.', file, maxSupportedVersion));
                 for (const err of errors) {
                     if (err.params && 'additionalProperty' in err.params) {
-                        logFunc(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
+                        logFunc(` >> ${err.dataPath}: ${localize('no.additional.properties', 'should NOT have additional properties')}: ${err.params.additionalProperty}`);
                     } else {
                         logFunc(` >> ${err.dataPath}: ${err.message}`);
                     }

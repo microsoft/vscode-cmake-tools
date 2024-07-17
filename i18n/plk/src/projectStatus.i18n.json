@@ -24,8 +24,15 @@
 	"Launch": "Uruchom",
 	"Folder": "Folder",
 	"active.folder": "Aktywny folder",
+	"configPreset.change": "Zmień ustawienie wstępne konfiguracji",
+	"buildPreset.change": "Zmień ustawienie wstępne kompilacji",
+	"testPreset.change": "Zmień ustawienie wstępne testu",
+	"packagePreset.change": "Zmień ustawienie wstępne pakietu",
+	"workflowPreset.change": "Zmień ustawienie wstępne przepływu pracy",
+	"kit.change": "Zmień zestaw",
 	"set.build.target": "Ustaw docelowy element kompilacji",
 	"set.debug.target": "Ustaw element docelowy debugowania",
 	"set.launch.target": "Ustaw element docelowy uruchamiania",
-	"select.active.folder": "Wybierz aktywny folder"
+	"select.active.folder": "Wybierz aktywny folder",
+	"set.variant": "Ustaw wariant"
 }
