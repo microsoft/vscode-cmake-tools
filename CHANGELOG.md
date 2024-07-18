@@ -2,6 +2,10 @@
 
 ## 1.19
 
+Features:
+
+- Add setting `cmake.useVsDeveloperEnvironment` to allow for more user control on when the Visual Studio Developer Enviornment is attempted to be added to the CMake Presets environment. [#3892](https://github.com/microsoft/vscode-cmake-tools/pull/3892)
+
 Improvements:
 
 - Add `Unspecified` option for selecting a kit variant to allow CMake itself to select the build type. [#3821](https://github.com/microsoft/vscode-cmake-tools/issues/3821)

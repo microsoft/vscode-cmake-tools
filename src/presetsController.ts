@@ -87,6 +87,11 @@ export class PresetsController {
             await presetsController.reapplyPresets();
         });
 
+        // We need to reapply presets to reassess whether the VS Developer Environment should be used.
+        project.workspaceContext.config.onChange('useVsDeveloperEnvironment', async () => {
+            await presetsController.reapplyPresets();
+        });
+
         return presetsController;
     }
 
