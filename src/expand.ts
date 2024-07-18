@@ -307,3 +307,12 @@ export function getParentEnvSubstitutions(input: string, subs: Map<string, strin
 
     return subs;
 }
+
+export function errorHandlerHelper(presetName: string, errorHandler?: ExpansionErrorHandler) {
+    if (errorHandler) {
+        for (const error of errorHandler.tempErrorList || []) {
+            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${presetName}'`]);
+        }
+        errorHandler.tempErrorList = [];
+    }
+}

@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
 import { execute } from '@cmt/proc';
-import { expandString, ExpansionErrorHandler, ExpansionOptions } from '@cmt/expand';
+import { errorHandlerHelper, expandString, ExpansionErrorHandler, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
@@ -880,12 +880,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
     }
 
-    if (errorHandler) {
-        for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
-        }
-        errorHandler.tempErrorList = [];
-    }
+    errorHandlerHelper(preset.name, errorHandler);
 
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
@@ -1491,12 +1486,7 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
 
-    if (errorHandler) {
-        for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
-        }
-        errorHandler.tempErrorList = [];
-    }
+    errorHandlerHelper(preset.name, errorHandler);
 
     return expandedPreset;
 }
@@ -1588,6 +1578,7 @@ async function expandBuildPresetHelper(folder: string, preset: BuildPreset, work
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, configurePreset.environment]);
             }
         } else {
+            errorHandlerHelper(preset.name, errorHandler);
             return null;
         }
     }
@@ -1688,12 +1679,7 @@ export async function expandTestPreset(folder: string, name: string, workspaceFo
 
     merge(expandedPreset, preset);
 
-    if (errorHandler) {
-        for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
-        }
-        errorHandler.tempErrorList = [];
-    }
+    errorHandlerHelper(preset.name, errorHandler);
 
     return expandedPreset;
 }
@@ -1782,6 +1768,7 @@ async function expandTestPresetHelper(folder: string, preset: TestPreset, worksp
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, configurePreset.environment]);
             }
         } else {
+            errorHandlerHelper(preset.name, errorHandler);
             return null;
         }
     }
@@ -1823,12 +1810,7 @@ export async function expandPackagePreset(folder: string, name: string, workspac
 
     expansionOpts.envOverride = expandedPreset.environment;
 
-    if (errorHandler) {
-        for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
-        }
-        errorHandler.tempErrorList = [];
-    }
+    errorHandlerHelper(preset.name, errorHandler);
 
     // According to CMake docs, no other fields support macro expansion in a package preset.
     merge(expandedPreset, preset);
@@ -1919,6 +1901,7 @@ async function expandPackagePresetHelper(folder: string, preset: PackagePreset, 
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, configurePreset.environment]);
             }
         } else {
+            errorHandlerHelper(preset.name, errorHandler);
             return null;
         }
     }
@@ -1947,12 +1930,7 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
 
     const expandedPreset: WorkflowPreset = { name, steps: [{type: "configure", name: "_placeholder_"}] };
 
-    if (errorHandler) {
-        for (const error of errorHandler.tempErrorList || []) {
-            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${preset.name}'`]);
-        }
-        errorHandler.tempErrorList = [];
-    }
+    errorHandlerHelper(preset.name, errorHandler);
 
     // According to CMake docs, no other fields support macro expansion in a workflow preset.
     merge(expandedPreset, preset);
@@ -2045,6 +2023,7 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
                 }
             };
         } else {
+            errorHandlerHelper(preset.name, errorHandler);
             return null;
         }
     }
