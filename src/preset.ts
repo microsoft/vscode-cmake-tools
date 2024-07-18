@@ -1229,12 +1229,15 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
 
     refs.add(preset.name);
 
-    // Init env and cacheVar to empty if not specified to avoid null checks later
+    // Init env, cacheVar and vendor to empty if not specified to avoid null checks later
     if (!preset.environment) {
         preset.environment = EnvironmentUtils.createPreserveNull();
     }
     if (!preset.cacheVariables) {
         preset.cacheVariables = {};
+    }
+    if (!preset.vendor) {
+        preset.vendor = {};
     }
 
     // Expand inherits
@@ -1252,6 +1255,12 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
                 for (const name in parent.cacheVariables) {
                     if (preset.cacheVariables[name] === undefined) {
                         preset.cacheVariables[name] = parent.cacheVariables[name];
+                    }
+                }
+                // Inherit vendor
+                for (const name in parent.vendor) {
+                    if (preset.vendor[name] === undefined) {
+                        preset.vendor[name] = parent.vendor[name];
                     }
                 }
                 // Inherit other fields
