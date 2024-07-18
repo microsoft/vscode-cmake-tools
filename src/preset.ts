@@ -834,6 +834,8 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
     }
 
+    // TODO: because of the below penv handling we get repeated expansions errors from parent presets. Need to fix for errorHandler
+
     // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
     // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
     // NOTE: Based on logic in `tryApplyVsDevEnv`, `preset.__parentEnvironment` should never be undefined at this point.
