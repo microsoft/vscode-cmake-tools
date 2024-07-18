@@ -783,36 +783,6 @@ async function expandCondition(condition: boolean | Condition | null | undefined
     return undefined;
 }
 
-export async function expandConditionsForPresets(folder: string, sourceDir: string, workspaceFolder: string, errorHandler?: ExpansionErrorHandler) {
-    for (const preset of allConfigurePresets(folder)) {
-        if (preset.condition) {
-            const expandedPreset = await expandConfigurePreset(folder, preset.name, sourceDir, workspaceFolder, true, false, errorHandler);
-            if (expandedPreset) {
-                const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
-                preset.condition = await expandCondition(preset.condition, opts, errorHandler);
-            }
-        }
-    }
-    for (const preset of allBuildPresets(folder)) {
-        if (preset.condition) {
-            const expandedPreset = await expandBuildPreset(folder, preset.name, workspaceFolder, sourceDir, undefined, undefined, true, preset.configurePreset, false);
-            if (expandedPreset) {
-                const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
-                preset.condition = await expandCondition(preset.condition, opts, errorHandler);
-            }
-        }
-    }
-    for (const preset of allTestPresets(folder)) {
-        if (preset.condition) {
-            const expandedPreset = await expandTestPreset(folder, preset.name, workspaceFolder, sourceDir, undefined, true, preset.configurePreset, false);
-            if (expandedPreset) {
-                const opts = await getExpansionOptions('${workspaceFolder}', sourceDir, expandedPreset);
-                preset.condition = await expandCondition(preset.condition, opts, errorHandler);
-            }
-        }
-    }
-}
-
 export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
 
     // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
