@@ -487,19 +487,25 @@ export function minCMakeVersion(folder: string) {
     return util.versionLess(min1, min2) ? min2 : min1;
 }
 
-export function configurePresets(folder: string) {
+export function configurePresets(folder: string, useOriginalPresets: boolean = false) {
+    if (useOriginalPresets) {
+        return originalPresetsFiles.get(folder)?.configurePresets || [];
+    }
     return expandedPresetsFiles.get(folder)?.configurePresets || [];
 }
 
-export function userConfigurePresets(folder: string) {
+export function userConfigurePresets(folder: string, useOriginalPresets: boolean = false) {
+    if (useOriginalPresets) {
+        return originalUserPresetsFiles.get(folder)?.configurePresets || [];
+    }
     return expandedUserPresetsFiles.get(folder)?.configurePresets || [];
 }
 
 /**
  * Don't use this function if you need to keep any changes in the presets
  */
-export function allConfigurePresets(folder: string) {
-    return configurePresets(folder).concat(userConfigurePresets(folder));
+export function allConfigurePresets(folder: string, useOriginalPresets: boolean = false) {
+    return configurePresets(folder, useOriginalPresets).concat(userConfigurePresets(folder, useOriginalPresets));
 }
 
 export function buildPresets(folder: string) {
@@ -611,33 +617,33 @@ function merge<T extends Object>(target: T, base: T) {
  */
 const referencedConfigurePresets: Map<string, Set<string>> = new Map();
 
-async function getVendorForConfigurePreset(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
+async function getVendorForConfigurePreset(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, useOriginalPresets: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
         referencedConfigurePresets.set(folder, new Set());
     } else {
         refs.clear();
     }
-    return getVendorForConfigurePresetImpl(folder, name, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
+    return getVendorForConfigurePresetImpl(folder, name, sourceDir, workspaceFolder, allowUserPreset, useOriginalPresets, errorHandler);
 }
 
-async function getVendorForConfigurePresetImpl(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
-    let preset = getPresetByName(configurePresets(folder), name);
+async function getVendorForConfigurePresetImpl(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, useOriginalPresets: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
+    let preset = getPresetByName(configurePresets(folder, useOriginalPresets), name);
     if (preset) {
-        return getVendorForConfigurePresetHelper(folder, preset, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
+        return getVendorForConfigurePresetHelper(folder, preset, sourceDir, workspaceFolder, allowUserPreset, useOriginalPresets, errorHandler);
     }
 
     if (allowUserPreset) {
-        preset = getPresetByName(userConfigurePresets(folder), name);
+        preset = getPresetByName(userConfigurePresets(folder, useOriginalPresets), name);
         if (preset) {
-            return getVendorForConfigurePresetHelper(folder, preset, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
+            return getVendorForConfigurePresetHelper(folder, preset, sourceDir, workspaceFolder, allowUserPreset, useOriginalPresets, errorHandler);
         }
     }
 
     return null;
 }
 
-async function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
+async function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, useOriginalPresets: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
     if (preset.__expanded) {
         return preset.vendor || null;
     }
@@ -660,7 +666,7 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
             preset.inherits = [preset.inherits];
         }
         for (const parent of preset.inherits) {
-            const parentVendor = await getVendorForConfigurePresetImpl(folder, parent, sourceDir, workspaceFolder, allowUserPreset);
+            const parentVendor = await getVendorForConfigurePresetImpl(folder, parent, sourceDir, workspaceFolder, useOriginalPresets, allowUserPreset);
             if (parentVendor) {
                 for (const key in parentVendor) {
                     if (preset.vendor[key] === undefined) {
@@ -760,119 +766,6 @@ async function expandCondition(condition: boolean | Condition | null | undefined
     return undefined;
 }
 
-export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
-
-    // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
-    const refs = referencedConfigurePresets.get(folder);
-    if (!refs) {
-        referencedConfigurePresets.set(folder, new Set());
-    } else {
-        refs.clear();
-    }
-
-    const preset = await expandConfigurePresetImpl(folder, name, allowUserPreset, errorHandler);
-
-    if (!preset) {
-        return null;
-    }
-
-    if (enableTryApplyDevEnv) {
-        // modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
-        await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
-    }
-
-    const expandedPreset = await expandConfigurePresetVariables(preset, folder, name, workspaceFolder, sourceDir, allowUserPreset, errorHandler);
-
-    errorHandlerHelper(preset.name, errorHandler);
-
-    // Other fields can be copied by reference for simplicity
-    merge(expandedPreset, preset);
-
-    return expandedPreset;
-}
-
-export async function expandConfigurePresetVariables(preset: ConfigurePreset, folder: string, name: string,  workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset> {
-
-    // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
-    // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
-    // NOTE: Based on logic in `tryApplyVsDevEnv`, `preset.__parentEnvironment` should never be undefined at this point.
-    preset.environment = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
-
-    // Expand strings under the context of current preset, also, pass preset.__parentEnvironment as a penvOverride so we include devenv if present.
-    // `preset.__parentEnvironment` is allowed to be undefined here because in expansion, it will default to process.env.
-    const expandedPreset: ConfigurePreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, preset.__parentEnvironment);
-
-    // Expand environment vars first since other fields may refer to them
-    if (preset.environment) {
-        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
-        for (const key in preset.environment) {
-            if (preset.environment[key]) {
-                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts, errorHandler);
-            }
-        }
-    }
-
-    expansionOpts.envOverride = expandedPreset.environment;
-
-    if (preset.__file && preset.__file.version >= 3) {
-        // For presets v3+ binaryDir is optional, but cmake-tools needs a value. Default to something reasonable.
-        if (!preset.binaryDir) {
-            const defaultValue = '${sourceDir}/out/build/${presetName}';
-
-            log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value {1}', preset.name, `"${defaultValue}"`));
-            preset.binaryDir = defaultValue;
-        }
-    }
-
-    // Expand other fields
-    if (preset.binaryDir) {
-        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts, errorHandler));
-        if (!path.isAbsolute(expandedPreset.binaryDir)) {
-            expandedPreset.binaryDir = util.resolvePath(expandedPreset.binaryDir, sourceDir);
-        }
-    }
-
-    if (preset.cmakeExecutable) {
-        expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts, errorHandler));
-    }
-
-    if (preset.installDir) {
-        expandedPreset.installDir = util.resolvePath(await expandString(preset.installDir, expansionOpts), sourceDir);
-    }
-
-    if (preset.toolchainFile) {
-        expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts, errorHandler));
-    }
-
-    if (preset.cacheVariables) {
-        expandedPreset.cacheVariables = {};
-        for (const cacheVarName in preset.cacheVariables) {
-            const cacheVar = preset.cacheVariables[cacheVarName];
-            if (typeof cacheVar === 'boolean') {
-                expandedPreset.cacheVariables[cacheVarName] = cacheVar;
-            } else if (cacheVar || cacheVar === "") {
-                if (util.isString(cacheVar)) {
-                    expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts, errorHandler);
-                } else if (util.isString(cacheVar.value)) {
-                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts, errorHandler) };
-                } else {
-                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
-                }
-            }
-        }
-    }
-
-    if (preset.condition) {
-        expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
-    }
-    if (preset.vendor) {
-        await getVendorForConfigurePreset(folder, expandedPreset.name, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
-    }
-
-    return expandedPreset;
-}
-
 export function getArchitecture(preset: ConfigurePreset) {
     if (util.isString(preset.architecture)) {
         return preset.architecture;
@@ -959,24 +852,6 @@ function parseToolset(toolset: string): Toolset {
         }
     }
     return result;
-}
-
-async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
-    let preset = getPresetByName(configurePresets(folder), name);
-    if (preset) {
-        return expandConfigurePresetHelper(folder, preset, false, errorHandler);
-    }
-
-    if (allowUserPreset) {
-        preset = getPresetByName(userConfigurePresets(folder), name);
-        if (preset) {
-            return expandConfigurePresetHelper(folder, preset, true, errorHandler);
-        }
-    }
-
-    log.error(localize('config.preset.not.found.full', 'Could not find configure preset with name {0}', name));
-    errorHandler?.tempErrorList.push([localize('config.preset.not.found', 'Could not find configure preset'), name]);
-    return null;
 }
 
 export interface VsDevEnvOptions {
@@ -1180,7 +1055,64 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string
     preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, developerEnvironment]);
 }
 
-async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler) {
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
+
+    // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
+    const refs = referencedConfigurePresets.get(folder);
+    if (!refs) {
+        referencedConfigurePresets.set(folder, new Set());
+    } else {
+        refs.clear();
+    }
+
+    // if enableTryApplyDevEnv is true, we have to check if the preset is valid in expandedPresetsFiles
+    if (enableTryApplyDevEnv) {
+        const preset = getPresetByName(configurePresets(folder), name);
+        if (!preset) {
+            return null;
+        }
+    }
+
+    const preset = await expandConfigurePresetImpl(folder, name, allowUserPreset, enableTryApplyDevEnv, errorHandler);
+
+    if (!preset) {
+        return null;
+    }
+
+    if (enableTryApplyDevEnv) {
+        // modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
+        await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
+    }
+
+    const expandedPreset = await expandConfigurePresetVariables(preset, folder, name, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler);
+
+    errorHandlerHelper(preset.name, errorHandler);
+
+    // Other fields can be copied by reference for simplicity
+    merge(expandedPreset, preset);
+
+    return expandedPreset;
+}
+
+async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false, useOriginalPresets: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
+    let preset = getPresetByName(configurePresets(folder, useOriginalPresets), name);
+    if (preset) {
+        return expandConfigurePresetHelper(folder, preset, false, useOriginalPresets, errorHandler);
+    }
+
+    if (allowUserPreset) {
+        preset = getPresetByName(userConfigurePresets(folder, useOriginalPresets), name);
+        if (preset) {
+            return expandConfigurePresetHelper(folder, preset, true, useOriginalPresets, errorHandler);
+        }
+    }
+
+    log.error(localize('config.preset.not.found.full', 'Could not find configure preset with name {0}', name));
+    errorHandler?.tempErrorList.push([localize('config.preset.not.found', 'Could not find configure preset'), name]);
+    return null;
+}
+
+async function expandConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false, useOriginalPresets: boolean = false, errorHandler?: ExpansionErrorHandler) {
     if (preset.__expanded) {
         return preset;
     }
@@ -1227,7 +1159,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset, errorHandler);
+            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset, useOriginalPresets, errorHandler);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
@@ -1253,6 +1185,88 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
 
     preset.__expanded = true;
     return preset;
+}
+
+export async function expandConfigurePresetVariables(preset: ConfigurePreset, folder: string, name: string,  workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, useOriginalPresets: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset> {
+
+    // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
+    // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
+    // NOTE: Based on logic in `tryApplyVsDevEnv`, `preset.__parentEnvironment` should never be undefined at this point.
+    preset.environment = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
+
+    // Expand strings under the context of current preset, also, pass preset.__parentEnvironment as a penvOverride so we include devenv if present.
+    // `preset.__parentEnvironment` is allowed to be undefined here because in expansion, it will default to process.env.
+    const expandedPreset: ConfigurePreset = { name };
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, preset.__parentEnvironment);
+
+    // Expand environment vars first since other fields may refer to them
+    if (preset.environment) {
+        expandedPreset.environment = EnvironmentUtils.createPreserveNull();
+        for (const key in preset.environment) {
+            if (preset.environment[key]) {
+                expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts, errorHandler);
+            }
+        }
+    }
+
+    expansionOpts.envOverride = expandedPreset.environment;
+
+    if (preset.__file && preset.__file.version >= 3) {
+        // For presets v3+ binaryDir is optional, but cmake-tools needs a value. Default to something reasonable.
+        if (!preset.binaryDir) {
+            const defaultValue = '${sourceDir}/out/build/${presetName}';
+
+            log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value {1}', preset.name, `"${defaultValue}"`));
+            preset.binaryDir = defaultValue;
+        }
+    }
+
+    // Expand other fields
+    if (preset.binaryDir) {
+        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts, errorHandler));
+        if (!path.isAbsolute(expandedPreset.binaryDir)) {
+            expandedPreset.binaryDir = util.resolvePath(expandedPreset.binaryDir, sourceDir);
+        }
+    }
+
+    if (preset.cmakeExecutable) {
+        expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts, errorHandler));
+    }
+
+    if (preset.installDir) {
+        expandedPreset.installDir = util.resolvePath(await expandString(preset.installDir, expansionOpts), sourceDir);
+    }
+
+    if (preset.toolchainFile) {
+        expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts, errorHandler));
+    }
+
+    if (preset.cacheVariables) {
+        expandedPreset.cacheVariables = {};
+        for (const cacheVarName in preset.cacheVariables) {
+            const cacheVar = preset.cacheVariables[cacheVarName];
+            if (typeof cacheVar === 'boolean') {
+                expandedPreset.cacheVariables[cacheVarName] = cacheVar;
+            } else if (cacheVar || cacheVar === "") {
+                if (util.isString(cacheVar)) {
+                    expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts, errorHandler);
+                } else if (util.isString(cacheVar.value)) {
+                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts, errorHandler) };
+                } else {
+                    expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
+                }
+            }
+        }
+    }
+
+    if (preset.condition) {
+        expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
+    }
+    if (preset.vendor) {
+        await getVendorForConfigurePreset(folder, expandedPreset.name, sourceDir, workspaceFolder, allowUserPreset, useOriginalPresets, errorHandler);
+    }
+
+    return expandedPreset;
 }
 
 // Used for both getConfigurePreset and expandBuildPreset.
