@@ -176,7 +176,7 @@ export class PresetsController {
         this.populatePrivatePresetsFields(presetsFile, file);
         await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
 
-        // set the pre-expanded version so we can call expandPresetsFile on it later
+        // set the pre-expanded version so we can call expandPresetsFile on it
         setPresetsFile(this.folderPath, presetsFile);
         presetsFile = await this.expandPresetsFile(presetsFile);
 
@@ -195,7 +195,6 @@ export class PresetsController {
         await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
 
         // reset all expanded presets storage.
-
         this._referencedFiles = Array.from(referencedFiles);
 
         this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
@@ -1655,9 +1654,6 @@ export class PresetsController {
         log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
         const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
-
-        // TODO: make this happen in each individual preset instead of here bc this is just doing extra work
-        // await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
         const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
             preset.expandConfigurePreset(

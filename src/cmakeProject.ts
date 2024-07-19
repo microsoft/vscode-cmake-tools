@@ -266,11 +266,15 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
-        const expandedConfigurePreset = await preset.expandConfigurePreset(this.folderPath,
-            configurePreset,
-            lightNormalizePath(this.folderPath || '.'),
-            this.sourceDir,
-            true);
+
+        // We want to use the original unexpanded preset file to apply the dev env in expandConfigurePreset
+        // we have to first check if the preset is valid in expandedPresetsFiles since we won't be expanding the whole file here, only the path up for this preset
+        const expandedConfigurePreset = preset.getPresetByName(preset.configurePresets(this.folderPath), configurePreset) &&
+            await preset.expandConfigurePreset(this.folderPath,
+                configurePreset,
+                lightNormalizePath(this.folderPath || '.'),
+                this.sourceDir,
+                true);
 
         // TODO: move applyDevEnv here to decouple from expandConfigurePreset
 

@@ -1065,16 +1065,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         refs.clear();
     }
 
-    // if enableTryApplyDevEnv is true, we have to check if the preset is valid in expandedPresetsFiles
-    if (enableTryApplyDevEnv) {
-        const preset = getPresetByName(configurePresets(folder), name);
-        if (!preset) {
-            return null;
-        }
-    }
-
     const preset = await expandConfigurePresetImpl(folder, name, allowUserPreset, enableTryApplyDevEnv, errorHandler);
-
     if (!preset) {
         return null;
     }
