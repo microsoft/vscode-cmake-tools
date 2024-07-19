@@ -449,11 +449,11 @@ export function setOriginalUserPresetsFile(folder: string, presets: PresetsFile 
     originalUserPresetsFiles.set(folder, presets);
 }
 
-export function setPresetsFile(folder: string, presets: PresetsFile | undefined) {
+export function setExpandedPresetsFile(folder: string, presets: PresetsFile | undefined) {
     expandedPresetsFiles.set(folder, presets);
 }
 
-export function setUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
+export function setExpandedUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
     if (presets) {
         if (presets.configurePresets) {
             for (const configPreset of presets.configurePresets) {
