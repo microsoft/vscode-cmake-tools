@@ -611,49 +611,26 @@ function merge<T extends Object>(target: T, base: T) {
  */
 const referencedConfigurePresets: Map<string, Set<string>> = new Map();
 
-/**
- * This is actually a very limited version of expandConfigurePreset.
- * Build/test presets currently don't need this, but We could extend this
- * to work with build/test presets in the future.
- * Use expandVendorPreset if other fields are needed.
- * They should NOT be used together.
- * They should Not call each other.
- */
-export async function expandVendorForConfigurePresets(folder: string, sourceDir: string, workspaceFolder: string, errorHandler?: ExpansionErrorHandler): Promise<void> {
-    for (const preset of configurePresets(folder)) {
-        await getVendorForConfigurePreset(folder, preset.name, sourceDir, workspaceFolder, errorHandler);
-    }
-    for (const preset of userConfigurePresets(folder)) {
-        await getVendorForConfigurePreset(folder, preset.name, sourceDir, workspaceFolder, errorHandler);
-    }
-}
-
-async function getVendorForConfigurePreset(folder: string, name: string, sourceDir: string, workspaceFolder: string, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
+async function getVendorForConfigurePreset(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
         referencedConfigurePresets.set(folder, new Set());
     } else {
         refs.clear();
     }
-    return getVendorForConfigurePresetImpl(folder, name, sourceDir, workspaceFolder, false, errorHandler);
+    return getVendorForConfigurePresetImpl(folder, name, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
 }
 
 async function getVendorForConfigurePresetImpl(folder: string, name: string, sourceDir: string, workspaceFolder: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<VendorType | VendorVsSettings | null> {
     let preset = getPresetByName(configurePresets(folder), name);
     if (preset) {
-        const expandedPreset = await expandConfigurePreset(folder, name, workspaceFolder, sourceDir, false, false, errorHandler);
-        if (expandedPreset) {
-            return getVendorForConfigurePresetHelper(folder, expandedPreset, sourceDir, workspaceFolder, false, errorHandler);
-        }
+        return getVendorForConfigurePresetHelper(folder, preset, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userConfigurePresets(folder), name);
         if (preset) {
-            const expandedPreset = await expandConfigurePreset(folder, name, workspaceFolder, sourceDir, allowUserPreset, false, errorHandler);
-            if (expandedPreset) {
-                return getVendorForConfigurePresetHelper(folder, expandedPreset, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
-            }
+            return getVendorForConfigurePresetHelper(folder, preset, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
         }
     }
 
@@ -879,7 +856,9 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     if (preset.condition) {
         expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
     }
-
+    if (preset.vendor) {
+        await getVendorForConfigurePreset(folder, expandedPreset.name, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
+    }
     errorHandlerHelper(preset.name, errorHandler);
 
     // Other fields can be copied by reference for simplicity

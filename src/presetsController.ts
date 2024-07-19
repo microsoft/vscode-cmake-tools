@@ -177,7 +177,6 @@ export class PresetsController {
         await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
 
         // set the pre-expanded version so we can call expandPresetsFile on it later
-        // TODO: check why this is necessary
         setPresetsFile(this.folderPath, presetsFile);
         presetsFile = await this.expandPresetsFile(presetsFile);
 
@@ -1657,7 +1656,8 @@ export class PresetsController {
 
         const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
-        await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
+        // TODO: make this happen in each individual preset instead of here bc this is just doing extra work
+        // await preset.expandVendorForConfigurePresets(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, expansionErrors);
 
         const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
             preset.expandConfigurePreset(
@@ -1723,10 +1723,12 @@ export class PresetsController {
         ))).filter(preset => preset !== null) as preset.WorkflowPreset[];
 
         if (expansionErrors.errorList.length > 0) {
+            log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
             await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
             return undefined;
         } else {
             log.info(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
+
             // cache everything that we just expanded
             // we'll only need to expand again on set preset - to apply the vs dev env if needed
             presetsFile.configurePresets = expandedConfigurePresets;
@@ -1743,8 +1745,6 @@ export class PresetsController {
     }
 
     private async reportPresetsFileErrors(path: string = "", expansionErrors: ExpansionErrorHandler) {
-        log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
-
         const diagnostics: Diagnostic[] = [];
         for (const error of expansionErrors.errorList) {
             // message - error type, source - details & the preset name it's from
@@ -1752,7 +1752,7 @@ export class PresetsController {
                 severity: DiagnosticSeverity.Error,
                 message: error[0],
                 source: error[1],
-                range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error
+                range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error - parse originalPresetsFile
             };
             // avoid duplicate diagnostics
             if (!diagnostics.find(d => d.message === diagnostic.message && d.source === diagnostic.source)) {

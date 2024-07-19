@@ -298,6 +298,9 @@ export class CMakeProject {
 
         if (configurePreset) {
             const expandedConfigurePreset: preset.ConfigurePreset | undefined = await this.expandConfigPresetbyName(configurePreset);
+
+            // TODO: move applyDevEnv here to decouple from expandConfigurePreset
+
             if (!expandedConfigurePreset) {
                 await this.resetPresets(drv);
                 return;
