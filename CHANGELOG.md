@@ -27,6 +27,7 @@ Bug Fixes:
 - Fix the bug where if a relative path specified for `installDir`, it is not calculated relative to the source directory, which is how it should be according to the CMake `installDir` docs [here](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset). [#3871](https://github.com/microsoft/vscode-cmake-tools/issues/3871)
 - Fix issue with CMakeLists.txt depth search. [#3901](https://github.com/microsoft/vscode-cmake-tools/issues/3901)
 - Fix localized file path for schema files. [#3872](https://github.com/microsoft/vscode-cmake-tools/issues/3872)
+- Disable annoy and invalid extenion message about fix windows sdk for MSVC 2022. [#3837](https://github.com/microsoft/vscode-cmake-tools/pull/3837)
 
 ## 1.18.43
 
