@@ -430,8 +430,8 @@ export const defaultWorkflowPreset: WorkflowPreset = {
 // Map<fsPath, PresetsFile | undefined>
 const originalPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const originalUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
-const presetsFiles: Map<string, PresetsFile | undefined> = new Map();
-const userPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
+const expandedPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
+const expandedUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 
 export function getOriginalPresetsFile(folder: string) {
     return originalPresetsFiles.get(folder);
@@ -450,7 +450,7 @@ export function setOriginalUserPresetsFile(folder: string, presets: PresetsFile 
 }
 
 export function setPresetsFile(folder: string, presets: PresetsFile | undefined) {
-    presetsFiles.set(folder, presets);
+    expandedPresetsFiles.set(folder, presets);
 }
 
 export function setUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
@@ -471,12 +471,12 @@ export function setUserPresetsFile(folder: string, presets: PresetsFile | undefi
             }
         }
     }
-    userPresetsFiles.set(folder, presets);
+    expandedUserPresetsFiles.set(folder, presets);
 }
 
 export function minCMakeVersion(folder: string) {
-    const min1 = presetsFiles.get(folder)?.cmakeMinimumRequired;
-    const min2 = userPresetsFiles.get(folder)?.cmakeMinimumRequired;
+    const min1 = expandedPresetsFiles.get(folder)?.cmakeMinimumRequired;
+    const min2 = expandedUserPresetsFiles.get(folder)?.cmakeMinimumRequired;
     if (!min1) {
         return min2;
     }
@@ -488,11 +488,11 @@ export function minCMakeVersion(folder: string) {
 }
 
 export function configurePresets(folder: string) {
-    return presetsFiles.get(folder)?.configurePresets || [];
+    return expandedPresetsFiles.get(folder)?.configurePresets || [];
 }
 
 export function userConfigurePresets(folder: string) {
-    return userPresetsFiles.get(folder)?.configurePresets || [];
+    return expandedUserPresetsFiles.get(folder)?.configurePresets || [];
 }
 
 /**
@@ -503,11 +503,11 @@ export function allConfigurePresets(folder: string) {
 }
 
 export function buildPresets(folder: string) {
-    return presetsFiles.get(folder)?.buildPresets || [];
+    return expandedPresetsFiles.get(folder)?.buildPresets || [];
 }
 
 export function userBuildPresets(folder: string) {
-    return userPresetsFiles.get(folder)?.buildPresets || [];
+    return expandedUserPresetsFiles.get(folder)?.buildPresets || [];
 }
 
 /**
@@ -518,11 +518,11 @@ export function allBuildPresets(folder: string) {
 }
 
 export function testPresets(folder: string) {
-    return presetsFiles.get(folder)?.testPresets || [];
+    return expandedPresetsFiles.get(folder)?.testPresets || [];
 }
 
 export function userTestPresets(folder: string) {
-    return userPresetsFiles.get(folder)?.testPresets || [];
+    return expandedUserPresetsFiles.get(folder)?.testPresets || [];
 }
 
 /**
@@ -533,11 +533,11 @@ export function allTestPresets(folder: string) {
 }
 
 export function packagePresets(folder: string) {
-    return presetsFiles.get(folder)?.packagePresets || [];
+    return expandedPresetsFiles.get(folder)?.packagePresets || [];
 }
 
 export function userPackagePresets(folder: string) {
-    return userPresetsFiles.get(folder)?.packagePresets || [];
+    return expandedUserPresetsFiles.get(folder)?.packagePresets || [];
 }
 
 /**
@@ -548,11 +548,11 @@ export function allPackagePresets(folder: string) {
 }
 
 export function workflowPresets(folder: string) {
-    return presetsFiles.get(folder)?.workflowPresets || [];
+    return expandedPresetsFiles.get(folder)?.workflowPresets || [];
 }
 
 export function userWorkflowPresets(folder: string) {
-    return userPresetsFiles.get(folder)?.workflowPresets || [];
+    return expandedUserPresetsFiles.get(folder)?.workflowPresets || [];
 }
 
 /**
