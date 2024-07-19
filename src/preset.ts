@@ -781,7 +781,17 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
     }
 
-    // TODO: because of the below penv handling we get repeated expansions errors from parent presets. Need to fix for errorHandler
+    const expandedPreset = await expandConfigurePresetVariables(preset, folder, name, workspaceFolder, sourceDir, allowUserPreset, errorHandler);
+
+    errorHandlerHelper(preset.name, errorHandler);
+
+    // Other fields can be copied by reference for simplicity
+    merge(expandedPreset, preset);
+
+    return expandedPreset;
+}
+
+export async function expandConfigurePresetVariables(preset: ConfigurePreset, folder: string, name: string,  workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset> {
 
     // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
     // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
@@ -859,10 +869,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     if (preset.vendor) {
         await getVendorForConfigurePreset(folder, expandedPreset.name, sourceDir, workspaceFolder, allowUserPreset, errorHandler);
     }
-    errorHandlerHelper(preset.name, errorHandler);
-
-    // Other fields can be copied by reference for simplicity
-    merge(expandedPreset, preset);
 
     return expandedPreset;
 }

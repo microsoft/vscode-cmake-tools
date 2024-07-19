@@ -271,6 +271,9 @@ export class CMakeProject {
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             true);
+
+        // TODO: move applyDevEnv here to decouple from expandConfigurePreset
+
         if (!expandedConfigurePreset) {
             log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
             return undefined;
@@ -298,8 +301,6 @@ export class CMakeProject {
 
         if (configurePreset) {
             const expandedConfigurePreset: preset.ConfigurePreset | undefined = await this.expandConfigPresetbyName(configurePreset);
-
-            // TODO: move applyDevEnv here to decouple from expandConfigurePreset
 
             if (!expandedConfigurePreset) {
                 await this.resetPresets(drv);
