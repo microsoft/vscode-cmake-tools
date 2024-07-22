@@ -17,7 +17,7 @@ import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
-import collections from './diagnostics/collections';
+import collections from '@cmt/diagnostics/collections';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

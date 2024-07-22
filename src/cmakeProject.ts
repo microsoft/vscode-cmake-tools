@@ -274,14 +274,13 @@ export class CMakeProject {
         }
 
         // TODO: move applyDevEnv here to decouple from expandConfigurePreset
-        // could do the checks for tryapplydevenv here but it wouldnt make sense because applydevenv could still return undefined
-        // so we wouldnt be able to get around having to call expandConfigurePresetImpl anyway
 
         // modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
         const expandedConfigurePreset = await preset.expandConfigurePreset(this.folderPath,
             configurePreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
+            true,
             true);
 
         if (!expandedConfigurePreset) {

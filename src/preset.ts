@@ -1054,8 +1054,13 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string
 
     preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, developerEnvironment]);
 }
-
-export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
+/**
+ * Expands the configure preset variables.
+ * @param enableTryApplyDevEnv is false by default, since the only situation where we want to try to apply the VS Dev Env
+ * on top of process.env is when we are setting that configure preset and re-doing the expansion.
+ * @param errorHandler is optional, and is used to collect expansion errors to show in the Problems Panel.
+ */
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
 
     // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
     const refs = referencedConfigurePresets.get(folder);
@@ -1085,6 +1090,10 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
     return expandedPreset;
 }
 
+/**
+ * @param useOriginalPresets is used to determine whether to get the preset from the original presets map or the expanded presets map when calling configurePresets() or userConfigurePresets().
+ * Getting the original presets map is useful on Select Preset when we want to be able to apply the Vs Dev Env to the preset.
+ */
 async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false, useOriginalPresets: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder, useOriginalPresets), name);
     if (preset) {
@@ -1882,7 +1891,7 @@ async function expandPackagePresetHelper(folder: string, preset: PackagePreset, 
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler); // TODO: i dont think i need to pass error handler here?
+        const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler);
         if (configurePreset) {
             preset.__binaryDir = configurePreset.binaryDir;
             preset.__generator = configurePreset.generator;
