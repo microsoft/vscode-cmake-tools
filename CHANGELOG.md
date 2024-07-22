@@ -27,6 +27,7 @@ Bug Fixes:
 - Fix issue with CMakeLists.txt depth search. [#3901](https://github.com/microsoft/vscode-cmake-tools/issues/3901)
 - Fix localized file path for schema files. [#3872](https://github.com/microsoft/vscode-cmake-tools/issues/3872)
 - Disable annoy and invalid extenion message about fix windows sdk for MSVC 2022. [#3837](https://github.com/microsoft/vscode-cmake-tools/pull/3837)
+- Fix re-using a terminal for launching even when the environment has changed. [#3478](https://github.com/microsoft/vscode-cmake-tools/issues/3478)
 
 ## 1.18.43
 

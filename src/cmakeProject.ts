@@ -1288,11 +1288,7 @@ export class CMakeProject {
         return false;
     }
 
-    private refreshLaunchEnvironment: boolean = false;
     async setKit(kit: Kit | null) {
-        if (!this.activeKit || (kit && this.activeKit.name !== kit.name)) {
-            this.refreshLaunchEnvironment = true;
-        }
         this._activeKit = kit;
         if (kit) {
             log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
@@ -2648,7 +2644,7 @@ export class CMakeProject {
     }
 
     /**
-     * Both debugTarget and launchTarget called this funciton, so it's refactored out
+     * Both debugTarget and launchTarget called this function, so it's refactored out
      * Array.concat's performance would not beat the Dict.merge a lot.
      * This is also the point to fixing the issue #1987
      */
@@ -2772,26 +2768,7 @@ export class CMakeProject {
     });
 
     private async createTerminal(executable: ExecutableTarget): Promise<vscode.Terminal> {
-        const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
-        if (launchBehavior !== "newterminal") {
-            for (const [, terminal] of this.launchTerminals) {
-                const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
-                const executablePath = creationOptions.env![this.launchTerminalTargetName];
-                const terminalPath = creationOptions.env![this.launchTerminalPath];
-                if (executablePath === executable.name) {
-                    if (launchBehavior === 'breakandreuseterminal') {
-                        terminal.sendText('\u0003');
-                    }
-                    // Dispose the terminal if the User's settings for preferred terminal have changed since the current target is launched,
-                    // or if the kit is changed, which means the environment variables are possibly updated.
-                    if (terminalPath !== vscode.env.shell || this.refreshLaunchEnvironment) {
-                        terminal.dispose();
-                        break;
-                    }
-                    return terminal;
-                }
-            }
-        }
+        // Create terminal options
         const userConfig = this.workspaceContext.config.debugConfig;
         const drv = await this.getCMakeDriverInstance();
         const launchEnv = await this.getTargetLaunchEnvironment(drv, userConfig.environment);
@@ -2805,7 +2782,25 @@ export class CMakeProject {
             options.env[this.launchTerminalPath] = vscode.env.shell;
         }
 
-        this.refreshLaunchEnvironment = false;
+        const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
+        // Check for terminal re-use
+        if (launchBehavior !== "newterminal") {
+            for (const [, terminal] of this.launchTerminals) {
+                const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
+                // If the environment has changed at all since the last run, dispose of this terminal
+                if (JSON.stringify(creationOptions.env) !== JSON.stringify(options.env)) {
+                    terminal.dispose();
+                    break;
+                }
+
+                if (launchBehavior === 'breakandreuseterminal') {
+                    terminal.sendText('\u0003');
+                }
+
+                return terminal;
+            }
+        }
+
         return vscode.window.createTerminal(options);
     }
 
