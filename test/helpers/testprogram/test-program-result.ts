@@ -17,7 +17,7 @@ export class TestProgramResult {
     }
 
     public async getResultAsJson(): Promise<any> {
-        expect(this.isPresent).to.eq(true, 'Test programm result file was not found');
+        expect(this.isPresent).to.eq(true, 'Test program result file was not found');
         const content = fs.readFileSync(this._result_file_location);
         expect(content.toLocaleString()).to.not.eq('');
 
