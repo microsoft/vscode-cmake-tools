@@ -9,6 +9,7 @@
 	"enable.optimizations.omit.debug": "최적화 사용, 디버그 정보 생략",
 	"optimize.for.smallest": "최소 이진 파일 크기에 최적화",
 	"optimize.and.debug": "최적화 수행 및 디버깅 정보 포함",
+	"unspec.build.type": "CMake에서 기본 빌드 형식을 선택하도록 허용",
 	"constructing": "{0}을(를) 생성하는 중",
 	"reloading.variants.file": "variant 파일 {0}을(를) 다시 로드하는 중",
 	"reloading.variants.from.settings": "설정에서 variant를 다시 로드하는 중",

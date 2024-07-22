@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "Eklenen ön ayarlar dosyası ({0}) bulunamıyor",
 	"validating.presets.file": "\"File {0}\" ön ayarları okunuyor ve doğrulanıyor",
 	"unsupported.presets": "{0} içinde desteklenmeyen ön ayarlar algılandı. Destek, {1} sürümü tarafından tanımlanan özelliklerle sınırlıdır.",
+	"no.additional.properties": "ek özelliklere sahip OLMAMALI",
 	"unsupported.presets.disable": "Bilinmeyen özellikler ve makrolar {0} ayarı kullanılarak yoksayılabilir.",
 	"duplicate.build.preset.found": "Derleme ön ayarları koleksiyonunda kopyalar bulundu: \"{0}\"",
 	"duplicate.test.preset.found": "Test ön ayarları koleksiyonunda kopyalar bulundu: \"{0}\"",

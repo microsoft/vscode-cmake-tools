@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "O arquivo incluído de predefinições {0} não pode ser encontrado",
 	"validating.presets.file": "Leitura e validação das predefinições \"arquivo {0}\"",
 	"unsupported.presets": "Predefinições sem suporte detectadas no {0}. O suporte é limitado a recursos definidos pela versão {1}.",
+	"no.additional.properties": "NÃO deve ter propriedades adicionais",
 	"unsupported.presets.disable": "Propriedades e macros desconhecidas podem ser ignoradas usando a configuração {0}.",
 	"duplicate.build.preset.found": "Duplicatas encontradas na coleção de predefinições da compilação: \"{0}\"",
 	"duplicate.test.preset.found": "Encontradas duplicatas na coleção de predefinições do teste: \"{0}\"",

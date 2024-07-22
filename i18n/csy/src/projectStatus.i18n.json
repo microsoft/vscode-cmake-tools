@@ -25,6 +25,7 @@
 	"Folder": "Složka",
 	"active.folder": "Aktivní složka",
 	"configPreset.change": "Změnit předvolbu konfigurace",
+	"override.settings.applied": "Použito přepsání nastavení",
 	"buildPreset.change": "Změnit předvolbu sestavení",
 	"testPreset.change": "Změnit předvolbu testování",
 	"packagePreset.change": "Změnit předvolbu balíčku",

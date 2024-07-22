@@ -7,7 +7,6 @@
 	"creating.instance.of": "Création de l'instance de {0}",
 	"removing": "Suppression de {0}",
 	"unlink.failed": "Échec de la suppression du fichier cache {0}",
-	"cmake.debug.name": "Débogueur CMake",
 	"toolchains.object.unsupported": "Cette version de CMake ne prend pas en charge les objets du genre \"chaîne d'outils\". Les chemins du compilateur sont déterminés par la lecture de CMakeCache.txt.",
 	"build.all.target": "Cible spéciale pour générer toutes les cibles disponibles",
 	"cmake.install.name": "Installer"

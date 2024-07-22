@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "Если вы используете комплекты, пропустите предустановку рабочего процесса: {0}",
 	"no.active.cmake.project": "Активный проект CMake отсутствует.",
 	"invalid.folder": "Недопустимая рабочая папка.",
+	"cmake.debug.name": "Отладчик CMake",
 	"select.a.cmake.project": "Выберите проект CMake",
 	"compilation information.not.found": "Не удалось найти сведения о компиляции для этого файла.",
 	"add.config.preset.in.test.mode": "Запуск CMakeTools в тестовом режиме. addConfigurePreset отключен.",

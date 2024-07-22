@@ -9,6 +9,7 @@
 	"enable.optimizations.omit.debug": "İyileştirmeleri etkinleştir, hata ayıklama bilgilerini çıkar",
 	"optimize.for.smallest": "En küçük ikili dosya boyutu için iyileştir",
 	"optimize.and.debug": "İyileştirmeleri gerçekleştir VE hata ayıklama bilgilerini ekle",
+	"unspec.build.type": "CMake'in varsayılan derleme türünü seçmesini izin ver",
 	"constructing": "{0} oluşturuluyor",
 	"reloading.variants.file": "{0} varyant dosyası yeniden yükleniyor",
 	"reloading.variants.from.settings": "Varyantlar, ayarlardan yeniden yükleniyor",

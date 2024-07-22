@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "Setleri kullanarak iş akışı ön ayarını belirlemeyi atla: {0}",
 	"no.active.cmake.project": "Etkin CMake projesi yok.",
 	"invalid.folder": "Geçersiz klasör.",
+	"cmake.debug.name": "CMake Hata Ayıklayıcısı",
 	"select.a.cmake.project": "CMake projesi seç",
 	"compilation information.not.found": "Bu dosya için derleme bilgileri bulunamıyor",
 	"add.config.preset.in.test.mode": "CMakeTools test modunda çalıştırılıyor. addConfigurePreset devre dışı bırakıldı.",

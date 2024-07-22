@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "Usando i kit, ignora la configurazione del set di impostazioni del flusso di lavoro: {0}",
 	"no.active.cmake.project": "Nessun progetto CMake attivo.",
 	"invalid.folder": "La cartella non è valida.",
+	"cmake.debug.name": "CMake Debugger",
 	"select.a.cmake.project": "Seleziona un progetto CMake",
 	"compilation information.not.found": "Non è possibile trovare le informazioni di compilazione per questo file",
 	"add.config.preset.in.test.mode": "Esecuzione di CMakeTools in modalità di test. addConfigurePreset è disabilitato.",
