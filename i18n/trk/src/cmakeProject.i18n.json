@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "Bir Daha Gösterme",
 	"configure.failed.tryWithDebugger": "Yapılandırma başarısız oldu. CMake Hata Ayıklayıcısı ile yapılandırmayı denemek ister misiniz?",
 	"no.configureWithDebugger.button": "İptal",
+	"cmake.debug.name": "CMake Hata Ayıklayıcısı",
 	"finishing.configure": "Yapılandırma tamamlanıyor",
 	"configure.failed": "Proje yapılandırılamadı",
 	"saving.open.files.before": "Yapılandırma/derleme öncesinde açık dosyalar kaydediliyor",

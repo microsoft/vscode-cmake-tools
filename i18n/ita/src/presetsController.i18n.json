@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "Impossibile trovare il file dei set di impostazioni inclusi {0}",
 	"validating.presets.file": "Lettura e convalida dei set di impostazioni \"file {0}\"",
 	"unsupported.presets": "Sono stati rilevati set di impostazioni non supportati in {0}. Il supporto è limitato alle funzionalità definite dalla versione {1}.",
+	"no.additional.properties": "NON deve avere proprietà aggiuntive",
 	"unsupported.presets.disable": "Le proprietà e le macro sconosciute possono essere ignorate usando l'impostazione {0}.",
 	"duplicate.build.preset.found": "Sono stati trovati duplicati all'interno della raccolta di set di impostazioni di compilazione: \"{0}\"",
 	"duplicate.test.preset.found": "Sono stati trovati duplicati all'interno della raccolta set di impostazioni test: \"{0}\"",

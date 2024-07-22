@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "Überspringen Sie bei Verwendung von Bausätzen die Einstellung der Workflowvoreinstellung: {0}",
 	"no.active.cmake.project": "Kein aktives CMake-Projekt.",
 	"invalid.folder": "Ungültiger Ordner.",
+	"cmake.debug.name": "CMake-Debugger",
 	"select.a.cmake.project": "Cmake-Projekt auswählen",
 	"compilation information.not.found": "Die Kompilierungsinformationen für diese Datei wurden nicht gefunden.",
 	"add.config.preset.in.test.mode": "CMakeTools wird im Testmodus ausgeführt. addConfigurePreset ist deaktiviert.",

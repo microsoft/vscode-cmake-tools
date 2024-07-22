@@ -25,6 +25,7 @@
 	"Folder": "Folder",
 	"active.folder": "Aktywny folder",
 	"configPreset.change": "Zmień ustawienie wstępne konfiguracji",
+	"override.settings.applied": "Zastosowano ustawienia zastępowania",
 	"buildPreset.change": "Zmień ustawienie wstępne kompilacji",
 	"testPreset.change": "Zmień ustawienie wstępne testu",
 	"packagePreset.change": "Zmień ustawienie wstępne pakietu",

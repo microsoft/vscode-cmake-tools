@@ -9,6 +9,7 @@
 	"enable.optimizations.omit.debug": "啟用最佳化，發出偵錯調試資訊",
 	"optimize.for.smallest": "針對最小的二進位大小最佳化",
 	"optimize.and.debug": "執行最佳化並包含偵錯資訊",
+	"unspec.build.type": "讓 CMake 挑選預設組建型別",
 	"constructing": "正在建構 {0}",
 	"reloading.variants.file": "正在重新載入變化檔案 {0}",
 	"reloading.variants.from.settings": "正在從設定重新載入變化",
