@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "Znovu nezobrazovat",
 	"configure.failed.tryWithDebugger": "Konfigurace se nezdařila. Chcete se pokusit o konfiguraci pomocí ladicího programu CMake?",
 	"no.configureWithDebugger.button": "Zrušit",
+	"cmake.debug.name": "Ladicí program CMake",
 	"finishing.configure": "Dokončuje se příkaz configure.",
 	"configure.failed": "Nepovedlo se nakonfigurovat projekt.",
 	"saving.open.files.before": "Ukládají se otevřené soubory před konfigurací/sestavením.",

@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "Nie można odnaleźć dołączonego pliku ustawień wstępnych {0}",
 	"validating.presets.file": "Odczytywanie i sprawdzanie poprawności ustawień wstępnych „plik {0}”",
 	"unsupported.presets": "Wykryto nieobsługiwane ustawienia wstępne w: {0}. Obsługa jest ograniczona do funkcji zdefiniowanych przez wersję {1}.",
+	"no.additional.properties": "NIE powinno mieć dodatkowych właściwości",
 	"unsupported.presets.disable": "Nieznane właściwości i makra można zignorować przy użyciu ustawienia {0}.",
 	"duplicate.build.preset.found": "Znaleziono duplikaty w kolekcji ustawień wstępnych kompilacji: „{0}”",
 	"duplicate.test.preset.found": "Znaleziono duplikaty w kolekcji ustawień wstępnych testu: „{0}\"",

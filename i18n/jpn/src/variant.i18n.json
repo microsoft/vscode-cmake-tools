@@ -9,6 +9,7 @@
 	"enable.optimizations.omit.debug": "最適化を有効にし、デバッグ情報を省略する",
 	"optimize.for.smallest": "最小バイナリ サイズの最適化",
 	"optimize.and.debug": "最適化を実行し、かつデバッグ情報を含める",
+	"unspec.build.type": "CMake が既定のビルドの種類を選択するようにする",
 	"constructing": "{0} を構築しています",
 	"reloading.variants.file": "バリアント ファイル {0} を再度読み込んでいます",
 	"reloading.variants.from.settings": "設定からバリアントを再度読み込んでいます",

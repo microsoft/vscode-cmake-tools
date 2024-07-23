@@ -9,6 +9,7 @@
 	"enable.optimizations.omit.debug": "Povolit optimalizace, vynechat ladicí informace",
 	"optimize.for.smallest": "Optimalizovat pro nejmenší velikost binárního souboru",
 	"optimize.and.debug": "Provést optimalizace A zahrnout ladicí informace",
+	"unspec.build.type": "Povolit nástroji CMake vybrat výchozí typ buildu",
 	"constructing": "Vytváří se element {0}.",
 	"reloading.variants.file": "Znovu se načítá soubor variant {0}.",
 	"reloading.variants.from.settings": "Znovu se načítají varianty z nastavení.",

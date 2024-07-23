@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "再表示しない",
 	"configure.failed.tryWithDebugger": "構成に失敗しました。CMake デバッガーを使用して構成しますか?",
 	"no.configureWithDebugger.button": "キャンセル",
+	"cmake.debug.name": "CMake デバッガー",
 	"finishing.configure": "構成を終了しています",
 	"configure.failed": "プロジェクトを構成できませんでした",
 	"saving.open.files.before": "構成またはビルドの前に、開いているファイルを保存しています",

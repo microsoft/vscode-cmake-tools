@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "À l’aide de kits, ignorez la définition de la présélection de workflow : {0}",
 	"no.active.cmake.project": "Aucun projet CMake actif.",
 	"invalid.folder": "Dossier non valide.",
+	"cmake.debug.name": "Débogueur CMake",
 	"select.a.cmake.project": "Sélectionner un projet cmake",
 	"compilation information.not.found": "Les informations de compilation sont introuvables pour ce fichier",
 	"add.config.preset.in.test.mode": "Exécution de CMakeTools en mode test. addConfigurePreset est désactivé.",

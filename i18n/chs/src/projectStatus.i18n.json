@@ -25,6 +25,7 @@
 	"Folder": "文件夹",
 	"active.folder": "活动文件夹",
 	"configPreset.change": "更改配置预设",
+	"override.settings.applied": "已应用替代设置",
 	"buildPreset.change": "更改生成预设",
 	"testPreset.change": "更改测试预设",
 	"packagePreset.change": "更改包预设",

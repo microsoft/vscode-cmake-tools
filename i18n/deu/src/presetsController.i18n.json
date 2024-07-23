@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "Enthaltene Voreinstellungsdatei {0} kann nicht gefunden werden",
 	"validating.presets.file": "Die Voreinstellung \"file {0}\" wird gelesen und überprüft.",
 	"unsupported.presets": "In {0} wurden nicht unterstützte Voreinstellungen erkannt. Die Unterstützung ist auf Features beschränkt, die von der Version {1} definiert werden.",
+	"no.additional.properties": "darf KEINE zusätzlichen Eigenschaften aufweisen.",
 	"unsupported.presets.disable": "Unbekannte Eigenschaften und Makros können mithilfe der Einstellung {0} ignoriert werden.",
 	"duplicate.build.preset.found": "In der Sammlung der Buildvoreinstellungen wurden Duplikate gefunden: \"{0}\"",
 	"duplicate.test.preset.found": "In der Sammlung der Testvoreinstellungen wurden Duplikate gefunden: \"{0}\"",

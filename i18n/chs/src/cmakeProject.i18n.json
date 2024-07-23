@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "不再显示",
 	"configure.failed.tryWithDebugger": "配置失败。是否要尝试使用 CMake 调试程序进行配置?",
 	"no.configureWithDebugger.button": "取消",
+	"cmake.debug.name": "CMake 调试程序",
 	"finishing.configure": "正在完成配置",
 	"configure.failed": "未能配置项目",
 	"saving.open.files.before": "在配置/生成前保存打开的文件",
