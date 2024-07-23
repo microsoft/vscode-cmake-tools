@@ -172,13 +172,19 @@ export class PresetsController {
         }
 
         presetsFile = await this.validatePresetsFile(presetsFile, file);
-        // Private fields must be set after validation, otherwise validation would fail.
-        this.populatePrivatePresetsFields(presetsFile, file);
-        await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
 
-        // set the pre-expanded version so we can call expandPresetsFile on it
-        setPresetsFile(this.folderPath, presetsFile);
-        presetsFile = await this.expandPresetsFile(presetsFile);
+        if (presetsFile) {
+            // Private fields must be set after validation, otherwise validation would fail.
+            this.populatePrivatePresetsFields(presetsFile, file);
+            await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
+
+            // add the include files to the original presets file
+            setOriginalPresetsFile(this.folderPath, {...presetsFile});
+
+            // set the pre-expanded version so we can call expandPresetsFile on it
+            setPresetsFile(this.folderPath, presetsFile);
+            presetsFile = await this.expandPresetsFile(presetsFile);
+        }
 
         // TODO: more validation (or move some of the per file validation here when all entries are merged.
         // Like unresolved preset reference or duplicates).
