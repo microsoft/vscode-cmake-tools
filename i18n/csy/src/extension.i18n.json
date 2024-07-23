@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "Používají se sady, přeskočit nastavení předvolby pracovního postupu: {0}",
 	"no.active.cmake.project": "Žádný aktivní projekt CMake.",
 	"invalid.folder": "Neplatná složka",
+	"cmake.debug.name": "Ladicí program CMake",
 	"select.a.cmake.project": "Vyberte projekt cmake.",
 	"compilation information.not.found": "Nepovedlo se najít informace o kompilaci pro tento soubor.",
 	"add.config.preset.in.test.mode": "Rozšíření CMakeTools běží v testovacím režimu. Element addConfigurePreset je zakázaný.",
