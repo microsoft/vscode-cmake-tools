@@ -25,6 +25,7 @@
 	"Folder": "Ordner",
 	"active.folder": "Aktiver Ordner",
 	"configPreset.change": "Konfigurationsvoreinstellung ändern",
+	"override.settings.applied": "Angewendete Einstellungen überschreiben",
 	"buildPreset.change": "Buildvoreinstellung ändern",
 	"testPreset.change": "Testvoreinstellung ändern",
 	"packagePreset.change": "Paketvoreinstellung ändern",

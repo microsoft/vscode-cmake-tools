@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "キットを使用して、ワークフロー プリセットの設定をスキップします: {0}",
 	"no.active.cmake.project": "アクティブな CMake プロジェクトがありません。",
 	"invalid.folder": "無効なフォルダーです。",
+	"cmake.debug.name": "CMake デバッガー",
 	"select.a.cmake.project": "cmake プロジェクトの選択",
 	"compilation information.not.found": "このファイルのコンパイル情報が見つかりません",
 	"add.config.preset.in.test.mode": "CMakeTools はテスト モードで実行されています。addConfigurePreset が無効になります。",

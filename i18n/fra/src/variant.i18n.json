@@ -9,6 +9,7 @@
 	"enable.optimizations.omit.debug": "Activer les optimisations, omettre les informations de débogage",
 	"optimize.for.smallest": "Optimiser pour la plus petite taille de fichier binaire",
 	"optimize.and.debug": "Effectuer les optimisations ET inclure les informations de débogage",
+	"unspec.build.type": "Laisser CMake choisir le type de build par défaut",
 	"constructing": "Construction de {0}",
 	"reloading.variants.file": "Rechargement du fichier de variantes {0}",
 	"reloading.variants.from.settings": "Rechargement des variantes à partir des paramètres",

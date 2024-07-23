@@ -25,6 +25,7 @@
 	"Folder": "Папка",
 	"active.folder": "Активная папка",
 	"configPreset.change": "Изменить предустановку конфигурации",
+	"override.settings.applied": "Параметры переопределения применены",
 	"buildPreset.change": "Изменить предустановку сборки",
 	"testPreset.change": "Изменить предустановку теста",
 	"packagePreset.change": "Изменить предустановку пакета",

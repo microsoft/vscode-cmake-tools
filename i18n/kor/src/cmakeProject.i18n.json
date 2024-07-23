@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "다시 표시 안 함",
 	"configure.failed.tryWithDebugger": "구성하지 못했습니다. CMake 디버거를 사용하여 구성하시겠습니까?",
 	"no.configureWithDebugger.button": "취소",
+	"cmake.debug.name": "CMake 디버거",
 	"finishing.configure": "구성을 완료하는 중",
 	"configure.failed": "프로젝트를 구성하지 못함",
 	"saving.open.files.before": "구성/빌드하기 전에 열린 파일을 저장하는 중",
