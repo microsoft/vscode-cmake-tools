@@ -10,6 +10,7 @@ Improvements:
 
 - Add `Unspecified` option for selecting a kit variant to allow CMake itself to select the build type. [#3821](https://github.com/microsoft/vscode-cmake-tools/issues/3821)
 - Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
+- Add setting to only show the cmake log on target failure. [#3785](https://github.com/microsoft/vscode-cmake-tools/pull/3785) [@stepeos](https://github.com/stepeos)
 
 Bug Fixes:
 
