@@ -1518,6 +1518,10 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
         }
     }
 
+    if (preset.condition) {
+        expandedPreset.condition = await expandCondition(preset.condition, expansionOpts, errorHandler);
+    }
+
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
 
@@ -1712,6 +1716,10 @@ export async function expandTestPreset(folder: string, name: string, workspaceFo
         merge(expandedPreset.execution, preset.execution);
     }
 
+    if (preset.condition) {
+        expandedPreset.condition = await expandCondition(preset.condition, expansionOpts, errorHandler);
+    }
+
     merge(expandedPreset, preset);
 
     errorHandlerHelper(preset.name, errorHandler);
@@ -1844,6 +1852,10 @@ export async function expandPackagePreset(folder: string, name: string, workspac
     }
 
     expansionOpts.envOverride = expandedPreset.environment;
+
+    if (preset.condition) {
+        expandedPreset.condition = await expandCondition(preset.condition, expansionOpts, errorHandler);
+    }
 
     errorHandlerHelper(preset.name, errorHandler);
 
