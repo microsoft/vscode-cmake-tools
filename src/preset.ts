@@ -1296,7 +1296,7 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
     }
 
     if (preset.condition) {
-        expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts, errorHandler);
+        expandedPreset.condition = await expandCondition(preset.condition, expansionOpts, errorHandler);
     }
     if (preset.vendor) {
         await getVendorForConfigurePreset(folder, expandedPreset.name, sourceDir, workspaceFolder, allowUserPreset, usePresetsPlusIncluded, errorHandler);
