@@ -137,8 +137,8 @@ export class PresetsController {
         return this._userPresetsChangedEmitter.event(listener);
     }
 
-    private readonly _setExpandedPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setExpandedPresetsFile(folder, presetsFile);
+    private readonly _setExpandedPresets = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setExpandedPresets(folder, presetsFile);
         this._presetsChangedEmitter.fire(presetsFile);
     };
 
@@ -147,13 +147,13 @@ export class PresetsController {
         this._userPresetsChangedEmitter.fire(presetsFile);
     };
 
-    private readonly _setPresetsFilePlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setPresetsFilesPlusIncluded(folder, presetsFile);
+    private readonly _setPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setPresetsPlusIncluded(folder, presetsFile);
         this._presetsChangedEmitter.fire(presetsFile);
     };
 
-    private readonly _setUserPresetsFilePlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setUserPresetsFilesPlusIncluded(folder, presetsFile);
+    private readonly _setUserPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setUserPresetsPlusIncluded(folder, presetsFile);
         this._userPresetsChangedEmitter.fire(presetsFile);
     };
 
@@ -165,7 +165,7 @@ export class PresetsController {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetPresetsFile(file: string, setExpandedPresetsFile: SetPresetsFileFunc, setPresetsFilesPlusIncluded: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Set<string>) {
+    private async resetPresetsFile(file: string, setExpandedPresets: SetPresetsFileFunc, setPresetsPlusIncluded: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Set<string>) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
@@ -188,14 +188,14 @@ export class PresetsController {
             await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
 
             // add the include files to the original presets file
-            setPresetsFilesPlusIncluded(this.folderPath, {...presetsFile});
+            setPresetsPlusIncluded(this.folderPath, {...presetsFile});
 
             // set the pre-expanded version so we can call expandPresetsFile on it
-            setExpandedPresetsFile(this.folderPath, presetsFile);
+            setExpandedPresets(this.folderPath, presetsFile);
             presetsFile = await this.expandPresetsFile(presetsFile);
         }
 
-        setExpandedPresetsFile(this.folderPath, presetsFile);
+        setExpandedPresets(this.folderPath, presetsFile);
     }
 
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
@@ -204,8 +204,8 @@ export class PresetsController {
         const referencedFiles: Set<string> = new Set();
 
         // Reset all changes due to expansion since parents could change
-        await this.resetPresetsFile(this.presetsPath, this._setExpandedPresetsFile, this._setPresetsFilePlusIncluded, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
-        await this.resetPresetsFile(this.userPresetsPath, this._setExpandedUserPresetsFile, this._setUserPresetsFilePlusIncluded, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.presetsPath, this._setExpandedPresets, this._setPresetsPlusIncluded, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.userPresetsPath, this._setExpandedUserPresetsFile, this._setUserPresetsPlusIncluded, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
 
         // reset all expanded presets storage.
         this._referencedFiles = Array.from(referencedFiles);

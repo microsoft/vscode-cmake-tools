@@ -268,7 +268,7 @@ export class CMakeProject {
         log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
 
         // We want to use the original unexpanded preset file to apply the dev env in expandConfigurePreset
-        // we have to first check if the preset is valid in expandedPresetsFiles since we won't be expanding the whole file here, only the path up for this preset
+        // we have to first check if the preset is valid in expandedPresets since we won't be expanding the whole file here, only the path up for this preset
         if (!preset.getPresetByName(preset.configurePresets(this.folderPath), configurePreset) && !preset.getPresetByName(preset.userConfigurePresets(this.folderPath), configurePreset)) {
             return undefined;
         }

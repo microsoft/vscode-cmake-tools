@@ -429,19 +429,19 @@ export const defaultWorkflowPreset: WorkflowPreset = {
  * original*PresetsFile's are each used to keep a copy by **value**. They are used to update
  * the presets files when new presets are added.
  *
- * *presetsFilesPlusIncluded are used to store the original presets files with included files.
+ * *presetsFilesIncluded is used to store the original presets files with included files.
  * They are used for expansion.
  *
- * expanded*PresetsFiles are used to cache the expanded presets files, without the VS dev env applied.
+ * expanded*PresetsFiles is used to cache the expanded presets files, without the VS dev env applied.
  */
 
 // Map<fsPath, PresetsFile | undefined>
 const originalPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const originalUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
-const presetsFilesPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
-const userPresetsFilesPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
-const expandedPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
-const expandedUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
+const presetsPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
+const userPresetsPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
+const expandedPresets: Map<string, PresetsFile | undefined> = new Map();
+const expandedUserPresets: Map<string, PresetsFile | undefined> = new Map();
 
 export function getOriginalPresetsFile(folder: string) {
     return originalPresetsFiles.get(folder);
@@ -459,11 +459,11 @@ export function setOriginalUserPresetsFile(folder: string, presets: PresetsFile 
     originalUserPresetsFiles.set(folder, presets);
 }
 
-export function setPresetsFilesPlusIncluded(folder: string, presets: PresetsFile | undefined) {
-    presetsFilesPlusIncluded.set(folder, presets);
+export function setPresetsPlusIncluded(folder: string, presets: PresetsFile | undefined) {
+    presetsPlusIncluded.set(folder, presets);
 }
 
-export function setUserPresetsFilesPlusIncluded(folder: string, presets: PresetsFile | undefined) {
+export function setUserPresetsPlusIncluded(folder: string, presets: PresetsFile | undefined) {
     if (presets) {
         if (presets.configurePresets) {
             for (const configPreset of presets.configurePresets) {
@@ -481,11 +481,11 @@ export function setUserPresetsFilesPlusIncluded(folder: string, presets: Presets
             }
         }
     }
-    userPresetsFilesPlusIncluded.set(folder, presets);
+    userPresetsPlusIncluded.set(folder, presets);
 }
 
-export function setExpandedPresetsFile(folder: string, presets: PresetsFile | undefined) {
-    expandedPresetsFiles.set(folder, presets);
+export function setExpandedPresets(folder: string, presets: PresetsFile | undefined) {
+    expandedPresets.set(folder, presets);
 }
 
 export function setExpandedUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
@@ -506,12 +506,12 @@ export function setExpandedUserPresetsFile(folder: string, presets: PresetsFile 
             }
         }
     }
-    expandedUserPresetsFiles.set(folder, presets);
+    expandedUserPresets.set(folder, presets);
 }
 
 export function minCMakeVersion(folder: string) {
-    const min1 = expandedPresetsFiles.get(folder)?.cmakeMinimumRequired;
-    const min2 = expandedUserPresetsFiles.get(folder)?.cmakeMinimumRequired;
+    const min1 = expandedPresets.get(folder)?.cmakeMinimumRequired;
+    const min2 = expandedUserPresets.get(folder)?.cmakeMinimumRequired;
     if (!min1) {
         return min2;
     }
@@ -524,16 +524,16 @@ export function minCMakeVersion(folder: string) {
 
 export function configurePresets(folder: string, usePresetsPlusIncluded: boolean = false) {
     if (usePresetsPlusIncluded) {
-        return presetsFilesPlusIncluded.get(folder)?.configurePresets || [];
+        return presetsPlusIncluded.get(folder)?.configurePresets || [];
     }
-    return expandedPresetsFiles.get(folder)?.configurePresets || [];
+    return expandedPresets.get(folder)?.configurePresets || [];
 }
 
 export function userConfigurePresets(folder: string, usePresetsPlusIncluded: boolean = false) {
     if (usePresetsPlusIncluded) {
-        return userPresetsFilesPlusIncluded.get(folder)?.configurePresets || [];
+        return userPresetsPlusIncluded.get(folder)?.configurePresets || [];
     }
-    return expandedUserPresetsFiles.get(folder)?.configurePresets || [];
+    return expandedUserPresets.get(folder)?.configurePresets || [];
 }
 
 /**
@@ -544,11 +544,11 @@ export function allConfigurePresets(folder: string, usePresetsPlusIncluded: bool
 }
 
 export function buildPresets(folder: string) {
-    return expandedPresetsFiles.get(folder)?.buildPresets || [];
+    return expandedPresets.get(folder)?.buildPresets || [];
 }
 
 export function userBuildPresets(folder: string) {
-    return expandedUserPresetsFiles.get(folder)?.buildPresets || [];
+    return expandedUserPresets.get(folder)?.buildPresets || [];
 }
 
 /**
@@ -559,11 +559,11 @@ export function allBuildPresets(folder: string) {
 }
 
 export function testPresets(folder: string) {
-    return expandedPresetsFiles.get(folder)?.testPresets || [];
+    return expandedPresets.get(folder)?.testPresets || [];
 }
 
 export function userTestPresets(folder: string) {
-    return expandedUserPresetsFiles.get(folder)?.testPresets || [];
+    return expandedUserPresets.get(folder)?.testPresets || [];
 }
 
 /**
@@ -574,11 +574,11 @@ export function allTestPresets(folder: string) {
 }
 
 export function packagePresets(folder: string) {
-    return expandedPresetsFiles.get(folder)?.packagePresets || [];
+    return expandedPresets.get(folder)?.packagePresets || [];
 }
 
 export function userPackagePresets(folder: string) {
-    return expandedUserPresetsFiles.get(folder)?.packagePresets || [];
+    return expandedUserPresets.get(folder)?.packagePresets || [];
 }
 
 /**
@@ -589,11 +589,11 @@ export function allPackagePresets(folder: string) {
 }
 
 export function workflowPresets(folder: string) {
-    return expandedPresetsFiles.get(folder)?.workflowPresets || [];
+    return expandedPresets.get(folder)?.workflowPresets || [];
 }
 
 export function userWorkflowPresets(folder: string) {
-    return expandedUserPresetsFiles.get(folder)?.workflowPresets || [];
+    return expandedUserPresets.get(folder)?.workflowPresets || [];
 }
 
 /**
