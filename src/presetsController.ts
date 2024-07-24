@@ -219,6 +219,12 @@ export class PresetsController {
         // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
     }
 
+    // this is used for the file watcher on adding a new presets file
+    async onCreatePresetsFile() {
+        await this.reapplyPresets();
+        await this.project.projectController?.updateActiveProject(this.workspaceFolder);
+    }
+
     private showNameInputBox() {
         return vscode.window.showInputBox({ placeHolder: localize('preset.name', 'Preset name') });
     }
@@ -1951,20 +1957,21 @@ export class PresetsController {
             this._presetCreatedWatcher.close().then(() => {}, () => {});
         }
 
-        const handler = () => {
+        const presetChangeHandler = () => {
             void this.reapplyPresets();
         };
         this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
-            .on('change', handler)
-            .on('unlink', handler);
+            .on('change', presetChangeHandler)
+            .on('unlink', presetChangeHandler);
 
-        const handler2 = () => {
+        const presetCreatedHandler = () => {
             log.debug(localize('preset.created', 'A new preset file was created!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'));
-            void this.reapplyPresets();
+            void this.onCreatePresetsFile();
         };
         this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
-            .on('add', handler2);
+            .on('add', presetCreatedHandler);
         this._presetCreatedWatcher?.add("CMakePresets.json");
+        this._presetCreatedWatcher?.add("CMakeUserPresets.json");
     };
 
     dispose() {
