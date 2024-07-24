@@ -715,10 +715,10 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset, penvOverride?: EnvironmentWithNull) {
-    const generator = 'generator' in preset
+async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset | PackagePreset, penvOverride?: EnvironmentWithNull, includeGenerator: boolean = true): Promise<ExpansionOptions> {
+    const generator = includeGenerator ? 'generator' in preset
         ? preset.generator
-        : ('__generator' in preset ? preset.__generator : undefined);
+        : ('__generator' in preset ? preset.__generator : undefined) : undefined;
 
     const expansionOpts: ExpansionOptions = {
         vars: {
@@ -1839,7 +1839,8 @@ export async function expandPackagePreset(folder: string, name: string, workspac
     }
 
     const expandedPreset: PackagePreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+    // Package presets cannot expand the macro ${generator} so this can't be included in opts
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, undefined, false);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
