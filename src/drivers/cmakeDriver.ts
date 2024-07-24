@@ -1798,13 +1798,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.NoSourceDirectoryFound);
             return false;
         }
-
-        const cmake_list = this.mainListFile;
-        if (!await fs.exists(cmake_list)) {
-            log.debug(localize('not.configuring', 'Not configuring: There is no {0}', cmake_list));
-            return this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile, this.config);
-        }
-
         return true;
     }
 

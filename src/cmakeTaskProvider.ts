@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as vscode from 'vscode';
-import { CMakeDriver } from './drivers/drivers';
+import { CMakeDriver, CMakePreconditionProblems } from './drivers/drivers';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -15,6 +15,7 @@ import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
+import { fs } from "./pr";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -432,7 +433,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
         telemetry.logEvent("task", {taskType: "configure", useCMakePresets: String(project.useCMakePresets)});
         await this.correctTargets(project, CommandType.config);
-        const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
+        const cmakeDriver: CMakeDriver | undefined = (await project?.tryGetCMakeDriverInstance()) || undefined;
+
         if (cmakeDriver) {
             if (project.useCMakePresets && cmakeDriver.config.configureOnEdit) {
                 log.debug(localize("configure.on.edit", 'When running configure tasks using presets, setting configureOnEdit to true can potentially overwrite the task configurations.'));

@@ -958,8 +958,12 @@ export class CMakeProject {
                                 telemetry.logEvent(telemetryEvent, telemetryProperties);
                                 await vscode.commands.executeCommand('cmake.configure');
                                 return true;
+                            } else {
+                                await this.reloadCMakeDriver();
                             }
                         }
+
+                        return true;
                     } else {
                         telemetryProperties["missingCMakeListsUserAction"] = "cancel-browse";
                     }
@@ -977,6 +981,23 @@ export class CMakeProject {
         // This is a good place for an update.
         await updateFullFeatureSet();
         return false;
+    }
+
+    public async tryGetCMakeDriverInstance(): Promise<CMakeDriver | null> {
+        let drv: CMakeDriver | null = await this.getCMakeDriverInstance();
+
+        // We should pop the selection for a CMakeLists file and if we can, continue after selection.
+        const cmake_list = await this.mainListFile;
+        if (!await fs.exists(cmake_list)) {
+            const continueConfiguring = await this.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, true, this.workspaceContext.config);
+            if (continueConfiguring) {
+                drv = await this.getCMakeDriverInstance() ?? null;
+            } else {
+                log.debug(localize('not.configuring', 'Not configuring: There is no {0}', cmake_list));
+            }
+        }
+
+        return drv;
     }
 
     /**
@@ -1552,7 +1573,8 @@ export class CMakeProject {
     }
 
     async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
-        const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
+        const drv: CMakeDriver | null = await this.tryGetCMakeDriverInstance();
+
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
         if (drv && drv.shouldUseCachedConfiguration(trigger)) {
