@@ -7,7 +7,6 @@
 	"creating.instance.of": "Creazione dell'istanza di {0}",
 	"removing": "Rimozione di {0}",
 	"unlink.failed": "Non è stato possibile rimuovere il file di cache {0}",
-	"cmake.debug.name": "CMake Debugger",
 	"toolchains.object.unsupported": "Questa versione di CMake non supporta il tipo di oggetto \"toolchains\". Per determinare i percorsi del compilatore, verrà letto il file CMakeCache.txt.",
 	"build.all.target": "Destinazione speciale per la compilazione di tutte le destinazioni disponibili",
 	"cmake.install.name": "Installa"

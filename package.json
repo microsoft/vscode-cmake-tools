@@ -3484,12 +3484,14 @@
           "enum": [
             "focus",
             "always",
-            "never"
+            "never",
+            "error"
           ],
           "enumDescriptions": [
             "%cmake-tools.configuration.cmake.revealLog.focus.description%",
             "%cmake-tools.configuration.cmake.revealLog.always.description%",
-            "%cmake-tools.configuration.cmake.revealLog.never.description%"
+            "%cmake-tools.configuration.cmake.revealLog.never.description%",
+            "%cmake-tools.configuration.cmake.revealLog.onError.description%"
           ],
           "description": "%cmake-tools.configuration.cmake.revealLog.description%"
         },
@@ -3595,12 +3597,12 @@
         "command": "cmake.buildWithTarget"
       },
       {
-        "key": "ctrl+f5",
+        "key": "shift+f5",
         "command": "cmake.debugTarget",
         "when": "!inDebugMode && inCMakeProject && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       },
       {
-        "key": "shift+f5",
+        "key": "ctrl+f5",
         "command": "cmake.launchTarget",
         "when": "!inDebugMode && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       }

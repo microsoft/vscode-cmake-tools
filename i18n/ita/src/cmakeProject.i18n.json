@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "Non visualizzare più questo messaggio",
 	"configure.failed.tryWithDebugger": "Configurazione non riuscita. Vuoi provare a configurare con CMake Debugger?",
 	"no.configureWithDebugger.button": "Annulla",
+	"cmake.debug.name": "CMake Debugger",
 	"finishing.configure": "Completamento della configurazione",
 	"configure.failed": "Non è stato possibile configurare il progetto",
 	"saving.open.files.before": "Salvataggio dei file aperti prima della configurazione/compilazione",

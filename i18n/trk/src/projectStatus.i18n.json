@@ -25,6 +25,7 @@
 	"Folder": "Klasör",
 	"active.folder": "Etkin Klasör",
 	"configPreset.change": "Yapılandırma Ön Ayarını Değiştir",
+	"override.settings.applied": "Geçersiz kılma ayarları uygulandı",
 	"buildPreset.change": "Derleme Ön Ayarını Değiştir",
 	"testPreset.change": "Test Ön Ayarını Değiştir",
 	"packagePreset.change": "Paket Ön Ayarını Değiştir",

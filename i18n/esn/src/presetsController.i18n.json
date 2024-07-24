@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "El archivo de valores preestablecidos incluidos {0} no se encuentra",
 	"validating.presets.file": "Leyendo y validando los valores preestablecidos de \"file {0}\"",
 	"unsupported.presets": "Se detectaron valores preestablecidos no admitidos en {0}. La compatibilidad se limita a las características definidas por la versión {1}.",
+	"no.additional.properties": "NO debe tener propiedades adicionales",
 	"unsupported.presets.disable": "Las macros y las propiedades desconocidas se pueden omitir mediante la configuración de {0}.",
 	"duplicate.build.preset.found": "Se encontraron duplicados en la colección de valores preestablecidos de compilación: \"{0}\"",
 	"duplicate.test.preset.found": "Se encontraron duplicados en la colección de valores preestablecidos de prueba: \"{0}\"",

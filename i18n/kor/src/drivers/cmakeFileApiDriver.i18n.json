@@ -7,7 +7,6 @@
 	"creating.instance.of": "{0} 인스턴스를 만드는 중",
 	"removing": "{0}을(를) 제거하는 중",
 	"unlink.failed": "캐시 파일 {0}을(를) 제거하지 못함",
-	"cmake.debug.name": "CMake 디버거",
 	"toolchains.object.unsupported": "이 CMake 버전은 \"도구 체인\" 개체 종류를 지원하지 않습니다. 컴파일러 경로는 CMakeCache.txt를 읽는 방법으로 결정됩니다.",
 	"build.all.target": "사용 가능한 모든 대상을 빌드할 특수 대상",
 	"cmake.install.name": "설치"

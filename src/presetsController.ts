@@ -9,13 +9,15 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
+import { ExpansionErrorHandler, ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
+import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
+import collections from '@cmt/diagnostics/collections';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -136,13 +138,23 @@ export class PresetsController {
         return this._userPresetsChangedEmitter.event(listener);
     }
 
-    private readonly _setPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setPresetsFile(folder, presetsFile);
+    private readonly _setExpandedPresets = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setExpandedPresets(folder, presetsFile);
         this._presetsChangedEmitter.fire(presetsFile);
     };
 
-    private readonly _setUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setUserPresetsFile(folder, presetsFile);
+    private readonly _setExpandedUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setExpandedUserPresetsFile(folder, presetsFile);
+        this._userPresetsChangedEmitter.fire(presetsFile);
+    };
+
+    private readonly _setPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setPresetsPlusIncluded(folder, presetsFile);
+        this._presetsChangedEmitter.fire(presetsFile);
+    };
+
+    private readonly _setUserPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setUserPresetsPlusIncluded(folder, presetsFile);
         this._userPresetsChangedEmitter.fire(presetsFile);
     };
 
@@ -154,7 +166,7 @@ export class PresetsController {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Set<string>) {
+    private async resetPresetsFile(file: string, setExpandedPresets: SetPresetsFileFunc, setPresetsPlusIncluded: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Set<string>) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
@@ -162,7 +174,6 @@ export class PresetsController {
 
         // Record the file as referenced, even if the file does not exist.
         referencedFiles.add(file);
-
         let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
         if (presetsFile) {
             // Parse again so we automatically have a copy by value
@@ -172,12 +183,20 @@ export class PresetsController {
         }
 
         presetsFile = await this.validatePresetsFile(presetsFile, file);
-        // Private fields must be set after validation, otherwise validation would fail.
-        this.populatePrivatePresetsFields(presetsFile, file);
-        await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
-        // TODO: more validation (or move some of the per file validation here when all entries are merged.
-        // Like unresolved preset reference or duplicates).
-        setPresetsFile(this.folderPath, presetsFile);
+        if (presetsFile) {
+            // Private fields must be set after validation, otherwise validation would fail.
+            this.populatePrivatePresetsFields(presetsFile, file);
+            await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
+
+            // add the include files to the original presets file
+            setPresetsPlusIncluded(this.folderPath, {...presetsFile});
+
+            // set the pre-expanded version so we can call expandPresetsFile on it
+            setExpandedPresets(this.folderPath, presetsFile);
+            presetsFile = await this.expandPresetsFile(presetsFile);
+        }
+
+        setExpandedPresets(this.folderPath, presetsFile);
     }
 
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
@@ -186,9 +205,10 @@ export class PresetsController {
         const referencedFiles: Set<string> = new Set();
 
         // Reset all changes due to expansion since parents could change
-        await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
-        await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.presetsPath, this._setExpandedPresets, this._setPresetsPlusIncluded, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.userPresetsPath, this._setExpandedUserPresetsFile, this._setUserPresetsPlusIncluded, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
 
+        // reset all expanded presets storage.
         this._referencedFiles = Array.from(referencedFiles);
 
         this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
@@ -421,7 +441,7 @@ export class PresetsController {
 
             if (newPreset) {
 
-                const before: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
+                const before: preset.ConfigurePreset[] = preset.allConfigurePresets(this.folderPath);
                 const name = await this.showNameInputBox() || newPreset.displayName || undefined;
                 if (!name) {
                     return false;
@@ -817,9 +837,23 @@ export class PresetsController {
     }
 
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
-        preset.expandVendorForConfigurePresets(this.folderPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
         return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+    }
+
+    async getAllBuildPresets(): Promise<preset.BuildPreset[]> {
+        return preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
+    }
+
+    async getAllTestPresets(): Promise<preset.TestPreset[]> {
+        return preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
+    }
+
+    async getAllPackagePresets(): Promise<preset.PackagePreset[]> {
+        return preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
+    }
+
+    async getAllWorkflowPresets(): Promise<preset.WorkflowPreset[]> {
+        return preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
     }
 
     async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
@@ -932,7 +966,15 @@ export class PresetsController {
         let currentBuildPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'build');
-            const buildPresets = preset.allBuildPresets(this.folderPath);
+            const allPresets = preset.allBuildPresets(this.folderPath);
+            const buildPresets = (await this.getAllBuildPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const buildPreset of buildPresets) {
                 // Set active build preset as the first valid build preset matches the selected configure preset
                 if (buildPreset.configurePreset === selectedConfigurePreset && !buildPreset.hidden) {
@@ -956,7 +998,15 @@ export class PresetsController {
         let currentTestPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'test');
-            const testPresets = preset.allTestPresets(this.folderPath);
+            const allPresets = preset.allTestPresets(this.folderPath);
+            const testPresets = (await this.getAllTestPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const testPreset of testPresets) {
                 // Set active test preset as the first valid test preset matches the selected configure preset
                 if (testPreset.configurePreset === selectedConfigurePreset && !testPreset.hidden) {
@@ -980,7 +1030,15 @@ export class PresetsController {
         let currentPackagePreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'package');
-            const packagePresets = preset.allPackagePresets(this.folderPath);
+            const allPresets = preset.allPackagePresets(this.folderPath);
+            const packagePresets = (await this.getAllPackagePresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const packagePreset of packagePresets) {
                 // Set active package preset as the first valid package preset matches the selected configure preset
                 if (packagePreset.configurePreset === selectedConfigurePreset && !packagePreset.hidden) {
@@ -1004,7 +1062,15 @@ export class PresetsController {
         let currentWorkflowPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
-            const workflowPresets = preset.allWorkflowPresets(this.folderPath);
+            const allPresets = preset.allWorkflowPresets(this.folderPath);
+            const workflowPresets = (await this.getAllWorkflowPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const workflowPreset of workflowPresets) {
                 // Set active workflow preset as the first valid workflow preset (matching the selected configure preset is not a requirement as for the other presets types)
                 await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
@@ -1057,7 +1123,6 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'build');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, _preset).buildPresetCompatible);
@@ -1216,7 +1281,6 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'test');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, _preset).testPresetCompatible);
@@ -1309,7 +1373,6 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'package');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, this.project.testPreset, _preset).packagePresetCompatible);
@@ -1392,7 +1455,6 @@ export class PresetsController {
         // which to be the same as in step0. This is verified by CMakePresets.json validation in validatePresetsFile.
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
         allPresets.push(preset.defaultWorkflowPreset);
@@ -1593,6 +1655,124 @@ export class PresetsController {
         }
     }
 
+    /**
+     * Returns the expanded presets file if there are no errors, otherwise returns undefined
+     * Does not apply vsdevenv to the presets file
+     */
+    private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
+
+        if (!presetsFile) {
+            return undefined;
+        }
+
+        log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
+
+        const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
+
+        const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
+            preset.expandConfigurePreset(
+                this.folderPath,
+                configurePreset.name,
+                this._sourceDir,
+                this.workspaceFolder.uri.fsPath,
+                true,
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null)  as preset.ConfigurePreset[];
+
+        const expandedBuildPresets = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
+            preset.expandBuildPreset(
+                this.folderPath,
+                buildPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                undefined,
+                true,   // should this always be true?
+                buildPreset.configurePreset,
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null) as preset.BuildPreset[];
+
+        const expandedPackagePresets = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
+            preset.expandPackagePreset(
+                this.folderPath,
+                packagePreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,   // should this always be true?
+                packagePreset.configurePreset,
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null) as preset.PackagePreset[];
+
+        const expandedTestPresets = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
+            preset.expandTestPreset(
+                this.folderPath,
+                testPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,   // should this always be true?
+                testPreset.configurePreset,
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null) as preset.TestPreset[];
+
+        const expandedWorkflowPresets = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
+            preset.expandWorkflowPreset(
+                this.folderPath,
+                workflowPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                true,   // should this always be true?
+                undefined,  // should this always be undefined?
+                false,
+                expansionErrors)
+        ))).filter(preset => preset !== null) as preset.WorkflowPreset[];
+
+        if (expansionErrors.errorList.length > 0) {
+            log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
+            await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
+            return undefined;
+        } else {
+            log.info(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
+
+            // cache everything that we just expanded
+            // we'll only need to expand again on set preset - to apply the vs dev env if needed
+            presetsFile.configurePresets = expandedConfigurePresets;
+            presetsFile.buildPresets = expandedBuildPresets;
+            presetsFile.testPresets = expandedTestPresets;
+            presetsFile.packagePresets = expandedPackagePresets;
+            presetsFile.workflowPresets = expandedWorkflowPresets;
+
+            // clear out the errors since there are none now
+            collections.presets.set(vscode.Uri.file(presetsFile.__path || ""), undefined);
+
+            return presetsFile;
+        }
+    }
+
+    private async reportPresetsFileErrors(path: string = "", expansionErrors: ExpansionErrorHandler) {
+        const diagnostics: Diagnostic[] = [];
+        for (const error of expansionErrors.errorList) {
+            // message - error type, source - details & the preset name it's from
+            const diagnostic: Diagnostic = {
+                severity: DiagnosticSeverity.Error,
+                message: error[0],
+                source: error[1],
+                range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error - parse originalPresetsFile
+            };
+            // avoid duplicate diagnostics
+            if (!diagnostics.find(d => d.message === diagnostic.message && d.source === diagnostic.source)) {
+                diagnostics.push(diagnostic);
+            }
+        }
+
+        collections.presets.set(vscode.Uri.file(path), diagnostics);
+    }
+
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {
         if (!presetsFile) {
             return undefined;
@@ -1691,7 +1871,7 @@ export class PresetsController {
             }
         }
 
-        log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
+        log.info(localize('successfully.validated.presets', 'Successfully validated {0} against presets schema', file));
         return presetsFile;
     }
 

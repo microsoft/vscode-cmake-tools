@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "Przy użyciu zestawów pomiń ustawienie wstępne przepływu pracy: {0}",
 	"no.active.cmake.project": "Brak aktywnego projektu narzędzia CMake.",
 	"invalid.folder": "Nieprawidłowy folder.",
+	"cmake.debug.name": "Debuger CMake",
 	"select.a.cmake.project": "Wybierz projekt cmake",
 	"compilation information.not.found": "Nie można znaleźć informacji o kompilacji dla tego pliku",
 	"add.config.preset.in.test.mode": "Uruchamianie narzędzi CMake w trybie testowym. Element addConfigurePreset jest wyłączony.",

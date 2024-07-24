@@ -25,6 +25,7 @@
 	"Folder": "Pasta",
 	"active.folder": "Pasta Ativa",
 	"configPreset.change": "Alterar Predefinição de Configuração",
+	"override.settings.applied": "Substituir configurações aplicadas",
 	"buildPreset.change": "Alterar Predefinição de Build",
 	"testPreset.change": "Alterar Predefinição de Teste",
 	"packagePreset.change": "Alterar Predefinição de Pacote",
