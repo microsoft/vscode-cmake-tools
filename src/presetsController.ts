@@ -219,12 +219,6 @@ export class PresetsController {
         // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
     }
 
-    // this is used for the file watcher on adding a new presets file
-    async onCreatePresetsFile() {
-        await this.reapplyPresets();
-        await this.project.projectController?.updateActiveProject(this.workspaceFolder);
-    }
-
     private showNameInputBox() {
         return vscode.window.showInputBox({ placeHolder: localize('preset.name', 'Preset name') });
     }
@@ -1948,7 +1942,12 @@ export class PresetsController {
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));
     }
 
-    // TODO: update this for when a new preset file is added!
+    // this is used for the file watcher on adding a new presets file
+    async onCreatePresetsFile() {
+        await this.reapplyPresets();
+        await this.project.projectController?.updateActiveProject(this.workspaceFolder);
+    }
+
     private async watchPresetsChange() {
         if (this._presetsWatcher) {
             this._presetsWatcher.close().then(() => {}, () => {});
