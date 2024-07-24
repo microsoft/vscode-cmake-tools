@@ -715,7 +715,7 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset | PackagePreset, penvOverride?: EnvironmentWithNull, includeGenerator: boolean = true): Promise<ExpansionOptions> {
+async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset | PackagePreset, penvOverride?: EnvironmentWithNull, includeGenerator: boolean = true) {
     const generator = includeGenerator ? 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined) : undefined;
