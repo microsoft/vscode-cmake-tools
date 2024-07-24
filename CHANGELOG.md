@@ -32,6 +32,7 @@ Bug Fixes:
 - Fix re-using a terminal for launching even when the environment has changed. [#3478](https://github.com/microsoft/vscode-cmake-tools/issues/3478)
 - Don't require Ninja or Make on command line when checking for supported generators. [#3924](https://github.com/microsoft/vscode-cmake-tools/issues/3924)
 - Fix our keybindings for debug and run without debugging to better match VS Code. [#3507](https://github.com/microsoft/vscode-cmake-tools/issues/3507)
+- Prevent second configure after `QuickStart` if the `automaticReconfigure` setting is enabled. [#3910](https://github.com/microsoft/vscode-cmake-tools/issues/3910)
 
 ## 1.18.43
 
