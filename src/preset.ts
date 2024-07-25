@@ -1535,29 +1535,33 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
     return expandedPreset;
 }
 
-async function expandBuildPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, parallelJobs?: number, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<BuildPreset | null> {
-    let preset = getPresetByName(buildPresets(folder), name);
-    if (preset) {
-        return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, false, enableTryApplyDevEnv, errorHandler);
-    }
-
-    if (allowUserPreset) {
-        preset = getPresetByName(userBuildPresets(folder), name);
+async function expandBuildPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, parallelJobs?: number, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: BuildPreset): Promise<BuildPreset | null> {
+    const presetList = inheritedByPreset ? inheritedByPreset.__file!.buildPresets : buildPresets(folder);
+    const validInherit = presetList !== undefined && presetList.filter(p => p.name === name).length > 0;
+    if (validInherit) {
+        let preset = getPresetByName(buildPresets(folder), name);
         if (preset) {
+            return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, false, enableTryApplyDevEnv, errorHandler);
+        }
+
+        if (allowUserPreset) {
+            preset = getPresetByName(userBuildPresets(folder), name);
+            if (preset) {
+                return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
+            }
+        }
+
+        if (name === defaultBuildPreset.name) {
+            // Construct the default build preset every time since it should NOT be cached
+            preset = {
+                name: defaultBuildPreset.name,
+                displayName: defaultBuildPreset.displayName,
+                description: defaultBuildPreset.description,
+                jobs: parallelJobs || defaultNumJobs(),
+                configurePreset
+            };
             return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
         }
-    }
-
-    if (name === defaultBuildPreset.name) {
-        // Construct the default build preset every time since it should NOT be cached
-        preset = {
-            name: defaultBuildPreset.name,
-            displayName: defaultBuildPreset.displayName,
-            description: defaultBuildPreset.description,
-            jobs: parallelJobs || defaultNumJobs(),
-            configurePreset
-        };
-        return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
     }
 
     log.error(localize('build.preset.not.found.full', 'Could not find build preset with name {0}', name));
@@ -1595,7 +1599,7 @@ async function expandBuildPresetHelper(folder: string, preset: BuildPreset, work
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, allowUserPreset, undefined, enableTryApplyDevEnv, errorHandler);
+            const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, allowUserPreset, undefined, enableTryApplyDevEnv, errorHandler, preset);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
@@ -1732,28 +1736,32 @@ export async function expandTestPreset(folder: string, name: string, workspaceFo
     return expandedPreset;
 }
 
-async function expandTestPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<TestPreset | null> {
-    let preset = getPresetByName(testPresets(folder), name);
-    if (preset) {
-        return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, false, enableTryApplyDevEnv, errorHandler);
-    }
-
-    if (allowUserPreset) {
-        preset = getPresetByName(userTestPresets(folder), name);
+async function expandTestPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: TestPreset): Promise<TestPreset | null> {
+    const presetList = inheritedByPreset ? inheritedByPreset.__file!.testPresets : testPresets(folder);
+    const validInherit = presetList !== undefined && presetList.filter(p => p.name === name).length > 0;
+    if (validInherit) {
+        let preset = getPresetByName(testPresets(folder), name);
         if (preset) {
+            return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, false, enableTryApplyDevEnv, errorHandler);
+        }
+
+        if (allowUserPreset) {
+            preset = getPresetByName(userTestPresets(folder), name);
+            if (preset) {
+                return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
+            }
+        }
+
+        if (name === defaultTestPreset.name) {
+            // Construct the default test preset every time since it should NOT be cached
+            preset = {
+                name: defaultTestPreset.name,
+                displayName: defaultTestPreset.displayName,
+                description: defaultTestPreset.description,
+                configurePreset
+            };
             return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
         }
-    }
-
-    if (name === defaultTestPreset.name) {
-        // Construct the default test preset every time since it should NOT be cached
-        preset = {
-            name: defaultTestPreset.name,
-            displayName: defaultTestPreset.displayName,
-            description: defaultTestPreset.description,
-            configurePreset
-        };
-        return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
     }
 
     log.error(localize('test.preset.not.found.full', 'Could not find test preset with name {0}', name));
@@ -1789,7 +1797,7 @@ async function expandTestPresetHelper(folder: string, preset: TestPreset, worksp
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset,  undefined, false, errorHandler);
+            const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset,  undefined, false, errorHandler, preset);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
@@ -1870,28 +1878,32 @@ export async function expandPackagePreset(folder: string, name: string, workspac
     return expandedPreset;
 }
 
-async function expandPackagePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<PackagePreset | null> {
-    let preset = getPresetByName(packagePresets(folder), name);
-    if (preset) {
-        return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, false, enableTryApplyDevEnv, errorHandler);
-    }
-
-    if (allowUserPreset) {
-        preset = getPresetByName(userPackagePresets(folder), name);
+async function expandPackagePresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: PackagePreset): Promise<PackagePreset | null> {
+    const presetList = inheritedByPreset ? inheritedByPreset.__file!.packagePresets : packagePresets(folder);
+    const validInherit = presetList !== undefined && presetList.filter(p => p.name === name).length > 0;
+    if (validInherit) {
+        let preset = getPresetByName(packagePresets(folder), name);
         if (preset) {
+            return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, false, enableTryApplyDevEnv, errorHandler);
+        }
+
+        if (allowUserPreset) {
+            preset = getPresetByName(userPackagePresets(folder), name);
+            if (preset) {
+                return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
+            }
+        }
+
+        if (name === defaultPackagePreset.name) {
+            // Construct the default package preset every time since it should NOT be cached
+            preset = {
+                name: defaultPackagePreset.name,
+                displayName: defaultPackagePreset.displayName,
+                description: defaultPackagePreset.description,
+                configurePreset
+            };
             return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
         }
-    }
-
-    if (name === defaultPackagePreset.name) {
-        // Construct the default package preset every time since it should NOT be cached
-        preset = {
-            name: defaultPackagePreset.name,
-            displayName: defaultPackagePreset.displayName,
-            description: defaultPackagePreset.description,
-            configurePreset
-        };
-        return expandPackagePresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true, enableTryApplyDevEnv, errorHandler);
     }
 
     log.error(localize('package.preset.not.found.full', 'Could not find package preset with name {0}', name));
@@ -1927,7 +1939,7 @@ async function expandPackagePresetHelper(folder: string, preset: PackagePreset, 
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandPackagePresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, undefined, enableTryApplyDevEnv, errorHandler);
+            const parent = await expandPackagePresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, undefined, enableTryApplyDevEnv, errorHandler, preset);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
@@ -1991,33 +2003,37 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
     return expandedPreset;
 }
 
-async function expandWorkflowPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<WorkflowPreset | null> {
-    let preset = getPresetByName(workflowPresets(folder), name);
-    if (preset) {
-        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, false, enableTryApplyDevEnv, errorHandler);
-    }
-
-    if (allowUserPreset) {
-        preset = getPresetByName(userWorkflowPresets(folder), name);
+async function expandWorkflowPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: WorkflowPreset): Promise<WorkflowPreset | null> {
+    const presetList = inheritedByPreset ? inheritedByPreset.__file!.workflowPresets : workflowPresets(folder);
+    const validInherit = presetList !== undefined && presetList.filter(p => p.name === name).length > 0;
+    if (validInherit) {
+        let preset = getPresetByName(workflowPresets(folder), name);
         if (preset) {
+            return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, false, enableTryApplyDevEnv, errorHandler);
+        }
+
+        if (allowUserPreset) {
+            preset = getPresetByName(userWorkflowPresets(folder), name);
+            if (preset) {
+                return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, true, enableTryApplyDevEnv, errorHandler);
+            }
+        }
+
+        if (name === defaultWorkflowPreset.name) {
+            // Construct the default workflow preset every time since it should NOT be cached
+            preset = {
+                name: defaultWorkflowPreset.name,
+                displayName: defaultWorkflowPreset.displayName,
+                description: defaultWorkflowPreset.description,
+                steps: [
+                    {
+                        type: "Configure",
+                        name: configurePreset ? configurePreset : "_placeholder_configure_preset_"
+                    }
+                ]
+            };
             return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, true, enableTryApplyDevEnv, errorHandler);
         }
-    }
-
-    if (name === defaultWorkflowPreset.name) {
-        // Construct the default workflow preset every time since it should NOT be cached
-        preset = {
-            name: defaultWorkflowPreset.name,
-            displayName: defaultWorkflowPreset.displayName,
-            description: defaultWorkflowPreset.description,
-            steps: [
-                {
-                    type: "Configure",
-                    name: configurePreset ? configurePreset : "_placeholder_configure_preset_"
-                }
-            ]
-        };
-        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, true, enableTryApplyDevEnv, errorHandler);
     }
 
     log.error(localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name));
