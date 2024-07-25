@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as vscode from 'vscode';
-import { CMakeDriver, CMakePreconditionProblems } from './drivers/drivers';
+import { CMakeDriver } from './drivers/drivers';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from './environmentVariables';
@@ -15,7 +15,6 @@ import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
-import { fs } from "./pr";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
