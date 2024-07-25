@@ -2,6 +2,7 @@ import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as lodash from "lodash";
 
 import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
@@ -187,8 +188,9 @@ export class PresetsController {
             this.populatePrivatePresetsFields(presetsFile, file);
             await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
 
+            const copyOfPresetsFile = lodash.cloneDeep(presetsFile);
             // add the include files to the original presets file
-            setPresetsPlusIncluded(this.folderPath, {...presetsFile});
+            setPresetsPlusIncluded(this.folderPath, copyOfPresetsFile);
 
             // set the pre-expanded version so we can call expandPresetsFile on it
             setExpandedPresets(this.folderPath, presetsFile);
