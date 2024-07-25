@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "使用工具包，跳过设置工作流预设: {0}",
 	"no.active.cmake.project": "没有活动的 CMake 项目。",
 	"invalid.folder": "无效的文件夹。",
+	"cmake.debug.name": "CMake 调试程序",
 	"select.a.cmake.project": "选择 cmake 项目",
 	"compilation information.not.found": "找不到此文件的编译信息",
 	"add.config.preset.in.test.mode": "正在测试模式下运行 CMakeTools。已禁用 addConfigurePreset。",

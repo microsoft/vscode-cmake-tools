@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "Soubor zahrnutých předvoleb {0} nebyl nalezen.",
 	"validating.presets.file": "Čtení a ověřování předvoleb souboru {0}",
 	"unsupported.presets": "V {0} se zjistily nepodporované předvolby. Podpora je omezená na funkce definované verzí {1}.",
+	"no.additional.properties": "NEMĚLO by mít další vlastnosti",
 	"unsupported.presets.disable": "Neznámé vlastnosti a makra lze ignorovat pomocí nastavení {0}.",
 	"duplicate.build.preset.found": "V kolekci předvoleb sestavení se našly duplicity: „{0}“",
 	"duplicate.test.preset.found": "V kolekci předvoleb testů se našly duplicity: „{0}“",

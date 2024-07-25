@@ -2,11 +2,17 @@
 
 ## 1.19
 
+Features:
+
+- Add setting `cmake.useVsDeveloperEnvironment` to allow for more user control on when the Visual Studio Developer Enviornment is attempted to be added to the CMake Presets environment. [#3892](https://github.com/microsoft/vscode-cmake-tools/pull/3892)
+
 Improvements:
 
 - Add `Unspecified` option for selecting a kit variant to allow CMake itself to select the build type. [#3821](https://github.com/microsoft/vscode-cmake-tools/issues/3821)
 - Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
 - Resolve diagnostics files relative to workspace and build directory, fixes [#1401](https://github.com/microsoft/vscode-cmake-tools/issues/1401) [@fargies](https://github.com/fargies)
+- Add setting to only show the cmake log on target failure. [#3785](https://github.com/microsoft/vscode-cmake-tools/pull/3785) [@stepeos](https://github.com/stepeos)
+- Preset expansion occurs on `CMakePresets.json` or `CMakeUserPresets.json` save, and if there are no errors the expanded presets are cached. The VS Developer Environment will only be applied to a preset if it is selected. Expansion errors will show in the problems panel and preset files with errors will be invalid, and any presets they contain cannot be used. [#3905](https://github.com/microsoft/vscode-cmake-tools/pull/3905)
 
 Bug Fixes:
 
@@ -16,10 +22,17 @@ Bug Fixes:
 - Fix issue where `cmakeUserPresets.json` not showing up in project outline. [#3832](https://github.com/microsoft/vscode-cmake-tools/issues/3832)
 - Fix edge case where parsing tests fails when additional output is printed before tests json. [#3750](https://github.com/microsoft/vscode-cmake-tools/issues/3750)
 - Fix issue where `Configure with CMake Debugger` fails on restart because the previously used pipe to CMake Debugger is no longer available. [#3582](https://github.com/microsoft/vscode-cmake-tools/issues/3582)
-- Fix custom kit PATH being overriden [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
-- Fix debug variables being overriden [#3806](https://github.com/microsoft/vscode-cmake-tools/issues/3806)
+- Fix custom kit PATH being overriden. [#3849](https://github.com/microsoft/vscode-cmake-tools/issues/3849)
+- Fix debug variables being overriden. [#3806](https://github.com/microsoft/vscode-cmake-tools/issues/3806)
 - Fix issue in Quick Start where a C file was generated in place of a C++ file. [#3856](https://github.com/microsoft/vscode-cmake-tools/issues/3856)
-- Fix custom build tasks not showing up [#3622](https://github.com/microsoft/vscode-cmake-tools/issues/3622)
+- Fix custom build tasks not showing up. [#3622](https://github.com/microsoft/vscode-cmake-tools/issues/3622)
+- Fix the bug where if a relative path specified for `installDir`, it is not calculated relative to the source directory, which is how it should be according to the CMake `installDir` docs [here](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset). [#3871](https://github.com/microsoft/vscode-cmake-tools/issues/3871)
+- Fix issue with CMakeLists.txt depth search. [#3901](https://github.com/microsoft/vscode-cmake-tools/issues/3901)
+- Fix localized file path for schema files. [#3872](https://github.com/microsoft/vscode-cmake-tools/issues/3872)
+- Disable annoy and invalid extenion message about fix windows sdk for MSVC 2022. [#3837](https://github.com/microsoft/vscode-cmake-tools/pull/3837)
+- Fix re-using a terminal for launching even when the environment has changed. [#3478](https://github.com/microsoft/vscode-cmake-tools/issues/3478)
+- Don't require Ninja or Make on command line when checking for supported generators. [#3924](https://github.com/microsoft/vscode-cmake-tools/issues/3924)
+- Fix our keybindings for debug and run without debugging to better match VS Code. [#3507](https://github.com/microsoft/vscode-cmake-tools/issues/3507)
 
 ## 1.18.43
 

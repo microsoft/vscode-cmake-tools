@@ -976,8 +976,8 @@ export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
 }
 
 export async function globForFileName(fileName: string, depth: number, cwd: string): Promise<boolean> {
-    let starString = "*";
-    for (let i = 1; i <= depth; i++) {
+    let starString = ".";
+    for (let i = 0; i <= depth; i++) {
         if (await globWrapper(`${starString}/${fileName}`, cwd)) {
             return true;
         }

@@ -7,7 +7,6 @@
 	"creating.instance.of": "正在建立 {0} 的執行個體",
 	"removing": "正在移除 {0}",
 	"unlink.failed": "無法移除快取檔案 {0}",
-	"cmake.debug.name": "CMake 偵錯工具",
 	"toolchains.object.unsupported": "此版 CMake 不支援「工具鏈」物件種類。編譯器路徑會在讀取 CMakeCache.txt 時決定。",
 	"build.all.target": "用來建置所有可用目標的特殊目標",
 	"cmake.install.name": "安裝"

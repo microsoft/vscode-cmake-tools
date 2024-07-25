@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "Uso de kits, omitir la configuración del valor preestablecido del flujo de trabajo: {0}",
 	"no.active.cmake.project": "No hay ningún proyecto de CMake activo.",
 	"invalid.folder": "La carpeta no es válida.",
+	"cmake.debug.name": "Depurador de CMake",
 	"select.a.cmake.project": "Seleccione un proyecto de CMake",
 	"compilation information.not.found": "No se encuentra la información de compilación para este archivo.",
 	"add.config.preset.in.test.mode": "Ejecutando CMakeTools en modo de prueba. El elemento addConfigurePreset está deshabilitado.",

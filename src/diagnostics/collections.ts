@@ -38,6 +38,7 @@ class LazyCollection implements vscode.Disposable {
 class Collections {
     private readonly _cmake = new LazyCollection('cmake-configure-diags');
     private readonly _build = new LazyCollection('cmake-build-diags');
+    private readonly _presets = new LazyCollection('cmake-presets-diags');
 
     /**
      * The `DiagnosticCollection` for the CMake configure diagnostics.
@@ -53,9 +54,17 @@ class Collections {
         return this._build.getOrCreate();
     }
 
+    /**
+     * The `DiagnosticCollection` for presets diagnostics
+     */
+    get presets(): vscode.DiagnosticCollection {
+        return this._presets.getOrCreate();
+    }
+
     reset() {
         this._cmake.dispose();
         this._build.dispose();
+        this._presets.dispose();
     }
 }
 

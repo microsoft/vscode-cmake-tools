@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "找不到包含的预设文件 {0}",
 	"validating.presets.file": "读取并验证预设“文件 {0}”",
 	"unsupported.presets": "在 {0} 中检测到不受支持的预设。支持仅限于版本 {1} 定义的功能。",
+	"no.additional.properties": "不得具有其他属性",
 	"unsupported.presets.disable": "通过使用 {0} 设置可以忽略未知属性和宏。",
 	"duplicate.build.preset.found": "在生成预设集合 {0} 中找到重复项",
 	"duplicate.test.preset.found": "在测试预设集合 {0} 中找到重复项",

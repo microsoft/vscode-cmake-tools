@@ -7,7 +7,6 @@
 	"creating.instance.of": "Creando una instancia de {0}",
 	"removing": "Quitando {0}",
 	"unlink.failed": "No se pudo quitar el archivo caché {0}",
-	"cmake.debug.name": "Depurador de CMake",
 	"toolchains.object.unsupported": "Esta versión de CMake no admite la variante de objeto \"toolchains\". Las rutas de acceso del compilador se determinarán al leer CMakeCache.txt.",
 	"build.all.target": "Un destino especial para compilar todos los destinos disponibles",
 	"cmake.install.name": "Instalar"

@@ -266,11 +266,23 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
+
+        // We want to use the original unexpanded preset file to apply the dev env in expandConfigurePreset
+        // we have to first check if the preset is valid in expandedPresets since we won't be expanding the whole file here, only the path up for this preset
+        if (!preset.getPresetByName(preset.configurePresets(this.folderPath), configurePreset) && !preset.getPresetByName(preset.userConfigurePresets(this.folderPath), configurePreset)) {
+            return undefined;
+        }
+
+        // TODO: move applyDevEnv here to decouple from expandConfigurePreset
+
+        // modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
         const expandedConfigurePreset = await preset.expandConfigurePreset(this.folderPath,
             configurePreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
+            true,
             true);
+
         if (!expandedConfigurePreset) {
             log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
             return undefined;
@@ -298,6 +310,7 @@ export class CMakeProject {
 
         if (configurePreset) {
             const expandedConfigurePreset: preset.ConfigurePreset | undefined = await this.expandConfigPresetbyName(configurePreset);
+
             if (!expandedConfigurePreset) {
                 await this.resetPresets(drv);
                 return;
@@ -1288,11 +1301,7 @@ export class CMakeProject {
         return false;
     }
 
-    private refreshLaunchEnvironment: boolean = false;
     async setKit(kit: Kit | null) {
-        if (!this.activeKit || (kit && this.activeKit.name !== kit.name)) {
-            this.refreshLaunchEnvironment = true;
-        }
         this._activeKit = kit;
         if (kit) {
             log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
@@ -1548,6 +1557,8 @@ export class CMakeProject {
             const result: ConfigureResult = await drv.configure(trigger, []);
             if (result.result === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
+            } else {
+                log.showChannel(true);
             }
             await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
@@ -1559,7 +1570,7 @@ export class CMakeProject {
             return { result: -1, resultType: ConfigureResultType.NoCache };
         }
 
-        return vscode.window.withProgress(
+        const res = await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Window,
                 title: localize('configuring.project', 'Configuring project'),
@@ -1637,6 +1648,7 @@ export class CMakeProject {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
                                 } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && result.resultType === ConfigureResultType.NormalOperation) {
+                                    log.showChannel(true);
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
                                         "Debug"
@@ -1686,6 +1698,11 @@ export class CMakeProject {
                 }
             }
         );
+        // check if the an error occured during the configuration
+        if (res.result !== 0) {
+            log.showChannel(true);
+        }
+        return res;
     }
 
     /**
@@ -1983,6 +2000,9 @@ export class CMakeProject {
                 buildLogger.info(localize('starting.build', 'Starting build'));
                 await setContextAndStore(isBuildingKey, true);
                 rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
+                if (rc !== 0) {
+                    log.showChannel(true); // in case build has failed
+                }
                 await setContextAndStore(isBuildingKey, false);
                 if (rc === null) {
                     buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
@@ -2013,6 +2033,9 @@ export class CMakeProject {
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
                         await setContextAndStore(isBuildingKey, false);
+                        if (rc !== 0) {
+                            log.showChannel(true); // in case build has failed
+                        }
                         if (rc === null) {
                             buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
                         } else {
@@ -2648,7 +2671,7 @@ export class CMakeProject {
     }
 
     /**
-     * Both debugTarget and launchTarget called this funciton, so it's refactored out
+     * Both debugTarget and launchTarget called this function, so it's refactored out
      * Array.concat's performance would not beat the Dict.merge a lot.
      * This is also the point to fixing the issue #1987
      */
@@ -2772,26 +2795,7 @@ export class CMakeProject {
     });
 
     private async createTerminal(executable: ExecutableTarget): Promise<vscode.Terminal> {
-        const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
-        if (launchBehavior !== "newterminal") {
-            for (const [, terminal] of this.launchTerminals) {
-                const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
-                const executablePath = creationOptions.env![this.launchTerminalTargetName];
-                const terminalPath = creationOptions.env![this.launchTerminalPath];
-                if (executablePath === executable.name) {
-                    if (launchBehavior === 'breakandreuseterminal') {
-                        terminal.sendText('\u0003');
-                    }
-                    // Dispose the terminal if the User's settings for preferred terminal have changed since the current target is launched,
-                    // or if the kit is changed, which means the environment variables are possibly updated.
-                    if (terminalPath !== vscode.env.shell || this.refreshLaunchEnvironment) {
-                        terminal.dispose();
-                        break;
-                    }
-                    return terminal;
-                }
-            }
-        }
+        // Create terminal options
         const userConfig = this.workspaceContext.config.debugConfig;
         const drv = await this.getCMakeDriverInstance();
         const launchEnv = await this.getTargetLaunchEnvironment(drv, userConfig.environment);
@@ -2805,7 +2809,25 @@ export class CMakeProject {
             options.env[this.launchTerminalPath] = vscode.env.shell;
         }
 
-        this.refreshLaunchEnvironment = false;
+        const launchBehavior = this.workspaceContext.config.launchBehavior.toLowerCase();
+        // Check for terminal re-use
+        if (launchBehavior !== "newterminal") {
+            for (const [, terminal] of this.launchTerminals) {
+                const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
+                // If the environment has changed at all since the last run, dispose of this terminal
+                if (JSON.stringify(creationOptions.env) !== JSON.stringify(options.env)) {
+                    terminal.dispose();
+                    break;
+                }
+
+                if (launchBehavior === 'breakandreuseterminal') {
+                    terminal.sendText('\u0003');
+                }
+
+                return terminal;
+            }
+        }
+
         return vscode.window.createTerminal(options);
     }
 

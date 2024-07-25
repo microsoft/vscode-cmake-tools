@@ -117,6 +117,7 @@
 	"included.presets.file.not.found": "找不到包含的預設檔案 {0}",
 	"validating.presets.file": "正在讀取及驗證預設 \"file {0}\"",
 	"unsupported.presets": "在 {0} 中偵測到不支援的預設。支援僅限於版本 {1} 所定義的功能。",
+	"no.additional.properties": "不應該有其他屬性",
 	"unsupported.presets.disable": "使用 {0} 設定可以忽略未知的屬性和巨集。",
 	"duplicate.build.preset.found": "在組建預設集合 {0} 中找到重複項",
 	"duplicate.test.preset.found": "在測試預設集合 {0} 中找到重複項",

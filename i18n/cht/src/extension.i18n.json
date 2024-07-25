@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "使用套件，跳過設定工作流程預設: {0}",
 	"no.active.cmake.project": "沒有使用中的 CMake 專案。",
 	"invalid.folder": "資料夾無效。",
+	"cmake.debug.name": "CMake 偵錯工具",
 	"select.a.cmake.project": "選取 Cmake 專案",
 	"compilation information.not.found": "找不到此檔案的編譯資訊",
 	"add.config.preset.in.test.mode": "在測試模式中執行 CMakeTools。addConfigurePreset 已停用。",

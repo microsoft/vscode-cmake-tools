@@ -25,6 +25,7 @@
 	"Folder": "Cartella",
 	"active.folder": "Cartella attiva",
 	"configPreset.change": "Cambia set di impostazioni di configurazione",
+	"override.settings.applied": "Impostazioni di override applicate",
 	"buildPreset.change": "Cambia set di impostazioni di compilazione",
 	"testPreset.change": "Cambia set di impostazioni di test",
 	"packagePreset.change": "Cambia set di impostazioni del pacchetto",

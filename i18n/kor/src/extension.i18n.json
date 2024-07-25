@@ -35,6 +35,7 @@
 	"skip.set.workflow.preset": "키트를 사용하여 워크플로 사전 설정 {0}을(를) 설정하는 작업 건너뛰기",
 	"no.active.cmake.project": "활성 CMake 프로젝트가 없습니다.",
 	"invalid.folder": "폴더가 잘못되었습니다.",
+	"cmake.debug.name": "CMake 디버거",
 	"select.a.cmake.project": "Cmake 프로젝트 선택",
 	"compilation information.not.found": "이 파일의 컴파일 정보를 찾을 수 없음",
 	"add.config.preset.in.test.mode": "테스트 모드에서 CMakeTools를 실행 중입니다. addConfigurePreset 가 사용 중지되었습니다.",
