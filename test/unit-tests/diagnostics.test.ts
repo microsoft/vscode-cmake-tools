@@ -10,7 +10,7 @@ import { expect } from 'chai';
 import * as diags from '@cmt/diagnostics/build';
 import { OutputConsumer } from '../../src/proc';
 import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/config';
-import { platformPathEquivalent } from '@cmt/util';
+import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { populateCollection } from '@cmt/diagnostics/util';
 import { getTestResourceFilePath } from '@test/util';
@@ -500,6 +500,6 @@ suite('Diagnostics', () => {
         resolved = await build_consumer.resolveDiagnostics('dummyPath', path.resolve(project_dir, 'build'), project_dir, 'dummyPath2');
         expect(resolved.length).to.eq(1);
         diagnostic = resolved[0];
-        expect(diagnostic.filepath).to.eq(path.join(project_dir, 'main.cpp'));
+        expect(diagnostic.filepath).to.eq(resolvePath('main.cpp', project_dir));
     });
 });
