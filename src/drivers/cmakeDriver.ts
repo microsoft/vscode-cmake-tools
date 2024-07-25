@@ -1799,8 +1799,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return false;
         }
 
-        // Note: This should be avoided by checks already made earlier in the chain of events. However, if we do get to this point,
-        // we should still fail. Thus, leaving it.
         const cmake_list = this.mainListFile;
         if (!await fs.exists(cmake_list)) {
             log.debug(localize('not.configuring', 'Not configuring: There is no {0}', cmake_list));
