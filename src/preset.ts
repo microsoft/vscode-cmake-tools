@@ -11,6 +11,7 @@ import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from './environmentVariables';
 import { defaultNumJobs, UseVsDeveloperEnvironment } from './config';
+import { get } from 'http';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1130,16 +1131,20 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
  * calling configurePresets() or userConfigurePresets(). Getting the presets plus included map is useful on Select Preset when we want to be able to
  * apply the Vs Dev Env to the preset and want the entire list of unexpanded presets, including the inlcuded presets.
  */
-async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
-    let preset = getPresetByName(configurePresets(folder, usePresetsPlusIncluded), name);
-    if (preset) {
-        return expandConfigurePresetHelper(folder, preset, false, usePresetsPlusIncluded, errorHandler);
-    }
-
-    if (allowUserPreset) {
-        preset = getPresetByName(userConfigurePresets(folder, usePresetsPlusIncluded), name);
+async function expandConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: ConfigurePreset): Promise<ConfigurePreset | null> {
+    const presetList = inheritedByPreset ? inheritedByPreset.__file!.configurePresets : configurePresets(folder, usePresetsPlusIncluded);
+    const validInherit = presetList !== undefined && presetList.filter(p => p.name === name).length > 0;
+    if (validInherit) {
+        let preset = getPresetByName(configurePresets(folder, usePresetsPlusIncluded), name);
         if (preset) {
-            return expandConfigurePresetHelper(folder, preset, true, usePresetsPlusIncluded, errorHandler);
+            return expandConfigurePresetHelper(folder, preset, false, usePresetsPlusIncluded, errorHandler);
+        }
+
+        if (allowUserPreset) {
+            preset = getPresetByName(userConfigurePresets(folder, usePresetsPlusIncluded), name);
+            if (preset) {
+                return expandConfigurePresetHelper(folder, preset, true, usePresetsPlusIncluded, errorHandler);
+            }
         }
     }
 
@@ -1195,7 +1200,7 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
             preset.inherits = [preset.inherits];
         }
         for (const parentName of preset.inherits) {
-            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset, usePresetsPlusIncluded, errorHandler);
+            const parent = await expandConfigurePresetImpl(folder, parentName, allowUserPreset, usePresetsPlusIncluded, errorHandler, preset);
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
