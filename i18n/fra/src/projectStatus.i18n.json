@@ -25,6 +25,7 @@
 	"Folder": "Dossier",
 	"active.folder": "Dossier actif",
 	"configPreset.change": "Modifier la présélection de configuration",
+	"override.settings.applied": "Les paramètres de remplacement sont appliqués",
 	"buildPreset.change": "Modifier la présélection de build",
 	"testPreset.change": "Modifier la présélection de test",
 	"packagePreset.change": "Modifier la présélection de package",

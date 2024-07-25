@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "不要再顯示",
 	"configure.failed.tryWithDebugger": "設定失敗。要嘗試使用 CMake 偵錯工具進行設定嗎?",
 	"no.configureWithDebugger.button": "取消",
+	"cmake.debug.name": "CMake 偵錯工具",
 	"finishing.configure": "正在完成設定",
 	"configure.failed": "無法設定專案",
 	"saving.open.files.before": "正在於設定/建置前儲存開啟的檔案",

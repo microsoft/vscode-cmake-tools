@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "Больше не показывать",
 	"configure.failed.tryWithDebugger": "Сбой настройки. Попробовать выполнить настройку с помощью отладчика CMake?",
 	"no.configureWithDebugger.button": "Отмена",
+	"cmake.debug.name": "Отладчик CMake",
 	"finishing.configure": "Завершение настройки.",
 	"configure.failed": "Не удалось настроить проект.",
 	"saving.open.files.before": "Сохранение открытых файлов перед настройкой или сборкой.",

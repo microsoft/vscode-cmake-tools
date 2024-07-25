@@ -7,7 +7,6 @@
 	"creating.instance.of": "Vytváří se instance {0}.",
 	"removing": "Odebírá se {0}.",
 	"unlink.failed": "Nepovedlo se odebrat soubor mezipaměti {0}",
-	"cmake.debug.name": "Ladicí program CMake",
 	"toolchains.object.unsupported": "Tato verze CMake nepodporuje typ objektu toolchains. Cesty kompilátoru se určí ze souboru CMakeCache.txt.",
 	"build.all.target": "Speciální cíl umožňující sestavení všech dostupných cílů",
 	"cmake.install.name": "Nainstalovat"

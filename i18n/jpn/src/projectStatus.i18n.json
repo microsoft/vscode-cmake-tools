@@ -25,6 +25,7 @@
 	"Folder": "フォルダー",
 	"active.folder": "アクティブなフォルダー",
 	"configPreset.change": "構成のプリセットの変更",
+	"override.settings.applied": "オーバーライド設定が適用されました",
 	"buildPreset.change": "ビルド プリセットの変更",
 	"testPreset.change": "テスト プリセットの変更",
 	"packagePreset.change": "パッケージ プリセットの変更",

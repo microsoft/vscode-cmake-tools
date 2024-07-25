@@ -25,6 +25,7 @@
 	"Folder": "Carpeta",
 	"active.folder": "Carpeta activa",
 	"configPreset.change": "Cambie configuración preestablecida",
+	"override.settings.applied": "Invalidación de la configuración aplicada",
 	"buildPreset.change": "Cambie valor preestablecido de compilación",
 	"testPreset.change": "Cambiar valor preestablecido de prueba",
 	"packagePreset.change": "Cambie el valor preestablecido del paquete",

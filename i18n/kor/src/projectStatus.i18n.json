@@ -25,6 +25,7 @@
 	"Folder": "폴더",
 	"active.folder": "활성 폴더",
 	"configPreset.change": "사전 설정 구성 변경",
+	"override.settings.applied": "재정의 설정 적용됨",
 	"buildPreset.change": "빌드 사전 설정 변경",
 	"testPreset.change": "테스트 사전 설정 변경",
 	"packagePreset.change": "패키지 사전 설정 변경",
