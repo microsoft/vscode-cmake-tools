@@ -3702,6 +3702,7 @@
     "@types/chai-string": "^1.4.2",
     "@types/js-yaml": "^4.0.0",
     "@types/json5": "~0.0.30",
+    "@types/lodash": "4.14.202",
     "@types/mocha": "^8.2.2",
     "@types/node": "~14.14.28",
     "@types/rimraf": "^3.0.0",
@@ -3768,7 +3769,8 @@
     "vscode-tas-client": "^0.1.45",
     "which": "~2.0.2",
     "xml2js": "^0.4.23",
-    "uuid": "~8.3.2"
+    "uuid": "~8.3.2",
+    "lodash": "^4.17.21"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
