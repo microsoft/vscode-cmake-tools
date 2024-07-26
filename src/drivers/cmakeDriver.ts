@@ -984,15 +984,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         for (const gen of preferredGenerators) {
             const gen_name = gen.name;
-            if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config' ||
-                    gen_name === 'Unix Makefiles') {
-                return gen;
-            } else if (gen_name === 'MinGW Makefiles' || gen_name === 'NMake Makefiles' ||
-                        gen_name === 'MSYS Makefiles') {
-                if (platform === 'win32') {
-                    return gen;
+            const generator_present = await (async (): Promise<boolean> => {
+                if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
+                    return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
                 }
-            } else {
+                if (gen_name === 'MinGW Makefiles') {
+                    return platform === 'win32' && this.testHaveCommand('mingw32-make');
+                }
+                if (gen_name === 'NMake Makefiles') {
+                    return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
+                }
+                if (gen_name === 'Unix Makefiles') {
+                    return this.testHaveCommand('make');
+                }
+                if (gen_name === 'MSYS Makefiles') {
+                    return platform === 'win32' && this.testHaveCommand('make');
+                }
+                return false;
+            })();
+            if (!generator_present) {
                 const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
                 if (platform === 'win32' && vsMatch) {
                     return {
@@ -1004,8 +1014,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
                     return gen;
                 }
+
+                // If the generator isn't found, move on to the next one
+                continue;
+            } else {
+                return gen;
             }
-            // If the generator isn't supported on the current system, move on to the next one.
         }
         return null;
     }
