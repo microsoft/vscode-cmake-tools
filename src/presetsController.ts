@@ -892,7 +892,7 @@ export class PresetsController {
                 await this.setConfigurePreset(chosenPreset);
             }
 
-            if (this.project.workspaceContext.config.automaticReconfigure) {
+            if (this.project.workspaceContext.config.automaticReconfigure  && !quickStart) {
                 await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
             }
             return !addPreset || allPresets.length === 0;
