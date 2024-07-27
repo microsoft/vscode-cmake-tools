@@ -32,6 +32,7 @@ Bug Fixes:
 - Fix re-using a terminal for launching even when the environment has changed. [#3478](https://github.com/microsoft/vscode-cmake-tools/issues/3478)
 - Fix our keybindings for debug and run without debugging to better match VS Code. [#3507](https://github.com/microsoft/vscode-cmake-tools/issues/3507)
 - Prevent second configure after `QuickStart` if the `automaticReconfigure` setting is enabled. [#3910](https://github.com/microsoft/vscode-cmake-tools/issues/3910)
+- Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
 
 ## 1.18.43
 
