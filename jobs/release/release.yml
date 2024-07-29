@@ -2,7 +2,7 @@
 # Release Pipeline for release
 # ==================================================================================
 
-name: PrereleaseRelease-$(Date:yyyyMMdd).$(Rev:r)
+name: OfficialRelease-$(Date:yyyyMMdd).$(Rev:r)
 trigger: none
 
 resources:
@@ -12,8 +12,8 @@ resources:
     name: 1ESPipelineTemplates/1ESPipelineTemplates
     ref: refs/tags/release
   pipelines:
-  - pipeline: BuildPrereleasePipeline
-    source: '\VC\VSCode\CMakeTools\vscode-cmake-tools - pre-release [YAML]'
+  - pipeline: BuildReleasePipeline
+    source: '\VC\VSCode\CMakeTools\vscode-cmake-tools - release [YAML]'
     trigger: true
 
 extends:
@@ -31,7 +31,7 @@ extends:
           isProduction: true
           inputs:
           - input: artifactsDrop
-            pipeline: BuildPrereleasePipeline
+            pipeline: BuildReleasePipeline
             artifactName: vsix
 
         steps:
@@ -43,6 +43,13 @@ extends:
             Write-Host "##vso[release.updatereleasename]$newVersion - $str"
           ignoreLASTEXITCODE: true
           displayName: 'Set the release name'
+        - task: ManualIntervention@8
+          displayName: 'Manual Intervention'
+          inputs:
+            instructions: |
+              Download and test the vsix from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=17431
+              
+              The version should match the name of this release.
         - task: NodeTool@0
           displayName: 'Use Node 14.x'
           inputs:
@@ -61,7 +68,7 @@ extends:
               $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
         #- script: |
-        #    vsce publish --packagePath build\vsix\cmake-tools.vsix  --pre-release
+        #    vsce publish --packagePath build\vsix\cmake-tools.vsix
         #    
         #    displayName: 'Publish the VSIX'
         #    env:
