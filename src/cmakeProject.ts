@@ -863,7 +863,7 @@ export class CMakeProject {
      * configure. This should be called by a derived driver before any
      * configuration tasks are run
      */
-    public async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, isConfiguring: boolean, config?: ConfigurationReader): Promise<void> {
+    public async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, isConfiguring: boolean, config?: ConfigurationReader): Promise<boolean> {
         let telemetryEvent: string | undefined;
         const telemetryProperties: telemetry.Properties = {};
 
@@ -956,9 +956,14 @@ export class CMakeProject {
 
                             if (!isConfiguring) {
                                 telemetry.logEvent(telemetryEvent, telemetryProperties);
-                                return vscode.commands.executeCommand('cmake.configure');
+                                await vscode.commands.executeCommand('cmake.configure');
+                                return true;
+                            } else {
+                                await this.reloadCMakeDriver();
                             }
                         }
+
+                        return true;
                     } else {
                         telemetryProperties["missingCMakeListsUserAction"] = "cancel-browse";
                     }
@@ -974,7 +979,8 @@ export class CMakeProject {
         // This project folder can go through various changes while executing this function
         // that could be relevant to the partial/full feature set view.
         // This is a good place for an update.
-        return updateFullFeatureSet();
+        await updateFullFeatureSet();
+        return false;
     }
 
     /**
@@ -1551,6 +1557,7 @@ export class CMakeProject {
 
     async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
+
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
         if (drv && drv.shouldUseCachedConfiguration(trigger)) {
