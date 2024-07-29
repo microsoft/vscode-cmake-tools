@@ -13,7 +13,7 @@ resources:
     ref: refs/tags/release
   pipelines:
   - pipeline: BuildPrereleasePipeline
-    source: '${{ BuildPipelineName }}'
+    source: '\VC\VSCode\CMakeTools\vscode-cmake-tools - pre-release [YAML]'
     trigger: true
 
 extends:
