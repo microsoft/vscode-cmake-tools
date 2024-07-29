@@ -1630,11 +1630,6 @@ export class PresetsController {
             // Private fields must be set after validation, otherwise validation would fail.
             this.populatePrivatePresetsFields(includeFile, fullIncludePath);
 
-            if (includeFile.cmakeMinimumRequired) {
-                if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
-                    presetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
-                }
-            }
             // Recursively merge included files
             await this.mergeIncludeFiles(includeFile, fullIncludePath, referencedFiles);
 
@@ -1652,6 +1647,11 @@ export class PresetsController {
             }
             if (includeFile.workflowPresets) {
                 presetsFile.workflowPresets = includeFile.workflowPresets.concat(presetsFile.workflowPresets || []);
+            }
+            if (includeFile.cmakeMinimumRequired) {
+                if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
+                    presetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
+                }
             }
         }
     }
