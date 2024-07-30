@@ -16,7 +16,7 @@ resources:
     source: '\VC\VSCode\CMakeTools\vscode-cmake-tools - release [YAML]'
     trigger:
       branches:
-        include: rel
+        include: refs/heads/rel
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
