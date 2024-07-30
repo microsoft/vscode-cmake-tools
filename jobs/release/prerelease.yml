@@ -30,7 +30,7 @@ extends:
           type: releaseJob
           isProduction: true
           inputs:
-          - input: artifactsDrop
+          - input: pipelineArtifact
             pipeline: BuildPrereleasePipeline
             artifactName: vsix
 
