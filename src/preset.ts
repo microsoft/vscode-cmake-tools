@@ -2007,7 +2007,7 @@ async function expandWorkflowPresetImpl(folder: string, name: string, workspaceF
     if (preset) {
         const presetList = inheritedByPreset ? inheritedByPreset.__file!.workflowPresets : workflowPresets(folder);
         const validInherit = presetList !== undefined && presetList.filter(p => p.name === name).length > 0;
-        if (validInherit || name === defaultWorkflowPreset.name) {
+        if (validInherit) {
             return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, false, enableTryApplyDevEnv, errorHandler);
         }
     }
