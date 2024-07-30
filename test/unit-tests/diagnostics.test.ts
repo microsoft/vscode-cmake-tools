@@ -10,9 +10,10 @@ import { expect } from 'chai';
 import * as diags from '@cmt/diagnostics/build';
 import { OutputConsumer } from '../../src/proc';
 import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/config';
-import { platformPathEquivalent } from '@cmt/util';
+import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { populateCollection } from '@cmt/diagnostics/util';
+import { getTestResourceFilePath } from '@test/util';
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
     for (const line of output) {
@@ -259,11 +260,11 @@ suite('Diagnostics', () => {
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
-    test('Parsing non-diagnostic', () => {
+    test('Parsing non-diagnostic', async () => {
         const lines = ['/usr/include/c++/10/bits/stl_vector.h:98:47: optimized: basic block part vectorized using 32 byte vectors'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
-        const resolved = build_consumer.resolveDiagnostics('dummyPath');
+        const resolved = await build_consumer.resolveDiagnostics('dummyPath');
         expect(resolved.length).to.eq(0);
     });
     test('Parsing linker error', () => {
@@ -479,5 +480,26 @@ suite('Diagnostics', () => {
         expect(diagnostic.code).to.eq('Pe1696');
         expect(diagnostic.message).to.eq('cannot open source file "kjlkjl"\nsearched: "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench\n8.0\\arm\\inc\\"\ncurrent directory: "C:\\Users\\user\\Documents"');
         expect(diagnostic.severity).to.eq('error');
+    });
+
+    test('Relative file resolution', async () => {
+        const project_dir = getTestResourceFilePath('driver/workspace/test_project');
+        build_consumer.config.updatePartial({ enabledOutputParsers: [ 'gcc' ] });
+
+        const lines = ['main.cpp:42:42: error: test warning'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+
+        /* default behavior resolve in build-dir */
+        let resolved = await build_consumer.resolveDiagnostics('dummyPath');
+        expect(resolved.length).to.eq(1);
+        let diagnostic = resolved[0];
+        expect(diagnostic.filepath).to.eq('dummyPath/main.cpp');
+
+        /* resolve first path where file exists (fallback on first argument) */
+        resolved = await build_consumer.resolveDiagnostics('dummyPath', path.resolve(project_dir, 'build'), project_dir, 'dummyPath2');
+        expect(resolved.length).to.eq(1);
+        diagnostic = resolved[0];
+        expect(diagnostic.filepath).to.eq(resolvePath('main.cpp', project_dir));
     });
 });

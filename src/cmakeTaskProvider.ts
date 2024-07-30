@@ -433,6 +433,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         telemetry.logEvent("task", {taskType: "configure", useCMakePresets: String(project.useCMakePresets)});
         await this.correctTargets(project, CommandType.config);
         const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
+
         if (cmakeDriver) {
             if (project.useCMakePresets && cmakeDriver.config.configureOnEdit) {
                 log.debug(localize("configure.on.edit", 'When running configure tasks using presets, setting configureOnEdit to true can potentially overwrite the task configurations.'));

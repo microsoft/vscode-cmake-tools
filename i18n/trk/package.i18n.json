@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Günlük görünür ve çıkış kanalı imlecin odağında olur.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Günlük görünür ancak çıkış kanalı imlecin odağında olmaz.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Günlük görünmez ve odakta olmaz.",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "Günlük yalnızca derleme veya yapılandırma başarısız olduğunda görünür.",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.js dosyasının dışarı aktarılmasını sağlar. Bu yalnızca Kits senaryolarında kullanılır. Önayar senaryolarında bunu lütfen CMakePresets.json kullanarak ayarlayın.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMake yapılandırma, derleme ve test sürücüsünü yapılandırmak için CMakePresets.json kullanın. CMakePresets.json kullanılırken kitler, çeşitler ve settings.json'daki bazı ayarla yoksayılır.",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "Windows'da CMake Önayarlarını kullanırken, Visual Studio ortamını üst ortam olarak kullanın. Otomatik seçeneği belirlendiğinde, Visual Studio ortamı yalnızca desteklenen bir derleyici (cl, clang, clang-cl, clang-cpp, clang++) algılandığında veya Ninja oluşturucusu kullanıldığında uygulanır.",

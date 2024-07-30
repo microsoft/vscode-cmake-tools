@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "El registro aparece y el canal de salida detecta el foco del cursor.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "El registro aparece, pero el canal de salida no detecta el foco del cursor.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "El registro no aparece ni detecta el foco.",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "El registro solo aparece cuando se produce un error en la compilación o la configuración.",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita la exportación de compile_commands.json. Esto solo se usa en escenarios de kits. En escenarios de valores preestablecidos, establézcalo mediante CMakePresets.json",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json para configurar, compilar y probar la unidad CMake. Cuando use CMakePresets.json, los kits, las variantes y algunos valores de configuración de settings.json se omitirán.",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "Al usar valores preestablecidos de CMake en Windows, use el entorno de Visual Studio como entorno primario. La selección automática solo aplicará el entorno de Visual Studio cuando detectemos un compilador compatible (cl, clang, clang-cl, clang-cpp, clang++) o cuando se use el generador Ninja.",

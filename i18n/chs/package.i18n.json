@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "将显示日志，并且输出通道会占用光标焦点。",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "将显示日志，但输出通道不会占用光标焦点。",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "日志既不显示也不占据焦点。",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "仅当生成或配置失败时，才会显示日志。",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "支持导出 compile_commands.json。仅在工具包场景中使用。在预设场景中，请使用 CMakePresets.json 设置它",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakePresets.json 配置驱动器 CMake 配置、生成和测试。使用 CMakePresets.json 时，将忽略工具包、变量和 settings.json 中的某些设置。",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "在 Windows 上使用 CMake 预设时，请使用 Visual Studio 环境作为父环境。选择“自动”将仅在检测到受支持的编译器(cl、clang、clang-cl、clang-cpp、clang++)或正在使用 Ninja 生成器时应用 Visual Studio 环境。",
