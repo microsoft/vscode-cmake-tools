@@ -14,7 +14,9 @@ resources:
   pipelines:
   - pipeline: BuildReleasePipeline
     source: '\VC\VSCode\CMakeTools\vscode-cmake-tools - release [YAML]'
-    trigger: true
+    trigger:
+      branches:
+        include: rel
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
