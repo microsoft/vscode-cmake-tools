@@ -33,7 +33,7 @@ extends:
           - input: pipelineArtifact
             pipeline: BuildReleasePipeline
             artifactName: vsix
-            destnationPath: $(Build.StagingDirectory)\vsix
+            destinationPath: $(Build.StagingDirectory)\vsix
 
         steps:
         - powershell: |
