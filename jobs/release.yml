@@ -36,7 +36,7 @@ resources:
   repositories:
   - repository: self
     type: git
-    ref: refs/heads/main
+    ref: refs/heads/rel
   - repository: MicroBuildTemplate
     type: git
     name: 1ESPipelineTemplates/MicroBuildTemplate

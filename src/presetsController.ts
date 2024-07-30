@@ -2,6 +2,7 @@ import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as lodash from "lodash";
 
 import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
@@ -186,10 +187,11 @@ export class PresetsController {
         if (presetsFile) {
             // Private fields must be set after validation, otherwise validation would fail.
             this.populatePrivatePresetsFields(presetsFile, file);
-            await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
+            await this.mergeIncludeFiles(presetsFile, file, referencedFiles);
 
+            const copyOfPresetsFile = lodash.cloneDeep(presetsFile);
             // add the include files to the original presets file
-            setPresetsPlusIncluded(this.folderPath, {...presetsFile});
+            setPresetsPlusIncluded(this.folderPath, copyOfPresetsFile);
 
             // set the pre-expanded version so we can call expandPresetsFile on it
             setExpandedPresets(this.folderPath, presetsFile);
@@ -893,7 +895,7 @@ export class PresetsController {
                 await this.setConfigurePreset(chosenPreset);
             }
 
-            if (this.project.workspaceContext.config.automaticReconfigure) {
+            if (this.project.workspaceContext.config.automaticReconfigure  && !quickStart) {
                 await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
             }
             return !addPreset || allPresets.length === 0;
@@ -1593,8 +1595,8 @@ export class PresetsController {
         setFile(presetsFile.packagePresets);
     }
 
-    private async mergeIncludeFiles(rootPresetsFile: preset.PresetsFile | undefined, presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Set<string>): Promise<void> {
-        if (!rootPresetsFile || !presetsFile || !presetsFile.include) {
+    private async mergeIncludeFiles(presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Set<string>): Promise<void> {
+        if (!presetsFile || !presetsFile.include) {
             return;
         }
 
@@ -1629,29 +1631,29 @@ export class PresetsController {
             // Private fields must be set after validation, otherwise validation would fail.
             this.populatePrivatePresetsFields(includeFile, fullIncludePath);
 
-            if (includeFile.cmakeMinimumRequired) {
-                if (!rootPresetsFile.cmakeMinimumRequired || util.versionLess(rootPresetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
-                    rootPresetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
-                }
-            }
+            // Recursively merge included files
+            await this.mergeIncludeFiles(includeFile, fullIncludePath, referencedFiles);
+
             if (includeFile.configurePresets) {
-                rootPresetsFile.configurePresets = includeFile.configurePresets.concat(rootPresetsFile.configurePresets || []);
+                presetsFile.configurePresets = includeFile.configurePresets.concat(presetsFile.configurePresets || []);
             }
             if (includeFile.buildPresets) {
-                rootPresetsFile.buildPresets = includeFile.buildPresets.concat(rootPresetsFile.buildPresets || []);
+                presetsFile.buildPresets = includeFile.buildPresets.concat(presetsFile.buildPresets || []);
             }
             if (includeFile.testPresets) {
-                rootPresetsFile.testPresets = includeFile.testPresets.concat(rootPresetsFile.testPresets || []);
+                presetsFile.testPresets = includeFile.testPresets.concat(presetsFile.testPresets || []);
             }
             if (includeFile.packagePresets) {
-                rootPresetsFile.packagePresets = includeFile.packagePresets.concat(rootPresetsFile.packagePresets || []);
+                presetsFile.packagePresets = includeFile.packagePresets.concat(presetsFile.packagePresets || []);
             }
             if (includeFile.workflowPresets) {
-                rootPresetsFile.workflowPresets = includeFile.workflowPresets.concat(rootPresetsFile.workflowPresets || []);
+                presetsFile.workflowPresets = includeFile.workflowPresets.concat(presetsFile.workflowPresets || []);
             }
-
-            // Recursively merge included files
-            await this.mergeIncludeFiles(rootPresetsFile, includeFile, fullIncludePath, referencedFiles);
+            if (includeFile.cmakeMinimumRequired) {
+                if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
+                    presetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
+                }
+            }
         }
     }
 

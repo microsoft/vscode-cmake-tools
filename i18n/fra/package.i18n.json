@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Le journal apparaît et le canal de sortie prend le focus sur le curseur.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Le journal apparaît mais le canal de sortie ne prend pas le focus sur le curseur.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Le journal n’apparaît ni ne prend le focus.",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "Le journal apparaît uniquement en cas d’échec de la build ou de la configuration.",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Permet l'exportation de compile_commands.json. Cette option est utilisée uniquement dans les scénarios Kits. Dans les scénarios de préréglages, veuillez définir cela à l'aide de CMakePresets.json",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Utilisez CMakePresets.json pour configurer la configuration du lecteur CMake, son build et son test. Lorsque vous utilisez CMakePresets.json, les kits, les variantes et certains paramètres de settings.json seront ignorés.",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "Lors de l’utilisation de présélections CMake sur Windows, utilisez l’environnement Visual Studio comme environnement parent. La sélection de l’option automatique applique uniquement l’environnement Visual Studio lorsque nous détectons un compilateur pris en charge (cl, clang, clang-cl, clang-cpp, clang++) ou en cas d’utilisation du générateur Ninja.",
