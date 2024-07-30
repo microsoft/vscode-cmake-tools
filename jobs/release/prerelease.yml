@@ -1,5 +1,5 @@
 # ==================================================================================
-# Release Pipeline for release
+# Release Pipeline for pre-release
 # ==================================================================================
 
 name: PrereleaseRelease-$(Date:yyyyMMdd).$(Rev:r)
