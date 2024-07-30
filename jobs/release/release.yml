@@ -67,10 +67,9 @@ extends:
             inlineScript: |
               $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
-        #- script: |
-        #    vsce publish --packagePath build\vsix\cmake-tools.vsix
-        #    
-        #    displayName: 'Publish the VSIX'
-        #    env:
-        #      VSCE_PAT: $(AAD_TOKEN)
+        - script: |
+            vsce publish --packagePath build\vsix\cmake-tools.vsix
+          displayName: 'Publish the VSIX'
+          env:
+            VSCE_PAT: $(AAD_TOKEN)
 
