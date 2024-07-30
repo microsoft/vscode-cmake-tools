@@ -40,7 +40,7 @@ extends:
             Write-Host "New version is: $newVersion"
             
             $str = Get-Date -Format "yyMMdd-HHmm"
-            Write-Host "##vso[release.updatereleasename]$newVersion - $str"
+            Write-Host "##vso[build.updatebuildnumber]$newVersion - $str"
           ignoreLASTEXITCODE: true
           displayName: 'Set the release name'
         - task: ManualIntervention@8
