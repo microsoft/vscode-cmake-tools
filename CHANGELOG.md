@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.18.44
+
+Bug Fixes:
+
+- Infrastructure fixes.
+
 ## 1.18.43
 
 Features:
