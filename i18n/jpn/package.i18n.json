@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "ログが表示され、出力チャネルがカーソル フォーカスを取得します。",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "ログが表示されますが、出力チャネルはカーソル フォーカスを取得しません。",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "ログは表示もされず、フォーカスも取得しません。",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "ログは、ビルドまたは構成が失敗した場合にのみ表示されます。",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json のエクスポートを有効にします。これは、Kits シナリオでのみ使用されます。Presets シナリオでは、CMakePresets.json を使用してこれを設定してください",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMakePresets.json を使用して、ドライブ CMake の構成、ビルド、テストを構成します。CMakePresets.json を使用している場合、キット、バリエーション、また settings.json の設定の一部は無視されます。",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "Windows で CMake プリセットを使用する場合は、Visual Studio 環境を親環境として使用します。自動を選択すると、サポートされているコンパイラ (cl、clang、clang-cl、clang-cpp、clang++) が検出されたとき、または Ninja ジェネレーターが使用されている場合にのみ、Visual Studio 環境が適用されます。",

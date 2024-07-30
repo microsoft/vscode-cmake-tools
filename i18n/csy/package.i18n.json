@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Zobrazí se protokol a výstupní kanál převezme fokus kurzoru.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Protokol se zobrazí, ale výstupní kanál nepřevezme zaměření kurzoru.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Protokol se nezobrazuje ani nepřijímá zaměření.",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "Protokol se zobrazí jenom v případě, že sestavení nebo konfigurace selže.",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umožňuje exportovat compile_commands.json. Používá se jenom ve scénářích Sady. Ve scénářích Předvolby tuto možnost prosím nastavte pomocí CMakePresets.json",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Pomocí CMakePresets.json můžete řídit konfiguraci, sestavování a testování pomocí CMaku. Když budete používat CMakePresets.json, budou se ignorovat sady, varianty a některá další nastavení v souboru settings.json.",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "Když se ve Windows používají předvolby CMake, jako nadřazené prostředí se použije prostředí sady Visual Studio. Při výběru možnosti Automaticky se prostředí sady Visual Studio použije pouze tehdy, když zjistíme podporovaný kompilátor (cl, clang, clang-cl, clang-cpp, clang++) nebo když je použit generátor Ninja.",

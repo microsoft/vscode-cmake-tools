@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Журнал отображается и выходной канал фокусируется курсором.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Журнал отображается, но выходной канал не фокусируется курсором.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Журнал не отображается и не фокусируется.",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "Журнал отображается только при сбое сборки или конфигурации.",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Разрешает экспортировать compile_commands.json. Это используется только в сценариях комплектов. В сценариях предварительных установок установите это с помощью CMakePresets.json.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Используйте CMakePresets.json для настройки конфигурации, сборки и тестирования CMake диска. При использовании CMakePresets.json наборы, варианты и некоторые параметры в settings.json будут пропущены.",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "При использовании предустановок CMake в Windows применяйте Visual Studio в качестве родительской среды. При выборе автоматического варианта среда Visual Studio будет применяться только в случае обнаружения поддерживаемого компилятора (cl, clang, clang-cl, clang-cpp, clang++) или использования генератора Ninja.",

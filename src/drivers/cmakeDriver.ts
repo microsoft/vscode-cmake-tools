@@ -71,7 +71,7 @@ export interface ConfigureResult {
     resultType: ConfigureResultType;
 }
 
-export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<void>;
+export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<boolean>;
 
 function nullableValueToString(arg: any | null | undefined): string {
     return arg === null ? 'empty' : arg;

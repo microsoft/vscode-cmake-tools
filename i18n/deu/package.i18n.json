@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "Das Protokoll wird angezeigt und der Ausgabekanal nimmt den Fokus des Cursors an.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "Das Protokoll wird angezeigt, aber der Ausgabekanal nimmt den Fokus des Cursors nicht an.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "Das Protokoll erscheint nicht und nimmt auch nicht den Fokus an.",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "Das Protokoll wird nur angezeigt, wenn der Build oder die Konfiguration fehlschlägt.",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Ermöglicht das Exportieren von \"compile_commands.json\". Dies wird nur in Kits-Szenarien verwendet. Legen Sie dies in Voreinstellungsszenarien mithilfe von CMakePresets.json",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "Benutzen Sie \"CMakePresets.json\", um das Konfigurieren, Erstellen und Testen von \"CMake\" zu steuern. Bei Verwendung von \"CMakePresets.json\" werden Kits, Varianten und einige Einstellungen in \"settings.json\" ignoriert.",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "Wenn Sie CMake-Voreinstellungen unter Windows verwenden, verwenden Sie die Visual Studio-Umgebung als übergeordnete Umgebung. Wenn Sie \"Auto\" auswählen, wird die Visual Studio-Umgebung nur angewendet, wenn ein unterstützter Compiler (cl, clang, clang-cl, clang-cpp, clang++) oder der Ninja-Generator verwendet wird.",

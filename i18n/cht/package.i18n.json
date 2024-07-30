@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "記錄已顯示，且輸出通道取得游標焦點。",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "記錄已顯示，但輸出通道未取得游標焦點。",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "記錄沒有顯示，也無法取得焦點。",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "只有在建置或設定失敗時，才會顯示記錄檔。",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "啟用匯出 compile_commands.json。這僅適用於套件案例。在預設案例中，請使用 CMakePresets.json 進行設定",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakePresets.json 來設定 CMake 設定、建置和測試的磁碟機。使用 CMakePresets.json 時，settings.json 中的套件、變體和某些設定會被忽略。",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "在 Windows 上使用 CMake 預設時，請使用 Visual Studio 環境做為父環境。只有在我們偵測到支援的編譯器 (cl、clang、clang-cl、clang-cpp、clang++) 或正在使用 Ninja 產生器時，選取 [自動] 才會套用 Visual Studio 環境。",
