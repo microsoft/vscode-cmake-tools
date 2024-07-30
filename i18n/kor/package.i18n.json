@@ -199,6 +199,7 @@
 	"cmake-tools.configuration.cmake.revealLog.focus.description": "로그가 나타나고 출력 채널이 커서 포커스를 받습니다.",
 	"cmake-tools.configuration.cmake.revealLog.always.description": "로그가 나타나지만 출력 채널은 커서 포커스를 받지 않습니다.",
 	"cmake-tools.configuration.cmake.revealLog.never.description": "로그가 나타나지도 않고 초점을 맞추지 않습니다.",
+	"cmake-tools.configuration.cmake.revealLog.onError.description": "로그는 빌드 또는 구성이 실패할 때만 나타납니다.",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json 내보내기를 사용하도록 설정합니다. 키트 시나리오에서만 사용됩니다. 사전 설정 시나리오에서는 CMakePresets.json을 사용하여 설정하세요.",
 	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMakePresets.json을 사용하여 드라이브 CMake 구성, 빌드 및 테스트를 구성합니다. CMakePresets.json을 사용할 때, 키트, 변형 및 settings.json의 일부 설정이 무시됩니다.",
 	"cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description": "Windows에서 CMake 사전 설정을 사용할 때 Visual Studio 환경을 부모 환경으로 사용합니다. 자동을 선택하면 지원되는 컴파일러(cl, clang, clang-cl, clang-cpp, clang++)가 감지되거나 Ninja 생성기가 사용되고 있는 경우에만 Visual Studio 환경이 적용됩니다.",
