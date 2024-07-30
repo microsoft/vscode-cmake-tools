@@ -33,10 +33,11 @@ extends:
           - input: pipelineArtifact
             pipeline: BuildReleasePipeline
             artifactName: vsix
+            destnationPath: $(Build.StagingDirectory)\vsix
 
         steps:
         - powershell: |
-            $newVersion = Get-Content -Path build\vsix\version.txt
+            $newVersion = Get-Content -Path $(Build.StagingDirectory)\vsix\version.txt
             Write-Host "New version is: $newVersion"
             
             $str = Get-Date -Format "yyMMdd-HHmm"
@@ -68,7 +69,7 @@ extends:
               $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
         - script: |
-            vsce publish --packagePath build\vsix\cmake-tools.vsix
+            vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix
           displayName: 'Publish the VSIX'
           env:
             VSCE_PAT: $(AAD_TOKEN)
