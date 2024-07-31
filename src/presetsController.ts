@@ -19,6 +19,7 @@ import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
 import collections from '@cmt/diagnostics/collections';
+import { debug } from 'console';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -29,7 +30,8 @@ type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefin
 
 export class PresetsController {
     private _presetsWatcher: chokidar.FSWatcher | undefined;
-    private _presetCreatedWatcher: chokidar.FSWatcher | undefined;
+    private _presetsCreatedWatcher: chokidar.FSWatcher | undefined;
+    private _userPresetsCreatedWatcher: chokidar.FSWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _presetsFileExists = false;
@@ -1954,8 +1956,11 @@ export class PresetsController {
         if (this._presetsWatcher) {
             this._presetsWatcher.close().then(() => {}, () => {});
         }
-        if (this._presetCreatedWatcher) {
-            this._presetCreatedWatcher.close().then(() => {}, () => {});
+        if (this._presetsCreatedWatcher) {
+            this._presetsCreatedWatcher.close().then(() => {}, () => {});
+        }
+        if (this._userPresetsCreatedWatcher) {
+            this._userPresetsCreatedWatcher.close().then(() => {}, () => {});
         }
 
         const presetChangeHandler = () => {
@@ -1966,21 +1971,23 @@ export class PresetsController {
             .on('unlink', presetChangeHandler);
 
         const presetCreatedHandler = () => {
-            log.debug(localize('preset.created', 'A new preset file was created!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'));
             void this.onCreatePresetsFile();
         };
-        this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
+        this._presetsCreatedWatcher = chokidar.watch(this.presetsPath, { ignoreInitial: true })
             .on('add', presetCreatedHandler);
-        this._presetCreatedWatcher?.add("CMakePresets.json");
-        this._presetCreatedWatcher?.add("CMakeUserPresets.json");
+        this._userPresetsCreatedWatcher = chokidar.watch(this.userPresetsPath, { ignoreInitial: true })
+            .on('add', presetCreatedHandler);
     };
 
     dispose() {
         if (this._presetsWatcher) {
             this._presetsWatcher.close().then(() => {}, () => {});
         }
-        if (this._presetCreatedWatcher) {
-            this._presetCreatedWatcher.close().then(() => {}, () => {});
+        if (this._presetsCreatedWatcher) {
+            this._presetsCreatedWatcher.close().then(() => {}, () => {});
+        }
+        if (this._userPresetsCreatedWatcher) {
+            this._userPresetsCreatedWatcher.close().then(() => {}, () => {});
         }
         if (this._sourceDirChangedSub) {
             this._sourceDirChangedSub.dispose();
