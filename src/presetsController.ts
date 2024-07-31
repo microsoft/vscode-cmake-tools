@@ -28,7 +28,6 @@ const log = logging.createLogger('presetController');
 type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefined) => void;
 
 export class PresetsController {
-    private _presetsWatcher: chokidar.FSWatcher | undefined;
     private _presetsWatchers: FileWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
@@ -1966,7 +1965,7 @@ export class PresetsController {
         ]);
 
         this._presetsWatchers?.dispose();
-        this._presetsWatchers = new FileWatcher(this._referencedFiles, events);
+        this._presetsWatchers = new FileWatcher(this._referencedFiles, events, { ignoreInitial: true });
     };
 
     dispose() {
@@ -1985,13 +1984,17 @@ export class PresetsController {
 class FileWatcher {
     private watchers: Map<string, chokidar.FSWatcher>;
 
-    public constructor(paths: string | string[], eventHandlers: Map<string, () => void>) {
+    public constructor(paths: string | string[], eventHandlers: Map<string, () => void>, options?: chokidar.WatchOptions) {
         this.watchers = new Map<string, chokidar.FSWatcher>();
-        for (const path of Array.isArray(paths) ? paths : [paths]) {
 
-            const watcher = chokidar.watch(path, { ignoreInitial: true });
-            Array.from(eventHandlers).forEach(([event, handler]) => watcher.on(event, handler));
-            this.watchers.set(path, watcher);
+        for (const path of Array.isArray(paths) ? paths : [paths]) {
+            try {
+                const watcher = chokidar.watch(path, { ...options });
+                Array.from(eventHandlers).forEach(([event, handler]) => watcher.on(event, handler));
+                this.watchers.set(path, watcher);
+            } catch (error) {
+                log.error(localize('failed.to.watch', 'Watcher could not be created for {0}: {1}', path, util.errorToString(error)));
+            }
         }
     }
 
