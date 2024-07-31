@@ -29,8 +29,7 @@ type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefin
 
 export class PresetsController {
     private _presetsWatcher: chokidar.FSWatcher | undefined;
-    private _presetsCreatedWatcher: chokidar.FSWatcher | undefined;
-    private _userPresetsCreatedWatcher: chokidar.FSWatcher | undefined;
+    private _presetsWatchers: FileWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _presetsFileExists = false;
@@ -1952,44 +1951,53 @@ export class PresetsController {
     }
 
     private async watchPresetsChange() {
-        if (this._presetsWatcher) {
-            this._presetsWatcher.close().then(() => {}, () => {});
-        }
-        if (this._presetsCreatedWatcher) {
-            this._presetsCreatedWatcher.close().then(() => {}, () => {});
-        }
-        if (this._userPresetsCreatedWatcher) {
-            this._userPresetsCreatedWatcher.close().then(() => {}, () => {});
-        }
 
         const presetChangeHandler = () => {
             void this.reapplyPresets();
         };
-        this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
-            .on('change', presetChangeHandler)
-            .on('unlink', presetChangeHandler);
-
         const presetCreatedHandler = () => {
             void this.onCreatePresetsFile();
         };
-        this._presetsCreatedWatcher = chokidar.watch(this.presetsPath, { ignoreInitial: true })
-            .on('add', presetCreatedHandler);
-        this._userPresetsCreatedWatcher = chokidar.watch(this.userPresetsPath, { ignoreInitial: true })
-            .on('add', presetCreatedHandler);
+
+        const events: Map<string, () => void> = new Map<string, () => void>([
+            ["change", presetChangeHandler],
+            ["unlink", presetChangeHandler],
+            ["add", presetCreatedHandler]
+        ]);
+
+        this._presetsWatchers?.dispose();
+        this._presetsWatchers = new FileWatcher(this._referencedFiles, events);
     };
 
     dispose() {
-        if (this._presetsWatcher) {
-            this._presetsWatcher.close().then(() => {}, () => {});
-        }
-        if (this._presetsCreatedWatcher) {
-            this._presetsCreatedWatcher.close().then(() => {}, () => {});
-        }
-        if (this._userPresetsCreatedWatcher) {
-            this._userPresetsCreatedWatcher.close().then(() => {}, () => {});
-        }
+        this._presetsWatchers?.dispose();
+
         if (this._sourceDirChangedSub) {
             this._sourceDirChangedSub.dispose();
+        }
+    }
+}
+
+/**
+ * FileWatcher is a wrapper around chokidar's FSWatcher that allows for watching multiple paths.
+ * Chokidar's support for watching multiple paths is currently broken, if it is fixed in the future, this class can be removed.
+ */
+class FileWatcher {
+    private watchers: Map<string, chokidar.FSWatcher>;
+
+    public constructor(paths: string | string[], eventHandlers: Map<string, () => void>) {
+        this.watchers = new Map<string, chokidar.FSWatcher>();
+        for (const path of Array.isArray(paths) ? paths : [paths]) {
+
+            const watcher = chokidar.watch(path, { ignoreInitial: true });
+            Array.from(eventHandlers).forEach(([event, handler]) => watcher.on(event, handler));
+            this.watchers.set(path, watcher);
+        }
+    }
+
+    public dispose() {
+        for (const watcher of this.watchers.values()) {
+            watcher.close().then(() => {}, () => {});
         }
     }
 }
