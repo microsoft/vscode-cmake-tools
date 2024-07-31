@@ -44,9 +44,10 @@ extends:
             Write-Host "##vso[build.updatebuildnumber]$newVersion - $str"
           ignoreLASTEXITCODE: true
           displayName: 'Set the release name'
-        - task: ManualIntervention@8
-          displayName: 'Manual Intervention'
+        - task: ManualValidation@0
+          displayName: 'Manual Validation'
           inputs:
+            notifyUsers: cmaketools@microsoft.com
             instructions: |
               Download and test the vsix from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=17431
               
