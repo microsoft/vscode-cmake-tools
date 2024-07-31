@@ -19,7 +19,6 @@ import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
 import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
 import collections from '@cmt/diagnostics/collections';
-import { debug } from 'console';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
