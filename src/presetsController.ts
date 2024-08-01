@@ -27,7 +27,7 @@ const log = logging.createLogger('presetController');
 
 type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefined) => void;
 
-export class PresetsController {
+export class PresetsController implements vscode.Disposable {
     private _presetsWatchers: FileWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
