@@ -1981,13 +1981,15 @@ export class PresetsController {
  * FileWatcher is a wrapper around chokidar's FSWatcher that allows for watching multiple paths.
  * Chokidar's support for watching multiple paths is currently broken, if it is fixed in the future, this class can be removed.
  */
-class FileWatcher {
+class FileWatcher implements vscode.Disposable {
     private watchers: Map<string, chokidar.FSWatcher>;
 
     public constructor(paths: string | string[], eventHandlers: Map<string, () => void>, options?: chokidar.WatchOptions) {
         this.watchers = new Map<string, chokidar.FSWatcher>();
 
-        for (const path of Array.isArray(paths) ? paths : [paths]) {
+        paths = Array.isArray(paths) ? paths : [paths];
+        for (let i = 0; i < paths.length; i++) {
+            const path = paths[i];
             try {
                 const watcher = chokidar.watch(path, { ...options });
                 Array.from(eventHandlers).forEach(([event, handler]) => watcher.on(event, handler));
