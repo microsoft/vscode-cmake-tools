@@ -1987,12 +1987,14 @@ class FileWatcher implements vscode.Disposable {
     public constructor(paths: string | string[], eventHandlers: Map<string, () => void>, options?: chokidar.WatchOptions) {
         this.watchers = new Map<string, chokidar.FSWatcher>();
 
-        paths = Array.isArray(paths) ? paths : [paths];
-        for (let i = 0; i < paths.length; i++) {
-            const path = paths[i];
+        for (const path of Array.isArray(paths) ? paths : [paths]) {
             try {
                 const watcher = chokidar.watch(path, { ...options });
-                Array.from(eventHandlers).forEach(([event, handler]) => watcher.on(event, handler));
+                const eventHandlerEntries = Array.from(eventHandlers);
+                for (let i = 0; i < eventHandlerEntries.length; i++) {
+                    const [event, handler] = eventHandlerEntries[i];
+                    watcher.on(event, handler);
+                }
                 this.watchers.set(path, watcher);
             } catch (error) {
                 log.error(localize('failed.to.watch', 'Watcher could not be created for {0}: {1}', path, util.errorToString(error)));
