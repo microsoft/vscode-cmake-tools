@@ -35,6 +35,7 @@ import { CacheEntry } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { onBuildSettingsChange, onTestSettingsChange, onPackageSettingsChange } from '@cmt/ui/util';
+import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
@@ -104,13 +105,14 @@ export interface NamedTarget {
 }
 
 /**
- * A target with a name, path, and type.
+ * A target with a name, path, type and folder.
  */
 export interface RichTarget {
     type: 'rich';
     name: string;
     filepath: string;
     targetType: string;
+    folder?: CodeModelKind.TargetObject;
     installPaths?: InstallPath[];
 }
 

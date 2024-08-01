@@ -52,6 +52,7 @@ import { ProjectController } from './projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
 import { ConfigurationType } from 'vscode-cmake-tools';
+import { NamedTarget, RichTarget } from '@cmt/drivers/cmakeDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -117,6 +118,15 @@ export interface DiagnosticsSettings {
     communicationMode: CMakeCommunicationMode;
     useCMakePresets: UseCMakePresets;
     configureOnOpen: boolean | null;
+}
+
+/**
+ * A target with a name, but no output. Only used for targets that have a
+ * folder property.
+ */
+interface FolderTarget {
+    type: 'folder';
+    name: string;
 }
 
 /**
@@ -2181,21 +2191,60 @@ export class CMakeProject {
         if (!drv.targets.length) {
             return await vscode.window.showInputBox({ prompt: localize('enter.target.name', 'Enter a target name') }) || null;
         } else {
-            const choices = drv.uniqueTargets.map((t): vscode.QuickPickItem => {
-                switch (t.type) {
-                    case 'named': {
-                        return {
-                            label: t.name,
-                            description: localize('target.to.build.description', 'Target to build')
-                        };
+            type Target = RichTarget | NamedTarget | FolderTarget;
+            let currentFolder: string | undefined;
+
+            for (let i = 0; i < 2; i++) {
+                const items: Target[] = [];
+                const folders: string[] = [];
+
+                drv.uniqueTargets.forEach((t) => {
+                    if (!currentFolder) {
+                        if (t.type === 'named') {
+                            items.push(t);
+                        } else if (t.type === 'rich') {
+                            if (!t.folder) {
+                                items.push(t);
+                            } else if (t.folder && !folders.includes(t.folder.name)) {
+                                folders.push(t.folder.name);
+                                items.push({ type: 'folder', name: t.folder.name });
+                            }
+                        }
+                    } else {
+                        if (t.type === 'rich' && t.folder && t.folder.name === currentFolder) {
+                            items.push(t);
+                        }
                     }
-                    case 'rich': {
-                        return { label: t.name, description: t.targetType, detail: t.filepath };
+                });
+
+                const choices = items.map((t): vscode.QuickPickItem => {
+                    switch (t.type) {
+                        case 'named': {
+                            return {
+                                label: t.name,
+                                description: localize('target.to.build.description', 'Target to build')
+                            };
+                        }
+                        case 'rich': {
+                            return { label: t.name, description: t.targetType, detail: t.filepath };
+                        }
+                        case 'folder': {
+                            return { label: t.name, description: 'FOLDER' };
+                        }
                     }
+                });
+
+                const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+                if (!sel) {
+                    return null;
+                } else if (!folders.includes(sel.label) || currentFolder === sel.label) {
+                    return sel.label;
+                } else {
+                    currentFolder = sel.label;
                 }
-            });
-            const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
-            return sel ? sel.label : null;
+            }
+
+            return null;
         }
     }
 
