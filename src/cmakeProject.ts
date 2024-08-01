@@ -139,7 +139,7 @@ export class CMakeProject {
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
-    private projectController: ProjectController | undefined;
+    public projectController: ProjectController | undefined;
     public readonly cTestController: CTestDriver;
     public readonly cPackageController: CPackDriver;
     public readonly workflowController: WorkflowDriver;
@@ -2920,8 +2920,6 @@ export class CMakeProject {
                 log.info(localize('cmakepresets.created', '[Quick Start] CMakePresets.json created successfully.'));
             }
         }
-
-        await this.projectController?.updateActiveProject(this.workspaceFolder);
 
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
