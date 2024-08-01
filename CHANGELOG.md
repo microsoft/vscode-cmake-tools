@@ -10,6 +10,7 @@ Improvements:
 
 - Add `Unspecified` option for selecting a kit variant to allow CMake itself to select the build type. [#3821](https://github.com/microsoft/vscode-cmake-tools/issues/3821)
 - Skip loading variants when using CMakePresets. [#3300](https://github.com/microsoft/vscode-cmake-tools/issues/3300)
+- Resolve diagnostics files relative to workspace and build directory, fixes [#1401](https://github.com/microsoft/vscode-cmake-tools/issues/1401) [@fargies](https://github.com/fargies)
 - Add setting to only show the cmake log on target failure. [#3785](https://github.com/microsoft/vscode-cmake-tools/pull/3785) [@stepeos](https://github.com/stepeos)
 - Preset expansion occurs on `CMakePresets.json` or `CMakeUserPresets.json` save, and if there are no errors the expanded presets are cached. The VS Developer Environment will only be applied to a preset if it is selected. Expansion errors will show in the problems panel and preset files with errors will be invalid, and any presets they contain cannot be used. [#3905](https://github.com/microsoft/vscode-cmake-tools/pull/3905)
 
@@ -31,6 +32,7 @@ Bug Fixes:
 - Disable annoy and invalid extenion message about fix windows sdk for MSVC 2022. [#3837](https://github.com/microsoft/vscode-cmake-tools/pull/3837)
 - Fix re-using a terminal for launching even when the environment has changed. [#3478](https://github.com/microsoft/vscode-cmake-tools/issues/3478)
 - Fix our keybindings for debug and run without debugging to better match VS Code. [#3507](https://github.com/microsoft/vscode-cmake-tools/issues/3507)
+- Allow success recovery in the configure precondition handler. [#3554](https://github.com/microsoft/vscode-cmake-tools/issues/3554)
 - Prevent second configure after `QuickStart` if the `automaticReconfigure` setting is enabled. [#3910](https://github.com/microsoft/vscode-cmake-tools/issues/3910)
 - Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
 

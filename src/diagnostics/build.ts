@@ -46,7 +46,17 @@ export class CompileOutputConsumer implements OutputConsumer {
         }
     }
 
-    resolveDiagnostics(basePath: string): FileDiagnostic[] {
+    async resolvePath(file: string, basePaths: string[]): Promise<string> {
+        for (const basePath of basePaths) {
+            const resolved = util.resolvePath(file, basePath);
+            if (await util.checkFileExists(resolved)) {
+                return resolved;
+            }
+        }
+        return util.resolvePath(file, basePaths[0] ?? '');
+    }
+
+    async resolveDiagnostics(...basePaths: string[]): Promise<FileDiagnostic[]> {
         const diags_by_file = new Map<string, vscode.Diagnostic[]>();
 
         const severity_of = (p: string) => {
@@ -75,13 +85,15 @@ export class CompileOutputConsumer implements OutputConsumer {
             link: this.compilers.gnuLD.diagnostics,
             IAR: this.compilers.iar.diagnostics
         };
-        const arrs = util.objectPairs(by_source)
-            .filter(([source, _]) => this.config.enableOutputParsers?.includes(source.toLowerCase()) ?? false)
-            .map(([source, diags]) => diags.map(raw_diag => {
-                const filepath = util.resolvePath(raw_diag.file, basePath);
+        const parsers = util.objectPairs(by_source)
+            .filter(([source, _]) => this.config.enableOutputParsers?.includes(source.toLowerCase()) ?? false);
+        const arrs: FileDiagnostic[] = [];
+        for (const [ source, diags ] of parsers) {
+            for (const raw_diag of diags) {
+                const filepath = await this.resolvePath(raw_diag.file, basePaths);
                 const severity = severity_of(raw_diag.severity);
                 if (severity === undefined) {
-                    return undefined;
+                    continue;
                 }
                 const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity);
                 diag.source = source;
@@ -93,17 +105,18 @@ export class CompileOutputConsumer implements OutputConsumer {
                 }
                 diag.relatedInformation = [];
                 for (const rel of raw_diag.related) {
-                    const relFilePath = vscode.Uri.file(util.resolvePath(rel.file, basePath));
+                    const relFilePath = vscode.Uri.file(await this.resolvePath(rel.file, basePaths));
                     const related = new vscode.DiagnosticRelatedInformation(new vscode.Location(relFilePath, rel.location), rel.message);
                     diag.relatedInformation.push(related);
                 }
                 diags_by_file.get(filepath)!.push(diag);
-                return {
+                arrs.push({
                     filepath,
                     diag
-                };
-            }).filter(e => e !== undefined) as FileDiagnostic[]);
-        return ([] as FileDiagnostic[]).concat(...arrs);
+                });
+            }
+        }
+        return arrs;
     }
 }
 
