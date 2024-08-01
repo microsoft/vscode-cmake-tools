@@ -23,9 +23,41 @@ extends:
       name: VSEngSS-MicroBuild2022-1ES
 
     stages:
-    - stage: release
+    - stage: Validate
       jobs:
-      - job: release
+        - job: UpdateBuildNumber
+          displayName: Update Build Number
+          steps:
+            - download: BuildReleasePipeline
+              artifact: vsix
+            - powershell: |
+                $newVersion = Get-Content -Path $(Pipeline.Workspace)\BuildReleasePipeline\vsix\version.txt
+                Write-Host "New version is: $newVersion"
+
+                $str = Get-Date -Format "yyMMdd-HHmm"
+                Write-Host "##vso[build.updatebuildnumber]$newVersion - $str"
+              ignoreLASTEXITCODE: true
+              displayName: "Set the release name"
+            - job: WaitForValidation
+              displayName: Wait for vscode-cmake-tools validation
+              dependsOn: UpdateBuildNumber
+              pool: server
+              steps:
+                - task: ManualValidation@0
+                  displayName: "Manual Validation"
+                  inputs:
+                    notifyUsers: cmaketools@microsoft.com
+                    instructions: |
+                      Download and test the vsix with the matching version number from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=20419
+
+                      The version should match the name of this release.
+
+    - stage: Release
+      dependsOn: Validate
+      condition: succeeded('Validate')
+      jobs:
+      - job: ReleaseCMakeTools
+        displayName: Release vscode-cmake-tools Tools
         templateContext:
           type: releaseJob
           isProduction: true
@@ -36,22 +68,6 @@ extends:
             targetPath: $(Build.StagingDirectory)\vsix
 
         steps:
-        - powershell: |
-            $newVersion = Get-Content -Path $(Build.StagingDirectory)\vsix\version.txt
-            Write-Host "New version is: $newVersion"
-            
-            $str = Get-Date -Format "yyMMdd-HHmm"
-            Write-Host "##vso[build.updatebuildnumber]$newVersion - $str"
-          ignoreLASTEXITCODE: true
-          displayName: 'Set the release name'
-        - task: ManualValidation@0
-          displayName: 'Manual Validation'
-          inputs:
-            notifyUsers: cmaketools@microsoft.com
-            instructions: |
-              Download and test the vsix from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=17431
-              
-              The version should match the name of this release.
         - task: NodeTool@0
           displayName: 'Use Node 14.x'
           inputs:
@@ -69,9 +85,9 @@ extends:
             inlineScript: |
               $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
-        - script: |
-            vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix
-          displayName: 'Publish the VSIX'
-          env:
-            VSCE_PAT: $(AAD_TOKEN)
+        #- script: |
+        #    vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix
+        #  displayName: 'Publish the VSIX'
+        #  env:
+        #    VSCE_PAT: $(AAD_TOKEN)
 
