@@ -38,19 +38,19 @@ extends:
                 Write-Host "##vso[build.updatebuildnumber]$newVersion - $str"
               ignoreLASTEXITCODE: true
               displayName: "Set the release name"
-            - job: WaitForValidation
-              displayName: Wait for vscode-cmake-tools validation
-              dependsOn: UpdateBuildNumber
-              pool: server
-              steps:
-                - task: ManualValidation@0
-                  displayName: "Manual Validation"
-                  inputs:
-                    notifyUsers: cmaketools@microsoft.com
-                    instructions: |
-                      Download and test the vsix with the matching version number from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=20419
+        - job: WaitForValidation
+          displayName: Wait for vscode-cmake-tools validation
+          dependsOn: UpdateBuildNumber
+          pool: server
+          steps:
+            - task: ManualValidation@0
+              displayName: "Manual Validation"
+              inputs:
+                notifyUsers: cmaketools@microsoft.com
+                instructions: |
+                  Download and test the vsix with the matching version number from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=20419
 
-                      The version should match the name of this release.
+                  The version should match the name of this release.
 
     - stage: Release
       dependsOn: Validate
