@@ -4,6 +4,7 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
@@ -1568,15 +1569,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
             };
             if (this.useCMakePresets && this.workspaceFolder) {
                 const configurePresets = preset.configurePresets(this.workspaceFolder);
-                const userConfigurePresets = preset.userConfigurePresets(this.workspaceFolder);
+                // TODO: Ensure we only use user presets correctly.
+                const userConfigurePresets = lodash.difference(preset.userConfigurePresets(this.workspaceFolder), configurePresets);
                 const buildPresets = preset.buildPresets(this.workspaceFolder);
-                const userBuildPresets = preset.userBuildPresets(this.workspaceFolder);
+                const userBuildPresets = lodash.difference(preset.userBuildPresets(this.workspaceFolder), buildPresets);
                 const testPresets = preset.testPresets(this.workspaceFolder);
-                const userTestPresets = preset.userTestPresets(this.workspaceFolder);
+                const userTestPresets = lodash.difference(preset.userTestPresets(this.workspaceFolder), testPresets);
                 const packagePresets = preset.packagePresets(this.workspaceFolder);
-                const userPackagePresets = preset.userPackagePresets(this.workspaceFolder);
+                const userPackagePresets = lodash.difference(preset.userPackagePresets(this.workspaceFolder), packagePresets);
                 const workflowPresets = preset.workflowPresets(this.workspaceFolder);
-                const userWorkflowPresets = preset.userWorkflowPresets(this.workspaceFolder);
+                const userWorkflowPresets = lodash.difference(preset.userWorkflowPresets(this.workspaceFolder), workflowPresets);
                 telemetryMeasures['ConfigurePresets'] = configurePresets.length;
                 telemetryMeasures['HiddenConfigurePresets'] = this.countHiddenPresets(configurePresets);
                 telemetryMeasures['UserConfigurePresets'] = userConfigurePresets.length;
