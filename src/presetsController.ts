@@ -1595,7 +1595,17 @@ export class PresetsController implements vscode.Disposable {
     }
 
     private async mergeIncludeFiles(presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Set<string>): Promise<void> {
-        if (!presetsFile || !presetsFile.include) {
+        if (!presetsFile) {
+            return;
+        }
+
+        // CMakeUserPresets.json file should include CMakePresets.json file.
+        if (this.presetsFileExist && file === this.userPresetsPath) {
+            presetsFile.include = presetsFile.include || [];
+            presetsFile.include.push(this.presetsPath);
+        }
+
+        if (!presetsFile.include) {
             return;
         }
 
