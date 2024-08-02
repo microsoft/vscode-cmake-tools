@@ -270,8 +270,8 @@ suite('Diagnostics', () => {
     test('Parsing linker error', () => {
         const lines = ['/some/path/here:101: undefined reference to `some_function\''];
         feedLines(build_consumer, [], lines);
-        expect(build_consumer.compilers.gnuLD.diagnostics).to.have.length(1);
-        const diag = build_consumer.compilers.gnuLD.diagnostics[0];
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gcc.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(100);
         expect(diag.message).to.eq('undefined reference to `some_function\'');
@@ -283,8 +283,8 @@ suite('Diagnostics', () => {
     test('Parsing linker error in french', () => {
         const lines = ['/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »'];
         feedLines(build_consumer, [], lines);
-        expect(build_consumer.compilers.gnuLD.diagnostics).to.have.length(1);
-        const diag = build_consumer.compilers.gnuLD.diagnostics[0];
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gcc.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(8);
         expect(diag.message).to.eq('référence indéfinie vers « create_automaton_product56 »');
@@ -400,7 +400,7 @@ suite('Diagnostics', () => {
             `make: *** [Makefile:84 all] Error 2`
         ];
         feedLines(build_consumer, [], lines);
-        expect(build_consumer.compilers.gnuLD.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
     });
 
     test('Parse GCC error on line zero', () => {
