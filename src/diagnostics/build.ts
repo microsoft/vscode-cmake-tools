@@ -20,10 +20,10 @@ import { ConfigurationReader } from '@cmt/config';
 export class Compilers {
     [compiler: string]: RawDiagnosticParser;
 
+    gnuld = new gnu_ld.Parser();
     gcc = new gcc.Parser();
     ghs = new ghs.Parser();
     diab = new diab.Parser();
-    gnuLD = new gnu_ld.Parser();
     msvc = new mvsc.Parser();
     iar = new iar.Parser();
 }
@@ -82,7 +82,7 @@ export class CompileOutputConsumer implements OutputConsumer {
             MSVC: this.compilers.msvc.diagnostics,
             GHS: this.compilers.ghs.diagnostics,
             DIAB: this.compilers.diab.diagnostics,
-            link: this.compilers.gnuLD.diagnostics,
+            GNULD: this.compilers.gnuld.diagnostics,
             IAR: this.compilers.iar.diagnostics
         };
         const parsers = util.objectPairs(by_source)
