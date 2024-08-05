@@ -198,8 +198,6 @@ export class PresetsController implements vscode.Disposable {
         }
 
         setExpandedPresets(this.folderPath, presetsFile);
-
-        return referencedFiles;
     }
 
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
