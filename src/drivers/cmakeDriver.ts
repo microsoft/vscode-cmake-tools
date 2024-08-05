@@ -1570,15 +1570,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (this.useCMakePresets && this.workspaceFolder) {
                 const configurePresets = preset.configurePresets(this.workspaceFolder);
                 // TODO: Ensure we only use user presets correctly.
-                const userConfigurePresets = lodash.difference(preset.userConfigurePresets(this.workspaceFolder), configurePresets);
+                const userConfigurePresets = lodash.differenceWith(preset.userConfigurePresets(this.workspaceFolder), configurePresets, (a, b) => a.name === b.name);
                 const buildPresets = preset.buildPresets(this.workspaceFolder);
-                const userBuildPresets = lodash.difference(preset.userBuildPresets(this.workspaceFolder), buildPresets);
+                const userBuildPresets = lodash.differenceWith(preset.userBuildPresets(this.workspaceFolder), buildPresets, (a, b) => a.name === b.name);
                 const testPresets = preset.testPresets(this.workspaceFolder);
-                const userTestPresets = lodash.difference(preset.userTestPresets(this.workspaceFolder), testPresets);
+                const userTestPresets = lodash.differenceWith(preset.userTestPresets(this.workspaceFolder), testPresets, (a, b) => a.name === b.name);
                 const packagePresets = preset.packagePresets(this.workspaceFolder);
-                const userPackagePresets = lodash.difference(preset.userPackagePresets(this.workspaceFolder), packagePresets);
+                const userPackagePresets = lodash.differenceWith(preset.userPackagePresets(this.workspaceFolder), packagePresets, (a, b) => a.name === b.name);
                 const workflowPresets = preset.workflowPresets(this.workspaceFolder);
-                const userWorkflowPresets = lodash.difference(preset.userWorkflowPresets(this.workspaceFolder), workflowPresets);
+                const userWorkflowPresets = lodash.differenceWith(preset.userWorkflowPresets(this.workspaceFolder), workflowPresets, (a, b) => a.name === b.name);
                 telemetryMeasures['ConfigurePresets'] = configurePresets.length;
                 telemetryMeasures['HiddenConfigurePresets'] = this.countHiddenPresets(configurePresets);
                 telemetryMeasures['UserConfigurePresets'] = userConfigurePresets.length;
