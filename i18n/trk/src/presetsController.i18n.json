@@ -132,5 +132,6 @@
 	"use.kits.variants": "Setleri ve çeşitleri kullanın",
 	"edit.presets": "Bul",
 	"presets.version.error": "CMakePresets sürüm 1 desteklenmiyor. Nasıl devam etmek istersiniz?",
-	"failed.writing.to.file": "{0} dosyasına yazılamadı"
+	"failed.writing.to.file": "{0} dosyasına yazılamadı",
+	"failed.to.watch": "{0} için izleyici oluşturulamadı: {1}"
 }

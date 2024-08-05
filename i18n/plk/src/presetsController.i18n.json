@@ -132,5 +132,6 @@
 	"use.kits.variants": "Użyj zestawów i wariantów",
 	"edit.presets": "Zlokalizuj",
 	"presets.version.error": "Predefinicje programu CMake (wersja 1) nie są obsługiwane. W jaki sposób chcesz kontynuować?",
-	"failed.writing.to.file": "Nie można zapisać do pliku: {0}"
+	"failed.writing.to.file": "Nie można zapisać do pliku: {0}",
+	"failed.to.watch": "Nie można utworzyć obserwatora dla {0}: {1}"
 }

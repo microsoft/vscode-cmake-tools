@@ -132,5 +132,6 @@
 	"use.kits.variants": "Usar kits e variantes",
 	"edit.presets": "Localizar",
 	"presets.version.error": "Não há suporte para a versão 1 do CMakePresets. Como deseja prosseguir?",
-	"failed.writing.to.file": "Erro ao gravar no arquivo {0}"
+	"failed.writing.to.file": "Erro ao gravar no arquivo {0}",
+	"failed.to.watch": "Não foi possível criar o Observador para {0}: {1}"
 }

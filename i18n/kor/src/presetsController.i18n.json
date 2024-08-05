@@ -132,5 +132,6 @@
 	"use.kits.variants": "키트 및 변형 사용",
 	"edit.presets": "찾기",
 	"presets.version.error": "CMakePresets 버전 1이 지원되지 않습니다. 계속 진행하시겠습니까?",
-	"failed.writing.to.file": "{0} 파일에 쓰지 못함"
+	"failed.writing.to.file": "{0} 파일에 쓰지 못함",
+	"failed.to.watch": "{0}에 감시자를 만들 수 없습니다.{1}"
 }

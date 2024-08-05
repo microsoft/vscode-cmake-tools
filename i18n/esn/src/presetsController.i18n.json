@@ -132,5 +132,6 @@
 	"use.kits.variants": "Usar kits y variantes",
 	"edit.presets": "Buscar",
 	"presets.version.error": "CMakePresets versión 1 no es compatible. ¿Qué quiere hacer?",
-	"failed.writing.to.file": "No se pudo escribir en el archivo {0}"
+	"failed.writing.to.file": "No se pudo escribir en el archivo {0}",
+	"failed.to.watch": "No se pudo crear el monitor para {0}: {1}"
 }
