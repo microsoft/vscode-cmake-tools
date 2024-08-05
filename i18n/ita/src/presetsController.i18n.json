@@ -132,5 +132,6 @@
 	"use.kits.variants": "Usare kit e varianti",
 	"edit.presets": "Individuare",
 	"presets.version.error": "CMakePresets versione 1 non è supportato. Come si vuole procedere?",
-	"failed.writing.to.file": "Non è stato possibile scrivere nel file {0}"
+	"failed.writing.to.file": "Non è stato possibile scrivere nel file {0}",
+	"failed.to.watch": "Non è stato possibile creare Watcher per {0}: {1}"
 }
