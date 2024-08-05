@@ -132,5 +132,6 @@
 	"use.kits.variants": "使用工具包和变量",
 	"edit.presets": "定位",
 	"presets.version.error": "CMakePresets 版本 1 不受支持。希望如何继续?",
-	"failed.writing.to.file": "未能写入文件 {0}"
+	"failed.writing.to.file": "未能写入文件 {0}",
+	"failed.to.watch": "无法为 {0} 创建观察程序: {1}"
 }
