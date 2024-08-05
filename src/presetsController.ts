@@ -208,8 +208,8 @@ export class PresetsController implements vscode.Disposable {
         const referencedFiles: Map<string, preset.PresetsFile | undefined> = new Map();
 
         // Reset all changes due to expansion since parents could change
-        await this.resetPresetsFile(this.userPresetsPath, this._setExpandedUserPresetsFile, this._setUserPresetsPlusIncluded, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
         await this.resetPresetsFile(this.presetsPath, this._setExpandedPresets, this._setPresetsPlusIncluded, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.userPresetsPath, this._setExpandedUserPresetsFile, this._setUserPresetsPlusIncluded, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
 
         // reset all expanded presets storage.
         this._referencedFiles = Array.from(referencedFiles.keys());
@@ -1651,15 +1651,6 @@ export class PresetsController implements vscode.Disposable {
                         }
                     }
                 }
-                // TODO: concatenate and then continue.
-
-                // To do this we need to change Referenced Files to a map and store the file itself. and copy the bottom part of this method.
-                // We don't have to change the referencedFiles implementation.
-
-                // Then, we need to simply do a check in `getAllConfigurePresets` to either return the user presets or the presets (both of which )
-
-                // TODO: ENsure that this doesn't inflate any telemetry because we are including the regular presets inside of the user presets.
-                // I think we're good, but double check.
                 continue;
             }
             // Record the file as referenced, even if the file does not exist.
