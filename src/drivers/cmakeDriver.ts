@@ -1569,7 +1569,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
             };
             if (this.useCMakePresets && this.workspaceFolder) {
                 const configurePresets = preset.configurePresets(this.workspaceFolder);
-                // TODO: Ensure we only use user presets correctly.
                 const userConfigurePresets = lodash.differenceWith(preset.userConfigurePresets(this.workspaceFolder), configurePresets, (a, b) => a.name === b.name);
                 const buildPresets = preset.buildPresets(this.workspaceFolder);
                 const userBuildPresets = lodash.differenceWith(preset.userBuildPresets(this.workspaceFolder), buildPresets, (a, b) => a.name === b.name);

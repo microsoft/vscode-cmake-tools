@@ -839,6 +839,8 @@ export class PresetsController implements vscode.Disposable {
         return chosenPresets?.preset;
     }
 
+    // For all of the `getAll` methods, we now can safely grab only the user presets (if present), because they inherently include
+    // the presets.
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
         const userPresets = preset.userConfigurePresets(this.folderPath);
         return userPresets.length > 0 ? userPresets : preset.configurePresets(this.folderPath);
@@ -1606,11 +1608,19 @@ export class PresetsController implements vscode.Disposable {
             return;
         }
 
-        // CMakeUserPresets.json file should include CMakePresets.json file.
+        // CMakeUserPresets.json file should include CMakePresets.json file, by default.
         if (this.presetsFileExist && file === this.userPresetsPath) {
-            // TODO: Be better about checking for whether the file is already included
             presetsFile.include = presetsFile.include || [];
-            presetsFile.include.push(this.presetsPath);
+            const filteredIncludes = presetsFile.include.filter(include => {
+                const includePath = presetsFile.version >= 7 ?
+                // Version 7 and later support $penv{} expansions in include paths
+                    substituteAll(include, getParentEnvSubstitutions(include, new Map<string, string>())).result :
+                    include;
+                path.normalize(path.resolve(path.dirname(file), includePath)) === this.presetsPath;
+            });
+            if (filteredIncludes.length === 0) {
+                presetsFile.include.push(this.presetsPath);
+            }
         }
 
         if (!presetsFile.include) {
