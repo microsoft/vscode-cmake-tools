@@ -119,6 +119,10 @@ export interface DiagnosticsSettings {
     configureOnOpen: boolean | null;
 }
 
+export interface ConfigureCancelInformation {
+    canceled: boolean;
+}
+
 /**
  * Class implementing the extension. It's all here!
  *
@@ -1585,7 +1589,12 @@ export class CMakeProject {
             },
             async (progress, cancel) => {
                 progress.report({ message: localize('preparing.to.configure', 'Preparing to configure') });
+                const cancelInformation: ConfigureCancelInformation = {
+                    canceled: false
+                };
                 cancel.onCancellationRequested(() => {
+                    // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
+                    cancelInformation.canceled = true;
                     rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
                 });
 
@@ -1594,6 +1603,8 @@ export class CMakeProject {
                 // if there is a debugger information, we are debugging. Set up a listener for stopping a cmake debug session.
                 if (debuggerInformation) {
                     const trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactory(async () => {
+                        // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
+                        cancelInformation.canceled = true;
                         forciblyCanceled = true;
                         await this.cancelConfiguration();
                         trackerFactoryDisposable.dispose();
@@ -1622,23 +1633,23 @@ export class CMakeProject {
                                 let result: ConfigureResult;
                                 await setContextAndStore(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
-                                    result = await drv.configure(trigger, [], consumer, debuggerInformation);
+                                    result = await drv.configure(trigger, [], consumer, cancelInformation, debuggerInformation);
                                 } else {
                                     switch (type) {
                                         case ConfigureType.Normal:
-                                            result = await drv.configure(trigger, extraArgs, consumer);
+                                            result = await drv.configure(trigger, extraArgs, consumer, cancelInformation);
                                             break;
                                         case ConfigureType.NormalWithDebugger:
-                                            result = await drv.configure(trigger, extraArgs, consumer, debuggerInformation);
+                                            result = await drv.configure(trigger, extraArgs, consumer, cancelInformation, debuggerInformation);
                                             break;
                                         case ConfigureType.Clean:
-                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer);
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, cancelInformation);
                                             break;
                                         case ConfigureType.CleanWithDebugger:
-                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, debuggerInformation);
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, cancelInformation, debuggerInformation);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
-                                            result = await drv.configure(trigger, extraArgs, consumer, undefined, false, true);
+                                            result = await drv.configure(trigger, extraArgs, consumer, cancelInformation, undefined, false, true);
                                             break;
                                         default:
                                             rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
@@ -1654,7 +1665,7 @@ export class CMakeProject {
                                 if (result.result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && result.resultType === ConfigureResultType.NormalOperation) {
+                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && !cancelInformation.canceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     log.showChannel(true);
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
