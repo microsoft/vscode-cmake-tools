@@ -1639,19 +1639,19 @@ export class PresetsController implements vscode.Disposable {
                 const referencedIncludeFile = referencedFiles.get(fullIncludePath);
                 if (referencedIncludeFile) {
                     if (referencedIncludeFile.configurePresets) {
-                        presetsFile.configurePresets = lodash.union(referencedIncludeFile.configurePresets, presetsFile.configurePresets || []);
+                        presetsFile.configurePresets = lodash.unionWith(referencedIncludeFile.configurePresets, presetsFile.configurePresets || [], (a, b) => a.name === b.name);
                     }
                     if (referencedIncludeFile.buildPresets) {
-                        presetsFile.buildPresets = lodash.union(referencedIncludeFile.buildPresets, presetsFile.buildPresets || []);
+                        presetsFile.buildPresets = lodash.unionWith(referencedIncludeFile.buildPresets, presetsFile.buildPresets || [], (a, b) => a.name === b.name);
                     }
                     if (referencedIncludeFile.testPresets) {
-                        presetsFile.testPresets = lodash.union(referencedIncludeFile.testPresets, presetsFile.testPresets || []);
+                        presetsFile.testPresets = lodash.unionWith(referencedIncludeFile.testPresets, presetsFile.testPresets || [], (a, b) => a.name === b.name);
                     }
                     if (referencedIncludeFile.packagePresets) {
-                        presetsFile.packagePresets = lodash.union(referencedIncludeFile.packagePresets, presetsFile.packagePresets || []);
+                        presetsFile.packagePresets = lodash.unionWith(referencedIncludeFile.packagePresets, presetsFile.packagePresets || [], (a, b) => a.name === b.name);
                     }
                     if (referencedIncludeFile.workflowPresets) {
-                        presetsFile.workflowPresets = lodash.union(referencedIncludeFile.workflowPresets, presetsFile.workflowPresets || []);
+                        presetsFile.workflowPresets = lodash.unionWith(referencedIncludeFile.workflowPresets, presetsFile.workflowPresets || [], (a, b) => a.name === b.name);
                     }
                     if (referencedIncludeFile.cmakeMinimumRequired) {
                         if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, referencedIncludeFile.cmakeMinimumRequired)) {
@@ -1684,19 +1684,19 @@ export class PresetsController implements vscode.Disposable {
             await this.mergeIncludeFiles(includeFile, fullIncludePath, referencedFiles);
 
             if (includeFile.configurePresets) {
-                presetsFile.configurePresets = lodash.union(includeFile.configurePresets, presetsFile.configurePresets || []);
+                presetsFile.configurePresets = lodash.unionWith(includeFile.configurePresets, presetsFile.configurePresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.buildPresets) {
-                presetsFile.buildPresets = lodash.union(includeFile.buildPresets, presetsFile.buildPresets || []);
+                presetsFile.buildPresets = lodash.unionWith(includeFile.buildPresets, presetsFile.buildPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.testPresets) {
-                presetsFile.testPresets = lodash.union(includeFile.testPresets, presetsFile.testPresets || []);
+                presetsFile.testPresets = lodash.unionWith(includeFile.testPresets, presetsFile.testPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.packagePresets) {
-                presetsFile.packagePresets = lodash.union(includeFile.packagePresets, presetsFile.packagePresets || []);
+                presetsFile.packagePresets = lodash.unionWith(includeFile.packagePresets, presetsFile.packagePresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.workflowPresets) {
-                presetsFile.workflowPresets = lodash.union(includeFile.workflowPresets, presetsFile.workflowPresets || []);
+                presetsFile.workflowPresets = lodash.unionWith(includeFile.workflowPresets, presetsFile.workflowPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.cmakeMinimumRequired) {
                 if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
