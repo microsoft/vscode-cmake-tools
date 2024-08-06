@@ -1610,6 +1610,7 @@ export class PresetsController implements vscode.Disposable {
         if (this.presetsFileExist && file === this.userPresetsPath) {
             presetsFile.include = presetsFile.include || [];
             const filteredIncludes = presetsFile.include.filter(include => {
+                // Ensuring that we handle expansions. Duplicated from loop below.
                 const includePath = presetsFile.version >= 7 ?
                 // Version 7 and later support $penv{} expansions in include paths
                     substituteAll(include, getParentEnvSubstitutions(include, new Map<string, string>())).result :
