@@ -441,7 +441,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
             this.preset = await this.resolvePresetName(this.preset, project.useCMakePresets, CommandType.config);
             const configPreset: preset.ConfigurePreset | undefined = await project?.expandConfigPresetbyName(this.preset);
-            const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, undefined, false, false, configPreset, this.options);
+            const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, undefined, undefined, false, false, configPreset, this.options);
             if (result === undefined || result === null) {
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
