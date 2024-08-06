@@ -2,6 +2,7 @@
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as vscode from "vscode";
+import * as lodash from "lodash";
 
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
@@ -540,7 +541,7 @@ export function userConfigurePresets(folder: string, usePresetsPlusIncluded: boo
  * Don't use this function if you need to keep any changes in the presets
  */
 export function allConfigurePresets(folder: string, usePresetsPlusIncluded: boolean = false) {
-    return configurePresets(folder, usePresetsPlusIncluded).concat(userConfigurePresets(folder, usePresetsPlusIncluded));
+    return lodash.unionWith(configurePresets(folder, usePresetsPlusIncluded).concat(userConfigurePresets(folder, usePresetsPlusIncluded)), (a, b) => a.name === b.name);
 }
 
 export function buildPresets(folder: string) {
@@ -555,7 +556,7 @@ export function userBuildPresets(folder: string) {
  * Don't use this function if you need to keep any changes in the presets
  */
 export function allBuildPresets(folder: string) {
-    return buildPresets(folder).concat(userBuildPresets(folder));
+    return lodash.unionWith(buildPresets(folder).concat(userBuildPresets(folder)), (a, b) => a.name === b.name);
 }
 
 export function testPresets(folder: string) {
@@ -570,7 +571,7 @@ export function userTestPresets(folder: string) {
  * Don't use this function if you need to keep any changes in the presets
  */
 export function allTestPresets(folder: string) {
-    return testPresets(folder).concat(userTestPresets(folder));
+    return lodash.unionWith(testPresets(folder).concat(userTestPresets(folder)), (a, b) => a.name === b.name);
 }
 
 export function packagePresets(folder: string) {
@@ -585,7 +586,7 @@ export function userPackagePresets(folder: string) {
 * Don't use this function if you need to keep any changes in the presets
 */
 export function allPackagePresets(folder: string) {
-    return packagePresets(folder).concat(userPackagePresets(folder));
+    return lodash.unionWith(packagePresets(folder).concat(userPackagePresets(folder)), (a, b) => a.name === b.name);
 }
 
 export function workflowPresets(folder: string) {
@@ -600,7 +601,7 @@ export function userWorkflowPresets(folder: string) {
 * Don't use this function if you need to keep any changes in the presets
 */
 export function allWorkflowPresets(folder: string) {
-    return workflowPresets(folder).concat(userWorkflowPresets(folder));
+    return lodash.unionWith(workflowPresets(folder).concat(userWorkflowPresets(folder)), (a, b) => a.name === b.name);
 }
 
 export function getPresetByName<T extends Preset>(presets: T[], name: string): T | null {

@@ -166,15 +166,15 @@ export class PresetsController implements vscode.Disposable {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetPresetsFile(file: string, setExpandedPresets: SetPresetsFileFunc, setPresetsPlusIncluded: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Set<string>) {
+    private async resetPresetsFile(file: string, setExpandedPresets: SetPresetsFileFunc, setPresetsPlusIncluded: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Map<string, preset.PresetsFile | undefined>) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
         fileExistCallback(Boolean(presetsFileBuffer));
 
         // Record the file as referenced, even if the file does not exist.
-        referencedFiles.add(file);
         let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
+        referencedFiles.set(file, presetsFile);
         if (presetsFile) {
             // Parse again so we automatically have a copy by value
             setOriginalPresetsFile(this.folderPath, await this.parsePresetsFile(presetsFileBuffer, file));
@@ -203,14 +203,14 @@ export class PresetsController implements vscode.Disposable {
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
     // (need to clean or reload driver)
     async reapplyPresets() {
-        const referencedFiles: Set<string> = new Set();
+        const referencedFiles: Map<string, preset.PresetsFile | undefined> = new Map();
 
         // Reset all changes due to expansion since parents could change
         await this.resetPresetsFile(this.presetsPath, this._setExpandedPresets, this._setPresetsPlusIncluded, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
         await this.resetPresetsFile(this.userPresetsPath, this._setExpandedUserPresetsFile, this._setUserPresetsPlusIncluded, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
 
         // reset all expanded presets storage.
-        this._referencedFiles = Array.from(referencedFiles);
+        this._referencedFiles = Array.from(referencedFiles.keys());
 
         this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
 
@@ -837,24 +837,31 @@ export class PresetsController implements vscode.Disposable {
         return chosenPresets?.preset;
     }
 
+    // For all of the `getAll` methods, we now can safely grab only the user presets (if present), because they inherently include
+    // the presets.
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
-        return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+        const userPresets = preset.userConfigurePresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.configurePresets(this.folderPath);
     }
 
     async getAllBuildPresets(): Promise<preset.BuildPreset[]> {
-        return preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
+        const userPresets = preset.userBuildPresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.buildPresets(this.folderPath);
     }
 
     async getAllTestPresets(): Promise<preset.TestPreset[]> {
-        return preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
+        const userPresets = preset.userTestPresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.testPresets(this.folderPath);
     }
 
     async getAllPackagePresets(): Promise<preset.PackagePreset[]> {
-        return preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
+        const userPresets = preset.userPackagePresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.packagePresets(this.folderPath);
     }
 
     async getAllWorkflowPresets(): Promise<preset.WorkflowPreset[]> {
-        return preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
+        const userPresets = preset.userWorkflowPresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.workflowPresets(this.folderPath);
     }
 
     async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
@@ -1594,8 +1601,28 @@ export class PresetsController implements vscode.Disposable {
         setFile(presetsFile.packagePresets);
     }
 
-    private async mergeIncludeFiles(presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Set<string>): Promise<void> {
-        if (!presetsFile || !presetsFile.include) {
+    private async mergeIncludeFiles(presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Map<string, preset.PresetsFile | undefined>): Promise<void> {
+        if (!presetsFile) {
+            return;
+        }
+
+        // CMakeUserPresets.json file should include CMakePresets.json file, by default.
+        if (this.presetsFileExist && file === this.userPresetsPath) {
+            presetsFile.include = presetsFile.include || [];
+            const filteredIncludes = presetsFile.include.filter(include => {
+                // Ensuring that we handle expansions. Duplicated from loop below.
+                const includePath = presetsFile.version >= 7 ?
+                // Version 7 and later support $penv{} expansions in include paths
+                    substituteAll(include, getParentEnvSubstitutions(include, new Map<string, string>())).result :
+                    include;
+                path.normalize(path.resolve(path.dirname(file), includePath)) === this.presetsPath;
+            });
+            if (filteredIncludes.length === 0) {
+                presetsFile.include.push(this.presetsPath);
+            }
+        }
+
+        if (!presetsFile.include) {
             return;
         }
 
@@ -1610,10 +1637,33 @@ export class PresetsController implements vscode.Disposable {
 
             // Do not include files more than once
             if (referencedFiles.has(fullIncludePath)) {
+                const referencedIncludeFile = referencedFiles.get(fullIncludePath);
+                if (referencedIncludeFile) {
+                    if (referencedIncludeFile.configurePresets) {
+                        presetsFile.configurePresets = lodash.unionWith(referencedIncludeFile.configurePresets, presetsFile.configurePresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.buildPresets) {
+                        presetsFile.buildPresets = lodash.unionWith(referencedIncludeFile.buildPresets, presetsFile.buildPresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.testPresets) {
+                        presetsFile.testPresets = lodash.unionWith(referencedIncludeFile.testPresets, presetsFile.testPresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.packagePresets) {
+                        presetsFile.packagePresets = lodash.unionWith(referencedIncludeFile.packagePresets, presetsFile.packagePresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.workflowPresets) {
+                        presetsFile.workflowPresets = lodash.unionWith(referencedIncludeFile.workflowPresets, presetsFile.workflowPresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.cmakeMinimumRequired) {
+                        if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, referencedIncludeFile.cmakeMinimumRequired)) {
+                            presetsFile.cmakeMinimumRequired = referencedIncludeFile.cmakeMinimumRequired;
+                        }
+                    }
+                }
                 continue;
             }
             // Record the file as referenced, even if the file does not exist.
-            referencedFiles.add(fullIncludePath);
+            referencedFiles.set(fullIncludePath, undefined);
 
             const includeFileBuffer = await this.readPresetsFile(fullIncludePath);
             if (!includeFileBuffer) {
@@ -1622,6 +1672,7 @@ export class PresetsController implements vscode.Disposable {
             }
 
             let includeFile = await this.parsePresetsFile(includeFileBuffer, fullIncludePath);
+            referencedFiles.set(fullIncludePath, includeFile);
             includeFile = await this.validatePresetsFile(includeFile, fullIncludePath);
             if (!includeFile) {
                 continue;
@@ -1634,19 +1685,19 @@ export class PresetsController implements vscode.Disposable {
             await this.mergeIncludeFiles(includeFile, fullIncludePath, referencedFiles);
 
             if (includeFile.configurePresets) {
-                presetsFile.configurePresets = includeFile.configurePresets.concat(presetsFile.configurePresets || []);
+                presetsFile.configurePresets = lodash.unionWith(includeFile.configurePresets, presetsFile.configurePresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.buildPresets) {
-                presetsFile.buildPresets = includeFile.buildPresets.concat(presetsFile.buildPresets || []);
+                presetsFile.buildPresets = lodash.unionWith(includeFile.buildPresets, presetsFile.buildPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.testPresets) {
-                presetsFile.testPresets = includeFile.testPresets.concat(presetsFile.testPresets || []);
+                presetsFile.testPresets = lodash.unionWith(includeFile.testPresets, presetsFile.testPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.packagePresets) {
-                presetsFile.packagePresets = includeFile.packagePresets.concat(presetsFile.packagePresets || []);
+                presetsFile.packagePresets = lodash.unionWith(includeFile.packagePresets, presetsFile.packagePresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.workflowPresets) {
-                presetsFile.workflowPresets = includeFile.workflowPresets.concat(presetsFile.workflowPresets || []);
+                presetsFile.workflowPresets = lodash.unionWith(includeFile.workflowPresets, presetsFile.workflowPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.cmakeMinimumRequired) {
                 if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {

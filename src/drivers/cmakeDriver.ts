@@ -4,6 +4,7 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
@@ -1570,15 +1571,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             };
             if (this.useCMakePresets && this.workspaceFolder) {
                 const configurePresets = preset.configurePresets(this.workspaceFolder);
-                const userConfigurePresets = preset.userConfigurePresets(this.workspaceFolder);
+                const userConfigurePresets = lodash.differenceWith(preset.userConfigurePresets(this.workspaceFolder), configurePresets, (a, b) => a.name === b.name);
                 const buildPresets = preset.buildPresets(this.workspaceFolder);
-                const userBuildPresets = preset.userBuildPresets(this.workspaceFolder);
+                const userBuildPresets = lodash.differenceWith(preset.userBuildPresets(this.workspaceFolder), buildPresets, (a, b) => a.name === b.name);
                 const testPresets = preset.testPresets(this.workspaceFolder);
-                const userTestPresets = preset.userTestPresets(this.workspaceFolder);
+                const userTestPresets = lodash.differenceWith(preset.userTestPresets(this.workspaceFolder), testPresets, (a, b) => a.name === b.name);
                 const packagePresets = preset.packagePresets(this.workspaceFolder);
-                const userPackagePresets = preset.userPackagePresets(this.workspaceFolder);
+                const userPackagePresets = lodash.differenceWith(preset.userPackagePresets(this.workspaceFolder), packagePresets, (a, b) => a.name === b.name);
                 const workflowPresets = preset.workflowPresets(this.workspaceFolder);
-                const userWorkflowPresets = preset.userWorkflowPresets(this.workspaceFolder);
+                const userWorkflowPresets = lodash.differenceWith(preset.userWorkflowPresets(this.workspaceFolder), workflowPresets, (a, b) => a.name === b.name);
                 telemetryMeasures['ConfigurePresets'] = configurePresets.length;
                 telemetryMeasures['HiddenConfigurePresets'] = this.countHiddenPresets(configurePresets);
                 telemetryMeasures['UserConfigurePresets'] = userConfigurePresets.length;
