@@ -285,6 +285,8 @@ export class CMakeProject {
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             true,
+            true,
+            undefined,
             true);
 
         if (!expandedConfigurePreset) {

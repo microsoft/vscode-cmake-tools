@@ -192,9 +192,10 @@ export class PresetsController implements vscode.Disposable {
             // add the include files to the original presets file
             setPresetsPlusIncluded(this.folderPath, copyOfPresetsFile);
 
+            const copyAgain = lodash.cloneDeep(copyOfPresetsFile);
             // set the pre-expanded version so we can call expandPresetsFile on it
-            setExpandedPresets(this.folderPath, presetsFile);
-            presetsFile = await this.expandPresetsFile(presetsFile);
+            setExpandedPresets(this.folderPath, copyAgain);
+            presetsFile = await this.expandPresetsFile(copyAgain);
         }
 
         setExpandedPresets(this.folderPath, presetsFile);
@@ -1717,11 +1718,13 @@ export class PresetsController implements vscode.Disposable {
             return undefined;
         }
 
+        const clonedPresetsFile = lodash.cloneDeep(presetsFile);
+
         log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
         const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
-        const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
+        const expandedConfigurePresets = (await Promise.all((clonedPresetsFile?.configurePresets || []).map(async configurePreset =>
             preset.expandConfigurePreset(
                 this.folderPath,
                 configurePreset.name,
@@ -1732,7 +1735,7 @@ export class PresetsController implements vscode.Disposable {
                 expansionErrors)
         ))).filter(preset => preset !== null)  as preset.ConfigurePreset[];
 
-        const expandedBuildPresets = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
+        const expandedBuildPresets = (await Promise.all((clonedPresetsFile?.buildPresets || []).map(async buildPreset =>
             preset.expandBuildPreset(
                 this.folderPath,
                 buildPreset.name,
@@ -1746,7 +1749,7 @@ export class PresetsController implements vscode.Disposable {
                 expansionErrors)
         ))).filter(preset => preset !== null) as preset.BuildPreset[];
 
-        const expandedPackagePresets = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
+        const expandedPackagePresets = (await Promise.all((clonedPresetsFile?.packagePresets || []).map(async packagePreset =>
             preset.expandPackagePreset(
                 this.folderPath,
                 packagePreset.name,
@@ -1759,7 +1762,7 @@ export class PresetsController implements vscode.Disposable {
                 expansionErrors)
         ))).filter(preset => preset !== null) as preset.PackagePreset[];
 
-        const expandedTestPresets = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
+        const expandedTestPresets = (await Promise.all((clonedPresetsFile?.testPresets || []).map(async testPreset =>
             preset.expandTestPreset(
                 this.folderPath,
                 testPreset.name,
@@ -1772,7 +1775,7 @@ export class PresetsController implements vscode.Disposable {
                 expansionErrors)
         ))).filter(preset => preset !== null) as preset.TestPreset[];
 
-        const expandedWorkflowPresets = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
+        const expandedWorkflowPresets = (await Promise.all((clonedPresetsFile?.workflowPresets || []).map(async workflowPreset =>
             preset.expandWorkflowPreset(
                 this.folderPath,
                 workflowPreset.name,
@@ -1786,7 +1789,7 @@ export class PresetsController implements vscode.Disposable {
 
         if (expansionErrors.errorList.length > 0) {
             log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
-            await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
+            await this.reportPresetsFileErrors(clonedPresetsFile.__path, expansionErrors);
             return undefined;
         } else {
             log.info(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
@@ -1800,7 +1803,7 @@ export class PresetsController implements vscode.Disposable {
             presetsFile.workflowPresets = expandedWorkflowPresets;
 
             // clear out the errors since there are none now
-            collections.presets.set(vscode.Uri.file(presetsFile.__path || ""), undefined);
+            collections.presets.set(vscode.Uri.file(clonedPresetsFile.__path || ""), undefined);
 
             return presetsFile;
         }

@@ -511,8 +511,8 @@ export function setExpandedUserPresetsFile(folder: string, presets: PresetsFile 
 }
 
 export function minCMakeVersion(folder: string) {
-    const min1 = expandedPresets.get(folder)?.cmakeMinimumRequired;
-    const min2 = expandedUserPresets.get(folder)?.cmakeMinimumRequired;
+    const min1 = presetsPlusIncluded.get(folder)?.cmakeMinimumRequired;
+    const min2 = presetsPlusIncluded.get(folder)?.cmakeMinimumRequired;
     if (!min1) {
         return min2;
     }
@@ -716,7 +716,7 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset | PackagePreset, penvOverride?: EnvironmentWithNull, includeGenerator: boolean = true) {
+async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset | PackagePreset, envOverride?: EnvironmentWithNull, penvOverride?: EnvironmentWithNull, includeGenerator: boolean = true) {
     const generator = includeGenerator ? 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined) : undefined;
@@ -735,7 +735,7 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
             sourceDirName: path.basename(sourceDir),
             presetName: preset.name
         },
-        envOverride: preset.environment,
+        envOverride: envOverride ?? preset.environment,
         penvOverride: penvOverride,
         recursive: true,
         // Don't support commands since expansion might be called on activation. If there is
@@ -1096,8 +1096,7 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string
  * on top of process.env is when we are setting that configure preset and re-doing the expansion.
  * @param errorHandler is optional, and is used to collect expansion errors to show in the Problems Panel.
  */
-export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
-
+export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = false, errorHandler?: ExpansionErrorHandler, applyParentEnvironment: boolean = false): Promise<ConfigurePreset | null> {
     // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
     const refs = referencedConfigurePresets.get(folder);
     if (!refs) {
@@ -1116,7 +1115,7 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
         await tryApplyVsDevEnv(preset, workspaceFolder, sourceDir);
     }
 
-    const expandedPreset = await expandConfigurePresetVariables(preset, folder, name, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler);
+    const expandedPreset = await expandConfigurePresetVariables(preset, folder, name, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler, applyParentEnvironment);
 
     errorHandlerHelper(preset.name, errorHandler);
 
@@ -1228,17 +1227,17 @@ async function expandConfigurePresetHelper(folder: string, preset: ConfigurePres
     return preset;
 }
 
-export async function expandConfigurePresetVariables(preset: ConfigurePreset, folder: string, name: string,  workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset> {
+export async function expandConfigurePresetVariables(preset: ConfigurePreset, folder: string, name: string,  workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler, applyParentEnvironment: boolean = false): Promise<ConfigurePreset> {
 
     // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
     // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
     // NOTE: Based on logic in `tryApplyVsDevEnv`, `preset.__parentEnvironment` should never be undefined at this point.
-    preset.environment = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
+    const env = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
 
     // Expand strings under the context of current preset, also, pass preset.__parentEnvironment as a penvOverride so we include devenv if present.
     // `preset.__parentEnvironment` is allowed to be undefined here because in expansion, it will default to process.env.
     const expandedPreset: ConfigurePreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, preset.__parentEnvironment);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, env, preset.__parentEnvironment);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
@@ -1248,6 +1247,10 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
                 expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts, errorHandler);
             }
         }
+    }
+
+    if (applyParentEnvironment) {
+        expandedPreset.environment = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
     }
 
     expansionOpts.envOverride = expandedPreset.environment;
@@ -1489,6 +1492,8 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
         return null;
     }
 
+    const env = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
+
     // Expand strings under the context of current preset
     const expandedPreset: BuildPreset = { name };
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
@@ -1502,6 +1507,8 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
             }
         }
     }
+
+    expandedPreset.environment = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
 
     expansionOpts.envOverride = expandedPreset.environment;
 
@@ -1853,7 +1860,7 @@ export async function expandPackagePreset(folder: string, name: string, workspac
 
     const expandedPreset: PackagePreset = { name };
     // Package presets cannot expand the macro ${generator} so this can't be included in opts
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, undefined, false);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, undefined, undefined, false);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
