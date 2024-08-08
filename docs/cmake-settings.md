@@ -8,6 +8,8 @@ Options that support substitution, in the table below, allow variable references
 
 |Setting  |Description | Default value | Supports substitution |
 |---------|---------|---------|-----|
+| `cmake.enabled`| If 'false', CMake Tools skips the workspace, can be set at folder level. E.g. Skip folders that do not use CMake | 'true' | no |
+| `cmake.ignoreCMakeListsMissing`| If 'true', CMake Tools ignores missing CMakeLists.txt | 'false' | no |
 | `cmake.autoSelectActiveFolder`| If 'false', your active folder only changes if you manually run the `CMake: Select Active Folder` command. | 'true' | no |
 | `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |

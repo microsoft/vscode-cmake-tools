@@ -153,6 +153,7 @@ export interface OptionConfig {
 }
 
 export interface ExtensionConfigurationSettings {
+    enabled: boolean;
     autoSelectActiveFolder: boolean;
     cmakePath: string;
     buildDirectory: string;
@@ -319,6 +320,9 @@ export class ConfigurationReader implements vscode.Disposable {
             return '${sourceDirectory}/build';
         }
         return this.configData.buildDirectory;
+    }
+    get enabled(): boolean {
+        return this.configData.enabled;
     }
     get installPrefix(): string | null {
         return this.configData.installPrefix;
@@ -563,6 +567,7 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
+        enabled: new vscode.EventEmitter<boolean>(),
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         cmakePath: new vscode.EventEmitter<string>(),
         buildDirectory: new vscode.EventEmitter<string>(),

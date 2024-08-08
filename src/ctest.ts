@@ -1151,11 +1151,7 @@ export class CTestDriver implements vscode.Disposable {
 
             if (this.projectController) {
                 for (const project of this.projectController.getAllCMakeProjects()) {
-                    const folderPath = util.platformNormalizePath(project.sourceDir);
-                    const folderName = path.basename(project.sourceDir);
-                    const testItem = testExplorer.createTestItem(folderPath, folderName);
-                    testItem.description = folderPath;
-                    testExplorer.items.add(testItem);
+                    this.addTestExplorerRoot(project.sourceDir);
                 }
             }
 
@@ -1195,8 +1191,11 @@ export class CTestDriver implements vscode.Disposable {
             return;
         }
 
-        const normalizedFolder = util.platformNormalizePath(folder);
-        testExplorer.items.add(testExplorer.createTestItem(normalizedFolder, normalizedFolder));
+        const folderPath = util.platformNormalizePath(folder);
+        const folderName = path.basename(folder);
+        const testItem = testExplorer.createTestItem(folderPath, folderName);
+        testItem.description = folderPath;
+        testExplorer.items.add(testItem);
     }
 
     removeTestExplorerRoot(folder: string) {
