@@ -271,23 +271,32 @@ export class CMakeProject {
         }
         log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
 
-        // We want to use the original unexpanded preset file to apply the dev env in expandConfigurePreset
+        // Need to double check this preset is valid - We want to use the original unexpanded preset file to apply the dev env in expandConfigurePreset
         // we have to first check if the preset is valid in expandedPresets since we won't be expanding the whole file here, only the path up for this preset
         if (!preset.getPresetByName(preset.configurePresets(this.folderPath), configurePreset) && !preset.getPresetByName(preset.userConfigurePresets(this.folderPath), configurePreset)) {
             return undefined;
         }
 
-        // TODO: move applyDevEnv here to decouple from expandConfigurePreset
+        const workspaceFolder = lightNormalizePath(this.folderPath || '.');
+        let expandedConfigurePreset: preset.ConfigurePreset | undefined;
 
-        // modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
-        const expandedConfigurePreset = await preset.expandConfigurePreset(this.folderPath,
-            configurePreset,
-            lightNormalizePath(this.folderPath || '.'),
-            this.sourceDir,
-            true,
-            true,
-            undefined,
-            true);
+        const presetInherits = await preset.getConfigurePresetInherits(this.folderPath, configurePreset, true, true, undefined);
+        if (presetInherits) {
+            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
+            await preset.tryApplyVsDevEnv(presetInherits, workspaceFolder, this._sourceDir);
+
+            expandedConfigurePreset = await preset.expandConfigurePresetVariables(
+                presetInherits,
+                this.folderPath,
+                presetInherits.name,
+                workspaceFolder,
+                this.sourceDir,
+                true,
+                true,
+                undefined,
+                true
+            );
+        }
 
         if (!expandedConfigurePreset) {
             log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));

@@ -1003,7 +1003,7 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
  * @param sourceDir The source dir of the CMake project.
  * @returns Void. We don't return as we are modifying the preset by reference.
  */
-async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<void> {
+export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<void> {
     const useVsDeveloperEnvironmentMode = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get("useVsDeveloperEnvironment") as UseVsDeveloperEnvironment;
     if (useVsDeveloperEnvironmentMode === "never") {
         return;
@@ -1097,15 +1097,8 @@ async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string
  * @param errorHandler is optional, and is used to collect expansion errors to show in the Problems Panel.
  */
 export async function expandConfigurePreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = false, errorHandler?: ExpansionErrorHandler, applyParentEnvironment: boolean = false): Promise<ConfigurePreset | null> {
-    // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
-    const refs = referencedConfigurePresets.get(folder);
-    if (!refs) {
-        referencedConfigurePresets.set(folder, new Set());
-    } else {
-        refs.clear();
-    }
 
-    const preset = await getConfigurePresetInheritsImpl(folder, name, allowUserPreset, enableTryApplyDevEnv, errorHandler);
+    const preset = await getConfigurePresetInherits(folder, name, allowUserPreset, false, errorHandler);
     if (!preset) {
         return null;
     }
@@ -1117,11 +1110,6 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
 
     const expandedPreset = await expandConfigurePresetVariables(preset, folder, name, workspaceFolder, sourceDir, allowUserPreset, enableTryApplyDevEnv, errorHandler, applyParentEnvironment);
 
-    errorHandlerHelper(preset.name, errorHandler);
-
-    // Other fields can be copied by reference for simplicity
-    merge(expandedPreset, preset);
-
     return expandedPreset;
 }
 
@@ -1130,6 +1118,26 @@ export async function expandConfigurePreset(folder: string, name: string, worksp
  * calling configurePresets() or userConfigurePresets(). Getting the presets plus included map is useful on Select Preset when we want to be able to
  * apply the Vs Dev Env to the preset and want the entire list of unexpanded presets, including the inlcuded presets.
  */
+export async function getConfigurePresetInherits(folder: string, name: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset | null> {
+    // TODO: We likely need to refactor to include these refs, for configure, build, test, etc Presets.
+    const refs = referencedConfigurePresets.get(folder);
+    if (!refs) {
+        referencedConfigurePresets.set(folder, new Set());
+    } else {
+        refs.clear();
+    }
+
+    const preset = await getConfigurePresetInheritsImpl(folder, name, allowUserPreset, usePresetsPlusIncluded, errorHandler);
+
+    if (!preset) {
+        return null;
+    }
+
+    errorHandlerHelper(preset.name, errorHandler);
+
+    return preset;
+}
+
 async function getConfigurePresetInheritsImpl(folder: string, name: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: ConfigurePreset): Promise<ConfigurePreset | null> {
     let preset = getPresetByName(configurePresets(folder, usePresetsPlusIncluded), name);
     if (preset) {
@@ -1309,6 +1317,11 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
     if (preset.vendor) {
         await getVendorForConfigurePreset(folder, expandedPreset.name, sourceDir, workspaceFolder, allowUserPreset, usePresetsPlusIncluded, errorHandler);
     }
+
+    errorHandlerHelper(preset.name, errorHandler);
+
+    // Other fields can be copied by reference for simplicity
+    merge(expandedPreset, preset);
 
     return expandedPreset;
 }
