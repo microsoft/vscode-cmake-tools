@@ -13,7 +13,7 @@ Improvements:
 - Resolve diagnostics files relative to workspace and build directory, fixes [#1401](https://github.com/microsoft/vscode-cmake-tools/issues/1401) [@fargies](https://github.com/fargies)
 - Add setting to only show the cmake log on target failure. [#3785](https://github.com/microsoft/vscode-cmake-tools/pull/3785) [@stepeos](https://github.com/stepeos)
 - Preset expansion occurs on `CMakePresets.json` or `CMakeUserPresets.json` save, and if there are no errors the expanded presets are cached. The VS Developer Environment will only be applied to a preset if it is selected. Expansion errors will show in the problems panel and preset files with errors will be invalid, and any presets they contain cannot be used. [#3905](https://github.com/microsoft/vscode-cmake-tools/pull/3905)
-- Remove pop-ups asking to configure, default `cmake.configureOnOpen` to `true`.
+- Remove pop-ups asking to configure, default `cmake.configureOnOpen` to `true`. [#3967](https://github.com/microsoft/vscode-cmake-tools/pull/3967)
 
 Bug Fixes:
 
