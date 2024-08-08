@@ -1487,7 +1487,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
     return null;
 }
 
-export async function expandBuildPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, parallelJobs?: number, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<BuildPreset | null> {
+export async function expandBuildPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, parallelJobs?: number, preferredGeneratorName?: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler, applyParentEnvironment: boolean = false): Promise<BuildPreset | null> {
     const refs = referencedBuildPresets.get(folder);
     if (!refs) {
         referencedBuildPresets.set(folder, new Set());
@@ -1500,7 +1500,7 @@ export async function expandBuildPreset(folder: string, name: string, workspaceF
         return null;
     }
 
-    const expandedPreset = await expandBuildPresetVariables(preset, name, workspaceFolder, sourceDir, errorHandler);
+    const expandedPreset = await expandBuildPresetVariables(preset, name, workspaceFolder, sourceDir, errorHandler, applyParentEnvironment);
 
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
@@ -1619,18 +1619,18 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
         }
     }
 
-    preset.environment = EnvironmentUtils.mergePreserveNull([process.env, inheritedEnv, preset.environment]);
+    preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
 
     preset.__expanded = true;
     return preset;
 }
 
-async function expandBuildPresetVariables(preset: BuildPreset, name: string, workspaceFolder: string, sourceDir: string, errorHandler?: ExpansionErrorHandler): Promise<BuildPreset> {
+async function expandBuildPresetVariables(preset: BuildPreset, name: string, workspaceFolder: string, sourceDir: string, errorHandler?: ExpansionErrorHandler, applyParentEnvironment: boolean = false): Promise<BuildPreset> {
     const env = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
 
     // Expand strings under the context of current preset
     const expandedPreset: BuildPreset = { name };
-    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, env, preset.__parentEnvironment);
 
     // Expand environment vars first since other fields may refer to them
     if (preset.environment) {
@@ -1642,7 +1642,9 @@ async function expandBuildPresetVariables(preset: BuildPreset, name: string, wor
         }
     }
 
-    expandedPreset.environment = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
+    if (applyParentEnvironment) {
+        expandedPreset.environment = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
+    }
 
     expansionOpts.envOverride = expandedPreset.environment;
 
