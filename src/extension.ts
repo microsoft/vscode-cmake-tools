@@ -598,11 +598,11 @@ export class ExtensionManager implements vscode.Disposable {
 
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
         if (!project.hasCMakeLists()) {
-            if (shouldConfigure === true && hascmakelists) {
+            if (shouldConfigure && hascmakelists) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             }
         } else {
-            if (shouldConfigure === true) {
+            if (shouldConfigure) {
                 // We've opened a new workspace folder, and the user wants us to
                 // configure it now.
                 log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', project.folderPath));
