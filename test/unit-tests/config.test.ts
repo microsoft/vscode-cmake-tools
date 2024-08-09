@@ -47,7 +47,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         mergedCompileCommands: null,
         copyCompileCommands: null,
         loadCompileCommands: true,
-        configureOnOpen: null,
+        configureOnOpen: true,
         configureOnEdit: true,
         deleteBuildDirOnCleanConfigure: false,
         skipConfigureIfCachePresent: null,

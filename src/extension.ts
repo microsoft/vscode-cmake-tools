@@ -594,62 +594,15 @@ export class ExtensionManager implements vscode.Disposable {
             vscode.workspace.workspaceFolders[0] === rootFolder &&
             await scanForKitsIfNeeded(project);
 
-        let shouldConfigure = project?.workspaceContext.config.configureOnOpen;
+        const shouldConfigure = project?.workspaceContext.config.configureOnOpen;
 
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
-        if (shouldConfigure === null && !util.isTestMode() && hascmakelists) {
-            interface Choice1 {
-                title: string;
-                doConfigure: boolean;
-            }
-            const chosen = await vscode.window.showInformationMessage<Choice1>(
-                localize('configure.this.project', 'Would you like to configure project {0}?', `"${rootFolder.name}"`),
-                {},
-                { title: localize('yes.button', 'Yes'), doConfigure: true },
-                { title: localize('not.now.button', 'Not now'), doConfigure: false }
-            );
-            if (!chosen) {
-                // User cancelled.
-                shouldConfigure = null;
-            } else {
-                const persistMessage = chosen.doConfigure ?
-                    localize('always.configure.on.open', 'Always configure projects upon opening?') :
-                    localize('never.configure.on.open', 'Configure projects on opening?');
-                const buttonMessages = chosen.doConfigure ?
-                    [localize('yes.button', 'Yes'), localize('no.button', 'No')] :
-                    [localize('never.button', 'Never'), localize('never.for.this.workspace.button', 'Not this workspace')];
-                interface Choice2 {
-                    title: string;
-                    persistMode: 'user' | 'workspace';
-                }
-                // Try to persist the user's selection to a `settings.json`
-                const prompt = vscode.window.showInformationMessage<Choice2>(
-                    persistMessage,
-                    {},
-                    { title: buttonMessages[0], persistMode: 'user' },
-                    { title: buttonMessages[1], persistMode: 'workspace' })
-                    .then(async choice => {
-                        if (!choice) {
-                            // Use cancelled. Do nothing.
-                            return;
-                        }
-                        const config = vscode.workspace.getConfiguration(undefined, rootFolder.uri);
-                        let configTarget = vscode.ConfigurationTarget.Global;
-                        if (choice.persistMode === 'workspace') {
-                            configTarget = vscode.ConfigurationTarget.WorkspaceFolder;
-                        }
-                        await config.update('cmake.configureOnOpen', chosen.doConfigure, configTarget);
-                    });
-                rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, prompt);
-                shouldConfigure = chosen.doConfigure;
-            }
-        }
         if (!project.hasCMakeLists()) {
-            if (shouldConfigure === true && hascmakelists) {
+            if (shouldConfigure && hascmakelists) {
                 await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
             }
         } else {
-            if (shouldConfigure === true) {
+            if (shouldConfigure) {
                 // We've opened a new workspace folder, and the user wants us to
                 // configure it now.
                 log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', project.folderPath));
