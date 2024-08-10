@@ -280,19 +280,6 @@ suite('Diagnostics', () => {
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
-    test('Parsing linker error in french', () => {
-        const lines = ['/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »'];
-        feedLines(build_consumer, [], lines);
-        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
-        const diag = build_consumer.compilers.gcc.diagnostics[0];
-
-        expect(diag.location.start.line).to.eq(8);
-        expect(diag.message).to.eq('référence indéfinie vers « create_automaton_product56 »');
-        expect(diag.file).to.eq('/home/romain/TL/test/test_fa_tp4.c');
-        expect(diag.severity).to.eq('error');
-        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
-        expect(path.posix.isAbsolute(diag.file)).to.be.true;
-    });
     test('Parsing GHS Diagnostics', () => {
         const lines = [
             '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): warning #68-D: integer conversion resulted in a change of sign'

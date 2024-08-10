@@ -20,45 +20,9 @@ const regexPatterns: RegexPattern[] = [
         regexPattern: /^(?:(.*):(\d+):(\d+):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Column, MatchType.Severity, MatchType.Message]
     },
-    {   // path/to/ld[.exe]:path/to/file:line: warning: memory region ... not declared
-        regexPattern: /^(?:(?:(?:.*ld\:)|(?:.*ld\.exe\:))(.*):(\d+):)\s+(.*): (memory region .* not declared)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
-    },
-    {   // path/to/ld[.exe]:path/to/file:line: syntax error
-        regexPattern: /^(?:(?:(?:.*ld\:)|(?:.*ld\.exe\:))(.*):(\d+):) (syntax error)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
-    },
-    {   // path/to/ld.exe: severity: message
-        regexPattern: /^(?:(.*ld\.exe):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
-    },
-    {   // path/to/ld: severity: message
-        regexPattern: /^(?:(.*ld):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
-    },
-    {   // path/to/ld.exe: message
-        regexPattern: /^(?:(.*ld\.exe):)\s+(.*[^:]$)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
-    },
-    {   // path/to/ld: message
-        regexPattern: /^(?:(.*ld):)\s+(.*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
-    },
     {   // path/to/file:line: severity: message
         regexPattern: /^(?:(.*):(\d+):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
-    },
-    {   // path/to/file:line: undefined reference to
-        regexPattern: /^(?:(.*):(\d+):)\s+(undefined reference to .*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
-    },
-    {   // path/to/file: ... section ... will not fit in region ...
-        regexPattern: /^(.*): ((?:.*) .*section.* (?:.*) .*will not fit in region.*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
-    },
-    {   // path/to/file:line: multiple definition of ... first defined here
-        regexPattern: /^(?:(.*):(\d+):)\s+(multiple definition of .* first defined here)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     },
     {   // path/to/cc1.exe: severity: message
         regexPattern: /^(?:(.*cc1\.exe):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
