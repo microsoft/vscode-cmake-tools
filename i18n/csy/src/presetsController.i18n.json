@@ -132,5 +132,6 @@
 	"use.kits.variants": "Používat sady a varianty",
 	"edit.presets": "Vyhledat",
 	"presets.version.error": "CMakePresets verze 1 se nepodporuje. Jak chcete pokračovat?",
-	"failed.writing.to.file": "Nepovedlo se zapisovat do souboru {0}."
+	"failed.writing.to.file": "Nepovedlo se zapisovat do souboru {0}.",
+	"failed.to.watch": "Pro {0} se nepovedlo vytvořit sledovací proces: {1}"
 }

@@ -4,10 +4,11 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
-import { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
+import { ConfigureCancelInformation, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
@@ -1038,7 +1039,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Perform a clean configure. Deletes cached files before running the config
      * @param consumer The output consumer
      */
-    public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
+    public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
         if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return { result: -1, resultType: ConfigureResultType.ForcedCancel };
@@ -1051,7 +1052,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         await this.doPreCleanConfigure();
         this.isConfigInProgress = false;
 
-        return this.configure(trigger, extra_args, consumer, debuggerInformation);
+        return this.configure(trigger, extra_args, consumer, cancelInformation, debuggerInformation);
     }
 
     async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp, captureGroup: number): Promise<string | undefined> {
@@ -1425,7 +1426,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<ConfigureResult> {
+    // The `cancelInformation` parameter is an object that allows for passing the `cancelled` field to be modified by reference. This allows us to better understand if a user
+    // manually cancelled the configure process.
+    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation, debuggerInformation?: DebuggerInformation, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<ConfigureResult> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
@@ -1568,15 +1571,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             };
             if (this.useCMakePresets && this.workspaceFolder) {
                 const configurePresets = preset.configurePresets(this.workspaceFolder);
-                const userConfigurePresets = preset.userConfigurePresets(this.workspaceFolder);
+                const userConfigurePresets = lodash.differenceWith(preset.userConfigurePresets(this.workspaceFolder), configurePresets, (a, b) => a.name === b.name);
                 const buildPresets = preset.buildPresets(this.workspaceFolder);
-                const userBuildPresets = preset.userBuildPresets(this.workspaceFolder);
+                const userBuildPresets = lodash.differenceWith(preset.userBuildPresets(this.workspaceFolder), buildPresets, (a, b) => a.name === b.name);
                 const testPresets = preset.testPresets(this.workspaceFolder);
-                const userTestPresets = preset.userTestPresets(this.workspaceFolder);
+                const userTestPresets = lodash.differenceWith(preset.userTestPresets(this.workspaceFolder), testPresets, (a, b) => a.name === b.name);
                 const packagePresets = preset.packagePresets(this.workspaceFolder);
-                const userPackagePresets = preset.userPackagePresets(this.workspaceFolder);
+                const userPackagePresets = lodash.differenceWith(preset.userPackagePresets(this.workspaceFolder), packagePresets, (a, b) => a.name === b.name);
                 const workflowPresets = preset.workflowPresets(this.workspaceFolder);
-                const userWorkflowPresets = preset.userWorkflowPresets(this.workspaceFolder);
+                const userWorkflowPresets = lodash.differenceWith(preset.userWorkflowPresets(this.workspaceFolder), workflowPresets, (a, b) => a.name === b.name);
                 telemetryMeasures['ConfigurePresets'] = configurePresets.length;
                 telemetryMeasures['HiddenConfigurePresets'] = this.countHiddenPresets(configurePresets);
                 telemetryMeasures['UserConfigurePresets'] = userConfigurePresets.length;
@@ -1618,6 +1621,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             }
 
+            telemetryProperties.Canceled = cancelInformation?.canceled ? "true" : "false";
             telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
             return { result: retc, resultType: ConfigureResultType.NormalOperation };

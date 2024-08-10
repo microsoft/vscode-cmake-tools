@@ -69,4 +69,9 @@ suite('Preset include functionality', () => {
         const result = await testEnv.result.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(100000);
+
+    test('Configure CMakeUserPreset inheriting from CMakePreset', async function (this: Mocha.Context) {
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', 'TestInheritFromPreset');
+        expect(await vscode.commands.executeCommand('cmake.showConfigureCommand')).to.be.eq(0);
+    }).timeout(100000);
 });
