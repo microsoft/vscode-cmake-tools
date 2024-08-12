@@ -2502,6 +2502,17 @@ export class CMakeProject {
     }
 
     /**
+     * Implementation of `cmake.launchTargetName`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     */
+    async launchTargetName(): Promise<string | null> {
+        const targetPath = await this.launchTargetPath();
+        if (targetPath === null) {
+            return null;
+        }
+        return path.parse(targetPath).name;
+    }
+
+    /**
      * Implementation of `cmake.getLaunchTargetPath`. This does not ensure the target exists.
      */
     async getLaunchTargetPath(): Promise<string | null> {
@@ -2545,6 +2556,17 @@ export class CMakeProject {
             return null;
         }
         return path.basename(targetPath);
+    }
+
+    /**
+     * Implementation of `cmake.getLaunchTargetName`. This does not ensure the target exists.
+     */
+    async getLaunchTargetName(): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath();
+        if (targetPath === null) {
+            return null;
+        }
+        return path.parse(targetPath).name;
     }
 
     /**
