@@ -387,7 +387,10 @@ export class CMakeProject {
             this.workspaceContext.config.parallelJobs,
             this.getPreferredGeneratorName(),
             true,
-            this.configurePreset?.name);
+            this.configurePreset?.name,
+            true,
+            undefined,
+            true);
         if (!expandedBuildPreset) {
             log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
             return undefined;
@@ -460,7 +463,10 @@ export class CMakeProject {
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
-            this.configurePreset?.name);
+            this.configurePreset?.name,
+            true,
+            undefined,
+            true);
         if (!expandedTestPreset) {
             log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
             return undefined;
@@ -537,7 +543,10 @@ export class CMakeProject {
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
-            this.configurePreset?.name);
+            this.configurePreset?.name,
+            true,
+            undefined,
+            true);
         if (!expandedPackagePreset) {
             log.error(localize('failed.resolve.package.preset', 'Failed to resolve package preset: {0}', packagePreset));
             return undefined;
