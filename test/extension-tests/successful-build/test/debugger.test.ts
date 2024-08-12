@@ -62,6 +62,15 @@ suite('Debug/Launch interface', () => {
         expect(await cmakeProject.launchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
     });
 
+    test('Test launchTargetNameForSubstitution for use in other extensions or launch.json', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
+
+        expect(await cmakeProject.launchTargetNameForSubstitution()).to.be.eq(path.parse(executablesTargets[0].path).name);
+    });
+
     test('Test getLaunchTargetPath for use in other extensions or launch.json', async () => {
         const executablesTargets = await cmakeProject.executableTargets;
         expect(executablesTargets.length).to.be.not.eq(0);
@@ -87,6 +96,15 @@ suite('Debug/Launch interface', () => {
         await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
 
         expect(await cmakeProject.getLaunchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
+    });
+
+    test('Test getLaunchTargetName for use in other extensions or launch.json', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
+
+        expect(await cmakeProject.getLaunchTargetName()).to.be.eq(path.parse(executablesTargets[0].path).name);
     });
 
     test('Test build on launch (default)', async () => {
@@ -271,4 +289,3 @@ suite('Debug/Launch interface', () => {
         await new Promise((resolve) => setTimeout(resolve, 3000));
     }).timeout(60000);
 });
-
