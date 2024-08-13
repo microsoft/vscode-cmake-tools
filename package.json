@@ -2576,7 +2576,7 @@
         },
         "cmake.configureOnOpen": {
           "type": "boolean",
-          "default": null,
+          "default": true,
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
           "scope": "resource",
           "tags": [
