@@ -116,7 +116,7 @@ export interface DiagnosticsConfiguration {
 export interface DiagnosticsSettings {
     communicationMode: CMakeCommunicationMode;
     useCMakePresets: UseCMakePresets;
-    configureOnOpen: boolean | null;
+    configureOnOpen: boolean;
 }
 
 export interface ConfigureCancelInformation {
@@ -3314,7 +3314,7 @@ export class CMakeProject {
         return {
             communicationMode: 'automatic',
             useCMakePresets: 'auto',
-            configureOnOpen: null
+            configureOnOpen: true
         };
     }
 
