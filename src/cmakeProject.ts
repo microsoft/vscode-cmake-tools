@@ -292,8 +292,6 @@ export class CMakeProject {
                 workspaceFolder,
                 this.sourceDir,
                 true,
-                true,
-                undefined,
                 true
             );
         }
@@ -464,8 +462,6 @@ export class CMakeProject {
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name,
-            true,
-            undefined,
             true);
         if (!expandedTestPreset) {
             log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
@@ -544,8 +540,6 @@ export class CMakeProject {
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name,
-            true,
-            undefined,
             true);
         if (!expandedPackagePreset) {
             log.error(localize('failed.resolve.package.preset', 'Failed to resolve package preset: {0}', packagePreset));
