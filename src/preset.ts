@@ -1045,6 +1045,7 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                     tempPreset.environment = EnvironmentUtils.mergePreserveNull([process.env, tempPreset.environment]);
                     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, tempPreset);
                     const presetEnv = tempPreset.environment;
+                    // TODO: we need to make sure we only expand relevant env vars not EVERY env var.
                     if (presetEnv) {
                         for (const key in presetEnv) {
                             if (presetEnv[key]) {
