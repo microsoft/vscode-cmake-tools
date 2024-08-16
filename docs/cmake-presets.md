@@ -212,9 +212,9 @@ Set the path to `vcpkg.cmake` with the `VCPKG_ROOT` environment variable in `CMa
  },
 ```
 
-`VCPKG_ROOT` should be set to the root of your vcpkg installation. For more information, see [vcpkg environment variables](https://github.com/microsoft/vcpkg/blob/master/docs/users/config-environment.md).
+`VCPKG_ROOT` should be set to the root of your vcpkg installation. For more information, see [vcpkg environment variables](https://learn.microsoft.com/en-us/vcpkg/users/config-environment#vcpkg_root).
 
-If you're already using a CMake toolchain file and want to enable vcpkg integration, see [Using multiple toolchain files](https://github.com/microsoft/vcpkg/blob/master/docs/users/integration.md#using-multiple-toolchain-files). Follow those instructions to use an external toolchain file with a project by using vcpkg.
+If you're already using a CMake toolchain file and want to enable vcpkg integration, see [Using multiple toolchain files](https://learn.microsoft.com/en-us/vcpkg/users/buildsystems/cmake-integration#using-multiple-toolchain-files). Follow those instructions to use an external toolchain file with a project by using vcpkg.
 
 ## Substitute commands in `launch.json` and `settings.json`
 

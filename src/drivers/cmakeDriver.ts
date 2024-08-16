@@ -1562,8 +1562,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 telemetryProperties.CppCompilerName = 'cl';
             }
 
-            if (this._kit?.visualStudioArchitecture) {
-                telemetryProperties.VisualStudioArchitecture = this._kit?.visualStudioArchitecture;
+            if (this.useCMakePresets) {
+                const arch = presetOverride ? presetOverride.__developerEnvironmentArchitecture : this._configurePreset ? this._configurePreset.__developerEnvironmentArchitecture : undefined;
+                if (arch) {
+                    telemetryProperties.VisualStudioArchitecture = arch;
+                }
+            } else {
+                if (this._kit?.visualStudioArchitecture) {
+                    telemetryProperties.VisualStudioArchitecture =
+                        this._kit?.visualStudioArchitecture;
+                }
             }
 
             const telemetryMeasures: telemetry.Measures = {
