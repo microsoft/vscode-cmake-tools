@@ -1563,6 +1563,7 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
         preset.environment = EnvironmentUtils.createPreserveNull();
     }
     let inheritedEnv = EnvironmentUtils.createPreserveNull();
+    let inheritedParentEnv = EnvironmentUtils.createPreserveNull();
 
     // Expand inherits
     if (preset.inherits) {
@@ -1574,6 +1575,7 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                inheritedParentEnv = EnvironmentUtils.mergePreserveNull([parent.__parentEnvironment, inheritedParentEnv]);
                 // Inherit other fields
                 let key: keyof BuildPreset;
                 for (key in parent) {
@@ -1588,34 +1590,42 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const configurePresetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, allowUserPreset, false, errorHandler);
-        if (!configurePresetInherits) {
-            return null;
-        }
+        let expandedConfigurePreset: ConfigurePreset | null = null;
         if (enableTryApplyDevEnv) {
+            const configurePresetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, allowUserPreset, true, errorHandler);
+            if (!configurePresetInherits) {
+                return null;
+            }
             await tryApplyVsDevEnv(configurePresetInherits, workspaceFolder, sourceDir);
+
+            expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
+                folder,
+                preset.configurePreset,
+                workspaceFolder,
+                sourceDir,
+                allowUserPreset,
+                enableTryApplyDevEnv,
+                errorHandler);
+        }  else {
+            expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
         }
-        const expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
-            folder,
-            preset.configurePreset,
-            workspaceFolder,
-            sourceDir,
-            allowUserPreset,
-            enableTryApplyDevEnv,
-            errorHandler);
         if (!expandedConfigurePreset) {
             return null;
         }
+
         preset.__binaryDir = expandedConfigurePreset.binaryDir;
         preset.__generator = expandedConfigurePreset.generator;
 
         if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
             inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, expandedConfigurePreset.environment]);
+            inheritedParentEnv = EnvironmentUtils.mergePreserveNull([inheritedParentEnv, expandedConfigurePreset.__parentEnvironment]);
         }
     }
 
-    // the preset.environment is applied after the configurePreset.environment and its gettting ALL of precoessenv
+    // the preset.environment is applied after the configurePreset.environment
+    // same for parentenv and its getting ALL of processenv
     preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
+    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([inheritedParentEnv, preset.__parentEnvironment]);
 
     preset.__expanded = true;
     return preset;
@@ -1744,6 +1754,7 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
         preset.environment = EnvironmentUtils.createPreserveNull();
     }
     let inheritedEnv = EnvironmentUtils.createPreserveNull();
+    let inheritedParentEnv = EnvironmentUtils.createPreserveNull();
 
     // Expand inherits
     if (preset.inherits) {
@@ -1755,6 +1766,7 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                inheritedParentEnv = EnvironmentUtils.mergePreserveNull([parent.__parentEnvironment, inheritedParentEnv]);
                 // Inherit other fields
                 let key: keyof TestPreset;
                 for (key in parent) {
@@ -1769,33 +1781,42 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const configurePresetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, allowUserPreset, false, errorHandler);
-        if (!configurePresetInherits) {
-            return null;
-        }
+        let expandedConfigurePreset: ConfigurePreset | null = null;
         if (enableTryApplyDevEnv) {
+            const configurePresetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, allowUserPreset, true, errorHandler);
+            if (!configurePresetInherits) {
+                return null;
+            }
             await tryApplyVsDevEnv(configurePresetInherits, workspaceFolder, sourceDir);
+
+            expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
+                folder,
+                preset.configurePreset,
+                workspaceFolder,
+                sourceDir,
+                allowUserPreset,
+                enableTryApplyDevEnv,
+                errorHandler);
+        }  else {
+            expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
         }
-        const expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
-            folder,
-            preset.configurePreset,
-            workspaceFolder,
-            sourceDir,
-            allowUserPreset,
-            enableTryApplyDevEnv,
-            errorHandler);
         if (!expandedConfigurePreset) {
             return null;
         }
+
         preset.__binaryDir = expandedConfigurePreset.binaryDir;
         preset.__generator = expandedConfigurePreset.generator;
 
         if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
             inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, expandedConfigurePreset.environment]);
+            inheritedParentEnv = EnvironmentUtils.mergePreserveNull([inheritedParentEnv, expandedConfigurePreset.__parentEnvironment]);
         }
     }
 
+    // the preset.environment is applied after the configurePreset.environment
+    // same for parentenv and its getting ALL of processenv
     preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
+    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([inheritedParentEnv, preset.__parentEnvironment]);
 
     preset.__expanded = true;
     return preset;
@@ -1962,6 +1983,7 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
         preset.environment = EnvironmentUtils.createPreserveNull();
     }
     let inheritedEnv = EnvironmentUtils.createPreserveNull();
+    let inheritedParentEnv = EnvironmentUtils.createPreserveNull();
 
     // Expand inherits
     if (preset.inherits) {
@@ -1973,6 +1995,7 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
             if (parent) {
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
+                inheritedParentEnv = EnvironmentUtils.mergePreserveNull([parent.__parentEnvironment, inheritedParentEnv]);
                 // Inherit other fields
                 let key: keyof PackagePreset;
                 for (key in parent) {
@@ -1987,33 +2010,42 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const configurePresetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, allowUserPreset, false, errorHandler);
-        if (!configurePresetInherits) {
-            return null;
-        }
+        let expandedConfigurePreset: ConfigurePreset | null = null;
         if (enableTryApplyDevEnv) {
+            const configurePresetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, allowUserPreset, true, errorHandler);
+            if (!configurePresetInherits) {
+                return null;
+            }
             await tryApplyVsDevEnv(configurePresetInherits, workspaceFolder, sourceDir);
+
+            expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
+                folder,
+                preset.configurePreset,
+                workspaceFolder,
+                sourceDir,
+                allowUserPreset,
+                enableTryApplyDevEnv,
+                errorHandler);
+        }  else {
+            expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
         }
-        const expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
-            folder,
-            preset.configurePreset,
-            workspaceFolder,
-            sourceDir,
-            allowUserPreset,
-            enableTryApplyDevEnv,
-            errorHandler);
         if (!expandedConfigurePreset) {
             return null;
         }
+
         preset.__binaryDir = expandedConfigurePreset.binaryDir;
         preset.__generator = expandedConfigurePreset.generator;
 
         if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
             inheritedEnv = EnvironmentUtils.mergePreserveNull([inheritedEnv, expandedConfigurePreset.environment]);
+            inheritedParentEnv = EnvironmentUtils.mergePreserveNull([inheritedParentEnv, expandedConfigurePreset.__parentEnvironment]);
         }
     }
 
+    // the preset.environment is applied after the configurePreset.environment
+    // same for parentenv and its getting ALL of processenv
     preset.environment = EnvironmentUtils.mergePreserveNull([inheritedEnv, preset.environment]);
+    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([inheritedParentEnv, preset.__parentEnvironment]);
 
     preset.__expanded = true;
     return preset;
@@ -2125,21 +2157,25 @@ async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     const workflowConfigurePreset = preset.steps[0].name;
     if (workflowConfigurePreset) {
-        const configurePresetInherits = await getConfigurePresetInherits(folder, workflowConfigurePreset, allowUserPreset, false, errorHandler);
-        if (!configurePresetInherits) {
-            return null;
-        }
+        let expandedConfigurePreset: ConfigurePreset | null = null;
         if (enableTryApplyDevEnv) {
+            const configurePresetInherits = await getConfigurePresetInherits(folder, workflowConfigurePreset, allowUserPreset, true, errorHandler);
+            if (!configurePresetInherits) {
+                return null;
+            }
             await tryApplyVsDevEnv(configurePresetInherits, workspaceFolder, sourceDir);
+
+            expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
+                folder,
+                workflowConfigurePreset,
+                workspaceFolder,
+                sourceDir,
+                allowUserPreset,
+                enableTryApplyDevEnv,
+                errorHandler);
+        }  else {
+            expandedConfigurePreset = getPresetByName(configurePresets(folder), workflowConfigurePreset);
         }
-        const expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
-            folder,
-            workflowConfigurePreset,
-            workspaceFolder,
-            sourceDir,
-            allowUserPreset,
-            enableTryApplyDevEnv,
-            errorHandler);
         if (!expandedConfigurePreset) {
             return null;
         }
