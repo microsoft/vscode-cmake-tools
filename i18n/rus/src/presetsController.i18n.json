@@ -132,5 +132,6 @@
 	"use.kits.variants": "Использовать наборы и варианты",
 	"edit.presets": "Найти",
 	"presets.version.error": "CMakePresets версии 1 не поддерживается. Выберите нужное действие.",
-	"failed.writing.to.file": "Ошибка при записи в файл {0}"
+	"failed.writing.to.file": "Ошибка при записи в файл {0}",
+	"failed.to.watch": "Не удалось создать Наблюдателя для {0}: {1}"
 }
