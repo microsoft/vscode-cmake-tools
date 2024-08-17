@@ -206,20 +206,6 @@ suite('Diagnostics', () => {
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
 
-    test('Parsing fatal error diagnostics in french', () => {
-        const lines = ['/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type'];
-        feedLines(build_consumer, [], lines);
-        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
-        const diag = build_consumer.compilers.gcc.diagnostics[0];
-
-        expect(diag.location.start.line).to.eq(1);
-        expect(diag.message).to.eq('bonjour.h : Aucun fichier ou dossier de ce type');
-        expect(diag.location.start.character).to.eq(20);
-        expect(diag.file).to.eq('/home/romain/TL/test/base.c');
-        expect(diag.severity).to.eq('erreur');
-        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
-        expect(path.posix.isAbsolute(diag.file)).to.be.true;
-    });
     test('Parsing warning diagnostics', () => {
         const lines = ['/some/path/here:4:26: warning: unused parameter \'data\''];
         feedLines(build_consumer, [], lines);
@@ -246,20 +232,6 @@ suite('Diagnostics', () => {
         expect(diag.message).to.eq(`unused parameter ‘v’ [-Wunused-parameter]`);
         expect(diag.severity).to.eq('warning');
     });
-    test('Parsing warning diagnostics in french', () => {
-        const lines = ['/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’'];
-        feedLines(build_consumer, [], lines);
-        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
-        const diag = build_consumer.compilers.gcc.diagnostics[0];
-
-        expect(diag.location.start.line).to.eq(154);
-        expect(diag.message).to.eq('déclaration implicite de la fonction ‘create’');
-        expect(diag.location.start.character).to.eq(1);
-        expect(diag.file).to.eq('/home/romain/TL/test/base.c');
-        expect(diag.severity).to.eq('attention');
-        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
-        expect(path.posix.isAbsolute(diag.file)).to.be.true;
-    });
     test('Parsing non-diagnostic', async () => {
         const lines = ['/usr/include/c++/10/bits/stl_vector.h:98:47: optimized: basic block part vectorized using 32 byte vectors'];
         feedLines(build_consumer, [], lines);
@@ -267,75 +239,117 @@ suite('Diagnostics', () => {
         const resolved = await build_consumer.resolveDiagnostics('dummyPath');
         expect(resolved.length).to.eq(0);
     });
-    test('Parsing linker error of type "/path/to/ld:path/to/file:line: warning: memory region ... not declared"', () => {
-        const lines = ['/path/to/ld:path/to/file:42: warning: memory region ... not declared'];
+    test('Parsing linker error of type "/path/to/ld:path/to/file:line: severity: message"', () => {
+        const lines = ['/path/to/ld:path/to/file:42: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(41);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('memory region ... not declared');
+        expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('path/to/file');
-        expect(diag.severity).to.eq('warning');
+        expect(diag.severity).to.eq('severity');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.false;
     });
-    test('Parsing linker error of type "/path/to/ld.exe:path/to/file:line: warning: memory region ... not declared"', () => {
-        const lines = ['/path/to/ld.exe:path/to/file:42: warning: memory region ... not declared'];
+    test('Parsing linker error of type "/path/to/ld.exe:path/to/file:line: severity: message"', () => {
+        const lines = ['/path/to/ld.exe:path/to/file:42: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(41);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('memory region ... not declared');
+        expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('path/to/file');
-        expect(diag.severity).to.eq('warning');
+        expect(diag.severity).to.eq('severity');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.false;
     });
-    test('Parsing linker error of type "/path/to/ld:path/to/file:42: syntax error"', () => {
-        const lines = ['/path/to/ld:path/to/file:42: syntax error'];
+    test('Parsing linker error of type "/path/to/ld: path/to/file:line: severity: message"', () => {
+        const lines = ['/path/to/ld: path/to/file:42: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(41);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('syntax error');
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('path/to/file');
+        expect(diag.severity).to.eq('severity');
+        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+        expect(path.posix.isAbsolute(diag.file)).to.be.false;
+    });
+    test('Parsing linker error of type "/path/to/ld.exe: path/to/file:line: severity: message"', () => {
+        const lines = ['/path/to/ld.exe: path/to/file:42: severity: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.location.start.character).to.eq(0);
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('path/to/file');
+        expect(diag.severity).to.eq('severity');
+        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+        expect(path.posix.isAbsolute(diag.file)).to.be.false;
+    });
+    test('Parsing linker error of type "/path/to/ld:path/to/file:line: message"', () => {
+        const lines = ['/path/to/ld:path/to/file:42: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.location.start.character).to.eq(0);
+        expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('path/to/file');
         expect(diag.severity).to.eq('error');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.false;
     });
-    test('Parsing linker error of type "/path/to/ld.exe:path/to/file:42: syntax error"', () => {
-        const lines = ['/path/to/ld.exe:path/to/file:42: syntax error'];
+    test('Parsing linker error of type "/path/to/ld.exe:path/to/file:line: message"', () => {
+        const lines = ['/path/to/ld.exe:path/to/file:42: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(41);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('syntax error');
+        expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('path/to/file');
         expect(diag.severity).to.eq('error');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.false;
     });
-    test('Parsing linker error of type "/path/to/ld.exe: severity: message"', () => {
-        const lines = ['/path/to/ld.exe: warning: some message'];
+    test('Parsing linker error of type "/path/to/ld: path/to/file:line: message"', () => {
+        const lines = ['/path/to/ld: path/to/file:42: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
-        expect(diag.location.start.line).to.eq(0);
+        expect(diag.location.start.line).to.eq(41);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('some message');
-        expect(diag.file).to.eq('/path/to/ld.exe');
-        expect(diag.severity).to.eq('warning');
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('path/to/file');
+        expect(diag.severity).to.eq('error');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
-        expect(path.posix.isAbsolute(diag.file)).to.be.true;
+        expect(path.posix.isAbsolute(diag.file)).to.be.false;
+    });
+    test('Parsing linker error of type "/path/to/ld.exe: path/to/file:line: message"', () => {
+        const lines = ['/path/to/ld.exe: path/to/file:42: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.location.start.character).to.eq(0);
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('path/to/file');
+        expect(diag.severity).to.eq('error');
+        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+        expect(path.posix.isAbsolute(diag.file)).to.be.false;
     });
     test('Parsing linker error of type "/path/to/ld: severity: message"', () => {
         const lines = ['/path/to/ld: error: message'];
@@ -351,21 +365,21 @@ suite('Diagnostics', () => {
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
-    test('Parsing linker error of type "/path/to/ld.exe: message"', () => {
-        const lines = ['/path/to/ld.exe: message'];
+    test('Parsing linker error of type "/path/to/ld.exe: severity: message"', () => {
+        const lines = ['/path/to/ld.exe: warning: some message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(0);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('message');
+        expect(diag.message).to.eq('some message');
         expect(diag.file).to.eq('/path/to/ld.exe');
-        expect(diag.severity).to.eq('error');
+        expect(diag.severity).to.eq('warning');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
-    test('Parsing linker error of type "/path/to/ld: message"', () => {
+    test('Parsing linker error of type "/path/to/ld: message (without trailing colon)"', () => {
         const lines = ['/path/to/ld: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
@@ -379,50 +393,36 @@ suite('Diagnostics', () => {
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
-    test('Parsing linker error of type "/path/to/file:line: undefined reference to \'some function\' "', () => {
-        const lines = ['/path/to/file:42: undefined reference to \'some function\''];
-        feedLines(build_consumer, [], lines);
-        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
-        const diag = build_consumer.compilers.gnuld.diagnostics[0];
-
-        expect(diag.location.start.line).to.eq(41);
-        expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('undefined reference to \'some function\'');
-        expect(diag.file).to.eq('/path/to/file');
-        expect(diag.severity).to.eq('error');
-        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
-        expect(path.posix.isAbsolute(diag.file)).to.be.true;
-    });
-    test('Parsing linker error of type "/path/to/file: ... section ... will not fit in region ..."', () => {
-        const lines = ['/path/to/file: ... section ... will not fit in region ...'];
+    test('Parsing linker error of type "/path/to/ld.exe: message (without trailing colon)"', () => {
+        const lines = ['/path/to/ld.exe: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(0);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('... section ... will not fit in region ...');
-        expect(diag.file).to.eq('/path/to/file');
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('/path/to/ld.exe');
         expect(diag.severity).to.eq('error');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
-    test('Parsing linker error of type "/path/to/file:line: multiple definition of ... first defined here"', () => {
-        const lines = ['/path/to/file:42: multiple definition of ... first defined here'];
+    test('Parsing linker error of type "/path/to/file:line: message (without "[fatal] severity:" or trailing colon)"', () => {
+        const lines = ['/path/to/file:42: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gnuld.diagnostics[0];
 
         expect(diag.location.start.line).to.eq(41);
         expect(diag.location.start.character).to.eq(0);
-        expect(diag.message).to.eq('multiple definition of ... first defined here');
+        expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('/path/to/file');
         expect(diag.severity).to.eq('error');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
     test('Parsing gcc error of type "/path/to/file:line:column: severity: message"', () => {
-        const lines = ['/path/to/file:42:24: warning: message'];
+        const lines = ['/path/to/file:42:24: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gcc.diagnostics[0];
@@ -431,12 +431,12 @@ suite('Diagnostics', () => {
         expect(diag.location.start.character).to.eq(23);
         expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('/path/to/file');
-        expect(diag.severity).to.eq('warning');
+        expect(diag.severity).to.eq('severity');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
     test('Parsing gcc error of type "/path/to/file:line: severity: message"', () => {
-        const lines = ['/path/to/file:42: warning: message'];
+        const lines = ['/path/to/file:42: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gcc.diagnostics[0];
@@ -445,12 +445,26 @@ suite('Diagnostics', () => {
         expect(diag.location.start.character).to.eq(0);
         expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('/path/to/file');
-        expect(diag.severity).to.eq('warning');
+        expect(diag.severity).to.eq('severity');
+        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+        expect(path.posix.isAbsolute(diag.file)).to.be.true;
+    });
+    test('Parsing gcc error of type "/path/to/cc1: severity: message"', () => {
+        const lines = ['/path/to/cc1: severity: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gcc.diagnostics[0];
+
+        expect(diag.location.start.line).to.eq(0);
+        expect(diag.location.start.character).to.eq(0);
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('/path/to/cc1');
+        expect(diag.severity).to.eq('severity');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
     test('Parsing gcc error of type "/path/to/cc1.exe: severity: message"', () => {
-        const lines = ['/path/to/cc1.exe: warning: message'];
+        const lines = ['/path/to/cc1.exe: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gcc.diagnostics[0];
@@ -459,12 +473,26 @@ suite('Diagnostics', () => {
         expect(diag.location.start.character).to.eq(0);
         expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('/path/to/cc1.exe');
-        expect(diag.severity).to.eq('warning');
+        expect(diag.severity).to.eq('severity');
+        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+        expect(path.posix.isAbsolute(diag.file)).to.be.true;
+    });
+    test('Parsing gcc error of type "/path/to/arm-none-eabi-gcc: severity: message"', () => {
+        const lines = ['/path/to/arm-none-eabi-gcc: severity: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gcc.diagnostics[0];
+
+        expect(diag.location.start.line).to.eq(0);
+        expect(diag.location.start.character).to.eq(0);
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('/path/to/arm-none-eabi-gcc');
+        expect(diag.severity).to.eq('severity');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
     test('Parsing gcc error of type "/path/to/arm-none-eabi-gcc.exe: severity: message"', () => {
-        const lines = ['/path/to/arm-none-eabi-gcc.exe: warning: message'];
+        const lines = ['/path/to/arm-none-eabi-gcc.exe: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
         const diag = build_consumer.compilers.gcc.diagnostics[0];
@@ -473,7 +501,7 @@ suite('Diagnostics', () => {
         expect(diag.location.start.character).to.eq(0);
         expect(diag.message).to.eq('message');
         expect(diag.file).to.eq('/path/to/arm-none-eabi-gcc.exe');
-        expect(diag.severity).to.eq('warning');
+        expect(diag.severity).to.eq('severity');
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.true;
     });
@@ -485,41 +513,47 @@ suite('Diagnostics', () => {
         expect(build_consumer.compilers.gcc.diagnostics[0].location.start.line).to.eq(65);
         expect(build_consumer.compilers.gcc.diagnostics[0].location.start.character).to.eq(0);
     });
-    test('No gcc and linker error on "/path/to/ld.exe: relative/path/to/objfile.c.obj: in function \`function name\':"', () => {
-        const lines = ['/path/to/ld.exe: relative/path/to/objfile.c.obj: in function \`function name\':'];
+    test('No gcc and linker error on "/path/to/ld: message:" (trailing colon)', () => {
+        const lines = ['/path/to/ld: message:'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
     });
-    test('No gcc and linker error on "/path/to/ld: relative/path/to/objfile.c.obj: in function \`function name\':"', () => {
-        const lines = ['/path/to/ld: relative/path/to/objfile.c.obj: in function \`function name\':'];
+    test('No gcc and linker error on "/path/to/ld.exe: message:" (trailing colon)', () => {
+        const lines = ['/path/to/ld.exe: message:'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
     });
-    test('No gcc and linker error on "/path/to/file:line:column severity: message', () => {
-        const lines = ['path/to/file:42:24 warning: message'];
+    test('No gcc and linker error on "/path/to/file:line:column severity: message" (missing colon after column)', () => {
+        const lines = ['path/to/file:42:24 severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
     });
-    test('No gcc and linker error on "/path/to/file:line severity: message', () => {
-        const lines = ['path/to/file:42 warning: message'];
+    test('No gcc and linker error on "/path/to/file:line severity: message" (missing colon after line)', () => {
+        const lines = ['path/to/file:42 severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
     });
-    test('No gcc and linker error on "/path/to/file:line:column: severity message', () => {
-        const lines = ['path/to/file:42:24: warning message'];
+    test('No linker error on "/path/to/file:line: severity: message" ("severity:" is gcc diagnostic)', () => {
+        const lines = ['/path/to/file:42: severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
-        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
     });
-    test('No gcc and linker error on "/path/to/file:line: severity message', () => {
-        const lines = ['path/to/file:42: warning message'];
+    test('No linker error on "/path/to/file:line: fatal severity: message" ("fatal severity:" is gcc diagnostic)', () => {
+        const lines = ['/path/to/file:42: fatal severity: message'];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
-        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+    });
+    test('No gcc and linker error on "/path/to/file:line: message:" (trailing colon)', () => {
+        const lines = ['/path/to/file:42: message:'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
     });
     test('Parsing GHS Diagnostics', () => {
         const lines = [

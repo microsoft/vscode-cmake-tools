@@ -16,40 +16,24 @@ enum MatchType {
 }
 
 const regexPatterns: RegexPattern[] = [
-    {   // path/to/ld[.exe]:path/to/file:line: warning: memory region ... not declared
-        regexPattern: /^(?:(?:(?:.*ld\:)|(?:.*ld\.exe\:))(.*):(\d+):)\s+(.*): (memory region .* not declared)/,
+    {   // path/to/ld[.exe]:[ ]path/to/file:line: severity: message
+        regexPattern: /^(?:.*ld(?:\.exe)?:)(?:\s*)?(.+):(\d+):\s+(?:fatal )?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
     },
-    {   // path/to/ld[.exe]:path/to/file:line: syntax error
-        regexPattern: /^(?:(?:(?:.*ld\:)|(?:.*ld\.exe\:))(.*):(\d+):) (syntax error)/,
+    {   // path/to/ld[.exe]:[ ]path/to/file:line: message
+        regexPattern: /^(?:.*ld(?:\.exe)?\:)(?:\s*)?(.+):(\d+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     },
-    {   // path/to/ld.exe: severity: message
-        regexPattern: /^(?:(.*ld\.exe):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
+    {   // path/to/ld[.exe]: severity: message
+        regexPattern: /^(.*ld(?:\.exe)?):\s+(?:fatal )?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
     },
-    {   // path/to/ld: severity: message
-        regexPattern: /^(?:(.*ld):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
-    },
-    {   // path/to/ld.exe: message
-        regexPattern: /^(?:(.*ld\.exe):)\s+(.*)(?<!:)$/,
+    {   // path/to/ld[.exe]: message (without trailing colon)
+        regexPattern: /^(.*ld(?:\.exe)?):\s+(.+)(?<!:)$/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
     },
-    {   // path/to/ld: message
-        regexPattern: /^(?:(.*ld):)\s+(.*)(?<!:)$/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
-    },
-    {   // path/to/file:line: undefined reference to
-        regexPattern: /^(?:(.*):(\d+):)\s+(undefined reference to .*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
-    },
-    {   // path/to/file: ... section ... will not fit in region ...
-        regexPattern: /^(.*): ((?:.*) .*section.* (?:.*) .*will not fit in region.*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
-    },
-    {   // path/to/file:line: multiple definition of ... first defined here
-        regexPattern: /^(?:(.*):(\d+):)\s+(multiple definition of .* first defined here)/,
+    {   // /path/to/file:line: message (without "[fatal] severity:" or trailing colon)
+        regexPattern: /^(.+?):(\d+):\s+(?!fatal\s+\w+:)(?!\w+:)(.+)(?<!:)$/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     }
 ];

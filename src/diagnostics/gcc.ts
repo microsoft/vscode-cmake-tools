@@ -17,19 +17,15 @@ enum MatchType {
 
 const regexPatterns: RegexPattern[] = [
     {   // path/to/file:line:column: severity: message
-        regexPattern: /^(?:(.*):(\d+):(\d+):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
+        regexPattern: /^(.+):(\d+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Column, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/file:line: severity: message
-        regexPattern: /^(?:(.*):(\d+):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
+        regexPattern: /^(.+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
     },
-    {   // path/to/cc1.exe: severity: message
-        regexPattern: /^(?:(.*cc1\.exe):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
-        matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
-    },
-    {   // path/to/arm-none-eabi-gcc.exe: severity: message
-        regexPattern: /^(?:(.*arm-none-eabi-gcc\.exe):)\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/,
+    {   // path/to/cc1[.exe]|arm-none-eabi-gcc[.exe]: severity: message
+        regexPattern: /^(.*(?:cc1|arm-none-eabi-gcc)(?:\.exe)?):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
     }
 ];
