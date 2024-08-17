@@ -20,8 +20,8 @@ const regexPatterns: RegexPattern[] = [
         regexPattern: /^(.+):(\d+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Column, MatchType.Severity, MatchType.Message]
     },
-    {   // path/to/file:line: severity: message
-        regexPattern: /^(.+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
+    {   // path/to/file:line: severity: message (but not starting with "path/to/ld[.exe]:")
+        regexPattern: /^(?!.*?ld(?:\.exe)?:)(.+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/cc1[.exe]|arm-none-eabi-gcc[.exe]: severity: message

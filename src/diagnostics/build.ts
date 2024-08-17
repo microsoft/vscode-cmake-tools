@@ -20,8 +20,8 @@ import { ConfigurationReader } from '@cmt/config';
 export class Compilers {
     [compiler: string]: RawDiagnosticParser;
 
-    gnuld = new gnu_ld.Parser();
     gcc = new gcc.Parser();
+    gnuld = new gnu_ld.Parser();
     ghs = new ghs.Parser();
     diab = new diab.Parser();
     msvc = new mvsc.Parser();
