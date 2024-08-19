@@ -48,7 +48,7 @@ extends:
               inputs:
                 notifyUsers: $(EmailAddress)
                 instructions: |
-                  Download and test the vsix with the matching version number from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=20419
+                  Download and test the vsix with the matching version number from the latest release build: $(BuildPipelineURL)
 
                   The version should match the name of this release.
 
