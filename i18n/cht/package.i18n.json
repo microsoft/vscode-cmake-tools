@@ -152,7 +152,7 @@
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "目錄路徑。",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "安裝 Emscripten 的目錄。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "遞迴收集及合併 cmake.buildDirectory 中找到的所有compile_commands.js。",
-	"cmake-tools.configuration.cmake.copyCompileCommands.description": "組態成功之後，將 compile_commands.json 複製到此位置。",
+	"cmake-tools.configuration.cmake.copyCompileCommands.description": "組態成功之後，將 compile_commands.json 複製到此位置。（例子：${workspaceFolder}/compile_commands.json）",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "開啟 CMake 專案目錄時自動進行組態。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "在儲存 cmake.sourceDirectory 或 CMakeLists.txt 內容後，自動設定 CMake 專案目錄。",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "叫用乾淨的設定時，請刪除整個組建目錄。",
