@@ -387,8 +387,7 @@ export class CMakeProject {
             true,
             this.configurePreset?.name,
             true,
-            undefined,
-            true);
+            undefined);
         if (!expandedBuildPreset) {
             log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
             return undefined;
