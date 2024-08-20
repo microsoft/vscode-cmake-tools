@@ -1597,6 +1597,8 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
             if (!configurePresetInherits) {
                 return null;
             }
+
+            // This method will double chck if __parentEnvironment is aleady set and if not, will apply the VS Dev Env so it doesn't duplicate work
             await tryApplyVsDevEnv(configurePresetInherits, workspaceFolder, sourceDir);
 
             expandedConfigurePreset = await expandConfigurePresetVariables(configurePresetInherits,
