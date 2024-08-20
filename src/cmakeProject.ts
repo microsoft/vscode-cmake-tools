@@ -311,6 +311,9 @@ export class CMakeProject {
             }
         }
 
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedConfigurePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedConfigurePreset.__parentEnvironment, expandedConfigurePreset.environment]);
+
         return expandedConfigurePreset;
     }
 
@@ -400,6 +403,10 @@ export class CMakeProject {
             log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
             return undefined;
         }
+
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedBuildPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedBuildPreset.__parentEnvironment, expandedBuildPreset.environment]);
+
         return expandedBuildPreset;
     }
 
@@ -486,6 +493,10 @@ export class CMakeProject {
             log.error(localize('configurePreset.not.set.test.preset', '{0} is not set in test preset: {1}', "\"configurePreset\"", testPreset));
             return undefined;
         }
+
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedTestPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedTestPreset.__parentEnvironment, expandedTestPreset.environment]);
+
         return expandedTestPreset;
     }
 
@@ -572,6 +583,10 @@ export class CMakeProject {
             log.error(localize('configurePreset.not.set.package.preset', '{0} is not set in package preset: {1}', "\"configurePreset\"", packagePreset));
             return undefined;
         }
+
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedPackagePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedPackagePreset.__parentEnvironment, expandedPackagePreset.environment]);
+
         return expandedPackagePreset;
     }
 
