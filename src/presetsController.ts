@@ -1724,56 +1724,81 @@ export class PresetsController implements vscode.Disposable {
 
         const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
-        const expandedConfigurePresets = (await Promise.all((clonedPresetsFile?.configurePresets || []).map(async configurePreset =>
-            preset.expandConfigurePreset(
+        const expandedConfigurePresets = (await Promise.all((clonedPresetsFile?.configurePresets || []).map(async configurePreset => {
+            const inheritedPreset = await preset.getConfigurePresetInherits(
                 this.folderPath,
                 configurePreset.name,
-                this._sourceDir,
-                this.workspaceFolder.uri.fsPath,
                 true,
-                false,
-                expansionErrors)
-        ))).filter(preset => preset !== null)  as preset.ConfigurePreset[];
+                true,
+                expansionErrors);
+            return inheritedPreset ? preset.expandConfigurePresetVariables(
+                inheritedPreset,
+                this.folderPath,
+                configurePreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                true,
+                true,
+                expansionErrors) : null;
+        }))).filter(preset => preset !== null)  as preset.ConfigurePreset[];
 
-        const expandedBuildPresets = (await Promise.all((clonedPresetsFile?.buildPresets || []).map(async buildPreset =>
-            preset.expandBuildPreset(
+        const expandedBuildPresets = (await Promise.all((clonedPresetsFile?.buildPresets || []).map(async buildPreset => {
+            const inheritedPreset = await preset.getBuildPresetInherits(
                 this.folderPath,
                 buildPreset.name,
                 this.workspaceFolder.uri.fsPath,
                 this._sourceDir,
                 undefined,
                 undefined,
-                true,   // should this always be true?
+                true,
                 buildPreset.configurePreset,
                 false,
-                expansionErrors)
-        ))).filter(preset => preset !== null) as preset.BuildPreset[];
-
-        const expandedPackagePresets = (await Promise.all((clonedPresetsFile?.packagePresets || []).map(async packagePreset =>
-            preset.expandPackagePreset(
-                this.folderPath,
-                packagePreset.name,
+                expansionErrors);
+            return inheritedPreset ? preset.expandBuildPresetVariables(
+                inheritedPreset,
+                buildPreset.name,
                 this.workspaceFolder.uri.fsPath,
                 this._sourceDir,
-                undefined,
-                true,   // should this always be true?
-                packagePreset.configurePreset,
-                false,
-                expansionErrors)
-        ))).filter(preset => preset !== null) as preset.PackagePreset[];
+                expansionErrors) : null;
+        }))).filter(preset => preset !== null) as preset.BuildPreset[];
 
-        const expandedTestPresets = (await Promise.all((clonedPresetsFile?.testPresets || []).map(async testPreset =>
-            preset.expandTestPreset(
+        const expandedTestPresets = (await Promise.all((clonedPresetsFile?.testPresets || []).map(async testPreset => {
+            const inheritedPreset = await preset.getTestPresetInherits(
                 this.folderPath,
                 testPreset.name,
                 this.workspaceFolder.uri.fsPath,
                 this._sourceDir,
                 undefined,
-                true,   // should this always be true?
+                true,
                 testPreset.configurePreset,
                 false,
-                expansionErrors)
-        ))).filter(preset => preset !== null) as preset.TestPreset[];
+                expansionErrors);
+            return inheritedPreset ? preset.expandTestPresetVariables(
+                inheritedPreset,
+                testPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                expansionErrors) : null;
+        }))).filter(preset => preset !== null) as preset.TestPreset[];
+
+        const expandedPackagePresets = (await Promise.all((clonedPresetsFile?.packagePresets || []).map(async packagePreset => {
+            const inheritedPreset = await preset.getPackagePresetInherits(
+                this.folderPath,
+                packagePreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,
+                packagePreset.configurePreset,
+                false,
+                expansionErrors);
+            return inheritedPreset ? preset.expandPackagePresetVariables(
+                inheritedPreset,
+                packagePreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                expansionErrors) : null;
+        }))).filter(preset => preset !== null) as preset.PackagePreset[];
 
         const expandedWorkflowPresets = (await Promise.all((clonedPresetsFile?.workflowPresets || []).map(async workflowPreset =>
             preset.expandWorkflowPreset(

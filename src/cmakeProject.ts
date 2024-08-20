@@ -378,7 +378,9 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
-        const expandedBuildPreset = await preset.expandBuildPreset(this.folderPath,
+        let expandedBuildPreset: preset.BuildPreset | undefined;
+        const presetInherits = await preset.getBuildPresetInherits(
+            this.folderPath,
             buildPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
@@ -386,8 +388,15 @@ export class CMakeProject {
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name,
-            true,
-            undefined);
+            true);
+        if (presetInherits) {
+            expandedBuildPreset = await preset.expandBuildPresetVariables(
+                presetInherits,
+                buildPreset,
+                lightNormalizePath(this.folderPath || '.'),
+                this.sourceDir);
+        }
+
         if (!expandedBuildPreset) {
             log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
             return undefined;
@@ -454,14 +463,22 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
-        const expandedTestPreset = await preset.expandTestPreset(this.folderPath,
+        let expandedTestPreset: preset.TestPreset | undefined;
+        const presetInherits = await preset.getTestPresetInherits(
+            this.folderPath,
             testPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
-            this.configurePreset?.name,
-            true);
+            this.configurePreset?.name);
+        if (presetInherits) {
+            expandedTestPreset = await preset.expandTestPresetVariables(
+                presetInherits,
+                testPreset,
+                lightNormalizePath(this.folderPath || '.'),
+                this.sourceDir);
+        }
         if (!expandedTestPreset) {
             log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
             return undefined;
@@ -532,14 +549,22 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.package.preset', 'Resolving the selected package preset'));
-        const expandedPackagePreset = await preset.expandPackagePreset(this.folderPath,
+        let expandedPackagePreset: preset.TestPreset | undefined;
+        const presetInherits = await preset.getPackagePresetInherits(
+            this.folderPath,
             packagePreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
-            this.configurePreset?.name,
-            true);
+            this.configurePreset?.name);
+        if (presetInherits) {
+            expandedPackagePreset = await preset.expandPackagePresetVariables(
+                presetInherits,
+                packagePreset,
+                lightNormalizePath(this.folderPath || '.'),
+                this.sourceDir);
+        }
         if (!expandedPackagePreset) {
             log.error(localize('failed.resolve.package.preset', 'Failed to resolve package preset: {0}', packagePreset));
             return undefined;
