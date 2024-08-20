@@ -1729,7 +1729,7 @@ export class PresetsController implements vscode.Disposable {
                 this.folderPath,
                 configurePreset.name,
                 true,
-                true,
+                false,
                 expansionErrors);
             return inheritedPreset ? preset.expandConfigurePresetVariables(
                 inheritedPreset,
@@ -1738,7 +1738,7 @@ export class PresetsController implements vscode.Disposable {
                 this.workspaceFolder.uri.fsPath,
                 this._sourceDir,
                 true,
-                true,
+                false,
                 expansionErrors) : null;
         }))).filter(preset => preset !== null)  as preset.ConfigurePreset[];
 
