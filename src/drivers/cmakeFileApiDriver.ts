@@ -127,7 +127,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         if (cacheExists && this.generator?.name === await this.getGeneratorFromCache(this.cachePath)) {
             await this.loadGeneratorInformationFromCache(this.cachePath);
             const code_model_exist = await this.updateCodeModel();
-            if (!code_model_exist && this.config.configureOnOpen === true) {
+            if (!code_model_exist && this.config.configureOnOpen) {
                 await this.doConfigure([], undefined, undefined);
             }
         } else {
@@ -136,7 +136,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             // Since this setting will prevent configure anyway (until a configure command is invoked
             // or build/test will trigger automatic configuring), there is no need to delete the cache now
             // even if this is not a project configured from outside VSCode.
-            if (cacheExists && this.config.configureOnOpen !== false) {
+            if (cacheExists && this.config.configureOnOpen) {
                 // No need to remove the other CMake files for the generator change to work properly
                 log.info(localize('removing', 'Removing {0}', this.cachePath));
                 try {
@@ -324,7 +324,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     private toolchainWarningProvided: boolean = false;
     private async updateCodeModel(binaryDir?: string): Promise<boolean> {
-        const reply_path = this.getCMakeReplyPath(binaryDir).replace('~', process.env.HOME || "./");
+        const initialReplyPath = this.getCMakeReplyPath(binaryDir);
+        const reply_path = process.platform === "linux" ? initialReplyPath.replace('~', process.env.HOME || "./") : initialReplyPath;
         const indexFile = await loadIndexFile(reply_path);
         if (indexFile) {
             this._generatorInformation = indexFile.cmake.generator;

@@ -262,6 +262,9 @@ export interface ConfigurePreset extends Preset {
     vendor?: VendorVsSettings | VendorType;
     toolchainFile?: string;
     installDir?: string;
+
+    // Private fields
+    __developerEnvironmentArchitecture?: string; // Private field to indicate which VS Dev Env architecture we're using, if VS Dev Env is used.
 }
 
 export interface InheritsConfigurePreset extends Preset {
@@ -1089,7 +1092,11 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
         }
     }
 
-    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, developerEnvironment]);
+    if (developerEnvironment) {
+        preset.__developerEnvironmentArchitecture = getArchitecture(preset);
+    }
+
+    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, preset.__parentEnvironment, developerEnvironment]);
 }
 
 /**
