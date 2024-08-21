@@ -32,7 +32,6 @@ import { FileDiagnostic, populateCollection } from './diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit, SpecialKits } from './kit';
 import * as logging from './logging';
-import * as lodash from "lodash";
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
 import { FireLate, Property } from './prop';
