@@ -316,6 +316,301 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ---------------------------------------------------------
 
+kitware/cmake 5e984bb35232116a54de7db39788cb162ca7c263 - BSD-3-Clause
+
+
+(c) (c) L
+(c) Copyright John
+Copyright Google LLC
+Copyright Kitware, Inc.
+Copyright (C) Howard Chu
+(c) ! ISCNTRL (c) ISSPACE
+Copyright 2007 Edd Dawson
+Copyright 2019 Google LLC
+Copyright 2020 Google LLC
+Copyright 2021 Google LLC
+Copyright 2023 Google LLC
+Copyright by Tim Kientzle
+Copyright 2011 Google Inc.
+Copyright 2019 Peter Dimov
+Copyright (C) Red Hat, Inc.
+Copyright (c) 2007 Kai Wang
+Copyright (c) Red Hat, Inc.
+copyright Niels Provos. Two
+Copyright (C) Björn Stenberg
+Copyright (C) Michael Forney
+Copyright (C) Steve Holme, .
+Copyright (c) Facebook, Inc.
+Copyright 2011 Kitware, Inc.
+Specifies Copyright Filename
+COPYRIGHT MATCHES ActiveState
+Copyright (C) Daniel Stenberg
+Copyright (c) Daniel Stenberg
+Copyright (c) 2012 Ondrej Holy
+Copyright 1995-2022 Mark Adler
+Copyright (c) 2007 Tim Kientzle
+Copyright (c) 2011 Andres Mejia
+Copyright (c) 2011 Tim Kientzle
+Copyright (c) 2012, Google Inc.
+Copyright (c) 2013 Marek Kubica
+Copyright (c) 2017 Sean Purcell
+Copyright .txt or https://cmake
+Copyright (c) 2004 MyCompanyName
+Copyright (c) 2013 Konrad Kleine
+Copyright (c) 2016 InfoTeCS JSC.
+Copyright (c) 2003-2008 Yuta Mori
+Copyright (c) 2008 Anselm Strauss
+Copyright (c) 2016 Martin Matuska
+Copyright (c) 2016 Tino Reichardt
+Copyright (c) 2017 Martin Matuska
+Copyright (c) 2017, 2018 Dell EMC
+Copyright (c) 2019 Martin Matuska
+Copyright (c) 2020 Martin Matuska
+Copyright (c) The Qt Company Ltd.
+Copyright 2010-2012 Kitware, Inc.
+Copyright 2010-2018 Kitware, Inc.
+Copyright 2015-2016 Kitware, Inc.
+Copyright 2015-2017 Kitware, Inc.
+Copyright (c) 1995-2017 Mark Adler
+Copyright (c) 1995-2019 Mark Adler
+Copyright (c) 1995-2022 Mark Adler
+Copyright (c) 2004-2017 Mark Adler
+Copyright (c) 2004-2019 Mark Adler
+Copyright 2010 Firebreath Dev Team
+Copyright (C) Jacob Hoffman-Andrews
+Copyright (c) 1998 John D. Polstra.
+Copyright (c) 2003-2018 <author(s)>
+Copyright (c) 2004, 2010 Mark Adler
+Copyright (c) Microsoft Corporation
+copyright Alexander Chemeris. Three
+Copyright (c) 2001 Alexander Peslyak
+Copyright (c) 2003-2006 Tim Kientzle
+Copyright (c) 2003-2007 Tim Kientzle
+Copyright (c) 2003-2008 Tim Kientzle
+Copyright (c) 2003-2009 Tim Kientzle
+Copyright (c) 2003-2010 Tim Kientzle
+Copyright (c) 2003-2011 Tim Kientzle
+Copyright (c) 2003-2012 Tim Kientzle
+Copyright (c) 2003-2015 Tim Kientzle
+Copyright (c) 2004-2013 Tim Kientzle
+Copyright (c) 2009-2011 Sean Purcell
+Copyright (c) 2012-2014, Yann Collet
+Copyright (c) 2014 Sebastian Freundt
+Copyright (c) 2015 Okhotnikov Kirill
+Copyright libuv project contributors
+Copyright (c) 2007 Joerg Sonnenberger
+Copyright (c) 2008 Joerg Sonnenberger
+Copyright (c) 2009 Joerg Sonnenberger
+Copyright (c) 2009 Michihiro NAKAJIMA
+Copyright (c) 2010 Joerg Sonnenberger
+Copyright (c) 2011 Michihiro NAKAJIMA
+Copyright (c) 2012 Michihiro NAKAJIMA
+Copyright (c) 2014 Michihiro NAKAJIMA
+Copyright (C) " LIBCURL_COPYRIGHT "\0"
+Copyright (c) 2009, Michihiro NAKAJIMA
+Copyright (c) 2012 Tatsuhiro Tsujikawa
+Copyright (c) 2013 Tatsuhiro Tsujikawa
+Copyright (c) 2014 Tatsuhiro Tsujikawa
+Copyright (c) 2015 Tatsuhiro Tsujikawa
+Copyright (c) 2016 Tatsuhiro Tsujikawa
+Copyright (c) 2017 ngtcp2 contributors
+Copyright (C) Daniel Stenberg, , et al.
+Copyright (C) Simon Josefsson, , et al.
+Copyright (c) 2003-2007 Kees Zeelenberg
+Copyright (c) 2012 nghttp2 contributors
+Copyright (c) 2022 nghttp2 contributors
+Copyright (c) 2022 nghttp3 contributors
+copyright (c) 1996-2019 Julian R Seward
+Copyright (c) 1995-2003, 2010 Mark Adler
+Copyright (c) 1995-2005, 2010 Mark Adler
+Copyright (c) 1995-2011, 2016 Mark Adler
+Copyright (c) 1995-2017 Jean-loup Gailly
+Copyright (c) 1995-2018 Jean-loup Gailly
+Copyright (c) 1995-2021 Jean-loup Gailly
+Copyright (c) 1996-1998 John D. Polstra.
+Copyright (c) 1996-2019 by Julian Seward
+Copyright the libuv project contributors
+Copyright (c) 2001-2019 Expat maintainers
+Copyright (c) Yann Collet, Facebook, Inc.
+Copyright (c) 1990-1992 by Eberhard Mattes
+Copyright (c) 2006-2008 Alexander Chemeris
+Copyright (c) 2008-2014 Michihiro NAKAJIMA
+Copyright (c) 2009-2011 Michihiro NAKAJIMA
+Copyright (c) 2009-2012 Michihiro NAKAJIMA
+Copyright (c) 2010-2011 Michihiro NAKAJIMA
+Copyright (c) 2010-2012 Michihiro NAKAJIMA
+Copyright (c) 2011-2012 Michihiro NAKAJIMA
+Copyright (c) 2011-2012 libarchive Project
+Copyright (c) 2016-present, Facebook, Inc.
+Copyright (c) 1986 by University of Toronto
+Copyright (c) 2016 Ed Schouten <ed@nuxi.nl>
+Copyright (c) Internet Software Consortium.
+copyrighted by the Free Software Foundation
+Copyright (c) 2006 Rudolf Marek SYSGO s.r.o.
+Copyright (c) 2008 - 2009 NVIDIA Corporation
+Copyright (c) 2012, 2013 Tatsuhiro Tsujikawa
+Copyright (c) 2013, 2014 Tatsuhiro Tsujikawa
+Copyright (c) Howard Chu, <hyc@openldap.org>
+(c) 1995-2022 Jean-loup Gailly and Mark Adler
+Copyright (C) Bill Nagel , Exacq Technologies
+Copyright (c) Bjorn Stenberg, <bjorn@haxx.se>
+Thomas E. Dickey <dickey@clark.net> 1996,1997
+Copyright (c) 2001 The NetBSD Foundation, Inc.
+Copyright (c) 1996, David Mazieres <dm@uun.org>
+Copyright (c) 2009-2012,2014 Michihiro NAKAJIMA
+Copyright (c) 2011-2012,2014 Michihiro NAKAJIMA
+Copyright (c) 2016 Gaurav <g.gupta@samsung.com>
+Copyright (c) 2016 Thomas Beutlich <tc@tbeu.de>
+Copyright (c) Daniel Stenberg, <daniel@haxx.se>
+Copyright (c) Howard Chu, <hyc@highlandsun.com>
+Copyright 2012, Samuel Neves <sneves@dei.uc.pt>
+copyright the Internet Systems Consortium, Inc.
+Copyright (c) 2016 Eric Rahm <erahm@mozilla.com>
+Copyright (c) 1991 Texas Instruments Incorporated
+Copyright (c) 1998 Free Software Foundation, Inc.
+Copyright (c) 2013, Sony Mobile Communications AB
+Copyright (c) 2017 Viktor Szakats <commit@vsz.me>
+Copyright (c) Hoi-Ho Chan, <hoiho.chan@gmail.com>
+Copyright (c) Nick Zitzmann, <nickzman@gmail.com>
+Copyright (c) 1999, 2000, 2002 Aladdin Enterprises
+Copyright (c) 2002 Thomas Moestl <tmm@FreeBSD.org>
+Copyright (c) 2009 The Android Open Source Project
+Copyright (c) 2016 Don Lewis <truckman@apache.org>
+Copyright 2000-2016 Kitware, Inc. and Contributors
+Copyright 2000-2023 Kitware, Inc. and Contributors
+Copyright Joyent, Inc. and other Node contributors
+Copyright (c) 2008, Damien Miller <djm@openbsd.org>
+Copyright (c) 2017 Rolf Eike Beer <eike@sf-mail.de>
+Copyright (c) 2017 Vaclav Slavik <vaclav@slavik.io>
+Copyright (c) Michael Forney, <mforney@mforney.org>
+Copyright 1995-2022 Jean-loup Gailly and Mark Adler
+Copyright 2002 Niels Provos <provos@citi.umich.edu>
+Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997
+Copyright (c) 1995-2016 Jean-loup Gailly, Mark Adler
+Copyright (c) 1995-2022 Jean-loup Gailly, Mark Adler
+Copyright (c) 1996-2022 Internet Software Consortium
+Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
+Copyright (c) 2002 Karl Waclawek <karl@waclawek.net>
+Copyright (c) 2005 Karl Waclawek <karl@waclawek.net>
+Copyright (c) 2007 Karl Waclawek <karl@waclawek.net>
+Copyright (c) 2017 Hans Wennborg <hans@chromium.org>
+Copyright (c) 2018 Yury Gribov <tetra2005@gmail.com>
+Copyright (c) Marc Hoersken, <info@marc-hoersken.de>
+Copyright (c) Simon Josefsson, <simon@josefsson.org>
+Copyright (c) Steve Holme, <steve_holme@hotmail.com>
+Copyright (C) 1996-2022 Internet Software Consortium.
+Copyright (c) 2003-2008 Tim Kientzle and Miklos Vajna
+Copyright (c) 2015-present libuv project contributors
+Copyright (c) 2017 Benbuck Nason <bnason@netflix.com>
+Copyright (c) 2019 Vadim Zeitlin <vadim@zeitlins.org>
+Copyright (c) Linus Nielsen Feltzing, <linus@haxx.se>
+Copyright (c) Mark Salisbury, <mark.salisbury@hp.com>
+Copyright (c) 1998,2000 Free Software Foundation, Inc.
+Copyright (c) 2000, 2001, 2008, 2011, David E. O'Brien
+Copyright (c) 2005-2009 Steven Solie <steven@solie.ca>
+Copyright (c) 2013, Ben Noordhuis <info@bnoordhuis.nl>
+Copyright (c) 2021 Dong-hee Na <donghee.na@python.org>
+Copyright (c) 1991, 1999 Free Software Foundation, Inc.
+Copyright (c) 1995-2022 Jean-loup Gailly and Mark Adler
+Copyright (c) 1996-1999 by Internet Software Consortium
+Copyright (c) 1996-2019 Julian Seward <jseward@acm.org>
+Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
+Copyright (c) 2004 by Internet Systems Consortium, Inc.
+Copyright (c) 2016 Pascal Cuoq <cuoq@trust-in-soft.com>
+Copyright (c) 2022 Samanta Navarro <ferivoz@riseup.net>
+Copyright 2012 The Open Source Electronic Health Record
+Copyright (c) 2009 Andreas Henriksson <andreas@fatal.se>
+Copyright (c) 2012, 2014, 2015, 2016 Tatsuhiro Tsujikawa
+Copyright (c) 2018 Anton Maklakov <antmak.pub@gmail.com>
+Copyright (c) Florin Petriuc, <petriuc.florin@gmail.com>
+copyright Google Inc. and Sony Mobile Communications AB.
+Copyright (c) 2002-2005 Karl Waclawek <karl@waclawek.net>
+Copyright (c) 2002-2006 Karl Waclawek <karl@waclawek.net>
+Copyright (c) 2002-2016 Karl Waclawek <karl@waclawek.net>
+Copyright (c) 2012, 2014, 2015, 2016 nghttp2 contributors
+Copyright 2011 Baptiste Lepilleur and The JsonCpp Authors
+Copyright (c) 2006, Alexander Neundorf, <neundorf@kde.org>
+Copyright (c) 2016 Gustavo Grieco <gustavo.grieco@imag.fr>
+Copyright (c) 2017 Chanho Park <chanho61.park@samsung.com>
+Copyright (c) 2017 Rhodri James <rhodri@wildebeest.org.uk>
+Copyright (c) 2018 Benjamin Peterson <benjamin@python.org>
+Copyright (c) 2018 Grzegorz Antoniak (http://antoniak.org)
+Copyright (c) 2018 Marco Maggi <marco.maggi-ipsu@poste.it>
+Copyright (c) 2019 David Loffredo <loffredo@steptools.com>
+Copyright (c) 2019-2020 Ben Wagner <bungeman@chromium.org>
+Copyright (c) 2011, 2018 Ben Noordhuis <info@bnoordhuis.nl>
+Copyright (c) 2018 Mariusz Zaborski <oshogbo@vexillium.org>
+Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
+Copyright (c) 1999-2000 Thai Open Source Software Center Ltd
+Copyright (c) 2000 2006 Erik Edelmann <erik.edelmann@iki.fi>
+Copyright (c) 2002 Greg Stein <gstein@users.sourceforge.net>
+Copyright (c) 2003 Greg Stein <gstein@users.sourceforge.net>
+Copyright (c) 2017 Alexander Bluhm <alexander.bluhm@gmx.net>
+Copyright (c) 2017 Sebastian Pipping <sebastian@pipping.org>
+Copyright (c) 2020 Boris Kolpackov <boris@codesynthesis.com>
+Copyright (c) Markus Moeller, <markus_moeller@compuserve.com>
+Copyright (c) 1993 The Regents of the University of California
+Copyright (c) 2005, Aleksey Kravchenko <rhash.admin@gmail.com>
+Copyright (c) 2007, Aleksey Kravchenko <rhash.admin@gmail.com>
+Copyright (c) 2008, Aleksey Kravchenko <rhash.admin@gmail.com>
+Copyright (c) 2010, Aleksey Kravchenko <rhash.admin@gmail.com>
+Copyright (c) 2011, Aleksey Kravchenko <rhash.admin@gmail.com>
+Copyright (c) 2013, Aleksey Kravchenko <rhash.admin@gmail.com>
+Copyright 2007-2010 Baptiste Lepilleur and The JsonCpp Authors
+Copyright 2007-2011 Baptiste Lepilleur and The JsonCpp Authors
+Copyright (c) 2017 Jose Gutierrez de la Concha <jose@zeroc.com>
+Copyright (c) 2017-2018 Rhodri James <rhodri@wildebeest.org.uk>
+Copyright (c) Przemyslaw Skibinski, Yann Collet, Facebook, Inc.
+Copyright (c) 1995-2005, 2014, 2016 Jean-loup Gailly, Mark Adler
+Copyright (c) 2000 Clark Cooper <coopercc@users.sourceforge.net>
+Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies)
+Copyright (c) 2011 Nokia Corporation and/or its subsidiary(-ies)
+Copyright (c) 2016 Cristian Rodriguez <crrodriguez@opensuse.org>
+Copyright (c) 2001-2002 Greg Stein <gstein@users.sourceforge.net>
+Copyright (c) 2016-2017 Sebastian Pipping <sebastian@pipping.org>
+Copyright (c) 2016-2019 Sebastian Pipping <sebastian@pipping.org>
+Copyright (c) 2016-2021 Sebastian Pipping <sebastian@pipping.org>
+Copyright (c) 2016-2022 Sebastian Pipping <sebastian@pipping.org>
+Copyright (c) 2017-2019 Sebastian Pipping <sebastian@pipping.org>
+Copyright (c) 2017-2021 Sebastian Pipping <sebastian@pipping.org>
+Copyright (c) Jacob Hoffman-Andrews, <github@hoffman-andrews.com>
+Copyright (c) 2007-2010 Baptiste Lepilleur and The JsonCpp Authors
+Copyright (c) Bill Nagel <wnagel@tycoint.com> , Exacq Technologies
+Copyright (c) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+Copyright (c) 2002 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+Copyright (c) 2007-2010 by Baptiste Lepilleur and The JsonCpp Authors
+Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
+Copyright (c) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
+Portions Copyright (c) 1994, The Regents of the University of California
+Copyright (c) 2000-2004 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+Copyright (c) 2000-2005 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+Copyright (c) 2000-2006 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+Copyright (c) 2001-2003 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+Copyright (c) 2002-2003 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+Copyright (c) 1989, 1990, 1993 The Regents of the University of California
+Copyright (c) 1998-2000 Thai Open Source Software Center Ltd and Clark Cooper
+Copyright (c) 1985, 1986, 1992, 1993 The Regents of the University of California
+Copyright (c) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation, Inc.
+Copyright (c) 1996 - 2023, Daniel Stenberg, <daniel@haxx.se> , and many contributors
+Copyright (c) 2007-2009 Scientific Computing and Imaging Institute, University of Utah
+Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska HAPgskolan (Royal Institute of Technology, Stockholm, Sweden)
+
+Copyright (c) <year> <owner> . All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+   3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+---------------------------------------------------------
+
+---------------------------------------------------------
+
 source-map 0.6.1 - BSD-3-Clause
 https://github.com/mozilla/source-map
 
@@ -1086,23 +1381,23 @@ The MIT License (MIT)
 
 Copyright (c) Microsoft Corporation
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 ---------------------------------------------------------
@@ -1120,23 +1415,23 @@ The MIT License (MIT)
 
 Copyright (c) Microsoft Corporation
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 ---------------------------------------------------------
@@ -1326,23 +1621,23 @@ MIT License
 
 Copyright (c) 2022 NevWare21
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 ---------------------------------------------------------
@@ -2321,149 +2616,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
----------------------------------------------------------
-
----------------------------------------------------------
-
-kitware/cmake 5e984bb35232116a54de7db39788cb162ca7c263 - BSD-3
-
-
-CMake - Cross Platform Makefile Generator
-Copyright 2000-2024 Kitware, Inc. and Contributors
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-* Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright
-  notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution.
-
-* Neither the name of Kitware, Inc. nor the names of Contributors
-  may be used to endorse or promote products derived from this
-  software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-------------------------------------------------------------------------------
-
-The following individuals and institutions are among the Contributors:
-
-* Aaron C. Meadows <cmake@shadowguarddev.com>
-* Adriaan de Groot <groot@kde.org>
-* Aleksey Avdeev <solo@altlinux.ru>
-* Alexander Neundorf <neundorf@kde.org>
-* Alexander Smorkalov <alexander.smorkalov@itseez.com>
-* Alexey Sokolov <sokolov@google.com>
-* Alex Merry <alex.merry@kde.org>
-* Alex Turbov <i.zaufi@gmail.com>
-* Andreas Pakulat <apaku@gmx.de>
-* Andreas Schneider <asn@cryptomilk.org>
-* André Rigland Brodtkorb <Andre.Brodtkorb@ifi.uio.no>
-* Axel Huebl, Helmholtz-Zentrum Dresden - Rossendorf
-* Benjamin Eikel
-* Bjoern Ricks <bjoern.ricks@gmail.com>
-* Brad Hards <bradh@kde.org>
-* Christopher Harvey
-* Christoph Grüninger <foss@grueninger.de>
-* Clement Creusot <creusot@cs.york.ac.uk>
-* Daniel Blezek <blezek@gmail.com>
-* Daniel Pfeifer <daniel@pfeifer-mail.de>
-* Dawid Wróbel <me@dawidwrobel.com>
-* Enrico Scholz <enrico.scholz@informatik.tu-chemnitz.de>
-* Eran Ifrah <eran.ifrah@gmail.com>
-* Esben Mose Hansen, Ange Optimization ApS
-* Geoffrey Viola <geoffrey.viola@asirobots.com>
-* Google Inc
-* Gregor Jasny
-* Helio Chissini de Castro <helio@kde.org>
-* Ilya Lavrenov <ilya.lavrenov@itseez.com>
-* Insight Software Consortium <insightsoftwareconsortium.org>
-* Intel Corporation <www.intel.com>
-* Jan Woetzel
-* Jordan Williams <jordan@jwillikers.com>
-* Julien Schueller
-* Kelly Thompson <kgt@lanl.gov>
-* Konstantin Podsvirov <konstantin@podsvirov.pro>
-* Laurent Montel <montel@kde.org>
-* Mario Bensi <mbensi@ipsquad.net>
-* Martin Gräßlin <mgraesslin@kde.org>
-* Mathieu Malaterre <mathieu.malaterre@gmail.com>
-* Matthaeus G. Chajdas
-* Matthias Kretz <kretz@kde.org>
-* Matthias Maennich <matthias@maennich.net>
-* Michael Hirsch, Ph.D. <www.scivision.co>
-* Michael Stürmer
-* Miguel A. Figueroa-Villanueva
-* Mike Durso <rbprogrammer@gmail.com>
-* Mike Jackson
-* Mike McQuaid <mike@mikemcquaid.com>
-* Nicolas Bock <nicolasbock@gmail.com>
-* Nicolas Despres <nicolas.despres@gmail.com>
-* Nikita Krupen'ko <krnekit@gmail.com>
-* NVIDIA Corporation <www.nvidia.com>
-* OpenGamma Ltd. <opengamma.com>
-* Patrick Stotko <stotko@cs.uni-bonn.de>
-* Per Øyvind Karlsen <peroyvind@mandriva.org>
-* Peter Collingbourne <peter@pcc.me.uk>
-* Petr Gotthard <gotthard@honeywell.com>
-* Philip Lowman <philip@yhbt.com>
-* Philippe Proulx <pproulx@efficios.com>
-* Raffi Enficiaud, Max Planck Society
-* Raumfeld <raumfeld.com>
-* Roger Leigh <rleigh@codelibre.net>
-* Rolf Eike Beer <eike@sf-mail.de>
-* Roman Donchenko <roman.donchenko@itseez.com>
-* Roman Kharitonov <roman.kharitonov@itseez.com>
-* Ruslan Baratov
-* Sebastian Holtermann <sebholt@xwmw.org>
-* Stephen Kelly <steveire@gmail.com>
-* Sylvain Joubert <joubert.sy@gmail.com>
-* The Qt Company Ltd.
-* Thomas Sondergaard <ts@medical-insight.com>
-* Tobias Hunger <tobias.hunger@qt.io>
-* Todd Gamblin <tgamblin@llnl.gov>
-* Tristan Carel
-* University of Dundee
-* Vadim Zhukov
-* Will Dicharry <wdicharry@stellarscience.com>
-
-See version control history for details of individual contributions.
-
-The above copyright and license notice applies to distributions of
-CMake in source and binary form.  Third-party software packages supplied
-with CMake under compatible licenses provide their own copyright notices
-documented in corresponding subdirectories or source files.
-
-------------------------------------------------------------------------------
-
-CMake was initially developed by Kitware with the following sponsorship:
-
- * National Library of Medicine at the National Institutes of Health
-   as part of the Insight Segmentation and Registration Toolkit (ITK).
-
- * US National Labs (Los Alamos, Livermore, Sandia) ASC Parallel
-   Visualization Initiative.
-
- * National Alliance for Medical Image Computing (NAMIC) is funded by the
-   National Institutes of Health through the NIH Roadmap for Medical Research,
-   Grant U54 EB005149.
-
- * Kitware, Inc.
 
 ---------------------------------------------------------
 
