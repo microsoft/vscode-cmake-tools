@@ -1801,7 +1801,7 @@ export class PresetsController implements vscode.Disposable {
         }))).filter(preset => preset !== null) as preset.PackagePreset[];
 
         const expandedWorkflowPresets = (await Promise.all((clonedPresetsFile?.workflowPresets || []).map(async workflowPreset =>
-            preset.expandWorkflowPreset(
+            preset.getWorkflowPresetInherits(
                 this.folderPath,
                 workflowPreset.name,
                 this.workspaceFolder.uri.fsPath,

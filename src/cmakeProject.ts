@@ -649,7 +649,7 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.workflow.preset', 'Resolving the selected workflow preset'));
-        const expandedWorkflowPreset = await preset.expandWorkflowPreset(this.folderPath,
+        const expandedWorkflowPreset = await preset.getWorkflowPresetInherits(this.folderPath,
             workflowPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,

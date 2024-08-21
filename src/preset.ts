@@ -2080,7 +2080,7 @@ export async function expandPackagePresetVariables(preset: PackagePreset, name: 
 // Map<fsPath, Set<referencedPresets>>
 const referencedWorkflowPresets: Map<string, Set<string>> = new Map();
 
-export async function expandWorkflowPreset(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<WorkflowPreset | null> {
+export async function getWorkflowPresetInherits(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler): Promise<WorkflowPreset | null> {
     const refs = referencedWorkflowPresets.get(folder);
     if (!refs) {
         referencedWorkflowPresets.set(folder, new Set());
@@ -2088,7 +2088,7 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
         refs.clear();
     }
 
-    const preset = await expandWorkflowPresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset, configurePreset, enableTryApplyDevEnv, errorHandler);
+    const preset = await getWorkflowPresetInheritsImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset, configurePreset, enableTryApplyDevEnv, errorHandler);
     if (!preset) {
         return null;
     }
@@ -2103,20 +2103,20 @@ export async function expandWorkflowPreset(folder: string, name: string, workspa
     return expandedPreset;
 }
 
-async function expandWorkflowPresetImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: WorkflowPreset): Promise<WorkflowPreset | null> {
+async function getWorkflowPresetInheritsImpl(folder: string, name: string, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, configurePreset?: string, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler, inheritedByPreset?: WorkflowPreset): Promise<WorkflowPreset | null> {
     let preset = getPresetByName(workflowPresets(folder, enableTryApplyDevEnv), name);
     if (preset) {
         const presetList = inheritedByPreset ? inheritedByPreset.__file!.workflowPresets : workflowPresets(folder, enableTryApplyDevEnv);
         const validInherit = presetList !== undefined && presetList.filter(p => p.name === name).length > 0;
         if (validInherit) {
-            return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, false, enableTryApplyDevEnv, errorHandler);
+            return getWorkflowPresetInheritsHelper(folder, preset, workspaceFolder, sourceDir, false, enableTryApplyDevEnv, errorHandler);
         }
     }
 
     if (allowUserPreset) {
         preset = getPresetByName(userWorkflowPresets(folder, enableTryApplyDevEnv), name);
         if (preset) {
-            return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, true, enableTryApplyDevEnv, errorHandler);
+            return getWorkflowPresetInheritsHelper(folder, preset, workspaceFolder, sourceDir, true, enableTryApplyDevEnv, errorHandler);
         }
     }
 
@@ -2133,14 +2133,14 @@ async function expandWorkflowPresetImpl(folder: string, name: string, workspaceF
                 }
             ]
         };
-        return expandWorkflowPresetHelper(folder, preset, workspaceFolder, sourceDir, true, enableTryApplyDevEnv, errorHandler);
+        return getWorkflowPresetInheritsHelper(folder, preset, workspaceFolder, sourceDir, true, enableTryApplyDevEnv, errorHandler);
     }
     log.error(localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name));
     errorHandler?.tempErrorList.push([localize('workflow.preset.not.found', 'Could not find workflow preset'), name]);
     return null;
 }
 
-async function expandWorkflowPresetHelper(folder: string, preset: WorkflowPreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler) {
+async function getWorkflowPresetInheritsHelper(folder: string, preset: WorkflowPreset, workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, enableTryApplyDevEnv: boolean = true, errorHandler?: ExpansionErrorHandler) {
     if (preset.__expanded) {
         return preset;
     }
