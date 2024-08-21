@@ -1794,8 +1794,8 @@ export class PresetsController implements vscode.Disposable {
             }
         }
 
-        const expandedPackagePresets: preset.BuildPreset[] = [];
-        for (const packagePreset of clonedPresetsFile?.buildPresets || []) {
+        const expandedPackagePresets: preset.PackagePreset[] = [];
+        for (const packagePreset of clonedPresetsFile?.packagePresets || []) {
             const inheritedPreset = await preset.getPackagePresetInherits(
                 this.folderPath,
                 packagePreset.name,
