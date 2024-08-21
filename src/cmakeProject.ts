@@ -32,6 +32,7 @@ import { FileDiagnostic, populateCollection } from './diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from './expand';
 import { CMakeGenerator, Kit, SpecialKits } from './kit';
 import * as logging from './logging';
+import * as lodash from "lodash";
 import { fs } from './pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
 import { FireLate, Property } from './prop';
@@ -311,6 +312,8 @@ export class CMakeProject {
             }
         }
 
+        preset.cacheExpandedPreset(this.folderPath, expandedConfigurePreset, "configurePresets");
+
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
         expandedConfigurePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedConfigurePreset.__parentEnvironment, expandedConfigurePreset.environment]);
 
@@ -404,6 +407,10 @@ export class CMakeProject {
             return undefined;
         }
 
+        if (expandedBuildPreset.name !== preset.defaultBuildPreset.name) {
+            preset.cacheExpandedPreset(this.folderPath, expandedBuildPreset, "buildPresets");
+        }
+
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
         expandedBuildPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedBuildPreset.__parentEnvironment, expandedBuildPreset.environment]);
 
@@ -494,6 +501,10 @@ export class CMakeProject {
             return undefined;
         }
 
+        if (expandedTestPreset.name !== preset.defaultTestPreset.name) {
+            preset.cacheExpandedPreset(this.folderPath, expandedTestPreset, "testPresets");
+        }
+
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
         expandedTestPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedTestPreset.__parentEnvironment, expandedTestPreset.environment]);
 
@@ -582,6 +593,10 @@ export class CMakeProject {
         if (!expandedPackagePreset.configurePreset) {
             log.error(localize('configurePreset.not.set.package.preset', '{0} is not set in package preset: {1}', "\"configurePreset\"", packagePreset));
             return undefined;
+        }
+
+        if (expandedPackagePreset.name !== preset.defaultPackagePreset.name) {
+            preset.cacheExpandedPreset(this.folderPath, expandedPackagePreset, "packagePresets");
         }
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
