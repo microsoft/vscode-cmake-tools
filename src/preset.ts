@@ -2144,7 +2144,7 @@ async function getWorkflowPresetInheritsHelper(folder: string, preset: WorkflowP
                 enableTryApplyDevEnv,
                 errorHandler);
         }  else {
-            const expandedConfigurePreset = getPresetByName(configurePresets(folder), workflowConfigurePreset);
+            expandedConfigurePreset = getPresetByName(configurePresets(folder), workflowConfigurePreset);
         }
         if (!expandedConfigurePreset) {
             return null;
