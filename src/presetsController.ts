@@ -192,9 +192,10 @@ export class PresetsController implements vscode.Disposable {
             // add the include files to the original presets file
             setPresetsPlusIncluded(this.folderPath, copyOfPresetsFile);
 
+            const copyAgain = lodash.cloneDeep(copyOfPresetsFile);
             // set the pre-expanded version so we can call expandPresetsFile on it
-            setExpandedPresets(this.folderPath, presetsFile);
-            presetsFile = await this.expandPresetsFile(presetsFile);
+            setExpandedPresets(this.folderPath, copyAgain);
+            presetsFile = await this.expandPresetsFile(copyAgain);
         }
 
         setExpandedPresets(this.folderPath, presetsFile);
@@ -1717,76 +1718,126 @@ export class PresetsController implements vscode.Disposable {
             return undefined;
         }
 
+        const clonedPresetsFile = lodash.cloneDeep(presetsFile);
+
         log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
         const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
-        const expandedConfigurePresets = (await Promise.all((presetsFile?.configurePresets || []).map(async configurePreset =>
-            preset.expandConfigurePreset(
+        const expandedConfigurePresets: preset.ConfigurePreset[] = [];
+        for (const configurePreset of clonedPresetsFile?.configurePresets || []) {
+            const inheritedPreset = await preset.getConfigurePresetInherits(
                 this.folderPath,
                 configurePreset.name,
-                this._sourceDir,
-                this.workspaceFolder.uri.fsPath,
                 true,
                 false,
-                expansionErrors)
-        ))).filter(preset => preset !== null)  as preset.ConfigurePreset[];
+                expansionErrors);
+            if (inheritedPreset) {
+                expandedConfigurePresets.push(await preset.expandConfigurePresetVariables(
+                    inheritedPreset,
+                    this.folderPath,
+                    configurePreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    true,
+                    false,
+                    expansionErrors
+                ));
+            }
+        }
 
-        const expandedBuildPresets = (await Promise.all((presetsFile?.buildPresets || []).map(async buildPreset =>
-            preset.expandBuildPreset(
+        const expandedBuildPresets: preset.BuildPreset[] = [];
+        for (const buildPreset of clonedPresetsFile?.buildPresets || []) {
+            const inheritedPreset = await preset.getBuildPresetInherits(
                 this.folderPath,
                 buildPreset.name,
                 this.workspaceFolder.uri.fsPath,
                 this._sourceDir,
                 undefined,
                 undefined,
-                true,   // should this always be true?
+                true,
                 buildPreset.configurePreset,
                 false,
-                expansionErrors)
-        ))).filter(preset => preset !== null) as preset.BuildPreset[];
+                expansionErrors);
+            if (inheritedPreset) {
+                expandedBuildPresets.push(await preset.expandBuildPresetVariables(
+                    inheritedPreset,
+                    buildPreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    expansionErrors
+                ));
+            }
+        }
 
-        const expandedPackagePresets = (await Promise.all((presetsFile?.packagePresets || []).map(async packagePreset =>
-            preset.expandPackagePreset(
-                this.folderPath,
-                packagePreset.name,
-                this.workspaceFolder.uri.fsPath,
-                this._sourceDir,
-                undefined,
-                true,   // should this always be true?
-                packagePreset.configurePreset,
-                false,
-                expansionErrors)
-        ))).filter(preset => preset !== null) as preset.PackagePreset[];
-
-        const expandedTestPresets = (await Promise.all((presetsFile?.testPresets || []).map(async testPreset =>
-            preset.expandTestPreset(
+        const expandedTestPresets: preset.TestPreset[] = [];
+        for (const testPreset of clonedPresetsFile?.testPresets || []) {
+            const inheritedPreset = await preset.getTestPresetInherits(
                 this.folderPath,
                 testPreset.name,
                 this.workspaceFolder.uri.fsPath,
                 this._sourceDir,
                 undefined,
-                true,   // should this always be true?
+                true,
                 testPreset.configurePreset,
                 false,
-                expansionErrors)
-        ))).filter(preset => preset !== null) as preset.TestPreset[];
+                expansionErrors
+            );
+            if (inheritedPreset) {
+                expandedTestPresets.push(await preset.expandTestPresetVariables(
+                    inheritedPreset,
+                    testPreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    expansionErrors
+                ));
+            }
+        }
 
-        const expandedWorkflowPresets = (await Promise.all((presetsFile?.workflowPresets || []).map(async workflowPreset =>
-            preset.expandWorkflowPreset(
+        const expandedPackagePresets: preset.PackagePreset[] = [];
+        for (const packagePreset of clonedPresetsFile?.packagePresets || []) {
+            const inheritedPreset = await preset.getPackagePresetInherits(
+                this.folderPath,
+                packagePreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,
+                packagePreset.configurePreset,
+                false,
+                expansionErrors
+            );
+            if (inheritedPreset) {
+                expandedPackagePresets.push(await preset.expandPackagePresetVariables(
+                    inheritedPreset,
+                    packagePreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    expansionErrors
+                ));
+            }
+        }
+
+        const expandedWorkflowPresets: preset.WorkflowPreset[] = [];
+        for (const workflowPreset of clonedPresetsFile?.workflowPresets || []) {
+            const inheritedPreset = await preset.getWorkflowPresetInherits(
                 this.folderPath,
                 workflowPreset.name,
                 this.workspaceFolder.uri.fsPath,
                 this._sourceDir,
-                true,   // should this always be true?
-                undefined,  // should this always be undefined?
+                true, // should this always be true?
+                undefined, // should this always be undefined?
                 false,
-                expansionErrors)
-        ))).filter(preset => preset !== null) as preset.WorkflowPreset[];
+                expansionErrors
+            );
+            if (inheritedPreset && inheritedPreset !== null) {
+                expandedWorkflowPresets.push(inheritedPreset);
+            }
+        }
 
         if (expansionErrors.errorList.length > 0) {
             log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
-            await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
+            await this.reportPresetsFileErrors(clonedPresetsFile.__path, expansionErrors);
             return undefined;
         } else {
             log.info(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
@@ -1800,7 +1851,7 @@ export class PresetsController implements vscode.Disposable {
             presetsFile.workflowPresets = expandedWorkflowPresets;
 
             // clear out the errors since there are none now
-            collections.presets.set(vscode.Uri.file(presetsFile.__path || ""), undefined);
+            collections.presets.set(vscode.Uri.file(clonedPresetsFile.__path || ""), undefined);
 
             return presetsFile;
         }
