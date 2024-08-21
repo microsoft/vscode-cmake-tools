@@ -2998,6 +2998,8 @@ export class CMakeProject {
             }
         }
 
+        await this.projectController?.updateActiveProject(this.workspaceFolder);
+
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
         await enableFullFeatureSet(true);

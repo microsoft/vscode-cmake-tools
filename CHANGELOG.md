@@ -39,6 +39,12 @@ Bug Fixes:
 - Only do special handling of `~` for code model reply path on linux. [#3957](https://github.com/microsoft/vscode-cmake-tools/issues/3957)
 - Fix issues with expanding unnecessary environment variables and incorrectly saving preset environments to cache. Also fixes expansion error reporting issue with not checking for an invalid Configure preset in other types of presets. [#3961](https://github.com/microsoft/vscode-cmake-tools/issues/3961) & [#1841](https://github.com/microsoft/vscode-cmake-tools/issues/1841)
 
+## 1.18.44
+
+Bug Fixes:
+
+- Infrastructure fixes.
+
 ## 1.18.43
 
 Features:
