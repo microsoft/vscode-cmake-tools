@@ -37,7 +37,7 @@ Bug Fixes:
 - Prevent second configure after `QuickStart` if the `automaticReconfigure` setting is enabled. [#3910](https://github.com/microsoft/vscode-cmake-tools/issues/3910)
 - Set usepresets context after manually creating a CMakePresets.json/CMakeUserPresets.json or using QuickStart to create it. [#3854](https://github.com/microsoft/vscode-cmake-tools/issues/3854)
 - Only do special handling of `~` for code model reply path on linux. [#3957](https://github.com/microsoft/vscode-cmake-tools/issues/3957)
-- Fix issues with expanding unnecessary environment variables and incorrectly saving preset environments to cache.[#3961](https://github.com/microsoft/vscode-cmake-tools/issues/3961), [#1841](https://github.com/microsoft/vscode-cmake-tools/issues/1841)
+- Fix issues with expanding unnecessary environment variables and incorrectly saving preset environments to cache. Also fixes expansion error reporting issue with not checking for an invalid Configure preset in other types of presets. [#3961](https://github.com/microsoft/vscode-cmake-tools/issues/3961) & [#1841](https://github.com/microsoft/vscode-cmake-tools/issues/1841)
 
 ## 1.18.43
 
