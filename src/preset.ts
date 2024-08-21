@@ -1069,10 +1069,11 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                     // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
                     // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
                     const tempPreset = { ...preset};
-                    tempPreset.environment = EnvironmentUtils.mergePreserveNull([process.env, tempPreset.environment]);
-                    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, tempPreset);
+
+                    const env = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
+                    const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, tempPreset, env);
+
                     const presetEnv = tempPreset.environment;
-                    // TODO: we need to make sure we only expand relevant env vars not EVERY env var.
                     if (presetEnv) {
                         for (const key in presetEnv) {
                             if (presetEnv[key]) {
