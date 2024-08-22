@@ -78,6 +78,14 @@ export interface ExpansionOptions {
      */
     envOverride?: EnvironmentWithNull;
     /**
+     * Override the values used in `${penv:var}`-style and `${penv.var}`-style expansions.
+     *
+     * Note that setting this property will disable expansion of environment
+     * variables for the running process. Only environment variables in this key
+     * will be expanded.
+     */
+    penvOverride?: EnvironmentWithNull;
+    /**
      * Variables for `${variant:var}`-style expansions.
      */
     variantVars?: { [key: string]: string };
@@ -91,6 +99,11 @@ export interface ExpansionOptions {
     doNotSupportCommands?: boolean;
 }
 
+export interface ExpansionErrorHandler {
+    errorList: [string, string][];
+    tempErrorList: [string, string][];
+}
+
 /**
  * Replace ${variable} references in the given string with their corresponding
  * values.
@@ -98,11 +111,10 @@ export interface ExpansionOptions {
  * @param opts Options for the expansion process
  * @returns A string with the variable references replaced
  */
-export async function expandString<T>(input: string | T, opts: ExpansionOptions): Promise<string | T> {
+export async function expandString<T>(input: string | T, opts: ExpansionOptions, errorHandler?: ExpansionErrorHandler): Promise<string | T> {
     if (typeof input !== 'string') {
         return input;
     }
-
     const inputString = input as string;
     try {
 
@@ -114,7 +126,7 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
         let i = 0;
         do {
             // TODO: consider a full circular reference check?
-            const expansion = await expandStringHelper(result, opts);
+            const expansion = await expandStringHelper(result, opts, errorHandler);
             result = expansion.result;
             didReplacement = expansion.didReplacement;
             circularReference = expansion.circularReference;
@@ -122,14 +134,16 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
         } while (i < maxRecursion && opts.recursive && didReplacement && !circularReference);
 
         if (circularReference) {
-            log.warning(localize('circular.variable.reference', 'Circular variable reference found: {0}', circularReference));
+            log.error(localize('circular.variable.reference.full', 'Circular variable reference found: {0}', circularReference));
         } else if (i === maxRecursion) {
             log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
+            errorHandler?.tempErrorList.push([localize('max.recursion', 'Max string expansion recursion'), ""]);
         }
 
         return replaceAll(result, '${dollar}', '$');
     } catch (e) {
-        log.warning(localize('exception.expanding.string', 'Exception while expanding string {0}: {1}', inputString, errorToString(e)));
+        log.warning(localize('exception.expanding.string.full', 'Exception while expanding string {0}: {1}', inputString, errorToString(e)));
+        errorHandler?.tempErrorList.push([localize('exception.expanding.string', 'Exception expanding string'), inputString]);
     }
 
     return input;
@@ -140,7 +154,7 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions)
 // as few times as possible, expanding as needed (lazy)
 const varValueRegexp = ".+?";
 
-async function expandStringHelper(input: string, opts: ExpansionOptions) {
+async function expandStringHelper(input: string, opts: ExpansionOptions, errorHandler?: ExpansionErrorHandler) {
     const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
     const env = EnvironmentUtils.create(envPreNormalize);
     const replacements = opts.vars;
@@ -161,7 +175,8 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
             // Replace dollar sign at the very end of the expanding process
             const replacement = replacements[key];
             if (!replacement) {
-                log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, input));
+                log.warning(localize('invalid.variable.reference.full', 'Invalid variable reference {0} in string: {1}', full, input));
+                errorHandler?.tempErrorList.push([localize('invalid.variable.reference', 'Invalid variable reference'), input]);
             } else {
                 subs.set(full, replacement);
             }
@@ -198,12 +213,13 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
         const varNameReplacement = mat2 ? mat2[1] : undefined;
         if (varNameReplacement && varNameReplacement === varName) {
             circularReference = `\"${varName}\" : \"${input}\"`;
+            errorHandler?.tempErrorList.push([localize('circular.variable.reference', 'Circular variable reference'), full]);
             break;
         }
         subs.set(full, replacement);
     }
 
-    getParentEnvSubstitutions(input, subs);
+    getParentEnvSubstitutions(input, subs, opts.penvOverride);
 
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
         const folderRegex = RegExp(`\\$\\{workspaceFolder:(${varValueRegexp})\\}`, "g");
@@ -246,7 +262,8 @@ async function expandStringHelper(input: string, opts: ExpansionOptions) {
             const result = await vscode.commands.executeCommand(command, opts.vars.workspaceFolder);
             subs.set(full, `${result}`);
         } catch (e) {
-            log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} {2}', command, input, errorToString(e)));
+            log.warning(localize('exception.executing.command.full', 'Exception while executing command {0} for string: {1} {2}', command, input, errorToString(e)));
+            errorHandler?.tempErrorList.push([localize('exception.executing.command', 'Exception executing command'), input]);
         }
     }
 
@@ -278,14 +295,24 @@ export function substituteAll(input: string, subs: Map<string, string>) {
     return { result: finalString, didReplacement };
 }
 
-export function getParentEnvSubstitutions(input: string, subs: Map<string, string>): Map<string, string> {
+export function getParentEnvSubstitutions(input: string, subs: Map<string, string>, penvOverride?: EnvironmentWithNull): Map<string, string> {
     const parentEnvRegex = RegExp(`\\$penv\\{(${varValueRegexp})\\}`, "g");
     for (const mat of matchAll(input, parentEnvRegex)) {
         const full = mat[0];
         const varName = mat[1];
-        const replacement = fixPaths(process.env[varName]) || '';
+        const replacementValue = penvOverride ? penvOverride[varName] : process.env[varName];
+        const replacement = fixPaths(replacementValue === null ? undefined : replacementValue) || '';
         subs.set(full, replacement);
     }
 
     return subs;
+}
+
+export function errorHandlerHelper(presetName: string, errorHandler?: ExpansionErrorHandler) {
+    if (errorHandler) {
+        for (const error of errorHandler.tempErrorList || []) {
+            errorHandler.errorList.push([error[0], `'${error[1]}' in preset '${presetName}'`]);
+        }
+        errorHandler.tempErrorList = [];
+    }
 }

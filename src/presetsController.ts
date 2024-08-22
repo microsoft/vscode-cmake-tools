@@ -2,6 +2,7 @@ import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as lodash from "lodash";
 
 import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
@@ -9,13 +10,15 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
+import { ExpansionErrorHandler, ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { loadSchema } from '@cmt/schema';
 import json5 = require('json5');
+import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
+import collections from '@cmt/diagnostics/collections';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -24,8 +27,8 @@ const log = logging.createLogger('presetController');
 
 type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefined) => void;
 
-export class PresetsController {
-    private _presetsWatcher: chokidar.FSWatcher | undefined;
+export class PresetsController implements vscode.Disposable {
+    private _presetsWatchers: FileWatcher | undefined;
     private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _presetsFileExists = false;
@@ -87,6 +90,11 @@ export class PresetsController {
             await presetsController.reapplyPresets();
         });
 
+        // We need to reapply presets to reassess whether the VS Developer Environment should be used.
+        project.workspaceContext.config.onChange('useVsDeveloperEnvironment', async () => {
+            await presetsController.reapplyPresets();
+        });
+
         return presetsController;
     }
 
@@ -130,13 +138,23 @@ export class PresetsController {
         return this._userPresetsChangedEmitter.event(listener);
     }
 
-    private readonly _setPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setPresetsFile(folder, presetsFile);
+    private readonly _setExpandedPresets = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setExpandedPresets(folder, presetsFile);
         this._presetsChangedEmitter.fire(presetsFile);
     };
 
-    private readonly _setUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setUserPresetsFile(folder, presetsFile);
+    private readonly _setExpandedUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setExpandedUserPresetsFile(folder, presetsFile);
+        this._userPresetsChangedEmitter.fire(presetsFile);
+    };
+
+    private readonly _setPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setPresetsPlusIncluded(folder, presetsFile);
+        this._presetsChangedEmitter.fire(presetsFile);
+    };
+
+    private readonly _setUserPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
+        preset.setUserPresetsPlusIncluded(folder, presetsFile);
         this._userPresetsChangedEmitter.fire(presetsFile);
     };
 
@@ -148,16 +166,15 @@ export class PresetsController {
         preset.setOriginalUserPresetsFile(folder, presetsFile);
     };
 
-    private async resetPresetsFile(file: string, setPresetsFile: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Set<string>) {
+    private async resetPresetsFile(file: string, setExpandedPresets: SetPresetsFileFunc, setPresetsPlusIncluded: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Map<string, preset.PresetsFile | undefined>) {
         const presetsFileBuffer = await this.readPresetsFile(file);
 
         // There might be a better location for this, but for now this is the best one...
         fileExistCallback(Boolean(presetsFileBuffer));
 
         // Record the file as referenced, even if the file does not exist.
-        referencedFiles.add(file);
-
         let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
+        referencedFiles.set(file, presetsFile);
         if (presetsFile) {
             // Parse again so we automatically have a copy by value
             setOriginalPresetsFile(this.folderPath, await this.parsePresetsFile(presetsFileBuffer, file));
@@ -166,24 +183,35 @@ export class PresetsController {
         }
 
         presetsFile = await this.validatePresetsFile(presetsFile, file);
-        // Private fields must be set after validation, otherwise validation would fail.
-        this.populatePrivatePresetsFields(presetsFile, file);
-        await this.mergeIncludeFiles(presetsFile, presetsFile, file, referencedFiles);
-        // TODO: more validation (or move some of the per file validation here when all entries are merged.
-        // Like unresolved preset reference or duplicates).
-        setPresetsFile(this.folderPath, presetsFile);
+        if (presetsFile) {
+            // Private fields must be set after validation, otherwise validation would fail.
+            this.populatePrivatePresetsFields(presetsFile, file);
+            await this.mergeIncludeFiles(presetsFile, file, referencedFiles);
+
+            const copyOfPresetsFile = lodash.cloneDeep(presetsFile);
+            // add the include files to the original presets file
+            setPresetsPlusIncluded(this.folderPath, copyOfPresetsFile);
+
+            const copyAgain = lodash.cloneDeep(copyOfPresetsFile);
+            // set the pre-expanded version so we can call expandPresetsFile on it
+            setExpandedPresets(this.folderPath, copyAgain);
+            presetsFile = await this.expandPresetsFile(copyAgain);
+        }
+
+        setExpandedPresets(this.folderPath, presetsFile);
     }
 
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
     // (need to clean or reload driver)
     async reapplyPresets() {
-        const referencedFiles: Set<string> = new Set();
+        const referencedFiles: Map<string, preset.PresetsFile | undefined> = new Map();
 
         // Reset all changes due to expansion since parents could change
-        await this.resetPresetsFile(this.presetsPath, this._setPresetsFile, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
-        await this.resetPresetsFile(this.userPresetsPath, this._setUserPresetsFile, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.presetsPath, this._setExpandedPresets, this._setPresetsPlusIncluded, this._setOriginalPresetsFile, exists => this._presetsFileExists = exists, referencedFiles);
+        await this.resetPresetsFile(this.userPresetsPath, this._setExpandedUserPresetsFile, this._setUserPresetsPlusIncluded, this._setOriginalUserPresetsFile, exists => this._userPresetsFileExists = exists, referencedFiles);
 
-        this._referencedFiles = Array.from(referencedFiles);
+        // reset all expanded presets storage.
+        this._referencedFiles = Array.from(referencedFiles.keys());
 
         this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
 
@@ -415,7 +443,7 @@ export class PresetsController {
 
             if (newPreset) {
 
-                const before: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
+                const before: preset.ConfigurePreset[] = preset.allConfigurePresets(this.folderPath);
                 const name = await this.showNameInputBox() || newPreset.displayName || undefined;
                 if (!name) {
                     return false;
@@ -810,10 +838,31 @@ export class PresetsController {
         return chosenPresets?.preset;
     }
 
+    // For all of the `getAll` methods, we now can safely grab only the user presets (if present), because they inherently include
+    // the presets.
     async getAllConfigurePresets(): Promise<preset.ConfigurePreset[]> {
-        preset.expandVendorForConfigurePresets(this.folderPath);
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
-        return preset.configurePresets(this.folderPath).concat(preset.userConfigurePresets(this.folderPath));
+        const userPresets = preset.userConfigurePresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.configurePresets(this.folderPath);
+    }
+
+    async getAllBuildPresets(): Promise<preset.BuildPreset[]> {
+        const userPresets = preset.userBuildPresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.buildPresets(this.folderPath);
+    }
+
+    async getAllTestPresets(): Promise<preset.TestPreset[]> {
+        const userPresets = preset.userTestPresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.testPresets(this.folderPath);
+    }
+
+    async getAllPackagePresets(): Promise<preset.PackagePreset[]> {
+        const userPresets = preset.userPackagePresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.packagePresets(this.folderPath);
+    }
+
+    async getAllWorkflowPresets(): Promise<preset.WorkflowPreset[]> {
+        const userPresets = preset.userWorkflowPresets(this.folderPath);
+        return userPresets.length > 0 ? userPresets : preset.workflowPresets(this.folderPath);
     }
 
     async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
@@ -853,7 +902,7 @@ export class PresetsController {
                 await this.setConfigurePreset(chosenPreset);
             }
 
-            if (this.project.workspaceContext.config.automaticReconfigure) {
+            if (this.project.workspaceContext.config.automaticReconfigure  && !quickStart) {
                 await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
             }
             return !addPreset || allPresets.length === 0;
@@ -926,7 +975,15 @@ export class PresetsController {
         let currentBuildPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'build');
-            const buildPresets = preset.allBuildPresets(this.folderPath);
+            const allPresets = preset.allBuildPresets(this.folderPath);
+            const buildPresets = (await this.getAllBuildPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const buildPreset of buildPresets) {
                 // Set active build preset as the first valid build preset matches the selected configure preset
                 if (buildPreset.configurePreset === selectedConfigurePreset && !buildPreset.hidden) {
@@ -950,7 +1007,15 @@ export class PresetsController {
         let currentTestPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'test');
-            const testPresets = preset.allTestPresets(this.folderPath);
+            const allPresets = preset.allTestPresets(this.folderPath);
+            const testPresets = (await this.getAllTestPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const testPreset of testPresets) {
                 // Set active test preset as the first valid test preset matches the selected configure preset
                 if (testPreset.configurePreset === selectedConfigurePreset && !testPreset.hidden) {
@@ -974,7 +1039,15 @@ export class PresetsController {
         let currentPackagePreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'package');
-            const packagePresets = preset.allPackagePresets(this.folderPath);
+            const allPresets = preset.allPackagePresets(this.folderPath);
+            const packagePresets = (await this.getAllPackagePresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const packagePreset of packagePresets) {
                 // Set active package preset as the first valid package preset matches the selected configure preset
                 if (packagePreset.configurePreset === selectedConfigurePreset && !packagePreset.hidden) {
@@ -998,7 +1071,15 @@ export class PresetsController {
         let currentWorkflowPreset: string | undefined;
         if (selectedConfigurePreset) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
-            const workflowPresets = preset.allWorkflowPresets(this.folderPath);
+            const allPresets = preset.allWorkflowPresets(this.folderPath);
+            const workflowPresets = (await this.getAllWorkflowPresets()).filter(
+                (_preset) =>
+                    this.checkCompatibility(
+                        this.project.configurePreset,
+                        _preset
+                    ).buildPresetCompatible &&
+                    preset.evaluatePresetCondition(_preset, allPresets)
+            );
             for (const workflowPreset of workflowPresets) {
                 // Set active workflow preset as the first valid workflow preset (matching the selected configure preset is not a requirement as for the other presets types)
                 await this.setWorkflowPreset(workflowPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
@@ -1051,7 +1132,6 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'build');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, _preset).buildPresetCompatible);
@@ -1210,7 +1290,6 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'test');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, _preset).testPresetCompatible);
@@ -1303,7 +1382,6 @@ export class PresetsController {
         }
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'package');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, this.project.testPreset, _preset).packagePresetCompatible);
@@ -1386,7 +1464,6 @@ export class PresetsController {
         // which to be the same as in step0. This is verified by CMakePresets.json validation in validatePresetsFile.
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
-        await preset.expandConditionsForPresets(this.folderPath, this._sourceDir);
 
         const allPresets = preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
         allPresets.push(preset.defaultWorkflowPreset);
@@ -1525,8 +1602,28 @@ export class PresetsController {
         setFile(presetsFile.packagePresets);
     }
 
-    private async mergeIncludeFiles(rootPresetsFile: preset.PresetsFile | undefined, presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Set<string>): Promise<void> {
-        if (!rootPresetsFile || !presetsFile || !presetsFile.include) {
+    private async mergeIncludeFiles(presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Map<string, preset.PresetsFile | undefined>): Promise<void> {
+        if (!presetsFile) {
+            return;
+        }
+
+        // CMakeUserPresets.json file should include CMakePresets.json file, by default.
+        if (this.presetsFileExist && file === this.userPresetsPath) {
+            presetsFile.include = presetsFile.include || [];
+            const filteredIncludes = presetsFile.include.filter(include => {
+                // Ensuring that we handle expansions. Duplicated from loop below.
+                const includePath = presetsFile.version >= 7 ?
+                // Version 7 and later support $penv{} expansions in include paths
+                    substituteAll(include, getParentEnvSubstitutions(include, new Map<string, string>())).result :
+                    include;
+                path.normalize(path.resolve(path.dirname(file), includePath)) === this.presetsPath;
+            });
+            if (filteredIncludes.length === 0) {
+                presetsFile.include.push(this.presetsPath);
+            }
+        }
+
+        if (!presetsFile.include) {
             return;
         }
 
@@ -1541,10 +1638,33 @@ export class PresetsController {
 
             // Do not include files more than once
             if (referencedFiles.has(fullIncludePath)) {
+                const referencedIncludeFile = referencedFiles.get(fullIncludePath);
+                if (referencedIncludeFile) {
+                    if (referencedIncludeFile.configurePresets) {
+                        presetsFile.configurePresets = lodash.unionWith(referencedIncludeFile.configurePresets, presetsFile.configurePresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.buildPresets) {
+                        presetsFile.buildPresets = lodash.unionWith(referencedIncludeFile.buildPresets, presetsFile.buildPresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.testPresets) {
+                        presetsFile.testPresets = lodash.unionWith(referencedIncludeFile.testPresets, presetsFile.testPresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.packagePresets) {
+                        presetsFile.packagePresets = lodash.unionWith(referencedIncludeFile.packagePresets, presetsFile.packagePresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.workflowPresets) {
+                        presetsFile.workflowPresets = lodash.unionWith(referencedIncludeFile.workflowPresets, presetsFile.workflowPresets || [], (a, b) => a.name === b.name);
+                    }
+                    if (referencedIncludeFile.cmakeMinimumRequired) {
+                        if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, referencedIncludeFile.cmakeMinimumRequired)) {
+                            presetsFile.cmakeMinimumRequired = referencedIncludeFile.cmakeMinimumRequired;
+                        }
+                    }
+                }
                 continue;
             }
             // Record the file as referenced, even if the file does not exist.
-            referencedFiles.add(fullIncludePath);
+            referencedFiles.set(fullIncludePath, undefined);
 
             const includeFileBuffer = await this.readPresetsFile(fullIncludePath);
             if (!includeFileBuffer) {
@@ -1553,6 +1673,7 @@ export class PresetsController {
             }
 
             let includeFile = await this.parsePresetsFile(includeFileBuffer, fullIncludePath);
+            referencedFiles.set(fullIncludePath, includeFile);
             includeFile = await this.validatePresetsFile(includeFile, fullIncludePath);
             if (!includeFile) {
                 continue;
@@ -1561,30 +1682,198 @@ export class PresetsController {
             // Private fields must be set after validation, otherwise validation would fail.
             this.populatePrivatePresetsFields(includeFile, fullIncludePath);
 
-            if (includeFile.cmakeMinimumRequired) {
-                if (!rootPresetsFile.cmakeMinimumRequired || util.versionLess(rootPresetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
-                    rootPresetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
-                }
-            }
+            // Recursively merge included files
+            await this.mergeIncludeFiles(includeFile, fullIncludePath, referencedFiles);
+
             if (includeFile.configurePresets) {
-                rootPresetsFile.configurePresets = includeFile.configurePresets.concat(rootPresetsFile.configurePresets || []);
+                presetsFile.configurePresets = lodash.unionWith(includeFile.configurePresets, presetsFile.configurePresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.buildPresets) {
-                rootPresetsFile.buildPresets = includeFile.buildPresets.concat(rootPresetsFile.buildPresets || []);
+                presetsFile.buildPresets = lodash.unionWith(includeFile.buildPresets, presetsFile.buildPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.testPresets) {
-                rootPresetsFile.testPresets = includeFile.testPresets.concat(rootPresetsFile.testPresets || []);
+                presetsFile.testPresets = lodash.unionWith(includeFile.testPresets, presetsFile.testPresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.packagePresets) {
-                rootPresetsFile.packagePresets = includeFile.packagePresets.concat(rootPresetsFile.packagePresets || []);
+                presetsFile.packagePresets = lodash.unionWith(includeFile.packagePresets, presetsFile.packagePresets || [], (a, b) => a.name === b.name);
             }
             if (includeFile.workflowPresets) {
-                rootPresetsFile.workflowPresets = includeFile.workflowPresets.concat(rootPresetsFile.workflowPresets || []);
+                presetsFile.workflowPresets = lodash.unionWith(includeFile.workflowPresets, presetsFile.workflowPresets || [], (a, b) => a.name === b.name);
             }
-
-            // Recursively merge included files
-            await this.mergeIncludeFiles(rootPresetsFile, includeFile, fullIncludePath, referencedFiles);
+            if (includeFile.cmakeMinimumRequired) {
+                if (!presetsFile.cmakeMinimumRequired || util.versionLess(presetsFile.cmakeMinimumRequired, includeFile.cmakeMinimumRequired)) {
+                    presetsFile.cmakeMinimumRequired = includeFile.cmakeMinimumRequired;
+                }
+            }
         }
+    }
+
+    /**
+     * Returns the expanded presets file if there are no errors, otherwise returns undefined
+     * Does not apply vsdevenv to the presets file
+     */
+    private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
+
+        if (!presetsFile) {
+            return undefined;
+        }
+
+        const clonedPresetsFile = lodash.cloneDeep(presetsFile);
+
+        log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
+
+        const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
+
+        const expandedConfigurePresets: preset.ConfigurePreset[] = [];
+        for (const configurePreset of clonedPresetsFile?.configurePresets || []) {
+            const inheritedPreset = await preset.getConfigurePresetInherits(
+                this.folderPath,
+                configurePreset.name,
+                true,
+                false,
+                expansionErrors);
+            if (inheritedPreset) {
+                expandedConfigurePresets.push(await preset.expandConfigurePresetVariables(
+                    inheritedPreset,
+                    this.folderPath,
+                    configurePreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    true,
+                    false,
+                    expansionErrors
+                ));
+            }
+        }
+
+        const expandedBuildPresets: preset.BuildPreset[] = [];
+        for (const buildPreset of clonedPresetsFile?.buildPresets || []) {
+            const inheritedPreset = await preset.getBuildPresetInherits(
+                this.folderPath,
+                buildPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                undefined,
+                true,
+                buildPreset.configurePreset,
+                false,
+                expansionErrors);
+            if (inheritedPreset) {
+                expandedBuildPresets.push(await preset.expandBuildPresetVariables(
+                    inheritedPreset,
+                    buildPreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    expansionErrors
+                ));
+            }
+        }
+
+        const expandedTestPresets: preset.TestPreset[] = [];
+        for (const testPreset of clonedPresetsFile?.testPresets || []) {
+            const inheritedPreset = await preset.getTestPresetInherits(
+                this.folderPath,
+                testPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,
+                testPreset.configurePreset,
+                false,
+                expansionErrors
+            );
+            if (inheritedPreset) {
+                expandedTestPresets.push(await preset.expandTestPresetVariables(
+                    inheritedPreset,
+                    testPreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    expansionErrors
+                ));
+            }
+        }
+
+        const expandedPackagePresets: preset.PackagePreset[] = [];
+        for (const packagePreset of clonedPresetsFile?.packagePresets || []) {
+            const inheritedPreset = await preset.getPackagePresetInherits(
+                this.folderPath,
+                packagePreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                undefined,
+                true,
+                packagePreset.configurePreset,
+                false,
+                expansionErrors
+            );
+            if (inheritedPreset) {
+                expandedPackagePresets.push(await preset.expandPackagePresetVariables(
+                    inheritedPreset,
+                    packagePreset.name,
+                    this.workspaceFolder.uri.fsPath,
+                    this._sourceDir,
+                    expansionErrors
+                ));
+            }
+        }
+
+        const expandedWorkflowPresets: preset.WorkflowPreset[] = [];
+        for (const workflowPreset of clonedPresetsFile?.workflowPresets || []) {
+            const inheritedPreset = await preset.getWorkflowPresetInherits(
+                this.folderPath,
+                workflowPreset.name,
+                this.workspaceFolder.uri.fsPath,
+                this._sourceDir,
+                true, // should this always be true?
+                undefined, // should this always be undefined?
+                false,
+                expansionErrors
+            );
+            if (inheritedPreset && inheritedPreset !== null) {
+                expandedWorkflowPresets.push(inheritedPreset);
+            }
+        }
+
+        if (expansionErrors.errorList.length > 0) {
+            log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
+            await this.reportPresetsFileErrors(clonedPresetsFile.__path, expansionErrors);
+            return undefined;
+        } else {
+            log.info(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
+
+            // cache everything that we just expanded
+            // we'll only need to expand again on set preset - to apply the vs dev env if needed
+            presetsFile.configurePresets = expandedConfigurePresets;
+            presetsFile.buildPresets = expandedBuildPresets;
+            presetsFile.testPresets = expandedTestPresets;
+            presetsFile.packagePresets = expandedPackagePresets;
+            presetsFile.workflowPresets = expandedWorkflowPresets;
+
+            // clear out the errors since there are none now
+            collections.presets.set(vscode.Uri.file(clonedPresetsFile.__path || ""), undefined);
+
+            return presetsFile;
+        }
+    }
+
+    private async reportPresetsFileErrors(path: string = "", expansionErrors: ExpansionErrorHandler) {
+        const diagnostics: Diagnostic[] = [];
+        for (const error of expansionErrors.errorList) {
+            // message - error type, source - details & the preset name it's from
+            const diagnostic: Diagnostic = {
+                severity: DiagnosticSeverity.Error,
+                message: error[0],
+                source: error[1],
+                range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error - parse originalPresetsFile
+            };
+            // avoid duplicate diagnostics
+            if (!diagnostics.find(d => d.message === diagnostic.message && d.source === diagnostic.source)) {
+                diagnostics.push(diagnostic);
+            }
+        }
+
+        collections.presets.set(vscode.Uri.file(path), diagnostics);
     }
 
     private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {
@@ -1623,7 +1912,7 @@ export class PresetsController {
                 logFunc(localize('unsupported.presets', 'Unsupported presets detected in {0}. Support is limited to features defined by version {1}.', file, maxSupportedVersion));
                 for (const err of errors) {
                     if (err.params && 'additionalProperty' in err.params) {
-                        logFunc(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
+                        logFunc(` >> ${err.dataPath}: ${localize('no.additional.properties', 'should NOT have additional properties')}: ${err.params.additionalProperty}`);
                     } else {
                         logFunc(` >> ${err.dataPath}: ${err.message}`);
                     }
@@ -1685,7 +1974,7 @@ export class PresetsController {
             }
         }
 
-        log.info(localize('successfully.validated.presets', 'Successfully validated presets in {0}', file));
+        log.info(localize('successfully.validated.presets', 'Successfully validated {0} against presets schema', file));
         return presetsFile;
     }
 
@@ -1756,26 +2045,68 @@ export class PresetsController {
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));
     }
 
-    private async watchPresetsChange() {
-        if (this._presetsWatcher) {
-            this._presetsWatcher.close().then(() => {}, () => {});
-        }
+    // this is used for the file watcher on adding a new presets file
+    async onCreatePresetsFile() {
+        await this.reapplyPresets();
+        await this.project.projectController?.updateActiveProject(this.workspaceFolder);
+    }
 
-        const handler = () => {
+    private async watchPresetsChange() {
+
+        const presetChangeHandler = () => {
             void this.reapplyPresets();
         };
-        this._presetsWatcher = chokidar.watch(this._referencedFiles, { ignoreInitial: true })
-            .on('add', handler)
-            .on('change', handler)
-            .on('unlink', handler);
+        const presetCreatedHandler = () => {
+            void this.onCreatePresetsFile();
+        };
+
+        const events: Map<string, () => void> = new Map<string, () => void>([
+            ["change", presetChangeHandler],
+            ["unlink", presetChangeHandler],
+            ["add", presetCreatedHandler]
+        ]);
+
+        this._presetsWatchers?.dispose();
+        this._presetsWatchers = new FileWatcher(this._referencedFiles, events, { ignoreInitial: true });
     };
 
     dispose() {
-        if (this._presetsWatcher) {
-            this._presetsWatcher.close().then(() => {}, () => {});
-        }
+        this._presetsWatchers?.dispose();
+
         if (this._sourceDirChangedSub) {
             this._sourceDirChangedSub.dispose();
+        }
+    }
+}
+
+/**
+ * FileWatcher is a wrapper around chokidar's FSWatcher that allows for watching multiple paths.
+ * Chokidar's support for watching multiple paths is currently broken, if it is fixed in the future, this class can be removed.
+ */
+class FileWatcher implements vscode.Disposable {
+    private watchers: Map<string, chokidar.FSWatcher>;
+
+    public constructor(paths: string | string[], eventHandlers: Map<string, () => void>, options?: chokidar.WatchOptions) {
+        this.watchers = new Map<string, chokidar.FSWatcher>();
+
+        for (const path of Array.isArray(paths) ? paths : [paths]) {
+            try {
+                const watcher = chokidar.watch(path, { ...options });
+                const eventHandlerEntries = Array.from(eventHandlers);
+                for (let i = 0; i < eventHandlerEntries.length; i++) {
+                    const [event, handler] = eventHandlerEntries[i];
+                    watcher.on(event, handler);
+                }
+                this.watchers.set(path, watcher);
+            } catch (error) {
+                log.error(localize('failed.to.watch', 'Watcher could not be created for {0}: {1}', path, util.errorToString(error)));
+            }
+        }
+    }
+
+    public dispose() {
+        for (const watcher of this.watchers.values()) {
+            watcher.close().then(() => {}, () => {});
         }
     }
 }

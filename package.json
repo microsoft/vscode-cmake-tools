@@ -2437,6 +2437,11 @@
                   "short": "RelWithDebInfo",
                   "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long%",
                   "buildType": "RelWithDebInfo"
+                },
+                "unspecified": {
+                  "short": "Unspecified",
+                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.unspecified.long%",
+                  "buildType": "Unspecified"
                 }
               }
             }
@@ -2571,7 +2576,7 @@
         },
         "cmake.configureOnOpen": {
           "type": "boolean",
-          "default": null,
+          "default": true,
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
           "scope": "resource",
           "tags": [
@@ -2587,7 +2592,7 @@
         "cmake.deleteBuildDirOnCleanConfigure": {
           "type": "boolean",
           "default": false,
-          "description": "%cmake-tools.configuration.cmake.deleteBuildDirOnCleanCconfigure.description%",
+          "description": "%cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description%",
           "scope": "resource"
         },
         "cmake.setBuildTypeOnMultiConfig": {
@@ -3479,12 +3484,14 @@
           "enum": [
             "focus",
             "always",
-            "never"
+            "never",
+            "error"
           ],
           "enumDescriptions": [
             "%cmake-tools.configuration.cmake.revealLog.focus.description%",
             "%cmake-tools.configuration.cmake.revealLog.always.description%",
-            "%cmake-tools.configuration.cmake.revealLog.never.description%"
+            "%cmake-tools.configuration.cmake.revealLog.never.description%",
+            "%cmake-tools.configuration.cmake.revealLog.onError.description%"
           ],
           "description": "%cmake-tools.configuration.cmake.revealLog.description%"
         },
@@ -3504,6 +3511,17 @@
           "default": "auto",
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%",
           "scope": "resource"
+        },
+        "cmake.useVsDeveloperEnvironment": {
+            "type": "string",
+            "enum": [
+                "always",
+                "never",
+                "auto"
+            ],
+            "default": "auto",
+            "description": "%cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description%",
+            "scope": "resource"
         },
         "cmake.allowCommentsInPresetsFile": {
           "type": "boolean",
@@ -3579,12 +3597,12 @@
         "command": "cmake.buildWithTarget"
       },
       {
-        "key": "ctrl+f5",
+        "key": "shift+f5",
         "command": "cmake.debugTarget",
         "when": "!inDebugMode && inCMakeProject && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       },
       {
-        "key": "shift+f5",
+        "key": "ctrl+f5",
         "command": "cmake.launchTarget",
         "when": "!inDebugMode && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       }
@@ -3684,6 +3702,7 @@
     "@types/chai-string": "^1.4.2",
     "@types/js-yaml": "^4.0.0",
     "@types/json5": "~0.0.30",
+    "@types/lodash": "4.14.202",
     "@types/mocha": "^8.2.2",
     "@types/node": "~14.14.28",
     "@types/rimraf": "^3.0.0",
@@ -3750,7 +3769,8 @@
     "vscode-tas-client": "^0.1.45",
     "which": "~2.0.2",
     "xml2js": "^0.4.23",
-    "uuid": "~8.3.2"
+    "uuid": "~8.3.2",
+    "lodash": "^4.17.21"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",

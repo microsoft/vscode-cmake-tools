@@ -23,7 +23,7 @@ enum LogLevel {
     Fatal,
 }
 
-type RevealLogKey = 'always' | 'never' | 'focus';
+type RevealLogKey = 'always' | 'never' | 'focus' | 'error';
 
 /**
  * Get the name of a logging level
@@ -252,10 +252,17 @@ export class Logger {
         SingletonLogger.instance().clearOutputChannel();
     }
 
-    showChannel() {
+    showChannel(error_to_show?: boolean) {
         const reveal_log = vscode.workspace.getConfiguration('cmake').get<RevealLogKey>('revealLog', 'always');
 
-        const should_show = (reveal_log !== 'never');
+        let should_show: boolean = false;
+        if (reveal_log === 'always') {
+            should_show = true;
+        }
+        // won't show if no target information
+        if (reveal_log === 'error' && error_to_show !== undefined) {
+            should_show = error_to_show;
+        }
         const should_focus = (reveal_log === 'focus');
 
         if (should_show) {

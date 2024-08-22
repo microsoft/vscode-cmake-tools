@@ -31,7 +31,6 @@ import * as nls from 'vscode-nls';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
-import { logCMakeDebuggerTelemetry } from '@cmt/debug/cmakeDebuggerTelemetry';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -39,7 +38,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cmakefileapi-driver');
 /**
- * The CMake driver with FileApi of CMake >= 3.15.0
+ * The CMake driver with FileApi of CMake >= 3.14.0
  */
 export class CMakeFileApiDriver extends CMakeDriver {
 
@@ -53,7 +52,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         isMultiProject: boolean,
         workspaceRootPath: string,
         preconditionHandler: CMakePreconditionProblemSolver) {
-        super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler);
+        super(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler, true);
     }
 
     static async create(cmake: CMakeExecutable,
@@ -128,7 +127,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         if (cacheExists && this.generator?.name === await this.getGeneratorFromCache(this.cachePath)) {
             await this.loadGeneratorInformationFromCache(this.cachePath);
             const code_model_exist = await this.updateCodeModel();
-            if (!code_model_exist && this.config.configureOnOpen === true) {
+            if (!code_model_exist && this.config.configureOnOpen) {
                 await this.doConfigure([], undefined, undefined);
             }
         } else {
@@ -137,7 +136,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
             // Since this setting will prevent configure anyway (until a configure command is invoked
             // or build/test will trigger automatic configuring), there is no need to delete the cache now
             // even if this is not a project configured from outside VSCode.
-            if (cacheExists && this.config.configureOnOpen !== false) {
+            if (cacheExists && this.config.configureOnOpen) {
                 // No need to remove the other CMake files for the generator change to work properly
                 log.info(localize('removing', 'Removing {0}', this.cachePath));
                 try {
@@ -149,7 +148,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
             this._generatorInformation = this.generator;
         }
-        if (!this.generator && !this.useCMakePresets) {
+        if (!(this.cmake.isDefaultGeneratorSupported && this.kit?.name === '__unspec__') && !this.generator && !this.useCMakePresets) {
             throw new NoGeneratorError();
         }
 
@@ -170,7 +169,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     async doSetKit(cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
         await cb();
-        if (!this.generator) {
+        if (!(this.cmake.isDefaultGeneratorSupported && this.kit?.name === '__unspec__') && !this.generator) {
             throw new NoGeneratorError();
         }
     }
@@ -290,23 +289,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
                         await new Promise(resolve => setTimeout(resolve, 50));
                     }
 
-                    // if there isn't a `debuggerIsReady` callback provided, this means that this invocation was
-                    // started by a command, rather than by a launch configuration, and the debug session will start from here.
-                    if (debuggerInformation.debuggerIsReady) {
-                        // This cmake debug invocation came from a launch configuration. All telemetry is handled in the createDebugAdapterDescriptor handler.
-                        debuggerInformation.debuggerIsReady();
-                    } else {
-                        const cmakeDebugType = "configure";
-                        logCMakeDebuggerTelemetry(trigger ?? "", cmakeDebugType);
-                        await vscode.debug.startDebugging(undefined, {
-                            name: localize("cmake.debug.name", "CMake Debugger"),
-                            request: "launch",
-                            type: "cmake",
-                            cmakeDebugType,
-                            pipeName: debuggerInformation.pipeName,
-                            fromCommand: true
-                        });
-                    }
+                    // This cmake debug invocation was started from a startDebugging command.
+                    // All telemetry is handled in the createDebugAdapterDescriptor handler.
+                    debuggerInformation.debuggerIsReady();
                 }
             }
 
@@ -339,7 +324,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     private toolchainWarningProvided: boolean = false;
     private async updateCodeModel(binaryDir?: string): Promise<boolean> {
-        const reply_path = this.getCMakeReplyPath(binaryDir).replace('~', process.env.HOME || "./");
+        const initialReplyPath = this.getCMakeReplyPath(binaryDir);
+        const reply_path = process.platform === "linux" ? initialReplyPath.replace('~', process.env.HOME || "./") : initialReplyPath;
         const indexFile = await loadIndexFile(reply_path);
         if (indexFile) {
             this._generatorInformation = indexFile.cmake.generator;
