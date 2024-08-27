@@ -1685,7 +1685,7 @@ export async function expandBuildPresetVariables(preset: BuildPreset, name: stri
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
 
-    return preset;
+    return expandedPreset;
 }
 
 // Map<fsPath, Set<referencedPresets>>
