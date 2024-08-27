@@ -1613,7 +1613,10 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        if (!expandedConfigurePreset && allowUserPreset) {
+            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
+        }
 
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', preset.configurePreset));
@@ -1685,7 +1688,7 @@ export async function expandBuildPresetVariables(preset: BuildPreset, name: stri
     // Other fields can be copied by reference for simplicity
     merge(expandedPreset, preset);
 
-    return preset;
+    return expandedPreset;
 }
 
 // Map<fsPath, Set<referencedPresets>>
@@ -1786,7 +1789,11 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        if (!expandedConfigurePreset && allowUserPreset) {
+            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
+        }
+
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', preset.configurePreset));
             errorHandler?.tempErrorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
@@ -1996,7 +2003,11 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        const expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        if (!expandedConfigurePreset && allowUserPreset) {
+            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
+        }
+
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', preset.configurePreset));
             errorHandler?.tempErrorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
