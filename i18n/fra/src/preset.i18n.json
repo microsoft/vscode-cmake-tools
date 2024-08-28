@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Héritages circulaires dans la présélection de workflow {0}",
 	"build.preset.not.found.full": "Impossible de trouver une préselection de build avec le nom {0}",
 	"build.preset.not.found": "Impossible de trouver une préselection de build",
+	"configure.preset.not.found.full": "Présélection de la configuration introuvable avec le nom {0}",
+	"configure.preset.not.found": "Présélection de la configuration introuvable",
 	"test.preset.not.found.full": "Impossible de trouver une présélection de test nommée {0}",
 	"test.preset.not.found": "Impossible de trouver la présélection de test",
 	"package.preset.not.found.full": "Impossible de trouver la présélection de package nommée {0}",
