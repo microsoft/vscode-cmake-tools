@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "循环在工作流预设 {0} 中继承",
 	"build.preset.not.found.full": "找不到名称为 {0} 的生成预设",
 	"build.preset.not.found": "找不到生成预设",
+	"configure.preset.not.found.full": "找不到名为 {0} 的配置预设",
+	"configure.preset.not.found": "找不到配置预设",
 	"test.preset.not.found.full": "找不到名称为 {0} 的测试预设",
 	"test.preset.not.found": "找不到测试预设",
 	"package.preset.not.found.full": "找不名称为 {0} 的包预设",
