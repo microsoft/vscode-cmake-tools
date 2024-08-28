@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Cyklické dědění v předvolbě pracovního postupu {0}",
 	"build.preset.not.found.full": "Nepovedlo se najít předvolbu sestavení s názvem {0}.",
 	"build.preset.not.found": "Nepovedlo se najít předvolbu sestavení.",
+	"configure.preset.not.found.full": "Nepovedlo se najít předvolbu konfigurace s názvem {0}.",
+	"configure.preset.not.found": "Nepovedlo se najít předvolbu konfigurace.",
 	"test.preset.not.found.full": "Nepovedlo se najít předvolbu testování s názvem {0}.",
 	"test.preset.not.found": "Nepovedlo se najít předvolbu testování.",
 	"package.preset.not.found.full": "Nepovedlo se najít předvolbu balíčku s názvem {0}.",
