@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Ereditarietà circolari nel set di impostazioni del flusso di lavoro {0}",
 	"build.preset.not.found.full": "Non è stato possibile trovare il set di impostazioni di compilazione denominato {0}",
 	"build.preset.not.found": "Non è stato possibile trovare il set di impostazioni di compilazione",
+	"configure.preset.not.found.full": "Non è stato possibile trovare il set di impostazioni di configurazione denominato {0}",
+	"configure.preset.not.found": "Non è stato possibile trovare il set di impostazioni di configurazione",
 	"test.preset.not.found.full": "Non è stato possibile trovare il set di impostazioni di test denominato {0}",
 	"test.preset.not.found": "Non è stato possibile trovare il set di impostazioni di test",
 	"package.preset.not.found.full": "Non è possibile trovare il set di impostazioni del pacchetto con il nome {0}",

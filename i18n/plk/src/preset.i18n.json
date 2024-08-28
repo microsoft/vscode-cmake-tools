@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Cykliczne dziedziczenia w ustawieniu wstępnym przepływu pracy {0}",
 	"build.preset.not.found.full": "Nie można odnaleźć predefiniowanej kompilacji o nazwie {0}",
 	"build.preset.not.found": "Nie można odnaleźć ustawienia wstępnego kompilacji",
+	"configure.preset.not.found.full": "Nie można odnaleźć predefiniowanej konfiguracji o nazwie {0}",
+	"configure.preset.not.found": "Nie można odnaleźć ustawienia wstępnego konfiguracji",
 	"test.preset.not.found.full": "Nie można odnaleźć predefiniowanego testu o nazwie {0}",
 	"test.preset.not.found": "Nie można odnaleźć ustawienia wstępnego testu",
 	"package.preset.not.found.full": "Nie można odnaleźć ustawienia wstępnego pakietu o nazwie {0}",
