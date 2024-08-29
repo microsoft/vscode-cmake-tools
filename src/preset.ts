@@ -1293,13 +1293,14 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
             const defaultValue = '${sourceDir}/out/build/${presetName}';
 
             log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value {1}', preset.name, `"${defaultValue}"`));
-            preset.binaryDir = defaultValue;
+            // Modify the expandedPreset binary dir so that we don't modify the cache in place.
+            expandedPreset.binaryDir = defaultValue;
         }
     }
 
     // Expand other fields
-    if (preset.binaryDir) {
-        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts, errorHandler));
+    if (expandedPreset.binaryDir) {
+        expandedPreset.binaryDir = util.lightNormalizePath(await expandString(expandedPreset.binaryDir, expansionOpts, errorHandler));
         if (!path.isAbsolute(expandedPreset.binaryDir)) {
             expandedPreset.binaryDir = util.resolvePath(expandedPreset.binaryDir, sourceDir);
         }
@@ -1614,22 +1615,9 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        let expandedConfigurePreset: ConfigurePreset | undefined;
-
-        const presetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, true, true);
-        if (presetInherits) {
-            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
-            await tryApplyVsDevEnv(presetInherits, workspaceFolder, sourceDir);
-
-            expandedConfigurePreset = await expandConfigurePresetVariables(
-                presetInherits,
-                folder,
-                presetInherits.name,
-                workspaceFolder,
-                sourceDir,
-                true,
-                true
-            );
+        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        if (!expandedConfigurePreset && allowUserPreset) {
+            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
         }
 
         if (!expandedConfigurePreset) {
@@ -1803,22 +1791,9 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        let expandedConfigurePreset: ConfigurePreset | undefined;
-
-        const presetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, true, true);
-        if (presetInherits) {
-            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
-            await tryApplyVsDevEnv(presetInherits, workspaceFolder, sourceDir);
-
-            expandedConfigurePreset = await expandConfigurePresetVariables(
-                presetInherits,
-                folder,
-                presetInherits.name,
-                workspaceFolder,
-                sourceDir,
-                true,
-                true
-            );
+        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        if (!expandedConfigurePreset && allowUserPreset) {
+            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
         }
 
         if (!expandedConfigurePreset) {
@@ -2030,22 +2005,9 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        let expandedConfigurePreset: ConfigurePreset | undefined;
-
-        const presetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, true, true);
-        if (presetInherits) {
-            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
-            await tryApplyVsDevEnv(presetInherits, workspaceFolder, sourceDir);
-
-            expandedConfigurePreset = await expandConfigurePresetVariables(
-                presetInherits,
-                folder,
-                presetInherits.name,
-                workspaceFolder,
-                sourceDir,
-                true,
-                true
-            );
+        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
+        if (!expandedConfigurePreset && allowUserPreset) {
+            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
         }
 
         if (!expandedConfigurePreset) {
