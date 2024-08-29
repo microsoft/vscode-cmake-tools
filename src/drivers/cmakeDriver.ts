@@ -727,7 +727,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this._kitDetect = await getKitDetect(this._kit);
         log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
         this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
-        let usingDefaultGenerators = false;
+        let usingFallbackGenerators = false;
 
         // Place a kit preferred generator at the front of the list
         if (kit.preferredGenerator) {
@@ -753,10 +753,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
         ) {
             preferredGenerators.push({ name: "Ninja" });
             preferredGenerators.push({ name: "Unix Makefiles" });
-            usingDefaultGenerators = true;
+            usingFallbackGenerators = true;
         }
 
-        this._generator = await this.findBestGenerator(preferredGenerators, usingDefaultGenerators);
+        this._generator = await this.findBestGenerator(preferredGenerators, usingFallbackGenerators);
     }
 
     protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -981,7 +981,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * Picks the best generator to use on the current system
      */
-    async findBestGenerator(preferredGenerators: CMakeGenerator[], usingDefaultGenerators: boolean): Promise<CMakeGenerator | null> {
+    async findBestGenerator(preferredGenerators: CMakeGenerator[], usingFallbackGenerators: boolean): Promise<CMakeGenerator | null> {
         log.debug(localize('trying.to.detect.generator', 'Trying to detect generator supported by system'));
         const platform = process.platform;
 
@@ -991,7 +991,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 // If we're not using the default generators, then the generator was manually specified
                 // in that case, assume it exists and don't check the PATH, only check if it's a supported generator.
                 // If we are using the default generators, then we should also check if it is on the PATH
-                if (!usingDefaultGenerators) {
+                if (!usingFallbackGenerators) {
                     return gen_name === 'Ninja' ||
                         gen_name === 'Ninja Multi-Config' ||
                         (gen_name === 'MinGW Makefiles' && platform === 'win32') ||
