@@ -997,7 +997,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                         (gen_name === 'MinGW Makefiles' && platform === 'win32') ||
                         (gen_name === 'MinGW Makefiles' && platform === 'win32') ||
                         gen_name === 'Unix Makefiles' ||
-                        (gen_name === 'MSYS Makefiles' && platform === 'win32')
+                        (gen_name === 'MSYS Makefiles' && platform === 'win32');
                 } else {
                     if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
                         return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
