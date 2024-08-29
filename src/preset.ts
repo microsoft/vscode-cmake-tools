@@ -1834,7 +1834,7 @@ export async function expandTestPresetVariables(preset: TestPreset, name: string
         }
     }
 
-    expansionOpts.envOverride = EnvironmentUtils.mergePreserveNull([expandedPreset.environment]);
+    expansionOpts.envOverride = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
 
     // Expand other fields
     if (preset.overwriteConfigurationFile) {
