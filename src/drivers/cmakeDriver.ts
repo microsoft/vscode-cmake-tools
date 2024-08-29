@@ -727,21 +727,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this._kitDetect = await getKitDetect(this._kit);
         log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
         this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
+        let usingDefaultGenerators = false;
 
         // Place a kit preferred generator at the front of the list
         if (kit.preferredGenerator) {
             preferredGenerators.unshift(kit.preferredGenerator);
-        }
-
-        // If no preferred generator is defined by the current kit or the user settings,
-        // it's time to consider the defaults.
-        if (preferredGenerators.length === 0
-            && !(this.usingFileApi
-                && (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, this.cmake.minimalDefaultGeneratorVersion))
-                && kit.name === "__unspec__")
-        ) {
-            preferredGenerators.push({ name: "Ninja" });
-            preferredGenerators.push({ name: "Unix Makefiles" });
         }
 
         // If a generator is set in the "cmake.generator" setting, push it to the front
@@ -754,7 +744,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
             });
         }
 
-        this._generator = await this.findBestGenerator(preferredGenerators);
+        // If no preferred generator is defined by the current kit or the user settings,
+        // it's time to consider the defaults.
+        if (preferredGenerators.length === 0
+            && !(this.usingFileApi
+                && (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, this.cmake.minimalDefaultGeneratorVersion))
+                && kit.name === "__unspec__")
+        ) {
+            preferredGenerators.push({ name: "Ninja" });
+            preferredGenerators.push({ name: "Unix Makefiles" });
+            usingDefaultGenerators = true;
+        }
+
+        this._generator = await this.findBestGenerator(preferredGenerators, usingDefaultGenerators);
     }
 
     protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -979,27 +981,39 @@ export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * Picks the best generator to use on the current system
      */
-    async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator | null> {
+    async findBestGenerator(preferredGenerators: CMakeGenerator[], usingDefaultGenerators: boolean): Promise<CMakeGenerator | null> {
         log.debug(localize('trying.to.detect.generator', 'Trying to detect generator supported by system'));
         const platform = process.platform;
 
         for (const gen of preferredGenerators) {
             const gen_name = gen.name;
             const generator_present = await (async (): Promise<boolean> => {
-                if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
-                    return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
-                }
-                if (gen_name === 'MinGW Makefiles') {
-                    return platform === 'win32' && this.testHaveCommand('mingw32-make');
-                }
-                if (gen_name === 'NMake Makefiles') {
-                    return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
-                }
-                if (gen_name === 'Unix Makefiles') {
-                    return this.testHaveCommand('make');
-                }
-                if (gen_name === 'MSYS Makefiles') {
-                    return platform === 'win32' && this.testHaveCommand('make');
+                // If we're not using the default generators, then the generator was manually specified
+                // in that case, assume it exists and don't check the PATH, only check if it's a supported generator.
+                // If we are using the default generators, then we should also check if it is on the PATH
+                if (!usingDefaultGenerators) {
+                    return gen_name === 'Ninja' ||
+                        gen_name === 'Ninja Multi-Config' ||
+                        (gen_name === 'MinGW Makefiles' && platform === 'win32') ||
+                        (gen_name === 'MinGW Makefiles' && platform === 'win32') ||
+                        gen_name === 'Unix Makefiles' ||
+                        (gen_name === 'MSYS Makefiles' && platform === 'win32')
+                } else {
+                    if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
+                        return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
+                    }
+                    if (gen_name === 'MinGW Makefiles') {
+                        return platform === 'win32' && this.testHaveCommand('mingw32-make');
+                    }
+                    if (gen_name === 'NMake Makefiles') {
+                        return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
+                    }
+                    if (gen_name === 'Unix Makefiles') {
+                        return this.testHaveCommand('make');
+                    }
+                    if (gen_name === 'MSYS Makefiles') {
+                        return platform === 'win32' && this.testHaveCommand('make');
+                    }
                 }
                 return false;
             })();
