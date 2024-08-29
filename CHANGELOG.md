@@ -1,6 +1,12 @@
 # What's New?
 
-## 1.19
+## 1.19.50
+
+Bug Fixes: 
+
+- Fix env expansion of all variables (toolchainFile, etc.) in presets. [#4019](https://github.com/microsoft/vscode-cmake-tools/issues/4019)
+
+## 1.19.49
 
 Features:
 
