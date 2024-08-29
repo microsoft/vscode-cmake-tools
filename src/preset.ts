@@ -444,6 +444,7 @@ const originalPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const originalUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const presetsPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
 const userPresetsPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
+// TODO: We should continue to brainstorm ensuring that our expandedCache is correct.
 const expandedPresets: Map<string, PresetsFile | undefined> = new Map();
 const expandedUserPresets: Map<string, PresetsFile | undefined> = new Map();
 
@@ -1613,9 +1614,22 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
-        if (!expandedConfigurePreset && allowUserPreset) {
-            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
+        let expandedConfigurePreset: ConfigurePreset | undefined;
+
+        const presetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, true, true);
+        if (presetInherits) {
+            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
+            await tryApplyVsDevEnv(presetInherits, workspaceFolder, sourceDir);
+
+            expandedConfigurePreset = await expandConfigurePresetVariables(
+                presetInherits,
+                folder,
+                presetInherits.name,
+                workspaceFolder,
+                sourceDir,
+                true,
+                true
+            );
         }
 
         if (!expandedConfigurePreset) {
@@ -1789,9 +1803,22 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
-        if (!expandedConfigurePreset && allowUserPreset) {
-            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
+        let expandedConfigurePreset: ConfigurePreset | undefined;
+
+        const presetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, true, true);
+        if (presetInherits) {
+            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
+            await tryApplyVsDevEnv(presetInherits, workspaceFolder, sourceDir);
+
+            expandedConfigurePreset = await expandConfigurePresetVariables(
+                presetInherits,
+                folder,
+                presetInherits.name,
+                workspaceFolder,
+                sourceDir,
+                true,
+                true
+            );
         }
 
         if (!expandedConfigurePreset) {
@@ -2003,9 +2030,22 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
     // Expand configure preset. Evaluate this after inherits since it may come from parents
     if (preset.configurePreset) {
-        let expandedConfigurePreset = getPresetByName(configurePresets(folder), preset.configurePreset);
-        if (!expandedConfigurePreset && allowUserPreset) {
-            expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), preset.configurePreset);
+        let expandedConfigurePreset: ConfigurePreset | undefined;
+
+        const presetInherits = await getConfigurePresetInherits(folder, preset.configurePreset, true, true);
+        if (presetInherits) {
+            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
+            await tryApplyVsDevEnv(presetInherits, workspaceFolder, sourceDir);
+
+            expandedConfigurePreset = await expandConfigurePresetVariables(
+                presetInherits,
+                folder,
+                presetInherits.name,
+                workspaceFolder,
+                sourceDir,
+                true,
+                true
+            );
         }
 
         if (!expandedConfigurePreset) {

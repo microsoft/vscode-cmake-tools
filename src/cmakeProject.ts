@@ -311,6 +311,7 @@ export class CMakeProject {
             }
         }
 
+        // TODO: I think we need to handle whether we should save this cache in user presets or regular presets.
         preset.cacheExpandedPreset(this.folderPath, expandedConfigurePreset, "configurePresets");
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
