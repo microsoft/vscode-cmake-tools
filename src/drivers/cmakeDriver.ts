@@ -1022,10 +1022,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
                 // If it is not a common generator that we can find, but it is a known cmake generator (cmakeGenerators), return it.
                 // The only caveat is that we should not return a Visual Studio generator on non-Windows platforms.
-                if (this.cmakeGenerators.indexOf(gen_name) >= 0 && !this.isCommonGenerator(gen.name)) {
-                    if (!(gen_name.startsWith("Visual Studio") && platform === "win32")) {
-                        return gen;
-                    }
+                if (this.cmakeGenerators.indexOf(gen_name) >= 0 && !this.isCommonGenerator(gen.name) && !(gen_name.startsWith("Visual Studio") && platform !== "win32")) {
+                    return gen;
                 }
                 continue;
             } else {
