@@ -2,9 +2,10 @@
 
 ## 1.19.50
 
-Bug Fixes: 
+Bug Fixes:
 
 - Fix env expansion of all variables (toolchainFile, etc.) in presets. [#4019](https://github.com/microsoft/vscode-cmake-tools/issues/4019)
+- Fix generator and preferredGenerator logic. [#4031](https://github.com/microsoft/vscode-cmake-tools/issues/4031), [#4005](https://github.com/microsoft/vscode-cmake-tools/issues/4005), [#4032](https://github.com/microsoft/vscode-cmake-tools/issues/4032)
 
 ## 1.19.49
 
