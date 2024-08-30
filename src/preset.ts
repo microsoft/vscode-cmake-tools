@@ -497,7 +497,7 @@ export function setExpandedPresets(folder: string, presets: PresetsFile | undefi
  * However, this only updates the cache if the preset was already in the cache.
  * @param folder Folder to grab the cached expanded presets for
  * @param preset The updated preset to cache
- * @param presetType Type of the preset. 
+ * @param presetType Type of the preset.
  */
 export function updateCachedExpandedPreset(folder: string, preset: Preset, presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
     const clonedPreset = lodash.cloneDeep(preset);
@@ -508,11 +508,11 @@ export function updateCachedExpandedPreset(folder: string, preset: Preset, prese
 }
 
 /**
- * Updates the cache only if the preset was already present in the cache. 
- * Updates the cache in-place, the sorting of the list will remain the same. 
+ * Updates the cache only if the preset was already present in the cache.
+ * Updates the cache in-place, the sorting of the list will remain the same.
  * @param cache The cache to update.
  * @param preset The updated preset to cache
- * @param presetType Type of the preset. 
+ * @param presetType Type of the preset.
  * @returns void
  */
 function updateCachedExpandedPresethelper(cache: PresetsFile | undefined, preset: Preset, presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
@@ -527,9 +527,8 @@ function updateCachedExpandedPresethelper(cache: PresetsFile | undefined, preset
         return;
     }
 
-
     // TODO: I'd like to try and figure out how to template this so that we don't have this logic duplicated for each if statement.
-    // We know that the list exists so we use "!". 
+    // We know that the list exists so we use "!".
     // We use slice so that we can insert the updated preset in the same location it was previously in.
     if (presetType === 'configurePresets') {
         cache.configurePresets = [...cache.configurePresets!.slice(0, index), preset as ConfigurePreset, ...cache.configurePresets!.slice(index + 1)];
@@ -1292,7 +1291,7 @@ async function getConfigurePresetInheritsHelper(folder: string, preset: Configur
     return preset;
 }
 
-// This function does not modify the preset in place, it constructs a new expanded preset and returns it. 
+// This function does not modify the preset in place, it constructs a new expanded preset and returns it.
 export async function expandConfigurePresetVariables(preset: ConfigurePreset, folder: string, name: string,  workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset> {
 
     // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
