@@ -1006,9 +1006,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (!generator_present) {
                 const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
                 if (platform === 'win32' && vsMatch) {
+                    let possibleArchitecture = vsMatch[2].trim();
+                    if (possibleArchitecture && possibleArchitecture === "Win64") {
+                        possibleArchitecture = "x64";
+                    }
                     return {
                         name: vsMatch[1],
-                        platform: gen.platform || vsMatch[2],
+                        platform: gen.platform || possibleArchitecture,
                         toolset: gen.toolset
                     };
                 }
