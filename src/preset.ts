@@ -1287,6 +1287,8 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
 
     expansionOpts.envOverride = expandedPreset.environment;
 
+    expandedPreset.binaryDir = preset.binaryDir;
+
     if (preset.__file && preset.__file.version >= 3) {
         // For presets v3+ binaryDir is optional, but cmake-tools needs a value. Default to something reasonable.
         if (!preset.binaryDir) {
