@@ -1314,7 +1314,7 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
         }
     }
 
-    expansionOpts.envOverride = expandedPreset.environment;
+    expansionOpts.envOverride = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
 
     expandedPreset.binaryDir = preset.binaryDir;
 
@@ -1692,7 +1692,7 @@ export async function expandBuildPresetVariables(preset: BuildPreset, name: stri
         }
     }
 
-    expansionOpts.envOverride = expandedPreset.environment;
+    expansionOpts.envOverride = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
 
     // Expand other fields
     if (preset.targets) {
@@ -1867,7 +1867,7 @@ export async function expandTestPresetVariables(preset: TestPreset, name: string
         }
     }
 
-    expansionOpts.envOverride = expandedPreset.environment;
+    expansionOpts.envOverride = EnvironmentUtils.mergePreserveNull([env, expandedPreset.environment]);
 
     // Expand other fields
     if (preset.overwriteConfigurationFile) {
