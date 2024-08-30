@@ -493,26 +493,55 @@ export function setExpandedPresets(folder: string, presets: PresetsFile | undefi
     expandedPresets.set(folder, presets);
 }
 
-export function cacheExpandedPreset(folder: string, preset: Preset, presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
-    const expanded = expandedPresets.get(folder);
+/**
+ * This function updates the cache in both the regular presets cache and user presets cache.
+ * However, this only updates the cache if the preset was already in the cache.
+ * @param folder Folder to grab the cached expanded presets for
+ * @param preset The updated preset to cache
+ * @param presetType Type of the preset. 
+ */
+export function updateCachedExpandedPreset(folder: string, preset: Preset, presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
     const clonedPreset = lodash.cloneDeep(preset);
-    if (expanded) {
-        if (presetType === 'configurePresets') {
-            expanded.configurePresets = expanded.configurePresets?.filter(p => p.name !== clonedPreset.name);
-            expanded.configurePresets?.push(clonedPreset as ConfigurePreset);
-        } else if (presetType === "buildPresets") {
-            expanded.buildPresets = expanded.buildPresets?.filter(p => p.name !== clonedPreset.name);
-            expanded.buildPresets?.push(clonedPreset as BuildPreset);
-        } else if (presetType === "testPresets") {
-            expanded.testPresets = expanded.testPresets?.filter(p => p.name !== clonedPreset.name);
-            expanded.testPresets?.push(clonedPreset as TestPreset);
-        } else if (presetType === "packagePresets") {
-            expanded.packagePresets = expanded.packagePresets?.filter(p => p.name !== clonedPreset.name);
-            expanded.packagePresets?.push(clonedPreset as PackagePreset);
-        } else if (presetType === "workflowPresets") {
-            expanded.workflowPresets = expanded.workflowPresets?.filter(p => p.name !== clonedPreset.name);
-            expanded.workflowPresets?.push(clonedPreset as WorkflowPreset);
-        }
+    const expanded = expandedPresets.get(folder);
+    const userExpanded = expandedUserPresets.get(folder);
+    updateCachedExpandedPresethelper(expanded, clonedPreset, presetType);
+    updateCachedExpandedPresethelper(userExpanded, clonedPreset, presetType);
+}
+
+/**
+ * Updates the cache only if the preset was already present in the cache. 
+ * Updates the cache in-place, the sorting of the list will remain the same. 
+ * @param cache The cache to update.
+ * @param preset The updated preset to cache
+ * @param presetType Type of the preset. 
+ * @returns void
+ */
+function updateCachedExpandedPresethelper(cache: PresetsFile | undefined, preset: Preset, presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
+    // Exit early if the cache or the list of presets is undefined.
+    if (!cache || !cache[presetType]) {
+        return;
+    }
+
+    // Exit early if the cache doesn't contain the preset.
+    const index = cache[presetType]!.findIndex(p => p.name === preset.name);
+    if (index === -1) {
+        return;
+    }
+
+
+    // TODO: I'd like to try and figure out how to template this so that we don't have this logic duplicated for each if statement.
+    // We know that the list exists so we use "!". 
+    // We use slice so that we can insert the updated preset in the same location it was previously in.
+    if (presetType === 'configurePresets') {
+        cache.configurePresets = [...cache.configurePresets!.slice(0, index), preset as ConfigurePreset, ...cache.configurePresets!.slice(index + 1)];
+    } else if (presetType === "buildPresets") {
+        cache.buildPresets = [...cache.buildPresets!.slice(0, index), preset as BuildPreset, ...cache.buildPresets!.slice(index + 1)];
+    } else if (presetType === "testPresets") {
+        cache.testPresets = [...cache.testPresets!.slice(0, index), preset as TestPreset, ...cache.testPresets!.slice(index + 1)];
+    } else if (presetType === "packagePresets") {
+        cache.packagePresets = [...cache.packagePresets!.slice(0, index), preset as PackagePreset, ...cache.packagePresets!.slice(index + 1)];
+    } else if (presetType === "workflowPresets") {
+        cache.workflowPresets = [...cache.workflowPresets!.slice(0, index), preset as WorkflowPreset, ...cache.workflowPresets!.slice(index + 1)];
     }
 }
 
@@ -1188,6 +1217,7 @@ async function getConfigurePresetInheritsImpl(folder: string, name: string, allo
     return null;
 }
 
+// This function does modify the preset parameter in-place. This means that the cache will be updated if the preset was retreived from the cache and not cloned.
 async function getConfigurePresetInheritsHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler) {
     if (preset.__expanded) {
         return preset;
@@ -1263,6 +1293,7 @@ async function getConfigurePresetInheritsHelper(folder: string, preset: Configur
     return preset;
 }
 
+// This function does not modify the preset in place, it constructs a new expanded preset and returns it. 
 export async function expandConfigurePresetVariables(preset: ConfigurePreset, folder: string, name: string,  workspaceFolder: string, sourceDir: string, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler): Promise<ConfigurePreset> {
 
     // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.

@@ -198,7 +198,7 @@ export class PresetsController implements vscode.Disposable {
 
             // set the pre-expanded version so we can call expandPresetsFile on it
             setExpandedPresets(this.folderPath, presetsFile);
-            presetsFile = await this.expandPresetsFile(presetsFile, setExpandedPresets);
+            presetsFile = await this.expandPresetsFile(presetsFile);
         }
 
         setExpandedPresets(this.folderPath, presetsFile);
@@ -1715,7 +1715,7 @@ export class PresetsController implements vscode.Disposable {
      * Returns the expanded presets file if there are no errors, otherwise returns undefined
      * Does not apply vsdevenv to the presets file
      */
-    private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined, setExpandedPresets: SetPresetsFileFunc): Promise<preset.PresetsFile | undefined> {
+    private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
 
         if (!presetsFile) {
             return undefined;
@@ -1727,7 +1727,6 @@ export class PresetsController implements vscode.Disposable {
 
         const expandedConfigurePresets: preset.ConfigurePreset[] = [];
         for (const configurePreset of presetsFile?.configurePresets || []) {
-            setExpandedPresets(this.folderPath, presetsFile);
             const inheritedPreset = await preset.getConfigurePresetInherits(
                 this.folderPath,
                 configurePreset.name,
@@ -1750,7 +1749,6 @@ export class PresetsController implements vscode.Disposable {
 
         const expandedBuildPresets: preset.BuildPreset[] = [];
         for (const buildPreset of presetsFile?.buildPresets || []) {
-            setExpandedPresets(this.folderPath, presetsFile);
             const inheritedPreset = await preset.getBuildPresetInherits(
                 this.folderPath,
                 buildPreset.name,
@@ -1775,7 +1773,6 @@ export class PresetsController implements vscode.Disposable {
 
         const expandedTestPresets: preset.TestPreset[] = [];
         for (const testPreset of presetsFile?.testPresets || []) {
-            setExpandedPresets(this.folderPath, presetsFile);
             const inheritedPreset = await preset.getTestPresetInherits(
                 this.folderPath,
                 testPreset.name,
@@ -1800,7 +1797,6 @@ export class PresetsController implements vscode.Disposable {
 
         const expandedPackagePresets: preset.PackagePreset[] = [];
         for (const packagePreset of presetsFile?.packagePresets || []) {
-            setExpandedPresets(this.folderPath, presetsFile);
             const inheritedPreset = await preset.getPackagePresetInherits(
                 this.folderPath,
                 packagePreset.name,
@@ -1825,7 +1821,6 @@ export class PresetsController implements vscode.Disposable {
 
         const expandedWorkflowPresets: preset.WorkflowPreset[] = [];
         for (const workflowPreset of presetsFile?.workflowPresets || []) {
-            setExpandedPresets(this.folderPath, presetsFile);
             const inheritedPreset = await preset.getWorkflowPresetInherits(
                 this.folderPath,
                 workflowPreset.name,

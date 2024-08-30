@@ -311,8 +311,7 @@ export class CMakeProject {
             }
         }
 
-        // TODO: I think we need to handle whether we should save this cache in user presets or regular presets.
-        preset.cacheExpandedPreset(this.folderPath, expandedConfigurePreset, "configurePresets");
+        preset.updateCachedExpandedPreset(this.folderPath, expandedConfigurePreset, "configurePresets");
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
         expandedConfigurePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedConfigurePreset.__parentEnvironment, expandedConfigurePreset.environment]);
@@ -408,7 +407,7 @@ export class CMakeProject {
         }
 
         if (expandedBuildPreset.name !== preset.defaultBuildPreset.name) {
-            preset.cacheExpandedPreset(this.folderPath, expandedBuildPreset, "buildPresets");
+            preset.updateCachedExpandedPreset(this.folderPath, expandedBuildPreset, "buildPresets");
         }
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
@@ -502,7 +501,7 @@ export class CMakeProject {
         }
 
         if (expandedTestPreset.name !== preset.defaultTestPreset.name) {
-            preset.cacheExpandedPreset(this.folderPath, expandedTestPreset, "testPresets");
+            preset.updateCachedExpandedPreset(this.folderPath, expandedTestPreset, "testPresets");
         }
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
@@ -596,7 +595,7 @@ export class CMakeProject {
         }
 
         if (expandedPackagePreset.name !== preset.defaultPackagePreset.name) {
-            preset.cacheExpandedPreset(this.folderPath, expandedPackagePreset, "packagePresets");
+            preset.updateCachedExpandedPreset(this.folderPath, expandedPackagePreset, "packagePresets");
         }
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
