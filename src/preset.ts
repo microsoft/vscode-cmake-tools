@@ -444,7 +444,6 @@ const originalPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const originalUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 const presetsPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
 const userPresetsPlusIncluded: Map<string, PresetsFile | undefined> = new Map();
-// TODO: We should continue to brainstorm ensuring that our expandedCache is correct.
 const expandedPresets: Map<string, PresetsFile | undefined> = new Map();
 const expandedUserPresets: Map<string, PresetsFile | undefined> = new Map();
 
@@ -1217,7 +1216,7 @@ async function getConfigurePresetInheritsImpl(folder: string, name: string, allo
     return null;
 }
 
-// This function does modify the preset parameter in-place. This means that the cache will be updated if the preset was retreived from the cache and not cloned.
+// This function modifies the preset parameter in-place. This means that the cache will be updated if the preset was retreived from the cache and not cloned.
 async function getConfigurePresetInheritsHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false, usePresetsPlusIncluded: boolean = false, errorHandler?: ExpansionErrorHandler) {
     if (preset.__expanded) {
         return preset;
