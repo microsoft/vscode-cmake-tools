@@ -744,17 +744,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
             preferredGenerators.push({ name: "Unix Makefiles" });
         }
 
-        // If a generator is set in the "cmake.generator" setting, push it to the front
-        // of the "best generator" logic
+        // Use the "best generator" logic only if the user did not define a particular
+        // generator to be used via the `cmake.generator` setting.
         if (this.config.generator) {
-            preferredGenerators.unshift({
+            this._generator = {
                 name: this.config.generator,
                 platform: this.config.platform || undefined,
                 toolset: this.config.toolset || undefined
-            });
+            };
+        } else {
+            this._generator = await this.findBestGenerator(preferredGenerators);
         }
-
-        this._generator = await this.findBestGenerator(preferredGenerators);
     }
 
     protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -1004,7 +1004,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 return false;
             })();
             if (!generator_present) {
-                const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
+                const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen_name);
                 if (platform === 'win32' && vsMatch) {
                     let possibleArchitecture = vsMatch[2].trim();
                     if (possibleArchitecture && possibleArchitecture === "Win64") {
@@ -1016,11 +1016,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
                         toolset: gen.toolset
                     };
                 }
-                if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
+                if (gen_name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
                     return gen;
                 }
 
-                // If the generator isn't found, move on to the next one
+                // If it is not a common generator that we can find, but it is a known cmake generator (cmakeGenerators), return it.
+                // The only caveat is that we should not return a Visual Studio generator on non-Windows platforms.
+                if (this.cmakeGenerators.indexOf(gen_name) >= 0 && !this.isCommonGenerator(gen.name)) {
+                    if (gen_name.startsWith("Visual Studio") && platform === "win32") {
+                        return gen;
+                    }
+                }
                 continue;
             } else {
                 return gen;
