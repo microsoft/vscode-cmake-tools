@@ -1084,6 +1084,7 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
 export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<void> {
     const useVsDeveloperEnvironmentMode = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get("useVsDeveloperEnvironment") as UseVsDeveloperEnvironment;
     if (useVsDeveloperEnvironmentMode === "never") {
+        preset.__parentEnvironment = process.env;
         return;
     }
 
