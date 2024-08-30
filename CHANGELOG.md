@@ -2,9 +2,10 @@
 
 ## 1.19.50
 
-Bug Fixes: 
+Bug Fixes:
 
 - Fix env expansion of all variables (toolchainFile, etc.) in presets. [#4019](https://github.com/microsoft/vscode-cmake-tools/issues/4019)
+- Fix issues with inheritance and presets. [#4023](https://github.com/microsoft/vscode-cmake-tools/issues/4023)
 
 ## 1.19.49
 
