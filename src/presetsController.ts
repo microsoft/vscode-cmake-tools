@@ -139,31 +139,37 @@ export class PresetsController implements vscode.Disposable {
     }
 
     private readonly _setExpandedPresets = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setExpandedPresets(folder, presetsFile);
-        this._presetsChangedEmitter.fire(presetsFile);
+        const clone = lodash.cloneDeep(presetsFile);
+        preset.setExpandedPresets(folder, clone);
+        this._presetsChangedEmitter.fire(clone);
     };
 
     private readonly _setExpandedUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setExpandedUserPresetsFile(folder, presetsFile);
-        this._userPresetsChangedEmitter.fire(presetsFile);
+        const clone = lodash.cloneDeep(presetsFile);
+        preset.setExpandedUserPresetsFile(folder, clone);
+        this._userPresetsChangedEmitter.fire(clone);
     };
 
     private readonly _setPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setPresetsPlusIncluded(folder, presetsFile);
-        this._presetsChangedEmitter.fire(presetsFile);
+        const clone = lodash.cloneDeep(presetsFile);
+        preset.setPresetsPlusIncluded(folder, clone);
+        this._presetsChangedEmitter.fire(clone);
     };
 
     private readonly _setUserPresetsPlusIncluded = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setUserPresetsPlusIncluded(folder, presetsFile);
-        this._userPresetsChangedEmitter.fire(presetsFile);
+        const clone = lodash.cloneDeep(presetsFile);
+        preset.setUserPresetsPlusIncluded(folder, clone);
+        this._userPresetsChangedEmitter.fire(clone);
     };
 
     private readonly _setOriginalPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setOriginalPresetsFile(folder, presetsFile);
+        const clone = lodash.cloneDeep(presetsFile);
+        preset.setOriginalPresetsFile(folder, clone);
     };
 
     private readonly _setOriginalUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
-        preset.setOriginalUserPresetsFile(folder, presetsFile);
+        const clone = lodash.cloneDeep(presetsFile);
+        preset.setOriginalUserPresetsFile(folder, clone);
     };
 
     private async resetPresetsFile(file: string, setExpandedPresets: SetPresetsFileFunc, setPresetsPlusIncluded: SetPresetsFileFunc, setOriginalPresetsFile: SetPresetsFileFunc, fileExistCallback: (fileExists: boolean) => void, referencedFiles: Map<string, preset.PresetsFile | undefined>) {
@@ -176,8 +182,7 @@ export class PresetsController implements vscode.Disposable {
         let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
         referencedFiles.set(file, presetsFile);
         if (presetsFile) {
-            // Parse again so we automatically have a copy by value
-            setOriginalPresetsFile(this.folderPath, await this.parsePresetsFile(presetsFileBuffer, file));
+            setOriginalPresetsFile(this.folderPath, presetsFile);
         } else {
             setOriginalPresetsFile(this.folderPath, undefined);
         }
@@ -188,14 +193,12 @@ export class PresetsController implements vscode.Disposable {
             this.populatePrivatePresetsFields(presetsFile, file);
             await this.mergeIncludeFiles(presetsFile, file, referencedFiles);
 
-            const copyOfPresetsFile = lodash.cloneDeep(presetsFile);
             // add the include files to the original presets file
-            setPresetsPlusIncluded(this.folderPath, copyOfPresetsFile);
+            setPresetsPlusIncluded(this.folderPath, presetsFile);
 
-            const copyAgain = lodash.cloneDeep(copyOfPresetsFile);
             // set the pre-expanded version so we can call expandPresetsFile on it
-            setExpandedPresets(this.folderPath, copyAgain);
-            presetsFile = await this.expandPresetsFile(copyAgain);
+            setExpandedPresets(this.folderPath, presetsFile);
+            presetsFile = await this.expandPresetsFile(presetsFile);
         }
 
         setExpandedPresets(this.folderPath, presetsFile);
@@ -1718,14 +1721,12 @@ export class PresetsController implements vscode.Disposable {
             return undefined;
         }
 
-        const clonedPresetsFile = lodash.cloneDeep(presetsFile);
-
         log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
 
         const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
         const expandedConfigurePresets: preset.ConfigurePreset[] = [];
-        for (const configurePreset of clonedPresetsFile?.configurePresets || []) {
+        for (const configurePreset of presetsFile?.configurePresets || []) {
             const inheritedPreset = await preset.getConfigurePresetInherits(
                 this.folderPath,
                 configurePreset.name,
@@ -1747,7 +1748,7 @@ export class PresetsController implements vscode.Disposable {
         }
 
         const expandedBuildPresets: preset.BuildPreset[] = [];
-        for (const buildPreset of clonedPresetsFile?.buildPresets || []) {
+        for (const buildPreset of presetsFile?.buildPresets || []) {
             const inheritedPreset = await preset.getBuildPresetInherits(
                 this.folderPath,
                 buildPreset.name,
@@ -1771,7 +1772,7 @@ export class PresetsController implements vscode.Disposable {
         }
 
         const expandedTestPresets: preset.TestPreset[] = [];
-        for (const testPreset of clonedPresetsFile?.testPresets || []) {
+        for (const testPreset of presetsFile?.testPresets || []) {
             const inheritedPreset = await preset.getTestPresetInherits(
                 this.folderPath,
                 testPreset.name,
@@ -1795,7 +1796,7 @@ export class PresetsController implements vscode.Disposable {
         }
 
         const expandedPackagePresets: preset.PackagePreset[] = [];
-        for (const packagePreset of clonedPresetsFile?.packagePresets || []) {
+        for (const packagePreset of presetsFile?.packagePresets || []) {
             const inheritedPreset = await preset.getPackagePresetInherits(
                 this.folderPath,
                 packagePreset.name,
@@ -1819,7 +1820,7 @@ export class PresetsController implements vscode.Disposable {
         }
 
         const expandedWorkflowPresets: preset.WorkflowPreset[] = [];
-        for (const workflowPreset of clonedPresetsFile?.workflowPresets || []) {
+        for (const workflowPreset of presetsFile?.workflowPresets || []) {
             const inheritedPreset = await preset.getWorkflowPresetInherits(
                 this.folderPath,
                 workflowPreset.name,
@@ -1837,7 +1838,7 @@ export class PresetsController implements vscode.Disposable {
 
         if (expansionErrors.errorList.length > 0) {
             log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
-            await this.reportPresetsFileErrors(clonedPresetsFile.__path, expansionErrors);
+            await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
             return undefined;
         } else {
             log.info(localize('successfully.expanded.presets.file', 'Successfully expanded presets file {0}', presetsFile?.__path || ''));
@@ -1851,7 +1852,7 @@ export class PresetsController implements vscode.Disposable {
             presetsFile.workflowPresets = expandedWorkflowPresets;
 
             // clear out the errors since there are none now
-            collections.presets.set(vscode.Uri.file(clonedPresetsFile.__path || ""), undefined);
+            collections.presets.set(vscode.Uri.file(presetsFile.__path || ""), undefined);
 
             return presetsFile;
         }
