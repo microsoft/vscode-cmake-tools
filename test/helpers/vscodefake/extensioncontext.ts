@@ -17,7 +17,7 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
     get extensionPath(): string {
         throw new Error(notImplementedErr);
     }
-    get environmentVariableCollection(): vscode.EnvironmentVariableCollection {
+    get environmentVariableCollection(): vscode.GlobalEnvironmentVariableCollection {
         throw new Error(notImplementedErr);
     }
     asAbsolutePath(relativePath: string): string {
@@ -61,7 +61,7 @@ export class SmokeTestExtensionContext implements vscode.ExtensionContext {
     get extensionUri(): vscode.Uri {
         throw new Error(notImplementedErr);
     }
-    get environmentVariableCollection(): vscode.EnvironmentVariableCollection {
+    get environmentVariableCollection(): vscode.GlobalEnvironmentVariableCollection {
         throw new Error(notImplementedErr);
     }
     asAbsolutePath(sub: string): string {
