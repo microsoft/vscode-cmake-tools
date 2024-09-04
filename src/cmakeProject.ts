@@ -117,7 +117,11 @@ export interface DiagnosticsConfiguration {
 export interface DiagnosticsSettings {
     communicationMode: CMakeCommunicationMode;
     useCMakePresets: UseCMakePresets;
-    configureOnOpen: boolean | null;
+    configureOnOpen: boolean;
+}
+
+export interface ConfigureCancelInformation {
+    canceled: boolean;
 }
 
 /**
@@ -277,21 +281,30 @@ export class CMakeProject {
         }
         log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
 
-        // We want to use the original unexpanded preset file to apply the dev env in expandConfigurePreset
-        // we have to first check if the preset is valid in expandedPresets since we won't be expanding the whole file here, only the path up for this preset
+        // Need to double check this preset is valid - We want to use the original unexpanded preset file to apply the dev env in expandConfigurePreset,
+        // so we have to first check if the preset is valid in expandedPresets since we won't be expanding the whole file here, only the path up for this preset
         if (!preset.getPresetByName(preset.configurePresets(this.folderPath), configurePreset) && !preset.getPresetByName(preset.userConfigurePresets(this.folderPath), configurePreset)) {
             return undefined;
         }
 
-        // TODO: move applyDevEnv here to decouple from expandConfigurePreset
+        const workspaceFolder = lightNormalizePath(this.folderPath || '.');
+        let expandedConfigurePreset: preset.ConfigurePreset | undefined;
 
-        // modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
-        const expandedConfigurePreset = await preset.expandConfigurePreset(this.folderPath,
-            configurePreset,
-            lightNormalizePath(this.folderPath || '.'),
-            this.sourceDir,
-            true,
-            true);
+        const presetInherits = await preset.getConfigurePresetInherits(this.folderPath, configurePreset, true, true);
+        if (presetInherits) {
+            // Modify the preset parent environment, in certain cases, to apply the Vs Dev Env on top of process.env.
+            await preset.tryApplyVsDevEnv(presetInherits, workspaceFolder, this._sourceDir);
+
+            expandedConfigurePreset = await preset.expandConfigurePresetVariables(
+                presetInherits,
+                this.folderPath,
+                presetInherits.name,
+                workspaceFolder,
+                this.sourceDir,
+                true,
+                true
+            );
+        }
 
         if (!expandedConfigurePreset) {
             log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
@@ -307,6 +320,11 @@ export class CMakeProject {
                 return undefined;
             }
         }
+
+        preset.updateCachedExpandedPreset(this.folderPath, expandedConfigurePreset, "configurePresets");
+
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedConfigurePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedConfigurePreset.__parentEnvironment, expandedConfigurePreset.environment]);
 
         return expandedConfigurePreset;
     }
@@ -375,7 +393,9 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
-        const expandedBuildPreset = await preset.expandBuildPreset(this.folderPath,
+        let expandedBuildPreset: preset.BuildPreset | undefined;
+        const presetInherits = await preset.getBuildPresetInherits(
+            this.folderPath,
             buildPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
@@ -383,10 +403,26 @@ export class CMakeProject {
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
+        if (presetInherits) {
+            expandedBuildPreset = await preset.expandBuildPresetVariables(
+                presetInherits,
+                buildPreset,
+                lightNormalizePath(this.folderPath || '.'),
+                this.sourceDir);
+        }
+
         if (!expandedBuildPreset) {
             log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
             return undefined;
         }
+
+        if (expandedBuildPreset.name !== preset.defaultBuildPreset.name) {
+            preset.updateCachedExpandedPreset(this.folderPath, expandedBuildPreset, "buildPresets");
+        }
+
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedBuildPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedBuildPreset.__parentEnvironment, expandedBuildPreset.environment]);
+
         return expandedBuildPreset;
     }
 
@@ -449,13 +485,22 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
-        const expandedTestPreset = await preset.expandTestPreset(this.folderPath,
+        let expandedTestPreset: preset.TestPreset | undefined;
+        const presetInherits = await preset.getTestPresetInherits(
+            this.folderPath,
             testPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
+        if (presetInherits) {
+            expandedTestPreset = await preset.expandTestPresetVariables(
+                presetInherits,
+                testPreset,
+                lightNormalizePath(this.folderPath || '.'),
+                this.sourceDir);
+        }
         if (!expandedTestPreset) {
             log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
             return undefined;
@@ -464,6 +509,14 @@ export class CMakeProject {
             log.error(localize('configurePreset.not.set.test.preset', '{0} is not set in test preset: {1}', "\"configurePreset\"", testPreset));
             return undefined;
         }
+
+        if (expandedTestPreset.name !== preset.defaultTestPreset.name) {
+            preset.updateCachedExpandedPreset(this.folderPath, expandedTestPreset, "testPresets");
+        }
+
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedTestPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedTestPreset.__parentEnvironment, expandedTestPreset.environment]);
+
         return expandedTestPreset;
     }
 
@@ -526,13 +579,22 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.package.preset', 'Resolving the selected package preset'));
-        const expandedPackagePreset = await preset.expandPackagePreset(this.folderPath,
+        let expandedPackagePreset: preset.TestPreset | undefined;
+        const presetInherits = await preset.getPackagePresetInherits(
+            this.folderPath,
             packagePreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
+        if (presetInherits) {
+            expandedPackagePreset = await preset.expandPackagePresetVariables(
+                presetInherits,
+                packagePreset,
+                lightNormalizePath(this.folderPath || '.'),
+                this.sourceDir);
+        }
         if (!expandedPackagePreset) {
             log.error(localize('failed.resolve.package.preset', 'Failed to resolve package preset: {0}', packagePreset));
             return undefined;
@@ -541,6 +603,14 @@ export class CMakeProject {
             log.error(localize('configurePreset.not.set.package.preset', '{0} is not set in package preset: {1}', "\"configurePreset\"", packagePreset));
             return undefined;
         }
+
+        if (expandedPackagePreset.name !== preset.defaultPackagePreset.name) {
+            preset.updateCachedExpandedPreset(this.folderPath, expandedPackagePreset, "packagePresets");
+        }
+
+        // Make sure we pass CMakeDriver the preset defined env as well as the parent env
+        expandedPackagePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedPackagePreset.__parentEnvironment, expandedPackagePreset.environment]);
+
         return expandedPackagePreset;
     }
 
@@ -603,7 +673,7 @@ export class CMakeProject {
             return undefined;
         }
         log.debug(localize('resolving.workflow.preset', 'Resolving the selected workflow preset'));
-        const expandedWorkflowPreset = await preset.expandWorkflowPreset(this.folderPath,
+        const expandedWorkflowPreset = await preset.getWorkflowPresetInherits(this.folderPath,
             workflowPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
@@ -1595,7 +1665,12 @@ export class CMakeProject {
             },
             async (progress, cancel) => {
                 progress.report({ message: localize('preparing.to.configure', 'Preparing to configure') });
+                const cancelInformation: ConfigureCancelInformation = {
+                    canceled: false
+                };
                 cancel.onCancellationRequested(() => {
+                    // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
+                    cancelInformation.canceled = true;
                     rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
                 });
 
@@ -1604,6 +1679,8 @@ export class CMakeProject {
                 // if there is a debugger information, we are debugging. Set up a listener for stopping a cmake debug session.
                 if (debuggerInformation) {
                     const trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactory(async () => {
+                        // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
+                        cancelInformation.canceled = true;
                         forciblyCanceled = true;
                         await this.cancelConfiguration();
                         trackerFactoryDisposable.dispose();
@@ -1632,23 +1709,23 @@ export class CMakeProject {
                                 let result: ConfigureResult;
                                 await setContextAndStore(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
-                                    result = await drv.configure(trigger, [], consumer, debuggerInformation);
+                                    result = await drv.configure(trigger, [], consumer, cancelInformation, debuggerInformation);
                                 } else {
                                     switch (type) {
                                         case ConfigureType.Normal:
-                                            result = await drv.configure(trigger, extraArgs, consumer);
+                                            result = await drv.configure(trigger, extraArgs, consumer, cancelInformation);
                                             break;
                                         case ConfigureType.NormalWithDebugger:
-                                            result = await drv.configure(trigger, extraArgs, consumer, debuggerInformation);
+                                            result = await drv.configure(trigger, extraArgs, consumer, cancelInformation, debuggerInformation);
                                             break;
                                         case ConfigureType.Clean:
-                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer);
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, cancelInformation);
                                             break;
                                         case ConfigureType.CleanWithDebugger:
-                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, debuggerInformation);
+                                            result = await drv.cleanConfigure(trigger, extraArgs, consumer, cancelInformation, debuggerInformation);
                                             break;
                                         case ConfigureType.ShowCommandOnly:
-                                            result = await drv.configure(trigger, extraArgs, consumer, undefined, false, true);
+                                            result = await drv.configure(trigger, extraArgs, consumer, cancelInformation, undefined, false, true);
                                             break;
                                         default:
                                             rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
@@ -1664,7 +1741,7 @@ export class CMakeProject {
                                 if (result.result === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && result.resultType === ConfigureResultType.NormalOperation) {
+                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && !cancelInformation.canceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     log.showChannel(true);
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
@@ -3352,7 +3429,7 @@ export class CMakeProject {
         return {
             communicationMode: 'automatic',
             useCMakePresets: 'auto',
-            configureOnOpen: null
+            configureOnOpen: true
         };
     }
 

@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Circular hereda en {0}preestablecidos de flujo de trabajo",
 	"build.preset.not.found.full": "No se ha encontrado la compilación preestablecida con el nombre {0}",
 	"build.preset.not.found": "No se encontró el valor preestablecido de compilación",
+	"configure.preset.not.found.full": "No se encontró la configuración preestablecida con el nombre {0}",
+	"configure.preset.not.found": "No se pudo encontrar el valor preestablecido de configuración",
 	"test.preset.not.found.full": "No ha encontrado se la prueba preestablecida con el nombre {0}.",
 	"test.preset.not.found": "No se pudo encontrar el valor preestablecido de prueba",
 	"package.preset.not.found.full": "No se encontró el valor preestablecido del paquete con el nombre {0}",

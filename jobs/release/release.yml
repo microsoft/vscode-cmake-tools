@@ -46,9 +46,9 @@ extends:
             - task: ManualValidation@0
               displayName: "Manual Validation"
               inputs:
-                notifyUsers: cmaketools@microsoft.com
+                notifyUsers: $(EmailAddress)
                 instructions: |
-                  Download and test the vsix with the matching version number from the latest release build: https://devdiv.visualstudio.com/DevDiv/_build?definitionId=20419
+                  Download and test the vsix with the matching version number from the latest release build: $(BuildPipelineURL)
 
                   The version should match the name of this release.
 
@@ -69,9 +69,9 @@ extends:
 
         steps:
         - task: NodeTool@0
-          displayName: 'Use Node 14.x'
+          displayName: 'Use Node 18.x'
           inputs:
-            versionSpec: 14.x
+            versionSpec: 18.x
         - task: Npm@0
           displayName: 'install vsce'
           inputs:

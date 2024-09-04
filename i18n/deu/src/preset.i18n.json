@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Kreisförmige Erbvorgänge in Workflowvoreinstellung {0}",
 	"build.preset.not.found.full": "Die Buildvoreinstellung mit dem Namen {0} wurde nicht gefunden",
 	"build.preset.not.found": "Die Buildvoreinstellung konnte nicht gefunden werden",
+	"configure.preset.not.found.full": "Die Konfigurationsvoreinstellung mit dem Namen {0} wurde nicht gefunden",
+	"configure.preset.not.found": "Die Konfigurationsvoreinstellung wurde nicht gefunden",
 	"test.preset.not.found.full": "Die Testvoreinstellung mit dem Namen {0} wurde nicht gefunden",
 	"test.preset.not.found": "Die Voreinstellung konnte nicht gefunden werden",
 	"package.preset.not.found.full": "Die Paketvoreinstellung mit dem Namen {0} wurde nicht gefunden",
