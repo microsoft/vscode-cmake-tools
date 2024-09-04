@@ -3592,6 +3592,27 @@
           "default": true,
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
+        },
+        "cmake.preRunCoverageTarget": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.preRunCoverageTarget.description%",
+          "scope": "resource"
+        },
+        "cmake.postRunCoverageTarget": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.postRunCoverageTarget.description%",
+          "scope": "resource"
+        },
+        "cmake.coverageInfoFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.coverageInfoFiles.description%",
+          "scope": "resource"
         }
       }
     },
