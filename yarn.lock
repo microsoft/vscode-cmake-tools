@@ -165,6 +165,11 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
+"@friedemannsommer/lcov-parser@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@friedemannsommer/lcov-parser/-/lcov-parser-4.0.1.tgz#192445df2095bb061fd889ea0b0f0f94bf7c58b7"
+  integrity sha512-NjXrxLeh77FUAL6TzVJyvYvgA2AS+t2hlfRmfOyE5HR3g+2HdLNFTP2l+zTypn5JTnV4jfXgwSO46JLhvJeXlw==
+
 "@gulp-sourcemaps/identity-map@^2.0.1":
   version "2.0.1"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@gulp-sourcemaps/identity-map/-/identity-map-2.0.1.tgz"
