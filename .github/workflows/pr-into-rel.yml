@@ -1,0 +1,21 @@
+name: Comment on PRs merged into release branches
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+    branches:
+      - 'rel'
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ethanis/nitpicker@v1
+        with:
+          nitpicks: '.github/workflows/nitpicker.yml'
+          token: '${{ secrets.GITHUB_TOKEN }}'
