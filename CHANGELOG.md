@@ -15,12 +15,14 @@ Bug Fixes:
 Improvements:
 
 - Update signing to support VSCode extension signing. [#4055](https://github.com/microsoft/vscode-cmake-tools/pull/4055)
+- Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
 
 ## 1.19.51
 
 Bug Fixes:
 
 - Fix generator and preferredGenerator logic. [#4031](https://github.com/microsoft/vscode-cmake-tools/issues/4031), [#4005](https://github.com/microsoft/vscode-cmake-tools/issues/4005), [#4032](https://github.com/microsoft/vscode-cmake-tools/issues/4032)
+
 
 ## 1.19.50
 
