@@ -23,7 +23,7 @@ jobs:
         run: npm install -g yarn
 
       - name: Install dependencies
-        run: yarn install --ignore-optional
+        run: yarn install --ignore-optional --verbose
 
       - name: Build the extension
         run: yarn compile-production
