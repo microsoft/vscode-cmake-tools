@@ -79,7 +79,7 @@ steps:
   displayName: Prepare manifest for signing
   inputs:
     script: |
-      cp $(Build.ArtifactStagingDirectory)\vsix\extension.manifest $(Build.ArtifactStagingDirectory)\vsix\extension.signature.p7s
+      copy $(Build.ArtifactStagingDirectory)\vsix\extension.manifest $(Build.ArtifactStagingDirectory)\vsix\extension.signature.p7s
 - task: MSBuild@1
   displayName: Sign VSIX
   inputs:
