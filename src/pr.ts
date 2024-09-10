@@ -49,9 +49,9 @@ export namespace fs {
         return str;
     }
 
-    export function readFile(filePath: string, encoding: string = "utf8"): Promise<any> {
+    export function readFile(filePath: string, encoding: BufferEncoding = "utf8"): Promise<any> {
         return fsAccessLimiter(() => new Promise((resolve, reject) => {
-            fs_.readFile(filePath, encoding, (err, data) => {
+            fs_.readFile(filePath, { encoding }, (err: any, data: any) => {
                 if (err) {
                     reject(err);
                 } else {

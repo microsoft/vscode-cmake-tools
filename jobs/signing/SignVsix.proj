@@ -10,8 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FilesToSign Include="$(OutDir)\**\*.vsix">
+    <FilesToSign Include="$(OutDir)\vsix\cmake-tools.vsix">
       <Authenticode>VsixSHA2</Authenticode>
+    </FilesToSign>
+    <FilesToSign Include="$(OutDir)\vsix\extension.signature.p7s">
+      <Authenticode>VSCodePublisher</Authenticode>
     </FilesToSign>
   </ItemGroup>
 
