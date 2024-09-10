@@ -22,7 +22,7 @@
     "syntaxes"
   ],
   "engines": {
-    "vscode": "^1.63.0"
+    "vscode": "^1.67.0"
   },
   "categories": [
     "Other",
