@@ -45,13 +45,13 @@ extends:
           ignoreLASTEXITCODE: true
           displayName: 'Set the release name'
         - task: NodeTool@0
-          displayName: 'Use Node 18.x'
+          displayName: 'Use Node 20.x'
           inputs:
-            versionSpec: 18.x
+            versionSpec: 20.x
         - task: Npm@0
           displayName: 'install vsce'
           inputs:
-            arguments: '-g vsce'
+            arguments: '-g @vscode/vsce'
         - task: AzureCLI@2
           displayName: 'Generate AAD_TOKEN'
           inputs:
@@ -62,7 +62,7 @@ extends:
               $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
         - script: |
-            vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix  --pre-release
+            vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix --pre-release --manifestPath $(Build.StagingDirectory)\vsix\extension.manifest --signaturePath $(Build.StagingDirectory)\vsix\extension.signature.p7s
           displayName: 'Publish the VSIX'
           env:
             VSCE_PAT: $(AAD_TOKEN)
