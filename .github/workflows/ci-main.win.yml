@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node environment
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
 
       - name: Install Yarn
         run: npm install -g yarn
