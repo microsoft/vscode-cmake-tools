@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Циклические наследования в предустановке рабочего процесса {0}",
 	"build.preset.not.found.full": "Не удалось найти предустановку сборки с именем {0}",
 	"build.preset.not.found": "Не удалось найти предустановку сборки",
+	"configure.preset.not.found.full": "Не удалось найти предустановку конфигурации с именем {0}",
+	"configure.preset.not.found": "Не удалось найти предустановку конфигурации",
 	"test.preset.not.found.full": "Не удалось найти предустановку теста с именем {0}",
 	"test.preset.not.found": "Не удалось найти предустановку теста",
 	"package.preset.not.found.full": "Не удалось найти предустановку пакета с именем {0}",

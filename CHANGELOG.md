@@ -1,6 +1,25 @@
 # What's New?
 
-## 1.19
+## 1.20
+
+Improvements:
+
+- Update signing to support VSCode extension signing. [#4055](https://github.com/microsoft/vscode-cmake-tools/pull/4055)
+
+## 1.19.51
+
+Bug Fixes:
+
+- Fix generator and preferredGenerator logic. [#4031](https://github.com/microsoft/vscode-cmake-tools/issues/4031), [#4005](https://github.com/microsoft/vscode-cmake-tools/issues/4005), [#4032](https://github.com/microsoft/vscode-cmake-tools/issues/4032)
+
+## 1.19.50
+
+Bug Fixes:
+
+- Fix env expansion of all variables (toolchainFile, etc.) in presets. [#4019](https://github.com/microsoft/vscode-cmake-tools/issues/4019)
+- Fix issues with inheritance and presets. [#4023](https://github.com/microsoft/vscode-cmake-tools/issues/4023)
+
+## 1.19.49
 
 Features:
 
@@ -38,6 +57,13 @@ Bug Fixes:
 - Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
 - Set usepresets context after manually creating a CMakePresets.json/CMakeUserPresets.json or using QuickStart to create it. [#3854](https://github.com/microsoft/vscode-cmake-tools/issues/3854)
 - Only do special handling of `~` for code model reply path on linux. [#3957](https://github.com/microsoft/vscode-cmake-tools/issues/3957)
+- Fix issues with expanding unnecessary environment variables and incorrectly saving preset environments to cache. Also fixes expansion error reporting issue with not checking for an invalid Configure preset in other types of presets. [#3961](https://github.com/microsoft/vscode-cmake-tools/issues/3961) & [#1841](https://github.com/microsoft/vscode-cmake-tools/issues/1841)
+
+## 1.18.44
+
+Bug Fixes:
+
+- Infrastructure fixes.
 
 ## 1.18.43
 
