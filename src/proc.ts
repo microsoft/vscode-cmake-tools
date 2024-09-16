@@ -138,6 +138,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     const cmdstr = buildCmdStr(command, args);
     console.log(`Executing with environment: ${JSON.stringify(final_env)}`);
+    for (const key in final_env) {
+        console.log(`Key: ${key}, Value: ${final_env[key]}`);
+    }
 
     if (options && options.silent !== true) {
         log.info(// We do simple quoting of arguments with spaces.
