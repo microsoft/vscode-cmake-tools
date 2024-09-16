@@ -30,9 +30,6 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Test before Ninja
-        run: ninja --version
-
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@v3.18.3
 
