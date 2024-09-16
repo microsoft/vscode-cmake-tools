@@ -33,6 +33,9 @@ jobs:
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@v3.18.3
 
+      - name: Test Ninja
+        run: ninja --version
+
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0
         with:
