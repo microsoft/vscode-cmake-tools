@@ -137,7 +137,6 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         options.overrideLocale ? localeOverride : {}]);
 
     const cmdstr = buildCmdStr(command, args);
-
     if (options && options.silent !== true) {
         log.info(// We do simple quoting of arguments with spaces.
             // This is only shown to the user,
