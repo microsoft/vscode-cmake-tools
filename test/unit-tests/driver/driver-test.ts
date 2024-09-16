@@ -43,7 +43,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 preferredGenerator: { name: 'Ninja' }
             } as Kit;
         } else {
-            ninjaKitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Ninja' }, isTrusted: true } as Kit;
+            ninjaKitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: process.platform === "darwin" ? 'Unix Makefiles' : 'Ninja' }, isTrusted: true } as Kit;
         }
         let secondaryKit: Kit;
         if (process.platform === 'win32') {
