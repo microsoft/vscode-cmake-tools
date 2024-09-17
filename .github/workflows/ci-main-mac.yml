@@ -2,9 +2,9 @@ name: CI (macOS)
 
 on:
   push:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**' ]
   pull_request:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**']
 
 jobs:
   build:
