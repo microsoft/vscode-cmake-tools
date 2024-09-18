@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.20
+
+Bug Fixes:
+
+- Fix our setting of `isUserPreset` for presets, only set it to `true` if it's defined in a user presets file. [#4059](https://github.com/microsoft/vscode-cmake-tools/issues/4059)
+
 ## 1.19.52
 
 Improvements:
