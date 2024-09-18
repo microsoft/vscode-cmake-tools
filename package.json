@@ -3776,6 +3776,7 @@
     "ansi-regex": "^5.0.1",
     "chokidar": "^3.5.1",
     "glob-parent": "^5.1.2",
+    "hosted-git-info": "^3.0.8",
     "https-proxy-agent": "^5.0.0",
     "**/minimist": "^1.2.5",
     "nanoid": "^3.1.31",
