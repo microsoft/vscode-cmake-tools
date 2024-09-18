@@ -3720,7 +3720,7 @@
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
-    "eslint": "~8.15.0",
+    "eslint": "^8.15.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^48.2.8",
     "event-stream": "^4.0.1",
