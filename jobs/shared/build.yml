@@ -22,10 +22,8 @@ steps:
   displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
   inputs:
     script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-- task: Npm@0
-  displayName: npm install VSCE
-  inputs:
-    arguments: -g @vscode/vsce
+- script: npm install -g @vscode/vsce
+  displayName: 'install vsce'
 - task: PowerShell@2
   displayName: Set build name
   inputs:
