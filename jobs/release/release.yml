@@ -63,7 +63,7 @@ extends:
           isProduction: true
           sdl:
             codeSignValidation:
-              additionalTargetsGlobPattern: -|**\*.js
+              additionalTargetsGlobPattern: -|**\dist\main.js
           inputs:
           - input: pipelineArtifact
             pipeline: BuildReleasePipeline
