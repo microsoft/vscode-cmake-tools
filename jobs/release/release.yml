@@ -61,6 +61,9 @@ extends:
         templateContext:
           type: releaseJob
           isProduction: true
+          sdl:
+            codeSignValidation:
+              additionalTargetsGlobPattern: -|**\*.js
           inputs:
           - input: pipelineArtifact
             pipeline: BuildReleasePipeline

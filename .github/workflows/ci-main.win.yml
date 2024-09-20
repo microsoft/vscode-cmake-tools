@@ -2,9 +2,9 @@ name: CI (Windows)
 
 on:
   push:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**' ]
   pull_request:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**' ]
 
 jobs:
   build:
@@ -33,7 +33,10 @@ jobs:
 
       # The cmake server mode has been removed since CMake 3.20
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@v3.18.3
+        uses: lukka/get-cmake@v3.30.3
+        with:
+            cmakeVersion: 3.18.3
+            ninjaVersion: 1.10.1
 
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0
