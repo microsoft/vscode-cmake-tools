@@ -21,6 +21,8 @@ extends:
   parameters:
     pool:
       name: VSEngSS-MicroBuild2022-1ES
+      demands:
+        - ImageVersionOverride -equals 21.0.0
 
     stages:
     - stage: release
