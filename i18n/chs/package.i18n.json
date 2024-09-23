@@ -152,7 +152,7 @@
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "目录路径。",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "可在其中安装 Emscripten 的目录。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "以递归方式收集和合并在 cmake.buildDirectory 中找到的所有compile_commands.json。",
-	"cmake-tools.configuration.cmake.copyCompileCommands.description": "成功配置后将 compile_commands.json 复制到此位置。",
+	"cmake-tools.configuration.cmake.copyCompileCommands.description": "成功配置后将 compile_commands.json 复制到此位置。（例子：${workspaceFolder}/compile_commands.json）",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "在 CMake 项目目录打开时自动对其进行配置。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "保存 cmake.sourceDirectory 或 CMakeLists.txt 内容时，自动配置 CMake 项目目录。",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "调用干净配置时删除整个编译目录。",
