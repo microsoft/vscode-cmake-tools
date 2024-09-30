@@ -97,7 +97,9 @@ class RollbarController {
      */
     error(what: string, additional: object = {}): void {
         log.error(what, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
-        debugger;
+        if (process.env.NODE_ENV === 'development') {
+            debugger;
+        }
     }
 
     info(what: string, additional: object = {}): void {
