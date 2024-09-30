@@ -161,7 +161,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
-        shell: options.shell ?? determineShell(command)
+        shell: options.shell ?? process.platform === "win32" ? determineShell(command) : undefined
     };
     if (options?.cwd !== undefined) {
         util.createDirIfNotExistsSync(options.cwd);
