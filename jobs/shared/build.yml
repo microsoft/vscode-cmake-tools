@@ -56,7 +56,7 @@ steps:
   displayName: Build files
   inputs:
     script: |
-      npm run vscode:prepublish
+      yarn compile-production
 - task: MSBuild@1
   displayName: Sign files
   inputs:
