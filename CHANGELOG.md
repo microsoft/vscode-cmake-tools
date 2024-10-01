@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.20
+
+Bug Fixes:
+
+- Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
+
 ## 1.19.52
 
 Improvements:
