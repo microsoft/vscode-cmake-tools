@@ -3677,7 +3677,6 @@
     "@test": "out/test/"
   },
   "scripts": {
-    "vscode:prepublish": "yarn run compile-production",
     "compile": "yarn install && webpack --mode development",
     "compile-watch": "yarn install && webpack --mode development --watch --progress",
     "compile-production": "yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
