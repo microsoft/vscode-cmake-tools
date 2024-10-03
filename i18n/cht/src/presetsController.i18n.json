@@ -132,5 +132,6 @@
 	"use.kits.variants": "使用套件和變體",
 	"edit.presets": "尋找",
 	"presets.version.error": "不支援 CMakePresets 版本 1。要如何繼續?",
-	"failed.writing.to.file": "無法寫入檔案 {0}"
+	"failed.writing.to.file": "無法寫入檔案 {0}",
+	"failed.to.watch": "無法為 {0}: {1} 監控程式建立容器"
 }

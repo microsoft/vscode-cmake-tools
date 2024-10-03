@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "Heranças circulares na predefinição de fluxo de trabalho {0}",
 	"build.preset.not.found.full": "Não foi possível encontrar a predefinição de compilação com o nome {0}",
 	"build.preset.not.found": "Não foi possível localizar a predefinição de build",
+	"configure.preset.not.found.full": "Não foi possível encontrar a predefinição de configuração com o nome {0}",
+	"configure.preset.not.found": "Não foi possível encontrar a predefinição de configuração",
 	"test.preset.not.found.full": "Não foi possível encontrar a predefinição de teste com o nome {0}",
 	"test.preset.not.found": "Não foi possível localizar a predefinição de teste",
 	"package.preset.not.found.full": "Não foi possível encontrar a predefinição de pacote com o nome {0}",

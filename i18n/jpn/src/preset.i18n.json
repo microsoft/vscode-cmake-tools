@@ -38,6 +38,8 @@
 	"circular.inherits.in.workflow.preset": "ワークフロー プリセット {0} での循環継承",
 	"build.preset.not.found.full": "名前が {0} のビルドの事前設定が見つかりませんでした",
 	"build.preset.not.found": "ビルド プリセットが見つかりませんでした",
+	"configure.preset.not.found.full": "名前が {0} の構成の事前設定を見つけることができませんでした",
+	"configure.preset.not.found": "構成プリセットが見つかりませんでした",
 	"test.preset.not.found.full": "名前が {0} のテストの事前設定が見つかりませんでした",
 	"test.preset.not.found": "テスト プリセットが見つかりませんでした。",
 	"package.preset.not.found.full": "名前が {0} のパッケージ プリセットが見つかりませんでした",

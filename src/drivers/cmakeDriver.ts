@@ -4,10 +4,11 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
-import { ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
+import { ConfigureCancelInformation, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
@@ -743,17 +744,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
             preferredGenerators.push({ name: "Unix Makefiles" });
         }
 
-        // If a generator is set in the "cmake.generator" setting, push it to the front
-        // of the "best generator" logic
+        // Use the "best generator" logic only if the user did not define a particular
+        // generator to be used via the `cmake.generator` setting.
         if (this.config.generator) {
-            preferredGenerators.unshift({
+            this._generator = {
                 name: this.config.generator,
                 platform: this.config.platform || undefined,
                 toolset: this.config.toolset || undefined
-            });
+            };
+        } else {
+            this._generator = await this.findBestGenerator(preferredGenerators);
         }
-
-        this._generator = await this.findBestGenerator(preferredGenerators);
     }
 
     protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -1003,19 +1004,27 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 return false;
             })();
             if (!generator_present) {
-                const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
+                const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen_name);
                 if (platform === 'win32' && vsMatch) {
+                    let possibleArchitecture = vsMatch[2].trim();
+                    if (possibleArchitecture && possibleArchitecture === "Win64") {
+                        possibleArchitecture = "x64";
+                    }
                     return {
                         name: vsMatch[1],
-                        platform: gen.platform || vsMatch[2],
+                        platform: gen.platform || possibleArchitecture,
                         toolset: gen.toolset
                     };
                 }
-                if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
+                if (gen_name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
                     return gen;
                 }
 
-                // If the generator isn't found, move on to the next one
+                // If it is not a common generator that we can find, but it is a known cmake generator (cmakeGenerators), return it.
+                // The only caveat is that we should not return a Visual Studio generator on non-Windows platforms.
+                if (this.cmakeGenerators.indexOf(gen_name) >= 0 && !this.isCommonGenerator(gen_name) && !(gen_name.startsWith("Visual Studio") && platform !== "win32")) {
+                    return gen;
+                }
                 continue;
             } else {
                 return gen;
@@ -1038,7 +1047,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Perform a clean configure. Deletes cached files before running the config
      * @param consumer The output consumer
      */
-    public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
+    public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
         if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
             return { result: -1, resultType: ConfigureResultType.ForcedCancel };
@@ -1051,7 +1060,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         await this.doPreCleanConfigure();
         this.isConfigInProgress = false;
 
-        return this.configure(trigger, extra_args, consumer, debuggerInformation);
+        return this.configure(trigger, extra_args, consumer, cancelInformation, debuggerInformation);
     }
 
     async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp, captureGroup: number): Promise<string | undefined> {
@@ -1425,7 +1434,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return Promise.all(expanded_flags_promises);
     }
 
-    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, debuggerInformation?: DebuggerInformation, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<ConfigureResult> {
+    // The `cancelInformation` parameter is an object that allows for passing the `cancelled` field to be modified by reference. This allows us to better understand if a user
+    // manually cancelled the configure process.
+    async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation, debuggerInformation?: DebuggerInformation, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean, presetOverride?: preset.ConfigurePreset, options?: proc.ExecutionOptions): Promise<ConfigureResult> {
         // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
         const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
@@ -1559,8 +1570,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 telemetryProperties.CppCompilerName = 'cl';
             }
 
-            if (this._kit?.visualStudioArchitecture) {
-                telemetryProperties.VisualStudioArchitecture = this._kit?.visualStudioArchitecture;
+            if (this.useCMakePresets) {
+                const arch = presetOverride ? presetOverride.__developerEnvironmentArchitecture : this._configurePreset ? this._configurePreset.__developerEnvironmentArchitecture : undefined;
+                if (arch) {
+                    telemetryProperties.VisualStudioArchitecture = arch;
+                }
+            } else {
+                if (this._kit?.visualStudioArchitecture) {
+                    telemetryProperties.VisualStudioArchitecture =
+                        this._kit?.visualStudioArchitecture;
+                }
             }
 
             const telemetryMeasures: telemetry.Measures = {
@@ -1568,15 +1587,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             };
             if (this.useCMakePresets && this.workspaceFolder) {
                 const configurePresets = preset.configurePresets(this.workspaceFolder);
-                const userConfigurePresets = preset.userConfigurePresets(this.workspaceFolder);
+                const userConfigurePresets = lodash.differenceWith(preset.userConfigurePresets(this.workspaceFolder), configurePresets, (a, b) => a.name === b.name);
                 const buildPresets = preset.buildPresets(this.workspaceFolder);
-                const userBuildPresets = preset.userBuildPresets(this.workspaceFolder);
+                const userBuildPresets = lodash.differenceWith(preset.userBuildPresets(this.workspaceFolder), buildPresets, (a, b) => a.name === b.name);
                 const testPresets = preset.testPresets(this.workspaceFolder);
-                const userTestPresets = preset.userTestPresets(this.workspaceFolder);
+                const userTestPresets = lodash.differenceWith(preset.userTestPresets(this.workspaceFolder), testPresets, (a, b) => a.name === b.name);
                 const packagePresets = preset.packagePresets(this.workspaceFolder);
-                const userPackagePresets = preset.userPackagePresets(this.workspaceFolder);
+                const userPackagePresets = lodash.differenceWith(preset.userPackagePresets(this.workspaceFolder), packagePresets, (a, b) => a.name === b.name);
                 const workflowPresets = preset.workflowPresets(this.workspaceFolder);
-                const userWorkflowPresets = preset.userWorkflowPresets(this.workspaceFolder);
+                const userWorkflowPresets = lodash.differenceWith(preset.userWorkflowPresets(this.workspaceFolder), workflowPresets, (a, b) => a.name === b.name);
                 telemetryMeasures['ConfigurePresets'] = configurePresets.length;
                 telemetryMeasures['HiddenConfigurePresets'] = this.countHiddenPresets(configurePresets);
                 telemetryMeasures['UserConfigurePresets'] = userConfigurePresets.length;
@@ -1618,6 +1637,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 }
             }
 
+            telemetryProperties.Canceled = cancelInformation?.canceled ? "true" : "false";
             telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
             return { result: retc, resultType: ConfigureResultType.NormalOperation };
