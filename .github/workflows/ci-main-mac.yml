@@ -2,13 +2,13 @@ name: CI (macOS)
 
 on:
   push:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**' ]
   pull_request:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**']
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13 # TODO: This is a workaround until macos-14 is fixed: https://github.com/actions/runner-images/issues/10624
 
     steps:
       - uses: actions/checkout@v3
@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node environment
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
 
       - name: Install Yarn
         run: npm install -g yarn
@@ -31,7 +31,10 @@ jobs:
         run: yarn lint
 
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@v3.18.3
+        uses: lukka/get-cmake@v3.30.3
+        with:
+            cmakeVersion: 3.18.3
+            ninjaVersion: 1.10.1
 
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0

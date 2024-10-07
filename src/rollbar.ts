@@ -6,6 +6,7 @@ import * as logging from './logging';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import { logEvent } from './telemetry';
+import * as lodash from "lodash";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -76,7 +77,11 @@ class RollbarController {
      * @returns The LogResult if we are enabled. `null` otherwise.
      */
     exception(what: string, exception: Error, additional: object = {}): void {
-        log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
+        try {
+            log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
+        } catch (e) {
+            log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, lodash.toString(additional));
+        }
         const callstack = cleanStack(exception.stack);
         const message = cleanString(exception.message);
         logEvent('exception2', { message, callstack });
@@ -92,7 +97,9 @@ class RollbarController {
      */
     error(what: string, additional: object = {}): void {
         log.error(what, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
-        debugger;
+        if (process.env.NODE_ENV === 'development') {
+            debugger;
+        }
     }
 
     info(what: string, additional: object = {}): void {
