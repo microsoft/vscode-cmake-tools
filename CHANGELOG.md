@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.20
+
+Improvements:
+
+- Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
+
 ## 1.19.52
 
 Improvements:
