@@ -24,7 +24,6 @@ export const envDelimiter: string = (process.platform === 'win32') ? ";" : ":";
  * variables are specified as properties on this interface.
  */
 interface RequiredExpansionContextVars {
-    generator: string;
     workspaceFolder: string;
     workspaceFolderBasename: string;
     sourceDir: string;
@@ -50,6 +49,7 @@ export interface KitContextVars extends RequiredExpansionContextVars {
 
 export interface PresetContextVars extends RequiredExpansionContextVars {
     [key: string]: string;
+    generator: string;
     sourceDir: string;
     sourceParentDir: string;
     sourceDirName: string;
@@ -61,6 +61,16 @@ export interface MinimalPresetContextVars extends RequiredExpansionContextVars {
     [key: string]: string;
 }
 
+export interface NonPresetSpecificContextVars {
+    [key: string]: string;
+    sourceDir: string;
+    sourceParentDir: string;
+    sourceDirName: string;
+    hostSystemName: string;
+    fileDir: string;
+    pathListSep: string;
+}
+
 /**
  * Options to control the behavior of `expandString`.
  */
@@ -68,7 +78,7 @@ export interface ExpansionOptions {
     /**
      * Plain `${variable}` style expansions.
      */
-    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars;
+    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars | NonPresetSpecificContextVars;
     /**
      * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
      *
