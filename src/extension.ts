@@ -264,7 +264,6 @@ export class ExtensionManager implements vscode.Disposable {
                 this.statusBar.setAutoSelectActiveProject(true);
             }
             await this.initActiveProject();
-            await this.selectDefaultProject();
         }
         const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject();
         await enableFullFeatureSet(isFullyActivated);
@@ -685,29 +684,20 @@ export class ExtensionManager implements vscode.Disposable {
         if (activeFolder) {
             folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(activeFolder));
         }
+
+        let activeTextEditor = vscode.window.activeTextEditor;
+        const defaultActiveFolder = this.workspaceConfig.defaultActiveFolder;
+        if (defaultActiveFolder) {
+            // do not use the active text editor for updating active project
+            activeTextEditor = undefined;
+            folder = vscode.workspace.workspaceFolders!.find(candidate => candidate.uri.path.endsWith(defaultActiveFolder));
+        }
+
         if (!folder) {
             folder = vscode.workspace.workspaceFolders![0];
         }
-        await this.updateActiveProject(folder, vscode.window.activeTextEditor);
+        await this.updateActiveProject(folder, activeTextEditor);
         return this.getActiveProject();
-    }
-
-    // Selects the configured default project base on workspace configuration
-    private async selectDefaultProject() {
-        const defaultActiveFolder = this.workspaceConfig.defaultActiveFolder;
-        if (!defaultActiveFolder) {
-            return;
-        }
-
-        const projects = this.projectController.getAllCMakeProjects();
-        const defaultProject = projects?.find(candidate => candidate.workspaceFolder.name === defaultActiveFolder);
-
-        if (defaultProject) {
-            await this.setActiveProject(defaultProject);
-            telemetry.logEvent("selectactivefolder");
-            const currentActiveFolderPath = this.activeFolderPath();
-            await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
-        }
     }
 
     // Update the active project
