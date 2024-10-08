@@ -4,7 +4,7 @@ parameters:
   default: $(IsPreRelease)
 - name: ReleaseVersion
   type: string
-  default: $(ReleaseVersion)
+  default: unset
 
 steps:
 - task: MicroBuildSigningPlugin@3
@@ -13,9 +13,9 @@ steps:
     signType: $(SignType)
     zipSources: false
 - task: NodeTool@0
-  displayName: Use Node 16.x
+  displayName: Use Node 20.x
   inputs:
-    versionSpec: 16.x
+    versionSpec: 20.x
 - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
   displayName: Use Yarn 1.x
 - task: CmdLine@2
@@ -25,44 +25,7 @@ steps:
 - task: Npm@0
   displayName: npm install VSCE
   inputs:
-    arguments: -g vsce
-- task: PowerShell@2
-  displayName: Update ReleaseVersion for pre-release builds
-  condition: eq(variables.IsPreRelease, '1')
-  inputs:
-    targetType: inline
-    script: |
-      #
-      # Query the Marketplace for the latest version of CMake Tools
-      # https://github.com/microsoft/vscode/blob/main/src/vs/platform/extensionManagement/common/extensionGalleryService.ts
-      #
-      $uri = 'https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery'
-      $contentType = 'application/json'
-      $headers = @{
-      "Accept" = "application/json; api-version=3.0-preview"
-      }
-      $data = '{"filters": [{"criteria": [{"filterType": 7, "value": "ms-vscode.cmake-tools"}]}], "flags": 529}'
-      $response = Invoke-WebRequest -Method 'POST' -Uri $uri -UseBasicParsing -ContentType $contentType -Headers $headers -Body $data
-      $newVersion = ''
-      if ($response.StatusCode.Equals(200)) {
-          $result = $response.Content | ConvertFrom-Json
-          # Check the $result.results[0].extensions.versions.properties for the 'Microsoft.VisualStudio.Code.PreRelease' key to make sure it's true,
-          # if not, we need to bump the .Minor version and reset .Build to 0
-          $index = $result.results[0].extensions.versions.properties.key.IndexOf("Microsoft.VisualStudio.Code.PreRelease")
-          $isPreRelease = "false"
-          if ($index -ge 0) {
-              $isPreRelease = $result.results[0].extensions.versions.properties.value[$index]
-          }
-          $v = [System.Version]::Parse($result.results[0].extensions.versions.version)
-          if ($isPreRelease.Equals('true')) { 
-              $newVersion = [System.Version]::new($v.Major, $v.Minor, $v.Build + 1).ToString()
-          } else {
-              $newVersion = [System.Version]::new($v.Major, $v.Minor + 1, 0).ToString()
-          }
-      }
-      Write-Host "New version is: $newVersion"
-      Write-Host "##vso[task.setvariable variable=ReleaseVersion]$newVersion"
-    ignoreLASTEXITCODE: true
+    arguments: -g @vscode/vsce
 - task: PowerShell@2
   displayName: Set build name
   inputs:
@@ -95,7 +58,7 @@ steps:
   displayName: Build files
   inputs:
     script: |
-      npm run vscode:prepublish
+      yarn compile-production
 - task: MSBuild@1
   displayName: Sign files
   inputs:
@@ -107,6 +70,16 @@ steps:
     script: |
       mkdir $(Build.ArtifactStagingDirectory)\vsix
       if "${{parameters.IsPreRelease}}"=="1" (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+- task: CmdLine@2
+  displayName: Generate Extension Manifest
+  inputs:
+    script: |
+      vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
+- task: CmdLine@2
+  displayName: Prepare manifest for signing
+  inputs:
+    script: |
+      copy $(Build.ArtifactStagingDirectory)\vsix\extension.manifest $(Build.ArtifactStagingDirectory)\vsix\extension.signature.p7s
 - task: MSBuild@1
   displayName: Sign VSIX
   inputs:

@@ -9,6 +9,7 @@
 	"enable.optimizations.omit.debug": "Optimierungen aktivieren, Debuginformationen auslassen",
 	"optimize.for.smallest": "Für die kleinste binäre Größe optimieren",
 	"optimize.and.debug": "Optimierungen durchführen UND Debuginformationen einschließen",
+	"unspec.build.type": "CMake den Standardbuildtyp auswählen lassen",
 	"constructing": "Erstellen von {0}",
 	"reloading.variants.file": "Variantendatei wird erneut geladen: {0}",
 	"reloading.variants.from.settings": "Varianten werden aus den Einstellungen neu geladen.",

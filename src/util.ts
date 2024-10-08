@@ -300,7 +300,9 @@ export async function termProc(child: child_process.ChildProcess) {
     // spawn child processes, and CMake won't forward signals to its
     // children. As a workaround, we list the children of the cmake process
     // and also send signals to them.
-    await _killTree(child.pid);
+    if (child.pid) {
+        await _killTree(child.pid);
+    }
     return true;
 }
 
@@ -976,8 +978,8 @@ export function runCommand(key: keyof ExtensionManager, ...args: any[]) {
 }
 
 export async function globForFileName(fileName: string, depth: number, cwd: string): Promise<boolean> {
-    let starString = "*";
-    for (let i = 1; i <= depth; i++) {
+    let starString = ".";
+    for (let i = 0; i <= depth; i++) {
         if (await globWrapper(`${starString}/${fileName}`, cwd)) {
             return true;
         }

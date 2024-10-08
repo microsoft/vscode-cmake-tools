@@ -168,6 +168,11 @@ export const DEFAULT_VARIANTS: VarFileRoot = {
                 short: 'RelWithDebInfo',
                 long: localize('optimize.and.debug', 'Perform optimizations AND include debugging information'),
                 buildType: 'RelWithDebInfo'
+            },
+            unspecified: {
+                short: 'Unspecified',
+                long: localize('unspec.build.type', 'Let CMake pick the default build type'),
+                buildType: 'Unspecified'
             }
         }
     }
@@ -189,6 +194,11 @@ export class VariantManager implements vscode.Disposable {
      */
     private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true, followSymlinks: false });
     private customVariantsFileExists: boolean = false;
+
+    /**
+     * Whether the variant manager has been initialized
+     */
+    private initialized: boolean = false;
 
     dispose() {
         void this._variantFileWatcher.close();
@@ -233,14 +243,16 @@ export class VariantManager implements vscode.Disposable {
         this.customVariantsFileExists = false;
         const validate = await loadSchema('./schemas/variants-schema.json');
 
-        if (!filepath || !await fs.exists(filepath)) {
-            const workspaceFolder: string = this.workspaceFolder.uri.fsPath;
-            const candidates = [
-                path.join(workspaceFolder, 'cmake-variants.json'),
-                path.join(workspaceFolder, 'cmake-variants.yaml'),
-                path.join(workspaceFolder, '.vscode/cmake-variants.json'),
-                path.join(workspaceFolder, '.vscode/cmake-variants.yaml')
-            ];
+        // Variants file should be one of these four options
+        const workspaceFolder: string = this.workspaceFolder.uri.fsPath;
+        const candidates = [
+            path.join(workspaceFolder, 'cmake-variants.json'),
+            path.join(workspaceFolder, 'cmake-variants.yaml'),
+            path.join(workspaceFolder, '.vscode/cmake-variants.json'),
+            path.join(workspaceFolder, '.vscode/cmake-variants.yaml')
+        ];
+
+        if (!filepath || !await fs.exists(filepath) || !candidates.includes(filepath)) {
             for (const testpath of candidates) {
                 if (await fs.exists(testpath)) {
                     filepath = testpath;
@@ -329,7 +341,7 @@ export class VariantManager implements vscode.Disposable {
         const invalid_variant = {
             key: '__invalid__',
             short: 'Unknown',
-            long: 'Unknwon'
+            long: 'Unknown'
         };
         const kws = this.stateManager.getActiveVariantSettings(this.folderName, this.isMultiProject);
         if (!kws) {
@@ -433,5 +445,11 @@ export class VariantManager implements vscode.Disposable {
             const defaultChoices = this.findDefaultChoiceCombination();
             await this.publishActiveKeywordSettings(defaultChoices);
         }
+
+        this.initialized = true;
+    }
+
+    hasInitialized(): boolean {
+        return this.initialized;
     }
 }

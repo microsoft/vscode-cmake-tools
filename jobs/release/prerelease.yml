@@ -1,0 +1,69 @@
+# ==================================================================================
+# Release Pipeline for pre-release
+# ==================================================================================
+
+name: PrereleaseRelease-$(Date:yyyyMMdd).$(Rev:r)
+trigger: none
+
+resources:
+  repositories:
+  - repository: 1ESPipelineTemplates
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
+  pipelines:
+  - pipeline: BuildPrereleasePipeline
+    source: '\VC\VSCode\CMakeTools\vscode-cmake-tools - pre-release [YAML]'
+    trigger: true
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: VSEngSS-MicroBuild2022-1ES
+
+    stages:
+    - stage: release
+      jobs:
+      - job: release
+        templateContext:
+          type: releaseJob
+          isProduction: true
+          inputs:
+          - input: pipelineArtifact
+            pipeline: BuildPrereleasePipeline
+            artifactName: vsix
+            targetPath: $(Build.StagingDirectory)\vsix
+
+        steps:
+        - powershell: |
+            $newVersion = Get-Content -Path $(Build.StagingDirectory)\vsix\version.txt
+            Write-Host "New version is: $newVersion"
+            
+            $str = Get-Date -Format "yyMMdd-HHmm"
+            Write-Host "##vso[build.updatebuildnumber]$newVersion - $str"
+          ignoreLASTEXITCODE: true
+          displayName: 'Set the release name'
+        - task: NodeTool@0
+          displayName: 'Use Node 20.x'
+          inputs:
+            versionSpec: 20.x
+        - task: Npm@0
+          displayName: 'install vsce'
+          inputs:
+            arguments: '-g @vscode/vsce'
+        - task: AzureCLI@2
+          displayName: 'Generate AAD_TOKEN'
+          inputs:
+            azureSubscription: '$(AzureSubscription)'
+            scriptType: ps
+            scriptLocation: inlineScript
+            inlineScript: |
+              $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
+              Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
+        - script: |
+            vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix --pre-release --manifestPath $(Build.StagingDirectory)\vsix\extension.manifest --signaturePath $(Build.StagingDirectory)\vsix\extension.signature.p7s
+          displayName: 'Publish the VSIX'
+          env:
+            VSCE_PAT: $(AAD_TOKEN)
+

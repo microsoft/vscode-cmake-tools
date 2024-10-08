@@ -1,6 +1,13 @@
 import * as proc from '../proc';
 import * as util from '../util';
 import {setContextAndStore} from '../extension';
+import * as logging from '@cmt/logging';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
+const log = logging.createLogger('cmakeExecutable');
 
 export interface CMakeExecutable {
     path: string;
@@ -8,9 +15,11 @@ export interface CMakeExecutable {
     isServerModeSupported?: boolean;
     isFileApiModeSupported?: boolean;
     isDebuggerSupported?: boolean;
+    isDefaultGeneratorSupported?: boolean;
     version?: util.Version;
     minimalServerModeVersion: util.Version;
     minimalFileApiModeVersion: util.Version;
+    minimalDefaultGeneratorVersion: util.Version;
 }
 
 const cmakeInfo = new Map<string, CMakeExecutable>();
@@ -20,7 +29,8 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         path,
         isPresent: false,
         minimalServerModeVersion: util.parseVersion('3.7.1'),
-        minimalFileApiModeVersion: util.parseVersion('3.14.0')
+        minimalFileApiModeVersion: util.parseVersion('3.14.0'),
+        minimalDefaultGeneratorVersion: util.parseVersion('3.15.0')
     };
 
     // The check for 'path' seems unnecessary, but crash logs tell us otherwise. It is not clear
@@ -29,10 +39,14 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         const normalizedPath = util.platformNormalizePath(path);
         if (cmakeInfo.has(normalizedPath)) {
             const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
-            await setCMakeDebuggerAvailableContext(
-                cmakeExe.isDebuggerSupported?.valueOf() ?? false
-            );
-            return cmakeExe;
+            if (cmakeExe.isPresent) {
+                await setCMakeDebuggerAvailableContext(
+                    cmakeExe.isDebuggerSupported?.valueOf() ?? false
+                );
+                return cmakeExe;
+            } else {
+                log.error(localize('cmake.exe.not.found.in.cache', 'CMake executable not found in cache. Checking again.'));
+            }
         }
 
         try {
@@ -50,6 +64,9 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
                 // Support for new file based API, it replace the server mode
                 cmake.isFileApiModeSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalFileApiModeVersion);
                 cmake.isPresent = true;
+
+                // Support for CMake using an internal default generator when one isn't provided
+                cmake.isDefaultGeneratorSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalDefaultGeneratorVersion);
             }
             const debuggerPresent = await proc.execute(path, ['-E', 'capabilities'], null, execOpt).result;
             if (debuggerPresent.retc === 0 && debuggerPresent.stdout) {

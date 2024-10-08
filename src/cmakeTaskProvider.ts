@@ -255,7 +255,8 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         let matchingTargetTasks: CMakeTask[];
 
         if (presetName) {
-            matchingTargetTasks = buildTasks.filter(task => task.definition.preset === presetName);
+            matchingTargetTasks = buildTasks.filter(task => task.definition.preset === presetName
+                || task.definition.preset === "${command:cmake.activeBuildPresetName}");
         } else {
             matchingTargetTasks = buildTasks.filter(task => {
                 const taskTargets: string[] = task.definition.targets || [];
@@ -432,6 +433,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         telemetry.logEvent("task", {taskType: "configure", useCMakePresets: String(project.useCMakePresets)});
         await this.correctTargets(project, CommandType.config);
         const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
+
         if (cmakeDriver) {
             if (project.useCMakePresets && cmakeDriver.config.configureOnEdit) {
                 log.debug(localize("configure.on.edit", 'When running configure tasks using presets, setting configureOnEdit to true can potentially overwrite the task configurations.'));
@@ -439,7 +441,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
             this.preset = await this.resolvePresetName(this.preset, project.useCMakePresets, CommandType.config);
             const configPreset: preset.ConfigurePreset | undefined = await project?.expandConfigPresetbyName(this.preset);
-            const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, undefined, false, false, configPreset, this.options);
+            const result = await cmakeDriver.configure(ConfigureTrigger.taskProvider, [], this, undefined, undefined, false, false, configPreset, this.options);
             if (result === undefined || result === null) {
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);

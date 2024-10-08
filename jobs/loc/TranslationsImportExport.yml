@@ -51,6 +51,11 @@ extends:
             artifactName: 'drop'
             publishLocation: 'Container'
         steps:
+        - task: UseNode@1
+          displayName: "Use Node 20.x"
+          inputs:
+            version: "20.x"
+
         - task: CmdLine@2
           inputs:
             script: 'yarn install'
@@ -58,6 +63,18 @@ extends:
         - task: CmdLine@2
           inputs:
             script: 'yarn run translations-export'
+
+        # Requires Azure client 2.x
+        - task: AzureCLI@2
+          displayName: 'Set OneLocBuildToken'
+          enabled: true
+          inputs:
+            azureSubscription: '$(AzureSubscription)'   # Azure DevOps service connection
+            scriptType: 'pscore'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              $token = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
+              Write-Host "##vso[task.setvariable variable=AzDO.OneLocBuildToken;issecret=true]${token}"    
         
         - task: OneLocBuild@2
           env:
@@ -68,7 +85,7 @@ extends:
             isCreatePrSelected: false
             prSourceBranchPrefix: 'locfiles'
             packageSourceAuth: 'patAuth'
-            patVariable: '$(OneLocBuildPat)'
+            patVariable: '$(AzDO.OneLocBuildToken)'
             LclSource: lclFilesfromPackage
             LclPackageId: 'LCL-JUNO-PROD-VCMAKE'
             lsBuildXLocPackageVersion: '7.0.30510'

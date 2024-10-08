@@ -6,6 +6,7 @@
 {
 	"workflow.preset.not.set": "Ustawienie wstępne przepływu pracy nie jest ustawione",
 	"no.project.found": "Nie znaleziono projektu dla folderu {0}",
+	"workflow.configuring.clean": "Konfigurowanie czystego projektu przy użyciu skonfigurowanych ustawień wstępnych przepływu pracy {0}.",
 	"workflow.configuring": "Konfigurowanie projektu przy użyciu {0} ustawień wstępnych zestawu przepływu pracy.",
 	"workflow.building": "Kompilowanie projektu przy użyciu ustawień wstępnych {0} kompilacji kroku przepływu pracy.",
 	"workflow.running.ctest": "Uruchomienie funkcji ctest dla {0} ustawień wstępnych testowego kroku przepływu pracy.",

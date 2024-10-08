@@ -101,6 +101,7 @@
 	"options.configureWithDebuggerOnFail.do.not.show": "No volver a mostrar",
 	"configure.failed.tryWithDebugger": "Error de configuración. ¿Desea intentar configurar con el depurador de CMake?",
 	"no.configureWithDebugger.button": "Cancelar",
+	"cmake.debug.name": "Depurador de CMake",
 	"finishing.configure": "Finalizando la configuración",
 	"configure.failed": "No se pudo configurar el proyecto.",
 	"saving.open.files.before": "Guardando los archivos abiertos antes de configurar o compilar",

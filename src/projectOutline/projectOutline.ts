@@ -381,7 +381,9 @@ export class TargetNode extends BaseNode {
             ].join(',');
             return item;
         } catch (e) {
-            debugger;
+            if (process.env.NODE_ENV === 'development') {
+                debugger;
+            }
             return new vscode.TreeItem(`${this.name} (${localize('item.render.issue', 'There was an issue rendering this item. This is a bug')})`);
         }
     }
@@ -499,6 +501,11 @@ export class ProjectNode extends BaseNode {
         const possiblePreset = path.join(this.sourceDirectory, 'CMakePresets.json');
         if (fs.existsSync(possiblePreset)) {
             children.push(new SourceFileNode(this.id, this.folder, this.sourceDirectory, possiblePreset));
+        }
+
+        const possibleUserPreset = path.join(this.sourceDirectory, 'CMakeUserPresets.json');
+        if (fs.existsSync(possibleUserPreset)) {
+            children.push(new SourceFileNode(this.id, this.folder, this.sourceDirectory, possibleUserPreset));
         }
 
         return children;
