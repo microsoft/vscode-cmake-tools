@@ -61,16 +61,6 @@ export interface MinimalPresetContextVars extends RequiredExpansionContextVars {
     [key: string]: string;
 }
 
-export interface NonPresetSpecificContextVars {
-    [key: string]: string;
-    sourceDir: string;
-    sourceParentDir: string;
-    sourceDirName: string;
-    hostSystemName: string;
-    fileDir: string;
-    pathListSep: string;
-}
-
 /**
  * Options to control the behavior of `expandString`.
  */
@@ -78,7 +68,7 @@ export interface ExpansionOptions {
     /**
      * Plain `${variable}` style expansions.
      */
-    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars | NonPresetSpecificContextVars;
+    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars;
     /**
      * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
      *
