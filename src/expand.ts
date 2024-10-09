@@ -24,6 +24,7 @@ export const envDelimiter: string = (process.platform === 'win32') ? ";" : ":";
  * variables are specified as properties on this interface.
  */
 interface RequiredExpansionContextVars {
+    generator: string;
     workspaceFolder: string;
     workspaceFolderBasename: string;
     sourceDir: string;
@@ -49,7 +50,6 @@ export interface KitContextVars extends RequiredExpansionContextVars {
 
 export interface PresetContextVars extends RequiredExpansionContextVars {
     [key: string]: string;
-    generator: string;
     sourceDir: string;
     sourceParentDir: string;
     sourceDirName: string;
