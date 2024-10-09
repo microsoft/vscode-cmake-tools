@@ -2,6 +2,10 @@
 
 ## 1.20
 
+Features:
+
+- Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
+
 Bug Fixes:
 
 - Fix our setting of `isUserPreset` for presets, only set it to `true` if it's defined in a user presets file. [#4059](https://github.com/microsoft/vscode-cmake-tools/issues/4059)
