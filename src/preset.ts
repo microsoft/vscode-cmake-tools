@@ -1212,7 +1212,7 @@ async function getConfigurePresetInheritsImpl(folder: string, name: string, allo
     }
 
     log.error(localize('config.preset.not.found.full', 'Could not find configure preset with name {0}', name));
-    errorHandler?.errorList.push([localize('config.preset.not.found', 'Could not find configure preset'), name]);
+    errorHandler?.tempErrorList.push([localize('config.preset.not.found', 'Could not find configure preset'), name]);
     return null;
 }
 
@@ -1593,7 +1593,7 @@ async function getBuildPresetInheritsImpl(folder: string, name: string, workspac
     }
 
     log.error(localize('build.preset.not.found.full', 'Could not find build preset with name {0}', name));
-    errorHandler?.errorList.push([localize('build.preset.not.found', 'Could not find build preset'), name]);
+    errorHandler?.tempErrorList.push([localize('build.preset.not.found', 'Could not find build preset'), name]);
     return null;
 }
 
@@ -1654,7 +1654,7 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
 
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', preset.configurePreset));
-            errorHandler?.errorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
+            errorHandler?.tempErrorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
             return null;
         }
 
@@ -1771,7 +1771,7 @@ async function getTestPresetInheritsImpl(folder: string, name: string, workspace
     }
 
     log.error(localize('test.preset.not.found.full', 'Could not find test preset with name {0}', name));
-    errorHandler?.errorList.push([localize('test.preset.not.found', 'Could not find test preset'), name]);
+    errorHandler?.tempErrorList.push([localize('test.preset.not.found', 'Could not find test preset'), name]);
     return null;
 }
 
@@ -1830,7 +1830,7 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
 
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', preset.configurePreset));
-            errorHandler?.errorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
+            errorHandler?.tempErrorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
             return null;
         }
 
@@ -2044,7 +2044,7 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', preset.configurePreset));
-            errorHandler?.errorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
+            errorHandler?.tempErrorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), preset.configurePreset]);
             return null;
         }
 
@@ -2155,7 +2155,7 @@ async function getWorkflowPresetInheritsImpl(folder: string, name: string, works
         return getWorkflowPresetInheritsHelper(folder, preset, workspaceFolder, sourceDir, true, usePresetsPlusIncluded, errorHandler);
     }
     log.error(localize('workflow.preset.not.found', 'Could not find workflow preset with name {0}', name));
-    errorHandler?.errorList.push([localize('workflow.preset.not.found', 'Could not find workflow preset'), name]);
+    errorHandler?.tempErrorList.push([localize('workflow.preset.not.found', 'Could not find workflow preset'), name]);
     return null;
 }
 
@@ -2200,7 +2200,7 @@ async function getWorkflowPresetInheritsHelper(folder: string, preset: WorkflowP
         }
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', workflowConfigurePreset));
-            errorHandler?.errorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), workflowConfigurePreset]);
+            errorHandler?.tempErrorList.push([localize('configure.preset.not.found', 'Could not find configure preset'), workflowConfigurePreset]);
             return null;
         }
         // The below is critical when the workflow step0 configure preset is different than the
