@@ -823,13 +823,13 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
     };
 
     if (preset.__file && preset.__file.version >= 3) {
-        expansionOpts.vars['hostSystemName'] = await util.getHostSystemNameMemo();
+        expansionOpts.vars.hostSystemName = await util.getHostSystemNameMemo();
     }
     if (preset.__file && preset.__file.version >= 4) {
-        expansionOpts.vars['fileDir'] = path.dirname(preset.__file!.__path!);
+        expansionOpts.vars.fileDir = path.dirname(preset.__file!.__path!);
     }
     if (preset.__file && preset.__file.version >= 5) {
-        expansionOpts.vars['pathListSep'] = path.delimiter;
+        expansionOpts.vars.pathListSep = path.delimiter;
     }
 
     return expansionOpts;
