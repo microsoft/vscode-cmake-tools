@@ -2,6 +2,10 @@
 
 ## 1.20
 
+Features:
+
+- Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
+
 Improvements:
 
 - Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
