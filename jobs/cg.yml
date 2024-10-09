@@ -80,10 +80,8 @@ extends:
         - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
           displayName: Use Yarn 1.x
         
-        - task: Npm@0
-          displayName: npm install vsce
-          inputs:
-            arguments: -g @vscode/vsce
+        - script: npm install -g @vscode/vsce
+          displayName: 'install vsce'
         
         - task: CmdLine@2
           displayName: Run VSCE to package vsix
@@ -91,12 +89,9 @@ extends:
             script: |-
               echo Building VSIX
               vsce package --yarn -o $(Build.StagingDirectory)\cmake-tools.vsix
-        
-        - task: Npm@0
-          displayName: npm uninstall vsce
-          inputs:
-            command: uninstall
-            arguments: -g @vscode/vsce
+
+        - script: npm uninstall -g @vscode/vsce
+          displayName: 'uninstall vsce'
         
         - task: DeleteFiles@1
           displayName: Remove non-source code
