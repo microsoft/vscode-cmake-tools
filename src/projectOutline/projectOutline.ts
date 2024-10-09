@@ -381,7 +381,9 @@ export class TargetNode extends BaseNode {
             ].join(',');
             return item;
         } catch (e) {
-            debugger;
+            if (process.env.NODE_ENV === 'development') {
+                debugger;
+            }
             return new vscode.TreeItem(`${this.name} (${localize('item.render.issue', 'There was an issue rendering this item. This is a bug')})`);
         }
     }
