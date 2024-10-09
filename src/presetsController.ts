@@ -10,7 +10,7 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { expandString, ExpansionErrorHandler, ExpansionOptions, getParentEnvSubstitutions, MinimalPresetContextVars, substituteAll } from '@cmt/expand';
+import { expandString, ExpansionErrorHandler, ExpansionOptions, MinimalPresetContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
