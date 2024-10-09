@@ -10,7 +10,7 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { errorHandlerHelper, expandString, ExpansionErrorHandler, ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
+import { errorHandlerHelper, expandString, ExpansionErrorHandler, ExpansionOptions, getParentEnvSubstitutions, MinimalPresetContextVars, substituteAll } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
@@ -1615,13 +1615,6 @@ export class PresetsController implements vscode.Disposable {
         return presetsFile.version >= 9
             ? expandString(include, {
                 vars: {
-                    generator: "${generator}", // Not supported in presets includes v9.
-                    userHome: "${userHome}", // Not supported in presets includes v9.
-                    workspaceFolder: "${workspaceFolder}", // Not supported in presets includes v9.
-                    workspaceFolderBasename: "${workspaceFolderBasename}", // Not supported in presets includes v9.
-                    workspaceHash: "${workspaceHash}", // Not supported in presets includes v9.
-                    workspaceRoot: "${workspaceRoot}", // Not supported in presets includes v9.
-                    workspaceRootFolderName: "${workspaceRootFolderName}", // Not supported in presets includes v9.
                     sourceDir: this.folderPath,
                     sourceParentDir: path.dirname(this.folderPath),
                     sourceDirName: path.basename(this.folderPath),
@@ -1635,16 +1628,7 @@ export class PresetsController implements vscode.Disposable {
                 ? // Version 7 and later support $penv{} expansions in include paths
                 expandString(include, {
                     // No vars are supported in Version 7 for include paths.
-                    vars: {
-                        generator: "${generator}", // Not supported in presets includes v7.
-                        userHome: "${userHome}", // Not supported in presets includes v7.
-                        workspaceFolder: "${workspaceFolder}", // Not supported in presets includes v7.
-                        workspaceFolderBasename: "${workspaceFolderBasename}", // Not supported in presets includes v7.
-                        workspaceHash: "${workspaceHash}", // Not supported in presets includes v7.
-                        workspaceRoot: "${workspaceRoot}", // Not supported in presets includes v7.
-                        workspaceRootFolderName: "${workspaceRootFolderName}", // Not supported in presets includes v7.
-                        sourceDir: "${sourceDir}" // Not support in presets includes v7
-                    },
+                    vars: {} as MinimalPresetContextVars,
                     envOverride: {} // $env{} expansions are not supported in `include` v9
                 }, expansionErrors)
                 : include;
