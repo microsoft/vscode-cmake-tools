@@ -10,7 +10,7 @@ import { fs } from '@cmt/pr';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
-import { ExpansionErrorHandler, ExpansionOptions, getParentEnvSubstitutions, substituteAll } from '@cmt/expand';
+import { expandString, ExpansionErrorHandler, ExpansionOptions, MinimalPresetContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
@@ -187,18 +187,24 @@ export class PresetsController implements vscode.Disposable {
             setOriginalPresetsFile(this.folderPath, undefined);
         }
 
+        const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
+
         presetsFile = await this.validatePresetsFile(presetsFile, file);
         if (presetsFile) {
             // Private fields must be set after validation, otherwise validation would fail.
             this.populatePrivatePresetsFields(presetsFile, file);
-            await this.mergeIncludeFiles(presetsFile, file, referencedFiles);
+            await this.mergeIncludeFiles(presetsFile, file, referencedFiles, expansionErrors);
 
-            // add the include files to the original presets file
-            setPresetsPlusIncluded(this.folderPath, presetsFile);
+            if (expansionErrors.errorList.length > 0 || expansionErrors.tempErrorList.length > 0) {
+                presetsFile = undefined;
+            } else {
+                // add the include files to the original presets file
+                setPresetsPlusIncluded(this.folderPath, presetsFile);
 
-            // set the pre-expanded version so we can call expandPresetsFile on it
-            setExpandedPresets(this.folderPath, presetsFile);
-            presetsFile = await this.expandPresetsFile(presetsFile);
+                // set the pre-expanded version so we can call expandPresetsFile on it
+                setExpandedPresets(this.folderPath, presetsFile);
+                presetsFile = await this.expandPresetsFile(presetsFile, expansionErrors);
+            }
         }
 
         setExpandedPresets(this.folderPath, presetsFile);
@@ -1605,22 +1611,47 @@ export class PresetsController implements vscode.Disposable {
         setFile(presetsFile.packagePresets);
     }
 
-    private async mergeIncludeFiles(presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Map<string, preset.PresetsFile | undefined>): Promise<void> {
+    private async getExpandedInclude(presetsFile: preset.PresetsFile, include: string, file: string, hostSystemName: string, expansionErrors: ExpansionErrorHandler): Promise<string> {
+        return presetsFile.version >= 9
+            ? expandString(include, {
+                vars: {
+                    sourceDir: this.folderPath,
+                    sourceParentDir: path.dirname(this.folderPath),
+                    sourceDirName: path.basename(this.folderPath),
+                    hostSystemName: hostSystemName,
+                    fileDir: path.dirname(file),
+                    pathListSep: path.delimiter
+                },
+                envOverride: {} // $env{} expansions are not supported in `include` v9
+            }, expansionErrors)
+            : presetsFile.version >= 7
+                ? // Version 7 and later support $penv{} expansions in include paths
+                expandString(include, {
+                    // No vars are supported in Version 7 for include paths.
+                    vars: {} as MinimalPresetContextVars,
+                    envOverride: {} // $env{} expansions are not supported in `include` v9
+                }, expansionErrors)
+                : include;
+    }
+
+    private async mergeIncludeFiles(presetsFile: preset.PresetsFile | undefined, file: string, referencedFiles: Map<string, preset.PresetsFile | undefined>, expansionErrors: ExpansionErrorHandler): Promise<void> {
         if (!presetsFile) {
             return;
         }
 
+        const hostSystemName = await util.getHostSystemNameMemo();
+
         // CMakeUserPresets.json file should include CMakePresets.json file, by default.
         if (this.presetsFileExist && file === this.userPresetsPath) {
             presetsFile.include = presetsFile.include || [];
-            const filteredIncludes = presetsFile.include.filter(include => {
-                // Ensuring that we handle expansions. Duplicated from loop below.
-                const includePath = presetsFile.version >= 7 ?
-                // Version 7 and later support $penv{} expansions in include paths
-                    substituteAll(include, getParentEnvSubstitutions(include, new Map<string, string>())).result :
-                    include;
-                path.normalize(path.resolve(path.dirname(file), includePath)) === this.presetsPath;
-            });
+            const filteredIncludes = [];
+            for (const include of presetsFile.include) {
+                const expandedInclude = await this.getExpandedInclude(presetsFile, include, file, hostSystemName, expansionErrors);
+                if (path.normalize(path.resolve(path.dirname(file), expandedInclude)) === this.presetsPath) {
+                    filteredIncludes.push(include);
+                }
+            }
+
             if (filteredIncludes.length === 0) {
                 presetsFile.include.push(this.presetsPath);
             }
@@ -1633,10 +1664,7 @@ export class PresetsController implements vscode.Disposable {
         // Merge the includes in reverse order so that the final presets order is correct
         for (let i = presetsFile.include.length - 1; i >= 0; i--) {
             const rawInclude = presetsFile.include[i];
-            const includePath = presetsFile.version >= 7 ?
-                // Version 7 and later support $penv{} expansions in include paths
-                substituteAll(rawInclude, getParentEnvSubstitutions(rawInclude, new Map<string, string>())).result :
-                rawInclude;
+            const includePath = await this.getExpandedInclude(presetsFile, rawInclude, file, hostSystemName, expansionErrors);
             const fullIncludePath = path.normalize(path.resolve(path.dirname(file), includePath));
 
             // Do not include files more than once
@@ -1672,6 +1700,7 @@ export class PresetsController implements vscode.Disposable {
             const includeFileBuffer = await this.readPresetsFile(fullIncludePath);
             if (!includeFileBuffer) {
                 log.error(localize('included.presets.file.not.found', 'Included presets file {0} cannot be found', fullIncludePath));
+                expansionErrors.errorList.push([localize('included.presets.file.not.found', 'Included presets file {0} cannot be found', fullIncludePath), file]);
                 continue;
             }
 
@@ -1686,7 +1715,7 @@ export class PresetsController implements vscode.Disposable {
             this.populatePrivatePresetsFields(includeFile, fullIncludePath);
 
             // Recursively merge included files
-            await this.mergeIncludeFiles(includeFile, fullIncludePath, referencedFiles);
+            await this.mergeIncludeFiles(includeFile, fullIncludePath, referencedFiles, expansionErrors);
 
             if (includeFile.configurePresets) {
                 presetsFile.configurePresets = lodash.unionWith(includeFile.configurePresets, presetsFile.configurePresets || [], (a, b) => a.name === b.name);
@@ -1709,21 +1738,27 @@ export class PresetsController implements vscode.Disposable {
                 }
             }
         }
+
+        if (expansionErrors.errorList.length > 0 || expansionErrors.tempErrorList.length > 0) {
+            expansionErrors.tempErrorList.forEach((error) => expansionErrors.errorList.unshift(error));
+            log.error(localize('expansion.errors', 'Expansion errors found in the presets file.'));
+            await this.reportPresetsFileErrors(presetsFile.__path, expansionErrors);
+        } else {
+            collections.presets.set(vscode.Uri.file(presetsFile.__path || ""), undefined);
+        }
     }
 
     /**
      * Returns the expanded presets file if there are no errors, otherwise returns undefined
      * Does not apply vsdevenv to the presets file
      */
-    private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined): Promise<preset.PresetsFile | undefined> {
+    private async expandPresetsFile(presetsFile: preset.PresetsFile | undefined, expansionErrors: ExpansionErrorHandler): Promise<preset.PresetsFile | undefined> {
 
         if (!presetsFile) {
             return undefined;
         }
 
         log.info(localize('expanding.presets.file', 'Expanding presets file {0}', presetsFile?.__path || ''));
-
-        const expansionErrors: ExpansionErrorHandler = { errorList: [], tempErrorList: []};
 
         const expandedConfigurePresets: preset.ConfigurePreset[] = [];
         for (const configurePreset of presetsFile?.configurePresets || []) {
@@ -1884,7 +1919,7 @@ export class PresetsController implements vscode.Disposable {
 
         log.info(localize('validating.presets.file', 'Reading and validating the presets "file {0}"', file));
         let schemaFile;
-        const maxSupportedVersion = 8;
+        const maxSupportedVersion = 9;
         const validationErrorsAreWarnings = presetsFile.version > maxSupportedVersion && this.project.workspaceContext.config.allowUnsupportedPresetsVersions;
         if (presetsFile.version < 2) {
             await this.showPresetsFileVersionError(file);
@@ -1902,7 +1937,8 @@ export class PresetsController implements vscode.Disposable {
         } else if (presetsFile.version === 7) {
             schemaFile = './schemas/CMakePresets-v7-schema.json';
         } else {
-            schemaFile = './schemas/CMakePresets-v8-schema.json';
+            // This can be used for v9 as well, there is no schema difference.
+            schemaFile = "./schemas/CMakePresets-v8-schema.json";
         }
 
         const validator = await loadSchema(schemaFile);
