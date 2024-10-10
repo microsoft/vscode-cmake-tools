@@ -159,7 +159,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         }
     }
 
-    if (options.shell === undefined && process.platform === "win32") {
+    if (process.platform === "win32" && options.shell === undefined) {
         options.shell = determineShell(command);
     }
 

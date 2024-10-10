@@ -6,6 +6,10 @@ Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
 
+Improvements:
+
+- Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
+
 Bug Fixes:
 
 - Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
@@ -15,7 +19,6 @@ Bug Fixes:
 Improvements:
 
 - Update signing to support VSCode extension signing. [#4055](https://github.com/microsoft/vscode-cmake-tools/pull/4055)
-- Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
 
 ## 1.19.51
 
