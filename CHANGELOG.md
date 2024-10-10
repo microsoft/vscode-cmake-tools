@@ -6,6 +6,16 @@ Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
 
+Improvements:
+
+- Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
+- Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
+
+Bug Fixes:
+
+- Fix our setting of `isUserPreset` for presets, only set it to `true` if it's defined in a user presets file. [#4059](https://github.com/microsoft/vscode-cmake-tools/issues/4059)
+- Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
+
 ## 1.19.52
 
 Improvements:

@@ -1142,7 +1142,7 @@ export class PresetsController implements vscode.Disposable {
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'build');
 
-        const allPresets = preset.buildPresets(this.folderPath).concat(preset.userBuildPresets(this.folderPath));
+        const allPresets = await this.getAllBuildPresets();
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, _preset).buildPresetCompatible);
         presets.push(preset.defaultBuildPreset);
 
@@ -1300,7 +1300,7 @@ export class PresetsController implements vscode.Disposable {
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'test');
 
-        const allPresets = preset.testPresets(this.folderPath).concat(preset.userTestPresets(this.folderPath));
+        const allPresets = await this.getAllTestPresets();
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, _preset).testPresetCompatible);
         presets.push(preset.defaultTestPreset);
 
@@ -1392,7 +1392,7 @@ export class PresetsController implements vscode.Disposable {
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'package');
 
-        const allPresets = preset.packagePresets(this.folderPath).concat(preset.userPackagePresets(this.folderPath));
+        const allPresets = await this.getAllPackagePresets();
         const presets = allPresets.filter(_preset => this.checkCompatibility(selectedConfigurePreset, selectedBuildPreset, this.project.testPreset, _preset).packagePresetCompatible);
         presets.push(preset.defaultPackagePreset);
 
@@ -1474,7 +1474,7 @@ export class PresetsController implements vscode.Disposable {
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
 
-        const allPresets = preset.workflowPresets(this.folderPath).concat(preset.userWorkflowPresets(this.folderPath));
+        const allPresets = await this.getAllWorkflowPresets();
         allPresets.push(preset.defaultWorkflowPreset);
 
         log.debug(localize('start.selection.of.workflow.presets', 'Start selection of workflow presets. Found {0} presets.', allPresets.length));
