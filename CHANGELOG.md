@@ -5,6 +5,7 @@
 Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
+- Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078)
 
 Improvements:
 
