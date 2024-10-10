@@ -8,6 +8,7 @@ Features:
 
 Improvements:
 
+- Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
 - Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
 
 Bug Fixes:
