@@ -10,6 +10,10 @@ Improvements:
 
 - Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
 
+Bug Fixes:
+
+- Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
+
 ## 1.19.52
 
 Improvements:
