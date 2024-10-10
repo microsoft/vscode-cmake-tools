@@ -36,6 +36,7 @@ jobs:
       - name: Build the VSIX
         run:  |
           yarn install
+          yarn run compile-production
           yarn run package
 
       - name: Upload Build Artifacts

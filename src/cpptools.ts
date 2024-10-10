@@ -431,7 +431,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         // For CppTools V6 and above, build the compilerFragments data, otherwise build compilerArgs data
         const useFragments: boolean = this.cpptoolsVersion >= cpptools.Version.v6;
         // If the file didn't have a language, default to C++
-        const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
+        const lang = fileGroup.language === "RC" || fileGroup.language === "Swift" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the
         // group's language compiler, then the C++ compiler, then the C compiler.
         let compilerToolchains: CodeModelToolchain | undefined;
