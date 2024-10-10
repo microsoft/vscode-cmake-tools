@@ -467,24 +467,39 @@ export function setPresetsPlusIncluded(folder: string, presets: PresetsFile | un
     presetsPlusIncluded.set(folder, presets);
 }
 
-export function setUserPresetsPlusIncluded(folder: string, presets: PresetsFile | undefined) {
+export function setUserPresetsHelper(presets: PresetsFile | undefined) {
     if (presets) {
+        // for each condition of `isUserPreset`, if we don't find file.path, then we default to true like before.
         if (presets.configurePresets) {
             for (const configPreset of presets.configurePresets) {
-                configPreset.isUserPreset = true;
+                configPreset.isUserPreset = configPreset.__file?.__path?.endsWith("CMakeUserPresets.json") ?? true;
             }
         }
         if (presets.buildPresets) {
             for (const buildPreset of presets.buildPresets) {
-                buildPreset.isUserPreset = true;
+                buildPreset.isUserPreset = buildPreset.__file?.__path?.endsWith("CMakeUserPresets.json") ?? true;
             }
         }
         if (presets.testPresets) {
             for (const testPreset of presets.testPresets) {
-                testPreset.isUserPreset = true;
+                testPreset.isUserPreset = testPreset.__file?.__path?.endsWith("CMakeUserPresets.json") ?? true;
+            }
+        }
+        if (presets.packagePresets) {
+            for (const packagePreset of presets.packagePresets) {
+                packagePreset.isUserPreset = packagePreset.__file?.__path?.endsWith("CMakeUserPresets.json") ?? true;
+            }
+        }
+        if (presets.workflowPresets) {
+            for (const workflowPreset of presets.workflowPresets) {
+                workflowPreset.isUserPreset = workflowPreset.__file?.__path?.endsWith("CMakeUserPresets.json") ?? true;
             }
         }
     }
+}
+
+export function setUserPresetsPlusIncluded(folder: string, presets: PresetsFile | undefined) {
+    setUserPresetsHelper(presets);
     userPresetsPlusIncluded.set(folder, presets);
 }
 
@@ -544,23 +559,7 @@ function updateCachedExpandedPresethelper(cache: PresetsFile | undefined, preset
 }
 
 export function setExpandedUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
-    if (presets) {
-        if (presets.configurePresets) {
-            for (const configPreset of presets.configurePresets) {
-                configPreset.isUserPreset = true;
-            }
-        }
-        if (presets.buildPresets) {
-            for (const buildPreset of presets.buildPresets) {
-                buildPreset.isUserPreset = true;
-            }
-        }
-        if (presets.testPresets) {
-            for (const testPreset of presets.testPresets) {
-                testPreset.isUserPreset = true;
-            }
-        }
-    }
+    setUserPresetsHelper(presets);
     expandedUserPresets.set(folder, presets);
 }
 
