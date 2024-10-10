@@ -6,6 +6,10 @@ Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
 
+Bug Fixes:
+
+- Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
+
 ## 1.19.52
 
 Improvements:
