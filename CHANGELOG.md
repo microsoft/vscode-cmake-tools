@@ -5,6 +5,7 @@
 Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
+- Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078)
 
 ## 1.19.52
 
@@ -105,7 +106,6 @@ Features:
 - Add support for CMakePresets V7 and V8. [#3549](https://github.com/microsoft/vscode-cmake-tools/issues/3549)
 - Update `api.ts` to add the `onSelectedConfigurationChanged` event. [#3671](https://github.com/microsoft/vscode-cmake-tools/pull/3671) [@OrkunTokdemir](https://github.com/OrkunTokdemir)
 - Improve CMake QuickStart by allowing the user to dynamically create a CMakePresets.json file. [#3649](https://github.com/microsoft/vscode-cmake-tools/issues/3649)
-- Add support to configure default project in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078)
 
 Improvements:
 
