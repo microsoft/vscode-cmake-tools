@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { CodeModelContent } from '@cmt/drivers/codeModel';

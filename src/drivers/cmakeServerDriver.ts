@@ -1,4 +1,4 @@
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import { InputFileSet } from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';

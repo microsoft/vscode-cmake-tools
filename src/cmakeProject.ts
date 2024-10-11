@@ -1,7 +1,7 @@
 import { CMakeCache } from '@cmt/cache';
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { CompilationDatabase } from '@cmt/compilationDatabase';
-import * as debuggerModule from '@cmt/debugger';
+import * as debuggerModule from '@cmt/debug/debugger';
 import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import { Strand } from '@cmt/strand';
@@ -39,7 +39,7 @@ import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
 import { VariantManager } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
-import { ConfigurationWebview } from '@cmt/cacheView';
+import { ConfigurationWebview } from '@cmt/ui/cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from '@cmt/config';
 import * as preset from '@cmt/presets/preset';
@@ -50,7 +50,7 @@ import { PresetsController } from '@cmt/presets/presetsController';
 import paths from '@cmt/paths';
 import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
-import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/debuggerConfigureDriver';
+import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

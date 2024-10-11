@@ -1,5 +1,5 @@
 import { CMakeCache, CacheEntry } from '@cmt/cache';
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import {
     createQueryFileForApi,
@@ -28,7 +28,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/presets/preset';
 import * as nls from 'vscode-nls';
-import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';

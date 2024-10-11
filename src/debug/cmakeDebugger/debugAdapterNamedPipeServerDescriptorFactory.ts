@@ -1,12 +1,12 @@
 import { extensionManager } from "@cmt/extension";
 import * as vscode from "vscode";
-import { DebuggerInformation, getDebuggerPipeName } from "./debuggerConfigureDriver";
-import { executeScriptWithDebugger } from "./debuggerScriptDriver";
+import { DebuggerInformation, getDebuggerPipeName } from "@cmt/debug/cmakeDebugger/debuggerConfigureDriver";
+import { executeScriptWithDebugger } from "@cmt/debug/cmakeDebugger/debuggerScriptDriver";
 
-import * as logging from '../logging';
+import * as logging from '@cmt/logging';
 import * as nls from "vscode-nls";
-import { fs } from "../pr";
-import { DebugOrigin, logCMakeDebuggerTelemetry} from "./cmakeDebuggerTelemetry";
+import { fs } from "@cmt/pr";
+import { DebugOrigin, logCMakeDebuggerTelemetry} from "@cmt/debug/cmakeDebugger/cmakeDebuggerTelemetry";
 import { ConfigureTrigger } from "@cmt/cmakeProject";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

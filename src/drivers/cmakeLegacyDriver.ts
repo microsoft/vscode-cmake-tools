@@ -3,7 +3,7 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import * as vscode from 'vscode';
 
 import { CMakeCache, CacheEntry } from '@cmt/cache';

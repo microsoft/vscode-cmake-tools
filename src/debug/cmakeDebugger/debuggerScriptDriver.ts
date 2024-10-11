@@ -1,9 +1,9 @@
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import * as proc from '@cmt/proc';
-import { DebuggerInformation } from './debuggerConfigureDriver';
-import { getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
+import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
+import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { extensionManager } from '@cmt/extension';
-import * as logging from '../logging';
+import * as logging from '@cmt/logging';
 import * as nls from "vscode-nls";
 import { EnvironmentUtils } from '@cmt/environmentVariables';
 

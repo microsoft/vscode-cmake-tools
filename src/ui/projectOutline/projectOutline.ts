@@ -5,7 +5,7 @@ import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
 import { lexicographicalCompare, splitPath } from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
-import { populateViewCodeModel } from '@cmt/projectOutline/targetsViewCodeModel';
+import { populateViewCodeModel } from '@cmt/ui/projectOutline/targetsViewCodeModel';
 import { fs } from '@cmt/pr';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
 

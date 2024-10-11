@@ -1,4 +1,4 @@
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { CMakeServerDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/drivers';
 import { CMakeGenerator, Kit } from '@cmt/kits/kit';

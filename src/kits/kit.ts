@@ -22,7 +22,7 @@ import { TargetTriple, findTargetTriple, parseTargetTriple, computeTargetTriple 
 import { compare, dropNulls, Ordering, versionLess } from "@cmt/util";
 import * as nls from 'vscode-nls';
 import { Environment, EnvironmentUtils } from "@cmt/environmentVariables";
-import { getCMakeExecutableInformation } from "@cmt/cmake/cmakeExecutable";
+import { getCMakeExecutableInformation } from "@cmt/cmakeExecutable";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

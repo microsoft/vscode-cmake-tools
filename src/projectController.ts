@@ -19,7 +19,7 @@ import { StatusBar } from '@cmt/status';
 import { FireNow } from '@cmt/prop';
 import { setContextAndStore } from '@cmt/extension';
 import * as ext from '@cmt/extension';
-import { ProjectStatus } from '@cmt/projectStatus';
+import { ProjectStatus } from '@cmt/ui/projectStatus';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
