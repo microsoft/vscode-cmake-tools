@@ -4,10 +4,10 @@
  */
 
 import * as vscode from 'vscode';
-import { createLogger } from './logging';
-import { replaceAll, fixPaths, errorToString } from './util';
+import { createLogger } from '@cmt/logging';
+import { replaceAll, fixPaths, errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { EnvironmentWithNull, EnvironmentUtils } from './environmentVariables';
+import { EnvironmentWithNull, EnvironmentUtils } from '@cmt/environmentVariables';
 import * as matchAll from 'string.prototype.matchall';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

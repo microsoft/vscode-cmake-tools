@@ -17,7 +17,7 @@ import {
     SpecialKits,
     SpecialKitsCount,
     getAdditionalKits
-} from '@cmt/kit';
+} from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';

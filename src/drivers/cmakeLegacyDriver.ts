@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 
 import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/drivers';
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
@@ -16,8 +16,8 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
-import { CodeModelContent } from './codeModel';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/presets/preset';
+import { CodeModelContent } from '@cmt/drivers/codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
 

@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as telemetry from '@cmt/telemetry';
-import * as util from './util';
+import * as util from '@cmt/util';
 
-import { CacheEntryType, CMakeCache } from './cache';
+import { CacheEntryType, CMakeCache } from '@cmt/cache';
 
-import * as logging from './logging';
+import * as logging from '@cmt/logging';
 const log = logging.createLogger('cache');
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

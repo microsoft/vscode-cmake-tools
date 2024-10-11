@@ -1,4 +1,4 @@
-import { Condition, evaluateCondition, getArchitecture, getToolset } from '../../src/preset';
+import { Condition, evaluateCondition, getArchitecture, getToolset } from '@cmt/presets/preset';
 import { expect } from '@test/util';
 import * as os from "os";
 

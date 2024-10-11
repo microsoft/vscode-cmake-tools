@@ -11,7 +11,7 @@ import * as path from 'path';
 
 chai.use(chaiString);
 
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 

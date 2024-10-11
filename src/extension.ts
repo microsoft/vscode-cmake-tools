@@ -22,8 +22,8 @@ import {
     USER_KITS_FILEPATH,
     findCLCompilerPath,
     scanForKitsIfNeeded
-} from '@cmt/kit';
-import { KitsController } from '@cmt/kitsController';
+} from '@cmt/kits/kit';
+import { KitsController } from '@cmt/kits/kitsController';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import { FireNow, FireLate } from '@cmt/prop';
@@ -39,16 +39,16 @@ import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
-import { CMakeToolsApiImpl } from './api';
-import { DirectoryContext } from './workspace';
-import { ProjectStatus } from './projectStatus';
-import { PinnedCommands } from './pinnedCommands';
+import { CMakeToolsApiImpl } from '@cmt/api';
+import { DirectoryContext } from '@cmt/workspace';
+import { ProjectStatus } from '@cmt/projectStatus';
+import { PinnedCommands } from '@cmt/pinnedCommands';
 import { StatusBar } from '@cmt/status';
-import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
-import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
-import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
-import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from './debug/debugConfigurationProvider';
-import { deIntegrateTestExplorer } from './ctest';
+import { DebugAdapterNamedPipeServerDescriptorFactory } from '@cmt/debug/debugAdapterNamedPipeServerDescriptorFactory';
+import { getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
+import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/debuggerConfigureDriver';
+import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/debugConfigurationProvider';
+import { deIntegrateTestExplorer } from "@cmt/ctest";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

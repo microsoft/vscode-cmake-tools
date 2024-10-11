@@ -18,7 +18,7 @@ import {
     NoGeneratorError
 } from '@cmt/drivers/drivers';
 import * as codeModel from '@cmt/drivers/codeModel';
-import { CMakeGenerator, Kit } from '@cmt/kit';
+import { CMakeGenerator, Kit } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
@@ -26,7 +26,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/presets/preset';
 import * as nls from 'vscode-nls';
 import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { CMakeDriver } from '@cmt/drivers/drivers';
 import { OutputConsumer } from './proc';
 import * as nls from 'vscode-nls';
-import { PackagePreset } from './preset';
+import { PackagePreset } from './presets/preset';
 import { expandString } from './expand';
 import * as proc from '@cmt/proc';
 

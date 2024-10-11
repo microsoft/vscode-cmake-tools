@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from './cmakeProject';
-import * as preset from './preset';
+import * as preset from './presets/preset';
 import { runCommand } from './util';
 import { OptionConfig, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent } from './config';
 

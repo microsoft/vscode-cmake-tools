@@ -10,7 +10,7 @@ import { fs } from './pr';
 import { OutputConsumer } from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
-import { testArgs, TestPreset } from './preset';
+import { testArgs, TestPreset } from './presets/preset';
 import { expandString } from './expand';
 import * as proc from '@cmt/proc';
 import { ProjectController } from './projectController';

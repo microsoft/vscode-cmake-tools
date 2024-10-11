@@ -7,7 +7,7 @@ import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
-import { FileDiagnostic, oneLess } from './util';
+import { FileDiagnostic, oneLess } from '@cmt/diagnostics/util';
 
 export enum StateMessage {
     WaitingForDebuggerClient = "Waiting for debugger client to connect...",

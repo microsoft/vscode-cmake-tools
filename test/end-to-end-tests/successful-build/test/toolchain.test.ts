@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions */
 import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeProject, ConfigureTrigger } from '@cmt/cmakeProject';
-import { readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH } from '@cmt/kit';
+import { readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH } from '@cmt/kits/kit';
 import { platformNormalizePath } from '@cmt/util';
 import { DefaultEnvironment, expect } from '@test/util';
 

@@ -12,7 +12,7 @@ import { CMakeServerDriver } from '@cmt/drivers/cmakeServerDriver';
 
 chai.use(chaiString);
 
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import { CMakePreconditionProblems, CMakeDriver, CMakePreconditionProblemSolver, NoGeneratorError, ConfigureResultType } from '@cmt/drivers/cmakeDriver';
 
 const here = __dirname;

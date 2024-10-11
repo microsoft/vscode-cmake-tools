@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { getExtensionActiveCommands, getExtensionLocalizedStrings, onExtensionActiveCommandsChanged } from './extension';
-import * as logging from './logging';
+import { getExtensionActiveCommands, getExtensionLocalizedStrings, onExtensionActiveCommandsChanged } from '@cmt/extension';
+import * as logging from '@cmt/logging';
 import { ConfigurationReader } from '@cmt/config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

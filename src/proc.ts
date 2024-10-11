@@ -7,11 +7,11 @@
 import * as proc from 'child_process';
 import * as iconv from 'iconv-lite';
 
-import { createLogger } from './logging';
-import rollbar from './rollbar';
-import * as util from './util';
+import { createLogger } from '@cmt/logging';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { Environment, EnvironmentUtils } from './environmentVariables';
+import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

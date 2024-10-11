@@ -10,8 +10,8 @@ import * as os from 'os';
 import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { CppDebugConfiguration } from './debugger';
-import { Environment } from './environmentVariables';
+import { CppDebugConfiguration } from '@cmt/debugger';
+import { Environment } from '@cmt/environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

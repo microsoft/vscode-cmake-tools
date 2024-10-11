@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { CMakeDriver } from '@cmt/drivers/drivers';
 import * as nls from 'vscode-nls';
 import { ConfigureType } from './cmakeProject';
-import { WorkflowPreset, ConfigurePreset, BuildPreset, TestPreset, PackagePreset, getPresetByName, allConfigurePresets, allBuildPresets, allTestPresets, allPackagePresets } from './preset';
+import { WorkflowPreset, ConfigurePreset, BuildPreset, TestPreset, PackagePreset, getPresetByName, allConfigurePresets, allBuildPresets, allTestPresets, allPackagePresets } from './presets/preset';
 import * as proc from '@cmt/proc';
 import { ProjectController } from './projectController';
 

@@ -1,4 +1,4 @@
-import { scanForKits } from '@cmt/kit';
+import { scanForKits } from '@cmt/kits/kit';
 import { fs } from '@cmt/pr';
 import { expect } from '@test/util';
 

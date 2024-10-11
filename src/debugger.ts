@@ -1,10 +1,10 @@
 import { CMakeCache } from '@cmt/cache';
 import * as proc from '@cmt/proc';
-import { createLogger } from './logging';
+import { createLogger } from '@cmt/logging';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { fs } from './pr';
+import { fs } from '@cmt/pr';
 import { ExecutableTarget } from '@cmt/drivers/drivers';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

@@ -7,13 +7,13 @@ import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 
 import { ConfigurationReader } from '@cmt/config';
-import * as logging from './logging';
-import { fs } from './pr';
-import { Environment, EnvironmentUtils } from './environmentVariables';
-import rollbar from './rollbar';
-import { loadSchema } from './schema';
-import { StateManager } from './state';
-import * as util from './util';
+import * as logging from '@cmt/logging';
+import { fs } from '@cmt/pr';
+import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
+import rollbar from '@cmt/rollbar';
+import { loadSchema } from '@cmt/schema';
+import { StateManager } from '@cmt/state';
+import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
