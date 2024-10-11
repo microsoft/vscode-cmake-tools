@@ -3,16 +3,12 @@ import { TestProgramResult } from '@test/helpers/testprogram/test-program-result
 import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
-    expect,
-    getFirstSystemKit,
-    getMatchingSystemKit
+    expect
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-const workername: string = process.platform;
-
-suite('Build using Kits and Variants', () => {
+suite('Build using Presets', () => {
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
 
@@ -22,24 +18,25 @@ suite('Build using Kits and Variants', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
+        // CMakePresets.json and CMakeUserPresets.json exist so will use presets by default
+        testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-UI/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
 
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
-
-        // This test will use all on the same kit.
-        // No rescan of the tools is needed
-        // No new kit selection is needed
         await clearExistingKitConfigurationFile();
-        await vscode.commands.executeCommand('cmake.scanForKits');
     });
 
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        const kit = await getFirstSystemKit();
-        await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
+        await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
+        await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
+        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
+
         testEnv.projectFolder.buildDirectory.clear();
     });
 
@@ -56,11 +53,28 @@ suite('Build using Kits and Variants', () => {
     });
 
     test('Configure', async () => {
-        expect(await vscode.commands.executeCommand('cmake.useCMakePresets', vscode.workspace.workspaceFolders![0])).to.be.eq(false);
-        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.useCMakePresets', vscode.workspace.workspaceFolders![0])).to.be.eq(true);
 
+        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
     }).timeout(100000);
+
+    // from v3 on configure presets are not required to have a generator defined
+    test('Configure >=v3 no fallback generator', async () => {
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', 'NoGenerator');
+        expect(await vscode.commands.executeCommand('cmake.showConfigureCommand')).to.be.eq(0);
+
+        // make sure that cmake configure was not invoked with the -G (Generator) flag by checking the logs
+        const logDocuments = vscode.workspace.textDocuments.filter(document => document.languageId === 'Log');
+        expect(logDocuments).lengthOf(1);
+        const lines = logDocuments[0].getText().split('\n');
+        for (const line of lines) {
+            if (line.startsWith('[cmakefileapi-driver]')) {
+                expect(line).not.contain('-G');
+            }
+        }
+
+    });
 
     test('Build', async () => {
         expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
@@ -80,61 +94,22 @@ suite('Build using Kits and Variants', () => {
     test('Configure and Build run target', async () => {
         expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
 
-        await vscode.commands.executeCommand('cmake.setDefaultTarget', undefined, 'runTestTarget');
-        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.build', undefined, 'runTestTarget')).to.be.eq(0);
 
         const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(100000);
 
-    test('Test kit switch after missing preferred generator', async function (this: Mocha.Context) {
-        // Select compiler build node dependent
-        const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-            linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
-        };
-        if (!(workername in os_compilers)) {
-            this.skip();
-        }
-        const compiler = os_compilers[workername];
-
-        // Run test
-        testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
-
-        await vscode.commands.executeCommand('cmake.build');
-
-        testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
-
-        await vscode.commands.executeCommand('cmake.build');
-        const result1 = await testEnv.result.getResultAsJson();
-        expect(result1['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(100000);
-
-    test('Test kit switch between different preferred generators and compilers',
+    test('Test preset switch',
         async function (this: Mocha.Context) {
-            // Select compiler build node dependent
-            const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-                linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-                win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
-            };
-            if (!(workername in os_compilers)) {
-                this.skip();
-            }
-            const compiler = os_compilers[workername];
-
-            testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
             await vscode.commands.executeCommand('cmake.build');
 
-            testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
+            await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'WindowsUser1' : 'LinuxUser1');
             await vscode.commands.executeCommand('cmake.build');
 
-            const result1 = await testEnv.result.getResultAsJson();
-            expect(result1['compiler']).to.eql(compiler[1].compiler);
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['cookie']).to.eq('passed-cookie');
         })
         .timeout(100000);
 

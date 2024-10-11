@@ -13,7 +13,7 @@ suite('Environment Variables in Variants', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder-2', build_loc, exe_res);
+        testEnv = new DefaultEnvironment('test/end-to-end-tests/multi-root-UI/project-folder-2', build_loc, exe_res);
 
         // This test will use all on the same kit.
         // No rescan of the tools is needed

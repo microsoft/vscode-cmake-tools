@@ -1,8 +1,10 @@
 import { CMakeCache, CacheEntryType } from '@cmt/cache';
-import { DefaultEnvironment, expect } from '@test/util';
+import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
+import { fs } from '@cmt/pr';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
-suite('Environment Variables in Presets', () => {
+suite('Environment Variables in Variants', () => {
     let testEnv: DefaultEnvironment;
 
     setup(async function (this: Mocha.Context) {
@@ -11,23 +13,33 @@ suite('Environment Variables in Presets', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
-        testEnv.projectFolder.buildDirectory.clear();
+        testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-UI/project-folder', build_loc, exe_res);
 
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
         await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
-        await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'WindowsUser1' : 'LinuxUser1');
-        await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
-        await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
-        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
-        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
+        // This test will use all on the same kit.
+        // No rescan of the tools is needed
+        // No new kit selection is needed
+        await clearExistingKitConfigurationFile();
+
+        const kit = await getFirstSystemKit();
+        await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
+
+        testEnv.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function (this: Mocha.Context) {
         this.timeout(30000);
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
-        testEnv.projectFolder.buildDirectory.clear();
+        const variantFileBackup = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
+        if (await fs.exists(variantFileBackup)) {
+            const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
+            await fs.rename(variantFileBackup, variantFile);
+        }
+
         testEnv.teardown();
     });
 

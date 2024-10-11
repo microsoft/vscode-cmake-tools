@@ -25,7 +25,7 @@ suite('Build', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
+        testEnv = new DefaultEnvironment('test/end-to-end-tests/successful-build/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
         cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}/");
 

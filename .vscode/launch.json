@@ -50,17 +50,17 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceFolder}/test/extension-tests/successful-build/project-folder",
+                "${workspaceFolder}/test/end-to-end-tests/successful-build/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/successful-build/index"
+                "--extensionTestsPath=${workspaceFolder}/out/test/end-to-end-tests/successful-build/index"
             ],
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/src/*",
                 "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/successful-build/*",
-                "${workspaceFolder}/out/test/extension-tests/successful-build/test/*"
+                "${workspaceFolder}/out/test/end-to-end-tests/successful-build/*",
+                "${workspaceFolder}/out/test/end-to-end-tests/successful-build/test/*"
             ],
             "preLaunchTask": "Pretest",
             "env": {
@@ -75,17 +75,17 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceFolder}/test/extension-tests/single-root-UI/project-folder",
+                "${workspaceFolder}/test/end-to-end-tests/single-root-UI/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI/index"
+                "--extensionTestsPath=${workspaceFolder}/out/test/end-to-end-tests/single-root-UI/index"
             ],
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/src/*",
                 "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/single-root-UI/*",
-                "${workspaceFolder}/out/test/extension-tests/single-root-UI/test/*"
+                "${workspaceFolder}/out/test/end-to-end-tests/single-root-UI/*",
+                "${workspaceFolder}/out/test/end-to-end-tests/single-root-UI/test/*"
             ],
             "preLaunchTask": "Pretest",
             "env": {
@@ -100,17 +100,17 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceFolder}/test/extension-tests/multi-root-UI/project-workspace.code-workspace",
+                "${workspaceFolder}/test/end-to-end-tests/multi-root-UI/project-workspace.code-workspace",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/multi-root-UI/index"
+                "--extensionTestsPath=${workspaceFolder}/out/test/end-to-end-tests/multi-root-UI/index"
             ],
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/src/*",
                 "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/multi-root-UI/*",
-                "${workspaceFolder}/out/test/extension-tests/multi-root-UI/test/*"
+                "${workspaceFolder}/out/test/end-to-end-tests/multi-root-UI/*",
+                "${workspaceFolder}/out/test/end-to-end-tests/multi-root-UI/test/*"
             ],
             "preLaunchTask": "Pretest",
             "env": {
@@ -122,7 +122,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Run Backend tests",
+            "name": "Run Backend Unit tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-u",
@@ -134,7 +134,7 @@
                 "ts-node/register",
                 "-r",
                 "tsconfig-paths/register",
-                "${workspaceFolder}/test/backend-unit-tests/**/*.test.ts"
+                "${workspaceFolder}/test/unit-tests/backend/**/*.test.ts"
             ],
             "internalConsoleOptions": "openOnSessionStart",
             "env": {

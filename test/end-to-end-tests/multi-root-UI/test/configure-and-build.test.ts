@@ -23,7 +23,7 @@ suite('Build', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        folder2 = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder-2', build_loc, exe_res);
+        folder2 = new DefaultEnvironment('test/end-to-end-tests/multi-root-UI/project-folder-2', build_loc, exe_res);
         compdb_cp_path = path.join(folder2.projectFolder.location, 'compdb_cp.json');
 
         // This test will use all on the same kit.

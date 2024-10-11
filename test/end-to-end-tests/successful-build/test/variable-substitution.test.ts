@@ -12,7 +12,7 @@ suite('Variable Substitution', () => {
     setup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
-        testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
+        testEnv = new DefaultEnvironment('test/end-to-end-tests/successful-build/project-folder', 'build', 'output.txt');
         cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}");
 
         // This test will use all on the same kit.

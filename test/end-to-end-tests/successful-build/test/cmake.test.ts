@@ -11,7 +11,7 @@ suite('cmake', () => {
         const build_loc = 'build';
         const exe_res = 'output.txt';
 
-        testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
+        testEnv = new DefaultEnvironment('test/end-to-end-tests/successful-build/project-folder', build_loc, exe_res);
         cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}/");
 
         // This test will use all on the same kit.
