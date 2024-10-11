@@ -24,7 +24,7 @@ import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
-import { ConfigureArguments, VariantOption } from '@cmt/variant';
+import { ConfigureArguments, VariantOption } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/presets/preset';

@@ -37,7 +37,7 @@ import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOpt
 import { FireLate, Property } from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
-import { VariantManager } from '@cmt/variant';
+import { VariantManager } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from '@cmt/cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';

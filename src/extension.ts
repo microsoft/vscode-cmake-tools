@@ -34,7 +34,7 @@ import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline/projectOutline';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
-import { DEFAULT_VARIANTS } from '@cmt/variant';
+import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
