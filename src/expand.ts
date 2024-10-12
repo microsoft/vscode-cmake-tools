@@ -48,13 +48,19 @@ export interface KitContextVars extends RequiredExpansionContextVars {
     buildKitVersionMinor: string;
 }
 
-export interface PresetContextVars extends RequiredExpansionContextVars {
+export interface PresetContextVars extends PresetContextNotPresetSpecificVars, RequiredExpansionContextVars {
+    [key: string]: string;
+    presetName: string;
+}
+
+export interface PresetContextNotPresetSpecificVars {
     [key: string]: string;
     sourceDir: string;
     sourceParentDir: string;
     sourceDirName: string;
-    presetName: string;
     fileDir: string;
+    hostSystemName: string;
+    pathListSep: string;
 }
 
 export interface MinimalPresetContextVars extends RequiredExpansionContextVars {
@@ -68,7 +74,7 @@ export interface ExpansionOptions {
     /**
      * Plain `${variable}` style expansions.
      */
-    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars;
+    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars | PresetContextNotPresetSpecificVars;
     /**
      * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
      *

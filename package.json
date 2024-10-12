@@ -45,9 +45,11 @@
     "onCommand:cmake.launchTargetPath",
     "onCommand:cmake.launchTargetDirectory",
     "onCommand:cmake.launchTargetFilename",
+    "onCommand:cmake.launchTargetName",
     "onCommand:cmake.getLaunchTargetPath",
     "onCommand:cmake.getLaunchTargetDirectory",
     "onCommand:cmake.getLaunchTargetFilename",
+    "onCommand:cmake.getlaunchTargetName",
     "onCommand:cmake.buildType",
     "onCommand:cmake.buildDirectory",
     "onCommand:cmake.executableTargets",
@@ -2003,6 +2005,12 @@
           "description": "%cmake-tools.configuration.cmake.autoSelectActiveFolder.description%",
           "scope": "window"
         },
+        "cmake.defaultActiveFolder": {
+          "type": "string",
+          "default": "",
+          "description": "%cmake-tools.configuration.cmake.defaultActiveFolder.description%",
+          "scope": "window"
+        },
         "cmake.cmakePath": {
           "type": "string",
           "default": "cmake",
@@ -3745,7 +3753,7 @@
     "typescript": "^4.1.5",
     "vscode-cmake-tools": "^1.2.0",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^5.76.0",
+    "webpack": "^5.94.0",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {

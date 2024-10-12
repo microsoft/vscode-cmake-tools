@@ -684,10 +684,19 @@ export class ExtensionManager implements vscode.Disposable {
         if (activeFolder) {
             folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(activeFolder));
         }
+
+        let activeTextEditor = vscode.window.activeTextEditor;
+        const defaultActiveFolder = this.workspaceConfig.defaultActiveFolder;
+        if (defaultActiveFolder) {
+            // do not use the active text editor for updating active project
+            activeTextEditor = undefined;
+            folder = vscode.workspace.workspaceFolders!.find(candidate => candidate.uri.path.endsWith(defaultActiveFolder));
+        }
+
         if (!folder) {
             folder = vscode.workspace.workspaceFolders![0];
         }
-        await this.updateActiveProject(folder, vscode.window.activeTextEditor);
+        await this.updateActiveProject(folder, activeTextEditor);
         return this.getActiveProject();
     }
 
@@ -1601,6 +1610,19 @@ export class ExtensionManager implements vscode.Disposable {
         }, folder);
     }
 
+    launchTargetName(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
+        telemetry.logEvent("substitution", { command: "launchTargetName" });
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName !== undefined && targetName !== null) {
+                await cmakeProject.setLaunchTargetByName(targetName);
+            }
+            const targetFilename = await cmakeProject.launchTargetNameForSubstitution();
+            return targetFilename;
+        }, folder);
+    }
+
     getLaunchTargetPath(args?: FolderTargetNameArgsType) {
         const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
 
@@ -1636,6 +1658,19 @@ export class ExtensionManager implements vscode.Disposable {
                 await cmakeProject.setLaunchTargetByName(targetName);
             }
             const targetFilename = await cmakeProject.getLaunchTargetFilename();
+            return targetFilename;
+        }, folder);
+    }
+
+    getLaunchTargetName(args?: FolderTargetNameArgsType) {
+        const [folder, targetName] = this.resolveFolderTargetNameArgs(args);
+
+        telemetry.logEvent("substitution", { command: "getLaunchTargetName" });
+        return this.queryCMakeProject(async cmakeProject => {
+            if (targetName !== undefined && targetName !== null) {
+                await cmakeProject.setLaunchTargetByName(targetName);
+            }
+            const targetFilename = await cmakeProject.getLaunchTargetName();
             return targetFilename;
         }, folder);
     }
@@ -2203,9 +2238,11 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'launchTargetPath',
         'launchTargetDirectory',
         'launchTargetFilename',
+        'launchTargetName',
         'getLaunchTargetPath',
         'getLaunchTargetDirectory',
         'getLaunchTargetFilename',
+        'getLaunchTargetName',
         'buildTargetName',
         'buildKit',
         'buildType',
