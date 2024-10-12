@@ -4,9 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult } from './util';
-
-import { MatchType, RegexPattern } from './gcc';
+import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult, MatchType, RegexPattern } from './util';
 
 const regexPatterns: RegexPattern[] = [
     {   // path/to/ld[.exe]:[ ]path/to/file:line: severity: message
@@ -31,54 +29,12 @@ const regexPatterns: RegexPattern[] = [
     }
 ];
 
-interface PendingTemplateBacktrace {
-    rootInstantiation: string;
-    requiredFrom: RawRelated[];
-}
-
 export class Parser extends RawDiagnosticParser {
     private _prevDiag?: RawDiagnostic;
 
-    private _pendingTemplateError?: PendingTemplateBacktrace;
-
     doHandleLine(line: string) {
-        let mat = /(.*): (In instantiation of.+)/.exec(line);
-        if (mat) {
-            const [, , message] = mat;
-            this._pendingTemplateError = {
-                rootInstantiation: message,
-                requiredFrom: []
-            };
-            return FeedLineResult.Ok;
-        }
-        if (this._pendingTemplateError) {
-            mat = /(.*):(\d+):(\d+):(  +required from.+)/.exec(line);
-            if (mat) {
-                const [, file, linestr, column, message] = mat;
-                const lineNo = oneLess(linestr);
-                this._pendingTemplateError.requiredFrom.push({
-                    file,
-                    location: new vscode.Range(lineNo, parseInt(column), lineNo, 999),
-                    message
-                });
-                return FeedLineResult.Ok;
-            }
-        }
-
-        // Early-catch backtrace limit notes
-        mat = /note: \((.*backtrace-limit.*)\)/.exec(line);
-        if (mat && this._prevDiag && this._prevDiag.related.length !== 0) {
-            const prevRelated = this._prevDiag.related[0];
-            this._prevDiag.related.push({
-                file: prevRelated.file,
-                location: prevRelated.location,
-                message: mat[1]
-            });
-            return FeedLineResult.Ok;
-        }
-
         // Test if this is a diagnostic
-        let mat2 = null;
+        let mat = null;
 
         let full = "";
         let file = "";
@@ -88,28 +44,28 @@ export class Parser extends RawDiagnosticParser {
         let message = "foobar";
 
         for (const [, regexPattern] of regexPatterns.entries()) {
-            mat2 = line.match(regexPattern.regexPattern);
+            mat = line.match(regexPattern.regexPattern);
 
-            if (mat2 !== null) {
-                for (let i = 0; i < mat2.length; i++) {
+            if (mat !== null) {
+                for (let i = 0; i < mat.length; i++) {
                     switch (regexPattern.matchTypes[i]) {
                         case MatchType.Full:
-                            full = mat2[i];
+                            full = mat[i];
                             break;
                         case MatchType.File:
-                            file = mat2[i];
+                            file = mat[i];
                             break;
                         case MatchType.Line:
-                            lineno = oneLess(mat2[i]);
+                            lineno = oneLess(mat[i]);
                             break;
                         case MatchType.Column:
-                            columnno = oneLess(mat2[i]);
+                            columnno = oneLess(mat[i]);
                             break;
                         case MatchType.Severity:
-                            severity = mat2[i];
+                            severity = mat[i];
                             break;
                         case MatchType.Message:
-                            message = mat2[i];
+                            message = mat[i];
                             break;
                         default:
                             break;
@@ -119,7 +75,7 @@ export class Parser extends RawDiagnosticParser {
             }
         }
 
-        if (!mat2) {
+        if (!mat) {
             // Nothing to see on this line of output...
             return FeedLineResult.NotMine;
         } else {
@@ -132,27 +88,16 @@ export class Parser extends RawDiagnosticParser {
                 return FeedLineResult.Ok;
             } else {
                 const related: RawRelated[] = [];
-                const location = new vscode.Range(lineno, columnno, lineno, 999);
-                if (this._pendingTemplateError) {
-                    related.push({
-                        location,
-                        file,
-                        message: this._pendingTemplateError.rootInstantiation
-                    });
-                    related.push(...this._pendingTemplateError.requiredFrom);
-                    this._pendingTemplateError = undefined;
-                }
 
                 return this._prevDiag = {
                     full,
                     file,
-                    location,
+                    location: new vscode.Range(lineno, columnno, lineno, 999),
                     severity,
                     message,
                     related
                 };
             }
-            return FeedLineResult.NotMine;
         }
     }
 }

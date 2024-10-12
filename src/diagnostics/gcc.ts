@@ -4,16 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult } from './util';
-
-export enum MatchType {
-    Full,
-    File,
-    Line,
-    Column,
-    Severity,
-    Message
-}
+import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult, MatchType, RegexPattern } from './util';
 
 const regexPatterns: RegexPattern[] = [
     {   // path/to/file:line:column: severity: message
@@ -30,10 +21,6 @@ const regexPatterns: RegexPattern[] = [
     }
 ];
 
-export interface RegexPattern {
-    regexPattern: RegExp;
-    matchTypes: MatchType[];
-}
 
 interface PendingTemplateBacktrace {
     rootInstantiation: string;
