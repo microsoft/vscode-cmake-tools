@@ -6,14 +6,7 @@ import * as vscode from 'vscode';
 
 import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult } from './util';
 
-enum MatchType {
-    Full,
-    File,
-    Line,
-    Column,
-    Severity,
-    Message
-}
+import { MatchType, RegexPattern } from './gcc';
 
 const regexPatterns: RegexPattern[] = [
     {   // path/to/ld[.exe]:[ ]path/to/file:line: severity: message
@@ -37,11 +30,6 @@ const regexPatterns: RegexPattern[] = [
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     }
 ];
-
-interface RegexPattern {
-    regexPattern: RegExp;
-    matchTypes: MatchType[];
-}
 
 interface PendingTemplateBacktrace {
     rootInstantiation: string;

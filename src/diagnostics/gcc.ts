@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 
 import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult } from './util';
 
-enum MatchType {
+export enum MatchType {
     Full,
     File,
     Line,
@@ -30,7 +30,7 @@ const regexPatterns: RegexPattern[] = [
     }
 ];
 
-interface RegexPattern {
+export interface RegexPattern {
     regexPattern: RegExp;
     matchTypes: MatchType[];
 }
