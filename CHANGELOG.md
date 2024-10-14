@@ -16,6 +16,7 @@ Bug Fixes:
 
 - Fix our setting of `isUserPreset` for presets, only set it to `true` if it's defined in a user presets file. [#4059](https://github.com/microsoft/vscode-cmake-tools/issues/4059)
 - Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
+- Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
 
 ## 1.19.52
 
@@ -71,7 +72,6 @@ Bug Fixes:
 - Fix our keybindings for debug and run without debugging to better match VS Code. [#3507](https://github.com/microsoft/vscode-cmake-tools/issues/3507)
 - Allow success recovery in the configure precondition handler. [#3554](https://github.com/microsoft/vscode-cmake-tools/issues/3554)
 - Prevent second configure after `QuickStart` if the `automaticReconfigure` setting is enabled. [#3910](https://github.com/microsoft/vscode-cmake-tools/issues/3910)
-- Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
 - Set usepresets context after manually creating a CMakePresets.json/CMakeUserPresets.json or using QuickStart to create it. [#3854](https://github.com/microsoft/vscode-cmake-tools/issues/3854)
 - Only do special handling of `~` for code model reply path on linux. [#3957](https://github.com/microsoft/vscode-cmake-tools/issues/3957)
 - Fix issues with expanding unnecessary environment variables and incorrectly saving preset environments to cache. Also fixes expansion error reporting issue with not checking for an invalid Configure preset in other types of presets. [#3961](https://github.com/microsoft/vscode-cmake-tools/issues/3961) & [#1841](https://github.com/microsoft/vscode-cmake-tools/issues/1841)
