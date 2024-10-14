@@ -231,6 +231,10 @@ suite('Preset validation tests', () => {
         expect(preset.buildPresets(sourceDirectory).length).to.be.equal(0);
     }).timeout(100000);
 
+    /**
+     * First test that the `include` and `resolvePackageReferences` fields are allowed in version 4.
+     * Then, test that fields only allowed in 5 aren't supported, by adding a testPreset with the `testOutputTrunction` field added.
+     */
     test('Validate version 4 CMakePresets', async () => {
         fs.writeFileSync(presetsParser.presetsPath,
             JSON.stringify({
@@ -290,12 +294,15 @@ suite('Preset validation tests', () => {
         expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
         expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
 
-        fs.writeFileSync(path.join(presetsParser.presetsPath, "..", "test.json"),
+        // Remove the include.
+        fs.rmSync(path.join(presetsParser.presetsPath, "..", "test.json"));
+
+        fs.writeFileSync(presetsParser.presetsPath,
             JSON.stringify({
                 "version": 4,
                 "configurePresets": [
                     {
-                        "name": "blah",
+                        "name": "configure",
                         "hidden": false,
                         "generator": "Ninja",
                         "installDir": "${workspaceFolder}/install",
@@ -304,8 +311,24 @@ suite('Preset validation tests', () => {
                             "lhs": "${hostSystemName}",
                             "rhs": "Windows"
                         },
-                        "toolchainFile": "",
-                        "testOutputTruncation": "tail"
+                        "toolchainFile": ""
+                    }
+                ],
+                "buildPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "cleanFirst": true,
+                        "resolvePackageReferences": "on"
+                    }
+                ],
+                "testPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "output": {
+                            "testOutputTruncation": "tail"
+                        }
                     }
                 ]
             }
@@ -317,13 +340,202 @@ suite('Preset validation tests', () => {
             false
         );
 
-        // TODO: This test is failing because we're getting duplicate errors. I need to investigate why, and we may need to be wiser about how we're adding errors,
-        // both in the testing scenario and in the code itself.
-        // We need to fix this in the code.
         expect(presetsFileErrors).to.have.lengthOf(2);
         expect(presetsFileErrors.filter((e) => e.includes("should NOT have additional properties: testOutputTruncation"))).to.have.lengthOf(1);
         expect(preset.configurePresets(sourceDirectory).length).to.be.equal(0);
         expect(preset.buildPresets(sourceDirectory).length).to.be.equal(0);
+    }).timeout(100000);
+
+    /**
+     * First test that the `testOutputTruncation field is allowed in version 5.
+     */
+    test('Validate version 5 CMakePresets', async () => {
+        fs.writeFileSync(presetsParser.presetsPath,
+            JSON.stringify({
+                "version": 5,
+                "configurePresets": [
+                    {
+                        "name": "configure",
+                        "hidden": false,
+                        "generator": "Ninja",
+                        "installDir": "${workspaceFolder}/install",
+                        "condition": {
+                            "type": "equals",
+                            "lhs": "${hostSystemName}",
+                            "rhs": "Windows"
+                        },
+                        "toolchainFile": ""
+                    }
+                ],
+                "buildPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "cleanFirst": true,
+                        "resolvePackageReferences": "on"
+                    }
+                ],
+                "testPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "output": {
+                            "testOutputTruncation": "tail"
+                        }
+                    }
+                ]
+            }
+            ));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(0);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+
+        fs.writeFileSync(presetsParser.presetsPath,
+            JSON.stringify({
+                "version": 5,
+                "configurePresets": [
+                    {
+                        "name": "configure",
+                        "hidden": false,
+                        "generator": "Ninja",
+                        "installDir": "${workspaceFolder}/install",
+                        "condition": {
+                            "type": "equals",
+                            "lhs": "${hostSystemName}",
+                            "rhs": "Windows"
+                        },
+                        "toolchainFile": ""
+                    }
+                ],
+                "buildPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "cleanFirst": true,
+                        "resolvePackageReferences": "on"
+                    }
+                ],
+                "testPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "output": {
+                            "testOutputTruncation": "tail"
+                        }
+                    }
+                ],
+                "packagePresets": [
+                    {
+                        "name": "x64-debug-package"
+                    }
+                ],
+                "workflowPresets": [
+                    {
+                        "name": "x64-debug-workflow",
+                        "steps": [
+                            {
+                                "type": "configure",
+                                "name": "x64-debug"
+                            }
+                        ]
+                    }
+                ]
+            }
+            ));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(3);
+        expect(presetsFileErrors.filter((e) => e.includes("should NOT have additional properties: packagePresets"))).to.have.lengthOf(1);
+        expect(presetsFileErrors.filter((e) => e.includes("should NOT have additional properties: workflowPresets"))).to.have.lengthOf(1);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(0);
+    }).timeout(100000);
+
+    /**
+     * Validate the `packagePresets` and `workflowPresets` are supported in Presets v6.
+     */
+    test('Validate version 6 CMakePresets', async () => {
+        fs.writeFileSync(presetsParser.presetsPath,
+            JSON.stringify({
+                "version": 6,
+                "configurePresets": [
+                    {
+                        "name": "configure",
+                        "hidden": false,
+                        "generator": "Ninja",
+                        "installDir": "${workspaceFolder}/install",
+                        "condition": {
+                            "type": "equals",
+                            "lhs": "${hostSystemName}",
+                            "rhs": "Windows"
+                        },
+                        "toolchainFile": ""
+                    }
+                ],
+                "buildPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "cleanFirst": true,
+                        "resolvePackageReferences": "on"
+                    }
+                ],
+                "testPresets": [
+                    {
+                        "name": "x64-debug",
+                        "configurePreset": "configure",
+                        "output": {
+                            "testOutputTruncation": "tail"
+                        }
+                    }
+                ],
+                "packagePresets": [
+                    {
+                        "name": "x64-debug-package"
+                    }
+                ],
+                "workflowPresets": [
+                    {
+                        "name": "x64-debug-workflow",
+                        "steps": [
+                            {
+                                "type": "configure",
+                                "name": "configure"
+                            }
+                        ]
+                    }
+                ]
+            }
+            ));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(0);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
     }).timeout(100000);
 
     teardown(async () => {

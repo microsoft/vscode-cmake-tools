@@ -8,7 +8,6 @@ import { fs } from "@cmt/pr";
 import * as lodash from "lodash";
 import { expandString, ExpansionErrorHandler, MinimalPresetContextVars } from "@cmt/expand";
 import { loadSchema } from "@cmt/schema";
-import { assert } from "console";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -567,12 +566,7 @@ export class PresetsParser {
                     "Expansion errors found in the presets file."
                 )
             );
-
-            assert(presetsFile.__path !== undefined);
-            await this.presetsFileErrorReporter(
-                presetsFile.__path!,
-                expansionErrors
-            );
+            expansionErrors.tempErrorList = [];
         } else {
             this.collectionsModifier(presetsFile.__path || "");
         }
@@ -789,12 +783,6 @@ export class PresetsParser {
                     "Expansion errors found in the presets file."
                 )
             );
-
-            assert(presetsFile.__path !== undefined);
-            await this.presetsFileErrorReporter(
-                presetsFile.__path!,
-                expansionErrors
-            );
             return undefined;
         } else {
             log.info(
@@ -876,7 +864,6 @@ export class PresetsParser {
                 expansionErrors.tempErrorList.length > 0
             ) {
                 presetsFile = undefined;
-                await this.presetsFileErrorReporter(file, expansionErrors);
             } else {
                 // add the include files to the original presets file
                 setPresetsPlusIncluded(this.folderPath, presetsFile);
@@ -888,7 +875,11 @@ export class PresetsParser {
                     expansionErrors
                 );
             }
-        } else {
+        }
+
+        if (expansionErrors.errorList.length > 0 ||
+            expansionErrors.tempErrorList.length > 0
+        ) {
             await this.presetsFileErrorReporter(file, expansionErrors);
         }
 

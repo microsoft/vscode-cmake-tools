@@ -107,7 +107,7 @@ export interface ExpansionOptions {
 
 export interface ExpansionErrorHandler {
     errorList: [string, string][];
-    tempErrorList: [string, string][];
+    tempErrorList: [string, string][]; // This is primarily used to store errors that will then be re-used and modified with additional context to be added into the `errorList`
 }
 
 /**
