@@ -5,8 +5,18 @@ import { expect } from "@test/util";
 import * as fs from "fs";
 import * as preset from "@cmt/presets/preset";
 import * as path from "path";
+import * as lodash from "lodash";
 
-suite('Preset validation tests', () => {
+/**
+ * This test suite is designed specifically for testing the validation of a CMake Presets file.
+ * This specifically means that we are testing the existence of fields in the presets file based on what is supported for each
+ * presets version.
+ * TODO: It might be more clear to break this up into multiple test suites. This could be a suite per version of Presets, or a suite per validation/inclusion/expansion, etc.
+ * In order to do this, it might be beneficial to create a helper class so we don't duplicate the setup code.
+ * TODO: It might be wise to consider having actual these tests based on a file that is in the repo, not just created on the fly as
+ * this could make it easier for integration tests and/or e2e tests.
+*/
+suite('Presets validation, inclusion, and expansion tests', () => {
     let workspaceFolder: string;
     let sourceDirectory: string;
     let folderPath: string;
@@ -77,11 +87,12 @@ suite('Preset validation tests', () => {
     }).timeout(100000);
 
     /**
+     * TODO: We need improvements in the code to ensure that we're requiring `binaryDir` in version 2.
      * Test version 2 of CMake Prests.
      * We want to ensure that we're requiring `binaryDir`.
      * `installDir`, `condition`, `toolchainFile` are not supported in version 2.
      */
-    /* TODO: test('Validate version 2 CMakePresets, requires binaryDir', async () => {
+    /* test('Validate version 2 CMakePresets, requires binaryDir', async () => {
         fs.writeFileSync(presetsParser.presetsPath,
             JSON.stringify({
                 "version": 2,
@@ -153,6 +164,24 @@ suite('Preset validation tests', () => {
         expect(preset.configurePresets(sourceDirectory).length).to.be.equal(0);
     }).timeout(100000);
 
+    const v3SupportedPresets: any = {
+        "version": 3,
+        "configurePresets": [
+            {
+                "name": "configure",
+                "hidden": false,
+                "generator": "Ninja",
+                "installDir": "${workspaceFolder}/install",
+                "condition": {
+                    "type": "equals",
+                    "lhs": "${hostSystemName}",
+                    "rhs": "Windows"
+                },
+                "toolchainFile": ""
+            }
+        ]
+    };
+
     /**
      * Test validation of version 3 of CMake Prests.
      * Ensure that `installDir` and `condition` are accepted.
@@ -161,24 +190,7 @@ suite('Preset validation tests', () => {
      */
     test('Validate version 3 CMakePresets', async () => {
         fs.writeFileSync(presetsParser.presetsPath,
-            JSON.stringify({
-                "version": 3,
-                "configurePresets": [
-                    {
-                        "name": "configure",
-                        "hidden": false,
-                        "generator": "Ninja",
-                        "installDir": "${workspaceFolder}/install",
-                        "condition": {
-                            "type": "equals",
-                            "lhs": "${hostSystemName}",
-                            "rhs": "Windows"
-                        },
-                        "toolchainFile": ""
-                    }
-                ]
-            }
-            ));
+            JSON.stringify(v3SupportedPresets));
 
         await presetsParser.resetPresetsFiles(
             new Map<string, PresetsFile>(),
@@ -467,13 +479,256 @@ suite('Preset validation tests', () => {
         expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(0);
     }).timeout(100000);
 
+    const v6SupportedPresets: any = {
+        "version": 6,
+        "configurePresets": [
+            {
+                "name": "configure",
+                "hidden": false,
+                "generator": "Ninja",
+                "installDir": "${workspaceFolder}/install",
+                "condition": {
+                    "type": "equals",
+                    "lhs": "${hostSystemName}",
+                    "rhs": "Windows"
+                },
+                "toolchainFile": ""
+            }
+        ],
+        "buildPresets": [
+            {
+                "name": "x64-debug",
+                "configurePreset": "configure",
+                "cleanFirst": true,
+                "resolvePackageReferences": "on"
+            }
+        ],
+        "testPresets": [
+            {
+                "name": "x64-debug",
+                "configurePreset": "configure",
+                "output": {
+                    "testOutputTruncation": "tail"
+                }
+            }
+        ],
+        "packagePresets": [
+            {
+                "name": "x64-debug-package"
+            }
+        ],
+        "workflowPresets": [
+            {
+                "name": "x64-debug-workflow",
+                "steps": [
+                    {
+                        "type": "configure",
+                        "name": "configure"
+                    }
+                ]
+            }
+        ]
+    };
+
     /**
      * Validate the `packagePresets` and `workflowPresets` are supported in Presets v6.
+     * Then, confirm that the `trace` object isn't allowed in v6, as it was introduced in v7
      */
     test('Validate version 6 CMakePresets', async () => {
         fs.writeFileSync(presetsParser.presetsPath,
+            JSON.stringify(v6SupportedPresets));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(0);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
+
+        const v6AddedTrace = lodash.cloneDeep(v6SupportedPresets);
+        v6AddedTrace.configurePresets[0].trace = {};
+
+        fs.writeFileSync(presetsParser.presetsPath,
+            JSON.stringify(v6AddedTrace));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(2);
+        expect(presetsFileErrors.filter((e) => e.includes("should NOT have additional properties: trace"))).to.have.lengthOf(1);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(0);
+    }).timeout(100000);
+
+    const version7SupportedPresets: any = {
+        "version": 7,
+        "configurePresets": [
+            {
+                "name": "configure",
+                "hidden": false,
+                "generator": "Ninja",
+                "installDir": "${workspaceFolder}/install",
+                "condition": {
+                    "type": "equals",
+                    "lhs": "${hostSystemName}",
+                    "rhs": "Windows"
+                },
+                "toolchainFile": "",
+                "trace": {}
+            }
+        ],
+        "buildPresets": [
+            {
+                "name": "x64-debug",
+                "configurePreset": "configure",
+                "cleanFirst": true,
+                "resolvePackageReferences": "on"
+            }
+        ],
+        "testPresets": [
+            {
+                "name": "x64-debug",
+                "configurePreset": "configure",
+                "output": {
+                    "testOutputTruncation": "tail"
+                }
+            }
+        ],
+        "packagePresets": [
+            {
+                "name": "x64-debug-package"
+            }
+        ],
+        "workflowPresets": [
+            {
+                "name": "x64-debug-workflow",
+                "steps": [
+                    {
+                        "type": "configure",
+                        "name": "configure"
+                    }
+                ]
+            }
+        ]
+    };
+
+    /**
+     * First validate the version 7 supports the `trace` field.
+     * Then, confirm that the `$schema` field isn't allowed in v7.
+     */
+    test('Validate version 7 CMake Presets', async () => {
+        fs.writeFileSync(presetsParser.presetsPath,
+            JSON.stringify(version7SupportedPresets));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(0);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
+
+        const v7AddedSchema = lodash.cloneDeep(version7SupportedPresets);
+        v7AddedSchema["$schema"] = "test";
+
+        fs.writeFileSync(presetsParser.presetsPath,
+            JSON.stringify(v7AddedSchema));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(2);
+        expect(presetsFileErrors.filter((e) => e.includes("should NOT have additional properties: $schema"))).to.have.lengthOf(1);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(0);
+    }).timeout(100000);
+
+    /**
+     * Confirm that penv expansion doesn't work for `include` in v6.
+     * Then, confirm that penv works in v7.
+     */
+    test('Validate `include` field supporting penv macro expansion in v7', async () => {
+        const v6WithInclude: any = lodash.cloneDeep(v6SupportedPresets);
+        v6WithInclude.include = ["$penv{TEST}/test.json"];
+
+        fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(v6WithInclude));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(1);
+        expect(presetsFileErrors.filter((e) => e.includes("penv") && e.includes("cannot be found"))).to.have.lengthOf(1);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(0);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(0);
+
+        presetsFileErrors = [];
+        process.env.TEST = sourceDirectory;
+        const v7WithInclude: any = lodash.cloneDeep(version7SupportedPresets);
+        v7WithInclude.include = ["$penv{TEST}/test.json"];
+
+        // We need a unique name in order to confirm that the presets get included.
+        v7WithInclude.configurePresets[0].name = "testName";
+
+        fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(v7WithInclude));
+
+        // Create the include file.
+        fs.writeFileSync(path.join(presetsParser.presetsPath, "..", "test.json"),
+            JSON.stringify(v3SupportedPresets));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(0);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
+
+        // Remove the include file.
+        fs.rmSync(path.join(presetsParser.presetsPath, "..", "test.json"));
+    }).timeout(100000);
+
+    /**
+     * Validate the v8 supports `$schema` field.
+     */
+    test('Validate version 8 CMake Presets', async () => {
+        fs.writeFileSync(presetsParser.presetsPath,
             JSON.stringify({
-                "version": 6,
+                "version": 8,
+                "$schema": "test",
                 "configurePresets": [
                     {
                         "name": "configure",
@@ -485,7 +740,8 @@ suite('Preset validation tests', () => {
                             "lhs": "${hostSystemName}",
                             "rhs": "Windows"
                         },
-                        "toolchainFile": ""
+                        "toolchainFile": "",
+                        "trace": {}
                     }
                 ],
                 "buildPresets": [
@@ -532,6 +788,34 @@ suite('Preset validation tests', () => {
 
         expect(presetsFileErrors).to.have.lengthOf(0);
         expect(preset.configurePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
+        expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
+    });
+
+    /**
+     * Validate that CMake Presets v9 is supported, specifically additional macros in the `include` field.
+     */
+    test('Validate version 9 CMake Presets', async () => {
+        const v9WithInclude: any = lodash.cloneDeep(v6SupportedPresets);
+        v9WithInclude.version = 9;
+        v9WithInclude.include = ["${sourceDir}/test.json"];
+
+        // We need a unique configure preset name.
+        v9WithInclude.configurePresets[0].name = "testName";
+
+        fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(v9WithInclude));
+        fs.writeFileSync(path.join(presetsParser.presetsPath, "..", "test.json"), JSON.stringify(v3SupportedPresets));
+
+        await presetsParser.resetPresetsFiles(
+            new Map<string, PresetsFile>(),
+            false,
+            false
+        );
+
+        expect(presetsFileErrors).to.have.lengthOf(0);
+        expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
         expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
         expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
         expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
