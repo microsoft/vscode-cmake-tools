@@ -21,7 +21,6 @@ const regexPatterns: RegexPattern[] = [
     }
 ];
 
-
 interface PendingTemplateBacktrace {
     rootInstantiation: string;
     requiredFrom: RawRelated[];
