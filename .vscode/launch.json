@@ -33,9 +33,9 @@
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/src/**",
                 "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/unit-tests/*"
+                "${workspaceFolder}/out/test/unit-tests/**",
             ],
             "env": {
                 "CMT_TESTING": "1",
@@ -57,7 +57,7 @@
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/src/**",
                 "${workspaceFolder}/out/test/*",
                 "${workspaceFolder}/out/test/end-to-end-tests/successful-build/*",
                 "${workspaceFolder}/out/test/end-to-end-tests/successful-build/test/*"
@@ -82,7 +82,7 @@
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/src/**",
                 "${workspaceFolder}/out/test/*",
                 "${workspaceFolder}/out/test/end-to-end-tests/single-root-UI/*",
                 "${workspaceFolder}/out/test/end-to-end-tests/single-root-UI/test/*"
@@ -107,7 +107,7 @@
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/src/**",
                 "${workspaceFolder}/out/test/*",
                 "${workspaceFolder}/out/test/end-to-end-tests/multi-root-UI/*",
                 "${workspaceFolder}/out/test/end-to-end-tests/multi-root-UI/test/*"
