@@ -25,11 +25,10 @@ const log = logging.createLogger('presetController');
 
 export class PresetsController implements vscode.Disposable {
     private _presetsWatchers: FileWatcher | undefined;
-    private _sourceDir: string = '';
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _isChangingPresets = false;
     private _referencedFiles: string[] = [];
-    private _presetsParser: PresetsParser;
+    private _presetsParser!: PresetsParser;
 
     private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
     private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
@@ -59,7 +58,12 @@ export class PresetsController implements vscode.Disposable {
             return util.normalizeAndVerifySourceDir(dir, expansionOpts);
         };
 
-        presetsController._sourceDir = await expandSourceDir(project.sourceDir);
+        presetsController._presetsParser = new PresetsParser(project.folderPath, await expandSourceDir(project.sourceDir), project.workspaceFolder.uri.fsPath, presetsController.reportPresetsFileErrors, presetsController.showPresetsFileVersionError, (filePath: string) => {
+            collections.presets.set(
+                vscode.Uri.file(filePath),
+                undefined
+            );
+        }, presetsController._presetsChangedEmitter.fire, presetsController._userPresetsChangedEmitter.fire);
 
         // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
         // there might be timing issues, since listeners are invoked async.
@@ -93,14 +97,7 @@ export class PresetsController implements vscode.Disposable {
         return presetsController;
     }
 
-    private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController, private isMultiProject: boolean) {
-        this._presetsParser = new PresetsParser(this.folderPath, this._sourceDir, this.workspaceFolder.uri.fsPath, this.reportPresetsFileErrors, this.showPresetsFileVersionError, (filePath: string) => {
-            collections.presets.set(
-                vscode.Uri.file(filePath),
-                undefined
-            );
-        }, this._presetsChangedEmitter.fire, this._userPresetsChangedEmitter.fire);
-    }
+    private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController, private isMultiProject: boolean) {}
 
     get presetsPath() {
         return this._presetsParser.presetsPath;

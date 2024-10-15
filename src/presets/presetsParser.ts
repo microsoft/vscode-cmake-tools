@@ -24,7 +24,7 @@ type SetPresetsFileFunc = (folder: string, presets: preset.PresetsFile | undefin
  */
 export class PresetsParser {
     private folderPath: string;
-    private sourceDir: string;
+    private _sourceDir: string;
     private workspaceFolder: string;
     private presetsFileErrorReporter: (
         path: string,
@@ -51,7 +51,7 @@ export class PresetsParser {
         userPresetsChangedHandler: (presets: preset.PresetsFile | undefined) => void
     ) {
         this.folderPath = folderPath;
-        this.sourceDir = sourceDir;
+        this._sourceDir = sourceDir;
         this.workspaceFolder = workspaceFolder;
         this.presetsFileErrorReporter = presetsFileErrorReporter;
         this.showPresetsFileVersionError = showPresetsFileVersionError;
@@ -60,16 +60,20 @@ export class PresetsParser {
         this.userPresetsChangedHandler = userPresetsChangedHandler;
     }
 
+    set sourceDir(sourceDir: string) {
+        this._sourceDir = sourceDir;
+    }
+
     get presetsFileExists(): boolean {
         return this._presetsFileExists || this._userPresetsFileExists;
     }
 
     get presetsPath() {
-        return path.join(this.sourceDir, 'CMakePresets.json');
+        return path.join(this._sourceDir, 'CMakePresets.json');
     }
 
     get userPresetsPath() {
-        return path.join(this.sourceDir, 'CMakeUserPresets.json');
+        return path.join(this._sourceDir, 'CMakeUserPresets.json');
     }
 
     public async resetPresetsFiles(referencedFiles: Map<string, preset.PresetsFile | undefined>, allowCommentsInPresetsFile: boolean, allowUnsupportedPresetsVersions: boolean) {
@@ -671,7 +675,7 @@ export class PresetsParser {
                         this.folderPath,
                         configurePreset.name,
                         this.workspaceFolder,
-                        this.sourceDir,
+                        this._sourceDir,
                         true,
                         false,
                         expansionErrors
@@ -686,7 +690,7 @@ export class PresetsParser {
                 this.folderPath,
                 buildPreset.name,
                 this.workspaceFolder,
-                this.sourceDir,
+                this._sourceDir,
                 undefined,
                 undefined,
                 true,
@@ -700,7 +704,7 @@ export class PresetsParser {
                         inheritedPreset,
                         buildPreset.name,
                         this.workspaceFolder,
-                        this.sourceDir,
+                        this._sourceDir,
                         expansionErrors
                     )
                 );
@@ -713,7 +717,7 @@ export class PresetsParser {
                 this.folderPath,
                 testPreset.name,
                 this.workspaceFolder,
-                this.sourceDir,
+                this._sourceDir,
                 undefined,
                 true,
                 testPreset.configurePreset,
@@ -726,7 +730,7 @@ export class PresetsParser {
                         inheritedPreset,
                         testPreset.name,
                         this.workspaceFolder,
-                        this.sourceDir,
+                        this._sourceDir,
                         expansionErrors
                     )
                 );
@@ -739,7 +743,7 @@ export class PresetsParser {
                 this.folderPath,
                 packagePreset.name,
                 this.workspaceFolder,
-                this.sourceDir,
+                this._sourceDir,
                 undefined,
                 true,
                 packagePreset.configurePreset,
@@ -752,7 +756,7 @@ export class PresetsParser {
                         inheritedPreset,
                         packagePreset.name,
                         this.workspaceFolder,
-                        this.sourceDir,
+                        this._sourceDir,
                         expansionErrors
                     )
                 );
@@ -765,7 +769,7 @@ export class PresetsParser {
                 this.folderPath,
                 workflowPreset.name,
                 this.workspaceFolder,
-                this.sourceDir,
+                this._sourceDir,
                 true, // should this always be true?
                 undefined, // should this always be undefined?
                 false,
