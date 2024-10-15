@@ -1,8 +1,8 @@
 import Ajv, { ValidateFunction } from 'ajv';
 import * as path from 'path';
 
-import { fs } from './pr';
-import { thisExtensionPath } from './util';
+import { fs } from '@cmt/pr';
+import { thisExtensionPath } from '@cmt/util';
 
 export async function loadSchema(filepath: string): Promise<ValidateFunction> {
     const schema_path = path.isAbsolute(filepath) ? filepath : path.join(thisExtensionPath(), filepath);

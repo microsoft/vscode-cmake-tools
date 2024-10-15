@@ -6,8 +6,8 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
-import { CMakeCache, CacheEntryType, CacheEntry } from '../../src/cache';
-import * as util from '../../src/util';
+import { CMakeCache, CacheEntryType, CacheEntry } from '@cmt/cache';
+import * as util from '@cmt/util';
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {

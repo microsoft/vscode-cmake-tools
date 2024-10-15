@@ -2,10 +2,10 @@
  * Module for reading from the CMake cache
  */ /** */
 
-import * as logging from './logging';
-import { fs } from './pr';
-import rollbar from './rollbar';
-import * as util from './util';
+import * as logging from '@cmt/logging';
+import { fs } from '@cmt/pr';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

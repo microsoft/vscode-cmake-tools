@@ -5,16 +5,16 @@ import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
 import { CMakeDriver } from '@cmt/drivers/drivers';
-import * as logging from './logging';
-import { fs } from './pr';
-import { OutputConsumer } from './proc';
-import * as util from './util';
+import * as logging from '@cmt/logging';
+import { fs } from '@cmt/pr';
+import { OutputConsumer } from '@cmt/proc';
+import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { testArgs, TestPreset } from './preset';
-import { expandString } from './expand';
+import { testArgs, TestPreset } from '@cmt/presets/preset';
+import { expandString } from '@cmt/expand';
 import * as proc from '@cmt/proc';
-import { ProjectController } from './projectController';
-import { extensionManager } from './extension';
+import { ProjectController } from '@cmt/projectController';
+import { extensionManager } from '@cmt/extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();

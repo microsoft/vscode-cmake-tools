@@ -3,7 +3,7 @@ import * as net from 'net';
 import * as path from 'path';
 
 import * as cache from '@cmt/cache';
-import { CMakeGenerator } from '@cmt/kit';
+import { CMakeGenerator } from '@cmt/kits/kit';
 import { createLogger } from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';

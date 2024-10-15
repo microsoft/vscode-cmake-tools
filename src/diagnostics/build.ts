@@ -8,13 +8,13 @@ import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
-import * as gcc from './gcc';
-import * as ghs from './ghs';
-import * as diab from './diab';
-import * as gnu_ld from './gnu-ld';
-import * as mvsc from './msvc';
-import * as iar from './iar';
-import { FileDiagnostic, RawDiagnosticParser } from './util';
+import * as gcc from '@cmt/diagnostics/gcc';
+import * as ghs from '@cmt/diagnostics/ghs';
+import * as diab from '@cmt/diagnostics/diab';
+import * as gnu_ld from '@cmt/diagnostics/gnu-ld';
+import * as mvsc from '@cmt/diagnostics/msvc';
+import * as iar from '@cmt/diagnostics/iar';
+import { FileDiagnostic, RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ConfigurationReader } from '@cmt/config';
 
 export class Compilers {

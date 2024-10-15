@@ -1,4 +1,4 @@
-import { Kit, scanForVSKits, SpecialKits, UnspecifiedKit } from '@cmt/kit';
+import { Kit, scanForVSKits, SpecialKits, UnspecifiedKit } from '@cmt/kits/kit';
 import { SmokeTestExtensionContext } from '@test/helpers/vscodefake/extensioncontext';
 
 import * as vscode from 'vscode';

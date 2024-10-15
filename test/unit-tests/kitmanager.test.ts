@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { readKitsFile, getShellScriptEnvironment } from '@cmt/kit';
+import { readKitsFile, getShellScriptEnvironment } from '@cmt/kits/kit';
 import { expect } from '@test/util';
 import * as path from 'path';
 import paths from '@cmt/paths';

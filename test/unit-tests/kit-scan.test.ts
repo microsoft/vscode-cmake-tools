@@ -6,9 +6,9 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
-import * as kit from '../../src/kit';
-import * as triple from '../../src/triple';
-import { fs } from '../../src/pr';
+import * as kit from '@cmt/kits/kit';
+import * as triple from '@cmt/triple';
+import { fs } from '@cmt/pr';
 
 import { clearExistingKitConfigurationFile } from '@test/util';
 

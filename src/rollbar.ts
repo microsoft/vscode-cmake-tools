@@ -2,10 +2,10 @@
  * Wrapper around Rollbar, for error reporting.
  */
 
-import * as logging from './logging';
+import * as logging from '@cmt/logging';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
-import { logEvent } from './telemetry';
+import { logEvent } from '@cmt/telemetry';
 import * as lodash from "lodash";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

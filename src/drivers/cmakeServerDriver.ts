@@ -1,4 +1,4 @@
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import { InputFileSet } from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -16,14 +16,14 @@ import {
     Target,
     NoGeneratorError
 } from '@cmt/drivers/drivers';
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import { createLogger } from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
 import { errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/presets/preset';
 import { CodeModelConfiguration, CodeModelContent, CodeModelFileGroup, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';

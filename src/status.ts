@@ -1,5 +1,5 @@
 import { ConfigurationReader, StatusBarOptionVisibility, StatusBarTextOptionVisibility, StatusBarStaticOptionVisibility, StatusBarIconOptionVisibility, checkConfigureOverridesPresent, checkBuildOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent } from '@cmt/config';
-import { SpecialKits } from '@cmt/kit';
+import { SpecialKits } from '@cmt/kits/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 

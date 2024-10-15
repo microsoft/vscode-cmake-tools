@@ -1,5 +1,5 @@
 import { getStatusBar } from "@cmt/extension";
-import { treeDataProvider } from "@cmt/projectStatus";
+import { treeDataProvider } from "@cmt/ui/projectStatus";
 
 export async function onConfigureSettingsChange(): Promise<void> {
     await treeDataProvider.refreshConfigNode();
