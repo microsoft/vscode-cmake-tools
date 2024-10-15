@@ -1,6 +1,6 @@
-import * as proc from './proc';
-import * as util from './util';
-import {setContextAndStore} from './extension';
+import * as proc from '@cmt/proc';
+import * as util from '@cmt/util';
+import {setContextAndStore} from '@cmt/extension';
 import * as logging from '@cmt/logging';
 import * as nls from 'vscode-nls';
 
