@@ -28,7 +28,7 @@ export class PresetsController implements vscode.Disposable {
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _isChangingPresets = false;
     private _referencedFiles: string[] = [];
-    private _presetsParser!: PresetsParser;
+    private _presetsParser!: PresetsParser; // Using definite assigment (!) because we initialize it in the init method
 
     private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
     private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
