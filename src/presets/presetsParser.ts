@@ -37,6 +37,17 @@ export class PresetsParser {
     private presetsChangedHandler: (presets: preset.PresetsFile | undefined) => void;
     private userPresetsChangedHandler: (presets: preset.PresetsFile | undefined) => void;
 
+    /**
+     * Constructs the PresetsParser object
+     * @param folderPath Folder path of the presets file.
+     * @param sourceDir Source directory of the presets file.
+     * @param workspaceFolder Workspace folder of the presets file.
+     * @param presetsFileErrorReporter Callback that reports errors in the presets file.
+     * @param showPresetsFileVersionError Callback that reports errors with unsupported Presets versions.
+     * @param collectionsModifier Callback that modifies the collections (Problems pane) of the presets file.
+     * @param presetsChangedHandler Callback that handles the presets file being changed.
+     * @param userPresetsChangedHandler Callback that handles the user presets file being changed.
+     */
     public constructor(
         folderPath: string,
         sourceDir: string,
