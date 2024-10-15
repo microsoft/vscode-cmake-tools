@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import CMakeProject from '../cmakeProject';
-import * as preset from '../presets/preset';
-import { runCommand } from '../util';
+import CMakeProject from '@cmt/cmakeProject';
+import * as preset from '@cmt/presets/preset';
+import { runCommand } from '@cmt/util';
 import { OptionConfig, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent } from '../config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
