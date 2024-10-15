@@ -46,7 +46,7 @@ jobs:
       
 
       - name: Run successful-build test
-        run: yarn extensionTestsSuccessfulBuild
+        run: yarn endToEndTestsSuccessfulBuild
 
       - name: Run backend tests
         run: yarn backendTests
@@ -58,10 +58,10 @@ jobs:
         run: yarn unitTests
 
       - name: Run single root test
-        run: yarn extensionTestsSingleRoot
+        run: yarn endToEndTestsSingleRoot
 
       - name: Run multi root test
-        run: yarn extensionTestsMultiRoot
+        run: yarn endToEndTestsMultiRoot
 
       - name: Upload test logs if tests failed
         if: failure()
