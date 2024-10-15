@@ -2,16 +2,16 @@ import { DirectoryContext } from '@cmt/workspace';
 import * as vscode from 'vscode';
 import { CMakeDriver } from '@cmt/drivers/drivers';
 import * as nls from 'vscode-nls';
-import { ConfigureType } from './cmakeProject';
-import { WorkflowPreset, ConfigurePreset, BuildPreset, TestPreset, PackagePreset, getPresetByName, allConfigurePresets, allBuildPresets, allTestPresets, allPackagePresets } from './presets/preset';
+import { ConfigureType } from '@cmt/cmakeProject';
+import { WorkflowPreset, ConfigurePreset, BuildPreset, TestPreset, PackagePreset, getPresetByName, allConfigurePresets, allBuildPresets, allTestPresets, allPackagePresets } from '@cmt/presets/preset';
 import * as proc from '@cmt/proc';
-import { ProjectController } from './projectController';
+import { ProjectController } from '@cmt/projectController';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-import * as logging from './logging';
-import { ConfigureTrigger } from './cmakeProject';
+import * as logging from '@cmt/logging';
+import { ConfigureTrigger } from '@cmt/cmakeProject';
 const log = logging.createLogger('workflow');
 
 export class WorkflowDriver implements vscode.Disposable {
