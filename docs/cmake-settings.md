@@ -9,6 +9,7 @@ Options that support substitution, in the table below, allow variable references
 |Setting  |Description | Default value | Supports substitution |
 |---------|---------|---------|-----|
 | `cmake.autoSelectActiveFolder`| If 'false', your active folder only changes if you manually run the `CMake: Select Active Folder` command. | 'true' | no |
+| `cmake.defaultActiveFolder`| The name of active folder, which be used as default (Only works when ´cmake.autoSelectActiveFolder´ is disabled). | "" | no |
 | `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |

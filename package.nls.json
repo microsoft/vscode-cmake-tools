@@ -183,6 +183,7 @@
     "cmake-tools.configuration.cmake.outputLogEncoding.description": "Encoding of the output from external commands (eg.cmake -- build).",
     "cmake-tools.configuration.cmake.enableTraceLogging.description": "Enable trace logging to file and console (very noisy).",
     "cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Select active folder automatically.",
+    "cmake-tools.configuration.cmake.defaultActiveFolder.description": "Set the default active folder (only works when cmake.autoSelectActiveFolder is disable).",
     "cmake-tools.configuration.cmake.touchbar.advanced.description": "Configures advanced settings for how the extension displays buttons on a MacBook Touch Bar.",
     "cmake-tools.configuration.cmake.touchbar.visibility.description": "Configures how the extension displays the buttons on a MacBook Touch Bar.",
     "cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Show Touch Bar buttons on supported systems.",
