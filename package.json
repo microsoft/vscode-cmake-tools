@@ -3699,8 +3699,9 @@
     "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
     "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
-    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/unit-tests/backend/**/*.test.ts"
-  },
+    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/unit-tests/backend/**/*.test.ts",
+    "unitTests:coverage": "nyc yarn run unitTests"
+},
   "devDependencies": {
     "@octokit/rest": "^18.1.1",
     "@types/ajv": "^0.0.5",
@@ -3744,6 +3745,8 @@
     "mocha": "^8.3.2",
     "module-alias": "^2.2.2",
     "node-loader": "^1.0.2",
+    "nyc": "^17.1.0",
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "parse-git-config": "^3.0.0",
     "sinon": "~9.2.4",
     "ts-loader": "^8.0.17",
@@ -3797,5 +3800,23 @@
   "extensionPack": [
     "twxs.cmake"
   ],
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "yarn@1.22.19",
+  "nyc": {
+    "extends": "@istanbuljs/nyc-config-typescript",
+    "check-coverage": true,
+    "all": true,
+    "include": [
+        "src/**/!(*.test.*).[tj]s?(x)"
+    ],
+    "exclude": [
+        "src/_tests_/**/*.*"
+    ],
+    "reporter": [
+        "html",
+        "lcov",
+        "text",
+        "text-summary"
+    ],
+    "report-dir": "coverage"
+  }
 }
