@@ -67,25 +67,6 @@
   ],
   "main": "./dist/main",
   "contributes": {
-    "languages": [
-      {
-        "id": "cmake",
-        "extensions": [
-          ".cmake"
-        ],
-        "filenames": ["CMakeLists.txt"],
-        "aliases": [
-          "CMake"
-        ]
-      },
-      {
-        "id": "cmake-cache",
-        "filenames": ["CMakeCache.txt"],
-        "aliases": [
-          "CMake Cache"
-        ]
-      }
-    ],
     "icons": {
       "cmake-tools-build": {
         "description": "CMake build icon",
