@@ -165,6 +165,7 @@
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "外部コマンドからの出力のエンコードです (例: cmake -- build)。",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "ファイルおよびコンソールへのトレース ログを有効にします (非常に煩雑になります)。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "アクティブなフォルダーを自動的に選択します。",
+	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "既定のアクティブ フォルダーを設定します (cmake.autoSelectActiveFolder が無効である場合にのみ機能します)。",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "拡張機能によってボタンが MacBook の Touch Bar にどのように表示されるか詳細設定を構成します。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "拡張機能によってボタンが MacBook の Touch Bar にどのように表示されるかを構成します。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "サポートされているシステムで Touch Bar ボタンを表示します。",

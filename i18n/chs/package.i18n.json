@@ -165,6 +165,7 @@
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "来自外部命令的输出的编码(例如 cmake -- build)。",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "对文件和控制台启用跟踪日志记录(噪音很大)。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "自动选择活动文件夹。",
+	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "设置默认活动文件夹(仅在禁用 cmake.autoSelectActiveFolder 时有效)。",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "配置扩展如何在 MacBook 触摸栏上显示按钮的高级设置。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "配置扩展在 MacBook 触控栏上显示按钮的方式。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "在支持的系统上显示触控栏按钮。",
