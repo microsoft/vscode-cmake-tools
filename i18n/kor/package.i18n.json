@@ -165,6 +165,7 @@
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "외부 명령의 출력 인코딩입니다(예: cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "파일 및 콘솔에 대한 추적 로깅을 사용합니다(매우 불안정함).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "활성 폴더를 자동으로 선택합니다.",
+	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "기본 활성 폴더를 설정합니다(cmake.autoSelectActiveFolder를 사용하지 않도록 설정한 경우에만 작동).",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "확장에서 MacBook 터치 바에 단추를 표시하는 방법에 대한 고급 설정을 구성합니다.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "확장이 MacBook Touch Bar에 단추를 표시하는 방식을 구성합니다.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "지원되는 시스템에 Touch Bar 단추를 표시합니다.",

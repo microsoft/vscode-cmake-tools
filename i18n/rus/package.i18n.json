@@ -165,6 +165,7 @@
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Кодирование выходных данных из внешних команд (например, cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Включение ведения журнала трассировки в файле и в консоли (большое число сообщений).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Автоматический выбор активной папки.",
+	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Настройте активную папку по умолчанию (работает, только если параметр cmake.autoSelectActiveFolder отключен).",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "Настраивает дополнительные параметры того, как расширение отображает кнопки в панели Touch Bar на MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Настраивает отображение кнопок расширения в панели Touch Bar на MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Отображение кнопок панели Touch Bar на поддерживаемых системах.",
