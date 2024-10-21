@@ -59,17 +59,17 @@ jobs:
       - name: Run successful-build test
         uses: GabrielBB/xvfb-action@v1.6
         with:
-          run: yarn extensionTestsSuccessfulBuild
+          run: yarn endToEndTestsSuccessfulBuild
 
       - name: Run single root test
         uses: GabrielBB/xvfb-action@v1.6
         with:
-          run: yarn extensionTestsSingleRoot
+          run: yarn endToEndTestsSingleRoot
 
       - name: Run multi root test
         uses: GabrielBB/xvfb-action@v1.6
         with:
-          run: yarn extensionTestsMultiRoot
+          run: yarn endToEndTestsMultiRoot
 
       - name: Upload test logs if tests failed
         if: failure()

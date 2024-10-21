@@ -3701,10 +3701,10 @@
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/badProject/runTest.js && node ./out/test/smoke/goodProject/runTest.js && node ./out/test/smoke/noCtest/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
-    "extensionTestsSuccessfulBuild": "yarn run pretest && node ./out/test/extension-tests/successful-build/runTest.js",
-    "extensionTestsSingleRoot": "yarn run pretest && node ./out/test/extension-tests/single-root-UI/runTest.js",
-    "extensionTestsMultiRoot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
-    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/backend-unit-tests/**/*.test.ts",
+    "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
+    "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
+    "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
+    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/unit-tests/backend/**/*.test.ts",
     "build-product-icon-font": "yarn --cwd ./tools/product-icon-font-generator/ install && yarn --cwd ./tools/product-icon-font-generator/ build && node ./tools/product-icon-font-generator/dist/index.js --source-directory ./res/product-icons/ --output-directory ./res/ --woff2"
   },
   "devDependencies": {

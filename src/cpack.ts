@@ -1,10 +1,10 @@
 import { DirectoryContext } from '@cmt/workspace';
 import * as vscode from 'vscode';
 import { CMakeDriver } from '@cmt/drivers/drivers';
-import { OutputConsumer } from './proc';
+import { OutputConsumer } from '@cmt/proc';
 import * as nls from 'vscode-nls';
-import { PackagePreset } from './preset';
-import { expandString } from './expand';
+import { PackagePreset } from '@cmt/presets/preset';
+import { expandString } from '@cmt/expand';
 import * as proc from '@cmt/proc';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

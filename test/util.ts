@@ -1,5 +1,5 @@
 import { CMakeProject } from '@cmt/cmakeProject';
-import { Kit, scanForKits, kitsForWorkspaceDirectory } from '@cmt/kit';
+import { Kit, scanForKits, kitsForWorkspaceDirectory } from '@cmt/kits/kit';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import * as chai from 'chai';
