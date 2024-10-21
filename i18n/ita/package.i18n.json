@@ -165,6 +165,7 @@
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Codifica dell'output di comandi esterni (ad esempio cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Abilita la registrazione traccia in file e console (molto disturbata).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Seleziona automaticamente la cartella attiva.",
+	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Impostare la cartella attiva predefinita (funziona solo quando cmake.autoSelectActiveFolder è disabilitato).",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "Configura le impostazioni avanzate per la modalità di visualizzazione dei pulsanti dell'estensione in una touch bar per MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Configura il modo in cui l'estensione visualizza i pulsanti su una Touch Bar del MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Mostra i pulsanti della Touch Bar sui sistemi supportati.",
