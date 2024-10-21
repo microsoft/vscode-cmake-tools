@@ -165,6 +165,7 @@
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Dış komutlardan (ör. cmake -- build) gelen çıkışın kodlaması.",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Dosya ve konsolda izleme günlüğünü etkinleştirin (çok gürültülü).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Etkin klasörü otomatik olarak seçin.",
+	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Varsayılan etkin klasörü ayarla (yalnızca cmake.autoSelectActiveFolder devre dışı bırakıldığında çalışır).",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "Uzantının, düğmeleri MacBook Touch Bar'da nasıl görüntüleyeceğinin gelişmiş yapılandırmalarını ayarlar.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Uzantının, düğmeleri MacBook Touch Bar'da nasıl görüntüleyeceğini yapılandırır.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Desteklenen sistemlerde Touch Bar düğmelerini göster.",
