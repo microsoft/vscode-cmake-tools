@@ -897,7 +897,82 @@ suite('Presets validation, inclusion, and expansion tests', () => {
                 expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
                 expect(preset.userConfigurePresets(sourceDirectory).length).to.be.equal(3);
             })
-        })
+        });
+
+        suite('Presets inheritance and expansions', () => {
+            test('Testing inheritance of cacheVariables - 3603', async () => {
+                const asset = fs.readFileSync(path.join(__dirname, "..", "..", "..", "..", "test", "integration-tests", "presets", "assets", "3603_CMakePresets.json"), "utf-8");
+                fs.writeFileSync(presetsParser.presetsPath, asset);
+
+                await presetsParser.resetPresetsFiles(
+                    new Map<string, PresetsFile>(),
+                    false,
+                    false
+                );
+
+                expect(presetsFileErrors).to.have.lengthOf(0);
+                expect(preset.configurePresets(sourceDirectory).length).to.be.equal(4);
+                expect(preset.buildPresets(sourceDirectory).length).to.be.equal(12);
+                const toolsMSVCConfigPreset = preset.configurePresets(sourceDirectory).find(p => p.name === "tools-MSVC");
+                expect(toolsMSVCConfigPreset?.cacheVariables?.["BUILD_TOOLS"]).to.be.equal(true);
+                expect(toolsMSVCConfigPreset?.cacheVariables?.["CMAKE_C_COMPILER"]).to.be.equal("cl");
+                expect(toolsMSVCConfigPreset?.cacheVariables?.["CMAKE_CXX_COMPILER"]).to.be.equal("cl");
+                expect(toolsMSVCConfigPreset?.cacheVariables?.["CMAKE_EXPORT_COMPILE_COMMANDS"]).to.be.equal(true);
+
+            });
+
+            test('Testing inheritance and expansion of PATH - 3473', async () => {
+                const asset = fs.readFileSync(path.join(__dirname, "..", "..", "..", "..", "test", "integration-tests", "presets", "assets", "3473_CMakePresets.json"), "utf-8");
+                fs.writeFileSync(presetsParser.presetsPath, asset);
+                
+                await presetsParser.resetPresetsFiles(
+                    new Map<string, PresetsFile>(),
+                    false,
+                    false
+                );
+
+                expect(presetsFileErrors).to.have.lengthOf(0);
+                expect(preset.configurePresets(sourceDirectory).length).to.be.equal(3);
+                const customConfigurePreset = preset.configurePresets(sourceDirectory).find(p => p.name === "custom");
+                expect(customConfigurePreset?.environment?.PATH?.startsWith("C:\\msys64\\ucrt64\\bin;")).to.be.equal(true);
+                expect(customConfigurePreset?.environment?.PATH?.includes("Program Files")).to.be.equal(true);
+            });
+
+            test('Testing inheritance and overriding of variables', async () => {
+                fs.writeFileSync(presetsParser.presetsPath, JSON.stringify({
+                    "version": 3,
+                    "configurePresets": [
+                      {
+                        "name": "default",
+                        "environment": {
+                          "PATH": "C:\\msys64\\ucrt64\\bin;$penv{PATH}",
+                          "TEST": "test"
+                        }
+                      },
+                      {
+                        "name": "custom",
+                        "inherits": [ "default" ],
+                        "environment": {
+                            "UPDATE_PATH": "$env{PATH}",
+                            "TEST": "overridden"
+                        }
+                      }
+                    ]
+                  }));
+
+                await presetsParser.resetPresetsFiles(
+                    new Map<string, PresetsFile>(),
+                    false,
+                    false
+                );
+
+                expect(presetsFileErrors).to.have.lengthOf(0);
+                expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
+                const configurePreset = preset.configurePresets(sourceDirectory).find(p => p.name === "custom");
+                expect(configurePreset?.environment?.UPDATE_PATH?.startsWith("C:/msys64/ucrt64/bin;")).to.be.equal(true);
+                expect(configurePreset?.environment?.TEST).to.be.equal("overridden");
+            });
+        });
     
         teardown(async () => {
             if (fs.existsSync(presetsParser.presetsPath)) {
