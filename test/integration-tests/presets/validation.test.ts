@@ -931,7 +931,11 @@ suite('Presets validation, inclusion, and expansion tests', () => {
             expect(preset.configurePresets(sourceDirectory).length).to.be.equal(3);
             const customConfigurePreset = preset.configurePresets(sourceDirectory).find(p => p.name === "custom");
             expect(customConfigurePreset?.environment?.PATH?.startsWith("C:\\msys64\\ucrt64\\bin;")).to.be.equal(true);
-            expect(customConfigurePreset?.environment?.PATH?.includes("Program Files")).to.be.equal(true);
+            if (process.platform === "win32") {
+                expect(customConfigurePreset?.environment?.PATH?.includes("Program Files")).to.be.equal(true);            
+            } else {
+                expect(customConfigurePreset?.environment?.PATH?.includes("$penv{PATH}")).to.be.equal(false);
+            }
         });
 
         test('Testing inheritance and overriding of variables', async () => {
