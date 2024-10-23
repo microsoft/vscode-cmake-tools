@@ -107,7 +107,6 @@ suite('Presets validation, inclusion, and expansion tests', () => {
                     ]
                 }
                 ));
-    
             await presetsParser.resetPresetsFiles(
                 (_f, p) => (presetsContainer.expandedPresets = p),
                 (_f, p) => (presetsContainer.expandedUserPresets = p),
@@ -118,8 +117,7 @@ suite('Presets validation, inclusion, and expansion tests', () => {
                 new Map<string, PresetsFile>(),
                 false,
                 false
-            );
-    
+            );    
             expect(presetsFileErrors).to.have.lengthOf(1);
             expect(presetsFileErrors.filter((e) => e.includes("binaryDir"))).to.have.lengthOf(1);
             expect(presetsContainer.expandedPresets).to.be.undefined;
@@ -863,7 +861,6 @@ suite('Presets validation, inclusion, and expansion tests', () => {
             ]
         };
 
-
         test('Ensure CMakeUserPresets inherently includes CMakePresets', async () => {
             fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(presets));
             fs.writeFileSync(presetsParser.userPresetsPath, JSON.stringify(userPreset));
@@ -886,7 +883,6 @@ suite('Presets validation, inclusion, and expansion tests', () => {
             fs.writeFileSync(presetsParser.userPresetsPath, JSON.stringify(userPreset));
             fs.writeFileSync(path.join(presetsParser.presetsPath, "..", "included.json"), JSON.stringify(includedPreset));
 
-
             await presetsParser.resetPresetsFiles(
                 new Map<string, PresetsFile>(),
                 false,
@@ -896,7 +892,7 @@ suite('Presets validation, inclusion, and expansion tests', () => {
             expect(presetsFileErrors).to.have.lengthOf(0);
             expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
             expect(preset.userConfigurePresets(sourceDirectory).length).to.be.equal(3);
-        })
+        });
     });
 
     suite('Presets inheritance and expansions', () => {
