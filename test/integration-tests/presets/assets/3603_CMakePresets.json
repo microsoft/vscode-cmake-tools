@@ -1,0 +1,140 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default",
+            "description": "Default config, uses system default compiler",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+                "BUILD_TOOLS": false
+            }
+        },
+        {
+            "name": "MSVC",
+            "displayName": "MSVC",
+            "description": "Use the Visual Studio compiler",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_C_COMPILER": "cl"
+            },
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            }
+        },
+        {
+            "name": "tools",
+            "displayName": "tools",
+            "description": "Compile with tools (requires Qt)",
+            "inherits": "default",
+            "cacheVariables": {
+                "BUILD_TOOLS": true
+            }
+        },
+        {
+            "name": "tools-MSVC",
+            "displayName": "tools (MSVC)",
+            "description": "Compile with tools (requires Qt) using MSVC",
+            "inherits": ["tools", "MSVC"]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "description": "Build with debug information",
+            "configurePreset": "default",
+            "configuration": "Debug"
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "description": "Optimized build without debug information",
+            "configurePreset": "default",
+            "configuration": "Release"
+        },
+        {
+            "name": "RelWithDebInfo",
+            "displayName": "RelWithDebInfo",
+            "description": "Optimized build with debug information",
+            "configurePreset": "default",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "MSVC-debug",
+            "displayName": "Debug",
+            "description": "Build with debug information",
+            "configurePreset": "MSVC",
+            "configuration": "Debug"
+        },
+        {
+            "name": "MSVC-release",
+            "displayName": "Release",
+            "description": "Optimized build without debug information",
+            "configurePreset": "MSVC",
+            "configuration": "Release"
+        },
+        {
+            "name": "MSVC-RelWithDebInfo",
+            "displayName": "RelWithDebInfo",
+            "description": "Optimized build with debug information",
+            "configurePreset": "MSVC",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "tools-debug",
+            "displayName": "Debug (Tools)",
+            "description": "Build with debug information and tools",
+            "configurePreset": "tools",
+            "configuration": "Debug"
+        },
+        {
+            "name": "tools-release",
+            "displayName": "Release (Tools)",
+            "description": "Optimized build with tools",
+            "configurePreset": "tools",
+            "configuration": "Release"
+        },
+        {
+            "name": "tools-RelWithDebInfo",
+            "displayName": "RelWithDebInfo (Tools)",
+            "description": "Optimized build with debug information and tools",
+            "configurePreset": "tools",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "tools-MSVC-debug",
+            "displayName": "Debug (MSVC: Tools)",
+            "description": "Build with debug information and tools using MSVC",
+            "configurePreset": "tools-MSVC",
+            "configuration": "Debug"
+        },
+        {
+            "name": "tools-MSVC-release",
+            "displayName": "Release (MSVC: Tools)",
+            "description": "Optimized build with tools using MSVC",
+            "configurePreset": "tools-MSVC",
+            "configuration": "Release"
+        },
+        {
+            "name": "tools-MSVC-RelWithDebInfo",
+            "displayName": "RelWithDebInfo (MSVC: Tools)",
+            "description": "Optimized build with debug information and tools using MSVC",
+            "configurePreset": "tools-MSVC",
+            "configuration": "RelWithDebInfo"
+        }
+    ]
+}

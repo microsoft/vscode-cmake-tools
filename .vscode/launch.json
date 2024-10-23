@@ -34,8 +34,32 @@
             "outFiles": [
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/src/**",
-                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/**",
                 "${workspaceFolder}/out/test/unit-tests/**",
+            ],
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
+            },
+            "preLaunchTask": "Pretest"
+        },
+        {
+            "name": "Run Integration Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceFolder}/test/integration-tests",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/integration-tests/index"
+            ],
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/**",
+                "${workspaceFolder}/out/test/**",
+                "${workspaceFolder}/out/test/integration-tests/**",
             ],
             "env": {
                 "CMT_TESTING": "1",

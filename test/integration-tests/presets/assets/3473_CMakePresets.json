@@ -1,0 +1,18 @@
+{
+    "version": 3,
+    "configurePresets": [
+      {
+        "name": "default",
+        "environment": {
+          "PATH": "C:\\msys64\\ucrt64\\bin;$penv{PATH}"
+        }
+      },
+      {
+        "name": "empty"
+      },
+      {
+        "name": "custom",
+        "inherits": [ "empty", "default" ]
+      }
+    ]
+  }
