@@ -310,7 +310,6 @@ export class CTestDriver implements vscode.Disposable {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-
             const returnCode = await this.runCTestHelper(tests, run, run.token, driver, undefined, ctestArgs, customizedTask, consumer);
             run.end();
             return returnCode;
@@ -318,7 +317,7 @@ export class CTestDriver implements vscode.Disposable {
             return vscode.window.withProgress(
                 {
                     location: vscode.ProgressLocation.Window,
-                    title: localize('running.tests', 'Running tests'),
+                    title: localize('ctest.testing.progress.title', 'Testing'),
                     cancellable: true
                 },
                 async (progress, cancel) => {
@@ -613,11 +612,7 @@ export class CTestDriver implements vscode.Disposable {
             ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
 
-        let testCancelled = false;
-
         const cancellationHandler = cancellationToken.onCancellationRequested(async () => {
-            testCancelled = true;
-            
             if (child.child) {
                 util.termProc(child.child);
             }
