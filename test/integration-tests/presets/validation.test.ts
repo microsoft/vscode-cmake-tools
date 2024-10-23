@@ -117,7 +117,7 @@ suite('Presets validation, inclusion, and expansion tests', () => {
                 new Map<string, PresetsFile>(),
                 false,
                 false
-            );    
+            );
             expect(presetsFileErrors).to.have.lengthOf(1);
             expect(presetsFileErrors.filter((e) => e.includes("binaryDir"))).to.have.lengthOf(1);
             expect(presetsContainer.expandedPresets).to.be.undefined;
