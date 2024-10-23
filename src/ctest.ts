@@ -322,7 +322,7 @@ export class CTestDriver implements vscode.Disposable {
                 },
                 async (progress, cancel) => {
                     progress.report({ message: localize('running.tests', 'Running tests') });
-                    return await this.runCTestDirectly(driver, customizedTask, cancel, testPreset, consumer);
+                    return this.runCTestDirectly(driver, customizedTask, cancel, testPreset, consumer);
                 }
             );
         }
@@ -536,7 +536,7 @@ export class CTestDriver implements vscode.Disposable {
 
                         returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, returnCode, run);
                     }
-                } 
+                }
             }
         }
 
@@ -606,7 +606,7 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     }
 
-    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], cancellationToken: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {     
+    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], cancellationToken: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
             ctestPath, ctestArgs,
             ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
@@ -614,11 +614,11 @@ export class CTestDriver implements vscode.Disposable {
 
         const cancellationHandler = cancellationToken.onCancellationRequested(async () => {
             if (child.child) {
-                util.termProc(child.child);
+                await util.termProc(child.child);
             }
             log.info(localize('ctest.run.cancelled', 'CTest run was cancelled'));
         });
-        
+
         const res = await child.result;
 
         // Dispose of the cancellation handler so that it doesn't get sticky for other tests.
