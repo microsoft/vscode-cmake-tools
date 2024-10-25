@@ -310,14 +310,25 @@ export class CTestDriver implements vscode.Disposable {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-            const returnCode = await this.runCTestHelper(tests, run, driver, undefined, ctestArgs, undefined, customizedTask, consumer);
+            const returnCode = await this.runCTestHelper(tests, run, run.token, driver, undefined, ctestArgs, customizedTask, consumer);
+            run.end();
             return returnCode;
         } else {
-            return this.runCTestDirectly(driver, customizedTask, testPreset, consumer);
+            return vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Window,
+                    title: localize('ctest.testing.progress.title', 'Testing'),
+                    cancellable: true
+                },
+                async (progress, cancel) => {
+                    progress.report({ message: localize('running.tests', 'Running tests') });
+                    return this.runCTestDirectly(driver, customizedTask, cancel, testPreset, consumer);
+                }
+            );
         }
     }
 
-    private async runCTestDirectly(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
+    private async runCTestDirectly(driver: CMakeDriver, customizedTask: boolean = false, cancellationToken: vscode.CancellationToken, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
         // below code taken from #3032 PR (before changes in how tests are run)
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
         if (ctestpath === null) {
@@ -332,7 +343,7 @@ export class CTestDriver implements vscode.Disposable {
             return -3;
         }
 
-        const testResults = await this.runCTestImpl(driver, ctestpath, ctestArgs, customizedTask, consumer);
+        const testResults = await this.runCTestImpl(driver, ctestpath, ctestArgs, cancellationToken, customizedTask, consumer);
 
         let returnCode: number = 0;
         if (testResults) {
@@ -384,7 +395,7 @@ export class CTestDriver implements vscode.Disposable {
         run.failed(test, message, duration);
     }
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], cancellation?: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
         let returnCode: number = 0;
         const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[]}>();
 
@@ -435,7 +446,7 @@ export class CTestDriver implements vscode.Disposable {
             if (test.children.size > 0) {
                 // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
                 const children = this.testItemCollectionToArray(test.children);
-                if (await this.runCTestHelper(children, run, _driver, _ctestPath, _ctestArgs, cancellation, customizedTask, consumer, entryPoint)) {
+                if (await this.runCTestHelper(children, run, cancellation, _driver, _ctestPath, _ctestArgs, customizedTask, consumer, entryPoint)) {
                     returnCode = -1;
                 }
                 return returnCode;
@@ -460,7 +471,13 @@ export class CTestDriver implements vscode.Disposable {
                     run.started(test);
 
                     const _ctestArgs = driver.ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
-                    const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, customizedTask, consumer);
+
+                    const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, cancellation, customizedTask, consumer);
+
+                    if (cancellation && cancellation.isCancellationRequested) {
+                        run.skipped(test);
+                        continue;
+                    }
 
                     if (testResults) {
                         const testResult = testResults.site.testing.test.find(t => t.name === test.id);
@@ -503,7 +520,7 @@ export class CTestDriver implements vscode.Disposable {
                     uniqueCtestArgs.push(testsNamesRegex.slice(0, -1)); // Remove the last '|'
                 }
 
-                const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, customizedTask, consumer);
+                const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, cancellation, customizedTask, consumer);
 
                 if (testResults) {
                     for (let i = 0; i < testResults.site.testing.test.length; i++) {
@@ -511,6 +528,12 @@ export class CTestDriver implements vscode.Disposable {
                         if (_test === undefined) {
                             continue; // This should never happen, we just constructed this list. For now, simply ignore and keep going.
                         }
+
+                        if (cancellation && cancellation.isCancellationRequested) {
+                            run.skipped(_test);
+                            continue;
+                        }
+
                         returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, returnCode, run);
                     }
                 }
@@ -583,12 +606,24 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     }
 
-    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
+    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], cancellationToken: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
             ctestPath, ctestArgs,
             ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
+
+        const cancellationHandler = cancellationToken.onCancellationRequested(async () => {
+            if (child.child) {
+                await util.termProc(child.child);
+            }
+            log.info(localize('ctest.run.cancelled', 'CTest run was cancelled'));
+        });
+
         const res = await child.result;
+
+        // Dispose of the cancellation handler so that it doesn't get sticky for other tests.
+        cancellationHandler?.dispose();
+
         if (res.retc === null) {
             log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
         } else {
@@ -856,7 +891,7 @@ export class CTestDriver implements vscode.Disposable {
         this.ctestsEnqueued(tests, run);
         const buildSucceeded = await this.buildTests(tests, run);
         if (buildSucceeded) {
-            await this.runCTestHelper(tests, run, undefined, undefined, undefined, cancellation, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
+            await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
         } else {
             log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
         }
