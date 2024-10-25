@@ -82,6 +82,12 @@ extends:
         
         - script: npm install -g @vscode/vsce
           displayName: 'install vsce'
+
+        - task: CmdLine@2
+          displayName: Build files
+          inputs:
+            script: |
+              yarn compile-production
         
         - task: CmdLine@2
           displayName: Run VSCE to package vsix
