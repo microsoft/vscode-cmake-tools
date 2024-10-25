@@ -7,9 +7,9 @@ import * as path from 'path';
 import * as which from 'which';
 import * as vscode from 'vscode';
 
-import { vsInstallations } from './installs/visualStudio';
-import { expandString } from './expand';
-import { fs } from './pr';
+import { vsInstallations } from '@cmt/installs/visualStudio';
+import { expandString } from '@cmt/expand';
+import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
 
 interface VSCMakePaths {

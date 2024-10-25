@@ -10,7 +10,7 @@ import { Environment, EnvironmentUtils } from './environmentVariables';
 import * as logging from './logging';
 import { extensionManager, getActiveProject } from './extension';
 import { CMakeProject, ConfigureTrigger } from './cmakeProject';
-import * as preset from '@cmt/preset';
+import * as preset from '@cmt/presets/preset';
 import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';

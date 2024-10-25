@@ -5,14 +5,14 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as os from 'os';
-import * as contex from './contextKeyExpr';
+import * as contex from '@cmt/contextKeyExpr';
 
 import { DebuggerEnvironmentVariable, execute } from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
-import { Environment, EnvironmentUtils } from './environmentVariables';
+import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { TargetPopulation } from 'vscode-tas-client';
-import { expandString, ExpansionOptions } from './expand';
-import { ExtensionManager } from './extension';
+import { expandString, ExpansionOptions } from '@cmt/expand';
+import { ExtensionManager } from '@cmt/extension';
 import * as glob from "glob";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();

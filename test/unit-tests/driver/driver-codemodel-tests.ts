@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
@@ -11,7 +11,7 @@ import * as path from 'path';
 
 chai.use(chaiString);
 
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 

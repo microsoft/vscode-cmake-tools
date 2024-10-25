@@ -22,8 +22,8 @@ import {
     USER_KITS_FILEPATH,
     findCLCompilerPath,
     scanForKitsIfNeeded
-} from '@cmt/kit';
-import { KitsController } from '@cmt/kitsController';
+} from '@cmt/kits/kit';
+import { KitsController } from '@cmt/kits/kitsController';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import { FireNow, FireLate } from '@cmt/prop';
@@ -31,24 +31,24 @@ import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/projectOutline/projectOutline';
+import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/ui/projectOutline/projectOutline';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
-import { DEFAULT_VARIANTS } from '@cmt/variant';
+import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
-import { CMakeToolsApiImpl } from './api';
-import { DirectoryContext } from './workspace';
-import { ProjectStatus } from './projectStatus';
-import { PinnedCommands } from './pinnedCommands';
+import { CMakeToolsApiImpl } from '@cmt/api';
+import { DirectoryContext } from '@cmt/workspace';
+import { ProjectStatus } from '@cmt/ui/projectStatus';
+import { PinnedCommands } from '@cmt/ui/pinnedCommands';
 import { StatusBar } from '@cmt/status';
-import { DebugAdapterNamedPipeServerDescriptorFactory } from './debug/debugAdapterNamedPipeServerDescriptorFactory';
-import { getCMakeExecutableInformation } from './cmake/cmakeExecutable';
-import { DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
-import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from './debug/debugConfigurationProvider';
-import { deIntegrateTestExplorer } from './ctest';
+import { DebugAdapterNamedPipeServerDescriptorFactory } from '@cmt/debug/cmakeDebugger/debugAdapterNamedPipeServerDescriptorFactory';
+import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
+import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
+import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
+import { deIntegrateTestExplorer } from "@cmt/ctest";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
