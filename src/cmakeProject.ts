@@ -1541,13 +1541,13 @@ export class CMakeProject {
             }
         } else {
             // single file with known path
-            const compdbPath = path.join(await this.binaryDir, 'compile_commands.json');
+            const compdbPath = util.lightNormalizePath(path.join(await this.binaryDir, 'compile_commands.json'));
             if (await fs.exists(compdbPath)) {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
                     // Now try to copy the compdb to the user-requested path
-                    const copyDest = this.workspaceContext.config.copyCompileCommands;
-                    const expandedDest = await expandString(copyDest, opts);
+                    const copyDest = util.lightNormalizePath(this.workspaceContext.config.copyCompileCommands);
+                    const expandedDest = util.lightNormalizePath(await expandString(copyDest, opts));
                     if (compdbPath !== expandedDest) {
                         const parentDir = path.dirname(expandedDest);
                         try {
@@ -1555,6 +1555,7 @@ export class CMakeProject {
                             await fs.mkdir_p(parentDir);
                             try {
                                 await fs.copyFile(compdbPath, expandedDest);
+                                compdbPaths.push(expandedDest);
                             } catch (e: any) {
                                 // Just display the error. It's the best we can do.
                                 void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy {0} to {1}: {2}', `"${compdbPath}"`, `"${expandedDest}"`, e.toString()));
