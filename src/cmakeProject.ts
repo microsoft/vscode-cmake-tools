@@ -2129,7 +2129,7 @@ export class CMakeProject {
                         if (fileDiags) {
                             populateCollection(collections.build, fileDiags);
                         }
-                        await this.cTestController.refreshTests(drv);
+                        await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);
                         return rc === null ? -1 : rc;
                     }
