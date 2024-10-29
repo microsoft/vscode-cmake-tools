@@ -2593,7 +2593,8 @@
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
           "scope": "resource",
           "tags": [
-            "experimental"
+            "onExP",
+            "preview"
           ]
         },
         "cmake.configureOnEdit": {
