@@ -954,7 +954,13 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
 export function isFileInsideFolder(uri: vscode.Uri, folderPath: string): boolean {
     const parent = platformNormalizePath(folderPath);
     const file = platformNormalizePath(uri.fsPath);
-    return file.startsWith(parent);
+
+    // Ensure project path ends with a path separator to avoid partial matches
+    const parentWithEndingSeparator = parent.endsWith(path.posix.sep)
+        ? parent
+        : `${parent}${path.posix.sep}`;
+
+    return file.startsWith(parentWithEndingSeparator);
 }
 
 /**

@@ -32,6 +32,7 @@ Bug Fixes:
 - Fix reloading presets when included files are changed or renamed and updated. [#3963](https://github.com/microsoft/vscode-cmake-tools/issues/3963)
 - Fix compilation database path comparison with the `cmake.copyCompileCommands` that could otherwise overwrite that file. [#4207](https://github.com/microsoft/vscode-cmake-tools/issues/4207) [@k0zmo](https://github.com/k0zmo)
 - Fix parsing of CMakeUserPresets.json containing configure preset that is referenced in workflow preset. [#4202](https://github.com/microsoft/vscode-cmake-tools/pull/4202)
+- Fix auto select active project corner case. [#4146](https://github.com/microsoft/vscode-cmake-tools/issues/4146) Contributed by STMicroelectronics
 
 ## 1.19.52
 
