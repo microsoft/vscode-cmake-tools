@@ -48,6 +48,14 @@
     {
         "name": "TestInheritFromPreset",
         "inherits": "Linux1"
+    },
+    {
+      "name": "LinuxUser2",
+      "description": "LinuxUser1 with Coverage enabled",
+      "inherits": "LinuxUser1",
+      "cacheVariables": {
+        "USE_COVERAGE": "ON"
+      }
     }
   ]
 }

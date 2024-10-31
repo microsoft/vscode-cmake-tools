@@ -3,8 +3,19 @@ project(TestBuildProcess VERSION 0.1.0)
 
 set(CMT_COOKIE passed-cookie CACHE STRING "Cookie to be written by the main executable")
 
+option(USE_COVERAGE "Enable GCOV during the build" OFF)
+if(USE_COVERAGE)
+    add_compile_options(--coverage)
+    add_link_options(--coverage -Wl,--dynamic-list-data)
+endif()
+
+include(CTest)
+
 add_executable(TestBuildProcess main.cpp)
 set_property(TARGET TestBuildProcess PROPERTY CXX_STANDARD 98)
+
+add_test(NAME TestBuildProcessAsTest
+    COMMAND $<TARGET_FILE:TestBuildProcess>)
 
 add_custom_command(
     TARGET TestBuildProcess
@@ -36,3 +47,35 @@ add_custom_target(runTestTarget DEPENDS TestBuildProcess
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Run test target"
 )
+
+find_program(LCOV lcov)
+find_program(GCOV gcov)
+set(LCOV_BASE lcov-base.info)
+set(LCOV_TEST lcov-test.info)
+set(LCOV_TOTAL lcov.info)
+set(LCOV_LOG lcov.log)
+set(LCOV_ERR lcov.err)
+add_custom_target(init-coverage
+    COMMENT "Collecting initial coverage"
+    COMMAND ${LCOV} -c -i -d ${CMAKE_CURRENT_BINARY_DIR} --gcov-tool ${GCOV}
+        -o ${LCOV_BASE} 2>${LCOV_ERR} >${LCOV_LOG})
+add_dependencies(init-coverage reset-coverage)
+
+add_custom_target(reset-coverage
+    COMMENT "Reset all coverage counters to zero"
+    COMMAND ${LCOV} -q -z -d ${CMAKE_CURRENT_BINARY_DIR} --gcov-tool ${GCOV}
+        -o ${LCOV_BASE}
+    COMMAND ${LCOV} -q -z -d ${CMAKE_CURRENT_BINARY_DIR} --gcov-tool ${GCOV}
+        -o ${LCOV_TEST}
+    COMMAND ${LCOV} -q -z -d ${CMAKE_CURRENT_BINARY_DIR} --gcov-tool ${GCOV}
+        -o ${LCOV_TOTAL})
+
+add_custom_target(capture-coverage
+    COMMENT "Capture coverage data"
+    DEPENDS ${LCOV_BASE}
+    COMMAND ${LCOV} -c -d ${CMAKE_CURRENT_BINARY_DIR} -o ${LCOV_TEST}
+        --gcov-tool ${GCOV} 2>${LCOV_ERR} >${LCOV_LOG}
+    COMMAND ${LCOV} -a ${LCOV_BASE} -a ${LCOV_TEST} -o ${LCOV_TOTAL}
+        >>${LCOV_LOG}
+    COMMAND ${LCOV} -r ${LCOV_TOTAL} -o ${LCOV_TOTAL} "'/usr/include*'"
+        >>${LCOV_LOG})

@@ -691,7 +691,7 @@ export class CTestDriver implements vscode.Disposable {
             return -1;
         }
 
-        if (util.isTestMode()) {
+        if (util.isTestMode() && !util.overrideTestModeForTestExplorer()) {
             // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
             return 0;
         }
