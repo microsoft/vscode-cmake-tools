@@ -4,7 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult, MatchType, RegexPattern } from './util';
+import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult, MatchType, RegexPattern } from '@cmt/diagnostics/util';
 
 // Patterns to identify and capture GCC diagnostic messages.
 const regexPatterns: RegexPattern[] = [

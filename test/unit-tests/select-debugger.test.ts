@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
 import { CMakeCache } from '../../src/cache';
-import * as Debugger from '@cmt/debugger';
+import * as Debugger from '@cmt/debug/debugger';
 import * as proc from '@cmt/proc';
 import * as sinon from 'sinon';
 import { Subprocess } from '@cmt/proc';

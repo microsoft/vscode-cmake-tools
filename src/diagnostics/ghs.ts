@@ -4,7 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import { oneLess, RawDiagnosticParser, FeedLineResult } from './util';
+import { oneLess, RawDiagnosticParser, FeedLineResult } from '@cmt/diagnostics/util';
 
 export const REGEX = /^\"(.*)\",\s+(?:(?:line\s+(\d+)\s+\(col\.\s+(\d+)\))|(?:At end of source)):\s+(?:fatal )?(remark|warning|error)\s+(.*)/;
 
