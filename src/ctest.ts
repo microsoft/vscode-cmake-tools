@@ -554,7 +554,7 @@ export class CTestDriver implements vscode.Disposable {
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
-                if (completionStatus == "SKIP_REGULAR_EXPRESSION_MATCHED") {
+                if (completionStatus === "SKIP_REGULAR_EXPRESSION_MATCHED") {
                     run.skipped(test);
                 } else {
                     this.ctestErrored(
