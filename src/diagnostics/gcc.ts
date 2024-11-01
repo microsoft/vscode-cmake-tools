@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 
 import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult, MatchType, RegexPattern } from './util';
 
+// Patterns to identify and capture GCC diagnostic messages.
 const regexPatterns: RegexPattern[] = [
     {   // path/to/file:line:column: severity: message
         regexPattern: /^(.+):(\d+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
@@ -32,6 +33,11 @@ export class Parser extends RawDiagnosticParser {
     private _pendingTemplateError?: PendingTemplateBacktrace;
 
     doHandleLine(line: string) {
+        // Detect the first line of a C++ template error
+        // This is a special case which consists of 3 lines:
+        // path/to/file: In instantiation of ‘...’:
+        // path/to/file:lineno:columnno:   required from here
+        // path/to/file:lineno:columnno: severity: message
         let mat = /(.*): (In instantiation of.+)/.exec(line);
         if (mat) {
             const [, , message] = mat;
@@ -42,6 +48,7 @@ export class Parser extends RawDiagnosticParser {
             return FeedLineResult.Ok;
         }
         if (this._pendingTemplateError) {
+            // Detect the second line of a pending C++ template error
             mat = /(.*):(\d+):(\d+):(  +required from.+)/.exec(line);
             if (mat) {
                 const [, file, linestr, column, message] = mat;
@@ -55,7 +62,7 @@ export class Parser extends RawDiagnosticParser {
             }
         }
 
-        // Early-catch backtrace limit notes
+        // Detect backtrace limit notes in GCC diagnostics and append them to the previous diagnostic if one exists
         mat = /note: \((.*backtrace-limit.*)\)/.exec(line);
         if (mat && this._prevDiag && this._prevDiag.related.length !== 0) {
             const prevRelated = this._prevDiag.related[0];
@@ -67,7 +74,7 @@ export class Parser extends RawDiagnosticParser {
             return FeedLineResult.Ok;
         }
 
-        // Test if this is a diagnostic
+        // Attempt to parse a general diagnostic message using regex patterns defined in regexPatterns
         let mat2 = null;
 
         let full = "";
@@ -81,6 +88,7 @@ export class Parser extends RawDiagnosticParser {
             mat2 = line.match(regexPattern.regexPattern);
 
             if (mat2 !== null) {
+                // For each matchType in the pattern, assign values accordingly
                 for (let i = 0; i < mat2.length; i++) {
                     switch (regexPattern.matchTypes[i]) {
                         case MatchType.Full:
@@ -110,9 +118,10 @@ export class Parser extends RawDiagnosticParser {
         }
 
         if (!mat2) {
-            // Nothing to see on this line of output...
+            // Ignore this line because it is no matching diagnostic
             return FeedLineResult.NotMine;
         } else {
+            // If severity is "note", append the message to the previous diagnostic's related messages
             if (severity === 'note' && this._prevDiag) {
                 this._prevDiag.related.push({
                     file,
@@ -124,6 +133,7 @@ export class Parser extends RawDiagnosticParser {
                 const related: RawRelated[] = [];
                 const location = new vscode.Range(lineno, columnno, lineno, 999);
                 if (this._pendingTemplateError) {
+                    // If the diagnostic is the third line of a pending C++ template error, finalize it here
                     related.push({
                         location,
                         file,
@@ -133,6 +143,7 @@ export class Parser extends RawDiagnosticParser {
                     this._pendingTemplateError = undefined;
                 }
 
+                // Store and return the current diagnostic
                 return this._prevDiag = {
                     full,
                     file,

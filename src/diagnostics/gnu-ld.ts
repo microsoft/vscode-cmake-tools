@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 
 import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult, MatchType, RegexPattern } from './util';
 
+// Patterns to identify and capture GNU linker diagnostic messages
 const regexPatterns: RegexPattern[] = [
     {   // path/to/ld[.exe]:[ ]path/to/file:line: severity: message
         regexPattern: /^(?:.*ld(?:\.exe)?:)(?:\s*)?(.+):(\d+):\s+(?:fatal )?(\w+):\s+(.+)/,
@@ -47,6 +48,7 @@ export class Parser extends RawDiagnosticParser {
             mat = line.match(regexPattern.regexPattern);
 
             if (mat !== null) {
+                // For each matchType in the pattern, assign values accordingly
                 for (let i = 0; i < mat.length; i++) {
                     switch (regexPattern.matchTypes[i]) {
                         case MatchType.Full:
@@ -76,9 +78,10 @@ export class Parser extends RawDiagnosticParser {
         }
 
         if (!mat) {
-            // Nothing to see on this line of output...
+            // Ignore this line because it is no matching diagnostic
             return FeedLineResult.NotMine;
         } else {
+            // If severity is "note", append the message to the previous diagnostic's related messages
             if (severity === 'note' && this._prevDiag) {
                 this._prevDiag.related.push({
                     file,
@@ -89,6 +92,7 @@ export class Parser extends RawDiagnosticParser {
             } else {
                 const related: RawRelated[] = [];
 
+                // Store and return the current diagnostic
                 return this._prevDiag = {
                     full,
                     file,
