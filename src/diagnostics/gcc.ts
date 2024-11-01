@@ -142,7 +142,6 @@ export class Parser extends RawDiagnosticParser {
                     related
                 };
             }
-            return FeedLineResult.NotMine;
         }
     }
 }
