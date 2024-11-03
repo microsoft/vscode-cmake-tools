@@ -421,7 +421,7 @@ export class CTestDriver implements vscode.Disposable {
      *
      */
     private async fillDriverMap(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driverMap?: DriverMapT, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false): Promise<void> {
-        let _driverMap = <DriverMapT>{};
+        let _driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
         if (driverMap) {
             _driverMap = driverMap;
         }
@@ -434,7 +434,7 @@ export class CTestDriver implements vscode.Disposable {
             if (driver) {
                 _driver = driver;
             } else {
-                const _maybe_driver = this.getProjectDriver(test);
+                const _maybe_driver = await this.getProjectDriver(test);
                 if (typeof _maybe_driver === 'string') {
                     this.ctestErrored(test, run, { message: _maybe_driver });
                     continue;
@@ -484,7 +484,7 @@ export class CTestDriver implements vscode.Disposable {
 
     private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
         let returnCode: number = 0;
-        const driverMap = <DriverMapT>{};
+        const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
 
         await this.fillDriverMap(tests, run, cancellation, driverMap, driver, ctestPath, ctestArgs, customizedTask);
 
