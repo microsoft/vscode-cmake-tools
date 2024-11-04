@@ -401,17 +401,17 @@ export class CTestDriver implements vscode.Disposable {
      * Retrieve the driver from the test in argument
      *
      * @param test : test to retrieve the driver from
-     * @returns : the driver or an error message
+     * @returns : the driver 
      */
-    private async getProjectDriver(test: vscode.TestItem): Promise<CMakeDriver | String> {
+    private async getProjectDriver(test: vscode.TestItem): Promise<CMakeDriver> {
         const folder = this.getTestRootFolder(test);
         const project = await this.projectController?.getProjectForFolder(folder);
         if (!project) {
-            return localize('no.project.found', 'No project found for folder {0}', folder);
+            throw new Error(localize('no.project.found', 'No project found for folder {0}', folder));
         }
         const _driver = await project.getCMakeDriverInstance();
         if (!_driver) {
-            return localize('no.driver.found', 'No driver found for folder {0}', folder);
+            throw new Error(localize('no.driver.found', 'No driver found for folder {0}', folder));
         }
         return _driver;
     }
@@ -434,13 +434,12 @@ export class CTestDriver implements vscode.Disposable {
             if (driver) {
                 _driver = driver;
             } else {
-                const _maybe_driver = await this.getProjectDriver(test);
-                if (typeof _maybe_driver === 'string') {
-                    this.ctestErrored(test, run, { message: _maybe_driver });
+                try {
+                    _driver = await this.getProjectDriver(test);
+                } catch (err: any) {
+                    this.ctestErrored(test, run, { message: err.message });
                     continue;
-                } else {
-                    _driver = _maybe_driver as unknown as CMakeDriver;
-                };
+                }
             }
 
             let _ctestPath: string | null;
