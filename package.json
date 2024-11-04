@@ -26,7 +26,8 @@
   },
   "categories": [
     "Other",
-    "Debuggers"
+    "Debuggers",
+    "Programming Languages"
   ],
   "galleryBanner": {
     "color": "#13578c",
@@ -63,7 +64,9 @@
     "workspaceContains:*/*/CMakeLists.txt",
     "workspaceContains:*/*/*/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json",
-    "onFileSystem:cmake-tools-schema"
+    "onFileSystem:cmake-tools-schema",
+    "onLanguage:cmake",
+    "onLanguage:cmake-cache"
   ],
   "main": "./dist/main",
   "contributes": {
@@ -111,6 +114,31 @@
         }
       }
     },
+    "languages": [
+        {
+            "id": "cmake",
+            "extensions": [".cmake"],
+            "filenames": ["CMakelists.txt"],
+            "aliases": ["CMake"]
+        },
+        {
+            "id": "cmake-cache",
+            "filenames": ["CMakeCache.txt"],
+            "aliases": ["CMake Cache"]
+        }
+    ],
+    "grammars": [
+        {
+            "language": "cmake",
+            "scopeName": "source.cmake",
+            "path": "./syntaxes/CMake.tmLanguage."
+        },
+        {
+            "language": "cmake-cache",
+            "scopeName": "source.cmakecache",
+            "path": "./syntaxes/CMakeCache.tmLanguage."
+        }
+    ],
     "commands": [
       {
         "command": "cmake.openCMakePresets",
@@ -3817,8 +3845,5 @@
     "minimatch": "^3.0.5",
     "**/braces": "^3.0.3"
   },
-  "extensionPack": [
-    "twxs.cmake"
-  ],
   "packageManager": "yarn@1.22.19"
 }
