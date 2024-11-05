@@ -36,7 +36,5 @@ suite('Coverage Handling', () => {
 
         expect(coverageDetail![1].executed).to.eq(1);
         expect((coverageDetail![1].location as vscode.Position).line).to.eq(3);
-
-        console.log(JSON.stringify(coverageDetail, null, 4));
     });
 });
