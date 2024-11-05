@@ -401,7 +401,7 @@ export class CTestDriver implements vscode.Disposable {
      * Retrieve the driver from the test in argument
      *
      * @param test : test to retrieve the driver from
-     * @returns : the driver 
+     * @returns : the driver
      */
     private async getProjectDriver(test: vscode.TestItem): Promise<CMakeDriver> {
         const folder = this.getTestRootFolder(test);
