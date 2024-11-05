@@ -118,6 +118,10 @@ interface CTestInfo {
     version: { major: number; minor: number };
 }
 
+/* The preRunCoverageTarget and postRunCoverageTarget are optional user
+configured targets that are run before and after the tests when a "Run with
+Coverage" test execution is triggered. These cae be used to zero the
+coverage counters, filter coverage results etc. */
 interface ProjectCoverageConfig {
     project: CMakeProject;
     driver: CMakeDriver;
@@ -887,6 +891,7 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private async handleCoverageOnProjects(run: vscode.TestRun, projectCoverageConfigs: ProjectCoverageConfig[]) {
+        // Currently only LCOV coverage info files are supported
         for (const projectCoverageConfig of projectCoverageConfigs) {
             if (projectCoverageConfig.coverageInfoFiles.length === 0) {
                 log.warning(localize('test.noCoverageInfoFiles', 'No coverage info files for CMake project {0}. No coverage data will be analyzed for this project.', projectCoverageConfig.project.sourceDir));
