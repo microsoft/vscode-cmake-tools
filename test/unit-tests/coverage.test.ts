@@ -1,6 +1,7 @@
 import { handleCoverageInfoFiles } from "@cmt/coverage";
 import * as vscode from "vscode";
 import { expect, getTestResourceFilePath } from "@test/util";
+import * as path from "path";
 
 suite('Coverage Handling', () => {
 
@@ -27,7 +28,7 @@ suite('Coverage Handling', () => {
         const coverageData = new WeakMap<vscode.FileCoverage, vscode.FileCoverageDetail[]>();
         await handleCoverageInfoFiles(testRun, [getTestResourceFilePath('lcov.info')], coverageData);
         expect(filesCoverages.length).to.eq(1);
-        expect(filesCoverages[0].uri.fsPath).to.eq('/tmp/lcov/main.cpp');
+        expect(filesCoverages[0].uri.fsPath).to.eq(path.join(path.sep, 'tmp', 'lcov', 'main.cpp'));
         const coverageDetail = coverageData.get(filesCoverages[0]);
         expect(coverageDetail).to.not.be.undefined;
 

@@ -48,7 +48,7 @@ add_custom_target(runTestTarget DEPENDS TestBuildProcess
     COMMENT "Run test target"
 )
 
-find_program(LCOV lcov)
+find_program(LCOV lcov REQUIRED)
 set(LCOV_BASE lcov-base.info)
 set(LCOV_TEST lcov-test.info)
 set(LCOV_TOTAL lcov.info)
@@ -56,25 +56,25 @@ set(LCOV_LOG lcov.log)
 set(LCOV_ERR lcov.err)
 add_custom_target(init-coverage
     COMMENT "Collecting initial coverage"
-    COMMAND ${LCOV} -c -i -d ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND lcov -c -i -d ${CMAKE_CURRENT_BINARY_DIR}
         -o ${LCOV_BASE} 2>${LCOV_ERR} >${LCOV_LOG})
 add_dependencies(init-coverage reset-coverage)
 
 add_custom_target(reset-coverage
     COMMENT "Reset all coverage counters to zero"
-    COMMAND ${LCOV} -q -z -d ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND lcov -q -z -d ${CMAKE_CURRENT_BINARY_DIR}
         -o ${LCOV_BASE}
-    COMMAND ${LCOV} -q -z -d ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND lcov -q -z -d ${CMAKE_CURRENT_BINARY_DIR}
         -o ${LCOV_TEST}
-    COMMAND ${LCOV} -q -z -d ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND lcov -q -z -d ${CMAKE_CURRENT_BINARY_DIR}
         -o ${LCOV_TOTAL})
 
 add_custom_target(capture-coverage
     COMMENT "Capture coverage data"
     DEPENDS ${LCOV_BASE}
-    COMMAND ${LCOV} -c -d ${CMAKE_CURRENT_BINARY_DIR} -o ${LCOV_TEST}
+    COMMAND lcov -c -d ${CMAKE_CURRENT_BINARY_DIR} -o ${LCOV_TEST}
         2>${LCOV_ERR} >${LCOV_LOG}
-    COMMAND ${LCOV} -a ${LCOV_BASE} -a ${LCOV_TEST} -o ${LCOV_TOTAL}
+    COMMAND lcov -a ${LCOV_BASE} -a ${LCOV_TEST} -o ${LCOV_TOTAL}
         >>${LCOV_LOG}
-    COMMAND ${LCOV} -r ${LCOV_TOTAL} -o ${LCOV_TOTAL} "'/usr/include*'"
+    COMMAND lcov -r ${LCOV_TOTAL} -o ${LCOV_TOTAL} "'/usr/include*'"
         >>${LCOV_LOG})

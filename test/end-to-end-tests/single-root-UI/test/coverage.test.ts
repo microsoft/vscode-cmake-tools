@@ -1,5 +1,7 @@
 import { DefaultEnvironment, expect } from '@test/util';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // From vscode: src/vs/workbench/contrib/testing/common/testTypes.ts
 const enum TestResultState {
@@ -59,5 +61,6 @@ suite('Coverage integration', () => {
         const testResult: any = await vscode.commands.executeCommand('testing.coverage.uri', vscode.Uri.file(testEnv.projectFolder.location));
         expect(testResult['tasks'][0].hasCoverage).to.be.eq(true);
         expect(testResult['items'][2].computedState).to.be.eq(TestResultState.Passed);
+        expect(fs.existsSync(path.join(testEnv.projectFolder.location, testEnv.buildLocation, 'lcov.info'))).to.be.true;
     }).timeout(60000);
 });
