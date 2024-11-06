@@ -2591,10 +2591,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
-          "scope": "resource",
-          "tags": [
-            "experimental"
-          ]
+          "scope": "resource"
         },
         "cmake.configureOnEdit": {
           "type": "boolean",
