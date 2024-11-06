@@ -207,7 +207,6 @@ export interface ExtensionConfigurationSettings {
     loggingLevel: LogLevelKey;
     additionalKits: string[];
     touchbar: TouchBarConfig;
-    showOptionsMovedNotification: boolean;
     options: OptionConfig;
     useCMakePresets: UseCMakePresets;
     useVsDeveloperEnvironment: UseVsDeveloperEnvironment;
@@ -621,7 +620,6 @@ export class ConfigurationReader implements vscode.Disposable {
         loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
         additionalKits: new vscode.EventEmitter<string[]>(),
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
-        showOptionsMovedNotification: new vscode.EventEmitter<boolean>(),
         options: new vscode.EventEmitter<OptionConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         useVsDeveloperEnvironment: new vscode.EventEmitter<UseVsDeveloperEnvironment>(),
