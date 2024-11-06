@@ -2747,12 +2747,6 @@
             }
           }
         },
-        "cmake.showOptionsMovedNotification": {
-          "type": "boolean",
-          "default": true,
-          "description": "%cmake-tools.configuration.cmake.showOptionsMovedNotification%",
-          "scope": "application"
-        },
         "cmake.showConfigureWithDebuggerNotification": {
             "type": "boolean",
             "default": true,

@@ -65,7 +65,6 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         touchbar: {
             visibility: "default"
         },
-        showOptionsMovedNotification: true,
         options: {
             advanced: {},
             statusBarVisibility: "visible"
