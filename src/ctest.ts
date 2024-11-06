@@ -32,6 +32,8 @@ interface SiteAttributes {}
 
 type TestStatus = ('failed' | 'notrun' | 'passed');
 
+type DriverMapT = Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>;
+
 export interface TestMeasurement {
     type: string;
     name: string;
@@ -395,9 +397,34 @@ export class CTestDriver implements vscode.Disposable {
         run.failed(test, message, duration);
     }
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
-        let returnCode: number = 0;
-        const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[]}>();
+    /**
+     * Retrieve the driver from the test in argument
+     *
+     * @param test : test to retrieve the driver from
+     * @returns : the driver
+     */
+    private async getProjectDriver(test: vscode.TestItem): Promise<CMakeDriver> {
+        const folder = this.getTestRootFolder(test);
+        const project = await this.projectController?.getProjectForFolder(folder);
+        if (!project) {
+            throw new Error(localize('no.project.found', 'No project found for folder {0}', folder));
+        }
+        const _driver = await project.getCMakeDriverInstance();
+        if (!_driver) {
+            throw new Error(localize('no.driver.found', 'No driver found for folder {0}', folder));
+        }
+        return _driver;
+    }
+
+    /**
+     * Recursively collect all tests informations among all the test suite tree and store them in the driverMap
+     *
+     */
+    private async fillDriverMap(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driverMap?: DriverMapT, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false): Promise<void> {
+        let _driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
+        if (driverMap) {
+            _driverMap = driverMap;
+        }
 
         /**
          * Loop through the tests and get the driver, ctestPath, ctestArgs for each test. Construct a map for each soure directory, mapping drivers to tests.
@@ -407,15 +434,10 @@ export class CTestDriver implements vscode.Disposable {
             if (driver) {
                 _driver = driver;
             } else {
-                const folder = this.getTestRootFolder(test);
-                const project = await this.projectController?.getProjectForFolder(folder);
-                if (!project) {
-                    this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
-                    continue;
-                }
-                _driver = await project.getCMakeDriverInstance();
-                if (!_driver) {
-                    this.ctestErrored(test, run, { message: localize('no.driver.found', 'No driver found for folder {0}', folder) });
+                try {
+                    _driver = await this.getProjectDriver(test);
+                } catch (err: any) {
+                    this.ctestErrored(test, run, { message: err.message });
                     continue;
                 }
             }
@@ -444,21 +466,26 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             if (test.children.size > 0) {
-                // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
+                // If test has children then it is a suite, so we need to recursively call this function
                 const children = this.testItemCollectionToArray(test.children);
-                if (await this.runCTestHelper(children, run, cancellation, _driver, _ctestPath, _ctestArgs, customizedTask, consumer, entryPoint)) {
-                    returnCode = -1;
-                }
-                return returnCode;
+                await this.fillDriverMap(children, run, cancellation, _driverMap, _driver, _ctestPath, _ctestArgs, customizedTask);
             } else {
-                if (!driverMap.has(_driver.sourceDir)) {
-                    driverMap.set(_driver.sourceDir, { driver: _driver, ctestPath: _ctestPath, ctestArgs: _ctestArgs, tests: [test] });
+                // If test has no children, it is a leaf of the test suite hierarchy so add its characteristics to the driver map
+                if (!_driverMap.has(_driver.sourceDir)) {
+                    _driverMap.set(_driver.sourceDir, { driver: _driver, ctestPath: _ctestPath, ctestArgs: _ctestArgs, tests: [test] });
                 } else {
-                    const d = driverMap.get(_driver.sourceDir);
-                    driverMap.set(_driver.sourceDir, { driver: d!.driver, ctestPath: d!.ctestPath, ctestArgs: d!.ctestArgs, tests: d!.tests.concat(test) });
+                    const d = _driverMap.get(_driver.sourceDir);
+                    _driverMap.set(_driver.sourceDir, { driver: d!.driver, ctestPath: d!.ctestPath, ctestArgs: d!.ctestArgs, tests: d!.tests.concat(test) });
                 }
             }
         }
+    };
+
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
+        let returnCode: number = 0;
+        const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
+
+        await this.fillDriverMap(tests, run, cancellation, driverMap, driver, ctestPath, ctestArgs, customizedTask);
 
         if (!this.ws.config.ctestAllowParallelJobs) {
             for (const driver of driverMap.values()) {
@@ -777,7 +804,7 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     }
 
-                    const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer,  testDefFile ? vscode.Uri.file(testDefFile) : undefined);
+                    const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer, testDefFile ? vscode.Uri.file(testDefFile) : undefined);
                     const testItem = testAndParentSuite.test;
                     const parentSuiteItem = testAndParentSuite.parentSuite;
 

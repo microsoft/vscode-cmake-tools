@@ -2591,10 +2591,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
-          "scope": "resource",
-          "tags": [
-            "experimental"
-          ]
+          "scope": "resource"
         },
         "cmake.configureOnEdit": {
           "type": "boolean",
@@ -2749,12 +2746,6 @@
               ]
             }
           }
-        },
-        "cmake.showOptionsMovedNotification": {
-          "type": "boolean",
-          "default": true,
-          "description": "%cmake-tools.configuration.cmake.showOptionsMovedNotification%",
-          "scope": "application"
         },
         "cmake.showConfigureWithDebuggerNotification": {
             "type": "boolean",
@@ -3701,6 +3692,7 @@
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/badProject/runTest.js && node ./out/test/smoke/goodProject/runTest.js && node ./out/test/smoke/noCtest/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
+    "integrationTests": "yarn run pretest && node ./out/test/integration-tests/runTest.js",
     "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
     "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
