@@ -1555,7 +1555,6 @@ export class CMakeProject {
                             await fs.mkdir_p(parentDir);
                             try {
                                 await fs.copyFile(compdbPath, expandedDest);
-                                compdbPaths.push(expandedDest);
                             } catch (e: any) {
                                 // Just display the error. It's the best we can do.
                                 void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy {0} to {1}: {2}', `"${compdbPath}"`, `"${expandedDest}"`, e.toString()));
