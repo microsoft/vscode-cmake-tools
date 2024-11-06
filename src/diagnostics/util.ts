@@ -117,3 +117,23 @@ export abstract class RawDiagnosticParser {
      */
     protected abstract doHandleLine(line: string): RawDiagnostic | FeedLineResult;
 }
+
+/**
+ * Match types for gcc related regex diagnostics
+ */
+export enum MatchType {
+    Full,
+    File,
+    Line,
+    Column,
+    Severity,
+    Message
+}
+
+/**
+ * Regex pattern interface for generic gcc related regex diagnostics
+ */
+export interface RegexPattern {
+    regexPattern: RegExp;
+    matchTypes: MatchType[];
+}
