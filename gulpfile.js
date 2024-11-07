@@ -255,6 +255,13 @@ const generateJsonSchemaLoc = () => {
 
 gulp.task('translations-generate', gulp.series(generatedSrcLocBundle, generatedAdditionalLocFiles, generateJsonSchemaLoc));
 
+// TODO: Insert task that grabs the language services assets and drops them in a folder, maybe called 'data'.
+
+const languageServices = () => {
+    return gulp.src(["assets/*.json"]).pipe(gulp.dest("assets"));
+}
+gulp.task('language-services', languageServices);
+
 const allTypeScript = [
     'src/**/*.ts',
     'test/**/*.ts',
