@@ -24,7 +24,7 @@ interface Variable {
 
 export class LanguageServiceData implements vscode.HoverProvider, vscode.CompletionItemProvider {
     private commandsJson: Commands = {};
-    private variablesJson: Variables = {};
+    private variablesJson: Variables = {}; // variables and properties
 
     private constructor() {
     }
@@ -59,6 +59,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             if (this.commandsJson[key].name.includes(currentWord)) {
                 const completionItem = new vscode.CompletionItem(this.commandsJson[key].name);
                 completionItem.insertText = (this.commandsJson[key].name);
+                completionItem.kind = vscode.CompletionItemKind.Function;
                 return completionItem;
             }
             return null;
@@ -66,6 +67,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             if (this.variablesJson[key].name.includes(currentWord)) {
                 const completionItem = new vscode.CompletionItem(this.variablesJson[key].name);
                 completionItem.insertText = (this.variablesJson[key].name);
+                completionItem.kind = vscode.CompletionItemKind.Variable;
                 return completionItem;
             }
             return null;
@@ -74,8 +76,8 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         return suggestions as vscode.CompletionItem[];
     }
 
-    resolveCompletionItem?(_item: vscode.CompletionItem, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.CompletionItem> {
-        return null;
+    resolveCompletionItem?(item: vscode.CompletionItem, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.CompletionItem> {
+        return item;
     }
 
     provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
@@ -90,7 +92,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
 
         const markdown: vscode.MarkdownString = new vscode.MarkdownString();
         markdown.appendMarkdown(hoverSuggestions.description);
-        hoverSuggestions.syntax_examples.forEach((example) => {
+        hoverSuggestions.syntax_examples?.forEach((example) => {
             markdown.appendCodeblock(`\t${example}`, "cmake");
         });
 
