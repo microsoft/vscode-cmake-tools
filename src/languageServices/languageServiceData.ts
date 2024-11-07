@@ -10,7 +10,7 @@ interface Commands {
 interface Command {
     name: string;
     description: string;
-    syntax_examples: string;
+    syntax_examples: string[];
 }
 
 interface Variables {
@@ -42,8 +42,36 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         return data;
     }
 
-    provideCompletionItems(_document: vscode.TextDocument, _position: vscode.Position, _token: vscode.CancellationToken, _context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
-        return null;
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, _context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
+        const wordAtPosition = document.getWordRangeAtPosition(position);
+
+        let currentWord = "";
+        if (wordAtPosition && wordAtPosition.start.character < position.character) {
+            const word = document.getText(wordAtPosition);
+            currentWord = word.substr(0, position.character - wordAtPosition.start.character);
+        }
+
+        if (token.isCancellationRequested) {
+            return null;
+        }
+
+        const suggestions = Object.keys(this.commandsJson).map((key) => {
+            if (this.commandsJson[key].name.includes(currentWord)) {
+                const completionItem = new vscode.CompletionItem(this.commandsJson[key].name);
+                completionItem.insertText = (this.commandsJson[key].name);
+                return completionItem;
+            }
+            return null;
+        }).filter((value) => value !== null).concat(Object.keys(this.variablesJson).map((key) => {
+            if (this.variablesJson[key].name.includes(currentWord)) {
+                const completionItem = new vscode.CompletionItem(this.variablesJson[key].name);
+                completionItem.insertText = (this.variablesJson[key].name);
+                return completionItem;
+            }
+            return null;
+        }).filter((value) => value !== null));
+
+        return suggestions as vscode.CompletionItem[];
     }
 
     resolveCompletionItem?(_item: vscode.CompletionItem, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.CompletionItem> {
@@ -59,8 +87,15 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         }
 
         const hoverSuggestions = this.commandsJson[value] || this.variablesJson[value];
+
+        const markdown: vscode.MarkdownString = new vscode.MarkdownString();
+        markdown.appendMarkdown(hoverSuggestions.description);
+        hoverSuggestions.syntax_examples.forEach((example) => {
+            markdown.appendCodeblock(`\t${example}`, "cmake");
+        });
+
         if (hoverSuggestions) {
-            return new vscode.Hover({language: 'md', value: hoverSuggestions.description });
+            return new vscode.Hover(markdown);
         }
 
         return null;
