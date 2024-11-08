@@ -13,11 +13,15 @@ Improvements:
 - Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
 - Fix "Test output isn't visible when failed" and also mark skipped tests as so. [#4116](https://github.com/microsoft/vscode-cmake-tools/issues/4116)
 - Ensure that stopping tests actually forces the tests to stop running. [#2095](https://github.com/microsoft/vscode-cmake-tools/issues/2095)
+- Retire the Show Options Moved Notification [#4039](https://github.com/microsoft/vscode-cmake-tools/issues/4039)
 
 Bug Fixes:
 
+- Fix issue where setting test suite delimiter prevent execution of all tests. [#4092](https://github.com/microsoft/vscode-cmake-tools/issues/4092)
 - Fix our setting of `isUserPreset` for presets, only set it to `true` if it's defined in a user presets file. [#4059](https://github.com/microsoft/vscode-cmake-tools/issues/4059)
 - Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
+- Ensure that we're sanitizing paths for `cmake.copyCompileCommands`. [#3874](https://github.com/microsoft/vscode-cmake-tools/issues/3874)
+- Ensure that tests are updated after a build. [#4148](https://github.com/microsoft/vscode-cmake-tools/pull/4148)
 - Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
 
 ## 1.19.52
