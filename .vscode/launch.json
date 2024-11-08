@@ -105,6 +105,7 @@
             ],
             "sourceMaps": true,
             "outFiles": [
+                "${workspaceFolder}/dist/**/*.js",
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/src/**",
                 "${workspaceFolder}/out/test/*",
