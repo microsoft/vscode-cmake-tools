@@ -710,10 +710,10 @@ export class CTestDriver implements vscode.Disposable {
             return -1;
         }
 
-        if (util.isTestMode()) {
-            // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
-            return 0;
-        }
+        // if (util.isTestMode()) {
+        //     // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
+        //     return 0;
+        // }
 
         const initializedTestExplorer = this.ensureTestExplorerInitialized();
         const sourceDir = util.platformNormalizePath(driver.sourceDir);
