@@ -69,8 +69,6 @@ export class PresetsController implements vscode.Disposable {
         // there might be timing issues, since listeners are invoked async.
         await presetsController.reapplyPresets();
 
-        await presetsController.watchPresetsChange();
-
         project.workspaceContext.config.onChange('allowCommentsInPresetsFile', async () => {
             await presetsController.reapplyPresets();
             vscode.workspace.textDocuments.forEach(doc => {
@@ -140,7 +138,8 @@ export class PresetsController implements vscode.Disposable {
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
     // (need to clean or reload driver)
     async reapplyPresets() {
-        const referencedFiles: Map<string, preset.PresetsFile | undefined> = new Map();
+        const referencedFiles: Map<string, preset.PresetsFile | undefined> =
+            new Map();
 
         // Reset all changes due to expansion since parents could change
         await this._presetsParser.resetPresetsFiles(
@@ -158,6 +157,8 @@ export class PresetsController implements vscode.Disposable {
             await this.setConfigurePreset(this.project.configurePreset.name);
         }
         // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
+
+        await this.watchPresetsChange();
     }
 
     private showNameInputBox() {
@@ -1620,9 +1621,24 @@ export class PresetsController implements vscode.Disposable {
  */
 class FileWatcher implements vscode.Disposable {
     private watchers: Map<string, chokidar.FSWatcher>;
+    // Debounce the change handler to avoid multiple changes being triggered by a single file change. Two change events are coming in rapid succession without this.
+    private canRunChangeHandler = true;
 
     public constructor(paths: string | string[], eventHandlers: Map<string, () => void>, options?: chokidar.WatchOptions) {
         this.watchers = new Map<string, chokidar.FSWatcher>();
+
+        // We debounce the change event to avoid multiple changes being triggered by a single file change.
+        const onChange = eventHandlers.get('change');
+        if (onChange) {
+            const debouncedOnChange = () => {
+                if (this.canRunChangeHandler) {
+                    onChange();
+                    this.canRunChangeHandler = false;
+                    setTimeout(() => (this.canRunChangeHandler = true), 500);
+                }
+            };
+            eventHandlers.set("change", debouncedOnChange);
+        }
 
         for (const path of Array.isArray(paths) ? paths : [paths]) {
             try {
