@@ -13,6 +13,11 @@ interface Command {
     syntax_examples: string[];
 }
 
+// Same as variables right now. If we modify, create individual interfaces.
+interface Modules extends Variables {
+
+}
+
 interface Variables {
     [key: string]: Variable;
 }
@@ -23,8 +28,9 @@ interface Variable {
 }
 
 export class LanguageServiceData implements vscode.HoverProvider, vscode.CompletionItemProvider {
-    private commandsJson: Commands = {};
-    private variablesJson: Variables = {}; // variables and properties
+    private commands: Commands = {};
+    private variables: Variables = {}; // variables and properties
+    private modules: Modules = {};
 
     private constructor() {
     }
@@ -32,8 +38,9 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
     private async load(): Promise<void> {
         const test = thisExtensionPath();
         console.log(test);
-        this.commandsJson = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'commands.json')));
-        this.variablesJson = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'variables.json')));
+        this.commands = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'commands.json')));
+        this.variables = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'variables.json')));
+        this.modules = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'modules.json')));
     }
 
     public static async create(): Promise<LanguageServiceData> {
@@ -55,19 +62,27 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             return null;
         }
 
-        const suggestions = Object.keys(this.commandsJson).map((key) => {
-            if (this.commandsJson[key].name.includes(currentWord)) {
-                const completionItem = new vscode.CompletionItem(this.commandsJson[key].name);
-                completionItem.insertText = (this.commandsJson[key].name);
+        const suggestions = Object.keys(this.commands).map((key) => {
+            if (this.commands[key].name.includes(currentWord)) {
+                const completionItem = new vscode.CompletionItem(this.commands[key].name);
+                completionItem.insertText = (this.commands[key].name);
                 completionItem.kind = vscode.CompletionItemKind.Function;
                 return completionItem;
             }
             return null;
-        }).filter((value) => value !== null).concat(Object.keys(this.variablesJson).map((key) => {
-            if (this.variablesJson[key].name.includes(currentWord)) {
-                const completionItem = new vscode.CompletionItem(this.variablesJson[key].name);
-                completionItem.insertText = (this.variablesJson[key].name);
+        }).filter((value) => value !== null).concat(Object.keys(this.variables).map((key) => {
+            if (this.variables[key].name.includes(currentWord)) {
+                const completionItem = new vscode.CompletionItem(this.variables[key].name);
+                completionItem.insertText = (this.variables[key].name);
                 completionItem.kind = vscode.CompletionItemKind.Variable;
+                return completionItem;
+            }
+            return null;
+        }).filter((value) => value !== null)).concat(Object.keys(this.modules).map((key) => {
+            if (this.modules[key].name.includes(currentWord)) {
+                const completionItem = new vscode.CompletionItem(this.modules[key].name);
+                completionItem.insertText = (this.modules[key].name);
+                completionItem.kind = vscode.CompletionItemKind.Module;
                 return completionItem;
             }
             return null;
@@ -88,7 +103,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             return null;
         }
 
-        const hoverSuggestions = this.commandsJson[value] || this.variablesJson[value];
+        const hoverSuggestions = this.commands[value] || this.variables[value] || this.modules[value];
 
         const markdown: vscode.MarkdownString = new vscode.MarkdownString();
         markdown.appendMarkdown(hoverSuggestions.description);
