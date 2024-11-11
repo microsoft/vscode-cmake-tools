@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Configura cómo la extensión muestra los botones en la Touch Bar de un MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Muestra los botones de la barra táctil en los sistemas compatibles.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "No muestra los botones de la barra táctil.",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Habilita la notificación sobre el movimiento de las opciones de la barra de estado a la vista Estado del proyecto para mostrar cuándo se inicia la extensión.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Habilita el elemento emergente que pregunta al usuario si, tras un error de configuración, quiere configurarlo con el depurador de CMake.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Habilita el elemento emergente que pregunta al usuario si desea continuar con la compilación a pesar de que es posible que algunos archivos no se guarden. Si no está habilitada, la compilación continuará.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Muestra la opción de barra de estado a tamaño completo.",

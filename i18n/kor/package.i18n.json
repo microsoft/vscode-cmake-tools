@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "확장이 MacBook Touch Bar에 단추를 표시하는 방식을 구성합니다.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "지원되는 시스템에 Touch Bar 단추를 표시합니다.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Touch Bar 단추를 표시하지 않습니다.",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "확장 시작 시기를 표시하기 위해 프로젝트 상태 보기로 이동하는 상태 표시줄 옵션에 대한 알림을 사용하도록 설정합니다.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "구성 실패 시 CMake 디버거를 사용하여 구성할지를 묻는 팝업을 사용합니다.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "일부 파일이 저장되지 않았을 수 있음에도 불구하고 빌드를 계속할 것인지 묻는 팝업을 활성화합니다. 활성화하지 않으면 빌드가 계속 진행됩니다.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "상태 표시줄 옵션을 전체 크기로 표시합니다.",

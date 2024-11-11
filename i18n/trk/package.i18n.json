@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Uzantının, düğmeleri MacBook Touch Bar'da nasıl görüntüleyeceğini yapılandırır.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Desteklenen sistemlerde Touch Bar düğmelerini göster.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Touch Bar düğmelerini göstermeyin.",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Uzantının ne zaman başladığını göstermek üzere Proje Durum Görünümü'ne taşınan durum çubuğu seçenekleriyle ilgili bildirimi etkinleştirir.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Kullanıcıya başarısız bir yapılandırmadan sonra CMake Hata Ayıklayıcısı ile yapılandırmak isteyip istemediğini soran açılır pencereyi etkinleştirir.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Bazı dosyalar kaydedilmeyebilecek olduğu halde kullanıcıya derlemeye devam etmek isteyip istemediklerini soran açılır pencereyi etkinleştirir. Etkinleştirilmezse, derlemeye devam eder.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Durum çubuğu seçeneğini tam boyutta göster.",

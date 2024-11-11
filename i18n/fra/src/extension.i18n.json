@@ -47,8 +47,5 @@
 	"loading.extension.commands": "Chargement des commandes d'extension",
 	"register.command": "Inscrire la commande d'extension CMakeTools {0}",
 	"uninstall.old.cmaketools": "Désinstallez les anciennes versions de l'extension CMake Tools. Elle est désormais publiée par Microsoft à partir de la version 1.2.0.",
-	"options.moved.notification.body": "Certaines options de la barre d'état dans CMake Tools ont maintenant été déplacées vers la vue d'état du projet dans la barre latérale de CMake Tools. Affichez le nœud dans la vue d'état du projet. Vous pouvez personnaliser votre vue avec la propriété « cmake.options » dans les paramètres.",
-	"options.moved.notification.configure.cmake.options": "Configurer la visibilité des options CMake",
-	"options.moved.notification.do.not.show": "Ne plus afficher",
 	"deactivate.cmaketools": "Désactiver CMakeTools"
 }

@@ -47,8 +47,5 @@
 	"loading.extension.commands": "Загрузка команд расширения.",
 	"register.command": "Регистрация команды расширения CMakeTools {0}",
 	"uninstall.old.cmaketools": "Удалите все старые версии расширения \"Средства CMake\". Начиная с версии 1.2.0, это расширение публикуется корпорацией Майкрософт.",
-	"options.moved.notification.body": "Некоторые параметры строки состояния в Средствах CMake перемещены в представление состояния проекта на боковой панели Средств CMake. Вы можете настроить представление, используя свойство \"cmake.options\" в параметрах.",
-	"options.moved.notification.configure.cmake.options": "Настроить отображение параметров CMake",
-	"options.moved.notification.do.not.show": "Больше не показывать",
 	"deactivate.cmaketools": "Деактивировать CMakeTools"
 }
