@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Настраивает отображение кнопок расширения в панели Touch Bar на MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Отображение кнопок панели Touch Bar на поддерживаемых системах.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Кнопки панели Touch Bar отображаться не будут.",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Включает уведомление о параметрах строки состояния, перемещаемых в представление состояния проекта, для отображения при запуске расширения.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Разрешает всплывающее окно, которое при сбое настройки спрашивает у пользователя, хочет ли он выполнить настройку с помощью отладчика CMake.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Разрешает всплывающее окно, которое запрашивает у пользователя, хочет ли он продолжить сборку несмотря на то, что некоторые файлы могли не сохраниться. Если этот параметр не включен, сборка будет продолжена.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Отображение параметра строки состояния в полном размере.",

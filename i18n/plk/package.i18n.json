@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Konfiguruje sposób wyświetlania przez rozszerzenie przycisków na pasku Touch Bar komputera MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Pokaż przyciski paska Touch Bar w obsługiwanych systemach.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Nie pokazuj przycisków paska Touch Bar.",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Włącza powiadomienie o opcjach paska stanu przenoszonych do widoku stanu projektu, które będzie wyświetlane po uruchomieniu rozszerzenia.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Włącza wyskakujące okienko z pytaniem, czy po nieudanej konfiguracji użytkownik chce przeprowadzić konfigurację za pomocą debugera narzędzia CMake.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Włącza wyskakujące okienko z pytaniem, czy użytkownik chce kontynuować kompilację, mimo że niektóre pliki mogą nie zostać zapisane. Jeśli ta opcja nie zostanie włączona, kompilacja będzie kontynuowana.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Pokaż opcję paska stanu w pełnym rozmiarze.",

@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "拡張機能によってボタンが MacBook の Touch Bar にどのように表示されるかを構成します。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "サポートされているシステムで Touch Bar ボタンを表示します。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Touch Bar ボタンを表示しません。",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "拡張機能の開始時に表示するプロジェクト状態ビューに移動するステータス バー オプションに関する通知を有効にします。",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "失敗した構成時に CMake デバッガーを使用して構成するかどうかをユーザーに確認するポップアップを有効にします。",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "一部のファイルが保存されていない可能性があるにもかかわらず、ビルドを続行するかどうかをユーザーに確認するポップアップを有効にします。有効にしない場合、ビルドは続行されます。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "ステータス バー オプションをフル サイズで表示します。",

@@ -47,8 +47,5 @@
 	"loading.extension.commands": "Carregando comandos de extensão",
 	"register.command": "Registrar o comando de extensão de CMakeTools {0}",
 	"uninstall.old.cmaketools": "Desinstale as versões mais antigas da extensão de Ferramentas CMake. Iniciando com a versão 1.2.0, a extensão passou a ser publicada pela Microsoft.",
-	"options.moved.notification.body": "Algumas opções da barra de status nas Ferramentas do CMake agora foram movidas para a Exibição de Status do Projeto na barra lateral de Ferramentas do CMake. Você pode personalizar sua exibição com a propriedade ''cmake.options'' nas configurações.",
-	"options.moved.notification.configure.cmake.options": "Configurar a Visibilidade das Opções do CMake",
-	"options.moved.notification.do.not.show": "Não Mostrar Novamente",
 	"deactivate.cmaketools": "Desativar CMakeTools"
 }
