@@ -14,6 +14,7 @@ Improvements:
 - Fix "Test output isn't visible when failed" and also mark skipped tests as so. [#4116](https://github.com/microsoft/vscode-cmake-tools/issues/4116)
 - Ensure that stopping tests actually forces the tests to stop running. [#2095](https://github.com/microsoft/vscode-cmake-tools/issues/2095)
 - Retire the Show Options Moved Notification [#4039](https://github.com/microsoft/vscode-cmake-tools/issues/4039)
+- Improve the pinned commands experience by defaulting settings and using VS Code state rather than modifying user settings. [#3977](https://github.com/microsoft/vscode-cmake-tools/issues/3977)
 
 Bug Fixes:
 
