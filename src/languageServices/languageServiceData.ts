@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { fs } from "@cmt/pr";
 import { thisExtensionPath } from "@cmt/util";
+import * as util from "@cmt/util";
 
 interface Commands {
     [key: string]: Command;
@@ -35,12 +36,22 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
     private constructor() {
     }
 
+    private async getFile(fileEnding: string, locale: string): Promise<string> {
+        let filePath: string = path.join(thisExtensionPath(), 'dist/languageServices', locale, 'assets', fileEnding);
+        const fileExists: boolean = await util.checkFileExists(filePath);
+        if (!fileExists) {
+            filePath = path.join(thisExtensionPath(), 'assets', fileEnding);
+        }
+        return fs.readFile(filePath);
+    }
+
     private async load(): Promise<void> {
         const test = thisExtensionPath();
         console.log(test);
-        this.commands = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'commands.json')));
-        this.variables = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'variables.json')));
-        this.modules = JSON.parse(await fs.readFile(path.join(thisExtensionPath(), 'assets', 'modules.json')));
+        const locale: string = util.getLocaleId();
+        this.commands = JSON.parse(await this.getFile('commands.json', locale));
+        this.variables = JSON.parse(await this.getFile('variables.json', locale));
+        this.modules = JSON.parse(await this.getFile('modules.json', locale));
     }
 
     public static async create(): Promise<LanguageServiceData> {

@@ -3735,7 +3735,7 @@
   "scripts": {
     "compile": "yarn install && webpack --mode development",
     "compile-watch": "yarn install && webpack --mode development --watch --progress",
-    "compile-production": "yarn install && yarn run translations-generate && yarn run language-services && webpack --env BUILD_VSCODE_NLS=true --mode production",
+    "compile-production": "yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",
     "translations-import": "gulp translations-import",
