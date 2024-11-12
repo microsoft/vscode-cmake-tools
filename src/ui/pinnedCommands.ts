@@ -121,7 +121,7 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
             commands.forEach((x) => {
                 const label = localization[`cmake-tools.command.${x}.title`];
                 if (this.findNode(label) === -1) {
-                    this.pinnedCommands.push(new PinnedCommandNode(label, x, true));
+                    this.pinnedCommands.push(new PinnedCommandNode(label, x, activeCommands.has(x)));
                 }
             });
         };
