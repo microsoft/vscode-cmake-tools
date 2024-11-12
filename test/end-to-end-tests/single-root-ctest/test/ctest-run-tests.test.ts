@@ -15,7 +15,7 @@ suite('Ctest run tests', () => {
         this.timeout(100000);
 
         const build_loc = 'build';
-        const exe_res = 'output.txt';
+        const exe_res = 'output_test.txt';
 
         // CMakePresets.json and CMakeUserPresets.json exist so will use presets by default
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
@@ -28,7 +28,6 @@ suite('Ctest run tests', () => {
         this.timeout(100000);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        // await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
@@ -37,8 +36,6 @@ suite('Ctest run tests', () => {
         await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
 
         await vscode.commands.executeCommand('cmake.build');
-
-        // testEnv.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function (this: Mocha.Context) {
@@ -57,7 +54,8 @@ suite('Ctest run tests', () => {
         expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
-        expect(result['cookie']).to.eq('passed-cookie');
+        expect(result['test_a']).to.eq('OK');
+        expect(result['test_b']).to.eq('OK');
     }).timeout(100000);
 
 });

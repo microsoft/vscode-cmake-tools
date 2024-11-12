@@ -25,7 +25,10 @@ std::string dump_file(const std::string& filename) {
     }
     std::ostringstream oss;
     for (std::string line; std::getline(ifs, line);) {
-        oss << line << '\n';
+        oss << line;
+        if (ifs.good()) {
+            oss <<'\n';
+        }
     }
     if (ifs.bad()) {
         std::cerr << "Failed to read file: " << filename << '\n';
@@ -40,8 +43,16 @@ int main(int, char**) {
         std::cerr << "Failed to open output_test.txt\n";
         return 1;
     }
+
+    const auto& content_a = dump_file("test_a.txt");
+    const auto& content_b = dump_file("test_b.txt");
+
     ofs_test << "{\n";
-    ofs_test << dump_file("test_a.txt");
+    if (!content_a.empty())
+    {
+        ofs_test << dump_file("test_a.txt");
+        ofs_test << ",\n";
+    }
     ofs_test << dump_file("test_b.txt");
     ofs_test << "}\n";
     return 0;
