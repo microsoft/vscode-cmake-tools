@@ -1,38 +1,48 @@
-#include <cstdlib>
 #include <fstream>
+#include <filesystem>
 #include <iostream>
+#include <sstream>
 #include <string>
 
-#ifndef _CMAKE_VERSION
-    #define _CMAKE_VERSION "0.0"
-#endif
-
-#ifndef _GENERATOR
-    #define _GENERATOR ""
-#endif
-
-std::string getCompilerName() {
-    return C_COMPILER_ID;
-}
-
-std::string get_env_var(const std::string& key) {
-    const char* env = std::getenv(key.c_str());
-    return env != NULL ? env : "";
+/********************************************************************************/
+/**
+ * @brief Dump the content of a file to a string.
+ * 
+ * @param filename : The name of the file to dump.
+ * @return std::string : The content of the file.
+ */
+/********************************************************************************/
+std::string dump_file(const std::string& filename) {
+    std::filesystem::path filepath(filename);
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filename << '\n';
+        return {};
+    }
+    std::ifstream ifs (filepath, std::ifstream::in);
+    if (!ifs) {
+        std::cerr << "Failed to open file: " << filename << '\n';
+        return {};
+    }
+    std::ostringstream oss;
+    for (std::string line; std::getline(ifs, line);) {
+        oss << line << '\n';
+    }
+    if (ifs.bad()) {
+        std::cerr << "Failed to read file: " << filename << '\n';
+        return {};
+    }
+    return oss.str();
 }
 
 int main(int, char**) {
-    std::cout << "{\n";
-    std::cout << "  \"compiler\": \"" << getCompilerName() << "\",\n";
-    std::cout << "  \"cookie\": \"" CMT_COOKIE "\",\n";
-    std::cout << "  \"cmake-version\": \"" << _CMAKE_VERSION << "\",\n";
-    std::cout << "  \"cmake-generator\": \"" << _GENERATOR << "\",\n";
-    std::cout << "  \"configure-env\": \"" << get_env_var("_CONFIGURE_ENV") << "\",\n";
-    std::cout << "  \"build-env\": \"" << get_env_var("_BUILD_ENV") << "\",\n";
-    std::cout << "  \"env\": \"" << get_env_var("_ENV") << "\"\n";
-    std::cout << "}\n";
-
-    std::ofstream ofs ("test.txt", std::ofstream::out);
-    ofs << "{\n";
-    ofs << "  \"cookie\": \"" CMT_COOKIE "\",\n";
-    ofs << "}\n";
+    std::ofstream ofs_test("output_test.txt");
+    if (!ofs_test) {
+        std::cerr << "Failed to open output_test.txt\n";
+        return 1;
+    }
+    ofs_test << "{\n";
+    ofs_test << dump_file("test_a.txt");
+    ofs_test << dump_file("test_b.txt");
+    ofs_test << "}\n";
+    return 0;
 }
