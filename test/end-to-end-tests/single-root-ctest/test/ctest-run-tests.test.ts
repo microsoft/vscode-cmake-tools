@@ -40,9 +40,18 @@ suite('Ctest run tests', () => {
     });
 
     teardown(async function (this: Mocha.Context) {
-        await fs.unlink(path.join(paths.tmpDir, 'test_a.txt'));
-        await fs.unlink(path.join(paths.tmpDir, 'test_b.txt'));
-        await fs.unlink(path.join(testEnv.projectFolder.location, testEnv.buildLocation, testEnv.executableResult));
+        const file_a_path: string = path.join(paths.tmpDir, 'test_a.txt');
+        if (await fs.exists(file_a_path)) {
+            await fs.unlink(file_a_path);
+        }
+        const file_b_path: string = path.join(paths.tmpDir, 'test_b.txt');
+        if (await fs.exists(file_b_path)) {
+            await fs.unlink(file_b_path);
+        }
+        const output_test_path: string = path.join(testEnv.projectFolder.location, testEnv.buildLocation, testEnv.executableResult);
+        if (await fs.exists(output_test_path)) {
+            await fs.unlink(output_test_path);
+        }
     });
 
     suiteTeardown(async () => {
@@ -56,6 +65,7 @@ suite('Ctest run tests', () => {
 
     test('Test of ctest without parallel jobs', async () => {
         await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "");
         expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
@@ -75,6 +85,7 @@ suite('Ctest run tests', () => {
 
     test('Test of ctest with parallel jobs', async () => {
         await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "");
         expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
