@@ -28,6 +28,7 @@ suite('Ctest run tests', () => {
         this.timeout(100000);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', 'true');
 
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
