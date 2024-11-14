@@ -40,8 +40,9 @@ suite('Ctest run tests', () => {
     });
 
     teardown(async function (this: Mocha.Context) {
-        await fs.writeFile(path.join(paths.tmpDir, 'test_a.txt'), '[]');
-        await fs.writeFile(path.join(paths.tmpDir, 'test_b.txt'), '[]');
+        await fs.unlink(path.join(paths.tmpDir, 'test_a.txt'));
+        await fs.unlink(path.join(paths.tmpDir, 'test_b.txt'));
+        await fs.unlink(path.join(testEnv.projectFolder.location, testEnv.buildLocation, testEnv.executableResult));
     });
 
     suiteTeardown(async () => {
