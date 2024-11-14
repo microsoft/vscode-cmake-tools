@@ -29,7 +29,6 @@ suite('Ctest run tests', () => {
         this.timeout(100000);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
 
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
@@ -54,7 +53,8 @@ suite('Ctest run tests', () => {
         }
     });
 
-    test('Test of ctest', async () => {
+    test('Test of ctest without parallel jobs', async () => {
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
         expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
@@ -62,4 +62,12 @@ suite('Ctest run tests', () => {
         expect(result['test_b']).to.eq('OK');
     }).timeout(100000);
 
+    test('Test of ctest with parallel jobs', async () => {
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
+        expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(0);
+
+        const result = await testEnv.result.getResultAsJson();
+        expect(result['test_a']).to.eq('OK');
+        expect(result['test_b']).to.eq('OK');
+    }).timeout(100000);
 });
