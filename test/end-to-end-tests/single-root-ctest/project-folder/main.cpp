@@ -44,16 +44,16 @@ int main(int, char**) {
         return 1;
     }
 
-    const auto& content_a = dump_file("test_a.txt");
-    const auto& content_b = dump_file("test_b.txt");
+    const auto& content_a = dump_file("/tmp/test_a.txt");
+    const auto& content_b = dump_file("/tmp/test_b.txt");
 
     ofs_test << "{\n";
     if (!content_a.empty())
     {
-        ofs_test << dump_file("test_a.txt");
+        ofs_test << content_a;
         ofs_test << ",\n";
     }
-    ofs_test << dump_file("test_b.txt");
+    ofs_test << content_b;
     ofs_test << "}\n";
     return 0;
 }

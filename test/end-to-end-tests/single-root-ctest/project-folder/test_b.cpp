@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main() {
-  std::ofstream outfile("test_b.txt");
+  std::ofstream outfile("/tmp/test_b.txt");
   if (outfile.is_open()) {
     outfile << "\"test_b\": \"OK\"";
     outfile.close();

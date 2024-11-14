@@ -6,6 +6,7 @@ import {
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import paths from '@cmt/paths';
 
 suite('Ctest run tests', () => {
     let testEnv: DefaultEnvironment;
@@ -28,7 +29,7 @@ suite('Ctest run tests', () => {
         this.timeout(100000);
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', 'true');
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
 
         await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
@@ -40,6 +41,8 @@ suite('Ctest run tests', () => {
     });
 
     teardown(async function (this: Mocha.Context) {
+        await fs.writeFile(path.join(paths.tmpDir, 'test_a.txt'), '[]');
+        await fs.writeFile(path.join(paths.tmpDir, 'test_b.txt'), '[]');
     });
 
     suiteTeardown(async () => {
