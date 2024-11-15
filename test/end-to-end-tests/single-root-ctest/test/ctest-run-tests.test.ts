@@ -33,7 +33,7 @@ suite('Ctest run tests', () => {
         const build_loc = 'build';
         const exe_res = 'output_test.txt';
 
-        // CMakePresets.json and CMakeUserPresets.json exist so will use presets by default
+        // CMakePresets.json exist so will use presets by default
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
         compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
 
