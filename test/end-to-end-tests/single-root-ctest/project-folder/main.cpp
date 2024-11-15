@@ -51,7 +51,11 @@ int main(int, char**) {
     if (!content_a.empty())
     {
         ofs_test << content_a;
-        ofs_test << ",\n";
+        if (!content_b.empty())
+        {
+            ofs_test << ",";
+        }
+        ofs_test << "\n";
     }
     ofs_test << content_b;
     ofs_test << "}\n";
