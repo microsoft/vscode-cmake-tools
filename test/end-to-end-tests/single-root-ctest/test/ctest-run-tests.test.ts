@@ -75,7 +75,7 @@ suite('Ctest run tests', () => {
 
     test('Test of ctest without parallel jobs. Use test suite delimiter', async () => {
         await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', ".");
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
         expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
@@ -95,7 +95,7 @@ suite('Ctest run tests', () => {
 
     test('Test of ctest with parallel jobs. Use test suite delimiter', async () => {
         await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', ".");
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
         expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(0);
 
         const result = await testEnv.result.getResultAsJson();
