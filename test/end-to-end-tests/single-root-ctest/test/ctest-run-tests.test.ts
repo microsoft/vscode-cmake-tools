@@ -12,6 +12,21 @@ suite('Ctest run tests', () => {
     let testEnv: DefaultEnvironment;
     let compdb_cp_path: string;
 
+    async function cleanUpTestResultFiles() {
+        const file_a_path: string = path.join(paths.tmpDir, 'test_a.txt');
+        if (await fs.exists(file_a_path)) {
+            await fs.unlink(file_a_path);
+        }
+        const file_b_path: string = path.join(paths.tmpDir, 'test_b.txt');
+        if (await fs.exists(file_b_path)) {
+            await fs.unlink(file_b_path);
+        }
+        const output_test_path: string = path.join(testEnv.projectFolder.location, testEnv.buildLocation, testEnv.executableResult);
+        if (await fs.exists(output_test_path)) {
+            await fs.unlink(output_test_path);
+        }
+    }
+
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
 
@@ -26,18 +41,7 @@ suite('Ctest run tests', () => {
     });
 
     setup(async function (this: Mocha.Context) {
-        const file_a_path: string = path.join(paths.tmpDir, 'test_a.txt');
-        if (await fs.exists(file_a_path)) {
-            await fs.unlink(file_a_path);
-        }
-        const file_b_path: string = path.join(paths.tmpDir, 'test_b.txt');
-        if (await fs.exists(file_b_path)) {
-            await fs.unlink(file_b_path);
-        }
-        const output_test_path: string = path.join(testEnv.projectFolder.location, testEnv.buildLocation, testEnv.executableResult);
-        if (await fs.exists(output_test_path)) {
-            await fs.unlink(output_test_path);
-        }
+        await cleanUpTestResultFiles();
 
         this.timeout(100000);
 
@@ -53,18 +57,7 @@ suite('Ctest run tests', () => {
     });
 
     teardown(async function (this: Mocha.Context) {
-        const file_a_path: string = path.join(paths.tmpDir, 'test_a.txt');
-        if (await fs.exists(file_a_path)) {
-            await fs.unlink(file_a_path);
-        }
-        const file_b_path: string = path.join(paths.tmpDir, 'test_b.txt');
-        if (await fs.exists(file_b_path)) {
-            await fs.unlink(file_b_path);
-        }
-        const output_test_path: string = path.join(testEnv.projectFolder.location, testEnv.buildLocation, testEnv.executableResult);
-        if (await fs.exists(output_test_path)) {
-            await fs.unlink(output_test_path);
-        }
+        await cleanUpTestResultFiles();
     });
 
     suiteTeardown(async () => {
