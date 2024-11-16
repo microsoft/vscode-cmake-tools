@@ -45,6 +45,21 @@ std::string dump_file(const std::string &filename)
     return oss.str();
 }
 
+/********************************************************************************/
+/**
+ * @brief Generate an output file containing the content of the input files
+ * separated by commas and enclosed in curly braces.
+ *
+ * The output file is named output_test.txt and is created in the current
+ * directory.
+ * 
+ * The output file is in json format provided that the input files are in text
+ * format.
+ * 
+ * @param file_names : The list of input files to dump.
+ * @return int : 0 if the output file was successfully generated, 1 otherwise.
+ */
+/********************************************************************************/
 int generate_output_file(const std::vector<std::string> &file_names)
 {
     std::ofstream ofs_test("output_test.txt");
@@ -58,7 +73,7 @@ int generate_output_file(const std::vector<std::string> &file_names)
 
     for (auto iter{std::cbegin(file_names)}; iter != std::cend(file_names); ++iter)
     {
-        const auto& ccontent = dump_file(*iter);
+        const auto &ccontent = dump_file(*iter);
         if (!ccontent.empty())
         {
             ofs_test << ccontent;
@@ -81,12 +96,12 @@ int generate_output_file(const std::vector<std::string> &file_names)
 
 /*----------------------------------------------------------------------------*/
 /**
- * @brief
+ * @brief Main function.
  *
- * @return int
+ * @return int : 0 if the output file was successfully generated, 1 otherwise.
  */
 /*----------------------------------------------------------------------------*/
 int main(int, char **)
 {
-  return generate_output_file({"/tmp/test_a.txt", "/tmp/test_b.txt"});
+    return generate_output_file({"/tmp/test_a.txt", "/tmp/test_b.txt"});
 }
