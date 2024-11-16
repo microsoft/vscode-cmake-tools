@@ -64,10 +64,13 @@ int generate_output_file(const std::vector<std::string> &file_names)
             ofs_test << ccontent;
         }
 
-        const bool has_empty_successor = dump_file(*(std::next(iter))).empty();
-        if (!has_empty_successor)
+        if (std::next(iter) != std::cend(file_names))
         {
-            ofs_test << ",";
+            const bool has_empty_successor = dump_file(*(std::next(iter))).empty();
+            if (!has_empty_successor)
+            {
+                ofs_test << ",";
+            }
         }
         ofs_test << "\n";
     }
