@@ -2275,10 +2275,10 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         log.trace(localize('register.command', 'Register CMakeTools extension command {0}', `cmake.${key}`));
         context.subscriptions.push(register(key));
     }
-    if (util.isTestMode()) {
-        log.trace(localize('register.command', 'Register CMakeTools extension command cmake.getSettingsChangePromise'));
-        context.subscriptions.push(vscode.commands.registerCommand('cmake.getSettingsChangePromise', () => getSettingsChangePromise()));
-    }
+    // if (util.isTestMode()) {
+    log.trace(localize('register.command', 'Register CMakeTools extension command cmake.getSettingsChangePromise'));
+    context.subscriptions.push(vscode.commands.registerCommand('cmake.getSettingsChangePromise', () => getSettingsChangePromise()));
+    // }
 
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
