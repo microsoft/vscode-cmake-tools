@@ -9,6 +9,17 @@ target_sources(TestUtils PRIVATE test_utils.cpp)
 target_include_directories(TestUtils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(TestUtils PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 
+
+# set(TESTS_FILES "/tmp/test_a.txt;/tmp/test_b.txt")
+
+# foreach(TEST_FILE ${TESTS_FILES})
+#   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+#   configure_file(test.cpp.in "${TEST_FILE}.cpp" @ONLY)
+#   add_executable(TestA test_a.cpp)
+#   target_link_libraries(TestA PRIVATE TestUtils)
+# endforeach()
+
+
 add_executable(TestA test_a.cpp)
 target_link_libraries(TestA PRIVATE TestUtils)
 add_executable(TestB test_b.cpp)
