@@ -1,6 +1,5 @@
 import { fs } from '@cmt/pr';
 import {
-    clearExistingKitConfigurationFile,
     DefaultEnvironment,
     expect
 } from '@test/util';
@@ -10,7 +9,6 @@ import paths from '@cmt/paths';
 
 suite('Ctest run tests', () => {
     let testEnv: DefaultEnvironment;
-    let compdb_cp_path: string;
 
     async function cleanUpTestResultFiles() {
         const file_a_path: string = path.join(paths.tmpDir, 'test_a.txt');
@@ -35,15 +33,7 @@ suite('Ctest run tests', () => {
 
         // CMakePresets.json exist so will use presets by default
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
-        compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-
-        await clearExistingKitConfigurationFile();
-    });
-
-    setup(async function (this: Mocha.Context) {
-        await cleanUpTestResultFiles();
-
-        this.timeout(100000);
+        testEnv.projectFolder.buildDirectory.clear();
 
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
 
@@ -56,6 +46,10 @@ suite('Ctest run tests', () => {
         await vscode.commands.executeCommand('cmake.build');
     });
 
+    setup(async function (this: Mocha.Context) {
+        await cleanUpTestResultFiles();
+    });
+
     teardown(async function (this: Mocha.Context) {
         await cleanUpTestResultFiles();
     });
@@ -63,9 +57,6 @@ suite('Ctest run tests', () => {
     suiteTeardown(async () => {
         if (testEnv) {
             testEnv.teardown();
-        }
-        if (await fs.exists(compdb_cp_path)) {
-            await fs.unlink(compdb_cp_path);
         }
     });
 
