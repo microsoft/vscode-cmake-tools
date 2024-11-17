@@ -17,7 +17,7 @@ async function main() {
         const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
 
         const extensionTestsEnv: { [key: string]: string | undefined } = {
-            "CMT_TESTING": "0",
+            "CMT_TESTING": "1",
             "CMT_QUIET_CONSOLE": "1",
             "TEST_FILTER": process.env.TEST_FILTER ?? ".*"
         };
