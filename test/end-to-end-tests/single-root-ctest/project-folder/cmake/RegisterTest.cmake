@@ -95,7 +95,16 @@ function(register_test)
   set_tests_properties("${register_test_TEST_NAME}" PROPERTIES FIXTURES_REQUIRED GENOUT)
 endfunction()
 
-
+#--------------------------------------------------------------------
+# Create and register tests in arguments
+#
+# Usage:
+#   register_tests(TEST_NAME_LIST <names> TEST_OUTPUT_FILE_PATH_LIST <paths> TEST_SUCCESS_LIST <successes>)
+# Parameters:
+#   TEST_NAME_LIST: name of the test
+#   TEST_OUTPUT_FILE_PATH_LIST: path to the file the test should generate
+#   TEST_SUCCESS_LIST: whether or not the test should end successfully
+#--------------------------------------------------------------------
 function(register_tests)
   set(options)
   set(multiValueArgs "TEST_NAME_LIST;TEST_OUTPUT_FILE_PATH_LIST;TEST_SUCCESS_LIST")
