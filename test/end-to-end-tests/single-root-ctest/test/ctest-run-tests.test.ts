@@ -38,7 +38,7 @@ suite('Ctest run tests', () => {
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
         await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
-        await vscode.commands.executeCommand('cmake.setConfigurePreset', 'Linux1');
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', 'AllTestsSuccessfull');
         await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
         await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
         await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');

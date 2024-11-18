@@ -2,7 +2,7 @@
   "version": 2,
   "configurePresets": [
     {
-      "name": "Linux1",
+      "name": "AllTestsSuccessfull",
       "description": "Sets generator, build and install directory, vcpkg",
       "generator": "Ninja",
       "binaryDir": "${workspaceFolder}/build",
