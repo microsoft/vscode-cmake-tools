@@ -7,7 +7,10 @@
       "generator": "Ninja",
       "binaryDir": "${workspaceFolder}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TESTS_OUTPUT_FILES": "/tmp/test_a.txt;/tmp/test_b.txt",
+        "TESTS_NAMES": "Suite1.TestA;Suite2.TestB",
+        "TESTS_SUCCESS": "true;true"
       }
     }
   ]
