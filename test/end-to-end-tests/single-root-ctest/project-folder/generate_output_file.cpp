@@ -103,5 +103,18 @@ int generate_output_file(const std::vector<std::string> &file_names)
 /*----------------------------------------------------------------------------*/
 int main(int, char **)
 {
-    return generate_output_file({"/tmp/test_a.txt", "/tmp/test_b.txt"});
+    auto test_dir = std::filesystem::path{"/tmp/vscode-cmake-tools-tests"};
+    std::vector<std::string> test_files{};
+    if (!std::filesystem::exists(test_dir))
+    {
+        // May happen in sequential test execution if the GenerateOutputFile test is executed first
+        return 0;
+    }
+    for (auto const& dir_entry : std::filesystem::directory_iterator{test_dir})
+    {
+        std::cout << "Test file " << dir_entry.path() << " detected!" << std::endl;
+        test_files.emplace_back(dir_entry.path());
+    }
+
+    return generate_output_file(test_files);
 }

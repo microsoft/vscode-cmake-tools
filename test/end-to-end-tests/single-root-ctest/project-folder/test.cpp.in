@@ -1,5 +1,11 @@
 #include "test_utils.h"
+#include <filesystem>
 
 int main() {
+  auto test_dir = std::filesystem::path{"/tmp/vscode-cmake-tools-tests"};
+  if (!std::filesystem::exists(test_dir))
+  {
+    std::filesystem::create_directory(test_dir);
+  }
   return generic_test("@test_filename@", @success@);
 }
