@@ -52,15 +52,16 @@ endfunction()
 # Create and register a test
 #
 # Usage:
-#   register_test(TEST_NAME <name> TEST_OUTPUT_FILE_PATH <path> TEST_SUCCESS <success>)
+#   register_test(TEST_DIR <dir> TEST_NAME <name> TEST_OUTPUT_FILE <path> TEST_SUCCESS <success>)
 # Parameters:
+#   TEST_DIR: path to the directory where the test will write its output file
 #   TEST_NAME: name of the test
-#   TEST_OUTPUT_FILE_PATH: path to the file the test should generate
+#   TEST_OUTPUT_FILE: name of the file the test should generate
 #   TEST_SUCCESS: whether or not the test should end successfully
 #--------------------------------------------------------------------
 function(register_test)
   set(options)
-  set(oneValueArgs "TEST_DIR;TEST_NAME;TEST_OUTPUT_FILE_PATH;TEST_SUCCESS")
+  set(oneValueArgs "TEST_DIR;TEST_NAME;TEST_OUTPUT_FILE;TEST_SUCCESS")
   ### PARSING ARGUMENTS
   cmake_parse_arguments(register_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(DEFINED register_test_KEYWORDS_MISSING_VALUES)
@@ -81,14 +82,14 @@ function(register_test)
   if(NOT DEFINED register_test_TEST_NAME)
     message(FATAL_ERROR "The function register_test is awaiting for TEST_NAME keyword")
   endif()
-  if(NOT DEFINED register_test_TEST_OUTPUT_FILE_PATH)
-    message(FATAL_ERROR "The function register_test is awaiting for TEST_OUTPUT_FILE_PATH keyword")
+  if(NOT DEFINED register_test_TEST_OUTPUT_FILE)
+    message(FATAL_ERROR "The function register_test is awaiting for TEST_OUTPUT_FILE keyword")
   endif()
   if(NOT DEFINED register_test_TEST_SUCCESS)
     message(FATAL_ERROR "The function register_test is awaiting for TEST_SUCCESS keyword")
   endif()
 
-  set(test_output_file_path "${register_test_TEST_DIR}/${register_test_TEST_OUTPUT_FILE_PATH}")
+  set(test_output_file_path "${register_test_TEST_DIR}/${register_test_TEST_OUTPUT_FILE}")
   message(STATUS "Creating test named ${register_test_TEST_NAME} with result stored in ${test_output_file_path} returning as success: ${register_test_TEST_SUCCESS}")
   ### GENERATE TEST
   generate_test_source_file(${test_output_file_path} ${register_test_TEST_SUCCESS}) # => returns test_source
@@ -104,16 +105,17 @@ endfunction()
 # Create and register tests in arguments
 #
 # Usage:
-#   register_tests(TEST_NAME_LIST <names> TEST_OUTPUT_FILE_PATH_LIST <paths> TEST_SUCCESS_LIST <successes>)
+#   register_tests(TEST_DIRECTORY <dir> TEST_NAME_LIST <names> TEST_OUTPUT_FILE_LIST <paths> TEST_SUCCESS_LIST <successes>)
 # Parameters:
-#   TEST_NAME_LIST: name of the test
-#   TEST_OUTPUT_FILE_PATH_LIST: path to the file the test should generate
-#   TEST_SUCCESS_LIST: whether or not the test should end successfully
+#   TEST_DIRECTORY: path to the directory where the tests will write their output files
+#   TEST_NAME_LIST: list of test names
+#   TEST_OUTPUT_FILE_LIST: list of file names the tests should generate
+#   TEST_SUCCESS_LIST: list of boolean values indicating whether or not the tests should end successfully
 #--------------------------------------------------------------------
 function(register_tests)
   set(options)
   set(oneValueArgs "TEST_DIRECTORY")
-  set(multiValueArgs "TEST_NAME_LIST;TEST_OUTPUT_FILE_PATH_LIST;TEST_SUCCESS_LIST")
+  set(multiValueArgs "TEST_NAME_LIST;TEST_OUTPUT_FILE_LIST;TEST_SUCCESS_LIST")
   ### PARSING ARGUMENTS
   cmake_parse_arguments(register_tests "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(DEFINED register_tests_KEYWORDS_MISSING_VALUES)
@@ -134,8 +136,8 @@ function(register_tests)
   if(NOT DEFINED register_tests_TEST_NAME_LIST)
     message(FATAL_ERROR "The function register_tests is awaiting for TEST_NAME_LIST keyword")
   endif()
-  if(NOT DEFINED register_tests_TEST_OUTPUT_FILE_PATH_LIST)
-    message(FATAL_ERROR "The function register_tests is awaiting for TEST_OUTPUT_FILE_PATH_LIST keyword")
+  if(NOT DEFINED register_tests_TEST_OUTPUT_FILE_LIST)
+    message(FATAL_ERROR "The function register_tests is awaiting for TEST_OUTPUT_FILE_LIST keyword")
   endif()
   if(NOT DEFINED register_tests_TEST_SUCCESS_LIST)
     message(FATAL_ERROR "The function register_tests is awaiting for TEST_SUCCESS_LIST keyword")
@@ -144,9 +146,9 @@ function(register_tests)
   list(LENGTH register_tests_TEST_NAME_LIST NB_TESTS)
   math(EXPR MAX_INDEX "${NB_TESTS}-1")
   foreach(test_index RANGE ${MAX_INDEX})
-      list(GET register_tests_TEST_OUTPUT_FILE_PATH_LIST ${test_index} test_output)
+      list(GET register_tests_TEST_OUTPUT_FILE_LIST ${test_index} test_output)
       list(GET register_tests_TEST_NAME_LIST ${test_index} test_name)
       list(GET register_tests_TEST_SUCCESS_LIST ${test_index} test_success)
-      register_test(TEST_DIR ${register_tests_TEST_DIRECTORY} TEST_NAME ${test_name} TEST_OUTPUT_FILE_PATH ${test_output} TEST_SUCCESS ${test_success})
+      register_test(TEST_DIR ${register_tests_TEST_DIRECTORY} TEST_NAME ${test_name} TEST_OUTPUT_FILE ${test_output} TEST_SUCCESS ${test_success})
   endforeach()
 endfunction()
