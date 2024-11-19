@@ -13,8 +13,9 @@ function(generate_test_source_file output_file_path test_success)
   set(test_filename ${output_file_path})
   set(success ${test_success})
   # Generate test source file
-  set(test_source "${output_file_name}.cpp" PARENT_SCOPE)
+  set(test_source "${output_file_name}.cpp")
   configure_file(test.cpp.in ${test_source} @ONLY)
+  set(test_source "${test_source}" PARENT_SCOPE)
 endfunction()
 
 #--------------------------------------------------------------------
