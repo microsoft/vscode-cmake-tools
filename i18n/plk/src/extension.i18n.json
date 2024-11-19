@@ -47,8 +47,5 @@
 	"loading.extension.commands": "Ładowanie poleceń rozszerzenia",
 	"register.command": "Zarejestruj polecenie rozszerzenia CMakeTools {0}",
 	"uninstall.old.cmaketools": "Odinstaluj wszystkie starsze wersje rozszerzenia narzędzi CMake. Jest ono teraz publikowane przez firmę Microsoft, począwszy od wersji 1.2.0.",
-	"options.moved.notification.body": "Niektóre opcje paska stanu w narzędziach CMake zostały przeniesione do widoku stanu projektu na pasku bocznym narzędzi CMake. Widok można dostosować za pomocą właściwości „cmake.options” w ustawieniach.",
-	"options.moved.notification.configure.cmake.options": "Konfiguruj widoczność opcji narzędzia CMake",
-	"options.moved.notification.do.not.show": "Nie pokazuj ponownie",
 	"deactivate.cmaketools": "Dezaktywuj rozszerzenie CMakeTools"
 }

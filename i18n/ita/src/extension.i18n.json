@@ -47,8 +47,5 @@
 	"loading.extension.commands": "Caricamento dei comandi dell'estensione",
 	"register.command": "Registra il comando {0} dell'estensione CMakeTools",
 	"uninstall.old.cmaketools": "Disinstallare le versioni precedenti dell'estensione CMake Tools. Tale estensione è ora pubblicata da Microsoft a partire dalla versione 1.2.0.",
-	"options.moved.notification.body": "Alcune opzioni della barra di stato in CMake Tools sono state spostate nella visualizzazione stato progetto nella barra laterale di CMake Tools. È possibile personalizzare la visualizzazione con la proprietà 'cmake.options' nelle impostazioni.",
-	"options.moved.notification.configure.cmake.options": "Configurare la visibilità delle opzioni di CMake",
-	"options.moved.notification.do.not.show": "Non visualizzare più questo messaggio",
 	"deactivate.cmaketools": "Disattiva CMakeTools"
 }

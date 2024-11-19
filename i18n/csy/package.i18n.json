@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Nakonfiguruje, jak rozšíření zobrazuje tlačítka na Touch Baru na MacBooku.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Umožňuje zobrazit na podporovaných systémech tlačítka Touch Baru.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Nezobrazovat tlačítka Touch Baru",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Povolí oznámení týkající se možností stavového řádku, které se přesunou do zobrazení stavu projektu, aby se zobrazily při spuštění rozšíření.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Povolí automaticky otevírané okno, které se uživatele zeptá, jestli chce při neúspěšné konfiguraci provést konfiguraci pomocí ladicího programu CMake.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Povolí automaticky otevírané okno s dotazem uživatele, jestli chce pokračovat v sestavení, i když některé soubory se pravděpodobně neukládají. Pokud není povoleno, bude sestavení pokračovat.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Umožňuje zobrazit možnost stavového řádku v plné velikosti.",

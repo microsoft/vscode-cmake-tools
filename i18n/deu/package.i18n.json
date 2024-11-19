@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Hiermit wird konfiguriert, wie die Erweiterung die Schaltflächen auf einer MacBook Touch Bar anzeigt.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Hiermit werden die Touch Bar-Schaltflächen auf unterstützten Systemen angezeigt.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Hiermit werden die Touch Bar-Schaltflächen nicht angezeigt.",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Aktiviert die Benachrichtigung über die Statusleistenoptionen, die in die Projektstatusansicht verschoben werden, um anzuzeigen, wann die Erweiterung gestartet wird.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Aktiviert das Popup, das den Benutzer fragt, ob er bei einer fehlerhaften Konfiguration mit dem CMake Debugger konfigurieren möchte.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Aktiviert das Popup, das den Benutzer fragt, ob er den Buildvorgang fortsetzen möchte, obwohl einige Dateien möglicherweise nicht gespeichert werden. Wenn diese Option nicht aktiviert ist, wird der Buildvorgang fortgesetzt.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Zeigt die Statusleistenoption in voller Größe an.",

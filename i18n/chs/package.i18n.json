@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "配置扩展在 MacBook 触控栏上显示按钮的方式。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "在支持的系统上显示触控栏按钮。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "不显示触控栏按钮。",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "启用有关移动到项目状态视图的状态栏选项的通知，以便在扩展启动时显示。",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "启用弹出窗口，询问用户在配置失败时是否要使用 CMake 调试器进行配置。",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "启用弹出窗口，以询问用户是否要在一些文件可能未保存的情况下继续生成。如果未启用，则将继续生成。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "以完整大小显示状态栏选项。",

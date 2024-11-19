@@ -58,6 +58,9 @@ jobs:
       - name: Run unit tests
         run: yarn unitTests
 
+      - name: Run integration tests
+        run: yarn integrationTests
+
       - name: Run single root test
         run: yarn endToEndTestsSingleRoot
 

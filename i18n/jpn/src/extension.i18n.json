@@ -47,8 +47,5 @@
 	"loading.extension.commands": "拡張コマンドを読み込んでいます",
 	"register.command": "CMakeTools 拡張コマンド {0} の登録",
 	"uninstall.old.cmaketools": "以前のバージョンの CMake Tools 拡張機能をすべてアンインストールしてください。バージョン1.2.0 以降、Microsoft によって公開されるようになりました。",
-	"options.moved.notification.body": "CMake Tools の一部のステータス バー オプションが、CMake ツール サイド バーのプロジェクト状態スビューに移動されました。設定の 'cmake.options' プロパティを使用してビューをカスタマイズできます。",
-	"options.moved.notification.configure.cmake.options": "CMake オプションの可視性の構成",
-	"options.moved.notification.do.not.show": "今後表示しない",
 	"deactivate.cmaketools": "CMakeTools の非アクティブ化"
 }
