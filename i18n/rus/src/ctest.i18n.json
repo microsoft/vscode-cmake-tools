@@ -12,7 +12,7 @@
 	"no.driver.found": "Не найден драйвер для папки {0}",
 	"ctest.args.not.found": "Не удалось получить тестовые аргументы",
 	"test.results.not.found": "Результаты теста не найдены.",
-	"test.failed.with.exit.code": "Сбой теста {0}. Код выхода: {1}.",
+	"test.failed.with.exit.code": "{0}\nСбой теста {1}. Код выхода: {2}.",
 	"test.failed.with.completion.status": "Сбой теста {0} с состоянием завершения \"{1}\".",
 	"test.failed": "Сбой теста {0}. Дополнительные сведения см. в выходных данных.",
 	"ctest.run.cancelled": "Запуск CTest отменен",
