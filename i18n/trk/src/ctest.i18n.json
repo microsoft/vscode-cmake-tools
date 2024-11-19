@@ -12,7 +12,7 @@
 	"no.driver.found": "{0} klasörü için sürücü bulunamadı",
 	"ctest.args.not.found": "Test bağımsız değişkenleri alınamadı",
 	"test.results.not.found": "Test sonuçları bulunamadı.",
-	"test.failed.with.exit.code": "{0} testi {1} çıkış kodu ile başarısız oldu.",
+	"test.failed.with.exit.code": "{0}\n{1} testi {2} çıkış kodu ile başarısız oldu.",
 	"test.failed.with.completion.status": "{0} testi, \"{1}\" tamamlanma durumuyla başarısız oldu.",
 	"test.failed": "{0} testi başarısız oldu. Daha fazla bilgi için lütfen çıkışa bakın.",
 	"ctest.run.cancelled": "CTest çalıştırması iptal edildi",

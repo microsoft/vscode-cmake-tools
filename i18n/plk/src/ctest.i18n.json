@@ -12,7 +12,7 @@
 	"no.driver.found": "Nie znaleziono sterownika dla folderu {0}",
 	"ctest.args.not.found": "Nie można pobrać argumentów testu",
 	"test.results.not.found": "Nie znaleziono wyników testu.",
-	"test.failed.with.exit.code": "Test {0} zakończył się niepowodzeniem z kodem zakończenia {1}.",
+	"test.failed.with.exit.code": "{0}\nTest {1} zakończył się niepowodzeniem z kodem zakończenia {2}.",
 	"test.failed.with.completion.status": "Test {0} nie powiódł się ze statusem ukończenia „{1}”.",
 	"test.failed": "Test {0} nie powiódł się. Sprawdź dane wyjściowe, aby uzyskać więcej informacji.",
 	"ctest.run.cancelled": "Przebieg narzędzia CTest został anulowany",

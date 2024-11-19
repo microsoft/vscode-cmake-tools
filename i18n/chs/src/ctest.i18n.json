@@ -12,7 +12,7 @@
 	"no.driver.found": "找不到文件夹 {0} 的驱动程序",
 	"ctest.args.not.found": "无法获取测试参数",
 	"test.results.not.found": "找不到测试结果。",
-	"test.failed.with.exit.code": "测试{0}失败，退出代码 {1}。",
+	"test.failed.with.exit.code": "{0}\n测试 {1} 失败，退出代码: {2}。",
 	"test.failed.with.completion.status": "测试{0}失败，完成状态为 \"{1}\"。",
 	"test.failed": "测试{0}失败。有关详细信息，请检查输出。",
 	"ctest.run.cancelled": "已取消 CTest 运行",
