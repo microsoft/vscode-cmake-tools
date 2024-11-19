@@ -8,7 +8,8 @@
       "binaryDir": "${workspaceFolder}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "TESTS_OUTPUT_FILES": "/tmp/vscode-cmake-tools-tests/test_a.txt;/tmp/vscode-cmake-tools-tests/test_b.txt",
+        "TESTS_DIR": "/tmp/vscode-cmake-tools-tests",
+        "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt",
         "TESTS_NAMES": "Suite1.TestA;Suite2.TestB",
         "TESTS_SUCCESS": "true;true"
       }

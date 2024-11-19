@@ -60,7 +60,7 @@ endfunction()
 #--------------------------------------------------------------------
 function(register_test)
   set(options)
-  set(oneValueArgs "TEST_NAME;TEST_OUTPUT_FILE_PATH;TEST_SUCCESS")
+  set(oneValueArgs "TEST_DIR;TEST_NAME;TEST_OUTPUT_FILE_PATH;TEST_SUCCESS")
   ### PARSING ARGUMENTS
   cmake_parse_arguments(register_test "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(DEFINED register_test_KEYWORDS_MISSING_VALUES)
@@ -75,6 +75,9 @@ function(register_test)
         "Following arguments are unknown to register_test function: ${register_test_UNPARSED_ARGUMENTS}"
     )
   endif()
+  if(NOT DEFINED register_test_TEST_DIR)
+    message(FATAL_ERROR "The function register_test is awaiting for TEST_DIR keyword")
+  endif()
   if(NOT DEFINED register_test_TEST_NAME)
     message(FATAL_ERROR "The function register_test is awaiting for TEST_NAME keyword")
   endif()
@@ -85,13 +88,14 @@ function(register_test)
     message(FATAL_ERROR "The function register_test is awaiting for TEST_SUCCESS keyword")
   endif()
 
-  message(STATUS "Creating test named ${register_test_TEST_NAME} with result stored in ${register_test_TEST_OUTPUT_FILE_PATH} returning as success: ${register_test_TEST_SUCCESS}")
+  set(test_output_file_path "${register_test_TEST_DIR}/${register_test_TEST_OUTPUT_FILE_PATH}")
+  message(STATUS "Creating test named ${register_test_TEST_NAME} with result stored in ${test_output_file_path} returning as success: ${register_test_TEST_SUCCESS}")
   ### GENERATE TEST
-  generate_test_source_file(${register_test_TEST_OUTPUT_FILE_PATH} ${register_test_TEST_SUCCESS}) # => returns test_source
+  generate_test_source_file(${test_output_file_path} ${register_test_TEST_SUCCESS}) # => returns test_source
   build_test_exe_name(${test_source}) # => returns test_exe
   message(STATUS "--> Creating test executable ${test_exe} with source ${test_source}")
   add_executable(${test_exe} ${test_source})
-  target_link_libraries(${test_exe} PRIVATE TestUtils)
+  target_link_libraries(${test_exe} PRIVATE TestUtils GetTestDir)
   add_test(NAME "${register_test_TEST_NAME}" COMMAND "${test_exe}")
   set_tests_properties("${register_test_TEST_NAME}" PROPERTIES FIXTURES_REQUIRED GENOUT)
 endfunction()
@@ -108,6 +112,7 @@ endfunction()
 #--------------------------------------------------------------------
 function(register_tests)
   set(options)
+  set(oneValueArgs "TEST_DIRECTORY")
   set(multiValueArgs "TEST_NAME_LIST;TEST_OUTPUT_FILE_PATH_LIST;TEST_SUCCESS_LIST")
   ### PARSING ARGUMENTS
   cmake_parse_arguments(register_tests "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -122,6 +127,9 @@ function(register_tests)
       FATAL_ERROR
         "Following arguments are unknown to register_tests function: ${register_tests_UNPARSED_ARGUMENTS}"
     )
+  endif()
+  if(NOT DEFINED register_tests_TEST_DIRECTORY)
+    message(FATAL_ERROR "The function register_tests is awaiting for TEST_DIRECTORY keyword")
   endif()
   if(NOT DEFINED register_tests_TEST_NAME_LIST)
     message(FATAL_ERROR "The function register_tests is awaiting for TEST_NAME_LIST keyword")
@@ -139,6 +147,6 @@ function(register_tests)
       list(GET register_tests_TEST_OUTPUT_FILE_PATH_LIST ${test_index} test_output)
       list(GET register_tests_TEST_NAME_LIST ${test_index} test_name)
       list(GET register_tests_TEST_SUCCESS_LIST ${test_index} test_success)
-      register_test(TEST_NAME ${test_name} TEST_OUTPUT_FILE_PATH ${test_output} TEST_SUCCESS ${test_success})
+      register_test(TEST_DIR ${register_tests_TEST_DIRECTORY} TEST_NAME ${test_name} TEST_OUTPUT_FILE_PATH ${test_output} TEST_SUCCESS ${test_success})
   endforeach()
 endfunction()

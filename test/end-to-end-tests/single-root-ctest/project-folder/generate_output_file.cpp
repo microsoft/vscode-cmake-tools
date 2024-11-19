@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "get_test_dir.h"
+
 /********************************************************************************/
 /**
  * @brief Dump the content of a file to a string.
@@ -103,7 +105,7 @@ int generate_output_file(const std::vector<std::string> &file_names)
 /*----------------------------------------------------------------------------*/
 int main(int, char **)
 {
-    auto test_dir = std::filesystem::path{"/tmp/vscode-cmake-tools-tests"};
+    auto test_dir = get_test_dir();
     std::vector<std::string> test_files{};
     if (!std::filesystem::exists(test_dir))
     {

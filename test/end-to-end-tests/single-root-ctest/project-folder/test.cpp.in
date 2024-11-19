@@ -1,8 +1,9 @@
 #include "test_utils.h"
+#include "get_test_dir.h"
 #include <filesystem>
 
 int main() {
-  auto test_dir = std::filesystem::path{"/tmp/vscode-cmake-tools-tests"};
+  auto test_dir = get_test_dir();
   if (!std::filesystem::exists(test_dir))
   {
     std::filesystem::create_directory(test_dir);
