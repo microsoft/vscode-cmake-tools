@@ -12,7 +12,7 @@
 	"no.driver.found": "フォルダー {0} のドライバーが見つかりません",
 	"ctest.args.not.found": "テスト引数を取得できませんでした",
 	"test.results.not.found": "テスト結果が見つかりません。",
-	"test.failed.with.exit.code": "テスト {0} が終了コード {1} で失敗しました。",
+	"test.failed.with.exit.code": "{0}\nテスト {1} が終了コード {2} で失敗しました。",
 	"test.failed.with.completion.status": "テスト {0} が完了状態 \"{1}\" で失敗しました。",
 	"test.failed": "テスト {0} に失敗しました。詳細については、出力を確認してください。",
 	"ctest.run.cancelled": "CTest の実行が取り消されました",
