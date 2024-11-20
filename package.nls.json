@@ -271,7 +271,7 @@
     },
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
     "cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatically configure CMake project directories when the kit or the configuration preset is changed.",
-    "cmake-tools.configuration.cmake.pinnedCommands.description":"List of CMake commands to pin.",
+    "cmake-tools.configuration.cmake.pinnedCommands.description":"List of CMake commands to always pin by default.",
     "cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Enable automatic scanning for kits when a kit isn't selected. This will only take affect when CMake Presets aren't being used.",
     "cmake-tools.debugger.pipeName.description": "Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.",
     "cmake-tools.debugger.clean.description": "Clean prior to configuring.",
