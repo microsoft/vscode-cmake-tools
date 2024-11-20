@@ -167,7 +167,7 @@
 
 "@friedemannsommer/lcov-parser@^4.0.1":
   version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@friedemannsommer/lcov-parser/-/lcov-parser-4.0.1.tgz#192445df2095bb061fd889ea0b0f0f94bf7c58b7"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@friedemannsommer/lcov-parser/-/lcov-parser-4.0.1.tgz#192445df2095bb061fd889ea0b0f0f94bf7c58b7"
   integrity sha512-NjXrxLeh77FUAL6TzVJyvYvgA2AS+t2hlfRmfOyE5HR3g+2HdLNFTP2l+zTypn5JTnV4jfXgwSO46JLhvJeXlw==
 
 "@gulp-sourcemaps/identity-map@^2.0.1":
@@ -649,7 +649,7 @@
 
 "@types/vscode@1.88.0":
   version "1.88.0"
-  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.88.0.tgz#2dc690237f7ef049942508c8609b6b9f5216b4d3"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/vscode/-/vscode-1.88.0.tgz#2dc690237f7ef049942508c8609b6b9f5216b4d3"
   integrity sha512-rWY+Bs6j/f1lvr8jqZTyp5arRMfovdxolcqGi+//+cPDOh8SBvzXH90e7BiSXct5HJ9HGW6jATchbRTpTJpEkw==
 
 "@types/which@~2.0.0":
