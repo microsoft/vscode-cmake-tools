@@ -959,7 +959,7 @@ export class CTestDriver implements vscode.Disposable {
                 if (rc !== 0) {
                     log.error(localize('test.preRunCoverageTargetFailure', 'Building the preRunCoverageTarget \'{0}\' on project in {1} failed. Skipping running tests.', projectCoverageConfig.preRunCoverageTarget, projectCoverageConfig.project.sourceDir));
                     run.end();
-                    return 0;
+                    return rc;
                 }
             }
         }
@@ -970,7 +970,7 @@ export class CTestDriver implements vscode.Disposable {
                 const rc = await projectCoverageConfig.project.build([projectCoverageConfig.postRunCoverageTarget]);
                 if (rc !== 0) {
                     log.error(localize('test.postRunCoverageTargetFailure', 'Building target postRunCoverageTarget on project in {0} failed. Skipping handling of coverage data.', projectCoverageConfig.project.sourceDir));
-                    return 0;
+                    return rc;
                 }
             }
         }

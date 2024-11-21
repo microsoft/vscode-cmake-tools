@@ -6,7 +6,7 @@ import * as logging from '@cmt/logging';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-const log = logging.createLogger('ctest');
+const log = logging.createLogger('ctest-coverage');
 
 export async function handleCoverageInfoFiles(run: vscode.TestRun, coverageInfoFiles: string[], coverageData: WeakMap<vscode.FileCoverage, vscode.FileCoverageDetail[]>) {
     for (const coverageInfoFile of coverageInfoFiles) {
