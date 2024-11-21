@@ -3578,7 +3578,10 @@
             "type": "string"
           },
           "description": "%cmake-tools.configuration.cmake.pinnedCommands.description%",
-          "default": [],
+          "default": [
+            "workbench.action.tasks.configureTaskRunner",
+            "workbench.action.tasks.runTask"
+          ],
           "scope": "resource"
         },
         "cmake.enableAutomaticKitScan": {

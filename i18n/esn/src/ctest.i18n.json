@@ -12,7 +12,7 @@
 	"no.driver.found": "No se ha encontrado ningún controlador para la carpeta {0}",
 	"ctest.args.not.found": "No se pudieron obtener los argumentos de prueba",
 	"test.results.not.found": "No se encontraron los resultados de la prueba.",
-	"test.failed.with.exit.code": "La prueba {0} ha fallado con código {1} de salida .",
+	"test.failed.with.exit.code": "{0}\nError de prueba {1} con código de salida{2}.",
 	"test.failed.with.completion.status": "La prueba {0} fallida con estado de finalización \"{1}\".",
 	"test.failed": "La prueba {0} ha fallado. Compruebe el resultado para obtener más información.",
 	"ctest.run.cancelled": "Se canceló la ejecución de CTest",

@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "設定延伸模組在 MacBook 觸控列上顯示按鈕的方式。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "在支援的系統上顯示觸控列按鈕。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "不顯示觸控列按鈕。",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "啟用有關移至 [專案狀態檢視] 之狀態列選項的通知，以在延伸模組開始時顯示。",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "啟用會詢問使用者在設定失敗時是否要使用 CMake 偵錯工具進行設定的快顯。",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "啟用詢問使用者是否要繼續建置的快顯，儘管某些檔案可能未儲存。若未啟用，將會繼續建置。",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "以完整大小顯示狀態列選項。",

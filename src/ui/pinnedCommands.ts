@@ -8,7 +8,6 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('pinnedCommands');
 const defaultTaskCommands: string[] = ["workbench.action.tasks.configureTaskRunner", "workbench.action.tasks.runTask"];
-const mementoKey = "pinDefaultTasks";
 
 interface PinnedCommandsQuickPickItem extends vscode.QuickPickItem {
     command: string;
@@ -97,7 +96,6 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
     private config: vscode.WorkspaceConfiguration | null;
     private pinnedCommandsKey: string = "cmake.pinnedCommands";
     private isInitialized = false;
-    private pinDefaultTasks = true;
     private readonly _settingsSub ;
     private extensionContext: vscode.ExtensionContext;
 
@@ -106,7 +104,6 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
         this._settingsSub = configReader.onChange('pinnedCommands', () => this.doConfigureSettingsChange());
         this.config = vscode.workspace.getConfiguration();
         this.extensionContext = extensionContext;
-        this.pinDefaultTasks = this.extensionContext.globalState.get(mementoKey) === undefined; // the user has not unpinned any of the tasks commands yet.
         onExtensionActiveCommandsChanged(this.doConfigureSettingsChange, this);
     }
 
@@ -118,29 +115,29 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
         this.config = vscode.workspace.getConfiguration();
         this.pinnedCommands = []; //reset to empty list.
         const localization = getExtensionLocalizedStrings();
+        const activeCommands = new Set<string>(PinnedCommands.getPinnableCommands());
+
+        const tryPushCommands = (commands: string[]) => {
+            commands.forEach((x) => {
+                const label = localization[`cmake-tools.command.${x}.title`];
+                if (this.findNode(label) === -1) {
+                    this.pinnedCommands.push(new PinnedCommandNode(label, x, activeCommands.has(x)));
+                }
+            });
+        };
+
+        // Pin the commands that are requested from the users settings.
         if (this.config.has(this.pinnedCommandsKey)) {
             const settingsPinnedCommands = this.config.get(this.pinnedCommandsKey) as string[];
-            const activeCommands = new Set<string>(PinnedCommands.getPinnableCommands());
-            for (const commandName of settingsPinnedCommands) {
-                const label = localization[`cmake-tools.command.${commandName}.title`];
-                if (this.findNode(label) === -1) {
-                    // only show commands that are contained in the active commands for the extension.
-                    this.pinnedCommands.push(new PinnedCommandNode(label, commandName, activeCommands.has(commandName)));
-                }
-            }
+            tryPushCommands(settingsPinnedCommands);
         }
 
-        if (this.pinDefaultTasks) {
-            if (this.pinnedCommands.filter(x => defaultTaskCommands.includes(x.commandName)).length !== defaultTaskCommands.length) {
-                defaultTaskCommands.forEach((x) => {
-                    const label = localization[`cmake-tools.command.${x}.title`];
-                    if (this.findNode(label) === -1) {
-                        this.pinnedCommands.push(new PinnedCommandNode(label, x, true));
-                    }
-                });
-                await this.updateSettings();
-            }
+        // Pin commands that were pinned in the last session.
+        const lastSessionPinnedCommands = this.extensionContext.workspaceState.get(this.pinnedCommandsKey) as string[];
+        if (lastSessionPinnedCommands) {
+            tryPushCommands(lastSessionPinnedCommands);
         }
+
         this.isInitialized = true;
     }
 
@@ -174,10 +171,6 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
             this.pinnedCommands.splice(index, 1);
             await this.refresh();
         }
-        if (this.pinDefaultTasks && defaultTaskCommands.includes(node.commandName)) {
-            await this.extensionContext.globalState.update(mementoKey, false);
-            this.pinDefaultTasks = false;
-        }
         await this.updateSettings();
     }
 
@@ -191,8 +184,8 @@ class PinnedCommandsTreeDataProvider implements vscode.TreeDataProvider<PinnedCo
 
     async updateSettings() {
         if (this.config) {
-            const newValue: string[] = this.pinnedCommands.map(x => x.commandName);
-            await this.config.update(this.pinnedCommandsKey, newValue, true); // update global
+            const pinnedCommands: string[] = this.pinnedCommands.map(x => x.commandName);
+            await this.extensionContext.workspaceState.update(this.pinnedCommandsKey, pinnedCommands);
         }
     }
 

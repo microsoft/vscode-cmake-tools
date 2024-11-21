@@ -600,15 +600,19 @@ export class CTestDriver implements vscode.Disposable {
                 this.ctestFailed(
                     test,
                     run,
-                    new vscode.TestMessage(localize('test.failed.with.exit.code', 'Test {0} failed with exit code {1}.', testName, exitCode)),
+                    new vscode.TestMessage(localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitCode)),
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
-                this.ctestErrored(
-                    test,
-                    run,
-                    new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
-                );
+                if (completionStatus === "SKIP_REGULAR_EXPRESSION_MATCHED") {
+                    run.skipped(test);
+                } else {
+                    this.ctestErrored(
+                        test,
+                        run,
+                        new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
+                    );
+                }
             } else {
                 this.ctestErrored(
                     test,

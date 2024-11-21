@@ -12,7 +12,7 @@
 	"no.driver.found": "找不到資料夾 {0} 的驅動程式",
 	"ctest.args.not.found": "無法取得測試引數",
 	"test.results.not.found": "找不到測試結果。",
-	"test.failed.with.exit.code": "測試 {0} 失敗，結束代碼為 {1}。",
+	"test.failed.with.exit.code": "{0}\n測試 {1} 失敗，結束代碼為 {2}。",
 	"test.failed.with.completion.status": "測試 {0} 失敗，完成狀態為「{1}」。",
 	"test.failed": "測試 {0} 失敗。如需詳細資訊，請檢查輸出。",
 	"ctest.run.cancelled": "已取消 CTest 執行",

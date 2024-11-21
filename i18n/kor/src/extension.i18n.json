@@ -47,8 +47,5 @@
 	"loading.extension.commands": "확장 명령을 로드하는 중",
 	"register.command": "CMakeTools 확장 명령 {0} 등록",
 	"uninstall.old.cmaketools": "이전 버전의 CMake Tools 확장을 제거하세요. 버전 1.2.0부터 이제 Microsoft에서 게시합니다.",
-	"options.moved.notification.body": "이제 CMake 도구의 일부 상태 표시줄 옵션이 CMake 도구 사이드바의 프로젝트 상태 보기로 이동되었습니다. 설정에서 'cmake.options' 속성으로 보기를 사용자 지정할 수 있습니다.",
-	"options.moved.notification.configure.cmake.options": "CMake 옵션 표시 여부 구성",
-	"options.moved.notification.do.not.show": "다시 표시 안 함",
 	"deactivate.cmaketools": "CMakeTools 비활성화"
 }

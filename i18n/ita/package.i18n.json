@@ -170,7 +170,6 @@
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Configura il modo in cui l'estensione visualizza i pulsanti su una Touch Bar del MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Mostra i pulsanti della Touch Bar sui sistemi supportati.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.hidden.description": "Non visualizza i pulsanti della Touch Bar.",
-	"cmake-tools.configuration.cmake.showOptionsMovedNotification": "Consente di attivare la notifica relativa alle opzioni della barra di stato che si spostano nella visualizzazione Stato del progetto per visualizzarla all'avvio dell'estensione.",
 	"cmake-tools.configuration.cmake.showConfigureWithDebuggerNotification": "Abilita il pop-up che chiede all'utente se, dopo una configurazione non riuscita, vuole configurare con il Debugger CMake.",
 	"cmake-tools.configuration.cmake.showNotAllDocumentsSavedQuestion": "Abilita il popup che chiede all'utente se vuole continuare la compilazione nonostante alcuni file potrebbero non essere salvati. Se questa opzione non è abilitata, la compilazione continuerà.",
 	"cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description": "Mostra l'opzione della barra di stato a schermo intero.",

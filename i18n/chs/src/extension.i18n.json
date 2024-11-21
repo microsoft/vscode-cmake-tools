@@ -47,8 +47,5 @@
 	"loading.extension.commands": "正在加载扩展命令",
 	"register.command": "注册 CMakeTools 扩展命令 {0}",
 	"uninstall.old.cmaketools": "请卸载 CMake Tools 扩展的所有较早版本。现在自版本 1.2.0 起，它由 Microsoft 发布。",
-	"options.moved.notification.body": "CMake 工具中的某些状态栏选项现在已移动到 CMake 工具边栏中的项目状态视图。可以在设置中使用“cmake.options”属性自定义视图。",
-	"options.moved.notification.configure.cmake.options": "配置 CMake 选项可见性",
-	"options.moved.notification.do.not.show": "不再显示",
 	"deactivate.cmaketools": "停用 CMakeTools"
 }
