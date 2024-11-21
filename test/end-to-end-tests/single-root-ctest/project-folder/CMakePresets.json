@@ -2,7 +2,7 @@
   "version": 2,
   "configurePresets": [
     {
-      "name": "AllTestsSuccessfull",
+      "name": "2Successes",
       "description": "Sets generator, build and install directory, vcpkg",
       "generator": "Ninja",
       "binaryDir": "${workspaceFolder}/build",
@@ -12,6 +12,19 @@
         "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt",
         "TESTS_NAMES": "Suite1.TestA;Suite2.TestB",
         "TESTS_SUCCESS": "true;true"
+      }
+    },
+    {
+      "name": "2Successes1Failure",
+      "description": "Sets generator, build and install directory, vcpkg",
+      "generator": "Ninja",
+      "binaryDir": "${workspaceFolder}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TESTS_DIR": "/tmp/vscode-cmake-tools-tests",
+        "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt;test_c.txt",
+        "TESTS_NAMES": "Suite1.TestA;Suite2.TestB;Suite2.TestC",
+        "TESTS_SUCCESS": "true;false;true"
       }
     }
   ]

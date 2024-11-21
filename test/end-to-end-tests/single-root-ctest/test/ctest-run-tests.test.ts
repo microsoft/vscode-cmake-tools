@@ -54,9 +54,9 @@ async function getCMakePresetsAsJson(test_env: DefaultEnvironment) {
     return JSON.parse(content.toString());
 }
 
-suite('Ctest run tests', () => {
+suite('Ctest: 2 successfull tests', () => {
     let testEnv: DefaultEnvironment;
-    const usedConfigPreset: string = "AllTestsSuccessfull";
+    const usedConfigPreset: string = "2Successes";
 
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
@@ -136,5 +136,94 @@ suite('Ctest run tests', () => {
         const result = await testEnv.result.getResultAsJson();
         expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
         expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
+    }).timeout(100000);
+});
+
+suite('Ctest: 2 successfull tests 1 failing test', () => {
+    let testEnv: DefaultEnvironment;
+    const usedConfigPreset: string = "2Successes1Failure";
+
+    suiteSetup(async function (this: Mocha.Context) {
+        this.timeout(100000);
+
+        const build_loc = 'build';
+        const exe_res = 'output_test.txt';
+
+        // CMakePresets.json exist so will use presets by default
+        testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
+        testEnv.projectFolder.buildDirectory.clear();
+
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', usedConfigPreset);
+        await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
+        await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
+        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
+
+        await vscode.commands.executeCommand('cmake.build');
+    });
+
+    setup(async function (this: Mocha.Context) {
+        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+    });
+
+    teardown(async function (this: Mocha.Context) {
+        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+    });
+
+    suiteTeardown(async () => {
+        if (testEnv) {
+            testEnv.teardown();
+        }
+    });
+
+    test('Run ctest without parallel jobs', async () => {
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(-1);
+
+        const result = await testEnv.result.getResultAsJson();
+        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
+    }).timeout(100000);
+
+    test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(-1);
+
+        const result = await testEnv.result.getResultAsJson();
+        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
+    }).timeout(100000);
+
+    test('Run ctest with parallel jobs', async () => {
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(-1);
+
+        const result = await testEnv.result.getResultAsJson();
+        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
+    }).timeout(100000);
+
+    test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
+        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
+        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        expect(await vscode.commands.executeCommand('cmake.ctest')).to.be.eq(-1);
+
+        const result = await testEnv.result.getResultAsJson();
+        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
     }).timeout(100000);
 });
