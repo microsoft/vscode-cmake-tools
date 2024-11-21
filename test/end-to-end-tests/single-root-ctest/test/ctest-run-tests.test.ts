@@ -12,7 +12,7 @@ suite('Ctest run tests', () => {
     const usedConfigPreset: string = "AllTestsSuccessfull";
 
     /**
-     * 
+     *
      * @returns The content of the CMakePresets.json file as a JSON object
      */
     async function getCMakePresetsAsJson() {
