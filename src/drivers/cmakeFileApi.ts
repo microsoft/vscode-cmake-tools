@@ -419,6 +419,7 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
         name: targetObject.name,
         filepath: executablePath,
         targetType: targetObject.type,
+        folder: targetObject.folder,
         type: 'rich' as 'rich',
         installPaths: installPaths
     } as RichTarget;
