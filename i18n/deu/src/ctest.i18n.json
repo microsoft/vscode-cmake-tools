@@ -12,7 +12,7 @@
 	"no.driver.found": "Für den Ordner {0} wurde kein Treiber gefunden.",
 	"ctest.args.not.found": "Testargumente konnten nicht abgerufen werden.",
 	"test.results.not.found": "Die Testergebnisse wurden nicht gefunden.",
-	"test.failed.with.exit.code": "Fehler beim Test \"{0}\" mit Exitcode \"{1}\".",
+	"test.failed.with.exit.code": "{0}\nFehler beim Test „{1}“ mit Exitcode „{2}“.",
 	"test.failed.with.completion.status": "Fehler beim Test \"{0}\" mit dem Abschlussstatus \"{1}\".",
 	"test.failed": "Fehler beim Test \"{0}\". Weitere Informationen finden Sie in der Ausgabe.",
 	"ctest.run.cancelled": "C-Testlauf wurde abgebrochen.",

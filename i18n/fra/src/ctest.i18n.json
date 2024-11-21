@@ -12,7 +12,7 @@
 	"no.driver.found": "Pilote introuvable pour le dossier {0}",
 	"ctest.args.not.found": "Impossible d’obtenir les arguments de test",
 	"test.results.not.found": "Résultats des tests introuvables.",
-	"test.failed.with.exit.code": "Échec du test {0} avec le code de sortie {1}.",
+	"test.failed.with.exit.code": "{0}\nÉchec du test {1} avec le code de sortie {2}.",
 	"test.failed.with.completion.status": "Échec du test {0} avec l’état d’achèvement « {1} ».",
 	"test.failed": "Échec du test {0}. Pour plus d’informations, consultez la sortie.",
 	"ctest.run.cancelled": "L’exécution de CTest a été annulée",

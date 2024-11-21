@@ -18,6 +18,7 @@ Improvements:
 - Fix "Test output isn't visible when failed" and also mark skipped tests as so. [#4116](https://github.com/microsoft/vscode-cmake-tools/issues/4116)
 - Ensure that stopping tests actually forces the tests to stop running. [#2095](https://github.com/microsoft/vscode-cmake-tools/issues/2095)
 - Retire the Show Options Moved Notification [#4039](https://github.com/microsoft/vscode-cmake-tools/issues/4039)
+- Improve the pinned commands experience by defaulting settings and using VS Code state rather than modifying user settings. [#3977](https://github.com/microsoft/vscode-cmake-tools/issues/3977)
 
 Bug Fixes:
 
@@ -27,6 +28,7 @@ Bug Fixes:
 - Ensure that we're sanitizing paths for `cmake.copyCompileCommands`. [#3874](https://github.com/microsoft/vscode-cmake-tools/issues/3874)
 - Ensure that tests are updated after a build. [#4148](https://github.com/microsoft/vscode-cmake-tools/pull/4148)
 - Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
+- Fix reloading presets when included files are changed or renamed and updated. [#3963](https://github.com/microsoft/vscode-cmake-tools/issues/3963)
 
 ## 1.19.52
 

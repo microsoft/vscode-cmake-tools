@@ -12,7 +12,7 @@
 	"no.driver.found": "Nenhum driver encontrado na pasta {0}",
 	"ctest.args.not.found": "Não foi possível obter argumentos de teste",
 	"test.results.not.found": "Resultados do teste não encontrados.",
-	"test.failed.with.exit.code": "Ocorreu um erro no {0} teste com o código de saída {1}.",
+	"test.failed.with.exit.code": "{0}\nO teste {1} falhou com código de saída {2}.",
 	"test.failed.with.completion.status": "Ocorreu um erro no {0} teste com o status de conclusão \"{1}\".",
 	"test.failed": "Ocorreu um erro no {0} teste. Verifique a saída para obter mais informações.",
 	"ctest.run.cancelled": "A execução do teste foi cancelada",
