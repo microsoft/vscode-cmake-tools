@@ -6,7 +6,6 @@ import {
 import * as path from 'path';
 import * as vscode from 'vscode';
 import paths from '@cmt/paths';
-import { use } from 'chai';
 
 /**
  * Given a CMakePresets.json content, this function will return the configure preset with the given name
