@@ -54,6 +54,19 @@ async function getCMakePresetsAsJson(test_env: DefaultEnvironment) {
     return JSON.parse(content.toString());
 }
 
+async function commonSetup(configure_preset: string) {
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+    await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+
+    await vscode.commands.executeCommand('cmake.setConfigurePreset', configure_preset);
+    await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
+    await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+    await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
+    await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
+
+    await vscode.commands.executeCommand('cmake.build');
+}
+
 suite('Ctest: 2 successfull tests', () => {
     let testEnv: DefaultEnvironment;
     const usedConfigPreset: string = "2Successes";
@@ -68,16 +81,7 @@ suite('Ctest: 2 successfull tests', () => {
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
         testEnv.projectFolder.buildDirectory.clear();
 
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
-
-        await vscode.commands.executeCommand('cmake.setConfigurePreset', usedConfigPreset);
-        await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
-        await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
-        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
-        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
-
-        await vscode.commands.executeCommand('cmake.build');
+        await commonSetup(usedConfigPreset);
     });
 
     setup(async function (this: Mocha.Context) {
@@ -153,16 +157,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
         testEnv.projectFolder.buildDirectory.clear();
 
-        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
-
-        await vscode.commands.executeCommand('cmake.setConfigurePreset', usedConfigPreset);
-        await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
-        await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
-        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
-        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
-
-        await vscode.commands.executeCommand('cmake.build');
+        await commonSetup(usedConfigPreset);
     });
 
     setup(async function (this: Mocha.Context) {
