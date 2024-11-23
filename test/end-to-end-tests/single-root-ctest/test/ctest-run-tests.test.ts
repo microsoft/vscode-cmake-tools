@@ -183,7 +183,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
         const result = await testEnv.result.getResultAsJson();
         expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
         expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
     }).timeout(100000);
 
     test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
@@ -195,7 +195,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
         const result = await testEnv.result.getResultAsJson();
         expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
         expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
     }).timeout(100000);
 
     test('Run ctest with parallel jobs', async () => {
@@ -207,7 +207,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
         const result = await testEnv.result.getResultAsJson();
         expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
         expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
     }).timeout(100000);
 
     test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
@@ -219,6 +219,6 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
         const result = await testEnv.result.getResultAsJson();
         expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
         expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_b result not found in output");
+        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
     }).timeout(100000);
 });
