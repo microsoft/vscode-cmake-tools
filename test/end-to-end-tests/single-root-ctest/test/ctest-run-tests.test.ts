@@ -1,3 +1,19 @@
+/**
+ * This test suite will test the ctest command with different test results.
+ *
+ * Each test suite is defined in the project-folder's CMakePresets.json file through CMake cache variables:
+ *  - TESTS_DIR: The directory where the test results will be stored
+ *  - TESTS_OUTPUT_FILES: A list of file names that will contain the test results
+ *  - TESTS_NAMES: A list of names of the tests to run
+ *  - TESTS_SUCCESS: A list of the expected results of the tests
+ *
+ * All of those lists should have the same size.
+ *
+ * Each invocation of the ctest command will run the tests defined in the TESTS_NAMES list, storing their TESTS_OUTPUT_FILES
+ * in the TESTS_DIR directory and will make the test command ends according to the TESTS_SUCCESS list.
+ * After each invocation of the ctest command, the test results will be concatenated in the output_test.txt file in JSon format so that
+ * the test suite can check the results.
+ */
 import { fs } from '@cmt/pr';
 import {
     DefaultEnvironment,
@@ -54,6 +70,12 @@ async function getCMakePresetsAsJson(test_env: DefaultEnvironment) {
     return JSON.parse(content.toString());
 }
 
+/**
+ * This function will setup the test environment by setting the configure, build, test, package and workflow presets
+ * before building the project
+ *
+ * @param configure_preset: The name of the configure preset to use
+ */
 async function commonSetup(configure_preset: string) {
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
     await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
@@ -77,7 +99,6 @@ suite('Ctest: 2 successfull tests', () => {
         const build_loc = 'build';
         const exe_res = 'output_test.txt';
 
-        // CMakePresets.json exist so will use presets by default
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
         testEnv.projectFolder.buildDirectory.clear();
 
@@ -153,7 +174,6 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
         const build_loc = 'build';
         const exe_res = 'output_test.txt';
 
-        // CMakePresets.json exist so will use presets by default
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
         testEnv.projectFolder.buildDirectory.clear();
 
@@ -233,7 +253,6 @@ suite('Ctest: 3 failing tests', () => {
         const build_loc = 'build';
         const exe_res = 'output_test.txt';
 
-        // CMakePresets.json exist so will use presets by default
         testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
         testEnv.projectFolder.buildDirectory.clear();
 
