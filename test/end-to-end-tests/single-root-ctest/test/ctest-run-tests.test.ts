@@ -13,6 +13,12 @@
  * in the TESTS_DIR directory and will make the test command ends according to the TESTS_SUCCESS list.
  * After each invocation of the ctest command, the test results will be concatenated in the output_test.txt file in JSon format so that
  * the test suite can check the results.
+ *
+ * Each test suite will have the following tests:
+ *  - Run ctest without parallel jobs
+ *  - Run ctest with parallel jobs
+ *  - Run ctest without parallel jobs. Use test suite delimiter
+ *  - Run ctest with parallel jobs. Use test suite delimiter
  */
 import { fs } from '@cmt/pr';
 import {
