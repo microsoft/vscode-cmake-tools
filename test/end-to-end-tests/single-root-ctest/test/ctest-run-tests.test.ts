@@ -75,8 +75,15 @@ async function getCMakePresetsAsJson(test_env: DefaultEnvironment) {
  * before building the project
  *
  * @param configure_preset: The name of the configure preset to use
+ * @returns The test environment
  */
 async function commonSetup(configure_preset: string) {
+    const build_loc = 'build';
+    const exe_res = 'output_test.txt';
+
+    const test_env: DefaultEnvironment = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
+    test_env.projectFolder.buildDirectory.clear();
+
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
     await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
@@ -87,6 +94,8 @@ async function commonSetup(configure_preset: string) {
     await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
 
     await vscode.commands.executeCommand('cmake.build');
+
+    return test_env;
 }
 
 suite('Ctest: 2 successfull tests', () => {
@@ -95,14 +104,7 @@ suite('Ctest: 2 successfull tests', () => {
 
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
-
-        const build_loc = 'build';
-        const exe_res = 'output_test.txt';
-
-        testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
-        testEnv.projectFolder.buildDirectory.clear();
-
-        await commonSetup(usedConfigPreset);
+        testEnv = await commonSetup(usedConfigPreset);
     });
 
     setup(async function (this: Mocha.Context) {
@@ -170,14 +172,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
 
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
-
-        const build_loc = 'build';
-        const exe_res = 'output_test.txt';
-
-        testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
-        testEnv.projectFolder.buildDirectory.clear();
-
-        await commonSetup(usedConfigPreset);
+        testEnv = await commonSetup(usedConfigPreset);
     });
 
     setup(async function (this: Mocha.Context) {
@@ -249,14 +244,7 @@ suite('Ctest: 3 failing tests', () => {
 
     suiteSetup(async function (this: Mocha.Context) {
         this.timeout(100000);
-
-        const build_loc = 'build';
-        const exe_res = 'output_test.txt';
-
-        testEnv = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
-        testEnv.projectFolder.buildDirectory.clear();
-
-        await commonSetup(usedConfigPreset);
+        testEnv = await commonSetup(usedConfigPreset);
     });
 
     setup(async function (this: Mocha.Context) {
