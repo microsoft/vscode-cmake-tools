@@ -282,6 +282,8 @@ export class PresetsController implements vscode.Disposable {
                         } else if (kit.visualStudio && !kit.compilers) {
                             const hostTargetArch = getHostTargetArchString(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
                             return `${(kit.preferredGenerator?.name || 'Visual Studio')} ${hostTargetArch}`;
+                        } else if (kit.name === SpecialKits.ScanSpecificDir) {
+                            return `[${localize('scan.for.compilers.in.dir', 'Scan for compilers in directory')}]`;
                         } else {
                             return kit.name;
                         }
@@ -303,6 +305,32 @@ export class PresetsController implements vscode.Disposable {
                     } else {
                         if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
                             await KitsController.scanForKits(await this.project.getCMakePathofProject());
+                            return false;
+                        } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
+                            const dir = await vscode.window.showOpenDialog({
+                                canSelectFiles: false,
+                                canSelectFolders: true,
+                                canSelectMany: false,
+                                openLabel: localize('select.folder', 'Select Folder')
+                            });
+                            if (!dir || dir.length === 0) {
+                                return false;
+                            }
+                            const dirPathWithDepth = async (folder: string, depth: number = 5) => {
+                                const dir = await fs.readdir(folder);
+                                const files: string[] = [];
+                                for (const file of dir) {
+                                    const filePath = path.join(folder, file);
+                                    if (depth > 0 && (await fs.stat(filePath)).isDirectory()) {
+                                        files.push(...await dirPathWithDepth(filePath, depth - 1));
+                                        files.push(filePath);
+                                    }
+                                }
+
+                                return files;
+                            };
+
+                            await KitsController.scanForKits(await this.project.getCMakePathofProject(), [dir[0].fsPath, ...(await dirPathWithDepth(dir[0].fsPath))]);
                             return false;
                         } else {
                             log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
@@ -709,8 +737,10 @@ export class PresetsController implements vscode.Disposable {
                     const presets = preset.allConfigurePresets(this.folderPath);
                     const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
                     if (configurePreset) {
-                        newPreset = { name: '__placeholder__', description: '', displayName: '',
-                            steps: [{type: "configure", name: configurePreset}] };
+                        newPreset = {
+                            name: '__placeholder__', description: '', displayName: '',
+                            steps: [{ type: "configure", name: configurePreset }]
+                        };
                     }
 
                     break;
@@ -720,11 +750,11 @@ export class PresetsController implements vscode.Disposable {
                     const presets = preset.allWorkflowPresets(this.folderPath);
                     const workflowBasePresetName = await this.selectNonHiddenPreset(presets, presets, { placeHolder, canPickMany: false });
                     const workflowBasePreset = presets.find(pr => pr.name === workflowBasePresetName);
-                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: workflowBasePreset?.steps || [{type: "configure", name: "_placeholder_"}] };
+                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: workflowBasePreset?.steps || [{ type: "configure", name: "_placeholder_" }] };
                     break;
                 }
                 case SpecialOptions.Custom: {
-                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: [{type: "configure", name: "_placeholder_"}] };
+                    newPreset = { name: '__placeholder__', description: '', displayName: '', steps: [{ type: "configure", name: "_placeholder_" }] };
                     break;
                 }
                 default:
@@ -842,7 +872,7 @@ export class PresetsController implements vscode.Disposable {
                 await this.setConfigurePreset(chosenPreset);
             }
 
-            if (this.project.workspaceContext.config.automaticReconfigure  && !quickStart) {
+            if (this.project.workspaceContext.config.automaticReconfigure && !quickStart) {
                 await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
             }
             return !addPreset || allPresets.length === 0;
@@ -1150,8 +1180,7 @@ export class PresetsController implements vscode.Disposable {
         }
     }
 
-    private checkCompatibility(configurePreset: preset.ConfigurePreset | null, buildPreset?: preset.BuildPreset | null, testPreset?: preset.TestPreset | null, packagePreset?: preset.PackagePreset | null, workflowPreset?: preset.WorkflowPreset | null):
-    {buildPresetCompatible: boolean; testPresetCompatible: boolean; packagePresetCompatible: boolean; workflowPresetCompatible: boolean} {
+    private checkCompatibility(configurePreset: preset.ConfigurePreset | null, buildPreset?: preset.BuildPreset | null, testPreset?: preset.TestPreset | null, packagePreset?: preset.PackagePreset | null, workflowPreset?: preset.WorkflowPreset | null): { buildPresetCompatible: boolean; testPresetCompatible: boolean; packagePresetCompatible: boolean; workflowPresetCompatible: boolean } {
         let testPresetCompatible = true;
         let buildPresetCompatible = true;
         let packagePresetCompatible = true;
@@ -1215,7 +1244,7 @@ export class PresetsController implements vscode.Disposable {
             workflowPresetCompatible = (temp === undefined);
         }
 
-        return {buildPresetCompatible, testPresetCompatible, packagePresetCompatible, workflowPresetCompatible};
+        return { buildPresetCompatible, testPresetCompatible, packagePresetCompatible, workflowPresetCompatible };
     }
 
     async selectTestPreset(): Promise<boolean> {

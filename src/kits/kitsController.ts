@@ -119,6 +119,8 @@ export class KitsController {
         KitsController.specialKits = [
             // Spcial __scanforkits__ kit used for invoking the "Scan for kits"
             { name: SpecialKits.ScanForKits, isTrusted: true },
+            // Special __scanSpecificDir__ kit for invoking the "Scan for kits in specific directories"
+            { name: SpecialKits.ScanSpecificDir, isTrusted: true },
             // Special __unspec__ kit for opting-out of kits
             { name: SpecialKits.Unspecified, isTrusted: true }
         ];
@@ -249,6 +251,8 @@ export class KitsController {
             switch (kit.name) {
                 case SpecialKits.ScanForKits as string:
                     return `[${localize('scan.for.kits.button', 'Scan for kits')}]`;
+                case SpecialKits.ScanSpecificDir as string:
+                    return `[${localize('scan.for.kits.in.specific.dir.button', 'Scan for kits in specific directories')}]`;
                 case SpecialKits.Unspecified as string:
                     return `[${localize('unspecified.kit.name', 'Unspecified')}]`;
                 default:
@@ -275,6 +279,32 @@ export class KitsController {
         } else {
             if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
                 await KitsController.scanForKits(await this.project.getCMakePathofProject());
+                return false;
+            } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
+                const dir = await vscode.window.showOpenDialog({
+                    canSelectFiles: false,
+                    canSelectFolders: true,
+                    canSelectMany: false,
+                    openLabel: localize('select.folder', 'Select Folder')
+                });
+                if (!dir || dir.length === 0) {
+                    return false;
+                }
+                const dirPathWithDepth = async (folder: string, depth: number = 5) => {
+                    const dir = await fs.readdir(folder);
+                    const files: string[] = [];
+                    for (const file of dir) {
+                        const filePath = path.join(folder, file);
+                        if (depth > 0 && (await fs.stat(filePath)).isDirectory()) {
+                            files.push(...await dirPathWithDepth(filePath, depth - 1));
+                            files.push(filePath);
+                        }
+                    }
+
+                    return files;
+                };
+
+                await KitsController.scanForKits(await this.project.getCMakePathofProject(), [dir[0].fsPath, ...(await dirPathWithDepth(dir[0].fsPath))]);
                 return false;
             } else {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
@@ -423,7 +453,7 @@ export class KitsController {
 
         // Remove the special kits
         const stripped_kits = kits.filter(kit => ((kit.name !== SpecialKits.ScanForKits) &&
-            (kit.name !== SpecialKits.Unspecified)));
+            (kit.name !== SpecialKits.Unspecified) && (kit.name !== SpecialKits.ScanSpecificDir)));
 
         // Sort the kits by name so they always appear in order in the file.
         const sorted_kits = stripped_kits.sort((a, b) => {
@@ -489,11 +519,14 @@ export class KitsController {
      *
      * @returns if any duplicate vs kits are removed.
      */
-    static async scanForKits(cmakePath: string) {
+    static async scanForKits(cmakePath: string, directoriesToScan?: string[]) {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
 
         // Do the scan:
-        const discovered_kits = await scanForKits(cmakePath, { scanDirs: KitsController.additionalCompilerSearchDirs });
+        const discovered_kits = await scanForKits(cmakePath, !!directoriesToScan ? {
+            scanDirs: directoriesToScan,
+            useDefaultScanDirs: false
+        } : { scanDirs: KitsController.additionalCompilerSearchDirs });
 
         // The list with the new definition user kits starts with the non VS ones,
         // which do not have any variations in the way they can be defined.
@@ -574,7 +607,7 @@ export class KitsController {
         return false;
     }
 
-    static isBetterCompilerMatch(newCompilers?: {[lang: string]: string}, existingCompilers?: {[lang: string]: string}): boolean {
+    static isBetterCompilerMatch(newCompilers?: { [lang: string]: string }, existingCompilers?: { [lang: string]: string }): boolean {
         // Try to keep the best match (e.g. compilers for C and CXX exist)
         if (!existingCompilers) {
             return true;
