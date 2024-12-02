@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Si es `true`, la extensión no pedirá al usuario que seleccione un archivo CMakeLists.txt para la configuración cuando se encuentre uno en el área de trabajo, pero no en la carpeta raíz.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Controla lo que sucede con el terminal de inicio al iniciar un destino.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Configurar automáticamente los directorios del proyecto de CMake cuando se cambie el kit o el valor preestablecido de configuración.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista de comandos de CMake a anclar.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista de comandos de CMake para anclar siempre de forma predeterminada.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Habilitar el examen automático de kits cuando no se selecciona un kit. Esto solo tendrá efecto cuando no se usen valores preestablecidos de CMake.",
 	"cmake-tools.debugger.pipeName.description": "Nombre de la canalización (en Windows) o socket de dominio (en Unix) que se va a usar para la comunicación del depurador.",
 	"cmake-tools.debugger.clean.description": "Limpiar antes de la configuración.",

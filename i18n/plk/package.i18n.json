@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Jeśli ma wartość `true`, rozszerzenie nie będzie monitować użytkownika o wybranie pliku CMakeLists.txt do konfiguracji, gdy zostanie znaleziony w obszarze roboczym, ale nie w folderze głównym.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Określa, co się dzieje z terminalem uruchamiania po uruchomieniu elementu docelowego.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatycznie konfiguruj katalogi projektu narzędzia CMake po zmianie zestawu lub ustawienia wstępnego konfiguracji.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista poleceń narzędzia CMake do przypięcia.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista poleceń narzędzia CMake, które mają być zawsze domyślnie przypięte.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Włącz automatyczne skanowanie w poszukiwaniu zestawów, gdy zestaw nie jest wybrany. Będzie to miało wpływ tylko wtedy, gdy nie są używane ustawienia wstępne narzędzia CMake.",
 	"cmake-tools.debugger.pipeName.description": "Nazwa potoku (w systemie Windows) lub gniazda domeny (w systemie Unix) do użycia na potrzeby komunikacji debugera.",
 	"cmake-tools.debugger.clean.description": "Wyczyść przed skonfigurowaniem.",
