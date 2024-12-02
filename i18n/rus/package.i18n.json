@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Если установлено значение `true`, расширение не будет просить пользователя выбрать файл CMakeLists.txt для конфигурации, если такой файл обнаружен в рабочей области, но не в корневой папке.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Управляет тем, что происходит с терминалом запуска при запуске целевого объекта.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Автоматически настраивать каталоги проектов CMake при изменении набора или предустановки конфигурации.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Список команд CMake для закрепления.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Список команд CMake, которые всегда закрепляются по умолчанию.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Включить автоматическую проверку наборов, если набор не выбран. Это вступит в силу только в том случае, если не используются предустановки CMake.",
 	"cmake-tools.debugger.pipeName.description": "Имя канала (в Windows) или сокета домена (в Unix), используемого для связи отладчика.",
 	"cmake-tools.debugger.clean.description": "Очистка перед настройкой.",
