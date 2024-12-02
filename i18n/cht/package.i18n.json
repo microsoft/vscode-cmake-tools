@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "如果為 `true`，當工作區中找到某個檔案但卻不在根資料夾中時，延伸就不會要求使用者選取要設定的 CMakeLists.txt 檔案。",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "控制啟動終端機在您啟動目標時要執行的動作。",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "當套件或設定預設變更時，自動設定 CMake 專案目錄。",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "要釘選的 CMake 命令清單。",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "預設一律釘選的 CMake 命令清單。",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "未選取套件時啟用套件的自動掃描。只有在未使用 CMake 預設時才會生效。",
 	"cmake-tools.debugger.pipeName.description": "用於偵錯工具通訊的管道 (在 Windows 上) 或網域通訊端 (在 Unix 上) 的名稱。",
 	"cmake-tools.debugger.clean.description": "在設定之前先清除。",

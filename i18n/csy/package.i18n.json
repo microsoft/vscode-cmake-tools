@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Když se nastaví na `true`, rozšíření nebude uživatele žádat, aby vybral soubor CMakeLists.txt pro konfiguraci, když se nějaký najde v pracovním prostoru, ale ne v kořenové složce.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Určuje, co se stane se spouštěcím terminálem, když spustíte cíl.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Automaticky nakonfigurujte adresáře projektu CMake při změně sady nebo předvolby konfigurace.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Seznam příkazů CMake, které se mají připnout.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Seznam příkazů CMake, které se mají ve výchozím nastavení vždy připnout",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Umožňuje povolit automatické vyhledávání sad, když není vybrána sada. Bude to mít vliv jen v případě, že se nepoužívají předvolby CMake.",
 	"cmake-tools.debugger.pipeName.description": "Název kanálu (ve Windows) nebo soketu domény (v systému Unix), který se má použít pro komunikaci ladicího programu.",
 	"cmake-tools.debugger.clean.description": "Před konfigurací vyčistěte.",

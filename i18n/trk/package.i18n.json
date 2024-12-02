@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` ise; CMakeLists.txt, çalışma alanında bulunduğunda ama kök klasörde bulunmadığında, uzantı kullanıcıdan yapılandırma için bir CMakeLists.txt dosyası seçmesini istemez.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Bir hedefi başlattığınızda başlatma terminaline ne olacağını kontrol eder.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Set veya yapılandırma ön ayarı değiştirildiğinde CMake proje dizinlerini otomatik olarak yapılandır.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Sabitlenecek CMake komutlarının listesi.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Varsayılan olarak her zaman sabitlenen CMake komutlarının listesi.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Set seçilmediğinde setler için otomatik taramayı etkinleştirin. Bu, yalnızca CMake Önayarları kullanılmadığında devreye girer.",
 	"cmake-tools.debugger.pipeName.description": "Hata ayıklayıcı iletişimi için kullanılacak kanalın (Windows'da) veya etki alanı yuvasının (Unix üzerinde) adı.",
 	"cmake-tools.debugger.clean.description": "Yapılandırmadan önce temizleyin.",
