@@ -14,6 +14,9 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
+      - name: Setup LCOV
+        uses: hrishikesh-kadam/setup-lcov@v1
+
       - name: Setup Node environment
         uses: actions/setup-node@v3
         with:

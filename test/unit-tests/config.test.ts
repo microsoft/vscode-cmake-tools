@@ -76,7 +76,10 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         launchBehavior: 'reuseTerminal',
         ignoreCMakeListsMissing: false,
         automaticReconfigure: false,
-        enableAutomaticKitScan: true
+        enableAutomaticKitScan: true,
+        preRunCoverageTarget: null,
+        postRunCoverageTarget: null,
+        coverageInfoFiles: []
     });
     ret.updatePartial(conf);
     return ret;
