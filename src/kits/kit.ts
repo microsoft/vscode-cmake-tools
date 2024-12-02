@@ -34,7 +34,8 @@ const log = logging.createLogger('kit');
  */
 export enum SpecialKits {
     ScanForKits = '__scanforkits__',
-    Unspecified = '__unspec__'
+    Unspecified = '__unspec__',
+    ScanSpecificDir = '__scan_specific_dir__',
 }
 export const SpecialKitsCount: number = 2;
 export type UnspecifiedKit = SpecialKits.Unspecified;
@@ -1030,7 +1031,7 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     } else {
         const vs_vars = await getVSKitEnvironment(kit);
         env = EnvironmentUtils.merge([env, vs_vars]);
-        const expandOptions: expand.ExpansionOptions = opts ? {...opts, envOverride: env, penvOverride: env } : {
+        const expandOptions: expand.ExpansionOptions = opts ? { ...opts, envOverride: env, penvOverride: env } : {
             vars: {} as expand.KitContextVars,
             envOverride: env,
             penvOverride: env
@@ -1071,6 +1072,7 @@ export async function findCLCompilerPath(env?: Environment): Promise<string | nu
 export interface KitScanOptions {
     ignorePath?: boolean;
     scanDirs?: string[];
+    useDefaultScanDirs?: boolean;
 }
 
 /**
@@ -1094,6 +1096,9 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
         // Maps paths to booleans indicating if the path is trusted.
         const scan_paths = new Map<string, boolean>();
         function addScanPath(path: string, trusted: boolean, paths?: Map<string, boolean>) {
+            if (opt?.useDefaultScanDirs === false && !opt.scanDirs?.includes(path)) {
+                return;
+            }
             const normalizedPath = util.lightNormalizePath(path);
             const map = paths ?? scan_paths;
             map.set(normalizedPath, map.get(normalizedPath) || trusted);
@@ -1140,6 +1145,12 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
 
             // PATH environment variable locations
             scan_paths.forEach((isTrusted, path) => addScanPath(path, isTrusted, clang_paths));
+
+            // Paths provided by the user
+            for (const path of opt?.scanDirs ?? []) {
+                addScanPath(path, true, clang_paths);
+            }
+
             // LLVM bundled in VS locations
             const vs_installs = await vsInstallations();
             const bundled_clang_paths: string[] = [];
@@ -1182,14 +1193,14 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
                 Array.from(untrusted_paths).toString()),
             { action: 'yes', title: localize('yes', 'Yes') },
             { action: 'no', title: localize('no', 'No') }).then(async action => {
-            if (action?.action === 'yes') {
-                const settings = vscode.workspace.getConfiguration('cmake');
-                const additionalCompilerSearchDirs = settings.get<string[]>('additionalCompilerSearchDirs', []);
-                additionalCompilerSearchDirs.push(...Array.from(untrusted_paths));
-                await settings.update('additionalCompilerSearchDirs', additionalCompilerSearchDirs, vscode.ConfigurationTarget.Global);
-                await vscode.commands.executeCommand('cmake.scanForKits');
-            }
-        });
+                if (action?.action === 'yes') {
+                    const settings = vscode.workspace.getConfiguration('cmake');
+                    const additionalCompilerSearchDirs = settings.get<string[]>('additionalCompilerSearchDirs', []);
+                    additionalCompilerSearchDirs.push(...Array.from(untrusted_paths));
+                    await settings.update('additionalCompilerSearchDirs', additionalCompilerSearchDirs, vscode.ConfigurationTarget.Global);
+                    await vscode.commands.executeCommand('cmake.scanForKits');
+                }
+            });
     }
 
     return result.filter(kit => kit.isTrusted);
@@ -1251,7 +1262,14 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
     if (kit.name === SpecialKits.ScanForKits) {
         return localize('search.for.compilers', 'Search for compilers on this computer');
     }
-    return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
+    if (kit.name === SpecialKits.Unspecified) {
+        return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
+    }
+    if (kit.name === SpecialKits.ScanSpecificDir) {
+        return localize('search.for.compilers.in.dir', 'Search for compilers in a specific directory');
+    }
+
+    return '';
 }
 
 export async function readKitsFile(filePath: string, workspaceFolder?: string, expansionOptions?: expand.ExpansionOptions): Promise<Kit[]> {
