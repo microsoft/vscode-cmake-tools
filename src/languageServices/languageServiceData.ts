@@ -28,6 +28,12 @@ interface Variable {
     description: string;
 }
 
+enum LanguageType {
+    Variable,
+    Command,
+    Module
+}
+
 export class LanguageServiceData implements vscode.HoverProvider, vscode.CompletionItemProvider {
     private commands: Commands = {};
     private variables: Variables = {}; // variables and properties
@@ -37,10 +43,10 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
     }
 
     private async getFile(fileEnding: string, locale: string): Promise<string> {
-        let filePath: string = path.join(thisExtensionPath(), 'dist/languageServices', locale, 'assets', fileEnding);
+        let filePath: string = path.join(thisExtensionPath(), "dist/languageServices", locale, "assets", fileEnding);
         const fileExists: boolean = await util.checkFileExists(filePath);
         if (!fileExists) {
-            filePath = path.join(thisExtensionPath(), 'assets', fileEnding);
+            filePath = path.join(thisExtensionPath(), "assets", fileEnding);
         }
         return fs.readFile(filePath);
     }
@@ -49,9 +55,49 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         const test = thisExtensionPath();
         console.log(test);
         const locale: string = util.getLocaleId();
-        this.commands = JSON.parse(await this.getFile('commands.json', locale));
-        this.variables = JSON.parse(await this.getFile('variables.json', locale));
-        this.modules = JSON.parse(await this.getFile('modules.json', locale));
+        this.commands = JSON.parse(await this.getFile("commands.json", locale));
+        this.variables = JSON.parse(await this.getFile("variables.json", locale));
+        this.modules = JSON.parse(await this.getFile("modules.json", locale));
+    }
+
+    private getCompletionSuggestionsHelper(currentWord: string, data: Commands | Modules | Variables, type: LanguageType): vscode.CompletionItem[] {
+        function moduleInsertText(module: string): vscode.SnippetString {
+            if (module.indexOf("Find") === 0) {
+                return new vscode.SnippetString(`find_package(${module.replace("Find", "")}\${1: REQUIRED})`);
+            } else {
+                return new vscode.SnippetString(`include(${module})`);
+            }
+        }
+
+        function variableInsertText(variable: string): vscode.SnippetString {
+            return new vscode.SnippetString(variable.replace(/<(.*)>/g, "${1:<$1>}"));
+        }
+
+        function commandInsertText(func: string): vscode.SnippetString {
+            const scopedFunctions = ["if", "function", "while", "macro", "foreach"];
+            const is_scoped = scopedFunctions.includes(func);
+            if (is_scoped) {
+                return new vscode.SnippetString(`${func}(\${1})\n\t\nend${func}(\${1})\n`);
+            } else {
+                return new vscode.SnippetString(`${func}(\${1})`);
+            }
+        }
+
+        return Object.keys(data).map((key) => {
+            if (data[key].name.includes(currentWord)) {
+                const completionItem = new vscode.CompletionItem(data[key].name);
+                completionItem.insertText = type === LanguageType.Command ? commandInsertText(data[key].name) : type === LanguageType.Variable ? variableInsertText(data[key].name) : moduleInsertText(data[key].name);
+                completionItem.kind = type === LanguageType.Command ? vscode.CompletionItemKind.Function : type === LanguageType.Variable ? vscode.CompletionItemKind.Variable : vscode.CompletionItemKind.Module;
+                return completionItem;
+            }
+            return null;
+        }).filter((value) => value !== null) as vscode.CompletionItem[];
+    }
+
+    private getCompletionSuggestions(currentWord: string): vscode.CompletionItem[] {
+        return this.getCompletionSuggestionsHelper(currentWord, this.commands, LanguageType.Command)
+            .concat(this.getCompletionSuggestionsHelper(currentWord, this.variables, LanguageType.Variable))
+            .concat(this.getCompletionSuggestionsHelper(currentWord, this.modules, LanguageType.Module));
     }
 
     public static async create(): Promise<LanguageServiceData> {
@@ -73,33 +119,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             return null;
         }
 
-        const suggestions = Object.keys(this.commands).map((key) => {
-            if (this.commands[key].name.includes(currentWord)) {
-                const completionItem = new vscode.CompletionItem(this.commands[key].name);
-                completionItem.insertText = (this.commands[key].name);
-                completionItem.kind = vscode.CompletionItemKind.Function;
-                return completionItem;
-            }
-            return null;
-        }).filter((value) => value !== null).concat(Object.keys(this.variables).map((key) => {
-            if (this.variables[key].name.includes(currentWord)) {
-                const completionItem = new vscode.CompletionItem(this.variables[key].name);
-                completionItem.insertText = (this.variables[key].name);
-                completionItem.kind = vscode.CompletionItemKind.Variable;
-                return completionItem;
-            }
-            return null;
-        }).filter((value) => value !== null)).concat(Object.keys(this.modules).map((key) => {
-            if (this.modules[key].name.includes(currentWord)) {
-                const completionItem = new vscode.CompletionItem(this.modules[key].name);
-                completionItem.insertText = (this.modules[key].name);
-                completionItem.kind = vscode.CompletionItemKind.Module;
-                return completionItem;
-            }
-            return null;
-        }).filter((value) => value !== null));
-
-        return suggestions as vscode.CompletionItem[];
+        return this.getCompletionSuggestions(currentWord);
     }
 
     resolveCompletionItem?(item: vscode.CompletionItem, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.CompletionItem> {
