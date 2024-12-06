@@ -2196,6 +2196,9 @@ async function getWorkflowPresetInheritsHelper(folder: string, preset: WorkflowP
                 errorHandler);
         }  else {
             expandedConfigurePreset = getPresetByName(configurePresets(folder), workflowConfigurePreset);
+            if (!expandedConfigurePreset && allowUserPreset) {
+                expandedConfigurePreset = getPresetByName(userConfigurePresets(folder), workflowConfigurePreset);
+            }
         }
         if (!expandedConfigurePreset) {
             log.error(localize('configure.preset.not.found.full', 'Could not find configure preset with name {0}', workflowConfigurePreset));
