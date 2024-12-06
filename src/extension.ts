@@ -50,7 +50,6 @@ import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugg
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from "@cmt/ctest";
 import { LanguageServiceData } from './languageServices/languageServiceData';
-import { file } from 'tmp';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2365,9 +2364,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         { language: CMAKE_LANGUAGE, scheme: 'untitled'}
     ];
 
-    const languageServices = await LanguageServiceData.create();
-    vscode.languages.registerHoverProvider(CMAKE_SELECTOR, languageServices);
-    vscode.languages.registerCompletionItemProvider(CMAKE_SELECTOR, languageServices);
+    try {
+        const languageServices = await LanguageServiceData.create();
+        vscode.languages.registerHoverProvider(CMAKE_SELECTOR, languageServices);
+        vscode.languages.registerCompletionItemProvider(CMAKE_SELECTOR, languageServices);
+    } catch {
+        log.error(localize('language.service.failed', 'Failed to initialize language services'));
+    }
 
     vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
         indentationRules: {

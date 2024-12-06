@@ -52,8 +52,6 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
     }
 
     private async load(): Promise<void> {
-        const test = thisExtensionPath();
-        console.log(test);
         const locale: string = util.getLocaleId();
         this.commands = JSON.parse(await this.getFile("commands.json", locale));
         this.variables = JSON.parse(await this.getFile("variables.json", locale));
