@@ -49,6 +49,7 @@ import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from "@cmt/ctest";
+import { LanguageServiceData } from './languageServices/languageServiceData';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2355,6 +2356,69 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
+    }
+
+    const CMAKE_LANGUAGE = "cmake";
+    const CMAKE_SELECTOR: vscode.DocumentSelector = [
+        { language: CMAKE_LANGUAGE, scheme: 'file'},
+        { language: CMAKE_LANGUAGE, scheme: 'untitled'}
+    ];
+
+    try {
+        const languageServices = await LanguageServiceData.create();
+        vscode.languages.registerHoverProvider(CMAKE_SELECTOR, languageServices);
+        vscode.languages.registerCompletionItemProvider(CMAKE_SELECTOR, languageServices);
+    } catch {
+        log.error(localize('language.service.failed', 'Failed to initialize language services'));
+    }
+
+    vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
+        indentationRules: {
+            // ^(.*\*/)?\s*\}.*$
+            decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
+            // ^.*\{[^}"']*$
+            increaseIndentPattern: /^.*\{[^}"']*$/
+        },
+        wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
+        comments: {
+            lineComment: '#'
+        },
+        brackets: [
+            ['{', '}'],
+            ['(', ')']
+        ],
+
+        __electricCharacterSupport: {
+            brackets: [
+                { tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
+                { tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
+                { tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
+            ]
+        },
+
+        __characterPairSupport: {
+            autoClosingPairs: [
+                { open: '{', close: '}' },
+                { open: '(', close: ')' },
+                { open: '"', close: '"', notIn: ['string'] }
+            ]
+        }
+    });
+
+    if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
+        void vscode.window.showInformationMessage(
+            localize('options.moved.notification.body', "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools sidebar. You can customize your view with the 'cmake.options' property in settings."),
+            localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility'),
+            localize('options.moved.notification.do.not.show', "Do Not Show Again")
+        ).then(async (selection) => {
+            if (selection !== undefined) {
+                if (selection === localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility')) {
+                    await vscode.commands.executeCommand('workbench.action.openSettings', 'cmake.options');
+                } else if (selection === localize('options.moved.notification.do.not.show', "Do Not Show Again")) {
+                    await vscode.workspace.getConfiguration('cmake').update('showOptionsMovedNotification', false, vscode.ConfigurationTarget.Global);
+                }
+            }
+        });
     }
 
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
