@@ -2228,8 +2228,8 @@ export class CMakeProject {
         return 0;
     }
 
-    async buildWithTarget(specified_target: string | null = null): Promise<number> {
-        const target_selector = async (spec_target: string | null) => {
+    async buildWithTarget(specified_target?: string): Promise<number> {
+        const target_selector = async (spec_target: string | undefined) => {
             if (!spec_target) {
                 return this.showTargetSelector();
             }
