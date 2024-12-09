@@ -29,6 +29,7 @@ Bug Fixes:
 - Ensure that tests are updated after a build. [#4148](https://github.com/microsoft/vscode-cmake-tools/pull/4148)
 - Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
 - Fix reloading presets when included files are changed or renamed and updated. [#3963](https://github.com/microsoft/vscode-cmake-tools/issues/3963)
+- Fix the usage of toolset and archiecture in presets without generator set. [#4181](https://github.com/microsoft/vscode-cmake-tools/issues/4181)
 
 ## 1.19.52
 
