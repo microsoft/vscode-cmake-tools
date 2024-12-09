@@ -32,6 +32,7 @@ import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureD
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
+import { targetArchFromGeneratorPlatform } from '@cmt/installs/visualStudio';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -249,6 +250,17 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 if (generator.platform) {
                     args.push('-A');
                     args.push(generator.platform);
+                }
+            } else {
+                const platform = this._configurePreset?.architecture ? getValue(this._configurePreset.architecture) : undefined;
+                const toolset = this._configurePreset?.toolset ? getValue(this._configurePreset.toolset) : undefined;
+                if (toolset) {
+                    args.push('-T');
+                    args.push(toolset);
+                }
+                if (platform) {
+                    args.push("-A");
+                    args.push(platform);
                 }
             }
         }

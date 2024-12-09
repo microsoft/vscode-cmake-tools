@@ -390,7 +390,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this._useCMakePresets;
     }
 
-    private _configurePreset: preset.ConfigurePreset | null = null;
+    protected _configurePreset: preset.ConfigurePreset | null = null;
 
     private _buildPreset: preset.BuildPreset | null = null;
 
