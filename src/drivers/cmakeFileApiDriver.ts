@@ -32,7 +32,6 @@ import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureD
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
-import { targetArchFromGeneratorPlatform } from '@cmt/installs/visualStudio';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
