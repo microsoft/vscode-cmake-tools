@@ -217,6 +217,9 @@ export interface ExtensionConfigurationSettings {
     automaticReconfigure: boolean;
     pinnedCommands: string[];
     enableAutomaticKitScan: boolean;
+    preRunCoverageTarget: string | null;
+    postRunCoverageTarget: string | null;
+    coverageInfoFiles: string[];
 }
 
 type EmittersOf<T> = {
@@ -565,6 +568,18 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableAutomaticKitScan;
     }
 
+    get preRunCoverageTarget(): string | null {
+        return this.configData.preRunCoverageTarget;
+    }
+
+    get postRunCoverageTarget(): string | null {
+        return this.configData.postRunCoverageTarget;
+    }
+
+    get coverageInfoFiles(): string[] {
+        return this.configData.coverageInfoFiles;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
@@ -629,7 +644,10 @@ export class ConfigurationReader implements vscode.Disposable {
         launchBehavior: new vscode.EventEmitter<string>(),
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),
-        enableAutomaticKitScan: new vscode.EventEmitter<boolean>()
+        enableAutomaticKitScan: new vscode.EventEmitter<boolean>(),
+        preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
+        postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
+        coverageInfoFiles: new vscode.EventEmitter<string[]>()
     };
 
     /**

@@ -835,6 +835,13 @@ export function isTestMode(): boolean {
     return process.env['CMT_TESTING'] === '1';
 }
 
+/**
+ * Returns true if the test explorer should be enabled even when in test mode.
+ */
+export function overrideTestModeForTestExplorer(): boolean {
+    return process.env['CMT_TESTING_OVERRIDE_TEST_EXPLORER'] === '1';
+}
+
 export async function getAllCMakeListsPaths(path: string): Promise<string[] | undefined> {
     const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
     return recGetAllFilePaths(path, regex, await readDir(path), []);
