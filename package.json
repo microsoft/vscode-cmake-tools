@@ -22,7 +22,7 @@
     "syntaxes"
   ],
   "engines": {
-    "vscode": "^1.67.0"
+    "vscode": "^1.88.0"
   },
   "categories": [
     "Other",
@@ -3589,6 +3589,27 @@
           "default": true,
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
+        },
+        "cmake.preRunCoverageTarget": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.preRunCoverageTarget.description%",
+          "scope": "resource"
+        },
+        "cmake.postRunCoverageTarget": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.postRunCoverageTarget.description%",
+          "scope": "resource"
+        },
+        "cmake.coverageInfoFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.coverageInfoFiles.description%",
+          "scope": "resource"
         }
       }
     },
@@ -3716,7 +3737,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.63.0",
+    "@types/vscode": "1.88.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@types/uuid": "~8.3.3",
@@ -3758,6 +3779,7 @@
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@friedemannsommer/lcov-parser": "^4.0.1",
     "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^7.1.0",
     "chokidar": "^3.5.1",
