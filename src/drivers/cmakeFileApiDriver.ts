@@ -252,15 +252,19 @@ export class CMakeFileApiDriver extends CMakeDriver {
                     args.push(generator.platform);
                 }
             } else {
-                const platform = this._configurePreset?.architecture ? getValue(this._configurePreset.architecture) : undefined;
-                const toolset = this._configurePreset?.toolset ? getValue(this._configurePreset.toolset) : undefined;
-                if (toolset) {
-                    args.push('-T');
-                    args.push(toolset);
-                }
-                if (platform) {
-                    args.push("-A");
-                    args.push(platform);
+                if (this.useCMakePresets) {
+                    const presetArchitecture = this.configurePresetArchitecture;
+                    const presetToolset = this.configurePresetToolset;
+                    const platform = presetArchitecture ? getValue(presetArchitecture) : undefined;
+                    const toolset = presetToolset ? getValue(presetToolset) : undefined;
+                    if (toolset) {
+                        args.push('-T');
+                        args.push(toolset);
+                    }
+                    if (platform) {
+                        args.push("-A");
+                        args.push(platform);
+                    }
                 }
             }
         }
