@@ -1541,13 +1541,13 @@ export class CMakeProject {
             }
         } else {
             // single file with known path
-            const compdbPath = util.lightNormalizePath(path.join(await this.binaryDir, 'compile_commands.json'));
+            const compdbPath = util.platformNormalizePath(path.join(await this.binaryDir, 'compile_commands.json'));
             if (await fs.exists(compdbPath)) {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
                     // Now try to copy the compdb to the user-requested path
                     const copyDest = util.lightNormalizePath(this.workspaceContext.config.copyCompileCommands);
-                    const expandedDest = util.lightNormalizePath(await expandString(copyDest, opts));
+                    const expandedDest = util.platformNormalizePath(await expandString(copyDest, opts));
                     if (compdbPath !== expandedDest) {
                         const parentDir = path.dirname(expandedDest);
                         try {
