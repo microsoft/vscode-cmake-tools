@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Když se nastaví na `true`, rozšíření nebude uživatele žádat, aby vybral soubor CMakeLists.txt pro konfiguraci, když se nějaký najde v pracovním prostoru, ale ne v kořenové složce.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Určuje, co se stane se spouštěcím terminálem, když spustíte cíl.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Automaticky nakonfigurujte adresáře projektu CMake při změně sady nebo předvolby konfigurace.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Seznam příkazů CMake, které se mají ve výchozím nastavení vždy připnout",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Seznam příkazů CMake, které se mají ve výchozím nastavení vždy připnout Zobrazí se v části Připnuté příkazy na bočním panelu Nástrojů CMake.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Umožňuje povolit automatické vyhledávání sad, když není vybrána sada. Bude to mít vliv jen v případě, že se nepoužívají předvolby CMake.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Cíl, který se má sestavit před spuštěním testů s pokrytím pomocí Průzkumníka testů",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Cíl, který se má sestavit po spuštění testů s pokrytím pomocí Průzkumníka testů",

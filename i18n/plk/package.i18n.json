@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Jeśli ma wartość `true`, rozszerzenie nie będzie monitować użytkownika o wybranie pliku CMakeLists.txt do konfiguracji, gdy zostanie znaleziony w obszarze roboczym, ale nie w folderze głównym.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Określa, co się dzieje z terminalem uruchamiania po uruchomieniu elementu docelowego.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatycznie konfiguruj katalogi projektu narzędzia CMake po zmianie zestawu lub ustawienia wstępnego konfiguracji.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista poleceń narzędzia CMake, które mają być zawsze domyślnie przypięte.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista poleceń narzędzia CMake, które mają być zawsze domyślnie przypinane. Pojawią się one w sekcji \"Przypięte polecenia\" narzędzi CMake Tools.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Włącz automatyczne skanowanie w poszukiwaniu zestawów, gdy zestaw nie jest wybrany. Będzie to miało wpływ tylko wtedy, gdy nie są używane ustawienia wstępne narzędzia CMake.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Element docelowy do utworzenia przed przeprowadzeniem testów z pokryciem przy użyciu eksploratora testów",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Element docelowy do utworzenia po przeprowadzeniu testów z pokryciem przy użyciu eksploratora testów",

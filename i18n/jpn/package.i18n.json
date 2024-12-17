@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` の場合、拡張機能は、ワークスペース内で見つかったがルート フォルダーにない場合に、構成用の CMakeLists.txt ファイルを選択するようにユーザーに求めなくなります。",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "ターゲットを起動するときの起動ターミナルの動作を制御します。",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "キットまたは構成プリセットが変更されたときに、CMake プロジェクト ディレクトリを自動的に構成します。",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "既定で常にピン留めする CMake コマンドの一覧。",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "既定で常にピン留めする CMake コマンドの一覧。これらは、CMake Tools サイドバーの [ピン留めされたコマンド] セクションに表示されます。",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "キットが選択されていない場合は、キットの自動スキャンを有効にします。これは、CMake プリセットが使用されていない場合にのみ影響します。",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "テスト エクスプローラーを使用してカバレッジを使用してテストを実行する前に構築するターゲット",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "テスト エクスプローラーを使用してカバレッジを使用してテストを実行する後に構築するターゲット",

@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "如果为 `true`，则当在工作区中找到 CMakeLists.txt 文件，但未在根文件夹中找到时，扩展将不会要求用户选择 CMakeLists.txt 文件以进行配置。",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "控制启动目标时启动终端将执行的操作。",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "当工具包或配置预设发生更改时，将自动配置 CMake 项目目录。",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "默认情况下要始终固定的 CMake 命令的列表。",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "默认情况下始终固定的 CMake 命令列表。这些内容将显示在 CMake 工具边栏“固定的命令”部分中。",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "未选择工具包时启用工具包的自动扫描。这只会在未使用 CMake 预设时生效。",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "使用测试资源管理器运行覆盖率测试之前要生成的目标",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "使用测试资源管理器运行覆盖率测试之后要生成的目标",
