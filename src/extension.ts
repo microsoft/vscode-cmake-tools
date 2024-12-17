@@ -1428,7 +1428,7 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanRebuild(), this.ensureActiveBuildPreset, true);
     }
 
-    async buildWithTarget() {
+    async buildWithTarget(target?: string) {
         telemetry.logEvent("build", { command: "buildWithTarget", all: "false"});
         this.cleanOutputChannel();
         let activeProject: CMakeProject | undefined = this.getActiveProject();
@@ -1438,7 +1438,7 @@ export class ExtensionManager implements vscode.Disposable {
                 return; // Error or nothing is opened
             }
         } else {
-            return activeProject.buildWithTarget();
+            return activeProject.buildWithTarget(target);
         }
     }
 
