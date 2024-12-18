@@ -26,6 +26,11 @@ const jsonSchemaFilesPatterns = [
     "*/*-schema.json"
 ];
 
+// Patterns to find language services json files. 
+const languageServicesFilesPatterns = [
+    "assets/*.json"
+];
+
 const languages = [
     { id: "zh-tw", folderName: "cht", transifexId: "zh-hant" },
     { id: "zh-cn", folderName: "chs", transifexId: "zh-hans" },
@@ -94,7 +99,7 @@ const traverseJson = (jsonTree, descriptionCallback, prefixPath) => {
 
 // Traverses schema json files looking for "description" fields to localized.
 // The path to the "description" field is used to create a localization key.
-const processJsonSchemaFiles = () => {
+const processJsonFiles = () => {
     return es.through(function (file) {
         let jsonTree = JSON.parse(file.contents.toString());
         let localizationJsonContents = {};
@@ -133,10 +138,13 @@ gulp.task("translations-export", (done) => {
 
     // Scan schema files
     let jsonSchemaStream = gulp.src(jsonSchemaFilesPatterns)
-        .pipe(processJsonSchemaFiles());
+        .pipe(processJsonFiles());
+
+    let jsonLanguageServicesStream = gulp.src(languageServicesFilesPatterns)
+        .pipe(processJsonFiles());
 
     // Merge files from all source streams
-    es.merge(jsStream, jsonSchemaStream)
+    es.merge(jsStream, jsonSchemaStream, jsonLanguageServicesStream)
 
     // Filter down to only the files we need
     .pipe(filter(['**/*.nls.json', '**/*.nls.metadata.json']))
@@ -214,7 +222,7 @@ const generatedSrcLocBundle = () => {
         .pipe(gulp.dest('dist'));
 };
 
-const generateLocalizedJsonSchemaFiles = () => {
+const generateLocalizedJsonFiles = (paths) => {
     return es.through(function (file) {
         let jsonTree = JSON.parse(file.contents.toString());
         languages.map((language) => {
@@ -237,7 +245,7 @@ const generateLocalizedJsonSchemaFiles = () => {
             traverseJson(jsonTree, descriptionCallback, "");
             let newContent = JSON.stringify(jsonTree, null, '\t');
             this.queue(new vinyl({
-                path: path.join("schema", language.id, relativePath),
+                path: path.join(...paths, language.id, relativePath),
                 contents: Buffer.from(newContent, 'utf8')
             }));
         });
@@ -249,11 +257,17 @@ const generateLocalizedJsonSchemaFiles = () => {
 // Generate new version of the JSON schema file in dist/schema/<language_id>/<path>
 const generateJsonSchemaLoc = () => {
     return gulp.src(jsonSchemaFilesPatterns)
-        .pipe(generateLocalizedJsonSchemaFiles())
+        .pipe(generateLocalizedJsonFiles(["schema"]))
         .pipe(gulp.dest('dist'));
 };
 
-gulp.task('translations-generate', gulp.series(generatedSrcLocBundle, generatedAdditionalLocFiles, generateJsonSchemaLoc));
+const generateJsonLanguageServicesLoc = () => {
+    return gulp.src(languageServicesFilesPatterns)
+        .pipe(generateLocalizedJsonFiles(["languageServices"]))
+        .pipe(gulp.dest('dist'));
+};
+
+gulp.task('translations-generate', gulp.series(generatedSrcLocBundle, generatedAdditionalLocFiles, generateJsonSchemaLoc, generateJsonLanguageServicesLoc));
 
 const allTypeScript = [
     'src/**/*.ts',
