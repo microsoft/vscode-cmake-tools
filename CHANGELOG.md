@@ -13,6 +13,7 @@ Features:
 
 Improvements:
 
+- Add ability to pass custom target to "CMake: Build Target" command as argument. [#3598](https://github.com/microsoft/vscode-cmake-tools/issues/3598)
 - Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
 - Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
 - Fix "Test output isn't visible when failed" and also mark skipped tests as so. [#4116](https://github.com/microsoft/vscode-cmake-tools/issues/4116)
