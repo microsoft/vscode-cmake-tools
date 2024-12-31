@@ -1829,6 +1829,14 @@ export class ExtensionManager implements vscode.Disposable {
         return projects.some(project => project.hasCMakeLists());
     }
 
+    getAllCMakeProjects(): CMakeProject[] {
+        const projects: CMakeProject[] | undefined = this.projectController.getAllCMakeProjects();
+        if (!projects || projects.length === 0) {
+            return [];
+        }
+        return projects;
+    }
+
     activeConfigurePresetName(): string {
         telemetry.logEvent("substitution", { command: "activeConfigurePresetName" });
         return this.getActiveProject()?.configurePreset?.name || '';
