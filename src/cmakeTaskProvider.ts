@@ -172,10 +172,14 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             preset: preset
         };
         const scope = workspaceFolder ? workspaceFolder : vscode.TaskScope.Workspace;
+        // Add the workspace folder name to the task label if it is defined. This is to differentiate between tasks with the same name in different workspaces.
+        if (workspaceFolder !== undefined) {
+            definition.label = `${workspaceFolder.name}: ${definition.label}`;
+        }
         const task = new vscode.Task(definition, scope, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
-                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, {})
+                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, {})
             ), []);
         task.group = (commandType === CommandType.build || commandType === CommandType.cleanRebuild) ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
@@ -189,7 +193,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const scope: vscode.WorkspaceFolder | vscode.TaskScope = task.scope ? task.scope : vscode.TaskScope.Workspace;
             const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, resolvedDefinition.options)
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, undefined, resolvedDefinition.preset, resolvedDefinition.options)
                 ), []);
             return resolvedTask;
         }
@@ -203,7 +207,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
             const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, resolvedDefinition.options)
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, undefined, resolvedDefinition.preset, resolvedDefinition.options)
                 ), []);
             return resolvedTask;
         }
@@ -307,7 +311,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private targets: string[], private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
+    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
     }
 
     output(line: string): void {
@@ -416,8 +420,12 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         return useCMakePresets ? getDefaultPresetName(commandType, true) : undefined;
     }
 
-    private getActiveProject(): CMakeProject | undefined {
-        const project: CMakeProject | undefined = getActiveProject();
+    private async getActiveProject(): Promise<CMakeProject | undefined> {
+        let project: CMakeProject | undefined = getActiveProject();
+        if (this.workspaceFolder !== undefined) {
+            this.writeEmitter.fire("Workspace is " + this.workspaceFolder.uri.path + endOfLine);
+            project = await extensionManager?.projectController.getProjectForFolder(this.workspaceFolder.uri.path);
+        }
         if (!project) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
             this.writeEmitter.fire(localize("task.failed", "Task failed.") + endOfLine);
@@ -428,7 +436,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getActiveProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
@@ -465,7 +473,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         let args: string[] = [];
 
         if (!project) {
-            project = this.getActiveProject();
+            project = await this.getActiveProject();
             if (!project || !await this.isTaskCompatibleWithPresets(project)) {
                 return -1;
             }
@@ -544,7 +552,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
 
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getActiveProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
@@ -582,7 +590,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runPackageTask(): Promise<any> {
         this.writeEmitter.fire(localize("package.started", "Package task started...") + endOfLine);
 
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getActiveProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
@@ -620,7 +628,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runWorkflowTask(): Promise<any> {
         this.writeEmitter.fire(localize("workflow.started", "Workflow task started...") + endOfLine);
 
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getActiveProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
@@ -656,7 +664,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async runCleanRebuildTask(): Promise<any> {
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getActiveProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
