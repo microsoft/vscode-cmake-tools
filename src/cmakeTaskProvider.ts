@@ -187,6 +187,10 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public static async provideTask(commandType: CommandType, workspaceFolder: vscode.WorkspaceFolder, useCMakePresets?: boolean, targets?: string[], presetName?: string): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
+        const project = await extensionManager?.projectController.getProjectForFolder(workspaceFolder.uri.path);
+        if (!project) {
+            log.error(localize("project.not.found", 'Project not found.'));
+        }
         let buildTargets: string[] | undefined;
         let preset: string | undefined;
         if (commandType === CommandType.build || commandType === CommandType.cleanRebuild) {
@@ -195,7 +199,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         if (presetName) {
             preset = presetName;
         } else if (useCMakePresets) {
-            preset = await getDefaultPresetName(commandType);
+            preset = getDefaultPresetNameForProject(project, commandType);
         }
 
         const definition: CMakeTaskDefinition = {
