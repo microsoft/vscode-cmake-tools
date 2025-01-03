@@ -84,6 +84,39 @@ const localizeCommandType = (cmd: CommandType): string => {
     };
 };
 
+/**
+ * Returns the default preset name for the given project and command type.
+ *
+ * @param project Project to get the default preset name for.
+ * @param commandType Command type to get the default preset name for.
+ * @returns The default preset name for the given project and command type.
+ */
+function getDefaultPresetNameForProject(project: CMakeProject | undefined, commandType: CommandType): string | undefined {
+    if (!project) {
+        return undefined;
+    }
+    switch (commandType) {
+        case CommandType.config:
+            return project.configurePreset?.name;
+        case CommandType.build:
+            return project.buildPreset?.name;
+        case CommandType.install:
+            return project.buildPreset?.name;
+        case CommandType.clean:
+            return project.buildPreset?.name;
+        case CommandType.cleanRebuild:
+            return project.buildPreset?.name;
+        case CommandType.test:
+            return project.testPreset?.name;
+        case CommandType.package:
+            return project.packagePreset?.name;
+        case CommandType.workflow:
+            return project.workflowPreset?.name;
+        default:
+            return undefined;
+    }
+}
+
 async function getDefaultPresetName(commandType: CommandType, resolve: boolean = false): Promise<string | undefined> {
     let result: string | undefined;
     switch (commandType) {
