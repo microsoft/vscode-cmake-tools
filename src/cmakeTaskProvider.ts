@@ -187,7 +187,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 
     public static async provideTask(commandType: CommandType, workspaceFolder: vscode.WorkspaceFolder, useCMakePresets?: boolean, targets?: string[], presetName?: string): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
-        const project = await extensionManager?.projectController.getProjectForFolder(workspaceFolder.uri.path);
+        const project = await extensionManager?.getProjectForFolder(workspaceFolder);
         if (!project) {
             log.error(localize("project.not.found", 'Project not found.'));
         }
@@ -472,7 +472,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         let project: CMakeProject | undefined = getActiveProject();
         if (this.workspaceFolder !== undefined) {
             this.writeEmitter.fire("Workspace is " + this.workspaceFolder.uri.path + endOfLine);
-            project = await extensionManager?.projectController.getProjectForFolder(this.workspaceFolder.uri.path);
+            project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
         }
         if (!project) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
