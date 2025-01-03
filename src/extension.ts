@@ -1829,6 +1829,11 @@ export class ExtensionManager implements vscode.Disposable {
         return projects.some(project => project.hasCMakeLists());
     }
 
+    /**
+     * Get all CMake projects in the workspace
+     *
+     * @returns All CMake projects in the workspace
+     */
     getAllCMakeProjects(): CMakeProject[] {
         return this.projectController.getAllCMakeProjects();
     }
