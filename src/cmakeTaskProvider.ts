@@ -465,7 +465,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     /**
-     * 
+     *
      * @returns The CMake project for the current workspace folder if the workspace folder is defined, otherwise the active project.
      */
     private async getProject(): Promise<CMakeProject | undefined> {
