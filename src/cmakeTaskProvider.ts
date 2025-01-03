@@ -117,7 +117,7 @@ function getDefaultPresetNameForProject(project: CMakeProject | undefined, comma
     }
 }
 
-async function getDefaultPresetName(commandType: CommandType, resolve: boolean = false): Promise<string | undefined> {
+async function getDefaultPresetNameForActiveProject(commandType: CommandType, resolve: boolean = false): Promise<string | undefined> {
     let result: string | undefined;
     switch (commandType) {
         case CommandType.config:
@@ -457,7 +457,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (preset !== undefined) {
             return preset;
         }
-        return useCMakePresets ? getDefaultPresetName(commandType, true) : undefined;
+        return useCMakePresets ? getDefaultPresetNameForActiveProject(commandType, true) : undefined;
     }
 
     private async getActiveProject(): Promise<CMakeProject | undefined> {
