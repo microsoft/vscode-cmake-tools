@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true`이면 확장에서 작업 영역에 있지만 루트 폴더에는 없는 경우 구성을 위해 CMakeLists.txt 파일을 선택하도록 사용자에게 요청하지 않습니다.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "대상을 시작할 때 시작 터미널에서 수행되는 작업을 제어합니다.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "키트 또는 구성 사전 설정이 변경되면 CMake 프로젝트 디렉터리를 자동으로 구성합니다.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "기본적으로 항상 고정할 CMake 명령 목록입니다.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "항상 기본적으로 고정할 CMake 명령 목록입니다. CMake 도구 사이드바 '고정된 명령' 섹션에 표시됩니다.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "키트를 선택하지 않은 경우 키트 자동 검사를 활성화합니다. CMake 사전 설정을 사용하지 않는 경우에만 적용됩니다.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "테스트 탐색기를 사용하여 적용 범위가 있는 테스트를 실행하기 전에 빌드할 대상",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "테스트 탐색기를 사용하여 적용 범위가 있는 테스트를 실행한 후 빌드할 대상",

@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "Si es `true`, la extensión no pedirá al usuario que seleccione un archivo CMakeLists.txt para la configuración cuando se encuentre uno en el área de trabajo, pero no en la carpeta raíz.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Controla lo que sucede con el terminal de inicio al iniciar un destino.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Configurar automáticamente los directorios del proyecto de CMake cuando se cambie el kit o el valor preestablecido de configuración.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista de comandos de CMake para anclar siempre de forma predeterminada.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Lista de comandos de CMake para anclar siempre de forma predeterminada. Aparecerán en la sección \"Comandos anclados\" de la barra lateral de herramientas de CMake.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Habilitar el examen automático de kits cuando no se selecciona un kit. Esto solo tendrá efecto cuando no se usen valores preestablecidos de CMake.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Destino para compilar antes de ejecutar pruebas con cobertura mediante el explorador de pruebas",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Destino para compilar después de ejecutar pruebas con cobertura mediante el explorador de pruebas",

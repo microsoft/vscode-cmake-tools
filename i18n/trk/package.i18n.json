@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` ise; CMakeLists.txt, çalışma alanında bulunduğunda ama kök klasörde bulunmadığında, uzantı kullanıcıdan yapılandırma için bir CMakeLists.txt dosyası seçmesini istemez.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Bir hedefi başlattığınızda başlatma terminaline ne olacağını kontrol eder.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Set veya yapılandırma ön ayarı değiştirildiğinde CMake proje dizinlerini otomatik olarak yapılandır.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Varsayılan olarak her zaman sabitlenen CMake komutlarının listesi.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Varsayılan olarak her zaman sabitlenen CMake komutlarının listesi. Bunlar CMake Araçları kenar çubuğu 'Sabitlenmiş Komutlar' bölümünde görünür.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Set seçilmediğinde setler için otomatik taramayı etkinleştirin. Bu, yalnızca CMake Önayarları kullanılmadığında devreye girer.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Test gezginini kullanarak kapsamı olan testleri çalıştırmadan önce oluşturma hedefi",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Test gezginini kullanarak kapsamı olan testleri çalıştırdıktan sonra oluşturma hedefi",
