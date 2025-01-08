@@ -22,7 +22,7 @@
     "syntaxes"
   ],
   "engines": {
-    "vscode": "^1.67.0"
+    "vscode": "^1.88.0"
   },
   "categories": [
     "Other",
@@ -2591,10 +2591,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
-          "scope": "resource",
-          "tags": [
-            "experimental"
-          ]
+          "scope": "resource"
         },
         "cmake.configureOnEdit": {
           "type": "boolean",
@@ -2749,12 +2746,6 @@
               ]
             }
           }
-        },
-        "cmake.showOptionsMovedNotification": {
-          "type": "boolean",
-          "default": true,
-          "description": "%cmake-tools.configuration.cmake.showOptionsMovedNotification%",
-          "scope": "application"
         },
         "cmake.showConfigureWithDebuggerNotification": {
             "type": "boolean",
@@ -3587,13 +3578,37 @@
             "type": "string"
           },
           "description": "%cmake-tools.configuration.cmake.pinnedCommands.description%",
-          "default": [],
+          "default": [
+            "workbench.action.tasks.configureTaskRunner",
+            "workbench.action.tasks.runTask"
+          ],
           "scope": "resource"
         },
         "cmake.enableAutomaticKitScan": {
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
+          "scope": "resource"
+        },
+        "cmake.preRunCoverageTarget": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.preRunCoverageTarget.description%",
+          "scope": "resource"
+        },
+        "cmake.postRunCoverageTarget": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.postRunCoverageTarget.description%",
+          "scope": "resource"
+        },
+        "cmake.coverageInfoFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.coverageInfoFiles.description%",
           "scope": "resource"
         }
       }
@@ -3701,6 +3716,7 @@
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/badProject/runTest.js && node ./out/test/smoke/goodProject/runTest.js && node ./out/test/smoke/noCtest/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
+    "integrationTests": "yarn run pretest && node ./out/test/integration-tests/runTest.js",
     "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
     "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
@@ -3721,7 +3737,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.63.0",
+    "@types/vscode": "1.88.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@types/uuid": "~8.3.3",
@@ -3763,6 +3779,7 @@
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@friedemannsommer/lcov-parser": "^4.0.1",
     "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^7.1.0",
     "chokidar": "^3.5.1",

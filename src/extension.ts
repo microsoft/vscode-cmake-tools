@@ -1428,7 +1428,7 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanRebuild(), this.ensureActiveBuildPreset, true);
     }
 
-    async buildWithTarget() {
+    async buildWithTarget(target?: string) {
         telemetry.logEvent("build", { command: "buildWithTarget", all: "false"});
         this.cleanOutputChannel();
         let activeProject: CMakeProject | undefined = this.getActiveProject();
@@ -1438,7 +1438,7 @@ export class ExtensionManager implements vscode.Disposable {
                 return; // Error or nothing is opened
             }
         } else {
-            return activeProject.buildWithTarget();
+            return activeProject.buildWithTarget(target);
         }
     }
 
@@ -2355,22 +2355,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
-    }
-
-    if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
-        void vscode.window.showInformationMessage(
-            localize('options.moved.notification.body', "Some status bar options in CMake Tools have now moved to the Project Status View in the CMake Tools sidebar. You can customize your view with the 'cmake.options' property in settings."),
-            localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility'),
-            localize('options.moved.notification.do.not.show', "Do Not Show Again")
-        ).then(async (selection) => {
-            if (selection !== undefined) {
-                if (selection === localize('options.moved.notification.configure.cmake.options', 'Configure CMake Options Visibility')) {
-                    await vscode.commands.executeCommand('workbench.action.openSettings', 'cmake.options');
-                } else if (selection === localize('options.moved.notification.do.not.show', "Do Not Show Again")) {
-                    await vscode.workspace.getConfiguration('cmake').update('showOptionsMovedNotification', false, vscode.ConfigurationTarget.Global);
-                }
-            }
-        });
     }
 
     // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.

@@ -47,8 +47,5 @@
 	"loading.extension.commands": "正在載入延伸模組命令",
 	"register.command": "註冊 CMakeTools 延伸模組命令 {0}",
 	"uninstall.old.cmaketools": "請將所有較舊的 CMake 工具延伸模組版本解除安裝。它現在由 Microsoft 從版本 1.2.0 開始發佈。",
-	"options.moved.notification.body": "CMake 工具中的部分狀態列選項現在已移至 CMake 工具提要欄位中的 [專案狀態檢視]。您可以在設定中使用 'cmake.options' 屬性自訂您的檢視。",
-	"options.moved.notification.configure.cmake.options": "設定 CMake 選項可見度",
-	"options.moved.notification.do.not.show": "不要再顯示",
 	"deactivate.cmaketools": "停用 CMakeTools"
 }

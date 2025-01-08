@@ -47,8 +47,5 @@
 	"loading.extension.commands": "Načítání příkazů rozšíření",
 	"register.command": "Zaregistrujte příkaz rozšíření CMakeTools {0}.",
 	"uninstall.old.cmaketools": "Odinstalujte prosím všechny starší verze rozšíření CMake Tools. Od verze 1.2.0 jej publikuje Microsoft.",
-	"options.moved.notification.body": "Některé možnosti stavového řádku v nástrojích CMake se teď přesunuly do zobrazení stavu projektu na bočním panelu nástrojů CMake. Zobrazení můžete přizpůsobit pomocí vlastnosti cmake.options v nastavení.",
-	"options.moved.notification.configure.cmake.options": "Nakonfigurovat viditelnost možností CMake",
-	"options.moved.notification.do.not.show": "Už nezobrazovat",
 	"deactivate.cmaketools": "Deaktivovat CMakeTools"
 }

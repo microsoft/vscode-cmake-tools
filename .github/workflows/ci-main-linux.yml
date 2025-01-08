@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup LCOV
+        uses: hrishikesh-kadam/setup-lcov@v1
+
       - name: Setup Node environment
         uses: actions/setup-node@v3
         with:
@@ -55,6 +58,11 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.6
         with:
           run: yarn unitTests
+
+      - name: Run integration tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn integrationTests
 
       - name: Run successful-build test
         uses: GabrielBB/xvfb-action@v1.6

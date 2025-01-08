@@ -141,7 +141,7 @@ class WebfontGenerator {
                 // The SVG intermediate format has all the transformative options we can set.
                 svg: {
                     fontHeight: 1000,
-                    normalize: false
+                    normalize: true
                 }
             }
         });

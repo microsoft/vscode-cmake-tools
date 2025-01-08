@@ -15,6 +15,8 @@ import { expandString } from '@cmt/expand';
 import * as proc from '@cmt/proc';
 import { ProjectController } from '@cmt/projectController';
 import { extensionManager } from '@cmt/extension';
+import { CMakeProject } from '@cmt/cmakeProject';
+import { handleCoverageInfoFiles } from '@cmt/coverage';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -31,6 +33,8 @@ const testPresetRequired = '_test_preset_required_';
 interface SiteAttributes {}
 
 type TestStatus = ('failed' | 'notrun' | 'passed');
+
+type DriverMapT = Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>;
 
 export interface TestMeasurement {
     type: string;
@@ -114,6 +118,18 @@ interface CTestInfo {
         properties: { name: string; value: string | string[] }[];
     }[];
     version: { major: number; minor: number };
+}
+
+/* The preRunCoverageTarget and postRunCoverageTarget are optional user
+configured targets that are run before and after the tests when a "Run with
+Coverage" test execution is triggered. These cae be used to zero the
+coverage counters, filter coverage results etc. */
+interface ProjectCoverageConfig {
+    project: CMakeProject;
+    driver: CMakeDriver;
+    preRunCoverageTarget: string | null;
+    postRunCoverageTarget: string | null;
+    coverageInfoFiles: string[];
 }
 
 function parseXmlString<T>(xml: string): Promise<T> {
@@ -226,6 +242,8 @@ export class CTestDriver implements vscode.Disposable {
 
     private readonly testingEnabledEmitter = new vscode.EventEmitter<boolean>();
     readonly onTestingEnabledChanged = this.testingEnabledEmitter.event;
+
+    private coverageData = new WeakMap<vscode.FileCoverage, vscode.FileCoverageDetail[]>();
 
     dispose() {
         this.testingEnabledEmitter.dispose();
@@ -395,9 +413,34 @@ export class CTestDriver implements vscode.Disposable {
         run.failed(test, message, duration);
     }
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
-        let returnCode: number = 0;
-        const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[]}>();
+    /**
+     * Retrieve the driver from the test in argument
+     *
+     * @param test : test to retrieve the driver from
+     * @returns : the driver
+     */
+    private async getProjectDriver(test: vscode.TestItem): Promise<CMakeDriver> {
+        const folder = this.getTestRootFolder(test);
+        const project = await this.projectController?.getProjectForFolder(folder);
+        if (!project) {
+            throw new Error(localize('no.project.found', 'No project found for folder {0}', folder));
+        }
+        const _driver = await project.getCMakeDriverInstance();
+        if (!_driver) {
+            throw new Error(localize('no.driver.found', 'No driver found for folder {0}', folder));
+        }
+        return _driver;
+    }
+
+    /**
+     * Recursively collect all tests informations among all the test suite tree and store them in the driverMap
+     *
+     */
+    private async fillDriverMap(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driverMap?: DriverMapT, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false): Promise<void> {
+        let _driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
+        if (driverMap) {
+            _driverMap = driverMap;
+        }
 
         /**
          * Loop through the tests and get the driver, ctestPath, ctestArgs for each test. Construct a map for each soure directory, mapping drivers to tests.
@@ -407,15 +450,10 @@ export class CTestDriver implements vscode.Disposable {
             if (driver) {
                 _driver = driver;
             } else {
-                const folder = this.getTestRootFolder(test);
-                const project = await this.projectController?.getProjectForFolder(folder);
-                if (!project) {
-                    this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
-                    continue;
-                }
-                _driver = await project.getCMakeDriverInstance();
-                if (!_driver) {
-                    this.ctestErrored(test, run, { message: localize('no.driver.found', 'No driver found for folder {0}', folder) });
+                try {
+                    _driver = await this.getProjectDriver(test);
+                } catch (err: any) {
+                    this.ctestErrored(test, run, { message: err.message });
                     continue;
                 }
             }
@@ -444,21 +482,26 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             if (test.children.size > 0) {
-                // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
+                // If test has children then it is a suite, so we need to recursively call this function
                 const children = this.testItemCollectionToArray(test.children);
-                if (await this.runCTestHelper(children, run, cancellation, _driver, _ctestPath, _ctestArgs, customizedTask, consumer, entryPoint)) {
-                    returnCode = -1;
-                }
-                return returnCode;
+                await this.fillDriverMap(children, run, cancellation, _driverMap, _driver, _ctestPath, _ctestArgs, customizedTask);
             } else {
-                if (!driverMap.has(_driver.sourceDir)) {
-                    driverMap.set(_driver.sourceDir, { driver: _driver, ctestPath: _ctestPath, ctestArgs: _ctestArgs, tests: [test] });
+                // If test has no children, it is a leaf of the test suite hierarchy so add its characteristics to the driver map
+                if (!_driverMap.has(_driver.sourceDir)) {
+                    _driverMap.set(_driver.sourceDir, { driver: _driver, ctestPath: _ctestPath, ctestArgs: _ctestArgs, tests: [test] });
                 } else {
-                    const d = driverMap.get(_driver.sourceDir);
-                    driverMap.set(_driver.sourceDir, { driver: d!.driver, ctestPath: d!.ctestPath, ctestArgs: d!.ctestArgs, tests: d!.tests.concat(test) });
+                    const d = _driverMap.get(_driver.sourceDir);
+                    _driverMap.set(_driver.sourceDir, { driver: d!.driver, ctestPath: d!.ctestPath, ctestArgs: d!.ctestArgs, tests: d!.tests.concat(test) });
                 }
             }
         }
+    };
+
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
+        let returnCode: number = 0;
+        const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
+
+        await this.fillDriverMap(tests, run, cancellation, driverMap, driver, ctestPath, ctestArgs, customizedTask);
 
         if (!this.ws.config.ctestAllowParallelJobs) {
             for (const driver of driverMap.values()) {
@@ -573,15 +616,19 @@ export class CTestDriver implements vscode.Disposable {
                 this.ctestFailed(
                     test,
                     run,
-                    new vscode.TestMessage(localize('test.failed.with.exit.code', 'Test {0} failed with exit code {1}.', testName, exitCode)),
+                    new vscode.TestMessage(localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitCode)),
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
-                this.ctestErrored(
-                    test,
-                    run,
-                    new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
-                );
+                if (completionStatus === "SKIP_REGULAR_EXPRESSION_MATCHED") {
+                    run.skipped(test);
+                } else {
+                    this.ctestErrored(
+                        test,
+                        run,
+                        new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
+                    );
+                }
             } else {
                 this.ctestErrored(
                     test,
@@ -679,7 +726,7 @@ export class CTestDriver implements vscode.Disposable {
             return -1;
         }
 
-        if (util.isTestMode()) {
+        if (util.isTestMode() && !util.overrideTestModeForTestExplorer()) {
             // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
             return 0;
         }
@@ -777,7 +824,7 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     }
 
-                    const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer,  testDefFile ? vscode.Uri.file(testDefFile) : undefined);
+                    const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer, testDefFile ? vscode.Uri.file(testDefFile) : undefined);
                     const testItem = testAndParentSuite.test;
                     const parentSuiteItem = testAndParentSuite.parentSuite;
 
@@ -874,7 +921,65 @@ export class CTestDriver implements vscode.Disposable {
         return true;
     }
 
-    private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
+    private async handleCoverageOnProjects(run: vscode.TestRun, projectCoverageConfigs: ProjectCoverageConfig[]) {
+        // Currently only LCOV coverage info files are supported
+        for (const projectCoverageConfig of projectCoverageConfigs) {
+            if (projectCoverageConfig.coverageInfoFiles.length === 0) {
+                log.warning(localize('test.noCoverageInfoFiles', 'No coverage info files for CMake project {0}. No coverage data will be analyzed for this project.', projectCoverageConfig.project.sourceDir));
+                continue;
+            }
+            const expandedCoverageInfoFiles = await Promise.all(projectCoverageConfig.coverageInfoFiles.map(async (coverageInfoFile: string) => expandString(coverageInfoFile, projectCoverageConfig.driver.expansionOptions)));
+            await handleCoverageInfoFiles(run, expandedCoverageInfoFiles, this.coverageData);
+        }
+    }
+
+    private async coverageCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken): Promise<number> {
+        const projectRoots = new Set<string>();
+        for (const test of tests) {
+            projectRoots.add(this.getTestRootFolder(test));
+        }
+
+        const projectCoverageConfigs: ProjectCoverageConfig[] = [];
+        for (const folder of projectRoots) {
+            const project = await this.projectController?.getProjectForFolder(folder);
+            if (project) {
+                const driver = await project.getCMakeDriverInstance();
+                if (driver) {
+                    projectCoverageConfigs.push({
+                        project: project, driver: driver, preRunCoverageTarget: driver.config.preRunCoverageTarget, postRunCoverageTarget: driver.config.postRunCoverageTarget, coverageInfoFiles: driver.config.coverageInfoFiles
+                    });
+                }
+            }
+        }
+
+        for (const projectCoverageConfig of projectCoverageConfigs) {
+            if (projectCoverageConfig.preRunCoverageTarget) {
+                log.info(localize('test.buildingPreRunCoverageTarget', 'Building the preRunCoverageTarget for project {0} before running tests with coverage.', projectCoverageConfig.project.sourceDir));
+                const rc = await projectCoverageConfig.project.build([projectCoverageConfig.preRunCoverageTarget]);
+                if (rc !== 0) {
+                    log.error(localize('test.preRunCoverageTargetFailure', 'Building the preRunCoverageTarget \'{0}\' on project in {1} failed. Skipping running tests.', projectCoverageConfig.preRunCoverageTarget, projectCoverageConfig.project.sourceDir));
+                    run.end();
+                    return rc;
+                }
+            }
+        }
+        const runResult = await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
+        for (const projectCoverageConfig of projectCoverageConfigs) {
+            if (projectCoverageConfig.postRunCoverageTarget) {
+                log.info(localize('test.buildingPostRunCoverageTarget', 'Building the postRunCoverageTarget \'{0}\' for project {1} after the tests have run with coverage.', projectCoverageConfig.postRunCoverageTarget, projectCoverageConfig.project.sourceDir));
+                const rc = await projectCoverageConfig.project.build([projectCoverageConfig.postRunCoverageTarget]);
+                if (rc !== 0) {
+                    log.error(localize('test.postRunCoverageTargetFailure', 'Building target postRunCoverageTarget on project in {0} failed. Skipping handling of coverage data.', projectCoverageConfig.project.sourceDir));
+                    return rc;
+                }
+            }
+        }
+
+        await this.handleCoverageOnProjects(run, projectCoverageConfigs);
+        return runResult;
+    }
+
+    private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken, isCoverageRun = false) {
         // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return;
@@ -891,7 +996,12 @@ export class CTestDriver implements vscode.Disposable {
         this.ctestsEnqueued(tests, run);
         const buildSucceeded = await this.buildTests(tests, run);
         if (buildSucceeded) {
-            await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
+            if (isCoverageRun) {
+                await this.coverageCTestHelper(tests, run, cancellation);
+
+            } else {
+                await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
+            }
         } else {
             log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
         }
@@ -1200,6 +1310,12 @@ export class CTestDriver implements vscode.Disposable {
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
                 true
             );
+            testExplorer.createRunProfile(
+                'Run Tests with Coverage',
+                vscode.TestRunProfileKind.Coverage,
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation, true),
+                true
+            ).loadDetailedCoverage = async (_, fileCoverage) => this.coverageData.get(fileCoverage) ?? [];
             testExplorer.createRunProfile(
                 'Debug Tests',
                 vscode.TestRunProfileKind.Debug,

@@ -835,6 +835,13 @@ export function isTestMode(): boolean {
     return process.env['CMT_TESTING'] === '1';
 }
 
+/**
+ * Returns true if the test explorer should be enabled even when in test mode.
+ */
+export function overrideTestModeForTestExplorer(): boolean {
+    return process.env['CMT_TESTING_OVERRIDE_TEST_EXPLORER'] === '1';
+}
+
 export async function getAllCMakeListsPaths(path: string): Promise<string[] | undefined> {
     const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
     return recGetAllFilePaths(path, regex, await readDir(path), []);
@@ -947,7 +954,13 @@ export async function scheduleAsyncTask<T>(task: () => Promise<T>): Promise<T> {
 export function isFileInsideFolder(uri: vscode.Uri, folderPath: string): boolean {
     const parent = platformNormalizePath(folderPath);
     const file = platformNormalizePath(uri.fsPath);
-    return file.startsWith(parent);
+
+    // Ensure project path ends with a path separator to avoid partial matches
+    const parentWithEndingSeparator = parent.endsWith(path.posix.sep)
+        ? parent
+        : `${parent}${path.posix.sep}`;
+
+    return file.startsWith(parentWithEndingSeparator);
 }
 
 /**
