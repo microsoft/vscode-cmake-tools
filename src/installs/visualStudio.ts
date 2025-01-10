@@ -135,7 +135,7 @@ export function targetArchFromGeneratorPlatform(generatorPlatform?: string) {
     if (!generatorPlatform) {
         return undefined;
     }
-    return vsArchFromGeneratorPlatform[generatorPlatform] || generatorPlatform;
+    return vsArchFromGeneratorPlatform[generatorPlatform.toLowerCase()] || generatorPlatform;
 }
 
 /**
