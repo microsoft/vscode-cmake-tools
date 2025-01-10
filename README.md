@@ -15,6 +15,7 @@
 - [FAQ](docs/faq.md)
 - [Read the online documentation](docs/README.md)
 - [Contribute](CONTRIBUTING.md)
+- [Extensibility](EXTENSIBILITY.md)
 
 ## Issues? Questions? Feature requests?
 
