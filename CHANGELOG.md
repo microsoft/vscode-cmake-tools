@@ -10,6 +10,7 @@ Features:
   executed. This adds test execution type, "Run with coverage", on the `ctest`
   section of the Testing tab.
   [#4040](https://github.com/microsoft/vscode-cmake-tools/issues/4040)
+- Add basic CMake language services: quick hover and completions for CMake built-ins. [PR #4204](https://github.com/microsoft/vscode-cmake-tools/pull/4204)
 
 Improvements:
 
