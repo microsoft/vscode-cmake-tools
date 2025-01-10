@@ -208,7 +208,7 @@
 	"cmake-tools.configuration.cmake.ignoreCMakeListsMissing.description": "`true` gibt an, dass der Benutzer von der Erweiterung nicht aufgefordert wird, eine CMakeLists.txt-Datei für die Konfiguration auszuwählen, wenn eine Datei im Arbeitsbereich, aber nicht im Stammordner gefunden wird.",
 	"cmake-tools.configuration.cmake.launchBehavior.description": "Steuert, was mit dem Startterminal beim Starten eines Ziels geschieht.",
 	"cmake-tools.configuration.cmake.automaticReconfigure.description": "Hiermit werden CMake-Projektverzeichnisse automatisch konfiguriert, wenn das Kit oder die Konfigurationsvoreinstellung geändert wird.",
-	"cmake-tools.configuration.cmake.pinnedCommands.description": "Liste der CMake-Befehle, die standardmäßig immer angeheftet werden sollen.",
+	"cmake-tools.configuration.cmake.pinnedCommands.description": "Liste der CMake-Befehle, die standardmäßig immer angeheftet werden sollen. Diese werden im Abschnitt \"Angeheftete Befehle\" in der Randleiste \"CMake-Tools\" angezeigt.",
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Aktivieren Sie die automatische Überprüfung für Kits, wenn kein Kit ausgewählt ist. Dies wird nur wirksam, wenn keine CMake-Voreinstellungen verwendet werden.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Ziel, das vor dem Ausführen von Tests mit Abdeckung mithilfe des Test-Explorers erstellt werden soll",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Ziel, das nach dem Ausführen von Tests mit Abdeckung mithilfe des Test-Explorers erstellt werden soll",
