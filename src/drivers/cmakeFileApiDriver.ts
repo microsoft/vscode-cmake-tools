@@ -250,6 +250,21 @@ export class CMakeFileApiDriver extends CMakeDriver {
                     args.push('-A');
                     args.push(generator.platform);
                 }
+            } else {
+                if (this.useCMakePresets) {
+                    const presetArchitecture = this.configurePresetArchitecture;
+                    const presetToolset = this.configurePresetToolset;
+                    const platform = presetArchitecture ? getValue(presetArchitecture) : undefined;
+                    const toolset = presetToolset ? getValue(presetToolset) : undefined;
+                    if (toolset) {
+                        args.push('-T');
+                        args.push(toolset);
+                    }
+                    if (platform) {
+                        args.push("-A");
+                        args.push(platform);
+                    }
+                }
             }
         }
 
