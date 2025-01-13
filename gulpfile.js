@@ -19,7 +19,7 @@ const tsProject = ts.createProject('./tsconfig.json', { typescript });
 const filter = require('gulp-filter');
 const vinyl = require('vinyl');
 const jsonc = require('jsonc-parser');
-
+const lodash = require("lodash");
 
 // Patterns to find schema files
 const jsonSchemaFilesPatterns = [
@@ -114,7 +114,7 @@ const processJsonFiles = () => {
             let locId = filePath + "." + path;
             localizationJsonContents[locId] = value;
             localizationMetadataContents.keys.push(locId);
-            localizationMetadataContents.messages.push(value);
+            localizationMetadataContents.messages.push(lodash.escape(value));
         };
         traverseJson(jsonTree, descriptionCallback, "");
         this.queue(new vinyl({
