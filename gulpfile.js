@@ -99,7 +99,9 @@ const traverseJson = (jsonTree, descriptionCallback, prefixPath) => {
 
 // Traverses schema json files looking for "description" fields to localized.
 // The path to the "description" field is used to create a localization key.
-const processJsonFiles = () => {
+// escape is a boolean regarding whether we want to escape the string with lodash. We only want to do this with the
+// language service files. 
+const processJsonFiles = (escape = false) => {
     return es.through(function (file) {
         let jsonTree = JSON.parse(file.contents.toString());
         let localizationJsonContents = {};
@@ -113,8 +115,8 @@ const processJsonFiles = () => {
         let descriptionCallback = (path, value, parent) => {
             let locId = filePath + "." + path;
             localizationJsonContents[locId] = value;
-            localizationMetadataContents.keys.push(lodash.escape(locId));
-            localizationMetadataContents.messages.push(lodash.escape(value));
+            localizationMetadataContents.keys.push(escape ? lodash.escape(locId) : locId);
+            localizationMetadataContents.messages.push(escape ? lodash.escape(value) : value);
         };
         traverseJson(jsonTree, descriptionCallback, "");
         this.queue(new vinyl({
@@ -141,7 +143,7 @@ gulp.task("translations-export", (done) => {
         .pipe(processJsonFiles());
 
     let jsonLanguageServicesStream = gulp.src(languageServicesFilesPatterns)
-        .pipe(processJsonFiles());
+        .pipe(processJsonFiles(true));
 
     // Merge files from all source streams
     es.merge(jsStream, jsonSchemaStream, jsonLanguageServicesStream)
