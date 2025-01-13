@@ -26,9 +26,15 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('workspace');
 
+// TODO:
+interface PossibleCMakeProject {
+    cmakeEnabled: boolean;
+    projects: CMakeProject[];
+}
+
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
-    private readonly folderToProjectsMap = new Map<string, CMakeProject[]>();
+    private readonly folderToPossibleProjectsMap = new Map<string, PossibleCMakeProject>();
     private readonly sourceDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly buildDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
@@ -168,7 +174,9 @@ export class ProjectController implements vscode.Disposable {
 
     // Number of workspace folders
     get numOfWorkspaceFolders(): number {
-        return this.folderToProjectsMap.size;
+        let num = 0;
+        this.folderToPossibleProjectsMap.forEach((ftp) => ftp.cmakeEnabled ? num++ : 0);
+        return num;
     }
 
     get numOfProjects(): number {
@@ -176,11 +184,7 @@ export class ProjectController implements vscode.Disposable {
     }
 
     getNumOfValidProjects(): number {
-        let count: number = 0;
-        for (const project of this.getAllCMakeProjects()) {
-            count += project.hasCMakeLists() ? 1 : 0;
-        }
-        return count;
+        return this.getAllCMakeProjects().length;
     }
 
     get hasMultipleProjects(): boolean {
@@ -188,8 +192,8 @@ export class ProjectController implements vscode.Disposable {
     }
 
     get hasMultipleProjectsInOneFolder(): boolean {
-        for (const projects of this.folderToProjectsMap.values()) {
-            if (projects && projects.length > 1) {
+        for (const possibleProjects of this.folderToPossibleProjectsMap.values()) {
+            if (possibleProjects && possibleProjects.cmakeEnabled && possibleProjects.projects.length > 1) {
                 return true;
             }
         }
@@ -229,10 +233,14 @@ export class ProjectController implements vscode.Disposable {
     getProjectsForWorkspaceFolder(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeProject[] | undefined {
         if (ws) {
             if (util.isArrayOfString(ws)) {
-                return this.folderToProjectsMap.get(ws[ws.length - 1]);
+                const possibleProject = this.folderToPossibleProjectsMap.get(
+                    ws[ws.length - 1]
+                );
+                return possibleProject?.cmakeEnabled ? possibleProject.projects : undefined;
             } else if (util.isWorkspaceFolder(ws)) {
                 const folder = ws as vscode.WorkspaceFolder;
-                return this.folderToProjectsMap.get(folder.uri.fsPath);
+                const possibleProject = this.folderToPossibleProjectsMap.get(folder.uri.fsPath);
+                return possibleProject?.cmakeEnabled ? possibleProject.projects : undefined;
             }
         }
         return undefined;
@@ -252,7 +260,7 @@ export class ProjectController implements vscode.Disposable {
 
     getAllCMakeProjects(): CMakeProject[] {
         let allCMakeProjects: CMakeProject[] = [];
-        allCMakeProjects = allCMakeProjects.concat(...this.folderToProjectsMap.values());
+        allCMakeProjects = allCMakeProjects.concat([...this.folderToPossibleProjectsMap.values()].filter(ftp => ftp.cmakeEnabled).map(ftp => ftp.projects).flat());
         return allCMakeProjects;
     }
 
@@ -261,7 +269,7 @@ export class ProjectController implements vscode.Disposable {
      */
     async loadAllProjects() {
         this.getAllCMakeProjects().forEach(project => project.dispose());
-        this.folderToProjectsMap.clear();
+        this.folderToPossibleProjectsMap.clear();
         if (vscode.workspace.workspaceFolders) {
             for (const folder of vscode.workspace.workspaceFolders) {
                 await this.addFolder(folder);
@@ -340,7 +348,7 @@ export class ProjectController implements vscode.Disposable {
             // Load for the workspace.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
             projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext, this);
-            this.folderToProjectsMap.set(folder.uri.fsPath, projects);
+            this.folderToPossibleProjectsMap.set(folder.uri.fsPath, { cmakeEnabled: projects.some(p => p.hasCMakeLists()), projects: projects });
             const config: ConfigurationReader | undefined = workspaceContext.config;
             if (config) {
                 this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories, config.options)));
@@ -369,7 +377,7 @@ export class ProjectController implements vscode.Disposable {
             return;
         }
         // Drop the instance from our table. Forget about it.
-        this.folderToProjectsMap.delete(folder.uri.fsPath);
+        this.folderToPossibleProjectsMap.delete(folder.uri.fsPath);
         // Finally, dispose of the CMake Tools now that the workspace is gone.
         for (const project of cmakeProjects) {
             project.dispose();
@@ -440,7 +448,7 @@ export class ProjectController implements vscode.Disposable {
             }
 
             // Update the map.
-            this.folderToProjectsMap.set(folder.uri.fsPath, projects);
+            this.folderToPossibleProjectsMap.set(folder.uri.fsPath, { cmakeEnabled: projects.some(p => p.hasCMakeLists()), projects: projects });
             if (multiProjectChange || activeProjectPath !== undefined) {
                 // There's no way to reach into the extension manager and update the status bar, so we exposed a hidden command
                 // to referesh it.
@@ -572,6 +580,6 @@ export class ProjectController implements vscode.Disposable {
     }
 
     [Symbol.iterator]() {
-        return this.folderToProjectsMap.values();
+        return this.folderToPossibleProjectsMap.values();
     }
 }

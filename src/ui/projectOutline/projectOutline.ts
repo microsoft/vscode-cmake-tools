@@ -663,12 +663,6 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
     private readonly _folders = new Map<string, WorkspaceFolderNode>();
     private _selected_workspace?: WorkspaceFolderNode;
 
-    addAllCurrentFolders() {
-        for (const wsf of vscode.workspace.workspaceFolders || []) {
-            this._folders.set(wsf.uri.fsPath, new WorkspaceFolderNode(wsf));
-        }
-    }
-
     addFolder(folder: vscode.WorkspaceFolder) {
         this._folders.set(folder.uri.fsPath, new WorkspaceFolderNode(folder));
         this._changeEvent.fire(null);

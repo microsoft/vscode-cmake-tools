@@ -146,14 +146,17 @@ export class ExtensionManager implements vscode.Disposable {
 
         this.projectController.onAfterAddFolder(async (folderProjectMap: FolderProjectType) => {
             const folder: vscode.WorkspaceFolder = folderProjectMap.folder;
-            if (this.projectController.numOfWorkspaceFolders === 1) {
-                // First folder added
-                await this.updateActiveProject(folder);
-            } else {
-                await this.initActiveProject();
+            if (folderProjectMap.projects.some(project => project.useCMakePresets)) {
+                if (this.projectController.numOfWorkspaceFolders === 1) {
+                    // First folder added
+                    await this.updateActiveProject(folder);
+                } else {
+                    await this.initActiveProject();
+                }
+                this.projectOutline.addFolder(folder);
             }
+
             await setContextAndStore(multiProjectModeKey, this.projectController.hasMultipleProjects);
-            this.projectOutline.addFolder(folder);
             if (this.codeModelUpdateSubs.get(folder.uri.fsPath)) {
                 this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
                 this.codeModelUpdateSubs.delete(folder.uri.fsPath);
@@ -260,7 +263,6 @@ export class ExtensionManager implements vscode.Disposable {
             await this.projectController.loadAllProjects();
             isMultiProject = this.projectController.hasMultipleProjects;
             await setContextAndStore(multiProjectModeKey, isMultiProject);
-            this.projectOutline.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
             }
