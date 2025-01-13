@@ -113,7 +113,7 @@ const processJsonFiles = () => {
         let descriptionCallback = (path, value, parent) => {
             let locId = filePath + "." + path;
             localizationJsonContents[locId] = value;
-            localizationMetadataContents.keys.push(locId);
+            localizationMetadataContents.keys.push(lodash.escape(locId));
             localizationMetadataContents.messages.push(lodash.escape(value));
         };
         traverseJson(jsonTree, descriptionCallback, "");
