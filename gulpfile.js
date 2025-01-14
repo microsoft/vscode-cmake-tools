@@ -19,7 +19,6 @@ const tsProject = ts.createProject('./tsconfig.json', { typescript });
 const filter = require('gulp-filter');
 const vinyl = require('vinyl');
 const jsonc = require('jsonc-parser');
-const lodash = require("lodash");
 
 // Patterns to find schema files
 const jsonSchemaFilesPatterns = [
