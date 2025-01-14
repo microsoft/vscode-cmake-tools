@@ -89,3 +89,7 @@ extends:
             LclSource: lclFilesfromPackage
             LclPackageId: 'LCL-JUNO-PROD-VCMAKE'
             lsBuildXLocPackageVersion: '7.0.30510'
+        
+        - task: CmdLine@2
+          inputs:
+            script: 'node ./translations_auto_pr.js microsoft vscode-cmake-tools csigs $(csigsPat) csigs csigs@users.noreply.github.com "$(Build.ArtifactStagingDirectory)/loc" vscode-extensions-localization-export/vscode-extensions'
