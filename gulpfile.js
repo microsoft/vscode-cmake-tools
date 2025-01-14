@@ -116,8 +116,7 @@ const processJsonFiles = () => {
             filePath: filePath
         };
         let descriptionCallback = (path, value, parent) => {
-            let locId = filePath + "." + path;
-            locId = removeInvalidXLFCharacters(locId);
+            let locId = filePath + "." + removeInvalidXLFCharacters(path);
             localizationJsonContents[locId] = value;
             localizationMetadataContents.keys.push(locId);
             localizationMetadataContents.messages.push(value);
