@@ -5,6 +5,7 @@ export interface DebuggerInformation {
     pipeName: string;
     dapLog?: string;
     debuggerIsReady(): void;
+    debuggerStoppedDueToPreconditions(message: string): void;
 }
 
 export function getDebuggerPipeName(): string {
