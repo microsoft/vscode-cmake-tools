@@ -20,6 +20,7 @@ const filter = require('gulp-filter');
 const vinyl = require('vinyl');
 const jsonc = require('jsonc-parser');
 
+
 // Patterns to find schema files
 const jsonSchemaFilesPatterns = [
     "*/*-schema.json"
