@@ -97,11 +97,16 @@ const traverseJson = (jsonTree, descriptionCallback, prefixPath) => {
     }
 };
 
+// remove invalid characters that aren't allowed in xlf.
+const removeInvalidXLFCharacters = (str) => {
+    return str.replace(/[^a-zA-Z_]/g, "");
+}
+
 // Traverses schema json files looking for "description" fields to localized.
 // The path to the "description" field is used to create a localization key.
 // escape is a boolean regarding whether we want to escape the string with lodash. We only want to do this with the
 // language service files. 
-const processJsonFiles = (escape = false) => {
+const processJsonFiles = () => {
     return es.through(function (file) {
         let jsonTree = JSON.parse(file.contents.toString());
         let localizationJsonContents = {};
@@ -114,9 +119,10 @@ const processJsonFiles = (escape = false) => {
         };
         let descriptionCallback = (path, value, parent) => {
             let locId = filePath + "." + path;
+            locId = removeInvalidXLFCharacters(locId);
             localizationJsonContents[locId] = value;
-            localizationMetadataContents.keys.push(escape ? lodash.escape(locId) : locId);
-            localizationMetadataContents.messages.push(escape ? lodash.escape(value) : value);
+            localizationMetadataContents.keys.push(locId);
+            localizationMetadataContents.messages.push(value);
         };
         traverseJson(jsonTree, descriptionCallback, "");
         this.queue(new vinyl({
@@ -143,7 +149,7 @@ gulp.task("translations-export", (done) => {
         .pipe(processJsonFiles());
 
     let jsonLanguageServicesStream = gulp.src(languageServicesFilesPatterns)
-        .pipe(processJsonFiles(true));
+        .pipe(processJsonFiles());
 
     // Merge files from all source streams
     es.merge(jsStream, jsonSchemaStream, jsonLanguageServicesStream)
@@ -240,8 +246,9 @@ const generateLocalizedJsonFiles = (paths) => {
             let keyPrefix = relativePath + ".";
             keyPrefix = keyPrefix.replace(/\\/g, "/");
             let descriptionCallback = (path, value, parent) => {
-                if (stringTable[keyPrefix + path]) {
-                    parent.description = stringTable[keyPrefix + path];
+                const modifiedPath = removeInvalidXLFCharacters(path);
+                if (stringTable[keyPrefix + modifiedPath]) {
+                    parent.description = stringTable[keyPrefix + modifiedPath];
                 }
             };
             traverseJson(jsonTree, descriptionCallback, "");
