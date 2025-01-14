@@ -104,8 +104,6 @@ const removeInvalidXLFCharacters = (str) => {
 
 // Traverses schema json files looking for "description" fields to localized.
 // The path to the "description" field is used to create a localization key.
-// escape is a boolean regarding whether we want to escape the string with lodash. We only want to do this with the
-// language service files. 
 const processJsonFiles = () => {
     return es.through(function (file) {
         let jsonTree = JSON.parse(file.contents.toString());
