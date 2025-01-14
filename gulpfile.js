@@ -99,7 +99,7 @@ const traverseJson = (jsonTree, descriptionCallback, prefixPath) => {
 
 // remove invalid characters that aren't allowed in xlf.
 const removeInvalidXLFCharacters = (str) => {
-    return str.replace(/[^a-zA-Z_]/g, "");
+    return str.replace(/(<)|(>)/g, "");
 }
 
 // Traverses schema json files looking for "description" fields to localized.
