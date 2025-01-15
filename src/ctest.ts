@@ -1248,6 +1248,11 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
+        // If buildBeforeRun is set to false, we skip the build step
+        if (!this.ws.config.buildBeforeRun) {
+            return true;
+        }
+
         // Folder => status
         const builtFolder = new Map<string, number>();
         let status: number = 0;
