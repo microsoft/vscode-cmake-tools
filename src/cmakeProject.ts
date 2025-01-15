@@ -1764,7 +1764,7 @@ export class CMakeProject {
                                             }
                                         });
                                 } else if (result.result !== 0) {
-                                    debuggerInformation?.debuggerStoppedDueToPreconditions(localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to reason: \"{0}\"", ConfigureResultType[result.resultType]));
+                                    debuggerInformation?.debuggerStoppedDueToPreconditions(localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to: \"{0}\"", ConfigureResultType[result.resultType]));
                                 }
 
                                 await this.cTestController.refreshTests(drv);
