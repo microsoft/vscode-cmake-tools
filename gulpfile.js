@@ -97,6 +97,11 @@ const traverseJson = (jsonTree, descriptionCallback, prefixPath) => {
     }
 };
 
+// remove invalid characters that aren't allowed in xlf.
+const removeInvalidXLFCharacters = (str) => {
+    return str.replace(/<|>/g, "");
+}
+
 // Traverses schema json files looking for "description" fields to localized.
 // The path to the "description" field is used to create a localization key.
 const processJsonFiles = () => {
@@ -111,7 +116,7 @@ const processJsonFiles = () => {
             filePath: filePath
         };
         let descriptionCallback = (path, value, parent) => {
-            let locId = filePath + "." + path;
+            let locId = filePath + "." + removeInvalidXLFCharacters(path);
             localizationJsonContents[locId] = value;
             localizationMetadataContents.keys.push(locId);
             localizationMetadataContents.messages.push(value);
@@ -238,8 +243,9 @@ const generateLocalizedJsonFiles = (paths) => {
             let keyPrefix = relativePath + ".";
             keyPrefix = keyPrefix.replace(/\\/g, "/");
             let descriptionCallback = (path, value, parent) => {
-                if (stringTable[keyPrefix + path]) {
-                    parent.description = stringTable[keyPrefix + path];
+                const modifiedPath = removeInvalidXLFCharacters(path);
+                if (stringTable[keyPrefix + modifiedPath]) {
+                    parent.description = stringTable[keyPrefix + modifiedPath];
                 }
             };
             traverseJson(jsonTree, descriptionCallback, "");
