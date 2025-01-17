@@ -36,6 +36,7 @@ Bug Fixes:
 - Fix parsing of CMakeUserPresets.json containing configure preset that is referenced in workflow preset. [#4202](https://github.com/microsoft/vscode-cmake-tools/pull/4202)
 - Fix auto select active project corner case. [#4146](https://github.com/microsoft/vscode-cmake-tools/issues/4146) Contributed by STMicroelectronics
 - Localize our test run profiles. [#4236](https://github.com/microsoft/vscode-cmake-tools/issues/4236)
+- Fix issue where starting a CMake Configure with CMake Debugger while there was already a configure process running left a debug session going without a way to stop it. [#4230](https://github.com/microsoft/vscode-cmake-tools/issues/4230)
 
 ## 1.19.52
 
