@@ -1639,11 +1639,14 @@ export class CMakeProject {
             }
             await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
+            debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.with.cache', "Configured CMake with cache. CMake debugger is not supported with cache."));
             return result;
         }
 
         if (trigger === ConfigureTrigger.configureWithCache) {
-            log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));
+            const message = localize('no.cache.available', 'Unable to configure with existing cache');
+            log.debug(message);
+            debuggerInformation?.debuggerStoppedDueToPreconditions(message);
             return { result: -1, resultType: ConfigureResultType.NoCache };
         }
 
@@ -1760,6 +1763,8 @@ export class CMakeProject {
                                                 }
                                             }
                                         });
+                                } else if (result.result !== 0) {
+                                    debuggerInformation?.debuggerStoppedDueToPreconditions(localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to: \"{0}\"", ConfigureResultType[result.resultType]));
                                 }
 
                                 await this.cTestController.refreshTests(drv);
@@ -1772,12 +1777,14 @@ export class CMakeProject {
                             }
                         } else {
                             progress.report({ message: localize('configure.failed', 'Failed to configure project') });
+                            debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.driver.available.no.debug', 'Cannot configure with CMake debugger due to no CMake driver being available.'));
                             return { result: -1, resultType: ConfigureResultType.NormalOperation };
                         }
                     });
                 } catch (e: any) {
                     const error = e as Error;
                     progress.report({ message: error.message });
+                    debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.due.to.error', 'Cannot configure with CMake debugger due to error: {0}', error.message));
                     return { result: -1, resultType: ConfigureResultType.NormalOperation };
                 }
             }

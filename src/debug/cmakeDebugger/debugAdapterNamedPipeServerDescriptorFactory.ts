@@ -24,13 +24,20 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
         const debuggerInformation: DebuggerInformation = {
             pipeName,
             dapLog: session.configuration.dapLog,
-            debuggerIsReady: () => undefined
+            debuggerIsReady: () => undefined,
+            debuggerStoppedDueToPreconditions: (message: string) => {
+                throw new Error(message);
+            }
         };
 
         const cmakeDebugType: "configure" | "script" | "external" = session.configuration.cmakeDebugType;
         if (cmakeDebugType === "configure" || cmakeDebugType === "script") {
             const promise = new Promise<void>((resolve) => {
                 debuggerInformation.debuggerIsReady = resolve;
+            });
+
+            const stoppedPromise = new Promise<string>((_resolve, reject) => {
+                debuggerInformation.debuggerStoppedDueToPreconditions = reject;
             });
 
             if (cmakeDebugType === "script") {
@@ -76,7 +83,11 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                 }
             }
 
-            await promise;
+            try {
+                await Promise.race([promise, stoppedPromise]);
+            } catch (e: any) {
+                throw e;
+            }
         } else if (cmakeDebugType === "external") {
             logCMakeDebuggerTelemetry(origin, cmakeDebugType);
         }

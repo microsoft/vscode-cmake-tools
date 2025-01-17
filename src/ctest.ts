@@ -1310,19 +1310,19 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             testExplorer.createRunProfile(
-                'Run Tests',
+                localize('run.tests.profile', 'Run Tests'),
                 vscode.TestRunProfileKind.Run,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
                 true
             );
             testExplorer.createRunProfile(
-                'Run Tests with Coverage',
+                localize('run.tests.with.coverage.profile', 'Run Tests with Coverage'),
                 vscode.TestRunProfileKind.Coverage,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation, true),
                 true
             ).loadDetailedCoverage = async (_, fileCoverage) => this.coverageData.get(fileCoverage) ?? [];
             testExplorer.createRunProfile(
-                'Debug Tests',
+                localize('debug.tests.profile', 'Debug Tests'),
                 vscode.TestRunProfileKind.Debug,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
                     if (request.include === undefined) {
