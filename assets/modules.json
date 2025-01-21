@@ -169,7 +169,7 @@
     },
     "CMakeFindDependencyMacro": {
         "name": "CMakeFindDependencyMacro",
-        "description": "TODO: Document me."
+        "description": "The ``find_dependency()`` macro wraps a :command:`find_package` call for a package dependency."
     },
     "CMakeFindFrameworks": {
         "name": "CMakeFindFrameworks",
@@ -309,7 +309,7 @@
     },
     "ExternalProject": {
         "name": "ExternalProject",
-        "description": "TODO: Document me."
+        "description": "The ExternalProject_Add() function creates a custom target to drive download, update/patch, configure, build, install and test steps of an external project"
     },
     "FeatureSummary": {
         "name": "FeatureSummary",
@@ -317,7 +317,7 @@
     },
     "FetchContent": {
         "name": "FetchContent",
-        "description": "TODO: Document me."
+        "description": "This module enables populating content at configure time via any method supported by the ExternalProject module. Whereas ExternalProject_Add() downloads at build time, the FetchContent module makes content available immediately, allowing the configure step to use the content in commands like add_subdirectory(), include() or file() operations."
     },
     "FindALSA": {
         "name": "FindALSA",
@@ -327,7 +327,10 @@
         "name": "FindArmadillo",
         "description": "Find the Armadillo C++ library. Armadillo is a library for linear algebra & scientific computing."
     },
-    "FindASPELL": { "name": "FindASPELL", "description": "Try to find ASPELL" },
+    "FindASPELL": {
+        "name": "FindASPELL",
+        "description": "Try to find ASPELL"
+    },
     "FindAVIFile": {
         "name": "FindAVIFile",
         "description": "Locate AVIFILE library and include paths"
@@ -352,8 +355,14 @@
         "name": "FindBullet",
         "description": "Try to find the Bullet physics engine"
     },
-    "FindBZip2": { "name": "FindBZip2", "description": "Try to find BZip2" },
-    "FindCABLE": { "name": "FindCABLE", "description": "Find CABLE" },
+    "FindBZip2": {
+        "name": "FindBZip2",
+        "description": "Try to find BZip2"
+    },
+    "FindCABLE": {
+        "name": "FindCABLE",
+        "description": "Find CABLE"
+    },
     "FindCoin3D": {
         "name": "FindCoin3D",
         "description": "Find Coin3D (Open Inventor)"
@@ -390,7 +399,10 @@
         "name": "FindCygwin",
         "description": "Find Cygwin, a POSIX-compatible environment that runs natively on Microsoft Windows"
     },
-    "FindDart": { "name": "FindDart", "description": "Find DART" },
+    "FindDart": {
+        "name": "FindDart",
+        "description": "Find DART"
+    },
     "FindDCMTK": {
         "name": "FindDCMTK",
         "description": "Find DICOM ToolKit (DCMTK) libraries and applications"
@@ -507,7 +519,10 @@
         "name": "FindIconv",
         "description": "This module finds the iconv() POSIX.1 functions on the system. These functions might be provided in the regular C library or externally in the form of an additional library."
     },
-    "FindIcotool": { "name": "FindIcotool", "description": "Find icotool" },
+    "FindIcotool": {
+        "name": "FindIcotool",
+        "description": "Find icotool"
+    },
     "FindICU": {
         "name": "FindICU",
         "description": "Find the International Components for Unicode (ICU) libraries and programs."
@@ -528,7 +543,10 @@
         "name": "FindJasper",
         "description": "Find the Jasper JPEG2000 library."
     },
-    "FindJava": { "name": "FindJava", "description": "Find Java" },
+    "FindJava": {
+        "name": "FindJava",
+        "description": "Find Java"
+    },
     "FindJNI": {
         "name": "FindJNI",
         "description": "Find Java Native Interface (JNI) headers and libraries."
@@ -549,7 +567,10 @@
         "name": "FindLAPACK",
         "description": "Find Linear Algebra PACKage (LAPACK) library"
     },
-    "FindLATEX": { "name": "FindLATEX", "description": "Find LaTeX" },
+    "FindLATEX": {
+        "name": "FindLATEX",
+        "description": "Find LaTeX"
+    },
     "FindLibArchive": {
         "name": "FindLibArchive",
         "description": "Find libarchive library and headers. Libarchive is multi-format archive and compression library."
@@ -574,8 +595,14 @@
         "name": "FindLTTngUST",
         "description": "Find Linux Trace Toolkit Next Generation (LTTng-UST) library."
     },
-    "FindLua": { "name": "FindLua", "description": "Locate Lua library." },
-    "FindLua50": { "name": "FindLua50", "description": "Locate Lua library." },
+    "FindLua": {
+        "name": "FindLua",
+        "description": "Locate Lua library."
+    },
+    "FindLua50": {
+        "name": "FindLua50",
+        "description": "Locate Lua library."
+    },
     "FindLua51": {
         "name": "FindLua51",
         "description": "Locate Lua library. This module defines:"
@@ -748,12 +775,18 @@
         "name": "FindPerlLibs",
         "description": "Find Perl libraries"
     },
-    "FindPHP4": { "name": "FindPHP4", "description": "Find PHP4" },
+    "FindPHP4": {
+        "name": "FindPHP4",
+        "description": "Find PHP4"
+    },
     "FindPhysFS": {
         "name": "FindPhysFS",
         "description": "Locate PhysFS library This module defines:"
     },
-    "FindPike": { "name": "FindPike", "description": "Find Pike" },
+    "FindPike": {
+        "name": "FindPike",
+        "description": "Find Pike"
+    },
     "FindPkgConfig": {
         "name": "FindPkgConfig",
         "description": "A pkg-config module for CMake."
@@ -802,7 +835,10 @@
         "name": "FindQt3",
         "description": "Locate Qt include paths and libraries"
     },
-    "FindQt4": { "name": "FindQt4", "description": "TODO: Document me." },
+    "FindQt4": {
+        "name": "FindQt4",
+        "description": "This module can be used to find Qt4. The most important issue is that the Qt4 qmake is available via the system path. This qmake is then used to detect basically everything else. This module defines a number of IMPORTED targets, macros and variables."
+    },
     "FindQuickTime": {
         "name": "FindQuickTime",
         "description": "Locate QuickTime This module defines:"
@@ -811,8 +847,14 @@
         "name": "FindRTI",
         "description": "Try to find M&S HLA RTI libraries"
     },
-    "FindRuby": { "name": "FindRuby", "description": "Find Ruby" },
-    "FindSDL": { "name": "FindSDL", "description": "Locate the SDL library" },
+    "FindRuby": {
+        "name": "FindRuby",
+        "description": "Find Ruby"
+    },
+    "FindSDL": {
+        "name": "FindSDL",
+        "description": "Locate the SDL library"
+    },
     "FindSDL_gfx": {
         "name": "FindSDL_gfx",
         "description": "Locate SDL_gfx library"
@@ -837,12 +879,18 @@
         "name": "FindSDL_ttf",
         "description": "Locate SDL_ttf library"
     },
-    "FindSelfPackers": { "name": "FindSelfPackers", "description": "Find upx" },
+    "FindSelfPackers": {
+        "name": "FindSelfPackers",
+        "description": "Find upx"
+    },
     "FindSQLite3": {
         "name": "FindSQLite3",
         "description": "Find the SQLite libraries, v3"
     },
-    "FindSquish": { "name": "FindSquish", "description": "-- Typical Use" },
+    "FindSquish": {
+        "name": "FindSquish",
+        "description": "-- Typical Use"
+    },
     "FindSubversion": {
         "name": "FindSubversion",
         "description": "Extract information from a subversion working copy"
@@ -855,7 +903,10 @@
         "name": "FindTCL",
         "description": "TK_INTERNAL_PATH was removed."
     },
-    "FindTclsh": { "name": "FindTclsh", "description": "Find tclsh" },
+    "FindTclsh": {
+        "name": "FindTclsh",
+        "description": "Find tclsh"
+    },
     "FindTclStub": {
         "name": "FindTclStub",
         "description": "TCL_STUB_LIBRARY_DEBUG and TK_STUB_LIBRARY_DEBUG were removed."
@@ -880,8 +931,14 @@
         "name": "FindVulkan",
         "description": "Find Vulkan, which is a low-overhead, cross-platform 3D graphics and computing API."
     },
-    "FindWget": { "name": "FindWget", "description": "Find wget" },
-    "FindWish": { "name": "FindWish", "description": "Find wish installation" },
+    "FindWget": {
+        "name": "FindWget",
+        "description": "Find wget"
+    },
+    "FindWish": {
+        "name": "FindWish",
+        "description": "Find wish installation"
+    },
     "FindwxWidgets": {
         "name": "FindwxWidgets",
         "description": "Find a wxWidgets (a.k.a., wxWindows) installation."
@@ -890,7 +947,10 @@
         "name": "FindwxWindows",
         "description": "Find wxWindows (wxWidgets) installation"
     },
-    "FindX11": { "name": "FindX11", "description": "Find X11 installation" },
+    "FindX11": {
+        "name": "FindX11",
+        "description": "Find X11 installation"
+    },
     "FindXalanC": {
         "name": "FindXalanC",
         "description": "Find the Apache Xalan-C++ XSL transform processor headers and libraries."
@@ -903,7 +963,10 @@
         "name": "FindXercesC",
         "description": "Find the Apache Xerces-C++ validating XML parser headers and libraries."
     },
-    "FindXMLRPC": { "name": "FindXMLRPC", "description": "Find xmlrpc" },
+    "FindXMLRPC": {
+        "name": "FindXMLRPC",
+        "description": "Find xmlrpc"
+    },
     "FindZLIB": {
         "name": "FindZLIB",
         "description": "Find the native ZLIB includes and library."
@@ -1006,7 +1069,7 @@
     },
     "WriteBasicConfigVersionFile": {
         "name": "WriteBasicConfigVersionFile",
-        "description": "TODO: Document me."
+        "description": "Deprecated since version 3.0: Use the identical command write_basic_package_version_file() from module CMakePackageConfigHelpers."
     },
     "WriteCompilerDetectionHeader": {
         "name": "WriteCompilerDetectionHeader",
