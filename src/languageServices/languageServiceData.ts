@@ -59,7 +59,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
     }
 
     private getCompletionSuggestionsHelper(currentWord: string, data: Commands | Modules | Variables, type: LanguageType, beforeCurrentWord?: string): vscode.CompletionItem[] {
-        function moduleInsertText(module: string, currentWord: string, beforeCurrentWord?: string): vscode.SnippetString {
+        function moduleInsertText(module: string, beforeCurrentWord?: string): vscode.SnippetString {
             if (beforeCurrentWord) {
                 if (beforeCurrentWord.startsWith("include")) {
                     return new vscode.SnippetString(module);
@@ -92,7 +92,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         return Object.keys(data).map((key) => {
             if (data[key].name.includes(currentWord)) {
                 const completionItem = new vscode.CompletionItem(data[key].name);
-                completionItem.insertText = type === LanguageType.Command ? commandInsertText(data[key].name) : type === LanguageType.Variable ? variableInsertText(data[key].name) : moduleInsertText(data[key].name, currentWord, beforeCurrentWord);
+                completionItem.insertText = type === LanguageType.Command ? commandInsertText(data[key].name) : type === LanguageType.Variable ? variableInsertText(data[key].name) : moduleInsertText(data[key].name, beforeCurrentWord);
                 completionItem.kind = type === LanguageType.Command ? vscode.CompletionItemKind.Function : type === LanguageType.Variable ? vscode.CompletionItemKind.Variable : vscode.CompletionItemKind.Module;
                 return completionItem;
             }
