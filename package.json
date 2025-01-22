@@ -2044,6 +2044,15 @@
           "description": "%cmake-tools.configuration.cmake.defaultActiveFolder.description%",
           "scope": "window"
         },
+        "cmake.ignoredFolders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.ignoredFolders.description%",
+          "scope": "resource"
+        },
         "cmake.cmakePath": {
           "type": "string",
           "default": "cmake",

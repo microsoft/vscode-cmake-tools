@@ -5,6 +5,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     const ret = new ConfigurationReader({
         autoSelectActiveFolder: false,
         defaultActiveFolder: null,
+        ignoredFolders: [],
         cmakePath: '',
         buildDirectory: '',
         installPrefix: null,
