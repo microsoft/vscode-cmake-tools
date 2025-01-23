@@ -21,6 +21,7 @@ Improvements:
 - Ensure that stopping tests actually forces the tests to stop running. [#2095](https://github.com/microsoft/vscode-cmake-tools/issues/2095)
 - Retire the Show Options Moved Notification [#4039](https://github.com/microsoft/vscode-cmake-tools/issues/4039)
 - Improve the pinned commands experience by defaulting settings and using VS Code state rather than modifying user settings. [#3977](https://github.com/microsoft/vscode-cmake-tools/issues/3977)
+- Skip project building in the CTest test explorer when `cmake.buildBeforeRun` is set to `false`. [#4241](https://github.com/microsoft/vscode-cmake-tools/pull/4241) [@Dabsunter](https://github.com/Dabsunter)
 
 Bug Fixes:
 
@@ -35,6 +36,7 @@ Bug Fixes:
 - Fix compilation database path comparison with the `cmake.copyCompileCommands` that could otherwise overwrite that file. [#4207](https://github.com/microsoft/vscode-cmake-tools/issues/4207) [@k0zmo](https://github.com/k0zmo)
 - Fix parsing of CMakeUserPresets.json containing configure preset that is referenced in workflow preset. [#4202](https://github.com/microsoft/vscode-cmake-tools/pull/4202)
 - Fix auto select active project corner case. [#4146](https://github.com/microsoft/vscode-cmake-tools/issues/4146) Contributed by STMicroelectronics
+- Localize our test run profiles. [#4236](https://github.com/microsoft/vscode-cmake-tools/issues/4236)
 - Fix issue where starting a CMake Configure with CMake Debugger while there was already a configure process running left a debug session going without a way to stop it. [#4230](https://github.com/microsoft/vscode-cmake-tools/issues/4230)
 
 ## 1.19.52

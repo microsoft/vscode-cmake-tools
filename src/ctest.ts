@@ -1248,6 +1248,11 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
+        // If buildBeforeRun is set to false, we skip the build step
+        if (!this.ws.config.buildBeforeRun) {
+            return true;
+        }
+
         // Folder => status
         const builtFolder = new Map<string, number>();
         let status: number = 0;
@@ -1305,19 +1310,19 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             testExplorer.createRunProfile(
-                'Run Tests',
+                localize('run.tests.profile', 'Run Tests'),
                 vscode.TestRunProfileKind.Run,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
                 true
             );
             testExplorer.createRunProfile(
-                'Run Tests with Coverage',
+                localize('run.tests.with.coverage.profile', 'Run Tests with Coverage'),
                 vscode.TestRunProfileKind.Coverage,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation, true),
                 true
             ).loadDetailedCoverage = async (_, fileCoverage) => this.coverageData.get(fileCoverage) ?? [];
             testExplorer.createRunProfile(
-                'Debug Tests',
+                localize('debug.tests.profile', 'Debug Tests'),
                 vscode.TestRunProfileKind.Debug,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
                     if (request.include === undefined) {
