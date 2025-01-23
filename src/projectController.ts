@@ -28,7 +28,7 @@ const log = logging.createLogger('workspace');
 
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
 export class ProjectController implements vscode.Disposable {
-    private readonly folderToProjectsMap = new Map<string, CMakeProject[]>();
+    private readonly folderToProjectsMap = new Map<vscode.WorkspaceFolder, CMakeProject[]>();
     private readonly sourceDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly buildDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
@@ -226,13 +226,11 @@ export class ProjectController implements vscode.Disposable {
      * Get the all CMakeWorkspaceFolder instance associated with the given workspace folder, or undefined
      * @param ws The workspace folder to search, or array of command and workspace path
      */
-    getProjectsForWorkspaceFolder(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeProject[] | undefined {
+    getProjectsForWorkspaceFolder(ws: vscode.WorkspaceFolder | undefined): CMakeProject[] | undefined {
         if (ws) {
-            if (util.isArrayOfString(ws)) {
-                return this.folderToProjectsMap.get(ws[ws.length - 1]);
-            } else if (util.isWorkspaceFolder(ws)) {
+            if (util.isWorkspaceFolder(ws)) {
                 const folder = ws as vscode.WorkspaceFolder;
-                return this.folderToProjectsMap.get(folder.uri.fsPath);
+                return this.folderToProjectsMap.get(folder);
             }
         }
         return undefined;
@@ -340,7 +338,7 @@ export class ProjectController implements vscode.Disposable {
             // Load for the workspace.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
             projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext, this);
-            this.folderToProjectsMap.set(folder.uri.fsPath, projects);
+            this.folderToProjectsMap.set(folder, projects);
             const config: ConfigurationReader | undefined = workspaceContext.config;
             if (config) {
                 this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories, config.options)));
@@ -369,7 +367,7 @@ export class ProjectController implements vscode.Disposable {
             return;
         }
         // Drop the instance from our table. Forget about it.
-        this.folderToProjectsMap.delete(folder.uri.fsPath);
+        this.folderToProjectsMap.delete(folder);
         // Finally, dispose of the CMake Tools now that the workspace is gone.
         for (const project of cmakeProjects) {
             project.dispose();
@@ -440,7 +438,7 @@ export class ProjectController implements vscode.Disposable {
             }
 
             // Update the map.
-            this.folderToProjectsMap.set(folder.uri.fsPath, projects);
+            this.folderToProjectsMap.set(folder, projects);
             if (multiProjectChange || activeProjectPath !== undefined) {
                 // There's no way to reach into the extension manager and update the status bar, so we exposed a hidden command
                 // to referesh it.
