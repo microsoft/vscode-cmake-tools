@@ -58,8 +58,16 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         this.modules = JSON.parse(await this.getFile("modules.json", locale));
     }
 
-    private getCompletionSuggestionsHelper(currentWord: string, data: Commands | Modules | Variables, type: LanguageType): vscode.CompletionItem[] {
-        function moduleInsertText(module: string): vscode.SnippetString {
+    private getCompletionSuggestionsHelper(currentWord: string, data: Commands | Modules | Variables, type: LanguageType, beforeCurrentWord?: string): vscode.CompletionItem[] {
+        function moduleInsertText(module: string, beforeCurrentWord?: string): vscode.SnippetString {
+            if (beforeCurrentWord) {
+                if (beforeCurrentWord.startsWith("include")) {
+                    return new vscode.SnippetString(module);
+                } else if (beforeCurrentWord.startsWith("find_package")) {
+                    return new vscode.SnippetString(`${module.replace("Find", "")}\${1: REQUIRED}`);
+                }
+            }
+
             if (module.indexOf("Find") === 0) {
                 return new vscode.SnippetString(`find_package(${module.replace("Find", "")}\${1: REQUIRED})`);
             } else {
@@ -84,7 +92,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         return Object.keys(data).map((key) => {
             if (data[key].name.includes(currentWord)) {
                 const completionItem = new vscode.CompletionItem(data[key].name);
-                completionItem.insertText = type === LanguageType.Command ? commandInsertText(data[key].name) : type === LanguageType.Variable ? variableInsertText(data[key].name) : moduleInsertText(data[key].name);
+                completionItem.insertText = type === LanguageType.Command ? commandInsertText(data[key].name) : type === LanguageType.Variable ? variableInsertText(data[key].name) : moduleInsertText(data[key].name, beforeCurrentWord);
                 completionItem.kind = type === LanguageType.Command ? vscode.CompletionItemKind.Function : type === LanguageType.Variable ? vscode.CompletionItemKind.Variable : vscode.CompletionItemKind.Module;
                 return completionItem;
             }
@@ -92,10 +100,10 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         }).filter((value) => value !== null) as vscode.CompletionItem[];
     }
 
-    private getCompletionSuggestions(currentWord: string): vscode.CompletionItem[] {
-        return this.getCompletionSuggestionsHelper(currentWord, this.commands, LanguageType.Command)
-            .concat(this.getCompletionSuggestionsHelper(currentWord, this.variables, LanguageType.Variable))
-            .concat(this.getCompletionSuggestionsHelper(currentWord, this.modules, LanguageType.Module));
+    private getCompletionSuggestions(currentWord: string, beforeCurrentWord?: string): vscode.CompletionItem[] {
+        return this.getCompletionSuggestionsHelper(currentWord, this.commands, LanguageType.Command, beforeCurrentWord)
+            .concat(this.getCompletionSuggestionsHelper(currentWord, this.variables, LanguageType.Variable, beforeCurrentWord))
+            .concat(this.getCompletionSuggestionsHelper(currentWord, this.modules, LanguageType.Module, beforeCurrentWord));
     }
 
     public static async create(): Promise<LanguageServiceData> {
@@ -106,6 +114,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
 
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, _context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
         const wordAtPosition = document.getWordRangeAtPosition(position);
+        const beforeWordAtPosition = wordAtPosition ? document.getText(new vscode.Range(new vscode.Position(position.line, 0), new vscode.Position(position.line, wordAtPosition.start.character))) : undefined;
 
         let currentWord = "";
         if (wordAtPosition && wordAtPosition.start.character < position.character) {
@@ -117,7 +126,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             return null;
         }
 
-        return this.getCompletionSuggestions(currentWord);
+        return this.getCompletionSuggestions(currentWord, beforeWordAtPosition);
     }
 
     resolveCompletionItem?(item: vscode.CompletionItem, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.CompletionItem> {
@@ -132,7 +141,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             return null;
         }
 
-        const hoverSuggestions = this.commands[value] || this.variables[value] || this.modules[value];
+        const hoverSuggestions = this.commands[value] || this.variables[value] || this.modules[value] || this.modules[`Find${value}`];
 
         const markdown: vscode.MarkdownString = new vscode.MarkdownString();
         markdown.appendMarkdown(hoverSuggestions.description);
