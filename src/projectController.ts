@@ -257,7 +257,7 @@ export class ProjectController implements vscode.Disposable {
     /**
      * Load all the folders currently open in VSCode
      */
-    async loadAllProjects() {
+    async loadAllFolders() {
         this.getAllCMakeProjects().forEach(project => project.dispose());
         this.folderToProjectsMap.clear();
         if (vscode.workspace.workspaceFolders) {
@@ -330,6 +330,12 @@ export class ProjectController implements vscode.Disposable {
      * @returns The newly created CMakeProject backend for the given folder
      */
     private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
+        // TODO: This is the main part of the logic that we need to modify.
+        // We want the following events / flow.
+        // Add Folder: Simply adds the folder to our map, simply because it is there. We likely want to add a listener or two for settings like "excluded".
+        // Acknowledge Folder: This is where we actually load the folder because we only acknowledge non-excluded folders and folders that actually have CMake. We should have a listener for settings like "sourceDirectory" and "buildDirectory".
+        // Ignore Folder: This is where we actively ensure that we have ignored the folder. We should remove any project specific listeners, dispose, etc. But DON'T remove from our generic folder map.
+        // Remove Folder: This is where we actually remove the folder from our map. We also need to ensure that we've removed any project specific listeners, dispose, etc.
         this.beforeAddFolderEmitter.fire(folder);
         let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (projects) {
