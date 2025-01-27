@@ -1,4 +1,4 @@
 # This file specifies things for CodeQL to ignore.
 path_classifiers:
   tools:
-    - tools
+    - tools/**
