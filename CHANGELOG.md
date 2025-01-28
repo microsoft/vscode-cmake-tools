@@ -30,7 +30,7 @@ Bug Fixes:
 - Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
 - Ensure that we're sanitizing paths for `cmake.copyCompileCommands`. [#3874](https://github.com/microsoft/vscode-cmake-tools/issues/3874)
 - Ensure that tests are updated after a build. [#4148](https://github.com/microsoft/vscode-cmake-tools/pull/4148)
-- Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
+- Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864) [@0xemgy](https://github.com/0xemgy)
 - Fix reloading presets when included files are changed or renamed and updated. [#3963](https://github.com/microsoft/vscode-cmake-tools/issues/3963)
 - Fix the usage of toolset and archiecture in presets without generator set. [#4181](https://github.com/microsoft/vscode-cmake-tools/issues/4181)
 - Fix compilation database path comparison with the `cmake.copyCompileCommands` that could otherwise overwrite that file. [#4207](https://github.com/microsoft/vscode-cmake-tools/issues/4207) [@k0zmo](https://github.com/k0zmo)
