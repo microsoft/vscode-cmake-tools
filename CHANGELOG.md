@@ -5,7 +5,7 @@
 Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
-- Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078)
+- Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078) [@sanore](https://github.com/sanore)
 - Add support for processing LCOV based coverage info files when tests are
   executed. This adds test execution type, "Run with coverage", on the `ctest`
   section of the Testing tab.
@@ -14,7 +14,7 @@ Features:
 
 Improvements:
 
-- Add ability to pass custom target to "CMake: Build Target" command as argument. [#3598](https://github.com/microsoft/vscode-cmake-tools/issues/3598)
+- Add ability to pass custom target to "CMake: Build Target" command as argument. [#3598](https://github.com/microsoft/vscode-cmake-tools/issues/3598) [@hippo91](https://github.com/hippo91)
 - Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
 - Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
 - Fix "Test output isn't visible when failed" and also mark skipped tests as so. [#4116](https://github.com/microsoft/vscode-cmake-tools/issues/4116)
