@@ -478,6 +478,7 @@ function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject
     });
     // Collection all without compilegroup like headers
     const defaultIndex = fileGroup.push({ sources: [], isGenerated: false } as CodeModelFileGroup) - 1;
+    const generatedIndex = fileGroup.push({ sources: [], isGenerated: true } as CodeModelFileGroup) - 1;
 
     const targetRootSource = convertToAbsolutePath(targetObject.paths.source, rootPaths.source);
     targetObject.sources.forEach(sourceFile => {
@@ -486,10 +487,8 @@ function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject
         if (sourceFile.compileGroupIndex !== undefined) {
             fileGroup[sourceFile.compileGroupIndex].sources.push(fileRelativePath);
         } else {
-            fileGroup[defaultIndex].sources.push(fileRelativePath);
-            if (!!sourceFile.isGenerated) {
-                fileGroup[defaultIndex].isGenerated = sourceFile.isGenerated;
-            }
+            const i = !!sourceFile.isGenerated ? generatedIndex : defaultIndex;
+            fileGroup[i].sources.push(fileRelativePath);
         }
     });
     return fileGroup;
