@@ -491,6 +491,13 @@ function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject
             fileGroup[i].sources.push(fileRelativePath);
         }
     });
+
+    if (fileGroup[generatedIndex].sources.length === 0) {
+        fileGroup.splice(generatedIndex, 1);
+    } else if (fileGroup[defaultIndex].sources.length === 0) {
+        fileGroup.splice(defaultIndex, 1);
+    }
+
     return fileGroup;
 }
 
