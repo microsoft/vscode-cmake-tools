@@ -22,7 +22,7 @@
 **PLEASE**, if you experience any problems, have any questions, or have an idea
 for a new feature, create an issue on [the GitHub page](https://github.com/microsoft/vscode-cmake-tools)!
 
-This extension currently provides basic language support for CMake built into the extension. We bundle with [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) for the meantime, which provides additional levels of language support.
+This extension currently provides basic language support for CMake built into the extension. 
 
 ### Microsoft Open Source Code of Conduct
 
