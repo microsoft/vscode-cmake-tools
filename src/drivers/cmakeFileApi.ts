@@ -492,6 +492,7 @@ function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject
         }
     });
 
+    // TODO: Update code model interface so that the fileapi source file isGenerated property is plumbed through.
     if (fileGroup[generatedIndex].sources.length === 0) {
         fileGroup.splice(generatedIndex, 1);
     } else if (fileGroup[defaultIndex].sources.length === 0) {
