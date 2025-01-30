@@ -5,7 +5,7 @@
 Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
-- Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078)
+- Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078) [@sanore](https://github.com/sanore)
 - Add support for processing LCOV based coverage info files when tests are
   executed. This adds test execution type, "Run with coverage", on the `ctest`
   section of the Testing tab.
@@ -14,29 +14,29 @@ Features:
 
 Improvements:
 
-- Add ability to pass custom target to "CMake: Build Target" command as argument. [#3598](https://github.com/microsoft/vscode-cmake-tools/issues/3598)
+- Add ability to pass custom target to "CMake: Build Target" command as argument. [#3598](https://github.com/microsoft/vscode-cmake-tools/issues/3598) [@hippo91](https://github.com/hippo91)
 - Fix "Unable to resolve configuration with compilerPath" issue for Swift. [#4097](https://github.com/microsoft/vscode-cmake-tools/issues/4097)
 - Ensure that any uses of `proc.spawn` work, especially for .bat and .cmd files, due to VS Code updating to Node 20. [#4037](https://github.com/microsoft/vscode-cmake-tools/issues/4037)
-- Fix "Test output isn't visible when failed" and also mark skipped tests as so. [#4116](https://github.com/microsoft/vscode-cmake-tools/issues/4116)
+- Fix "Test output isn't visible when failed" and also mark skipped tests as so. [#4116](https://github.com/microsoft/vscode-cmake-tools/issues/4116) [@redstrate](https://github.com/redstrate)
 - Ensure that stopping tests actually forces the tests to stop running. [#2095](https://github.com/microsoft/vscode-cmake-tools/issues/2095)
 - Retire the Show Options Moved Notification [#4039](https://github.com/microsoft/vscode-cmake-tools/issues/4039)
 - Improve the pinned commands experience by defaulting settings and using VS Code state rather than modifying user settings. [#3977](https://github.com/microsoft/vscode-cmake-tools/issues/3977)
+- Skip project building in the CTest test explorer when `cmake.buildBeforeRun` is set to `false`. [#4241](https://github.com/microsoft/vscode-cmake-tools/pull/4241) [@Dabsunter](https://github.com/Dabsunter)
 
 Bug Fixes:
 
 - Fix issue where files don't show up in the outline if any in the group are generated. [#4099](https://github.com/microsoft/vscode-cmake-tools/issues/4099)
-- Fix issue where setting test suite delimiter prevent execution of all tests. [#4092](https://github.com/microsoft/vscode-cmake-tools/issues/4092)
+- Fix issue where setting test suite delimiter prevent execution of all tests. [#4092](https://github.com/microsoft/vscode-cmake-tools/issues/4092) [@hippo91](https://github.com/hippo91)
 - Fix our setting of `isUserPreset` for presets, only set it to `true` if it's defined in a user presets file. [#4059](https://github.com/microsoft/vscode-cmake-tools/issues/4059)
 - Fix issue where duplicate presets are being listed in dropdown. [#4104](https://github.com/microsoft/vscode-cmake-tools/issues/4104)
 - Ensure that we're sanitizing paths for `cmake.copyCompileCommands`. [#3874](https://github.com/microsoft/vscode-cmake-tools/issues/3874)
 - Ensure that tests are updated after a build. [#4148](https://github.com/microsoft/vscode-cmake-tools/pull/4148)
-- Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864)
+- Fix various GCC compiler errors and GCC linker errors not showing up in Problems View [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864) [@0xemgy](https://github.com/0xemgy)
 - Fix reloading presets when included files are changed or renamed and updated. [#3963](https://github.com/microsoft/vscode-cmake-tools/issues/3963)
 - Fix the usage of toolset and archiecture in presets without generator set. [#4181](https://github.com/microsoft/vscode-cmake-tools/issues/4181)
 - Fix compilation database path comparison with the `cmake.copyCompileCommands` that could otherwise overwrite that file. [#4207](https://github.com/microsoft/vscode-cmake-tools/issues/4207) [@k0zmo](https://github.com/k0zmo)
-- Fix parsing of CMakeUserPresets.json containing configure preset that is referenced in workflow preset. [#4202](https://github.com/microsoft/vscode-cmake-tools/pull/4202)
+- Fix parsing of CMakeUserPresets.json containing configure preset that is referenced in workflow preset. [#4202](https://github.com/microsoft/vscode-cmake-tools/pull/4202) [@nikobockerman](https://github.com/nikobockerman)
 - Fix auto select active project corner case. [#4146](https://github.com/microsoft/vscode-cmake-tools/issues/4146) Contributed by STMicroelectronics
-- Localize our test run profiles. [#4236](https://github.com/microsoft/vscode-cmake-tools/issues/4236)
 - Fix issue where starting a CMake Configure with CMake Debugger while there was already a configure process running left a debug session going without a way to stop it. [#4230](https://github.com/microsoft/vscode-cmake-tools/issues/4230)
 
 ## 1.19.52
