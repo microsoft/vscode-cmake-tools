@@ -231,7 +231,8 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             expect(target).to.be.not.undefined;
 
             // maybe could be used to exclude file list from utility targets
-            expect(target!.fileGroups![0].isGenerated).to.be.true;
+            const last = target!.fileGroups!.length - 1;
+            expect(target!.fileGroups![last].isGenerated).to.be.true;
         }).timeout(90000);
 
         test('Test sysroot access', async () => {
