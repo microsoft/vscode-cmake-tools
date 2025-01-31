@@ -252,7 +252,7 @@ export class KitsController {
                 case SpecialKits.ScanForKits as string:
                     return `[${localize('scan.for.kits.button', 'Scan for kits')}]`;
                 case SpecialKits.ScanSpecificDir as string:
-                    return `[${localize('scan.for.kits.in.specific.dir.button', 'Scan for kits in specific directories')}]`;
+                    return `[${localize('scan.for.kits.in.specific.dir.button', 'Scan recursively for kits in specific directories (max depth: 5)')}]`;
                 case SpecialKits.Unspecified as string:
                     return `[${localize('unspecified.kit.name', 'Unspecified')}]`;
                 default:
