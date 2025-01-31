@@ -1,0 +1,1060 @@
+{
+  "add_compile_definitions": {
+    "name": "add_compile_definitions",
+    "description": "Add preprocessor definitions to the compilation of source files.",
+    "syntax_examples": ["add_compile_definitions(<definition> ...)"]
+  },
+  "add_compile_options": {
+    "name": "add_compile_options",
+    "description": "Add options to the compilation of source files.",
+    "syntax_examples": ["add_compile_options(<option> ...)"]
+  },
+  "add_custom_command": {
+    "name": "add_custom_command",
+    "description": "Add a custom build rule to the generated build system.",
+    "syntax_examples": [
+      "add_custom_command(OUTPUT output1 [output2 ...] COMMAND command1 [ARGS] [args1...] [COMMAND command2 [ARGS] [args2...] ...] [MAIN_DEPENDENCY depend] [DEPENDS [depends...]] [BYPRODUCTS [files...]] [IMPLICIT_DEPENDS <lang1> depend1 [<lang2> depend2] ...] [WORKING_DIRECTORY dir] [COMMENT comment] [DEPFILE depfile] [JOB_POOL job_pool] [JOB_SERVER_AWARE <bool>] [VERBATIM] [APPEND] [USES_TERMINAL] [COMMAND_EXPAND_LISTS] [DEPENDS_EXPLICIT_ONLY])",
+      "add_custom_command( OUTPUT out.c COMMAND someTool -i ${CMAKE_CURRENT_SOURCE_DIR}/in.txt -o out.c DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/in.txt VERBATIM) add_library(myLib out.c)",
+      "add_custom_command( OUTPUT table.csv COMMAND makeTable -i ${CMAKE_CURRENT_SOURCE_DIR}/input.dat -o table.csv DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/input.dat VERBATIM) add_custom_target(generate_table_csv DEPENDS table.csv) add_custom_command( OUTPUT foo.cxx COMMAND genFromTable -i table.csv -case foo -o foo.cxx DEPENDS table.csv generate_table_csv VERBATIM) add_library(foo foo.cxx) add_custom_command( OUTPUT bar.cxx COMMAND genFromTable -i table.csv -case bar -o bar.cxx DEPENDS table.csv generate_table_csv VERBATIM) add_library(bar bar.cxx)",
+      "add_custom_command(TARGET <target> PRE_BUILD | PRE_LINK | POST_BUILD COMMAND command1 [ARGS] [args1...] [COMMAND command2 [ARGS] [args2...] ...] [BYPRODUCTS [files...]] [WORKING_DIRECTORY dir] [COMMENT comment] [VERBATIM] [COMMAND_EXPAND_LISTS])"
+    ]
+  },
+  "add_custom_target": {
+    "name": "add_custom_target",
+    "description": "Add a target with no output so it will always be built.",
+    "syntax_examples": [
+      "add_custom_target(Name [ALL] [command1 [args1...]] [COMMAND command2 [args2...] ...] [DEPENDS depend depend depend ... ] [BYPRODUCTS [files...]] [WORKING_DIRECTORY dir] [COMMENT comment] [JOB_POOL job_pool] [JOB_SERVER_AWARE <bool>] [VERBATIM] [USES_TERMINAL] [COMMAND_EXPAND_LISTS] [SOURCES src1 [src2...]])"
+    ]
+  },
+  "add_definitions": {
+    "name": "add_definitions",
+    "description": "Add -D define flags to the compilation of source files.",
+    "syntax_examples": ["add_definitions(-DFOO -DBAR ...)"]
+  },
+  "add_dependencies": {
+    "name": "add_dependencies",
+    "description": "Add a dependency between top-level targets.",
+    "syntax_examples": ["add_dependencies(<target> [<target-dependency>]...)"]
+  },
+  "add_executable": {
+    "name": "add_executable",
+    "description": "Add an executable to the project using the specified source files.",
+    "syntax_examples": [
+      "add_executable(<name> <options>... <sources>...) :target: normal Add an executable target called ``<name>`` to be built from the source files listed in the command invocation. The options are: ``WIN32`` Set the :prop_tgt:`WIN32_EXECUTABLE` target property automatically. See documentation of that target property for details. ``MACOSX_BUNDLE`` Set the :prop_tgt:`MACOSX_BUNDLE` target property automatically. See documentation of that target property for details. ``EXCLUDE_FROM_ALL`` Set the :prop_tgt:`EXCLUDE_FROM_ALL` target property automatically. See documentation of that target property for details.",
+      "add_executable(<name> IMPORTED [GLOBAL]) :target: IMPORTED Add an :ref:`IMPORTED executable target <Imported Targets>` to reference an executable file located outside the project. The target name may be referenced like any target built within the project, except that by default it is visible only in the directory in which it is created, and below. The options are: ``GLOBAL`` Make the target name globally visible.",
+      "add_executable(<name> ALIAS <target>) :target: ALIAS Creates an :ref:`Alias Target <Alias Targets>`, such that ``<name>`` can be used to refer to ``<target>`` in subsequent commands. The ``<name>`` does not appear in the generated buildsystem as a make target. The ``<target>`` may not be an ``ALIAS``."
+    ]
+  },
+  "add_library": {
+    "name": "add_library",
+    "description": "Add a library to the project using the specified source files.",
+    "syntax_examples": [
+      "add_library(<name> [<type>] [EXCLUDE_FROM_ALL] <sources>...) :target: normal Add a library target called ``<name>`` to be built from the source files listed in the command invocation. The optional ``<type>`` specifies the type of library to be created: ``STATIC`` An archive of object files for use when linking other targets. ``SHARED`` A dynamic library that may be linked by other targets and loaded at runtime. ``MODULE`` A plugin that may not be linked by other targets, but may be dynamically loaded at runtime using dlopen-like functionality. If no ``<type>`` is given the default is ``STATIC`` or ``SHARED`` based on the value of the :variable:`BUILD_SHARED_LIBS` variable. The options are: ``EXCLUDE_FROM_ALL`` Set the :prop_tgt:`EXCLUDE_FROM_ALL` target property automatically. See documentation of that target property for details.",
+      "add_library(<name> OBJECT <sources>...) :target: OBJECT Add an :ref:`Object Library <Object Libraries>` to compile source files without archiving or linking their object files into a library.",
+      "add_library(... $<TARGET_OBJECTS:objlib> ...) add_executable(... $<TARGET_OBJECTS:objlib> ...)",
+      "add_library(<name> INTERFACE) :target: INTERFACE Add an :ref:`Interface Library <Interface Libraries>` target that may specify usage requirements for dependents but does not compile sources and does not produce a library artifact on disk. An interface library with no source files is not included as a target in the generated buildsystem. However, it may have properties set on it and it may be installed and exported. Typically, ``INTERFACE_*`` properties are populated on an interface target using the commands: * :command:`set_property`, * :command:`target_link_libraries(INTERFACE)`, * :command:`target_link_options(INTERFACE)`, * :command:`target_include_directories(INTERFACE)`, * :command:`target_compile_options(INTERFACE)`, * :command:`target_compile_definitions(INTERFACE)`, and * :command:`target_sources(INTERFACE)`, and then it is used as an argument to :command:`target_link_libraries` like any other target. .. versionadded:: 3.15 An interface library can have :prop_tgt:`PUBLIC_HEADER` and :prop_tgt:`PRIVATE_HEADER` properties. The headers specified by those properties can be installed using the :command:`install(TARGETS)` command.",
+      "add_library(<name> INTERFACE [EXCLUDE_FROM_ALL] <sources>...) :target: INTERFACE-with-sources .. versionadded:: 3.19 Add an :ref:`Interface Library <Interface Libraries>` target with source files (in addition to usage requirements and properties as documented by the :command:`above signature <add_library(INTERFACE)>`). Source files may be listed directly in the ``add_library`` call or added later by calls to :command:`target_sources` with the ``PRIVATE`` or ``PUBLIC`` keywords. If an interface library has source files (i.e. the :prop_tgt:`SOURCES` target property is set), or header sets (i.e. the :prop_tgt:`HEADER_SETS` target property is set), it will appear in the generated buildsystem as a build target much like a target defined by the :command:`add_custom_target` command. It does not compile any sources, but does contain build rules for custom commands created by the :command:`add_custom_command` command. The options are: ``EXCLUDE_FROM_ALL`` Set the :prop_tgt:`EXCLUDE_FROM_ALL` target property automatically. See documentation of that target property for details. .. note:: In most command signatures where the ``INTERFACE`` keyword appears, the items listed after it only become part of that target's usage requirements and are not part of the target's own settings. However, in this signature of ``add_library``, the ``INTERFACE`` keyword refers to the library type only. Sources listed after it in the ``add_library`` call are ``PRIVATE`` to the interface library and do not appear in its :prop_tgt:`INTERFACE_SOURCES` target property.",
+      "add_library(<name> <type> IMPORTED [GLOBAL]) :target: IMPORTED Add an :ref:`IMPORTED library target <Imported Targets>` called ``<name>``. The target name may be referenced like any target built within the project, except that by default it is visible only in the directory in which it is created, and below. The ``<type>`` must be one of: ``STATIC``, ``SHARED``, ``MODULE``, ``UNKNOWN`` References a library file located outside the project. The :prop_tgt:`IMPORTED_LOCATION` target property (or its per-configuration variant :prop_tgt:`IMPORTED_LOCATION_<CONFIG>`) specifies the location of the main library file on disk: * For a ``SHARED`` library on most non-Windows platforms, the main library file is the ``.so`` or ``.dylib`` file used by both linkers and dynamic loaders. If the referenced library file has a ``SONAME`` (or on macOS, has a ``LC_ID_DYLIB`` starting in ``@rpath/``), the value of that field should be set in the :prop_tgt:`IMPORTED_SONAME` target property. If the referenced library file does not have a ``SONAME``, but the platform supports it, then the :prop_tgt:`IMPORTED_NO_SONAME` target property should be set. * For a ``SHARED`` library on Windows, the :prop_tgt:`IMPORTED_IMPLIB` target property (or its per-configuration variant :prop_tgt:`IMPORTED_IMPLIB_<CONFIG>`) specifies the location of the DLL import library file (``.lib`` or ``.dll.a``) on disk, and the ``IMPORTED_LOCATION`` is the location of the ``.dll`` runtime library (and is optional, but needed by the :genex:`TARGET_RUNTIME_DLLS` generator expression). Additional usage requirements may be specified in ``INTERFACE_*`` properties. An ``UNKNOWN`` library type is typically only used in the implementation of :ref:`Find Modules`. It allows the path to an imported library (often found using the :command:`find_library` command) to be used without having to know what type of library it is. This is especially useful on Windows where a static library and a DLL's import library both have the same file extension. ``OBJECT`` References a set of object files located outside the project. The :prop_tgt:`IMPORTED_OBJECTS` target property (or its per-configuration variant :prop_tgt:`IMPORTED_OBJECTS_<CONFIG>`) specifies the locations of object files on disk. Additional usage requirements may be specified in ``INTERFACE_*`` properties. ``INTERFACE`` Does not reference any library or object files on disk, but may specify usage requirements in ``INTERFACE_*`` properties. The options are: ``GLOBAL`` Make the target name globally visible.",
+      "add_library(<name> ALIAS <target>) :target: ALIAS Creates an :ref:`Alias Target <Alias Targets>`, such that ``<name>`` can be used to refer to ``<target>`` in subsequent commands. The ``<name>`` does not appear in the generated buildsystem as a make target. The ``<target>`` may not be an ``ALIAS``."
+    ]
+  },
+  "add_link_options": {
+    "name": "add_link_options",
+    "description": "Add options to the link step for executable, shared library or module library targets in the current directory and below that are added after this command is invoked.",
+    "syntax_examples": ["add_link_options(<option> ...)"]
+  },
+  "add_subdirectory": {
+    "name": "add_subdirectory",
+    "description": "Add a subdirectory to the build.",
+    "syntax_examples": [
+      "add_subdirectory(source_dir [binary_dir] [EXCLUDE_FROM_ALL] [SYSTEM])"
+    ]
+  },
+  "add_test": {
+    "name": "add_test",
+    "description": "Add a test to the project to be run by ctest.",
+    "syntax_examples": [
+      "add_test(NAME <name> COMMAND <command> [<arg>...] [CONFIGURATIONS <config>...] [WORKING_DIRECTORY <dir>] [COMMAND_EXPAND_LISTS])",
+      "add_test(NAME mytest COMMAND testDriver --config $<CONFIG> --exe $<TARGET_FILE:myexe>)",
+      "add_test(<name> <command> [<arg>...])"
+    ]
+  },
+  "aux_source_directory": {
+    "name": "aux_source_directory",
+    "description": "Find all source files in a directory.",
+    "syntax_examples": ["aux_source_directory(<dir> <variable>)"]
+  },
+  "block": {
+    "name": "block",
+    "description": "Evaluate a group of commands with a dedicated variable and/or policy scope.",
+    "syntax_examples": [
+      "block([SCOPE_FOR [POLICIES] [VARIABLES]] [PROPAGATE <var-name>...]) <commands> endblock()",
+      "block(SCOPE_FOR VARIABLES POLICIES)"
+    ]
+  },
+  "break": {
+    "name": "break",
+    "description": "Break from an enclosing foreach or while loop.",
+    "syntax_examples": ["break()"]
+  },
+  "build_command": {
+    "name": "build_command",
+    "description": "Get a command line to build the current project. This is mainly intended for internal use by the CTest module.",
+    "syntax_examples": [
+      "build_command(<variable> [CONFIGURATION <config>] [PARALLEL_LEVEL <parallel>] [TARGET <target>] [PROJECT_NAME <projname>])",
+      "build_command(<cachevariable> <makecommand>)"
+    ]
+  },
+  "build_name": {
+    "name": "build_name",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0036.",
+    "syntax_examples": ["build_name(variable)"]
+  },
+  "cmake_file_api": {
+    "name": "cmake_file_api",
+    "description": "Enables interacting with the CMake file API <cmake-file-api(7)>.",
+    "syntax_examples": [
+      "cmake_file_api(QUERY ...) The ``QUERY`` subcommand adds a file API query for the current CMake invocation. cmake_file_api( QUERY API_VERSION <version> [CODEMODEL <versions>...] [CACHE <versions>...] [CMAKEFILES <versions>...] [TOOLCHAINS <versions>...]) The ``API_VERSION`` must always be given. Currently, the only supported value for ``<version>`` is 1. See :ref:`file-api v1` for details of the reply content and location. Each of the optional keywords ``CODEMODEL``, ``CACHE``, ``CMAKEFILES`` and ``TOOLCHAINS`` correspond to one of the object kinds that can be requested by the project. The ``configureLog`` object kind cannot be set with this command, since it must be set before CMake starts reading the top level ``CMakeLists.txt`` file. For each of the optional keywords, the ``<versions>`` list must contain one or more version values of the form ``major`` or ``major.minor``, where ``major`` and ``minor`` are integers. Projects should list the versions they accept in their preferred order, as only the first supported value from the list will be selected. The command will ignore versions with a ``major`` version higher than any major version it supports for that object kind. It will raise an error if it encounters an invalid version number, or if none of the requested versions is supported. For each type of object kind requested, a query equivalent to a shared, stateless query will be added internally. No query file will be created in the file system. The reply *will* be written to the file system at generation time. It is not an error to add a query for the same thing more than once, whether from query files or from multiple calls to ``cmake_file_api(QUERY)``. The final set of queries will be a merged combination of all queries specified on disk and queries submitted by the project.",
+      "cmake_file_api( QUERY API_VERSION 1 CODEMODEL 2.3 TOOLCHAINS 1 ) add_custom_target(verify_project COMMAND ${CMAKE_COMMAND} -D BUILD_DIR=${CMAKE_BINARY_DIR} -D CONFIG=$<CONFIG> -P ${CMAKE_CURRENT_SOURCE_DIR}/verify_project.cmake )"
+    ]
+  },
+  "cmake_host_system_information": {
+    "name": "cmake_host_system_information",
+    "description": "Query various host system information.",
+    "syntax_examples": [
+      "cmake_host_system_information(RESULT <variable> QUERY <key> ...)",
+      "cmake_host_system_information(RESULT PRETTY_NAME QUERY DISTRIB_PRETTY_NAME) message(STATUS \"${PRETTY_NAME}\") cmake_host_system_information(RESULT DISTRO QUERY DISTRIB_INFO) foreach(VAR IN LISTS DISTRO) message(STATUS \"${VAR}=`${${VAR}}`\") endforeach()",
+      "cmake_host_system_information(RESULT <variable> QUERY WINDOWS_REGISTRY <key> [VALUE_NAMES|SUBKEYS|VALUE <name>] [VIEW (64|32|64_32|32_64|HOST|TARGET|BOTH)] [SEPARATOR <separator>] [ERROR_VARIABLE <result>])",
+      "cmake_host_system_information(RESULT result QUERY WINDOWS_REGISTRY \"HKLM\") cmake_host_system_information(RESULT result QUERY WINDOWS_REGISTRY \"HKLM/SOFTWARE/Kitware\") cmake_host_system_information(RESULT result QUERY WINDOWS_REGISTRY \"HKCU\\\\SOFTWARE\\\\Kitware\")",
+      "cmake_host_system_information(RESULT result QUERY WINDOWS_REGISTRY \"HKLM/SOFTWARE/Kitware\") cmake_host_system_information(RESULT result QUERY WINDOWS_REGISTRY \"HKLM/SOFTWARE/Kitware\" VALUE \"(default)\")"
+    ]
+  },
+  "cmake_language": {
+    "name": "cmake_language",
+    "description": "Call meta-operations on CMake commands.",
+    "syntax_examples": [
+      "cmake_language(CALL <command> [<arg>...]) cmake_language(EVAL CODE <code>...) cmake_language(DEFER <options>... CALL <command> [<arg>...]) cmake_language(SET_DEPENDENCY_PROVIDER <command> SUPPORTED_METHODS <methods>...) cmake_language(GET_MESSAGE_LOG_LEVEL <out-var>) cmake_language(EXIT <exit-code>)",
+      "cmake_language(CALL <command> [<arg>...]) Calls the named ``<command>`` with the given arguments (if any). For example, the code: set(message_command \"message\") cmake_language(CALL ${message_command} STATUS \"Hello World!\") is equivalent to message(STATUS \"Hello World!\") .. note:: To ensure consistency of the code, the following commands are not allowed: * ``if`` / ``elseif`` / ``else`` / ``endif`` * ``block`` / ``endblock`` * ``while`` / ``endwhile`` * ``foreach`` / ``endforeach`` * ``function`` / ``endfunction`` * ``macro`` / ``endmacro``",
+      "cmake_language(EVAL CODE <code>...) :target: EVAL Evaluates the ``<code>...`` as CMake code. For example, the code: set(A TRUE) set(B TRUE) set(C TRUE) set(condition \"(A AND B) OR C\") cmake_language(EVAL CODE \" if (${condition}) message(STATUS TRUE) else() message(STATUS FALSE) endif()\" ) is equivalent to set(A TRUE) set(B TRUE) set(C TRUE) set(condition \"(A AND B) OR C\") file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/eval.cmake \" if (${condition}) message(STATUS TRUE) else() message(STATUS FALSE) endif()\" ) include(${CMAKE_CURRENT_BINARY_DIR}/eval.cmake)",
+      "cmake_language(DEFER <options>... CALL <command> [<arg>...]) Schedules a call to the named ``<command>`` with the given arguments (if any) to occur at a later time. By default, deferred calls are executed as if written at the end of the current directory's ``CMakeLists.txt`` file, except that they run even after a :command:`return` call. Variable references in arguments are evaluated at the time the deferred call is executed. The options are: ``DIRECTORY <dir>`` Schedule the call for the end of the given directory instead of the current directory. The ``<dir>`` may reference either a source directory or its corresponding binary directory. Relative paths are treated as relative to the current source directory. The given directory must be known to CMake, being either the top-level directory or one added by :command:`add_subdirectory`. Furthermore, the given directory must not yet be finished processing. This means it can be the current directory or one of its ancestors. ``ID <id>`` Specify an identification for the deferred call. The ``<id>`` may not be empty and may not begin with a capital letter ``A-Z``. The ``<id>`` may begin with an underscore (``_``) only if it was generated automatically by an earlier call that used ``ID_VAR`` to get the id. ``ID_VAR <var>`` Specify a variable in which to store the identification for the deferred call. If ``ID <id>`` is not given, a new identification will be generated and the generated id will start with an underscore (``_``). The currently scheduled list of deferred calls may be retrieved: cmake_language(DEFER [DIRECTORY <dir>] GET_CALL_IDS <var>) This will store in ``<var>`` a :ref:`semicolon-separated list <CMake Language Lists>` of deferred call ids. The ids are for the directory scope in which the calls have been deferred to (i.e. where they will be executed), which can be different to the scope in which they were created. The ``DIRECTORY`` option can be used to specify the scope for which to retrieve the call ids. If that option is not given, the call ids for the current directory scope will be returned. Details of a specific call may be retrieved from its id: cmake_language(DEFER [DIRECTORY <dir>] GET_CALL <id> <var>) This will store in ``<var>`` a :ref:`semicolon-separated list <CMake Language Lists>` in which the first element is the name of the command to be called, and the remaining elements are its unevaluated arguments (any contained ``;`` characters are included literally and cannot be distinguished from multiple arguments). If multiple calls are scheduled with the same id, this retrieves the first one. If no call is scheduled with the given id in the specified ``DIRECTORY`` scope (or the current directory scope if no ``DIRECTORY`` option is given), this stores an empty string in the variable. Deferred calls may be canceled by their id: cmake_language(DEFER [DIRECTORY <dir>] CANCEL_CALL <id>...) This cancels all deferred calls matching any of the given ids in the specified ``DIRECTORY`` scope (or the current directory scope if no ``DIRECTORY`` option is given). Unknown ids are silently ignored.",
+      "cmake_language(DEFER CALL message \"${deferred_message}\") cmake_language(DEFER ID_VAR id CALL message \"Canceled Message\") cmake_language(DEFER CANCEL_CALL ${id}) message(\"Immediate Message\") set(deferred_message \"Deferred Message\")",
+      "cmake_language(SET_DEPENDENCY_PROVIDER <command> SUPPORTED_METHODS <methods>...) When a call is made to :command:`find_package` or :command:`FetchContent_MakeAvailable`, the call may be forwarded to a dependency provider which then has the opportunity to fulfill the request. If the request is for one of the ``<methods>`` specified when the provider was set, CMake calls the provider's ``<command>`` with a set of method-specific arguments. If the provider does not fulfill the request, or if the provider doesn't support the request's method, or no provider is set, the built-in :command:`find_package` or :command:`FetchContent_MakeAvailable` implementation is used to fulfill the request in the usual way. One or more of the following values can be specified for the ``<methods>`` when setting the provider: ``FIND_PACKAGE`` The provider command accepts :command:`find_package` requests. ``FETCHCONTENT_MAKEAVAILABLE_SERIAL`` The provider command accepts :command:`FetchContent_MakeAvailable` requests. It expects each dependency to be fed to the provider command one at a time, not the whole list in one go. Only one provider can be set at any point in time. If a provider is already set when ``cmake_language(SET_DEPENDENCY_PROVIDER)`` is called, the new provider replaces the previously set one. The specified ``<command>`` must already exist when ``cmake_language(SET_DEPENDENCY_PROVIDER)`` is called. As a special case, providing an empty string for the ``<command>`` and no ``<methods>`` will discard any previously set provider. The dependency provider can only be set while processing one of the files specified by the :variable:`CMAKE_PROJECT_TOP_LEVEL_INCLUDES` variable. Thus, dependency providers can only be set as part of the first call to :command:`project`. Calling ``cmake_language(SET_DEPENDENCY_PROVIDER)`` outside of that context will result in an error. .. versionadded:: 3.30 The :prop_gbl:`PROPAGATE_TOP_LEVEL_INCLUDES_TO_TRY_COMPILE` global property can be set if the dependency provider also wants to be enabled in whole-project calls to :command:`try_compile`. .. note:: The choice of dependency provider should always be under the user's control. As a convenience, a project may choose to provide a file that users can list in their :variable:`CMAKE_PROJECT_TOP_LEVEL_INCLUDES` variable, but the use of such a file should always be the user's choice.",
+      "cmake_language(GET_MESSAGE_LOG_LEVEL <output_variable>) Writes the current :command:`message` logging level into the given ``<output_variable>``. See :command:`message` for the possible logging levels. The current message logging level can be set either using the :option:`--log-level <cmake --log-level>` command line option of the :manual:`cmake(1)` program or using the :variable:`CMAKE_MESSAGE_LOG_LEVEL` variable. If both the command line option and the variable are set, the command line option takes precedence. If neither are set, the default logging level is returned.",
+      "cmake_language(EXIT <exit-code>) Terminate the current :option:`cmake -P` script and exit with ``<exit-code>``. This command works only in :ref:`script mode <Script Processing Mode>`. If used outside of that context, it will cause a fatal error. The ``<exit-code>`` should be non-negative. If ``<exit-code>`` is negative, then the behavior is unspecified (e.g., on Windows the error code -1 becomes ``0xffffffff``, and on Linux it becomes 255). Exit codes above 255 may not be supported by the underlying shell or platform, and some shells may interpret values above 125 specially. Therefore, it is advisable to only specify an ``<exit-code>`` in the range 0 to 125."
+    ]
+  },
+  "cmake_minimum_required": {
+    "name": "cmake_minimum_required",
+    "description": "Require a minimum version of cmake.",
+    "syntax_examples": [
+      "cmake_minimum_required(VERSION <min>[...<policy_max>] [FATAL_ERROR])"
+    ]
+  },
+  "cmake_parse_arguments": {
+    "name": "cmake_parse_arguments",
+    "description": "Parse function or macro arguments.",
+    "syntax_examples": [
+      "cmake_parse_arguments(<prefix> <options> <one_value_keywords> <multi_value_keywords> <args>...) cmake_parse_arguments(PARSE_ARGV <N> <prefix> <options> <one_value_keywords> <multi_value_keywords>)"
+    ]
+  },
+  "cmake_path": {
+    "name": "cmake_path",
+    "description": "This command is for the manipulation of paths. Only syntactic aspects of paths are handled, there is no interaction of any kind with any underlying file system. The path may represent a non-existing path or even one that is not allowed to exist on the current file system or platform. For operations that do interact with the filesystem, see the file command.",
+    "syntax_examples": [
+      "cmake_path(GET <path-var> ROOT_NAME <out-var>) cmake_path(GET <path-var> ROOT_DIRECTORY <out-var>) cmake_path(GET <path-var> ROOT_PATH <out-var>) cmake_path(GET <path-var> FILENAME <out-var>) cmake_path(GET <path-var> EXTENSION [LAST_ONLY] <out-var>) cmake_path(GET <path-var> STEM [LAST_ONLY] <out-var>) cmake_path(GET <path-var> RELATIVE_PART <out-var>) cmake_path(GET <path-var> PARENT_PATH <out-var>)",
+      "cmake_path(HAS_ROOT_NAME <path-var> <out-var>) cmake_path(HAS_ROOT_DIRECTORY <path-var> <out-var>) cmake_path(HAS_ROOT_PATH <path-var> <out-var>) cmake_path(HAS_FILENAME <path-var> <out-var>) cmake_path(HAS_EXTENSION <path-var> <out-var>) cmake_path(HAS_STEM <path-var> <out-var>) cmake_path(HAS_RELATIVE_PART <path-var> <out-var>) cmake_path(HAS_PARENT_PATH <path-var> <out-var>)",
+      "cmake_path(IS_ABSOLUTE <path-var> <out-var>)",
+      "cmake_path(IS_RELATIVE <path-var> <out-var>)",
+      "cmake_path(IS_PREFIX <path-var> <input> [NORMALIZE] <out-var>)",
+      "cmake_path(COMPARE <input1> EQUAL <input2> <out-var>) cmake_path(COMPARE <input1> NOT_EQUAL <input2> <out-var>)",
+      "cmake_path(SET <path-var> [NORMALIZE] <input>)",
+      "cmake_path(APPEND <path-var> [<input>...] [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(APPEND_STRING <path-var> [<input>...] [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(REMOVE_FILENAME <path-var> [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(REPLACE_FILENAME <path-var> <input> [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(HAS_FILENAME path has_filename) if(has_filename) cmake_path(REMOVE_FILENAME path) cmake_path(APPEND path input); endif()",
+      "cmake_path(REMOVE_EXTENSION <path-var> [LAST_ONLY] [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(REPLACE_EXTENSION <path-var> [LAST_ONLY] <input> [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(REMOVE_EXTENSION path) if(NOT \"input\" MATCHES \"^\\\\.\") cmake_path(APPEND_STRING path \".\") endif() cmake_path(APPEND_STRING path \"input\")",
+      "cmake_path(NORMAL_PATH <path-var> [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(RELATIVE_PATH <path-var> [BASE_DIRECTORY <input>] [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(ABSOLUTE_PATH <path-var> [BASE_DIRECTORY <input>] [NORMALIZE] [OUTPUT_VARIABLE <out-var>])",
+      "cmake_path(NATIVE_PATH <path-var> [NORMALIZE] <out-var>)",
+      "cmake_path(CONVERT <input> TO_CMAKE_PATH_LIST <out-var> [NORMALIZE])",
+      "cmake_path(CONVERT <input> TO_NATIVE_PATH_LIST <out-var> [NORMALIZE])",
+      "cmake_path(HASH <path-var> <out-var>)"
+    ]
+  },
+  "cmake_policy": {
+    "name": "cmake_policy",
+    "description": "Manage CMake Policy settings. See the cmake-policies manual for defined policies.",
+    "syntax_examples": [
+      "cmake_policy(VERSION <min>[...<max>]) :target: VERSION",
+      "cmake_policy(SET CMP<NNNN> NEW|OLD) :target: SET",
+      "cmake_policy(GET CMP<NNNN> <variable>) :target: GET",
+      "cmake_policy(PUSH) :target: PUSH Create a new entry on the policy stack.",
+      "cmake_policy(POP) :target: POP Remove the last policy stack entry created with ``cmake_policy(PUSH)``."
+    ]
+  },
+  "configure_file": {
+    "name": "configure_file",
+    "description": "Copy a file to another location and modify its contents.",
+    "syntax_examples": [
+      "configure_file(<input> <output> [NO_SOURCE_PERMISSIONS | USE_SOURCE_PERMISSIONS | FILE_PERMISSIONS <permissions>...] [COPYONLY] [ESCAPE_QUOTES] [@ONLY] [NEWLINE_STYLE [UNIX|DOS|WIN32|LF|CRLF]])"
+    ]
+  },
+  "continue": {
+    "name": "continue",
+    "description": "Continue to the top of enclosing foreach or while loop.",
+    "syntax_examples": ["continue()"]
+  },
+  "create_test_sourcelist": {
+    "name": "create_test_sourcelist",
+    "description": "Create a test driver program that links together many small tests into a single executable. This is useful when building static executables with large libraries to shrink the total required size.",
+    "syntax_examples": [
+      "create_test_sourcelist(<sourceListName> <driverName> <test>... <options>...) :target: original Generate a test driver source file from a list of individual test sources and provide a combined list of sources that can be built as an executable. The options are: ``<sourceListName>`` The name of a variable in which to store the list of source files needed to build the test driver. The list will contain the ``<test>...`` sources and the generated ``<driverName>`` source. .. versionchanged:: 3.29 The test driver source is listed by absolute path in the build tree. Previously it was listed only as ``<driverName>``. ``<driverName>`` Name of the test driver source file to be generated into the build tree. The source file will contain a ``main()`` program entry point that dispatches to whatever test is named on the command line. ``<test>...`` Test source files to be added to the driver binary. Each test source file must have a function in it that is the same name as the file with the extension removed. For example, a ``foo.cxx`` test source might contain: .. code-block:: c++ int foo(int argc, char** argv) ``EXTRA_INCLUDE <header>`` Specify a header file to `` ``FUNCTION <function>`` Specify a function to be called with pointers to ``argc`` and ``argv``. The function may be provided in the ``EXTRA_INCLUDE`` header: .. code-block:: c++ void function(int* pargc, char*** pargv) This can be used to add extra command line processing to each test."
+    ]
+  },
+  "ctest_build": {
+    "name": "ctest_build",
+    "description": "Perform the CTest Build Step as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_build([BUILD <build-dir>] [APPEND] [CONFIGURATION <config>] [PARALLEL_LEVEL <parallel>] [FLAGS <flags>] [PROJECT_NAME <project-name>] [TARGET <target-name>] [NUMBER_ERRORS <num-err-var>] [NUMBER_WARNINGS <num-warn-var>] [RETURN_VALUE <result-var>] [CAPTURE_CMAKE_ERROR <result-var>])"
+    ]
+  },
+  "ctest_configure": {
+    "name": "ctest_configure",
+    "description": "Perform the CTest Configure Step as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_configure([BUILD <build-dir>] [SOURCE <source-dir>] [APPEND] [OPTIONS <options>] [RETURN_VALUE <result-var>] [QUIET] [CAPTURE_CMAKE_ERROR <result-var>])"
+    ]
+  },
+  "ctest_coverage": {
+    "name": "ctest_coverage",
+    "description": "Perform the CTest Coverage Step as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_coverage([BUILD <build-dir>] [APPEND] [LABELS <label>...] [RETURN_VALUE <result-var>] [CAPTURE_CMAKE_ERROR <result-var>] [QUIET])"
+    ]
+  },
+  "ctest_empty_binary_directory": {
+    "name": "ctest_empty_binary_directory",
+    "description": "empties the binary directory",
+    "syntax_examples": ["ctest_empty_binary_directory(<directory>)"]
+  },
+  "ctest_memcheck": {
+    "name": "ctest_memcheck",
+    "description": "Perform the CTest MemCheck Step as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_memcheck([BUILD <build-dir>] [APPEND] [START <start-number>] [END <end-number>] [STRIDE <stride-number>] [EXCLUDE <exclude-regex>] [INCLUDE <include-regex>] [EXCLUDE_LABEL <label-exclude-regex>] [INCLUDE_LABEL <label-include-regex>] [EXCLUDE_FIXTURE <regex>] [EXCLUDE_FIXTURE_SETUP <regex>] [EXCLUDE_FIXTURE_CLEANUP <regex>] [PARALLEL_LEVEL <level>] [RESOURCE_SPEC_FILE <file>] [TEST_LOAD <threshold>] [SCHEDULE_RANDOM <ON|OFF>] [STOP_ON_FAILURE] [STOP_TIME <time-of-day>] [RETURN_VALUE <result-var>] [CAPTURE_CMAKE_ERROR <result-var>] [REPEAT <mode>:<n>] [OUTPUT_JUNIT <file>] [DEFECT_COUNT <defect-count-var>] [QUIET])"
+    ]
+  },
+  "ctest_read_custom_files": {
+    "name": "ctest_read_custom_files",
+    "description": "read CTestCustom files.",
+    "syntax_examples": ["ctest_read_custom_files(<directory>...)"]
+  },
+  "ctest_run_script": {
+    "name": "ctest_run_script",
+    "description": "runs a ctest -S script",
+    "syntax_examples": [
+      "ctest_run_script([NEW_PROCESS] script_file_name script_file_name1 script_file_name2 ... [RETURN_VALUE var])"
+    ]
+  },
+  "ctest_sleep": {
+    "name": "ctest_sleep",
+    "description": "sleeps for some amount of time",
+    "syntax_examples": [
+      "ctest_sleep(<seconds>)",
+      "ctest_sleep(<time1> <duration> <time2>)"
+    ]
+  },
+  "ctest_start": {
+    "name": "ctest_start",
+    "description": "Starts the testing for a given model",
+    "syntax_examples": [
+      "ctest_start(<model> [<source> [<binary>]] [GROUP <group>] [QUIET]) ctest_start([<model> [<source> [<binary>]]] [GROUP <group>] APPEND [QUIET])",
+      "ctest_start(Experimental GROUP GroupExperimental)",
+      "ctest_start(APPEND)",
+      "ctest_start(Experimental path/to/source path/to/binary GROUP SomeGroup QUIET APPEND) ctest_start(GROUP SomeGroup Experimental QUIET path/to/source APPEND path/to/binary) ctest_start(APPEND QUIET Experimental path/to/source GROUP SomeGroup path/to/binary)"
+    ]
+  },
+  "ctest_submit": {
+    "name": "ctest_submit",
+    "description": "Perform the CTest Submit Step as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_submit([PARTS <part>...] [FILES <file>...] [SUBMIT_URL <url>] [BUILD_ID <result-var>] [HTTPHEADER <header>] [RETRY_COUNT <count>] [RETRY_DELAY <delay>] [RETURN_VALUE <result-var>] [CAPTURE_CMAKE_ERROR <result-var>] [QUIET])",
+      "ctest_submit(HTTPHEADER \"Authorization: Bearer <auth-token>\")",
+      "ctest_submit(CDASH_UPLOAD <file> [CDASH_UPLOAD_TYPE <type>] [SUBMIT_URL <url>] [BUILD_ID <result-var>] [HTTPHEADER <header>] [RETRY_COUNT <count>] [RETRY_DELAY <delay>] [RETURN_VALUE <result-var>] [QUIET])"
+    ]
+  },
+  "ctest_test": {
+    "name": "ctest_test",
+    "description": "Perform the CTest Test Step as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_test([BUILD <build-dir>] [APPEND] [START <start-number>] [END <end-number>] [STRIDE <stride-number>] [EXCLUDE <exclude-regex>] [INCLUDE <include-regex>] [EXCLUDE_LABEL <label-exclude-regex>] [INCLUDE_LABEL <label-include-regex>] [EXCLUDE_FROM_FILE <filename>] [INCLUDE_FROM_FILE <filename>] [EXCLUDE_FIXTURE <regex>] [EXCLUDE_FIXTURE_SETUP <regex>] [EXCLUDE_FIXTURE_CLEANUP <regex>] [PARALLEL_LEVEL [<level>]] [RESOURCE_SPEC_FILE <file>] [TEST_LOAD <threshold>] [SCHEDULE_RANDOM <ON|OFF>] [STOP_ON_FAILURE] [STOP_TIME <time-of-day>] [RETURN_VALUE <result-var>] [CAPTURE_CMAKE_ERROR <result-var>] [REPEAT <mode>:<n>] [OUTPUT_JUNIT <file>] [QUIET])"
+    ]
+  },
+  "ctest_update": {
+    "name": "ctest_update",
+    "description": "Perform the CTest Update Step as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_update([SOURCE <source-dir>] [RETURN_VALUE <result-var>] [CAPTURE_CMAKE_ERROR <result-var>] [QUIET])"
+    ]
+  },
+  "ctest_upload": {
+    "name": "ctest_upload",
+    "description": "Upload files to a dashboard server as a Dashboard Client.",
+    "syntax_examples": [
+      "ctest_upload(FILES <file>... [QUIET] [CAPTURE_CMAKE_ERROR <result-var>])"
+    ]
+  },
+  "define_property": {
+    "name": "define_property",
+    "description": "Define and document custom properties.",
+    "syntax_examples": [
+      "define_property(<GLOBAL | DIRECTORY | TARGET | SOURCE | TEST | VARIABLE | CACHED_VARIABLE> PROPERTY <name> [INHERITED] [BRIEF_DOCS <brief-doc> [docs...]] [FULL_DOCS <full-doc> [docs...]] [INITIALIZE_FROM_VARIABLE <variable>])",
+      "define_property(TARGET PROPERTY MY_NEW_PROP BRIEF_DOCS \"My new custom property\" ) get_property(my_new_prop_exists TARGET NONE PROPERTY MY_NEW_PROP DEFINED ) if(my_new_prop_exists) get_property(my_new_prop_docs TARGET NONE PROPERTY MY_NEW_PROP BRIEF_DOCS ) endif()"
+    ]
+  },
+  "else": {
+    "name": "else",
+    "description": "Starts the else portion of an if block.",
+    "syntax_examples": ["else([<condition>])"]
+  },
+  "elseif": {
+    "name": "elseif",
+    "description": "Starts an elseif portion of an if block.",
+    "syntax_examples": ["elseif(<condition>)"]
+  },
+  "enable_language": {
+    "name": "enable_language",
+    "description": "Enable languages (CXX/C/OBJC/OBJCXX/Fortran/etc)",
+    "syntax_examples": ["enable_language(<lang>... [OPTIONAL])"]
+  },
+  "enable_testing": {
+    "name": "enable_testing",
+    "description": "Enable testing for current directory and below.",
+    "syntax_examples": ["enable_testing()"]
+  },
+  "endblock": {
+    "name": "endblock",
+    "description": "Ends a list of commands in a block and removes the scopes created by the block command.",
+    "syntax_examples": ["endblock()"]
+  },
+  "endforeach": {
+    "name": "endforeach",
+    "description": "Ends a list of commands in a foreach block.",
+    "syntax_examples": ["endforeach([<loop_var>])"]
+  },
+  "endfunction": {
+    "name": "endfunction",
+    "description": "Ends a list of commands in a function block.",
+    "syntax_examples": ["endfunction([<name>])"]
+  },
+  "endif": {
+    "name": "endif",
+    "description": "Ends a list of commands in an if block.",
+    "syntax_examples": ["endif([<condition>])"]
+  },
+  "endmacro": {
+    "name": "endmacro",
+    "description": "Ends a list of commands in a macro block.",
+    "syntax_examples": ["endmacro([<name>])"]
+  },
+  "endwhile": {
+    "name": "endwhile",
+    "description": "Ends a list of commands in a while block.",
+    "syntax_examples": ["endwhile([<condition>])"]
+  },
+  "execute_process": {
+    "name": "execute_process",
+    "description": "Execute one or more child processes.",
+    "syntax_examples": [
+      "execute_process(COMMAND <cmd1> [<arguments>] [COMMAND <cmd2> [<arguments>]]... [WORKING_DIRECTORY <directory>] [TIMEOUT <seconds>] [RESULT_VARIABLE <variable>] [RESULTS_VARIABLE <variable>] [OUTPUT_VARIABLE <variable>] [ERROR_VARIABLE <variable>] [INPUT_FILE <file>] [OUTPUT_FILE <file>] [ERROR_FILE <file>] [OUTPUT_QUIET] [ERROR_QUIET] [COMMAND_ECHO <where>] [OUTPUT_STRIP_TRAILING_WHITESPACE] [ERROR_STRIP_TRAILING_WHITESPACE] [ENCODING <name>] [ECHO_OUTPUT_VARIABLE] [ECHO_ERROR_VARIABLE] [COMMAND_ERROR_IS_FATAL <ANY|LAST>])"
+    ]
+  },
+  "exec_program": {
+    "name": "exec_program",
+    "description": "Run an executable program during the processing of the CMakeList.txt file.",
+    "syntax_examples": [
+      "exec_program(Executable [directory in which to run] [ARGS <arguments to executable>] [OUTPUT_VARIABLE <var>] [RETURN_VALUE <var>])"
+    ]
+  },
+  "export": {
+    "name": "export",
+    "description": "Export targets or packages for outside projects to use them directly from the current project's build tree, without installation.",
+    "syntax_examples": [
+      "export(TARGETS <target>... [...]) export(EXPORT <export-name> [...]) export(PACKAGE <PackageName>) export(SETUP <export-name> [...])",
+      "export(TARGETS <target>... [...])",
+      "export(TARGETS <target>... [NAMESPACE <namespace>] [APPEND] FILE <filename> [EXPORT_LINK_INTERFACE_LIBRARIES] [CXX_MODULES_DIRECTORY <directory>])",
+      "export(TARGETS <target>... ANDROID_MK <filename>)",
+      "export(EXPORT <export-name> [...])",
+      "export(EXPORT <export-name> [NAMESPACE <namespace>] [FILE <filename>] [CXX_MODULES_DIRECTORY <directory>] [EXPORT_PACKAGE_DEPENDENCIES])",
+      "export(PACKAGE <PackageName>)",
+      "export(PACKAGE <PackageName>)",
+      "export(SETUP <export-name> [...])",
+      "export(SETUP <export-name> [PACKAGE_DEPENDENCY <dep> [ENABLED (<bool-true>|<bool-false>|AUTO)] [EXTRA_ARGS <args>...]] [...] [TARGET <target> [XCFRAMEWORK_LOCATION <location>]] [...])"
+    ]
+  },
+  "export_library_dependencies": {
+    "name": "export_library_dependencies",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0033.",
+    "syntax_examples": ["export_library_dependencies(<file> [APPEND])"]
+  },
+  "file": {
+    "name": "file",
+    "description": "File manipulation command.",
+    "syntax_examples": [
+      "file(READ <filename> <variable> [OFFSET <offset>] [LIMIT <max-in>] [HEX]) Read content from a file called ``<filename>`` and store it in a ``<variable>``. Optionally start from the given ``<offset>`` and read at most ``<max-in>`` bytes. The ``HEX`` option causes data to be converted to a hexadecimal representation (useful for binary data). If the ``HEX`` option is specified, letters in the output (``a`` through ``f``) are in lowercase.",
+      "file(STRINGS <filename> <variable> <options>...) Parse a list of ASCII strings from ``<filename>`` and store it in ``<variable>``. Binary data in the file are ignored. Carriage return (``\\r``, CR) characters are ignored. The options are: ``LENGTH_MAXIMUM <max-len>`` Consider only strings of at most a given length. ``LENGTH_MINIMUM <min-len>`` Consider only strings of at least a given length. ``LIMIT_COUNT <max-num>`` Limit the number of distinct strings to be extracted. ``LIMIT_INPUT <max-in>`` Limit the number of input bytes to read from the file. ``LIMIT_OUTPUT <max-out>`` Limit the number of total bytes to store in the ``<variable>``. ``NEWLINE_CONSUME`` Treat newline characters (``\\n``, LF) as part of string content instead of terminating at them. ``NO_HEX_CONVERSION`` Intel Hex and Motorola S-record files are automatically converted to binary while reading unless this option is given. ``REGEX <regex>`` Consider only strings that match the given regular expression, as described under :ref:`string(REGEX) <Regex Specification>`. .. versionchanged:: 3.29 Capture groups from the last match in the file are stored in :variable:`CMAKE_MATCH_<n>`, similar to :command:`string(REGEX MATCHALL)`. See policy :policy:`CMP0159`. ``ENCODING <encoding-type>`` .. versionadded:: 3.1 Consider strings of a given encoding. Currently supported encodings are: ``UTF-8``, ``UTF-16LE``, ``UTF-16BE``, ``UTF-32LE``, ``UTF-32BE``. If the ``ENCODING`` option is not provided and the file has a Byte Order Mark, the ``ENCODING`` option will be defaulted to respect the Byte Order Mark. .. versionadded:: 3.2 Added the ``UTF-16LE``, ``UTF-16BE``, ``UTF-32LE``, ``UTF-32BE`` encodings. For example, the code file(STRINGS myfile.txt myfile) stores a list in the variable ``myfile`` in which each item is a line from the input file.",
+      "file(<HASH> <filename> <variable>) :target: <HASH> Compute a cryptographic hash of the content of ``<filename>`` and store it in a ``<variable>``. The supported ``<HASH>`` algorithm names are those listed by the :command:`string(<HASH>)` command.",
+      "file(TIMESTAMP <filename> <variable> [<format>] [UTC]) Compute a string representation of the modification time of ``<filename>`` and store it in ``<variable>``. Should the command be unable to obtain a timestamp variable will be set to the empty string (\"\"). See the :command:`string(TIMESTAMP)` command for documentation of the ``<format>`` and ``UTC`` options.",
+      "file(WRITE <filename> <content>...) file(APPEND <filename> <content>...) Write ``<content>`` into a file called ``<filename>``. If the file does not exist, it will be created. If the file already exists, ``WRITE`` mode will overwrite it and ``APPEND`` mode will append to the end. Any directories in the path specified by ``<filename>`` that do not exist will be created. If the file is a build input, use the :command:`configure_file` command to update the file only when its content changes.",
+      "file(TOUCH <files>...) file(TOUCH_NOCREATE <files>...) .. versionadded:: 3.12 Create a file with no content if it does not yet exist. If the file already exists, its access and/or modification will be updated to the time when the function call is executed. Use ``TOUCH_NOCREATE`` to touch a file if it exists but not create it. If a file does not exist it will be silently ignored. With ``TOUCH`` and ``TOUCH_NOCREATE``, the contents of an existing file will not be modified. .. versionchanged:: 3.30 ``<files>`` can be an empty list. CMake 3.29 and earlier required at least one file to be given.",
+      "file(GENERATE [...]) Generate an output file for each build configuration supported by the current :manual:`CMake Generator <cmake-generators(7)>`. Evaluate :manual:`generator expressions <cmake-generator-expressions(7)>` from the input content to produce the output content. file(GENERATE OUTPUT <output-file> <INPUT <input-file>|CONTENT <content>> [CONDITION <expression>] [TARGET <target>] [NO_SOURCE_PERMISSIONS | USE_SOURCE_PERMISSIONS | FILE_PERMISSIONS <permissions>...] [NEWLINE_STYLE [UNIX|DOS|WIN32|LF|CRLF]]) The options are: ``CONDITION <condition>`` Generate the output file for a particular configuration only if the condition is true. The condition must be either ``0`` or ``1`` after evaluating generator expressions. ``CONTENT <content>`` Use the content given explicitly as input. ``INPUT <input-file>`` Use the content from a given file as input. .. versionchanged:: 3.10 A relative path is treated with respect to the value of :variable:`CMAKE_CURRENT_SOURCE_DIR`. See policy :policy:`CMP0070`. ``OUTPUT <output-file>`` Specify the output file name to generate. Use generator expressions such as :genex:`$<CONFIG>` to specify a configuration-specific output file name. Multiple configurations may generate the same output file only if the generated content is identical. Otherwise, the ``<output-file>`` must evaluate to an unique name for each configuration. .. versionchanged:: 3.10 A relative path (after evaluating generator expressions) is treated with respect to the value of :variable:`CMAKE_CURRENT_BINARY_DIR`. See policy :policy:`CMP0070`. ``TARGET <target>`` .. versionadded:: 3.19 Specify which target to use when evaluating generator expressions that require a target for evaluation (e.g. :genex:`$<COMPILE_FEATURES:...>`, :genex:`$<TARGET_PROPERTY:prop>`). ``NO_SOURCE_PERMISSIONS`` .. versionadded:: 3.20 The generated file permissions default to the standard 644 value (-rw-r--r--). ``USE_SOURCE_PERMISSIONS`` .. versionadded:: 3.20 Transfer the file permissions of the ``INPUT`` file to the generated file. This is already the default behavior if none of the three permissions-related keywords are given (``NO_SOURCE_PERMISSIONS``, ``USE_SOURCE_PERMISSIONS`` or ``FILE_PERMISSIONS``). The ``USE_SOURCE_PERMISSIONS`` keyword mostly serves as a way of making the intended behavior clearer at the call site. It is an error to specify this option without ``INPUT``. ``FILE_PERMISSIONS <permissions>...`` .. versionadded:: 3.20 Use the specified permissions for the generated file. ``NEWLINE_STYLE <style>`` .. versionadded:: 3.20 Specify the newline style for the generated file. Specify ``UNIX`` or ``LF`` for ``\\n`` newlines, or specify ``DOS``, ``WIN32``, or ``CRLF`` for ``\\r\\n`` newlines. Exactly one ``CONTENT`` or ``INPUT`` option must be given. A specific ``OUTPUT`` file may be named by at most one invocation of ``file(GENERATE)``. Generated files are modified and their timestamp updated on subsequent cmake runs only if their content is changed. Note also that ``file(GENERATE)`` does not create the output file until the generation phase. The output file will not yet have been written when the ``file(GENERATE)`` command returns, it is written only after processing all of a project's ``CMakeLists.txt`` files.",
+      "file(CONFIGURE OUTPUT <output-file> CONTENT <content> [ESCAPE_QUOTES] [@ONLY] [NEWLINE_STYLE [UNIX|DOS|WIN32|LF|CRLF]]) :target: CONFIGURE .. versionadded:: 3.18 Generate an output file using the input given by ``CONTENT`` and substitute variable values referenced as ``@VAR@`` or ``${VAR}`` contained therein. The substitution rules behave the same as the :command:`configure_file` command. In order to match :command:`configure_file`'s behavior, generator expressions are not supported for both ``OUTPUT`` and ``CONTENT``, and the output file is only modified and its timestamp updated if the content is changed or the file previously didn't exist. The arguments are: ``OUTPUT <output-file>`` Specify the output file name to generate. A relative path is treated with respect to the value of :variable:`CMAKE_CURRENT_BINARY_DIR`. ``<output-file>`` does not support generator expressions. ``CONTENT <content>`` Use the content given explicitly as input. ``<content>`` does not support generator expressions. ``ESCAPE_QUOTES`` Escape any substituted quotes with backslashes (C-style). ``@ONLY`` Restrict variable replacement to references of the form ``@VAR@``. This is useful for configuring scripts that use ``${VAR}`` syntax. ``NEWLINE_STYLE <style>`` Specify the newline style for the output file. Specify ``UNIX`` or ``LF`` for ``\\n`` newlines, or specify ``DOS``, ``WIN32``, or ``CRLF`` for ``\\r\\n`` newlines.",
+      "file(GLOB <variable> [LIST_DIRECTORIES true|false] [RELATIVE <path>] [CONFIGURE_DEPENDS] <globbing-expressions>...) file(GLOB_RECURSE <variable> [FOLLOW_SYMLINKS] [LIST_DIRECTORIES true|false] [RELATIVE <path>] [CONFIGURE_DEPENDS] <globbing-expressions>...) Generate a list of files that match the ``<globbing-expressions>`` and store it into the ``<variable>``. Globbing expressions are similar to regular expressions, but much simpler. If ``RELATIVE`` flag is specified, the results will be returned as relative paths to the given path. .. versionchanged:: 3.6 The results will be ordered lexicographically. On Windows and macOS, globbing is case-insensitive even if the underlying filesystem is case-sensitive (both filenames and globbing expressions are converted to lowercase before matching). On other platforms, globbing is case-sensitive. .. versionadded:: 3.3 By default ``GLOB`` lists directories. Directories are omitted in the result if ``LIST_DIRECTORIES`` is set to false. .. versionadded:: 3.12 If the ``CONFIGURE_DEPENDS`` flag is specified, CMake will add logic to the main build system check target to rerun the flagged ``GLOB`` commands at build time. If any of the outputs change, CMake will regenerate the build system. .. note:: We do not recommend using GLOB to collect a list of source files from your source tree. If no CMakeLists.txt file changes when a source is added or removed then the generated build system cannot know when to ask CMake to regenerate. The ``CONFIGURE_DEPENDS`` flag may not work reliably on all generators, or if a new generator is added in the future that cannot support it, projects using it will be stuck. Even if ``CONFIGURE_DEPENDS`` works reliably, there is still a cost to perform the check on every rebuild. Examples of globbing expressions include: ============== ====================================================== ``*.cxx`` match all files with extension ``cxx`` ``*.vt?`` match all files with extension ``vta``, ..., ``vtz`` ``f[3-5].txt`` match files ``f3.txt``, ``f4.txt``, ``f5.txt`` ============== ====================================================== The ``GLOB_RECURSE`` mode will traverse all the subdirectories of the matched directory and match the files. Subdirectories that are symlinks are only traversed if ``FOLLOW_SYMLINKS`` is given or policy :policy:`CMP0009` is not set to ``NEW``. .. versionadded:: 3.3 By default ``GLOB_RECURSE`` omits directories from result list. Setting ``LIST_DIRECTORIES`` to true adds directories to result list. If ``FOLLOW_SYMLINKS`` is given or policy :policy:`CMP0009` is not set to ``NEW`` then ``LIST_DIRECTORIES`` treats symlinks as directories. Examples of recursive globbing include: ============== ====================================================== ``/dir/*.py`` match all python files in ``/dir`` and subdirectories ============== ======================================================",
+      "file(MAKE_DIRECTORY <directories>...) Create the given directories and their parents as needed. .. versionchanged:: 3.30 ``<directories>`` can be an empty list. CMake 3.29 and earlier required at least one directory to be given.",
+      "file(REMOVE <files>...) file(REMOVE_RECURSE <files>...) Remove the given files. The ``REMOVE_RECURSE`` mode will remove the given files and directories, including non-empty directories. No error is emitted if a given file does not exist. Relative input paths are evaluated with respect to the current source directory. .. versionchanged:: 3.15 Empty input paths are ignored with a warning. Previous versions of CMake interpreted empty strings as a relative path with respect to the current directory and removed its contents.",
+      "file(RENAME <oldname> <newname> [RESULT <result>] [NO_REPLACE]) Move a file or directory within a filesystem from ``<oldname>`` to ``<newname>``, replacing the destination atomically. The options are: ``RESULT <result>`` .. versionadded:: 3.21 Set ``<result>`` variable to ``0`` on success or an error message otherwise. If ``RESULT`` is not specified and the operation fails, an error is emitted. ``NO_REPLACE`` .. versionadded:: 3.21 If the ``<newname>`` path already exists, do not replace it. If ``RESULT <result>`` is used, the result variable will be set to ``NO_REPLACE``. Otherwise, an error is emitted.",
+      "file(COPY_FILE <oldname> <newname> [RESULT <result>] [ONLY_IF_DIFFERENT] [INPUT_MAY_BE_RECENT]) .. versionadded:: 3.21 Copy a file from ``<oldname>`` to ``<newname>``. Directories are not supported. Symlinks are ignored and ``<oldfile>``'s content is read and written to ``<newname>`` as a new file. The options are: ``RESULT <result>`` Set ``<result>`` variable to ``0`` on success or an error message otherwise. If ``RESULT`` is not specified and the operation fails, an error is emitted. ``ONLY_IF_DIFFERENT`` If the ``<newname>`` path already exists, do not replace it if the file's contents are already the same as ``<oldname>`` (this avoids updating ``<newname>``'s timestamp). ``INPUT_MAY_BE_RECENT`` .. versionadded:: 3.26 Tell CMake that the input file may have been recently created. This is meaningful only on Windows, where files may be inaccessible for a short time after they are created. With this option, if permission is denied, CMake will retry reading the input a few times. This sub-command has some similarities to :command:`configure_file` with the ``COPYONLY`` option. An important difference is that :command:`configure_file` creates a dependency on the source file, so CMake will be re-run if it changes. The ``file(COPY_FILE)`` sub-command does not create such a dependency. See also the :command:`file(COPY)` sub-command just below which provides further file-copying capabilities.",
+      "file(COPY [...]) file(INSTALL [...]) The ``COPY`` signature copies files, directories, and symlinks to a destination folder. Relative input paths are evaluated with respect to the current source directory, and a relative destination is evaluated with respect to the current build directory. Copying preserves input file timestamps, and optimizes out a file if it exists at the destination with the same timestamp. Copying preserves input permissions unless explicit permissions or ``NO_SOURCE_PERMISSIONS`` are given (default is ``USE_SOURCE_PERMISSIONS``). file(<COPY|INSTALL> <files>... DESTINATION <dir> [NO_SOURCE_PERMISSIONS | USE_SOURCE_PERMISSIONS] [FILE_PERMISSIONS <permissions>...] [DIRECTORY_PERMISSIONS <permissions>...] [FOLLOW_SYMLINK_CHAIN] [FILES_MATCHING] [[PATTERN <pattern> | REGEX <regex>] [EXCLUDE] [PERMISSIONS <permissions>...]] [...]) .. note:: For a simple file copying operation, the :command:`file(COPY_FILE)` sub-command just above may be easier to use. .. versionadded:: 3.15 If ``FOLLOW_SYMLINK_CHAIN`` is specified, ``COPY`` will recursively resolve the symlinks at the paths given until a real file is found, and install a corresponding symlink in the destination for each symlink encountered. For each symlink that is installed, the resolution is stripped of the directory, leaving only the filename, meaning that the new symlink points to a file in the same directory as the symlink. This feature is useful on some Unix systems, where libraries are installed as a chain of symlinks with version numbers, with less specific versions pointing to more specific versions. ``FOLLOW_SYMLINK_CHAIN`` will install all of these symlinks and the library itself into the destination directory. For example, if you have the following directory structure: * ``/opt/foo/lib/libfoo.so.1.2.3`` * ``/opt/foo/lib/libfoo.so.1.2 -> libfoo.so.1.2.3`` * ``/opt/foo/lib/libfoo.so.1 -> libfoo.so.1.2`` * ``/opt/foo/lib/libfoo.so -> libfoo.so.1`` and you do: file(COPY /opt/foo/lib/libfoo.so DESTINATION lib FOLLOW_SYMLINK_CHAIN) This will install all of the symlinks and ``libfoo.so.1.2.3`` itself into ``lib``. See the :command:`install(DIRECTORY)` command for documentation of permissions, ``FILES_MATCHING``, ``PATTERN``, ``REGEX``, and ``EXCLUDE`` options. Copying directories preserves the structure of their content even if options are used to select a subset of files. The ``INSTALL`` signature differs slightly from ``COPY``: it prints status messages, and ``NO_SOURCE_PERMISSIONS`` is default. Installation scripts generated by the :command:`install` command use this signature (with some undocumented options for internal use). .. versionchanged:: 3.22 The environment variable :envvar:`CMAKE_INSTALL_MODE` can override the default copying behavior of :command:`file(INSTALL)`.",
+      "file(SIZE <filename> <variable>) .. versionadded:: 3.14 Determine the file size of the ``<filename>`` and put the result in ``<variable>`` variable. Requires that ``<filename>`` is a valid path pointing to a file and is readable.",
+      "file(READ_SYMLINK <linkname> <variable>) .. versionadded:: 3.14 Query the symlink ``<linkname>`` and stores the path it points to in the result ``<variable>``. If ``<linkname>`` does not exist or is not a symlink, CMake issues a fatal error. Note that this command returns the raw symlink path and does not resolve a relative path. The following is an example of how to ensure that an absolute path is obtained: set(linkname \"/path/to/foo.sym\") file(READ_SYMLINK \"${linkname}\" result) if(NOT IS_ABSOLUTE \"${result}\") get_filename_component(dir \"${linkname}\" DIRECTORY) set(result \"${dir}/${result}\") endif()",
+      "file(CREATE_LINK <original> <linkname> [RESULT <result>] [COPY_ON_ERROR] [SYMBOLIC]) .. versionadded:: 3.14 Create a link ``<linkname>`` that points to ``<original>``. It will be a hard link by default, but providing the ``SYMBOLIC`` option results in a symbolic link instead. Hard links require that ``original`` exists and is a file, not a directory. If ``<linkname>`` already exists, it will be overwritten. The ``<result>`` variable, if specified, receives the status of the operation. It is set to ``0`` upon success or an error message otherwise. If ``RESULT`` is not specified and the operation fails, a fatal error is emitted. Specifying ``COPY_ON_ERROR`` enables copying the file as a fallback if creating the link fails. It can be useful for handling situations such as ``<original>`` and ``<linkname>`` being on different drives or mount points, which would make them unable to support a hard link.",
+      "file(CHMOD <files>... <directories>... [PERMISSIONS <permissions>...] [FILE_PERMISSIONS <permissions>...] [DIRECTORY_PERMISSIONS <permissions>...]) .. versionadded:: 3.19 Set the permissions for the ``<files>...`` and ``<directories>...`` specified. Valid permissions are ``OWNER_READ``, ``OWNER_WRITE``, ``OWNER_EXECUTE``, ``GROUP_READ``, ``GROUP_WRITE``, ``GROUP_EXECUTE``, ``WORLD_READ``, ``WORLD_WRITE``, ``WORLD_EXECUTE``, ``SETUID``, ``SETGID``. Valid combination of keywords are: ``PERMISSIONS`` All items are changed. ``FILE_PERMISSIONS`` Only files are changed. ``DIRECTORY_PERMISSIONS`` Only directories are changed. ``PERMISSIONS`` and ``FILE_PERMISSIONS`` ``FILE_PERMISSIONS`` overrides ``PERMISSIONS`` for files. ``PERMISSIONS`` and ``DIRECTORY_PERMISSIONS`` ``DIRECTORY_PERMISSIONS`` overrides ``PERMISSIONS`` for directories. ``FILE_PERMISSIONS`` and ``DIRECTORY_PERMISSIONS`` Use ``FILE_PERMISSIONS`` for files and ``DIRECTORY_PERMISSIONS`` for directories.",
+      "file(CHMOD_RECURSE <files>... <directories>... [PERMISSIONS <permissions>...] [FILE_PERMISSIONS <permissions>...] [DIRECTORY_PERMISSIONS <permissions>...]) .. versionadded:: 3.19 Same as :cref:`CHMOD`, but change the permissions of files and directories present in the ``<directories>...`` recursively.",
+      "file(REAL_PATH <path> <out-var> [BASE_DIRECTORY <dir>] [EXPAND_TILDE]) .. versionadded:: 3.19 Compute the absolute path to an existing file or directory with symlinks resolved. The options are: ``BASE_DIRECTORY <dir>`` If the provided ``<path>`` is a relative path, it is evaluated relative to the given base directory ``<dir>``. If no base directory is provided, the default base directory will be :variable:`CMAKE_CURRENT_SOURCE_DIR`. ``EXPAND_TILDE`` .. versionadded:: 3.21 If the ``<path>`` is ``~`` or starts with ``~/``, the ``~`` is replaced by the user's home directory. The path to the home directory is obtained from environment variables. On Windows, the ``USERPROFILE`` environment variable is used, falling back to the ``HOME`` environment variable if ``USERPROFILE`` is not defined. On all other platforms, only ``HOME`` is used. .. versionchanged:: 3.28 All symlinks are resolved before collapsing ``../`` components. See policy :policy:`CMP0152`.",
+      "file(RELATIVE_PATH <variable> <directory> <file>) Compute the relative path from a ``<directory>`` to a ``<file>`` and store it in the ``<variable>``.",
+      "file(TO_CMAKE_PATH \"<path>\" <variable>) file(TO_NATIVE_PATH \"<path>\" <variable>) The ``TO_CMAKE_PATH`` mode converts a native ``<path>`` into a cmake-style path with forward-slashes (``/``). The input can be a single path or a system search path like ``$ENV{PATH}``. A search path will be converted to a cmake-style list separated by ``;`` characters. The ``TO_NATIVE_PATH`` mode converts a cmake-style ``<path>`` into a native path with platform-specific slashes (``\\`` on Windows hosts and ``/`` elsewhere). Always use double quotes around the ``<path>`` to be sure it is treated as a single argument to this command.",
+      "file(DOWNLOAD <url> [<file>] <options>...) file(UPLOAD <file> <url> <options>...) The ``DOWNLOAD`` subcommand downloads the given ``<url>`` to a local ``<file>``. The ``UPLOAD`` mode uploads a local ``<file>`` to a given ``<url>``. .. versionadded:: 3.19 If ``<file>`` is not specified for ``file(DOWNLOAD)``, the file is not saved. This can be useful if you want to know if a file can be downloaded (for example, to check that it exists) without actually saving it anywhere. Options to both ``DOWNLOAD`` and ``UPLOAD`` are: ``INACTIVITY_TIMEOUT <seconds>`` Terminate the operation after a period of inactivity. ``LOG <variable>`` Store a human-readable log of the operation in a variable. ``SHOW_PROGRESS`` Print progress information as status messages until the operation is complete. ``STATUS <variable>`` Store the resulting status of the operation in a variable. The status is a ``;`` separated list of length 2. The first element is the numeric return value for the operation, and the second element is a string value for the error. A ``0`` numeric error means no error in the operation. ``TIMEOUT <seconds>`` Terminate the operation after a given total time has elapsed. ``USERPWD <username>:<password>`` .. versionadded:: 3.7 Set username and password for operation. ``HTTPHEADER <HTTP-header>`` .. versionadded:: 3.7 HTTP header for ``DOWNLOAD`` and ``UPLOAD`` operations. ``HTTPHEADER`` can be repeated for multiple options: file(DOWNLOAD <url> HTTPHEADER \"Authorization: Bearer <auth-token>\" HTTPHEADER \"UserAgent: Mozilla/5.0\") ``NETRC <level>`` .. versionadded:: 3.11 Specify whether the .netrc file is to be used for operation. If this option is not specified, the value of the :variable:`CMAKE_NETRC` variable will be used instead. Valid levels are: ``IGNORED`` The .netrc file is ignored. This is the default. ``OPTIONAL`` The .netrc file is optional, and information in the URL is preferred. The file will be scanned to find which ever information is not specified in the URL. ``REQUIRED`` The .netrc file is required, and information in the URL is ignored. ``NETRC_FILE <file>`` .. versionadded:: 3.11 Specify an alternative .netrc file to the one in your home directory, if the ``NETRC`` level is ``OPTIONAL`` or ``REQUIRED``. If this option is not specified, the value of the :variable:`CMAKE_NETRC_FILE` variable will be used instead. ``TLS_VERSION <min>`` .. versionadded:: 3.30 Specify minimum TLS version for ``https://`` URLs. If this option is not specified, the value of the :variable:`CMAKE_TLS_VERSION` variable or :envvar:`CMAKE_TLS_VERSION` environment variable will be used instead. See :variable:`CMAKE_TLS_VERSION` for allowed values. ``TLS_VERIFY <ON|OFF>`` Specify whether to verify the server certificate for ``https://`` URLs. The default is to *not* verify. If this option is not specified, the value of the :variable:`CMAKE_TLS_VERIFY` variable will be used instead. .. versionadded:: 3.18 Added support to ``file(UPLOAD)``. ``TLS_CAINFO <file>`` Specify a custom Certificate Authority file for ``https://`` URLs. If this option is not specified, the value of the :variable:`CMAKE_TLS_CAINFO` variable will be used instead. .. versionadded:: 3.18 Added support to ``file(UPLOAD)``. For ``https://`` URLs CMake must be built with OpenSSL support. ``TLS/SSL`` certificates are not checked by default. Set ``TLS_VERIFY`` to ``ON`` to check certificates. Additional options to ``DOWNLOAD`` are: ``EXPECTED_HASH <algorithm>=<value>`` Verify that the downloaded content hash matches the expected value, where ``<algorithm>`` is one of the algorithms supported by :cref:`<HASH>`. If the file already exists and matches the hash, the download is skipped. If the file already exists and does not match the hash, the file is downloaded again. If after download the file does not match the hash, the operation fails with an error. It is an error to specify this option if ``DOWNLOAD`` is not given a ``<file>``. ``EXPECTED_MD5 <value>`` Historical short-hand for ``EXPECTED_HASH MD5=<value>``. It is an error to specify this if ``DOWNLOAD`` is not given a ``<file>``. ``RANGE_START <value>`` .. versionadded:: 3.24 Offset of the start of the range in file in bytes. Could be omitted to download up to the specified ``RANGE_END``. ``RANGE_END <value>`` .. versionadded:: 3.24 Offset of the end of the range in file in bytes. Could be omitted to download everything from the specified ``RANGE_START`` to the end of file.",
+      "file(LOCK <path> [DIRECTORY] [RELEASE] [GUARD <FUNCTION|FILE|PROCESS>] [RESULT_VARIABLE <variable>] [TIMEOUT <seconds>]) .. versionadded:: 3.2 Lock a file specified by ``<path>`` if no ``DIRECTORY`` option present and file ``<path>/cmake.lock`` otherwise. The file will be locked for the scope defined by the ``GUARD`` option (default value is ``PROCESS``). The ``RELEASE`` option can be used to unlock the file explicitly. If the ``TIMEOUT`` option is not specified, CMake will wait until the lock succeeds or until a fatal error occurs. If ``TIMEOUT`` is set to ``0``, locking will be tried once and the result will be reported immediately. If ``TIMEOUT`` is not ``0``, CMake will try to lock the file for the period specified by the ``TIMEOUT <seconds>`` value. Any errors will be interpreted as fatal if there is no ``RESULT_VARIABLE`` option. Otherwise, the result will be stored in ``<variable>`` and will be ``0`` on success or an error message on failure. Note that lock is advisory; there is no guarantee that other processes will respect this lock, i.e. lock synchronize two or more CMake instances sharing some modifiable resources. Similar logic applies to the ``DIRECTORY`` option; locking a parent directory doesn't prevent other ``LOCK`` commands from locking any child directory or file. Trying to lock the same file twice is not allowed. Any intermediate directories and the file itself will be created if they not exist. The ``GUARD`` and ``TIMEOUT`` options are ignored on the ``RELEASE`` operation.",
+      "file(ARCHIVE_CREATE OUTPUT <archive> PATHS <paths>... [FORMAT <format>] [COMPRESSION <compression> [COMPRESSION_LEVEL <compression-level>]] [MTIME <mtime>] [VERBOSE]) :target: ARCHIVE_CREATE :break: verbatim .. versionadded:: 3.18 Creates the specified ``<archive>`` file with the files and directories listed in ``<paths>``. Note that ``<paths>`` must list actual files or directories; wildcards are not supported. Use the ``FORMAT`` option to specify the archive format. Supported values for ``<format>`` are ``7zip``, ``gnutar``, ``pax``, ``paxr``, ``raw`` and ``zip``. If ``FORMAT`` is not given, the default format is ``paxr``. Some archive formats allow the type of compression to be specified. The ``7zip`` and ``zip`` archive formats already imply a specific type of compression. The other formats use no compression by default, but can be directed to do so with the ``COMPRESSION`` option. Valid values for ``<compression>`` are ``None``, ``BZip2``, ``GZip``, ``XZ``, and ``Zstd``. .. versionadded:: 3.19 The compression level can be specified with the ``COMPRESSION_LEVEL`` option. The ``<compression-level>`` should be between 0-9, with the default being 0. The ``COMPRESSION`` option must be present when ``COMPRESSION_LEVEL`` is given. .. versionadded:: 3.26 The ``<compression-level>`` of the ``Zstd`` algorithm can be set between 0-19. .. note:: With ``FORMAT`` set to ``raw``, only one file will be compressed with the compression type specified by ``COMPRESSION``. The ``VERBOSE`` option enables verbose output for the archive operation. To specify the modification time recorded in tarball entries, use the ``MTIME`` option.",
+      "file(ARCHIVE_EXTRACT INPUT <archive> [DESTINATION <dir>] [PATTERNS <patterns>...] [LIST_ONLY] [VERBOSE] [TOUCH]) :target: ARCHIVE_EXTRACT .. versionadded:: 3.18 Extracts or lists the content of the specified ``<archive>``. The directory where the content of the archive will be extracted to can be specified using the ``DESTINATION`` option. If the directory does not exist, it will be created. If ``DESTINATION`` is not given, the current binary directory will be used. If required, you may select which files and directories to list or extract from the archive using the specified ``<patterns>``. Wildcards are supported. If the ``PATTERNS`` option is not given, the entire archive will be listed or extracted. ``LIST_ONLY`` will list the files in the archive rather than extract them. .. note:: The working directory for this subcommand is the ``DESTINATION`` directory (provided or computed) except when ``LIST_ONLY`` is specified. Therefore, outside of script mode, it may be best to provide absolute paths to ``INPUT`` archives as they are unlikely to be extracted where a relative path works. .. versionadded:: 3.24 The ``TOUCH`` option gives extracted files a current local timestamp instead of extracting file timestamps from the archive. With ``VERBOSE``, the command will produce verbose output.",
+      "file(GET_RUNTIME_DEPENDENCIES [...]) .. versionadded:: 3.16 Recursively get the list of libraries depended on by the given files: file(GET_RUNTIME_DEPENDENCIES [RESOLVED_DEPENDENCIES_VAR <deps_var>] [UNRESOLVED_DEPENDENCIES_VAR <unresolved_deps_var>] [CONFLICTING_DEPENDENCIES_PREFIX <conflicting_deps_prefix>] [EXECUTABLES <executable_files>...] [LIBRARIES <library_files>...] [MODULES <module_files>...] [DIRECTORIES <directories>...] [BUNDLE_EXECUTABLE <bundle_executable_file>] [PRE_INCLUDE_REGEXES <regexes>...] [PRE_EXCLUDE_REGEXES <regexes>...] [POST_INCLUDE_REGEXES <regexes>...] [POST_EXCLUDE_REGEXES <regexes>...] [POST_INCLUDE_FILES <files>...] [POST_EXCLUDE_FILES <files>...]) Please note that this sub-command is not intended to be used in project mode. It is intended for use at install time, either from code generated by the :command:`install(RUNTIME_DEPENDENCY_SET)` command, or from code provided by the project via :command:`install(CODE)` or :command:`install(SCRIPT)`. For example: install(CODE [[ file(GET_RUNTIME_DEPENDENCIES )]]) The arguments are as follows: ``RESOLVED_DEPENDENCIES_VAR <deps_var>`` Name of the variable in which to store the list of resolved dependencies. ``UNRESOLVED_DEPENDENCIES_VAR <unresolved_deps_var>`` Name of the variable in which to store the list of unresolved dependencies. If this variable is not specified, and there are any unresolved dependencies, an error is issued. ``CONFLICTING_DEPENDENCIES_PREFIX <conflicting_deps_prefix>`` Variable prefix in which to store conflicting dependency information. Dependencies are conflicting if two files with the same name are found in two different directories. The list of filenames that conflict are stored in ``<conflicting_deps_prefix>_FILENAMES``. For each filename, the list of paths that were found for that filename are stored in ``<conflicting_deps_prefix>_<filename>``. ``EXECUTABLES <executable_files>...`` List of executable files to read for dependencies. These are executables that are typically created with :command:`add_executable`, but they do not have to be created by CMake. On Apple platforms, the paths to these files determine the value of ``@executable_path`` when recursively resolving the libraries. Specifying any kind of library (``STATIC``, ``MODULE``, or ``SHARED``) here will result in undefined behavior. ``LIBRARIES <library_files>...`` List of library files to read for dependencies. These are libraries that are typically created with :command:`add_library(SHARED)`, but they do not have to be created by CMake. Specifying ``STATIC`` libraries, ``MODULE`` libraries, or executables here will result in undefined behavior. ``MODULES <module_files>...`` List of loadable module files to read for dependencies. These are modules that are typically created with :command:`add_library(MODULE)`, but they do not have to be created by CMake. They are typically used by calling ``dlopen()`` at runtime rather than linked at link time with ``ld -l``. Specifying ``STATIC`` libraries, ``SHARED`` libraries, or executables here will result in undefined behavior. ``DIRECTORIES <directories>...`` List of additional directories to search for dependencies. On Linux platforms, these directories are searched if the dependency is not found in any of the other usual paths. If it is found in such a directory, a warning is issued, because it means that the file is incomplete (it does not list all of the directories that contain its dependencies). On Windows platforms, these directories are searched if the dependency is not found in any of the other search paths, but no warning is issued, because searching other paths is a normal part of Windows dependency resolution. On Apple platforms, this argument has no effect. ``BUNDLE_EXECUTABLE <bundle_executable_file>`` Executable to treat as the \"bundle executable\" when resolving libraries. On Apple platforms, this argument determines the value of ``@executable_path`` when recursively resolving libraries for ``LIBRARIES`` and ``MODULES`` files. It has no effect on ``EXECUTABLES`` files. On other platforms, it has no effect. This is typically (but not always) one of the executables in the ``EXECUTABLES`` argument which designates the \"main\" executable of the package. The following arguments specify filters for including or excluding libraries to be resolved. See below for a full description of how they work. ``PRE_INCLUDE_REGEXES <regexes>...`` List of pre-include regexes through which to filter the names of not-yet-resolved dependencies. ``PRE_EXCLUDE_REGEXES <regexes>...`` List of pre-exclude regexes through which to filter the names of not-yet-resolved dependencies. ``POST_INCLUDE_REGEXES <regexes>...`` List of post-include regexes through which to filter the names of resolved dependencies. ``POST_EXCLUDE_REGEXES <regexes>...`` List of post-exclude regexes through which to filter the names of resolved dependencies. ``POST_INCLUDE_FILES <files>...`` .. versionadded:: 3.21 List of post-include filenames through which to filter the names of resolved dependencies. Symlinks are resolved when attempting to match these filenames. ``POST_EXCLUDE_FILES <files>...`` .. versionadded:: 3.21 List of post-exclude filenames through which to filter the names of resolved dependencies. Symlinks are resolved when attempting to match these filenames. These arguments can be used to exclude unwanted system libraries when resolving the dependencies, or to include libraries from a specific directory. The filtering works as follows: 1. If the not-yet-resolved dependency matches any of the ``PRE_INCLUDE_REGEXES``, steps 2 and 3 are skipped, and the dependency resolution proceeds to step 4. 2. If the not-yet-resolved dependency matches any of the ``PRE_EXCLUDE_REGEXES``, dependency resolution stops for that dependency. 3. Otherwise, dependency resolution proceeds. 4. ``file(GET_RUNTIME_DEPENDENCIES)`` searches for the dependency according to the linking rules of the platform (see below). 5. If the dependency is found, and its full path matches one of the ``POST_INCLUDE_REGEXES`` or ``POST_INCLUDE_FILES``, the full path is added to the resolved dependencies, and ``file(GET_RUNTIME_DEPENDENCIES)`` recursively resolves that library's own dependencies. Otherwise, resolution proceeds to step 6. 6. If the dependency is found, but its full path matches one of the ``POST_EXCLUDE_REGEXES`` or ``POST_EXCLUDE_FILES``, it is not added to the resolved dependencies, and dependency resolution stops for that dependency. 7. If the dependency is found, and its full path does not match either ``POST_INCLUDE_REGEXES``, ``POST_INCLUDE_FILES``, ``POST_EXCLUDE_REGEXES``, or ``POST_EXCLUDE_FILES``, the full path is added to the resolved dependencies, and ``file(GET_RUNTIME_DEPENDENCIES)`` recursively resolves that library's own dependencies. Different platforms have different rules for how dependencies are resolved. These specifics are described here. On Linux platforms, library resolution works as follows: 1. If the depending file does not have any ``RUNPATH`` entries, and the library exists in one of the depending file's ``RPATH`` entries, or its parents', in that order, the dependency is resolved to that file. 2. Otherwise, if the depending file has any ``RUNPATH`` entries, and the library exists in one of those entries, the dependency is resolved to that file. 3. Otherwise, if the library exists in one of the directories listed by ``ldconfig``, the dependency is resolved to that file. 4. Otherwise, if the library exists in one of the ``DIRECTORIES`` entries, the dependency is resolved to that file. In this case, a warning is issued, because finding a file in one of the ``DIRECTORIES`` means that the depending file is not complete (it does not list all the directories from which it pulls dependencies). 5. Otherwise, the dependency is unresolved. On Windows platforms, library resolution works as follows: 1. DLL dependency names are converted to lowercase for matching filters. Windows DLL names are case-insensitive, and some linkers mangle the case of the DLL dependency names. However, this makes it more difficult for ``PRE_INCLUDE_REGEXES``, ``PRE_EXCLUDE_REGEXES``, ``POST_INCLUDE_REGEXES``, and ``POST_EXCLUDE_REGEXES`` to properly filter DLL names - every regex would have to check for both uppercase and lowercase letters. For example: file(GET_RUNTIME_DEPENDENCIES PRE_INCLUDE_REGEXES \"^[Mm][Yy][Ll][Ii][Bb][Rr][Aa][Rr][Yy]\\\\.[Dd][Ll][Ll]$\" ) Converting the DLL name to lowercase allows the regexes to only match lowercase names, thus simplifying the regex. For example: file(GET_RUNTIME_DEPENDENCIES PRE_INCLUDE_REGEXES \"^mylibrary\\\\.dll$\" ) This regex will match ``mylibrary.dll`` regardless of how it is cased, either on disk or in the depending file. (For example, it will match ``mylibrary.dll``, ``MyLibrary.dll``, and ``MYLIBRARY.DLL``.) .. versionchanged:: 3.27 The conversion to lowercase only applies while matching filters. Results reported after filtering case-preserve each DLL name as it is found on disk, if resolved, and otherwise as it is referenced by the dependent binary. Prior to CMake 3.27, the results were reported with lowercase DLL file names, but the directory portion retained its casing. 2. (**Not yet implemented**) If the depending file is a Windows Store app, and the dependency is listed as a dependency in the application's package manifest, the dependency is resolved to that file. 3. Otherwise, if the library exists in the same directory as the depending file, the dependency is resolved to that file. 4. Otherwise, if the library exists in either the operating system's ``system32`` directory or the ``Windows`` directory, in that order, the dependency is resolved to that file. 5. Otherwise, if the library exists in one of the directories specified by ``DIRECTORIES``, in the order they are listed, the dependency is resolved to that file. In this case, a warning is not issued, because searching other directories is a normal part of Windows library resolution. 6. Otherwise, the dependency is unresolved. On Apple platforms, library resolution works as follows: 1. If the dependency starts with ``@executable_path/``, and an ``EXECUTABLES`` argument is in the process of being resolved, and replacing ``@executable_path/`` with the directory of the executable yields an existing file, the dependency is resolved to that file. 2. Otherwise, if the dependency starts with ``@executable_path/``, and there is a ``BUNDLE_EXECUTABLE`` argument, and replacing ``@executable_path/`` with the directory of the bundle executable yields an existing file, the dependency is resolved to that file. 3. Otherwise, if the dependency starts with ``@loader_path/``, and replacing ``@loader_path/`` with the directory of the depending file yields an existing file, the dependency is resolved to that file. 4. Otherwise, if the dependency starts with ``@rpath/``, and replacing ``@rpath/`` with one of the ``RPATH`` entries of the depending file yields an existing file, the dependency is resolved to that file. Note that ``RPATH`` entries that start with ``@executable_path/`` or ``@loader_path/`` also have these items replaced with the appropriate path. 5. Otherwise, if the dependency is an absolute file that exists, the dependency is resolved to that file. 6. Otherwise, the dependency is unresolved. This function accepts several variables that determine which tool is used for dependency resolution: .. variable:: CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM Determines which operating system and executable format the files are built for. This could be one of several values: * ``linux+elf`` * ``windows+pe`` * ``macos+macho`` If this variable is not specified, it is determined automatically by system introspection. .. variable:: CMAKE_GET_RUNTIME_DEPENDENCIES_TOOL Determines the tool to use for dependency resolution. It could be one of several values, depending on the value of :variable:`CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM`: ================================================= ============================================= ``CMAKE_GET_RUNTIME_DEPENDENCIES_PLATFORM`` ``CMAKE_GET_RUNTIME_DEPENDENCIES_TOOL`` ================================================= ============================================= ``linux+elf`` ``objdump`` ``windows+pe`` ``objdump`` or ``dumpbin`` ``macos+macho`` ``otool`` ================================================= ============================================= If this variable is not specified, it is determined automatically by system introspection. .. variable:: CMAKE_GET_RUNTIME_DEPENDENCIES_COMMAND Determines the path to the tool to use for dependency resolution. This is the actual path to ``objdump``, ``dumpbin``, or ``otool``. If this variable is not specified, it is determined by the value of ``CMAKE_OBJDUMP`` if set, else by system introspection. .. versionadded:: 3.18 Use ``CMAKE_OBJDUMP`` if set."
+    ]
+  },
+  "find_file": {
+    "name": "find_file",
+    "description": "This command is used to find a full path to named file.",
+    "syntax_examples": [
+      "find_file(<VAR> name1 [path1 path2 ...])",
+      "find_file(<VAR> name | NAMES name1 [name2 ...] [HINTS path1 [path2 ... ENV var]] [PATHS path1 [path2 ... ENV var]] [PATH_SUFFIXES suffix1 [suffix2 ...]] [DOC \"cache documentation string\"] [NO_DEFAULT_PATH] [NO_PACKAGE_ROOT_PATH] [NO_CMAKE_PATH] [NO_CMAKE_ENVIRONMENT_PATH] [NO_SYSTEM_ENVIRONMENT_PATH] [NO_CMAKE_SYSTEM_PATH] [CMAKE_FIND_ROOT_PATH_BOTH | ONLY_CMAKE_FIND_ROOT_PATH | NO_CMAKE_FIND_ROOT_PATH])"
+    ]
+  },
+  "find_library": {
+    "name": "find_library",
+    "description": "This command is used to find a library.",
+    "syntax_examples": [
+      "find_library(<VAR> name1 [path1 path2 ...])",
+      "find_library (<VAR> name | NAMES name1 [name2 ...] [NAMES_PER_DIR] [HINTS path1 [path2 ... ENV var]] [PATHS path1 [path2 ... ENV var]] [PATH_SUFFIXES suffix1 [suffix2 ...]] [DOC \"cache documentation string\"] [NO_DEFAULT_PATH] [NO_PACKAGE_ROOT_PATH] [NO_CMAKE_PATH] [NO_CMAKE_ENVIRONMENT_PATH] [NO_SYSTEM_ENVIRONMENT_PATH] [NO_CMAKE_SYSTEM_PATH] [CMAKE_FIND_ROOT_PATH_BOTH | ONLY_CMAKE_FIND_ROOT_PATH | NO_CMAKE_FIND_ROOT_PATH])"
+    ]
+  },
+  "find_package": {
+    "name": "find_package",
+    "description": "Find a package (usually provided by something external to the project), and load its package-specific details. Calls to this command can also be intercepted by dependency providers .",
+    "syntax_examples": [
+      "find_package(<PackageName> [<version>] [REQUIRED] [COMPONENTS <components>...])",
+      "find_package(<PackageName> [version] [EXACT] [QUIET] [MODULE] [REQUIRED] [[COMPONENTS] [components...]] [OPTIONAL_COMPONENTS components...] [REGISTRY_VIEW (64|32|64_32|32_64|HOST|TARGET|BOTH)] [GLOBAL] [NO_POLICY_SCOPE] [BYPASS_PROVIDER])",
+      "find_package(<PackageName> [version] [EXACT] [QUIET] [REQUIRED] [[COMPONENTS] [components...]] [OPTIONAL_COMPONENTS components...] [CONFIG|NO_MODULE] [GLOBAL] [NO_POLICY_SCOPE] [BYPASS_PROVIDER] [NAMES name1 [name2 ...]] [CONFIGS config1 [config2 ...]] [HINTS path1 [path2 ... ]] [PATHS path1 [path2 ... ]] [REGISTRY_VIEW (64|32|64_32|32_64|HOST|TARGET|BOTH)] [PATH_SUFFIXES suffix1 [suffix2 ...]] [NO_DEFAULT_PATH] [NO_PACKAGE_ROOT_PATH] [NO_CMAKE_PATH] [NO_CMAKE_ENVIRONMENT_PATH] [NO_SYSTEM_ENVIRONMENT_PATH] [NO_CMAKE_PACKAGE_REGISTRY] [NO_CMAKE_BUILDS_PATH] [NO_CMAKE_SYSTEM_PATH] [NO_CMAKE_INSTALL_PREFIX] [NO_CMAKE_SYSTEM_PACKAGE_REGISTRY] [CMAKE_FIND_ROOT_PATH_BOTH | ONLY_CMAKE_FIND_ROOT_PATH | NO_CMAKE_FIND_ROOT_PATH])"
+    ]
+  },
+  "find_path": {
+    "name": "find_path",
+    "description": "This command is used to find a directory containing the named file.",
+    "syntax_examples": [
+      "find_path(<VAR> name1 [path1 path2 ...])",
+      "find_path (<VAR> name | NAMES name1 [name2 ...] [HINTS path1 [path2 ... ENV var]] [PATHS path1 [path2 ... ENV var]] [PATH_SUFFIXES suffix1 [suffix2 ...]] [DOC \"cache documentation string\"] [NO_DEFAULT_PATH] [NO_PACKAGE_ROOT_PATH] [NO_CMAKE_PATH] [NO_CMAKE_ENVIRONMENT_PATH] [NO_SYSTEM_ENVIRONMENT_PATH] [NO_CMAKE_SYSTEM_PATH] [CMAKE_FIND_ROOT_PATH_BOTH | ONLY_CMAKE_FIND_ROOT_PATH | NO_CMAKE_FIND_ROOT_PATH])"
+    ]
+  },
+  "find_program": {
+    "name": "find_program",
+    "description": "This command is used to find a program.",
+    "syntax_examples": [
+      "find_program(<VAR> name1 [path1 path2 ...])",
+      "find_program (<VAR> name | NAMES name1 [name2 ...] [NAMES_PER_DIR] [HINTS path1 [path2 ... ENV var]] [PATHS path1 [path2 ... ENV var]] [PATH_SUFFIXES suffix1 [suffix2 ...]] [DOC \"cache documentation string\"] [NO_DEFAULT_PATH] [NO_PACKAGE_ROOT_PATH] [NO_CMAKE_PATH] [NO_CMAKE_ENVIRONMENT_PATH] [NO_SYSTEM_ENVIRONMENT_PATH] [NO_CMAKE_SYSTEM_PATH] [CMAKE_FIND_ROOT_PATH_BOTH | ONLY_CMAKE_FIND_ROOT_PATH | NO_CMAKE_FIND_ROOT_PATH])"
+    ]
+  },
+  "fltk_wrap_ui": {
+    "name": "fltk_wrap_ui",
+    "description": "Create FLTK user interfaces Wrappers.",
+    "syntax_examples": [
+      "fltk_wrap_ui(resultingLibraryName source1 source2 ... sourceN )"
+    ]
+  },
+  "foreach": {
+    "name": "foreach",
+    "description": "Evaluate a group of commands for each value in a list.",
+    "syntax_examples": [
+      "foreach(<loop_var> <items>) <commands> endforeach()",
+      "foreach(<loop_var> RANGE <stop>)",
+      "foreach(<loop_var> RANGE <start> <stop> [<step>])",
+      "foreach(<loop_var> IN [LISTS [<lists>]] [ITEMS [<items>]])",
+      "foreach(<loop_var>... IN ZIP_LISTS <lists>)"
+    ]
+  },
+  "function": {
+    "name": "function",
+    "description": "Start recording a function for later invocation as a command.",
+    "syntax_examples": [
+      "function(<name> [<arg1> ...]) <commands> endfunction()",
+      "function(foo) <commands> endfunction()"
+    ]
+  },
+  "get_cmake_property": {
+    "name": "get_cmake_property",
+    "description": "Get a global property of the CMake instance.",
+    "syntax_examples": ["get_cmake_property(<variable> <property>)"]
+  },
+  "get_directory_property": {
+    "name": "get_directory_property",
+    "description": "Get a property of DIRECTORY scope.",
+    "syntax_examples": [
+      "get_directory_property(<variable> [DIRECTORY <dir>] <prop-name>)",
+      "get_directory_property(<variable> [DIRECTORY <dir>] DEFINITION <var-name>)"
+    ]
+  },
+  "get_filename_component": {
+    "name": "get_filename_component",
+    "description": "Get a specific component of a full filename.",
+    "syntax_examples": [
+      "get_filename_component(<var> <FileName> <mode> [CACHE])",
+      "get_filename_component(<var> <FileName> <mode> [BASE_DIR <dir>] [CACHE])",
+      "get_filename_component(<var> <FileName> PROGRAM [PROGRAM_ARGS <arg_var>] [CACHE])"
+    ]
+  },
+  "get_property": {
+    "name": "get_property",
+    "description": "Get a property.",
+    "syntax_examples": [
+      "get_property(<variable> <GLOBAL | DIRECTORY [<dir>] | TARGET <target> | SOURCE <source> [DIRECTORY <dir> | TARGET_DIRECTORY <target>] | INSTALL <file> | TEST <test> [DIRECTORY <dir>] | CACHE <entry> | VARIABLE > PROPERTY <name> [SET | DEFINED | BRIEF_DOCS | FULL_DOCS])"
+    ]
+  },
+  "get_source_file_property": {
+    "name": "get_source_file_property",
+    "description": "Get a property for a source file.",
+    "syntax_examples": [
+      "get_source_file_property(<variable> <file> [DIRECTORY <dir> | TARGET_DIRECTORY <target>] <property>)"
+    ]
+  },
+  "get_target_property": {
+    "name": "get_target_property",
+    "description": "Get a property from a target.",
+    "syntax_examples": ["get_target_property(<variable> <target> <property>)"]
+  },
+  "get_test_property": {
+    "name": "get_test_property",
+    "description": "Get a property of the test.",
+    "syntax_examples": [
+      "get_test_property(<test> <property> [DIRECTORY <dir>] <variable>)"
+    ]
+  },
+  "if": {
+    "name": "if",
+    "description": "Conditionally execute a group of commands.",
+    "syntax_examples": [
+      "if(<condition>) <commands> elseif(<condition>) <commands> else() <commands> endif()",
+      "if(<constant>) :target: constant True if the constant is ``1``, ``ON``, ``YES``, ``TRUE``, ``Y``, or a non-zero number (including floating point numbers). False if the constant is ``0``, ``OFF``, ``NO``, ``FALSE``, ``N``, ``IGNORE``, ``NOTFOUND``, the empty string, or ends in the suffix ``-NOTFOUND``. Named boolean constants are case-insensitive. If the argument is not one of these specific constants, it is treated as a variable or string (see `Variable Expansion`_ further below) and one of the following two forms applies.",
+      "if(<variable>) :target: variable True if given a variable that is defined to a value that is not a false constant. False otherwise, including if the variable is undefined. Note that macro arguments are not variables. :ref:`Environment Variables <CMake Language Environment Variables>` also cannot be tested this way, e.g. ``if(ENV{some_var})`` will always evaluate to false.",
+      "if(<string>) :target: string A quoted string always evaluates to false unless: * The string's value is one of the true constants, or * Policy :policy:`CMP0054` is not set to ``NEW`` and the string's value happens to be a variable name that is affected by :policy:`CMP0054`'s behavior.",
+      "if(NOT <condition>) True if the condition is not true.",
+      "if(<cond1> AND <cond2>) :target: AND True if both conditions would be considered true individually.",
+      "if(<cond1> OR <cond2>) :target: OR True if either condition would be considered true individually.",
+      "if((condition) AND (condition OR (condition))) :target: parentheses The conditions inside the parenthesis are evaluated first and then the remaining condition is evaluated as in the other examples. Where there are nested parenthesis the innermost are evaluated as part of evaluating the condition that contains them.",
+      "if(COMMAND <command-name>) True if the given name is a command, macro or function that can be invoked.",
+      "if(POLICY <policy-id>) True if the given name is an existing policy (of the form ``CMP<NNNN>``).",
+      "if(TARGET <target-name>) True if the given name is an existing logical target name created by a call to the :command:`add_executable`, :command:`add_library`, or :command:`add_custom_target` command that has already been invoked (in any directory).",
+      "if(TEST <test-name>) .. versionadded:: 3.3 True if the given name is an existing test name created by the :command:`add_test` command.",
+      "if(DEFINED <name>|CACHE{<name>}|ENV{<name>}) True if a variable, cache variable or environment variable with given ``<name>`` is defined. The value of the variable does not matter. Note the following caveats: * Macro arguments are not variables. * It is not possible to test directly whether a `<name>` is a non-cache variable. The expression ``if(DEFINED someName)`` will evaluate to true if either a cache or non-cache variable ``someName`` exists. In comparison, the expression ``if(DEFINED CACHE{someName})`` will only evaluate to true if a cache variable ``someName`` exists. Both expressions need to be tested if you need to know whether a non-cache variable exists: ``if(DEFINED someName AND NOT DEFINED CACHE{someName})``. .. versionadded:: 3.14 Added support for ``CACHE{<name>}`` variables.",
+      "if(<variable|string> IN_LIST <variable>) :target: IN_LIST .. versionadded:: 3.3 True if the given element is contained in the named list variable.",
+      "if(EXISTS <path-to-file-or-directory>) True if the named file or directory exists and is readable. Behavior is well-defined only for explicit full paths (a leading ``~/`` is not expanded as a home directory and is considered a relative path). Resolves symbolic links, i.e. if the named file or directory is a symbolic link, returns true if the target of the symbolic link exists. False if the given path is an empty string. .. note:: Prefer ``if(IS_READABLE)`` to check file readability. ``if(EXISTS)`` may be changed in the future to only check file existence.",
+      "if(IS_READABLE <path-to-file-or-directory>) .. versionadded:: 3.29 True if the named file or directory is readable. Behavior is well-defined only for explicit full paths (a leading ``~/`` is not expanded as a home directory and is considered a relative path). Resolves symbolic links, i.e. if the named file or directory is a symbolic link, returns true if the target of the symbolic link is readable. False if the given path is an empty string.",
+      "if(IS_WRITABLE <path-to-file-or-directory>) .. versionadded:: 3.29 True if the named file or directory is writable. Behavior is well-defined only for explicit full paths (a leading ``~/`` is not expanded as a home directory and is considered a relative path). Resolves symbolic links, i.e. if the named file or directory is a symbolic link, returns true if the target of the symbolic link is writable. False if the given path is an empty string.",
+      "if(IS_EXECUTABLE <path-to-file-or-directory>) .. versionadded:: 3.29 True if the named file or directory is executable. Behavior is well-defined only for explicit full paths (a leading ``~/`` is not expanded as a home directory and is considered a relative path). Resolves symbolic links, i.e. if the named file or directory is a symbolic link, returns true if the target of the symbolic link is executable. False if the given path is an empty string.",
+      "if(<file1> IS_NEWER_THAN <file2>) :target: IS_NEWER_THAN True if ``file1`` is newer than ``file2`` or if one of the two files doesn't exist. Behavior is well-defined only for full paths. If the file time stamps are exactly the same, an ``IS_NEWER_THAN`` comparison returns true, so that any dependent build operations will occur in the event of a tie. This includes the case of passing the same file name for both file1 and file2.",
+      "if(IS_DIRECTORY <path>) True if ``path`` is a directory. Behavior is well-defined only for full paths. False if the given path is an empty string.",
+      "if(IS_SYMLINK <path>) True if the given path is a symbolic link. Behavior is well-defined only for full paths.",
+      "if(IS_ABSOLUTE <path>) True if the given path is an absolute path. Note the following special cases: * An empty ``path`` evaluates to false. * On Windows hosts, any ``path`` that begins with a drive letter and colon (e.g. ``C:``), a forward slash or a backslash will evaluate to true. This means a path like ``C:no\\base\\dir`` will evaluate to true, even though the non-drive part of the path is relative. * On non-Windows hosts, any ``path`` that begins with a tilde (``~``) evaluates to true.",
+      "if(<variable|string> MATCHES <regex>) :target: MATCHES True if the given string or variable's value matches the given regular expression. See :ref:`Regex Specification` for regex format. .. versionadded:: 3.9 ``()`` groups are captured in :variable:`CMAKE_MATCH_<n>` variables.",
+      "if(<variable|string> LESS <variable|string>) :target: LESS True if the given string or variable's value parses as a real number (like a C ``double``) and less than that on the right.",
+      "if(<variable|string> GREATER <variable|string>) :target: GREATER True if the given string or variable's value parses as a real number (like a C ``double``) and greater than that on the right.",
+      "if(<variable|string> EQUAL <variable|string>) :target: EQUAL True if the given string or variable's value parses as a real number (like a C ``double``) and equal to that on the right.",
+      "if(<variable|string> LESS_EQUAL <variable|string>) :target: LESS_EQUAL .. versionadded:: 3.7 True if the given string or variable's value parses as a real number (like a C ``double``) and less than or equal to that on the right.",
+      "if(<variable|string> GREATER_EQUAL <variable|string>) :target: GREATER_EQUAL .. versionadded:: 3.7 True if the given string or variable's value parses as a real number (like a C ``double``) and greater than or equal to that on the right.",
+      "if(<variable|string> STRLESS <variable|string>) :target: STRLESS True if the given string or variable's value is lexicographically less than the string or variable on the right.",
+      "if(<variable|string> STRGREATER <variable|string>) :target: STRGREATER True if the given string or variable's value is lexicographically greater than the string or variable on the right.",
+      "if(<variable|string> STREQUAL <variable|string>) :target: STREQUAL True if the given string or variable's value is lexicographically equal to the string or variable on the right.",
+      "if(<variable|string> STRLESS_EQUAL <variable|string>) :target: STRLESS_EQUAL .. versionadded:: 3.7 True if the given string or variable's value is lexicographically less than or equal to the string or variable on the right.",
+      "if(<variable|string> STRGREATER_EQUAL <variable|string>) :target: STRGREATER_EQUAL .. versionadded:: 3.7 True if the given string or variable's value is lexicographically greater than or equal to the string or variable on the right.",
+      "if(<variable|string> VERSION_LESS <variable|string>) :target: VERSION_LESS Component-wise integer version number comparison (version format is ``major[.minor[.patch[.tweak]]]``, omitted components are treated as zero). Any non-integer version component or non-integer trailing part of a version component effectively truncates the string at that point.",
+      "if(<variable|string> VERSION_GREATER <variable|string>) :target: VERSION_GREATER Component-wise integer version number comparison (version format is ``major[.minor[.patch[.tweak]]]``, omitted components are treated as zero). Any non-integer version component or non-integer trailing part of a version component effectively truncates the string at that point.",
+      "if(<variable|string> VERSION_EQUAL <variable|string>) :target: VERSION_EQUAL Component-wise integer version number comparison (version format is ``major[.minor[.patch[.tweak]]]``, omitted components are treated as zero). Any non-integer version component or non-integer trailing part of a version component effectively truncates the string at that point.",
+      "if(<variable|string> VERSION_LESS_EQUAL <variable|string>) :target: VERSION_LESS_EQUAL .. versionadded:: 3.7 Component-wise integer version number comparison (version format is ``major[.minor[.patch[.tweak]]]``, omitted components are treated as zero). Any non-integer version component or non-integer trailing part of a version component effectively truncates the string at that point.",
+      "if(<variable|string> VERSION_GREATER_EQUAL <variable|string>) :target: VERSION_GREATER_EQUAL .. versionadded:: 3.7 Component-wise integer version number comparison (version format is ``major[.minor[.patch[.tweak]]]``, omitted components are treated as zero). Any non-integer version component or non-integer trailing part of a version component effectively truncates the string at that point.",
+      "if(<variable|string> PATH_EQUAL <variable|string>) :target: PATH_EQUAL .. versionadded:: 3.24 Compares the two paths component-by-component. Only if every component of both paths match will the two paths compare equal. Multiple path separators are effectively collapsed into a single separator, but note that backslashes are not converted to forward slashes. No other :ref:`path normalization <Normalization>` is performed. Component-wise comparison is superior to string-based comparison due to the handling of multiple path separators. In the following example, the expression evaluates to true using ``PATH_EQUAL``, but false with ``STREQUAL``: if (\"/a//b/c\" PATH_EQUAL \"/a/b/c\") ... endif() if (\"/a//b/c\" STREQUAL \"/a/b/c\") ... endif() See :ref:`cmake_path(COMPARE) <Path COMPARE>` for more details.",
+      "if(var1)",
+      "if(var2)"
+    ]
+  },
+  "include": {
+    "name": "include",
+    "description": "Load and run CMake code from a file or module.",
+    "syntax_examples": [
+      "include(<file|module> [OPTIONAL] [RESULT_VARIABLE <var>] [NO_POLICY_SCOPE])"
+    ]
+  },
+  "include_directories": {
+    "name": "include_directories",
+    "description": "Add include directories to the build.",
+    "syntax_examples": [
+      "include_directories([AFTER|BEFORE] [SYSTEM] dir1 [dir2 ...])"
+    ]
+  },
+  "include_external_msproject": {
+    "name": "include_external_msproject",
+    "description": "Include an external Microsoft project file in a workspace.",
+    "syntax_examples": [
+      "include_external_msproject(projectname location [TYPE projectTypeGUID] [GUID projectGUID] [PLATFORM platformName] dep1 dep2 ...)"
+    ]
+  },
+  "include_guard": {
+    "name": "include_guard",
+    "description": "Provides an include guard for the file currently being processed by CMake.",
+    "syntax_examples": ["include_guard([DIRECTORY|GLOBAL])"]
+  },
+  "include_regular_expression": {
+    "name": "include_regular_expression",
+    "description": "Set the regular expression used for dependency checking.",
+    "syntax_examples": [
+      "include_regular_expression(regex_match [regex_complain])"
+    ]
+  },
+  "install": {
+    "name": "install",
+    "description": "Specify rules to run at install time.",
+    "syntax_examples": [
+      "install(TARGETS <target>... [...]) install(IMPORTED_RUNTIME_ARTIFACTS <target>... [...]) install({FILES | PROGRAMS} <file>... [...]) install(DIRECTORY <dir>... [...]) install(SCRIPT <file> [...]) install(CODE <code> [...]) install(EXPORT <export-name> [...]) install(RUNTIME_DEPENDENCY_SET <set-name> [...])",
+      "install(TARGETS <target>... [...]) Install target :ref:`Output Artifacts` and associated files: install(TARGETS <target>... [EXPORT <export-name>] [RUNTIME_DEPENDENCIES <arg>...|RUNTIME_DEPENDENCY_SET <set-name>] [<artifact-option>...] [<artifact-kind> <artifact-option>...]... [INCLUDES DESTINATION [<dir> ...]]) where ``<artifact-option>...`` group may contain: [DESTINATION <dir>] [PERMISSIONS <permission>...] [CONFIGURATIONS <config>...] [COMPONENT <component>] [NAMELINK_COMPONENT <component>] [OPTIONAL] [EXCLUDE_FROM_ALL] [NAMELINK_ONLY|NAMELINK_SKIP] The first ``<artifact-option>...`` group applies to target :ref:`Output Artifacts` that do not have a dedicated group specified later in the same call. .. _`<artifact-kind>`: Each ``<artifact-kind> <artifact-option>...`` group applies to :ref:`Output Artifacts` of the specified artifact kind: ``ARCHIVE`` Target artifacts of this kind include: * *Static libraries* (except on macOS when marked as ``FRAMEWORK``, see below); * *DLL import libraries* (on all Windows-based systems including Cygwin; they have extension ``.lib``, in contrast to the ``.dll`` libraries that go to ``RUNTIME``); * On AIX, the *linker import file* created for executables with :prop_tgt:`ENABLE_EXPORTS` enabled. * On macOS, the *linker import file* created for shared libraries with :prop_tgt:`ENABLE_EXPORTS` enabled (except when marked as ``FRAMEWORK``, see below). ``LIBRARY`` Target artifacts of this kind include: * *Shared libraries*, except - DLLs (these go to ``RUNTIME``, see below), - on macOS when marked as ``FRAMEWORK`` (see below). ``RUNTIME`` Target artifacts of this kind include: * *Executables* (except on macOS when marked as ``MACOSX_BUNDLE``, see ``BUNDLE`` below); * DLLs (on all Windows-based systems including Cygwin; note that the accompanying import libraries are of kind ``ARCHIVE``). ``OBJECTS`` .. versionadded:: 3.9 Object files associated with *object libraries*. ``FRAMEWORK`` Both static and shared libraries marked with the ``FRAMEWORK`` property are treated as ``FRAMEWORK`` targets on macOS. ``BUNDLE`` Executables marked with the :prop_tgt:`MACOSX_BUNDLE` property are treated as ``BUNDLE`` targets on macOS. ``PUBLIC_HEADER`` Any :prop_tgt:`PUBLIC_HEADER` files associated with a library are installed in the destination specified by the ``PUBLIC_HEADER`` argument on non-Apple platforms. Rules defined by this argument are ignored for :prop_tgt:`FRAMEWORK` libraries on Apple platforms because the associated files are installed into the appropriate locations inside the framework folder. See :prop_tgt:`PUBLIC_HEADER` for details. ``PRIVATE_HEADER`` Similar to ``PUBLIC_HEADER``, but for ``PRIVATE_HEADER`` files. See :prop_tgt:`PRIVATE_HEADER` for details. ``RESOURCE`` Similar to ``PUBLIC_HEADER`` and ``PRIVATE_HEADER``, but for ``RESOURCE`` files. See :prop_tgt:`RESOURCE` for details. ``FILE_SET <set-name>`` .. versionadded:: 3.23 File sets are defined by the :command:`target_sources(FILE_SET)` command. If the file set ``<set-name>`` exists and is ``PUBLIC`` or ``INTERFACE``, any files in the set are installed under the destination (see below). The directory structure relative to the file set's base directories is preserved. For example, a file added to the file set as ``/blah/include/myproj/here.h`` with a base directory ``/blah/include`` would be installed to ``myproj/here.h`` below the destination. ``CXX_MODULES_BMI`` .. versionadded:: 3.28 Any module files from C++ modules from ``PUBLIC`` sources in a file set of type ``CXX_MODULES`` will be installed to the given ``DESTINATION``. All modules are placed directly in the destination as no directory structure is derived from the names of the modules. An empty ``DESTINATION`` may be used to suppress installing these files (for use in generic code). For regular executables, static libraries and shared libraries, the ``DESTINATION`` argument is not required. For these target types, when ``DESTINATION`` is omitted, a default destination will be taken from the appropriate variable from :module:`GNUInstallDirs`, or set to a built-in default value if that variable is not defined. The same is true for file sets, and the public and private headers associated with the installed targets through the :prop_tgt:`PUBLIC_HEADER` and :prop_tgt:`PRIVATE_HEADER` target properties. A destination must always be provided for module libraries, Apple bundles and frameworks. A destination can be omitted for interface and object libraries, but they are handled differently (see the discussion of this topic toward the end of this section). For shared libraries on DLL platforms, if neither ``RUNTIME`` nor ``ARCHIVE`` destinations are specified, both the ``RUNTIME`` and ``ARCHIVE`` components are installed to their default destinations. If either a ``RUNTIME`` or ``ARCHIVE`` destination is specified, the component is installed to that destination, and the other component is not installed. If both ``RUNTIME`` and ``ARCHIVE`` destinations are specified, then both components are installed to their respective destinations. The following table shows the target types with their associated variables and built-in defaults that apply when no destination is given: =============================== =============================== ====================== Target Type GNUInstallDirs Variable Built-In Default =============================== =============================== ====================== ``RUNTIME`` ``${CMAKE_INSTALL_BINDIR}`` ``bin`` ``LIBRARY`` ``${CMAKE_INSTALL_LIBDIR}`` ``lib`` ``ARCHIVE`` ``${CMAKE_INSTALL_LIBDIR}`` ``lib`` ``PRIVATE_HEADER`` ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include`` ``PUBLIC_HEADER`` ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include`` ``FILE_SET`` (type ``HEADERS``) ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include`` =============================== =============================== ====================== Projects wishing to follow the common practice of installing headers into a project-specific subdirectory may prefer using file sets with appropriate paths and base directories. Otherwise, they must provide a ``DESTINATION`` instead of being able to rely on the above (see next example below). To make packages compliant with distribution filesystem layout policies, if projects must specify a ``DESTINATION``, it is strongly recommended that they use a path that begins with the appropriate relative :module:`GNUInstallDirs` variable. This allows package maintainers to control the install destination by setting the appropriate cache variables. The following example shows a static library being installed to the default destination provided by :module:`GNUInstallDirs`, but with its headers installed to a project-specific subdirectory without using file sets: add_library(mylib STATIC ...) set_target_properties(mylib PROPERTIES PUBLIC_HEADER mylib.h) include(GNUInstallDirs) install(TARGETS mylib PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/myproj ) In addition to the `common options`_ listed above, each target can accept the following additional arguments: ``NAMELINK_COMPONENT`` .. versionadded:: 3.12 On some platforms a versioned shared library has a symbolic link such as:: lib<name>.so -> lib<name>.so.1 where ``lib<name>.so.1`` is the soname of the library and ``lib<name>.so`` is a \"namelink\" allowing linkers to find the library when given ``-l<name>``. The ``NAMELINK_COMPONENT`` option is similar to the ``COMPONENT`` option, but it changes the installation component of a shared library namelink if one is generated. If not specified, this defaults to the value of ``COMPONENT``. It is an error to use this parameter outside of a ``LIBRARY`` block. .. versionchanged:: 3.27 This parameter is also usable for an ``ARCHIVE`` block to manage the linker import file created, on macOS, for shared libraries with :prop_tgt:`ENABLE_EXPORTS` enabled. See the `Example: Install Targets with Per-Artifact Components`_ for an example using ``NAMELINK_COMPONENT``. This option is typically used for package managers that have separate runtime and development packages. For example, on Debian systems, the library is expected to be in the runtime package, and the headers and namelink are expected to be in the development package. See the :prop_tgt:`VERSION` and :prop_tgt:`SOVERSION` target properties for details on creating versioned shared libraries. ``NAMELINK_ONLY`` This option causes the installation of only the namelink when a library target is installed. On platforms where versioned shared libraries do not have namelinks or when a library is not versioned, the ``NAMELINK_ONLY`` option installs nothing. It is an error to use this parameter outside of a ``LIBRARY`` block. .. versionchanged:: 3.27 This parameter is also usable for an ``ARCHIVE`` block to manage the linker import file created, on macOS, for shared libraries with :prop_tgt:`ENABLE_EXPORTS` enabled. When ``NAMELINK_ONLY`` is given, either ``NAMELINK_COMPONENT`` or ``COMPONENT`` may be used to specify the installation component of the namelink, but ``COMPONENT`` should generally be preferred. ``NAMELINK_SKIP`` Similar to ``NAMELINK_ONLY``, but it has the opposite effect: it causes the installation of library files other than the namelink when a library target is installed. When neither ``NAMELINK_ONLY`` or ``NAMELINK_SKIP`` are given, both portions are installed. On platforms where versioned shared libraries do not have symlinks or when a library is not versioned, ``NAMELINK_SKIP`` installs the library. It is an error to use this parameter outside of a ``LIBRARY`` block. .. versionchanged:: 3.27 This parameter is also usable for an ``ARCHIVE`` block to manage the linker import file created, on macOS, for shared libraries with :prop_tgt:`ENABLE_EXPORTS` enabled. If ``NAMELINK_SKIP`` is specified, ``NAMELINK_COMPONENT`` has no effect. It is not recommended to use ``NAMELINK_SKIP`` in conjunction with ``NAMELINK_COMPONENT``. The :command:`install(TARGETS)` command can also accept the following options at the top level: ``EXPORT`` This option associates the installed target files with an export called ``<export-name>``. It must appear before any target options. To actually install the export file itself, call :command:`install(EXPORT)`, documented below. See documentation of the :prop_tgt:`EXPORT_NAME` target property to change the name of the exported target. If ``EXPORT`` is used and the targets include ``PUBLIC`` or ``INTERFACE`` file sets, all of them must be specified with ``FILE_SET`` arguments. All ``PUBLIC`` or ``INTERFACE`` file sets associated with a target are included in the export. ``INCLUDES DESTINATION`` This option specifies a list of directories which will be added to the :prop_tgt:`INTERFACE_INCLUDE_DIRECTORIES` target property of the ``<targets>`` when exported by the :command:`install(EXPORT)` command. If a relative path is specified, it is treated as relative to the :genex:`$<INSTALL_PREFIX>`. ``RUNTIME_DEPENDENCY_SET <set-name>`` .. versionadded:: 3.21 This option causes all runtime dependencies of installed executable, shared library, and module targets to be added to the specified runtime dependency set. This set can then be installed with an :command:`install(RUNTIME_DEPENDENCY_SET)` command. This keyword and the ``RUNTIME_DEPENDENCIES`` keyword are mutually exclusive. ``RUNTIME_DEPENDENCIES <arg>...`` .. versionadded:: 3.21 This option causes all runtime dependencies of installed executable, shared library, and module targets to be installed along with the targets themselves. The ``RUNTIME``, ``LIBRARY``, ``FRAMEWORK``, and generic arguments are used to determine the properties (``DESTINATION``, ``COMPONENT``, etc.) of the installation of these dependencies. ``RUNTIME_DEPENDENCIES`` is semantically equivalent to the following pair of calls: install(TARGETS ... RUNTIME_DEPENDENCY_SET <set-name>) install(RUNTIME_DEPENDENCY_SET <set-name> <arg>...) where ``<set-name>`` will be a randomly generated set name. ``<arg>...`` may include any of the following keywords supported by the :command:`install(RUNTIME_DEPENDENCY_SET)` command: * ``DIRECTORIES`` * ``PRE_INCLUDE_REGEXES`` * ``PRE_EXCLUDE_REGEXES`` * ``POST_INCLUDE_REGEXES`` * ``POST_EXCLUDE_REGEXES`` * ``POST_INCLUDE_FILES`` * ``POST_EXCLUDE_FILES`` The ``RUNTIME_DEPENDENCIES`` and ``RUNTIME_DEPENDENCY_SET`` keywords are mutually exclusive. :ref:`Interface Libraries` may be listed among the targets to install. They install no artifacts but will be included in an associated ``EXPORT``. If :ref:`Object Libraries` are listed but given no destination for their object files, they will be exported as :ref:`Interface Libraries`. This is sufficient to satisfy transitive usage requirements of other targets that link to the object libraries in their implementation. Installing a target with the :prop_tgt:`EXCLUDE_FROM_ALL` target property set to ``TRUE`` has undefined behavior. .. versionadded:: 3.3 An install destination given as a ``DESTINATION`` argument may use \"generator expressions\" with the syntax ``$<...>``. See the :manual:`cmake-generator-expressions(7)` manual for available expressions. .. versionadded:: 3.13 :command:`install(TARGETS)` can install targets that were created in other directories. When using such cross-directory install rules, running ``make install`` (or similar) from a subdirectory will not guarantee that targets from other directories are up-to-date. You can use :command:`target_link_libraries` or :command:`add_dependencies` to ensure that such out-of-directory targets are built before the subdirectory-specific install rules are run.",
+      "install(IMPORTED_RUNTIME_ARTIFACTS <target>... [...]) .. versionadded:: 3.21 Install runtime artifacts of imported targets: install(IMPORTED_RUNTIME_ARTIFACTS <target>... [RUNTIME_DEPENDENCY_SET <set-name>] [[LIBRARY|RUNTIME|FRAMEWORK|BUNDLE] [DESTINATION <dir>] [PERMISSIONS <permission>...] [CONFIGURATIONS <config>...] [COMPONENT <component>] [OPTIONAL] [EXCLUDE_FROM_ALL]] [...]) The ``IMPORTED_RUNTIME_ARTIFACTS`` form specifies rules for installing the runtime artifacts of imported targets. Projects may do this if they want to bundle outside executables or modules inside their installation. The ``LIBRARY``, ``RUNTIME``, ``FRAMEWORK``, and ``BUNDLE`` arguments have the same semantics that they do in the `TARGETS`_ mode. Only the runtime artifacts of imported targets are installed (except in the case of :prop_tgt:`FRAMEWORK` libraries, :prop_tgt:`MACOSX_BUNDLE` executables, and :prop_tgt:`BUNDLE` CFBundles.) For example, headers and import libraries associated with DLLs are not installed. In the case of :prop_tgt:`FRAMEWORK` libraries, :prop_tgt:`MACOSX_BUNDLE` executables, and :prop_tgt:`BUNDLE` CFBundles, the entire directory is installed. The ``RUNTIME_DEPENDENCY_SET`` option causes the runtime artifacts of the imported executable, shared library, and module library ``targets`` to be added to the ``<set-name>`` runtime dependency set. This set can then be installed with an :command:`install(RUNTIME_DEPENDENCY_SET)` command.",
+      "install(FILES <file>... [...]) install(PROGRAMS <program>... [...]) .. note:: If installing header files, consider using file sets defined by :command:`target_sources(FILE_SET)` instead. File sets associate headers with a target and they install as part of the target. Install files or programs: install(<FILES|PROGRAMS> <file>... TYPE <type> | DESTINATION <dir> [PERMISSIONS <permission>...] [CONFIGURATIONS <config>...] [COMPONENT <component>] [RENAME <name>] [OPTIONAL] [EXCLUDE_FROM_ALL]) The ``FILES`` form specifies rules for installing files for a project. File names given as relative paths are interpreted with respect to the current source directory. Files installed by this form are by default given permissions ``OWNER_WRITE``, ``OWNER_READ``, ``GROUP_READ``, and ``WORLD_READ`` if no ``PERMISSIONS`` argument is given. The ``PROGRAMS`` form is identical to the ``FILES`` form except that the default permissions for the installed file also include ``OWNER_EXECUTE``, ``GROUP_EXECUTE``, and ``WORLD_EXECUTE``. This form is intended to install programs that are not targets, such as shell scripts. Use the ``TARGETS`` form to install targets built within the project. The list of ``files...`` given to ``FILES`` or ``PROGRAMS`` may use \"generator expressions\" with the syntax ``$<...>``. See the :manual:`cmake-generator-expressions(7)` manual for available expressions. However, if any item begins in a generator expression it must evaluate to a full path. Either a ``TYPE`` or a ``DESTINATION`` must be provided, but not both. A ``TYPE`` argument specifies the generic file type of the files being installed. A destination will then be set automatically by taking the corresponding variable from :module:`GNUInstallDirs`, or by using a built-in default if that variable is not defined. See the table below for the supported file types and their corresponding variables and built-in defaults. Projects can provide a ``DESTINATION`` argument instead of a file type if they wish to explicitly define the install destination. ======================= ================================== ========================= ``TYPE`` Argument GNUInstallDirs Variable Built-In Default ======================= ================================== ========================= ``BIN`` ``${CMAKE_INSTALL_BINDIR}`` ``bin`` ``SBIN`` ``${CMAKE_INSTALL_SBINDIR}`` ``sbin`` ``LIB`` ``${CMAKE_INSTALL_LIBDIR}`` ``lib`` ``INCLUDE`` ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include`` ``SYSCONF`` ``${CMAKE_INSTALL_SYSCONFDIR}`` ``etc`` ``SHAREDSTATE`` ``${CMAKE_INSTALL_SHARESTATEDIR}`` ``com`` ``LOCALSTATE`` ``${CMAKE_INSTALL_LOCALSTATEDIR}`` ``var`` ``RUNSTATE`` ``${CMAKE_INSTALL_RUNSTATEDIR}`` ``<LOCALSTATE dir>/run`` ``DATA`` ``${CMAKE_INSTALL_DATADIR}`` ``<DATAROOT dir>`` ``INFO`` ``${CMAKE_INSTALL_INFODIR}`` ``<DATAROOT dir>/info`` ``LOCALE`` ``${CMAKE_INSTALL_LOCALEDIR}`` ``<DATAROOT dir>/locale`` ``MAN`` ``${CMAKE_INSTALL_MANDIR}`` ``<DATAROOT dir>/man`` ``DOC`` ``${CMAKE_INSTALL_DOCDIR}`` ``<DATAROOT dir>/doc`` ======================= ================================== ========================= Projects wishing to follow the common practice of installing headers into a project-specific subdirectory will need to provide a destination rather than rely on the above. Using file sets for headers instead of ``install(FILES)`` would be even better (see :command:`target_sources(FILE_SET)`). Note that some of the types' built-in defaults use the ``DATAROOT`` directory as a prefix. The ``DATAROOT`` prefix is calculated similarly to the types, with ``CMAKE_INSTALL_DATAROOTDIR`` as the variable and ``share`` as the built-in default. You cannot use ``DATAROOT`` as a ``TYPE`` parameter; please use ``DATA`` instead. To make packages compliant with distribution filesystem layout policies, if projects must specify a ``DESTINATION``, it is strongly recommended that they use a path that begins with the appropriate relative :module:`GNUInstallDirs` variable. This allows package maintainers to control the install destination by setting the appropriate cache variables. The following example shows how to follow this advice while installing an image to a project-specific documentation subdirectory: include(GNUInstallDirs) install(FILES logo.png DESTINATION ${CMAKE_INSTALL_DOCDIR}/myproj ) .. versionadded:: 3.4 An install destination given as a ``DESTINATION`` argument may use \"generator expressions\" with the syntax ``$<...>``. See the :manual:`cmake-generator-expressions(7)` manual for available expressions. .. versionadded:: 3.20 An install rename given as a ``RENAME`` argument may use \"generator expressions\" with the syntax ``$<...>``. See the :manual:`cmake-generator-expressions(7)` manual for available expressions.",
+      "install(DIRECTORY <dir>... [...]) .. note:: To install a directory sub-tree of headers, consider using file sets defined by :command:`target_sources(FILE_SET)` instead. File sets not only preserve directory structure, they also associate headers with a target and install as part of the target. Install the contents of one or more directories: install(DIRECTORY dirs... TYPE <type> | DESTINATION <dir> [FILE_PERMISSIONS <permission>...] [DIRECTORY_PERMISSIONS <permission>...] [USE_SOURCE_PERMISSIONS] [OPTIONAL] [MESSAGE_NEVER] [CONFIGURATIONS <config>...] [COMPONENT <component>] [EXCLUDE_FROM_ALL] [FILES_MATCHING] [[PATTERN <pattern> | REGEX <regex>] [EXCLUDE] [PERMISSIONS <permission>...]] [...]) The ``DIRECTORY`` form installs contents of one or more directories to a given destination. The directory structure is copied verbatim to the destination. The last component of each directory name is appended to the destination directory but a trailing slash may be used to avoid this because it leaves the last component empty. Directory names given as relative paths are interpreted with respect to the current source directory. If no input directory names are given the destination directory will be created but nothing will be installed into it. The ``FILE_PERMISSIONS`` and ``DIRECTORY_PERMISSIONS`` options specify permissions given to files and directories in the destination. If ``USE_SOURCE_PERMISSIONS`` is specified and ``FILE_PERMISSIONS`` is not, file permissions will be copied from the source directory structure. If no permissions are specified files will be given the default permissions specified in the ``FILES`` form of the command, and the directories will be given the default permissions specified in the ``PROGRAMS`` form of the command. .. versionadded:: 3.1 The ``MESSAGE_NEVER`` option disables file installation status output. Installation of directories may be controlled with fine granularity using the ``PATTERN`` or ``REGEX`` options. These \"match\" options specify a globbing pattern or regular expression to match directories or files encountered within input directories. They may be used to apply certain options (see below) to a subset of the files and directories encountered. The full path to each input file or directory (with forward slashes) is matched against the expression. A ``PATTERN`` will match only complete file names: the portion of the full path matching the pattern must occur at the end of the file name and be preceded by a slash. A ``REGEX`` will match any portion of the full path but it may use ``/`` and ``$`` to simulate the ``PATTERN`` behavior. By default all files and directories are installed whether or not they are matched. The ``FILES_MATCHING`` option may be given before the first match option to disable installation of files (but not directories) not matched by any expression. For example, the code install(DIRECTORY src/ DESTINATION doc/myproj FILES_MATCHING PATTERN \"*.png\") will extract and install images from a source tree. Some options may follow a ``PATTERN`` or ``REGEX`` expression as described under :ref:`string(REGEX) <Regex Specification>` and are applied only to files or directories matching them. The ``EXCLUDE`` option will skip the matched file or directory. The ``PERMISSIONS`` option overrides the permissions setting for the matched file or directory. For example the code install(DIRECTORY icons scripts/ DESTINATION share/myproj PATTERN \"CVS\" EXCLUDE PATTERN \"scripts/*\" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ) will install the ``icons`` directory to ``share/myproj/icons`` and the ``scripts`` directory to ``share/myproj``. The icons will get default file permissions, the scripts will be given specific permissions, and any ``CVS`` directories will be excluded. Either a ``TYPE`` or a ``DESTINATION`` must be provided, but not both. A ``TYPE`` argument specifies the generic file type of the files within the listed directories being installed. A destination will then be set automatically by taking the corresponding variable from :module:`GNUInstallDirs`, or by using a built-in default if that variable is not defined. See the table below for the supported file types and their corresponding variables and built-in defaults. Projects can provide a ``DESTINATION`` argument instead of a file type if they wish to explicitly define the install destination. ======================= ================================== ========================= ``TYPE`` Argument GNUInstallDirs Variable Built-In Default ======================= ================================== ========================= ``BIN`` ``${CMAKE_INSTALL_BINDIR}`` ``bin`` ``SBIN`` ``${CMAKE_INSTALL_SBINDIR}`` ``sbin`` ``LIB`` ``${CMAKE_INSTALL_LIBDIR}`` ``lib`` ``INCLUDE`` ``${CMAKE_INSTALL_INCLUDEDIR}`` ``include`` ``SYSCONF`` ``${CMAKE_INSTALL_SYSCONFDIR}`` ``etc`` ``SHAREDSTATE`` ``${CMAKE_INSTALL_SHARESTATEDIR}`` ``com`` ``LOCALSTATE`` ``${CMAKE_INSTALL_LOCALSTATEDIR}`` ``var`` ``RUNSTATE`` ``${CMAKE_INSTALL_RUNSTATEDIR}`` ``<LOCALSTATE dir>/run`` ``DATA`` ``${CMAKE_INSTALL_DATADIR}`` ``<DATAROOT dir>`` ``INFO`` ``${CMAKE_INSTALL_INFODIR}`` ``<DATAROOT dir>/info`` ``LOCALE`` ``${CMAKE_INSTALL_LOCALEDIR}`` ``<DATAROOT dir>/locale`` ``MAN`` ``${CMAKE_INSTALL_MANDIR}`` ``<DATAROOT dir>/man`` ``DOC`` ``${CMAKE_INSTALL_DOCDIR}`` ``<DATAROOT dir>/doc`` ======================= ================================== ========================= Note that some of the types' built-in defaults use the ``DATAROOT`` directory as a prefix. The ``DATAROOT`` prefix is calculated similarly to the types, with ``CMAKE_INSTALL_DATAROOTDIR`` as the variable and ``share`` as the built-in default. You cannot use ``DATAROOT`` as a ``TYPE`` parameter; please use ``DATA`` instead. To make packages compliant with distribution filesystem layout policies, if projects must specify a ``DESTINATION``, it is strongly recommended that they use a path that begins with the appropriate relative :module:`GNUInstallDirs` variable. This allows package maintainers to control the install destination by setting the appropriate cache variables. .. versionadded:: 3.4 An install destination given as a ``DESTINATION`` argument may use \"generator expressions\" with the syntax ``$<...>``. See the :manual:`cmake-generator-expressions(7)` manual for available expressions. .. versionadded:: 3.5 The list of ``dirs...`` given to ``DIRECTORY`` may use \"generator expressions\" too.",
+      "install(SCRIPT <file> [...]) install(CODE <code> [...]) Invoke CMake scripts or code during installation: install([[SCRIPT <file>] [CODE <code>]] [ALL_COMPONENTS | COMPONENT <component>] [EXCLUDE_FROM_ALL] [...]) The ``SCRIPT`` form will invoke the given CMake script files during installation. If the script file name is a relative path it will be interpreted with respect to the current source directory. The ``CODE`` form will invoke the given CMake code during installation. Code is specified as a single argument inside a double-quoted string. For example, the code install(CODE \"MESSAGE(\\\"Sample install message.\\\")\") will print a message during installation. .. versionadded:: 3.21 When the ``ALL_COMPONENTS`` option is given, the custom installation script code will be executed for every component of a component-specific installation. This option is mutually exclusive with the ``COMPONENT`` option. .. versionadded:: 3.14 ``<file>`` or ``<code>`` may use \"generator expressions\" with the syntax ``$<...>`` (in the case of ``<file>``, this refers to their use in the file name, not the file's contents). See the :manual:`cmake-generator-expressions(7)` manual for available expressions.",
+      "install(EXPORT <export-name> [...]) Install a CMake file exporting targets for dependent projects: install(EXPORT <export-name> DESTINATION <dir> [NAMESPACE <namespace>] [FILE <name>.cmake] [PERMISSIONS <permission>...] [CONFIGURATIONS <config>...] [CXX_MODULES_DIRECTORY <directory>] [EXPORT_LINK_INTERFACE_LIBRARIES] [COMPONENT <component>] [EXCLUDE_FROM_ALL] [EXPORT_PACKAGE_DEPENDENCIES]) install(EXPORT_ANDROID_MK <export-name> DESTINATION <dir> [...]) The ``EXPORT`` form generates and installs a CMake file containing code to import targets from the installation tree into another project. Target installations are associated with the export ``<export-name>`` using the ``EXPORT`` option of the :command:`install(TARGETS)` signature documented above. The ``NAMESPACE`` option will prepend ``<namespace>`` to the target names as they are written to the import file. By default the generated file will be called ``<export-name>.cmake`` but the ``FILE`` option may be used to specify a different name. The value given to the ``FILE`` option must be a file name with the ``.cmake`` extension. If a ``CONFIGURATIONS`` option is given then the file will only be installed when one of the named configurations is installed. Additionally, the generated import file will reference only the matching target configurations. See the :variable:`CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>` variable to map configurations of dependent projects to the installed configurations. The ``EXPORT_LINK_INTERFACE_LIBRARIES`` keyword, if present, causes the contents of the properties matching ``(IMPORTED_)?LINK_INTERFACE_LIBRARIES(_<CONFIG>)?`` to be exported, when policy :policy:`CMP0022` is ``NEW``. .. note:: The installed ``<export-name>.cmake`` file may come with additional per-configuration ``<export-name>-*.cmake`` files to be loaded by globbing. Do not use an export name that is the same as the package name in combination with installing a ``<package-name>-config.cmake`` file or the latter may be incorrectly matched by the glob and loaded. When a ``COMPONENT`` option is given, the listed ``<component>`` implicitly depends on all components mentioned in the export set. The exported ``<name>.cmake`` file will require each of the exported components to be present in order for dependent projects to build properly. For example, a project may define components ``Runtime`` and ``Development``, with shared libraries going into the ``Runtime`` component and static libraries and headers going into the ``Development`` component. The export set would also typically be part of the ``Development`` component, but it would export targets from both the ``Runtime`` and ``Development`` components. Therefore, the ``Runtime`` component would need to be installed if the ``Development`` component was installed, but not vice versa. If the ``Development`` component was installed without the ``Runtime`` component, dependent projects that try to link against it would have build errors. Package managers, such as APT and RPM, typically handle this by listing the ``Runtime`` component as a dependency of the ``Development`` component in the package metadata, ensuring that the library is always installed if the headers and CMake export file are present. .. versionadded:: 3.7 In addition to cmake language files, the ``EXPORT_ANDROID_MK`` mode may be used to specify an export to the android ndk build system. This mode accepts the same options as the normal export mode. The Android NDK supports the use of prebuilt libraries, both static and shared. This allows cmake to build the libraries of a project and make them available to an ndk build system complete with transitive dependencies, include flags and defines required to use the libraries. ``CXX_MODULES_DIRECTORY`` .. versionadded:: 3.28 Specify a subdirectory to store C++ module information for targets in the export set. This directory will be populated with files which add the necessary target property information to the relevant targets. Note that without this information, none of the C++ modules which are part of the targets in the export set will support being imported in consuming targets. ``EXPORT_PACKAGE_DEPENDENCIES`` .. note:: Experimental. Gated by ``CMAKE_EXPERIMENTAL_EXPORT_PACKAGE_DEPENDENCIES``. Specify that :command:`find_dependency` calls should be exported. If this argument is specified, CMake examines all targets in the export set and gathers their ``INTERFACE`` link targets. If any such targets either were found with :command:`find_package` or have the :prop_tgt:`EXPORT_FIND_PACKAGE_NAME` property set, and such package dependency was not disabled by passing ``ENABLED OFF`` to :command:`export(SETUP)`, then a :command:`find_dependency` call is written with the target's corresponding package name, a ``REQUIRED`` argument, and any additional arguments specified by the ``EXTRA_ARGS`` argument of :command:`export(SETUP)`. Any package dependencies that were manually specified by passing ``ENABLED ON`` to :command:`export(SETUP)` are also added, even if the exported targets don't depend on any targets from them. The :command:`find_dependency` calls are written in the following order: 1. Any package dependencies that were listed in :command:`export(SETUP)` are written in the order they were first specified, regardless of whether or not they contain ``INTERFACE`` dependencies of the exported targets. 2. Any package dependencies that contain ``INTERFACE`` link dependencies of the exported targets and that were never specified in :command:`export(SETUP)` are written in the order they were first found. The ``EXPORT`` form is useful to help outside projects use targets built and installed by the current project. For example, the code install(TARGETS myexe EXPORT myproj DESTINATION bin) install(EXPORT myproj NAMESPACE mp_ DESTINATION lib/myproj) install(EXPORT_ANDROID_MK myproj DESTINATION share/ndk-modules) will install the executable ``myexe`` to ``<prefix>/bin`` and code to import it in the file ``<prefix>/lib/myproj/myproj.cmake`` and ``<prefix>/share/ndk-modules/Android.mk``. An outside project may load this file with the include command and reference the ``myexe`` executable from the installation tree using the imported target name ``mp_myexe`` as if the target were built in its own tree.",
+      "install(RUNTIME_DEPENDENCY_SET <set-name> [...]) .. versionadded:: 3.21 Installs a runtime dependency set: install(RUNTIME_DEPENDENCY_SET <set-name> [[LIBRARY|RUNTIME|FRAMEWORK] [DESTINATION <dir>] [PERMISSIONS <permission>...] [CONFIGURATIONS <config>...] [COMPONENT <component>] [NAMELINK_COMPONENT <component>] [OPTIONAL] [EXCLUDE_FROM_ALL]] [...] [PRE_INCLUDE_REGEXES <regex>...] [PRE_EXCLUDE_REGEXES <regex>...] [POST_INCLUDE_REGEXES <regex>...] [POST_EXCLUDE_REGEXES <regex>...] [POST_INCLUDE_FILES <file>...] [POST_EXCLUDE_FILES <file>...] [DIRECTORIES <dir>...]) Installs a runtime dependency set previously created by one or more :command:`install(TARGETS)` or :command:`install(IMPORTED_RUNTIME_ARTIFACTS)` commands. The dependencies of targets belonging to a runtime dependency set are installed in the ``RUNTIME`` destination and component on DLL platforms, and in the ``LIBRARY`` destination and component on non-DLL platforms. macOS frameworks are installed in the ``FRAMEWORK`` destination and component. Targets built within the build tree will never be installed as runtime dependencies, nor will their own dependencies, unless the targets themselves are installed with :command:`install(TARGETS)`. The generated install script calls :command:`file(GET_RUNTIME_DEPENDENCIES)` on the build-tree files to calculate the runtime dependencies. The build-tree executable files are passed as the ``EXECUTABLES`` argument, the build-tree shared libraries as the ``LIBRARIES`` argument, and the build-tree modules as the ``MODULES`` argument. On macOS, if one of the executables is a :prop_tgt:`MACOSX_BUNDLE`, that executable is passed as the ``BUNDLE_EXECUTABLE`` argument. At most one such bundle executable may be in the runtime dependency set on macOS. The :prop_tgt:`MACOSX_BUNDLE` property has no effect on other platforms. Note that :command:`file(GET_RUNTIME_DEPENDENCIES)` only supports collecting the runtime dependencies for Windows, Linux and macOS platforms, so ``install(RUNTIME_DEPENDENCY_SET)`` has the same limitation. The following sub-arguments are forwarded through as the corresponding arguments to :command:`file(GET_RUNTIME_DEPENDENCIES)` (for those that provide a non-empty list of directories, regular expressions or files). They all support :manual:`generator expressions <cmake-generator-expressions(7)>`. * ``DIRECTORIES <dir>...`` * ``PRE_INCLUDE_REGEXES <regex>...`` * ``PRE_EXCLUDE_REGEXES <regex>...`` * ``POST_INCLUDE_REGEXES <regex>...`` * ``POST_EXCLUDE_REGEXES <regex>...`` * ``POST_INCLUDE_FILES <file>...`` * ``POST_EXCLUDE_FILES <file>...``",
+      "install(TARGETS myExe mySharedLib myStaticLib RUNTIME COMPONENT Runtime LIBRARY COMPONENT Runtime NAMELINK_COMPONENT Development ARCHIVE COMPONENT Development DESTINATION lib/static FILE_SET HEADERS COMPONENT Development )",
+      "install(TARGETS myExe CONFIGURATIONS Debug RUNTIME DESTINATION Debug/bin ) install(TARGETS myExe CONFIGURATIONS Release RUNTIME DESTINATION Release/bin )"
+    ]
+  },
+  "install_files": {
+    "name": "install_files",
+    "description": "This command has been superseded by the install command. It is provided for compatibility with older CMake code. The FILES form is directly replaced by the FILES form of the install command. The regexp form can be expressed more clearly using the GLOB form of the file command.",
+    "syntax_examples": [
+      "install_files(<dir> extension file file ...)",
+      "install_files(<dir> regexp)",
+      "install_files(<dir> FILES file file ...)"
+    ]
+  },
+  "install_programs": {
+    "name": "install_programs",
+    "description": "This command has been superseded by the install command. It is provided for compatibility with older CMake code. The FILES form is directly replaced by the PROGRAMS form of the install command. The regexp form can be expressed more clearly using the GLOB form of the file command.",
+    "syntax_examples": [
+      "install_programs(<dir> file1 file2 [file3 ...]) install_programs(<dir> FILES file1 [file2 ...])",
+      "install_programs(<dir> regexp)"
+    ]
+  },
+  "install_targets": {
+    "name": "install_targets",
+    "description": "This command has been superseded by the install command. It is provided for compatibility with older CMake code.",
+    "syntax_examples": [
+      "install_targets(<dir> [RUNTIME_DIRECTORY dir] target target)"
+    ]
+  },
+  "link_directories": {
+    "name": "link_directories",
+    "description": "Add directories in which the linker will look for libraries.",
+    "syntax_examples": [
+      "link_directories([AFTER|BEFORE] directory1 [directory2 ...])"
+    ]
+  },
+  "link_libraries": {
+    "name": "link_libraries",
+    "description": "Link libraries to all targets added later.",
+    "syntax_examples": [
+      "link_libraries([item1 [item2 [...]]] [[debug|optimized|general] <item>] ...)"
+    ]
+  },
+  "list": {
+    "name": "list",
+    "description": "Operations on semicolon-separated lists .",
+    "syntax_examples": [
+      "list(LENGTH <list> <output variable>) Returns the list's length.",
+      "list(GET <list> <element index> [<element index> ...] <output variable>) Returns the list of elements specified by indices from the list.",
+      "list(JOIN <list> <glue> <output variable>) .. versionadded:: 3.12 Returns a string joining all list's elements using the glue string. To join multiple strings, which are not part of a list, use :command:`string(JOIN)`.",
+      "list(SUBLIST <list> <begin> <length> <output variable>) .. versionadded:: 3.12 Returns a sublist of the given list. If ``<length>`` is 0, an empty list will be returned. If ``<length>`` is -1 or the list is smaller than ``<begin>+<length>`` then the remaining elements of the list starting at ``<begin>`` will be returned.",
+      "list(FIND <list> <value> <output variable>) Returns the index of the element specified in the list or ``-1`` if it wasn't found.",
+      "list(APPEND <list> [<element> ...]) Appends elements to the list. If no variable named ``<list>`` exists in the current scope its value is treated as empty and the elements are appended to that empty list.",
+      "list(FILTER <list> <INCLUDE|EXCLUDE> REGEX <regular_expression>)",
+      "list(INSERT <list> <element_index> <element> [<element> ...]) Inserts elements to the list to the specified index. It is an error to specify an out-of-range index. Valid indexes are 0 to `N` where `N` is the length of the list, inclusive. An empty list has length 0. If no variable named ``<list>`` exists in the current scope its value is treated as empty and the elements are inserted in that empty list.",
+      "list(POP_BACK <list> [<out-var>...]) .. versionadded:: 3.15 If no variable name is given, removes exactly one element. Otherwise, with `N` variable names provided, assign the last `N` elements' values to the given variables and then remove the last `N` values from ``<list>``.",
+      "list(POP_FRONT <list> [<out-var>...]) .. versionadded:: 3.15 If no variable name is given, removes exactly one element. Otherwise, with `N` variable names provided, assign the first `N` elements' values to the given variables and then remove the first `N` values from ``<list>``.",
+      "list(PREPEND <list> [<element> ...]) .. versionadded:: 3.15 Insert elements to the 0th position in the list. If no variable named ``<list>`` exists in the current scope its value is treated as empty and the elements are prepended to that empty list.",
+      "list(REMOVE_ITEM <list> <value> [<value> ...]) Removes all instances of the given items from the list.",
+      "list(REMOVE_AT <list> <index> [<index> ...]) Removes items at given indices from the list.",
+      "list(REMOVE_DUPLICATES <list>) Removes duplicated items in the list. The relative order of items is preserved, but if duplicates are encountered, only the first instance is preserved.",
+      "list(TRANSFORM <list> <ACTION> [<SELECTOR>] [OUTPUT_VARIABLE <output variable>]) .. versionadded:: 3.12 Transforms the list by applying an ``<ACTION>`` to all or, by specifying a ``<SELECTOR>``, to the selected elements of the list, storing the result in-place or in the specified output variable. .. note:: The ``TRANSFORM`` sub-command does not change the number of elements in the list. If a ``<SELECTOR>`` is specified, only some elements will be changed, the other ones will remain the same as before the transformation. ``<ACTION>`` specifies the action to apply to the elements of the list. The actions have exactly the same semantics as sub-commands of the :command:`string` command. ``<ACTION>`` must be one of the following: :command:`APPEND <string(APPEND)>`, :command:`PREPEND <string(PREPEND)>` Append, prepend specified value to each element of the list. list(TRANSFORM <list> (APPEND|PREPEND) <value> ...) :target: TRANSFORM_APPEND :command:`TOLOWER <string(TOLOWER)>`, :command:`TOUPPER <string(TOUPPER)>` Convert each element of the list to lower, upper characters. list(TRANSFORM <list> (TOLOWER|TOUPPER) ...) :target: TRANSFORM_TOLOWER :command:`STRIP <string(STRIP)>` Remove leading and trailing spaces from each element of the list. list(TRANSFORM <list> STRIP ...) :target: TRANSFORM_STRIP :command:`GENEX_STRIP <string(GENEX_STRIP)>` Strip any :manual:`generator expressions <cmake-generator-expressions(7)>` from each element of the list. list(TRANSFORM <list> GENEX_STRIP ...) :target: TRANSFORM_GENEX_STRIP :command:`REPLACE <string(REGEX REPLACE)>`: Match the regular expression as many times as possible and substitute the replacement expression for the match for each element of the list (same semantic as :command:`string(REGEX REPLACE)`). list(TRANSFORM <list> REPLACE <regular_expression> <replace_expression> ...) :target: TRANSFORM_REPLACE ``<SELECTOR>`` determines which elements of the list will be transformed. Only one type of selector can be specified at a time. When given, ``<SELECTOR>`` must be one of the following: ``AT`` Specify a list of indexes. list(TRANSFORM <list> <ACTION> AT <index> [<index> ...] ...) ``FOR`` Specify a range with, optionally, an increment used to iterate over the range. list(TRANSFORM <list> <ACTION> FOR <start> <stop> [<step>] ...) ``REGEX`` Specify a regular expression. Only elements matching the regular expression will be transformed. list(TRANSFORM <list> <ACTION> REGEX <regular_expression> ...)",
+      "list(REVERSE <list>) Reverses the contents of the list in-place.",
+      "list(SORT <list> [COMPARE <compare>] [CASE <case>] [ORDER <order>]) Sorts the list in-place alphabetically. .. versionadded:: 3.13 Added the ``COMPARE``, ``CASE``, and ``ORDER`` options. .. versionadded:: 3.18 Added the ``COMPARE NATURAL`` option. Use the ``COMPARE`` keyword to select the comparison method for sorting. The ``<compare>`` option should be one of: ``STRING`` Sorts a list of strings alphabetically. This is the default behavior if the ``COMPARE`` option is not given. ``FILE_BASENAME`` Sorts a list of pathnames of files by their basenames. ``NATURAL`` Sorts a list of strings using natural order (see ``strverscmp(3)`` manual), i.e. such that contiguous digits are compared as whole numbers. For example: the following list `10.0 1.1 2.1 8.0 2.0 3.1` will be sorted as `1.1 2.0 2.1 3.1 8.0 10.0` if the ``NATURAL`` comparison is selected where it will be sorted as `1.1 10.0 2.0 2.1 3.1 8.0` with the ``STRING`` comparison. Use the ``CASE`` keyword to select a case sensitive or case insensitive sort mode. The ``<case>`` option should be one of: ``SENSITIVE`` List items are sorted in a case-sensitive manner. This is the default behavior if the ``CASE`` option is not given. ``INSENSITIVE`` List items are sorted case insensitively. The order of items which differ only by upper/lowercase is not specified. To control the sort order, the ``ORDER`` keyword can be given. The ``<order>`` option should be one of: ``ASCENDING`` Sorts the list in ascending order. This is the default behavior when the ``ORDER`` option is not given. ``DESCENDING`` Sorts the list in descending order."
+    ]
+  },
+  "load_cache": {
+    "name": "load_cache",
+    "description": "Load in the values from another project's CMake cache.",
+    "syntax_examples": [
+      "load_cache(pathToBuildDirectory READ_WITH_PREFIX prefix entry1...)",
+      "load_cache(pathToBuildDirectory [EXCLUDE entry1...] [INCLUDE_INTERNALS entry1...])"
+    ]
+  },
+  "load_command": {
+    "name": "load_command",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0031.",
+    "syntax_examples": ["load_command(COMMAND_NAME <loc1> [loc2 ...])"]
+  },
+  "macro": {
+    "name": "macro",
+    "description": "Start recording a macro for later invocation as a command",
+    "syntax_examples": [
+      "macro(<name> [<arg1> ...]) <commands> endmacro()",
+      "macro(foo) <commands> endmacro()",
+      "macro(bar) foreach(arg IN LISTS ARGN) <commands> endforeach() endmacro() function(foo) bar(x y z) endfunction() foo(a b c)"
+    ]
+  },
+  "make_directory": {
+    "name": "make_directory",
+    "description": "Creates the specified directory. Full paths should be given. Any parent directories that do not exist will also be created. Use with care.",
+    "syntax_examples": ["make_directory(directory)"]
+  },
+  "mark_as_advanced": {
+    "name": "mark_as_advanced",
+    "description": "Mark cmake cached variables as advanced.",
+    "syntax_examples": ["mark_as_advanced([CLEAR|FORCE] <var1> ...)"]
+  },
+  "math": {
+    "name": "math",
+    "description": "Evaluate a mathematical expression.",
+    "syntax_examples": [
+      "math(EXPR <variable> \"<expression>\" [OUTPUT_FORMAT <format>])",
+      "math(EXPR value \"100 * 0xA\" OUTPUT_FORMAT DECIMAL) math(EXPR value \"100 * 0xA\" OUTPUT_FORMAT HEXADECIMAL)"
+    ]
+  },
+  "message": {
+    "name": "message",
+    "description": "Log a message.",
+    "syntax_examples": [
+      "message([<mode>] \"message text\" ...)",
+      "message(STATUS \"Looking for someheader.h\") if(checkSuccess) message(STATUS \"Looking for someheader.h - found\") else() message(STATUS \"Looking for someheader.h - not found\") endif()",
+      "message(<checkState> \"message\" ...)",
+      "message(CHECK_START \"Finding my things\") list(APPEND CMAKE_MESSAGE_INDENT \" \") unset(missingComponents) message(CHECK_START \"Finding partA\") message(CHECK_PASS \"found\") message(CHECK_START \"Finding partB\") list(APPEND missingComponents B) message(CHECK_FAIL \"not found\") list(POP_BACK CMAKE_MESSAGE_INDENT) if(missingComponents) message(CHECK_FAIL \"missing components: ${missingComponents}\") else() message(CHECK_PASS \"all components found\") endif()",
+      "message(CONFIGURE_LOG <text>...)"
+    ]
+  },
+  "option": {
+    "name": "option",
+    "description": "Provide a boolean option that the user can optionally select.",
+    "syntax_examples": ["option(<variable> \"<help_text>\" [value])"]
+  },
+  "output_required_files": {
+    "name": "output_required_files",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0032.",
+    "syntax_examples": ["output_required_files(srcfile outputfile)"]
+  },
+  "project": {
+    "name": "project",
+    "description": "Set the name of the project.",
+    "syntax_examples": [
+      "project(<PROJECT-NAME> [<language-name>...]) project(<PROJECT-NAME> [VERSION <major>[.<minor>[.<patch>[.<tweak>]]]] [DESCRIPTION <project-description-string>] [HOMEPAGE_URL <url-string>] [LANGUAGES <language-name>...])"
+    ]
+  },
+  "qt_wrap_cpp": {
+    "name": "qt_wrap_cpp",
+    "description": "Manually create Qt Wrappers.",
+    "syntax_examples": [
+      "qt_wrap_cpp(resultingLibraryName DestName SourceLists ...)"
+    ]
+  },
+  "qt_wrap_ui": {
+    "name": "qt_wrap_ui",
+    "description": "Manually create Qt user interfaces Wrappers.",
+    "syntax_examples": [
+      "qt_wrap_ui(resultingLibraryName HeadersDestName SourcesDestName SourceLists ...)"
+    ]
+  },
+  "remove": {
+    "name": "remove",
+    "description": "Removes VALUE from the variable VAR. This is typically used to remove entries from a vector (e.g. semicolon separated list). VALUE is expanded.",
+    "syntax_examples": ["remove(VAR VALUE VALUE ...)"]
+  },
+  "remove_definitions": {
+    "name": "remove_definitions",
+    "description": "Remove -D define flags added by add_definitions.",
+    "syntax_examples": ["remove_definitions(-DFOO -DBAR ...)"]
+  },
+  "return": {
+    "name": "return",
+    "description": "Return from a file, directory or function.",
+    "syntax_examples": ["return([PROPAGATE <var-name>...])"]
+  },
+  "separate_arguments": {
+    "name": "separate_arguments",
+    "description": "Parse command-line arguments into a semicolon-separated list.",
+    "syntax_examples": [
+      "separate_arguments(<variable> <mode> [PROGRAM [SEPARATE_ARGS]] <args>)",
+      "separate_arguments (out UNIX_COMMAND PROGRAM \"cc -c main.c\")",
+      "separate_arguments (out UNIX_COMMAND PROGRAM SEPARATE_ARGS \"cc -c main.c\")",
+      "separate_arguments(<var>)"
+    ]
+  },
+  "set": {
+    "name": "set",
+    "description": "Set a normal, cache, or environment variable to a given value. See the cmake-language(7) variables  documentation for the scopes and interaction of normal variables and cache entries.",
+    "syntax_examples": [
+      "set(<variable> <value>... [PARENT_SCOPE]) :target: normal Set or unset ``<variable>`` in the current function or directory scope: * If at least one ``<value>...`` is given, set the variable to that value. * If no value is given, unset the variable. This is equivalent to :command:`unset(<variable>) <unset>`. If the ``PARENT_SCOPE`` option is given the variable will be set in the scope above the current scope. Each new directory or :command:`function` command creates a new scope. A scope can also be created with the :command:`block` command. ``set(PARENT_SCOPE)`` will set the value of a variable into the parent directory, calling function, or encompassing scope (whichever is applicable to the case at hand). The previous state of the variable's value stays the same in the current scope (e.g., if it was undefined before, it is still undefined and if it had a value, it is still that value). The :command:`block(PROPAGATE)` and :command:`return(PROPAGATE)` commands can be used as an alternate method to the :command:`set(PARENT_SCOPE)` and :command:`unset(PARENT_SCOPE)` commands to update the parent scope.",
+      "set(<variable> <value>... CACHE <type> <docstring> [FORCE]) :target: CACHE Sets the given cache ``<variable>`` (cache entry). Since cache entries are meant to provide user-settable values this does not overwrite existing cache entries by default. Use the ``FORCE`` option to overwrite existing entries. The ``<type>`` must be specified as one of: ``BOOL`` Boolean ``ON/OFF`` value. :manual:`cmake-gui(1)` offers a checkbox. ``FILEPATH`` Path to a file on disk. :manual:`cmake-gui(1)` offers a file dialog. ``PATH`` Path to a directory on disk. :manual:`cmake-gui(1)` offers a file dialog. ``STRING`` A line of text. :manual:`cmake-gui(1)` offers a text field or a drop-down selection if the :prop_cache:`STRINGS` cache entry property is set. ``INTERNAL`` A line of text. :manual:`cmake-gui(1)` does not show internal entries. They may be used to store variables persistently across runs. Use of this type implies ``FORCE``. The ``<docstring>`` must be specified as a line of text providing a quick summary of the option for presentation to :manual:`cmake-gui(1)` users. If the cache entry does not exist prior to the call or the ``FORCE`` option is given then the cache entry will be set to the given value. .. note:: The content of the cache variable will not be directly accessible if a normal variable of the same name already exists (see :ref:`rules of variable evaluation <CMake Language Variables>`). If policy :policy:`CMP0126` is set to ``OLD``, any normal variable binding in the current scope will be removed. It is possible for the cache entry to exist prior to the call but have no type set if it was created on the :manual:`cmake(1)` command line by a user through the :option:`-D\\<var\\>=\\<value\\> <cmake -D>` option without specifying a type. In this case the ``set`` command will add the type. Furthermore, if the ``<type>`` is ``PATH`` or ``FILEPATH`` and the ``<value>`` provided on the command line is a relative path, then the ``set`` command will treat the path as relative to the current working directory and convert it to an absolute path.",
+      "set(ENV{<variable>} [<value>]) :target: ENV Sets an :manual:`Environment Variable <cmake-env-variables(7)>` to the given value. Subsequent calls of ``$ENV{<variable>}`` will return this new value. This command affects only the current CMake process, not the process from which CMake was called, nor the system environment at large, nor the environment of subsequent build or test processes. If no argument is given after ``ENV{<variable>}`` or if ``<value>`` is an empty string, then this command will clear any existing value of the environment variable. Arguments after ``<value>`` are ignored. If extra arguments are found, then an author warning is issued."
+    ]
+  },
+  "set_directory_properties": {
+    "name": "set_directory_properties",
+    "description": "Set properties of the current directory and subdirectories.",
+    "syntax_examples": [
+      "set_directory_properties(PROPERTIES <prop1> <value1> [<prop2> <value2>] ...)"
+    ]
+  },
+  "set_property": {
+    "name": "set_property",
+    "description": "Set a named property in a given scope.",
+    "syntax_examples": [
+      "set_property(<GLOBAL | DIRECTORY [<dir>] | TARGET [<target1> ...] | SOURCE [<src1> ...] [DIRECTORY <dirs> ...] [TARGET_DIRECTORY <targets> ...] | INSTALL [<file1> ...] | TEST [<test1> ...] [DIRECTORY <dir>] | CACHE [<entry1> ...]> [APPEND] [APPEND_STRING] PROPERTY <name> [<value1> ...])"
+    ]
+  },
+  "set_source_files_properties": {
+    "name": "set_source_files_properties",
+    "description": "Source files can have properties that affect how they are built.",
+    "syntax_examples": [
+      "set_source_files_properties(<files> ... [DIRECTORY <dirs> ...] [TARGET_DIRECTORY <targets> ...] PROPERTIES <prop1> <value1> [<prop2> <value2>] ...)"
+    ]
+  },
+  "set_target_properties": {
+    "name": "set_target_properties",
+    "description": "Targets can have properties that affect how they are built.",
+    "syntax_examples": [
+      "set_target_properties(<targets> ... PROPERTIES <prop1> <value1> [<prop2> <value2>] ...)"
+    ]
+  },
+  "set_tests_properties": {
+    "name": "set_tests_properties",
+    "description": "Set a property of the tests.",
+    "syntax_examples": [
+      "set_tests_properties(<tests>... [DIRECTORY <dir>] PROPERTIES <prop1> <value1> [<prop2> <value2>]...)"
+    ]
+  },
+  "site_name": {
+    "name": "site_name",
+    "description": "Set the given variable to the name of the computer.",
+    "syntax_examples": ["site_name(variable)"]
+  },
+  "source_group": {
+    "name": "source_group",
+    "description": "Define a grouping for source files in IDE project generation. There are two different signatures to create source groups.",
+    "syntax_examples": [
+      "source_group(<name> [FILES <src>...] [REGULAR_EXPRESSION <regex>]) source_group(TREE <root> [PREFIX <prefix>] [FILES <src>...])",
+      "source_group(base/subdir ...) source_group(outer\\\\inner ...) source_group(TREE <root> PREFIX sources\\\\inc ...)",
+      "source_group(<name> <regex>)",
+      "source_group(<name> REGULAR_EXPRESSION <regex>)"
+    ]
+  },
+  "string": {
+    "name": "string",
+    "description": "String operations.",
+    "syntax_examples": [
+      "string(FIND <string> <substring> <output_variable> [REVERSE]) Return the position where the given ``<substring>`` was found in the supplied ``<string>``. If the ``REVERSE`` flag was used, the command will search for the position of the last occurrence of the specified ``<substring>``. If the ``<substring>`` is not found, a position of -1 is returned. The ``string(FIND)`` subcommand treats all strings as ASCII-only characters. The index stored in ``<output_variable>`` will also be counted in bytes, so strings containing multi-byte characters may lead to unexpected results.",
+      "string(REPLACE <match_string> <replace_string> <output_variable> <input> [<input>...]) Replace all occurrences of ``<match_string>`` in the ``<input>`` with ``<replace_string>`` and store the result in the ``<output_variable>``.",
+      "string(REGEX MATCH <regular_expression> <output_variable> <input> [<input>...]) Match the ``<regular_expression>`` once and store the match in the ``<output_variable>``. All ``<input>`` arguments are concatenated before matching. Regular expressions are specified in the subsection just below.",
+      "string(REGEX MATCHALL <regular_expression> <output_variable> <input> [<input>...]) Match the ``<regular_expression>`` as many times as possible and store the matches in the ``<output_variable>`` as a list. All ``<input>`` arguments are concatenated before matching.",
+      "string(REGEX REPLACE <regular_expression> <replacement_expression> <output_variable> <input> [<input>...]) Match the ``<regular_expression>`` as many times as possible and substitute the ``<replacement_expression>`` for the match in the output. All ``<input>`` arguments are concatenated before matching. The ``<replacement_expression>`` may refer to parenthesis-delimited subexpressions of the match using ``\\1``, ``\\2``, ..., ``\\9``. Note that two backslashes (``\\\\1``) are required in CMake code to get a backslash through argument parsing.",
+      "string(APPEND <string_variable> [<input>...]) .. versionadded:: 3.4 Append all the ``<input>`` arguments to the string.",
+      "string(PREPEND <string_variable> [<input>...]) .. versionadded:: 3.10 Prepend all the ``<input>`` arguments to the string.",
+      "string(CONCAT <output_variable> [<input>...]) Concatenate all the ``<input>`` arguments together and store the result in the named ``<output_variable>``.",
+      "string(JOIN <glue> <output_variable> [<input>...]) .. versionadded:: 3.12 Join all the ``<input>`` arguments together using the ``<glue>`` string and store the result in the named ``<output_variable>``. To join a list's elements, prefer to use the ``JOIN`` operator from the :command:`list` command. This allows for the elements to have special characters like ``;`` in them.",
+      "string(TOLOWER <string> <output_variable>) Convert ``<string>`` to lower characters.",
+      "string(TOUPPER <string> <output_variable>) Convert ``<string>`` to upper characters.",
+      "string(LENGTH <string> <output_variable>) Store in an ``<output_variable>`` a given string's length in bytes. Note that this means if ``<string>`` contains multi-byte characters, the result stored in ``<output_variable>`` will *not* be the number of characters.",
+      "string(SUBSTRING <string> <begin> <length> <output_variable>) Store in an ``<output_variable>`` a substring of a given ``<string>``. If ``<length>`` is ``-1`` the remainder of the string starting at ``<begin>`` will be returned. .. versionchanged:: 3.2 If ``<string>`` is shorter than ``<length>`` then the end of the string is used instead. Previous versions of CMake reported an error in this case. Both ``<begin>`` and ``<length>`` are counted in bytes, so care must be exercised if ``<string>`` could contain multi-byte characters.",
+      "string(STRIP <string> <output_variable>) Store in an ``<output_variable>`` a substring of a given ``<string>`` with leading and trailing spaces removed.",
+      "string(GENEX_STRIP <string> <output_variable>) .. versionadded:: 3.1 Strip any :manual:`generator expressions <cmake-generator-expressions(7)>` from the input ``<string>`` and store the result in the ``<output_variable>``.",
+      "string(REPEAT <string> <count> <output_variable>) .. versionadded:: 3.15 Produce the output string as the input ``<string>`` repeated ``<count>`` times.",
+      "string(COMPARE LESS <string1> <string2> <output_variable>) string(COMPARE GREATER <string1> <string2> <output_variable>) string(COMPARE EQUAL <string1> <string2> <output_variable>) string(COMPARE NOTEQUAL <string1> <string2> <output_variable>) string(COMPARE LESS_EQUAL <string1> <string2> <output_variable>) string(COMPARE GREATER_EQUAL <string1> <string2> <output_variable>) Compare the strings and store true or false in the ``<output_variable>``. .. versionadded:: 3.7 Added the ``LESS_EQUAL`` and ``GREATER_EQUAL`` options.",
+      "string(<HASH> <output_variable> <input>) :target: <HASH> Compute a cryptographic hash of the ``<input>`` string. The supported ``<HASH>`` algorithm names are: ``MD5`` Message-Digest Algorithm 5, RFC 1321. ``SHA1`` US Secure Hash Algorithm 1, RFC 3174. ``SHA224`` US Secure Hash Algorithms, RFC 4634. ``SHA256`` US Secure Hash Algorithms, RFC 4634. ``SHA384`` US Secure Hash Algorithms, RFC 4634. ``SHA512`` US Secure Hash Algorithms, RFC 4634. ``SHA3_224`` Keccak SHA-3. ``SHA3_256`` Keccak SHA-3. ``SHA3_384`` Keccak SHA-3. ``SHA3_512`` Keccak SHA-3. .. versionadded:: 3.8 Added the ``SHA3_*`` hash algorithms.",
+      "string(ASCII <number> [<number> ...] <output_variable>) Convert all numbers into corresponding ASCII characters.",
+      "string(HEX <string> <output_variable>) .. versionadded:: 3.18 Convert each byte in the input ``<string>`` to its hexadecimal representation and store the concatenated hex digits in the ``<output_variable>``. Letters in the output (``a`` through ``f``) are in lowercase.",
+      "string(CONFIGURE <string> <output_variable> [@ONLY] [ESCAPE_QUOTES]) Transform a ``<string>`` like :command:`configure_file` transforms a file.",
+      "string(MAKE_C_IDENTIFIER <string> <output_variable>) Convert each non-alphanumeric character in the input ``<string>`` to an underscore and store the result in the ``<output_variable>``. If the first character of the ``<string>`` is a digit, an underscore will also be prepended to the result.",
+      "string(RANDOM [LENGTH <length>] [ALPHABET <alphabet>] [RANDOM_SEED <seed>] <output_variable>) Return a random string of given ``<length>`` consisting of characters from the given ``<alphabet>``. Default length is 5 characters and default alphabet is all numbers and upper and lower case letters. If an integer ``RANDOM_SEED`` is given, its value will be used to seed the random number generator.",
+      "string(TIMESTAMP <output_variable> [<format_string>] [UTC]) Write a string representation of the current date and/or time to the ``<output_variable>``. If the command is unable to obtain a timestamp, the ``<output_variable>`` will be set to the empty string ``\"\"``. The optional ``UTC`` flag requests the current date/time representation to be in Coordinated Universal Time (UTC) rather than local time. The optional ``<format_string>`` may contain the following format specifiers: ``%%`` .. versionadded:: 3.8 A literal percent sign (%). ``%d`` The day of the current month (01-31). ``%H`` The hour on a 24-hour clock (00-23). ``%I`` The hour on a 12-hour clock (01-12). ``%j`` The day of the current year (001-366). ``%m`` The month of the current year (01-12). ``%b`` .. versionadded:: 3.7 Abbreviated month name (e.g. Oct). ``%B`` .. versionadded:: 3.10 Full month name (e.g. October). ``%M`` The minute of the current hour (00-59). ``%s`` .. versionadded:: 3.6 Seconds since midnight (UTC) 1-Jan-1970 (UNIX time). ``%S`` The second of the current minute. 60 represents a leap second. (00-60) ``%f`` .. versionadded:: 3.23 The microsecond of the current second (000000-999999). ``%U`` The week number of the current year (00-53). ``%V`` .. versionadded:: 3.22 The ISO 8601 week number of the current year (01-53). ``%w`` The day of the current week. 0 is Sunday. (0-6) ``%a`` .. versionadded:: 3.7 Abbreviated weekday name (e.g. Fri). ``%A`` .. versionadded:: 3.10 Full weekday name (e.g. Friday). ``%y`` The last two digits of the current year (00-99). ``%Y`` The current year. ``%z`` .. versionadded:: 3.26 The offset of the time zone from UTC, in hours and minutes, with format ``+hhmm`` or ``-hhmm``. ``%Z`` .. versionadded:: 3.26 The time zone name. Unknown format specifiers will be ignored and copied to the output as-is. If no explicit ``<format_string>`` is given, it will default to: :: %Y-%m-%dT%H:%M:%S for local time. %Y-%m-%dT%H:%M:%SZ for UTC. .. versionadded:: 3.8 If the ``SOURCE_DATE_EPOCH`` environment variable is set, its value will be used instead of the current time. See https://reproducible-builds.org/specs/source-date-epoch/ for details.",
+      "string(UUID <output_variable> NAMESPACE <namespace> NAME <name> TYPE <MD5|SHA1> [UPPER]) .. versionadded:: 3.1 Create a universally unique identifier (aka GUID) as per RFC4122 based on the hash of the combined values of ``<namespace>`` (which itself has to be a valid UUID) and ``<name>``. The hash algorithm can be either ``MD5`` (Version 3 UUID) or ``SHA1`` (Version 5 UUID). A UUID has the format ``xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`` where each ``x`` represents a lower case hexadecimal character. Where required, an uppercase representation can be requested with the optional ``UPPER`` flag.",
+      "string(JSON <out-var> [ERROR_VARIABLE <error-variable>] GET <json-string> <member|index> [<member|index> ...]) :target: JSON GET Get an element from ``<json-string>`` at the location given by the list of ``<member|index>`` arguments. Array and object elements will be returned as a JSON string. Boolean elements will be returned as ``ON`` or ``OFF``. Null elements will be returned as an empty string. Number and string types will be returned as strings.",
+      "string(JSON <out-var> [ERROR_VARIABLE <error-variable>] TYPE <json-string> <member|index> [<member|index> ...]) :target: JSON TYPE Get the type of an element in ``<json-string>`` at the location given by the list of ``<member|index>`` arguments. The ``<out-var>`` will be set to one of ``NULL``, ``NUMBER``, ``STRING``, ``BOOLEAN``, ``ARRAY``, or ``OBJECT``.",
+      "string(JSON <out-var> [ERROR_VARIABLE <error-var>] MEMBER <json-string> [<member|index> ...] <index>) :target: JSON MEMBER Get the name of the ``<index>``-th member in ``<json-string>`` at the location given by the list of ``<member|index>`` arguments. Requires an element of object type.",
+      "string(JSON <out-var> [ERROR_VARIABLE <error-variable>] LENGTH <json-string> [<member|index> ...]) :target: JSON LENGTH Get the length of an element in ``<json-string>`` at the location given by the list of ``<member|index>`` arguments. Requires an element of array or object type.",
+      "string(JSON <out-var> [ERROR_VARIABLE <error-variable>] REMOVE <json-string> <member|index> [<member|index> ...]) :target: JSON REMOVE Remove an element from ``<json-string>`` at the location given by the list of ``<member|index>`` arguments. The JSON string without the removed element will be stored in ``<out-var>``.",
+      "string(JSON <out-var> [ERROR_VARIABLE <error-variable>] SET <json-string> <member|index> [<member|index> ...] <value>) :target: JSON SET Set an element in ``<json-string>`` at the location given by the list of ``<member|index>`` arguments to ``<value>``. The contents of ``<value>`` should be valid JSON. If ``<json-string>`` is an array, ``<value>`` can be appended to the end of the array by using a number greater or equal to the array length as the ``<member|index>`` argument.",
+      "string(JSON <out-var> [ERROR_VARIABLE <error-var>] EQUAL <json-string1> <json-string2>) :target: JSON EQUAL Compare the two JSON objects given by ``<json-string1>`` and ``<json-string2>`` for equality. The contents of ``<json-string1>`` and ``<json-string2>`` should be valid JSON. The ``<out-var>`` will be set to a true value if the JSON objects are considered equal, or a false value otherwise."
+    ]
+  },
+  "subdirs": {
+    "name": "subdirs",
+    "description": "Add a list of subdirectories to the build.",
+    "syntax_examples": [
+      "subdirs(dir1 dir2 ...[EXCLUDE_FROM_ALL exclude_dir1 exclude_dir2 ...] [PREORDER])"
+    ]
+  },
+  "subdir_depends": {
+    "name": "subdir_depends",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0029.",
+    "syntax_examples": ["subdir_depends(subdir dep1 dep2 ...)"]
+  },
+  "target_compile_definitions": {
+    "name": "target_compile_definitions",
+    "description": "Add compile definitions to a target.",
+    "syntax_examples": [
+      "target_compile_definitions(<target> <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])",
+      "target_compile_definitions(foo PUBLIC FOO) target_compile_definitions(foo PUBLIC -DFOO) target_compile_definitions(foo PUBLIC \"\" FOO) target_compile_definitions(foo PUBLIC -D FOO)",
+      "target_compile_definitions(foo PUBLIC FOO=1)"
+    ]
+  },
+  "target_compile_features": {
+    "name": "target_compile_features",
+    "description": "Add expected compiler features to a target.",
+    "syntax_examples": [
+      "target_compile_features(<target> <PRIVATE|PUBLIC|INTERFACE> <feature> [...])"
+    ]
+  },
+  "target_compile_options": {
+    "name": "target_compile_options",
+    "description": "Add compile options to a target.",
+    "syntax_examples": [
+      "target_compile_options(<target> [BEFORE] <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])"
+    ]
+  },
+  "target_include_directories": {
+    "name": "target_include_directories",
+    "description": "Add include directories to a target.",
+    "syntax_examples": [
+      "target_include_directories(<target> [SYSTEM] [BEFORE] <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])",
+      "target_include_directories(mylib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/mylib> $<INSTALL_INTERFACE:include/mylib>)"
+    ]
+  },
+  "target_link_directories": {
+    "name": "target_link_directories",
+    "description": "Add link directories to a target.",
+    "syntax_examples": [
+      "target_link_directories(<target> [BEFORE] <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])"
+    ]
+  },
+  "target_link_libraries": {
+    "name": "target_link_libraries",
+    "description": "Specify libraries or flags to use when linking a given target and/or its dependents. Usage requirements  from linked library targets will be propagated. Usage requirements of a target's dependencies affect compilation of its own sources.",
+    "syntax_examples": [
+      "target_link_libraries(<target> ... <item>... ...)",
+      "target_link_libraries(<target> <PRIVATE|PUBLIC|INTERFACE> <item>... [<PRIVATE|PUBLIC|INTERFACE> <item>...]...)",
+      "target_link_libraries(<target> <item>...)",
+      "target_link_libraries(<target> <LINK_PRIVATE|LINK_PUBLIC> <lib>... [<LINK_PRIVATE|LINK_PUBLIC> <lib>...]...)",
+      "target_link_libraries(<target> LINK_INTERFACE_LIBRARIES <item>...)"
+    ]
+  },
+  "target_link_options": {
+    "name": "target_link_options",
+    "description": "Add options to the link step for an executable, shared library or module library target.",
+    "syntax_examples": [
+      "target_link_options(<target> [BEFORE] <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])"
+    ]
+  },
+  "target_precompile_headers": {
+    "name": "target_precompile_headers",
+    "description": "Add a list of header files to precompile.",
+    "syntax_examples": [
+      "target_precompile_headers(<target> <INTERFACE|PUBLIC|PRIVATE> [header1...] [<INTERFACE|PUBLIC|PRIVATE> [header2...] ...])",
+      "target_precompile_headers(myTarget PUBLIC project_header.h PRIVATE [[\"other_header.h\"]] <unordered_map>)",
+      "target_precompile_headers(mylib PRIVATE \"$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/cxx_only.h>\" \"$<$<COMPILE_LANGUAGE:C>:<stddef.h$<ANGLE-R>>\" \"$<$<COMPILE_LANGUAGE:CXX>:<cstddef$<ANGLE-R>>\" )",
+      "target_precompile_headers(<target> REUSE_FROM <other_target>)"
+    ]
+  },
+  "target_sources": {
+    "name": "target_sources",
+    "description": "Add sources to a target.",
+    "syntax_examples": [
+      "target_sources(<target> <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])",
+      "target_sources(MyTarget PRIVATE \"$<$<CONFIG:Debug>:dbgsrc.cpp>\") target_sources(MyTarget PRIVATE \"$<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/dbgsrc.cpp>\")",
+      "target_sources(<target> [<INTERFACE|PUBLIC|PRIVATE> [FILE_SET <set> [TYPE <type>] [BASE_DIRS <dirs>...] [FILES <files>...]]... ]...)"
+    ]
+  },
+  "try_compile": {
+    "name": "try_compile",
+    "description": "Try building some code.",
+    "syntax_examples": [
+      "try_compile(<compileResultVar> PROJECT <projectName> SOURCE_DIR <srcdir> [BINARY_DIR <bindir>] [TARGET <targetName>] [LOG_DESCRIPTION <text>] [NO_CACHE] [NO_LOG] [CMAKE_FLAGS <flags>...] [OUTPUT_VARIABLE <var>])",
+      "try_compile(<compileResultVar> <bindir> <srcdir> <projectName> [<targetName>] [CMAKE_FLAGS <flags>...] [OUTPUT_VARIABLE <var>])",
+      "try_compile(<compileResultVar> [SOURCES_TYPE <type>] <SOURCES <srcfile...> | SOURCE_FROM_CONTENT <name> <content> | SOURCE_FROM_VAR <name> <var> | SOURCE_FROM_FILE <name> <path>>... [LOG_DESCRIPTION <text>] [NO_CACHE] [NO_LOG] [CMAKE_FLAGS <flags>...] [COMPILE_DEFINITIONS <defs>...] [LINK_OPTIONS <options>...] [LINK_LIBRARIES <libs>...] [LINKER_LANGUAGE <lang>] [OUTPUT_VARIABLE <var>] [COPY_FILE <fileName> [COPY_FILE_ERROR <var>]] [<LANG>_STANDARD <std>] [<LANG>_STANDARD_REQUIRED <bool>] [<LANG>_EXTENSIONS <bool>])",
+      "try_compile(<compileResultVar> <bindir> <srcfile|SOURCES srcfile...> [CMAKE_FLAGS <flags>...] [COMPILE_DEFINITIONS <defs>...] [LINK_OPTIONS <options>...] [LINK_LIBRARIES <libs>...] [OUTPUT_VARIABLE <var>] [COPY_FILE <fileName> [COPY_FILE_ERROR <var>]] [<LANG>_STANDARD <std>] [<LANG>_STANDARD_REQUIRED <bool>] [<LANG>_EXTENSIONS <bool>])"
+    ]
+  },
+  "try_run": {
+    "name": "try_run",
+    "description": "Try compiling and then running some code.",
+    "syntax_examples": [
+      "try_run(<runResultVar> <compileResultVar> [SOURCES_TYPE <type>] <SOURCES <srcfile...> | SOURCE_FROM_CONTENT <name> <content> | SOURCE_FROM_VAR <name> <var> | SOURCE_FROM_FILE <name> <path>>... [LOG_DESCRIPTION <text>] [NO_CACHE] [NO_LOG] [CMAKE_FLAGS <flags>...] [COMPILE_DEFINITIONS <defs>...] [LINK_OPTIONS <options>...] [LINK_LIBRARIES <libs>...] [COMPILE_OUTPUT_VARIABLE <var>] [COPY_FILE <fileName> [COPY_FILE_ERROR <var>]] [<LANG>_STANDARD <std>] [<LANG>_STANDARD_REQUIRED <bool>] [<LANG>_EXTENSIONS <bool>] [RUN_OUTPUT_VARIABLE <var>] [RUN_OUTPUT_STDOUT_VARIABLE <var>] [RUN_OUTPUT_STDERR_VARIABLE <var>] [WORKING_DIRECTORY <var>] [ARGS <args>...])",
+      "try_run(<runResultVar> <compileResultVar> <bindir> <srcfile|SOURCES srcfile...> [CMAKE_FLAGS <flags>...] [COMPILE_DEFINITIONS <defs>...] [LINK_OPTIONS <options>...] [LINK_LIBRARIES <libs>...] [LINKER_LANGUAGE <lang>] [COMPILE_OUTPUT_VARIABLE <var>] [COPY_FILE <fileName> [COPY_FILE_ERROR <var>]] [<LANG>_STANDARD <std>] [<LANG>_STANDARD_REQUIRED <bool>] [<LANG>_EXTENSIONS <bool>] [RUN_OUTPUT_VARIABLE <var>] [OUTPUT_VARIABLE <var>] [WORKING_DIRECTORY <var>] [ARGS <args>...])"
+    ]
+  },
+  "unset": {
+    "name": "unset",
+    "description": "Unset a variable, cache variable, or environment variable.",
+    "syntax_examples": [
+      "unset(<variable> [CACHE | PARENT_SCOPE])",
+      "unset(ENV{<variable>})"
+    ]
+  },
+  "use_mangled_mesa": {
+    "name": "use_mangled_mesa",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0030.",
+    "syntax_examples": ["use_mangled_mesa(PATH_TO_MESA OUTPUT_DIRECTORY)"]
+  },
+  "utility_source": {
+    "name": "utility_source",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0034.",
+    "syntax_examples": [
+      "utility_source(cache_entry executable_name path_to_source [file1 file2 ...])"
+    ]
+  },
+  "variable_requires": {
+    "name": "variable_requires",
+    "description": "Disallowed since version 3.0. See CMake Policy CMP0035.",
+    "syntax_examples": [
+      "variable_requires(TEST_VARIABLE RESULT_VARIABLE REQUIRED_VARIABLE1 REQUIRED_VARIABLE2 ...)"
+    ]
+  },
+  "variable_watch": {
+    "name": "variable_watch",
+    "description": "Watch the CMake variable for change.",
+    "syntax_examples": ["variable_watch(<variable> [<command>])"]
+  },
+  "while": {
+    "name": "while",
+    "description": "Evaluate a group of commands while a condition is true",
+    "syntax_examples": ["while(<condition>) <commands> endwhile()"]
+  },
+  "write_file": {
+    "name": "write_file",
+    "description": "The first argument is the file name, the rest of the arguments are messages to write. If the argument APPEND is specified, then the message will be appended.",
+    "syntax_examples": ["write_file(filename \"message to write\"... [APPEND])"]
+  }
+}

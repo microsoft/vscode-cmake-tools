@@ -15,6 +15,8 @@ import { expandString } from '@cmt/expand';
 import * as proc from '@cmt/proc';
 import { ProjectController } from '@cmt/projectController';
 import { extensionManager } from '@cmt/extension';
+import { CMakeProject } from '@cmt/cmakeProject';
+import { handleCoverageInfoFiles } from '@cmt/coverage';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -116,6 +118,18 @@ interface CTestInfo {
         properties: { name: string; value: string | string[] }[];
     }[];
     version: { major: number; minor: number };
+}
+
+/* The preRunCoverageTarget and postRunCoverageTarget are optional user
+configured targets that are run before and after the tests when a "Run with
+Coverage" test execution is triggered. These cae be used to zero the
+coverage counters, filter coverage results etc. */
+interface ProjectCoverageConfig {
+    project: CMakeProject;
+    driver: CMakeDriver;
+    preRunCoverageTarget: string | null;
+    postRunCoverageTarget: string | null;
+    coverageInfoFiles: string[];
 }
 
 function parseXmlString<T>(xml: string): Promise<T> {
@@ -228,6 +242,8 @@ export class CTestDriver implements vscode.Disposable {
 
     private readonly testingEnabledEmitter = new vscode.EventEmitter<boolean>();
     readonly onTestingEnabledChanged = this.testingEnabledEmitter.event;
+
+    private coverageData = new WeakMap<vscode.FileCoverage, vscode.FileCoverageDetail[]>();
 
     dispose() {
         this.testingEnabledEmitter.dispose();
@@ -710,7 +726,7 @@ export class CTestDriver implements vscode.Disposable {
             return -1;
         }
 
-        if (util.isTestMode()) {
+        if (util.isTestMode() && !util.overrideTestModeForTestExplorer()) {
             // ProjectController can't be initialized in test mode, so we don't have a usable test explorer
             return 0;
         }
@@ -905,7 +921,65 @@ export class CTestDriver implements vscode.Disposable {
         return true;
     }
 
-    private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
+    private async handleCoverageOnProjects(run: vscode.TestRun, projectCoverageConfigs: ProjectCoverageConfig[]) {
+        // Currently only LCOV coverage info files are supported
+        for (const projectCoverageConfig of projectCoverageConfigs) {
+            if (projectCoverageConfig.coverageInfoFiles.length === 0) {
+                log.warning(localize('test.noCoverageInfoFiles', 'No coverage info files for CMake project {0}. No coverage data will be analyzed for this project.', projectCoverageConfig.project.sourceDir));
+                continue;
+            }
+            const expandedCoverageInfoFiles = await Promise.all(projectCoverageConfig.coverageInfoFiles.map(async (coverageInfoFile: string) => expandString(coverageInfoFile, projectCoverageConfig.driver.expansionOptions)));
+            await handleCoverageInfoFiles(run, expandedCoverageInfoFiles, this.coverageData);
+        }
+    }
+
+    private async coverageCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken): Promise<number> {
+        const projectRoots = new Set<string>();
+        for (const test of tests) {
+            projectRoots.add(this.getTestRootFolder(test));
+        }
+
+        const projectCoverageConfigs: ProjectCoverageConfig[] = [];
+        for (const folder of projectRoots) {
+            const project = await this.projectController?.getProjectForFolder(folder);
+            if (project) {
+                const driver = await project.getCMakeDriverInstance();
+                if (driver) {
+                    projectCoverageConfigs.push({
+                        project: project, driver: driver, preRunCoverageTarget: driver.config.preRunCoverageTarget, postRunCoverageTarget: driver.config.postRunCoverageTarget, coverageInfoFiles: driver.config.coverageInfoFiles
+                    });
+                }
+            }
+        }
+
+        for (const projectCoverageConfig of projectCoverageConfigs) {
+            if (projectCoverageConfig.preRunCoverageTarget) {
+                log.info(localize('test.buildingPreRunCoverageTarget', 'Building the preRunCoverageTarget for project {0} before running tests with coverage.', projectCoverageConfig.project.sourceDir));
+                const rc = await projectCoverageConfig.project.build([projectCoverageConfig.preRunCoverageTarget]);
+                if (rc !== 0) {
+                    log.error(localize('test.preRunCoverageTargetFailure', 'Building the preRunCoverageTarget \'{0}\' on project in {1} failed. Skipping running tests.', projectCoverageConfig.preRunCoverageTarget, projectCoverageConfig.project.sourceDir));
+                    run.end();
+                    return rc;
+                }
+            }
+        }
+        const runResult = await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
+        for (const projectCoverageConfig of projectCoverageConfigs) {
+            if (projectCoverageConfig.postRunCoverageTarget) {
+                log.info(localize('test.buildingPostRunCoverageTarget', 'Building the postRunCoverageTarget \'{0}\' for project {1} after the tests have run with coverage.', projectCoverageConfig.postRunCoverageTarget, projectCoverageConfig.project.sourceDir));
+                const rc = await projectCoverageConfig.project.build([projectCoverageConfig.postRunCoverageTarget]);
+                if (rc !== 0) {
+                    log.error(localize('test.postRunCoverageTargetFailure', 'Building target postRunCoverageTarget on project in {0} failed. Skipping handling of coverage data.', projectCoverageConfig.project.sourceDir));
+                    return rc;
+                }
+            }
+        }
+
+        await this.handleCoverageOnProjects(run, projectCoverageConfigs);
+        return runResult;
+    }
+
+    private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken, isCoverageRun = false) {
         // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
             return;
@@ -922,7 +996,12 @@ export class CTestDriver implements vscode.Disposable {
         this.ctestsEnqueued(tests, run);
         const buildSucceeded = await this.buildTests(tests, run);
         if (buildSucceeded) {
-            await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
+            if (isCoverageRun) {
+                await this.coverageCTestHelper(tests, run, cancellation);
+
+            } else {
+                await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, RunCTestHelperEntryPoint.TestExplorer);
+            }
         } else {
             log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
         }
@@ -1169,6 +1248,11 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
+        // If buildBeforeRun is set to false, we skip the build step
+        if (!this.ws.config.buildBeforeRun) {
+            return true;
+        }
+
         // Folder => status
         const builtFolder = new Map<string, number>();
         let status: number = 0;
@@ -1226,13 +1310,19 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             testExplorer.createRunProfile(
-                'Run Tests',
+                localize('run.tests.profile', 'Run Tests'),
                 vscode.TestRunProfileKind.Run,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
                 true
             );
             testExplorer.createRunProfile(
-                'Debug Tests',
+                localize('run.tests.with.coverage.profile', 'Run Tests with Coverage'),
+                vscode.TestRunProfileKind.Coverage,
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation, true),
+                true
+            ).loadDetailedCoverage = async (_, fileCoverage) => this.coverageData.get(fileCoverage) ?? [];
+            testExplorer.createRunProfile(
+                localize('debug.tests.profile', 'Debug Tests'),
                 vscode.TestRunProfileKind.Debug,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
                     if (request.include === undefined) {

@@ -14,6 +14,9 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
+      - name: Setup LCOV
+        uses: hrishikesh-kadam/setup-lcov@v1
+
       - name: Setup Node environment
         uses: actions/setup-node@v3
         with:
@@ -68,7 +71,7 @@ jobs:
 
       - name: Upload test logs if tests failed
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: TestLogs
           path: test/**/log.txt
