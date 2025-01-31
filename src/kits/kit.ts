@@ -1193,14 +1193,14 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
                 Array.from(untrusted_paths).toString()),
             { action: 'yes', title: localize('yes', 'Yes') },
             { action: 'no', title: localize('no', 'No') }).then(async action => {
-                if (action?.action === 'yes') {
-                    const settings = vscode.workspace.getConfiguration('cmake');
-                    const additionalCompilerSearchDirs = settings.get<string[]>('additionalCompilerSearchDirs', []);
-                    additionalCompilerSearchDirs.push(...Array.from(untrusted_paths));
-                    await settings.update('additionalCompilerSearchDirs', additionalCompilerSearchDirs, vscode.ConfigurationTarget.Global);
-                    await vscode.commands.executeCommand('cmake.scanForKits');
-                }
-            });
+            if (action?.action === 'yes') {
+                const settings = vscode.workspace.getConfiguration('cmake');
+                const additionalCompilerSearchDirs = settings.get<string[]>('additionalCompilerSearchDirs', []);
+                additionalCompilerSearchDirs.push(...Array.from(untrusted_paths));
+                await settings.update('additionalCompilerSearchDirs', additionalCompilerSearchDirs, vscode.ConfigurationTarget.Global);
+                await vscode.commands.executeCommand('cmake.scanForKits');
+            }
+        });
     }
 
     return result.filter(kit => kit.isTrusted);
@@ -1266,7 +1266,7 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
         return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
     }
     if (kit.name === SpecialKits.ScanSpecificDir) {
-        return localize('search.for.compilers.in.dir', 'Search for compilers in a specific directory');
+        return localize('search.for.compilers.in.dir', 'Search recursively for compilers in a specific directory (max depth: 5)');
     }
 
     return '';

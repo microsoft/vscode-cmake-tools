@@ -283,7 +283,7 @@ export class PresetsController implements vscode.Disposable {
                             const hostTargetArch = getHostTargetArchString(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
                             return `${(kit.preferredGenerator?.name || 'Visual Studio')} ${hostTargetArch}`;
                         } else if (kit.name === SpecialKits.ScanSpecificDir) {
-                            return `[${localize('scan.for.compilers.in.dir', 'Scan for compilers in directory')}]`;
+                            return `[${localize('scan.for.compilers.in.dir', 'Scan recursively for compilers in directory (max depth: 5)')}]`;
                         } else {
                             return kit.name;
                         }
@@ -307,30 +307,7 @@ export class PresetsController implements vscode.Disposable {
                             await KitsController.scanForKits(await this.project.getCMakePathofProject());
                             return false;
                         } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
-                            const dir = await vscode.window.showOpenDialog({
-                                canSelectFiles: false,
-                                canSelectFolders: true,
-                                canSelectMany: false,
-                                openLabel: localize('select.folder', 'Select Folder')
-                            });
-                            if (!dir || dir.length === 0) {
-                                return false;
-                            }
-                            const dirPathWithDepth = async (folder: string, depth: number = 5) => {
-                                const dir = await fs.readdir(folder);
-                                const files: string[] = [];
-                                for (const file of dir) {
-                                    const filePath = path.join(folder, file);
-                                    if (depth > 0 && (await fs.stat(filePath)).isDirectory()) {
-                                        files.push(...await dirPathWithDepth(filePath, depth - 1));
-                                        files.push(filePath);
-                                    }
-                                }
-
-                                return files;
-                            };
-
-                            await KitsController.scanForKits(await this.project.getCMakePathofProject(), [dir[0].fsPath, ...(await dirPathWithDepth(dir[0].fsPath))]);
+                            await KitsController.scanForKitsInSpecificFolder(this.project);
                             return false;
                         } else {
                             log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));

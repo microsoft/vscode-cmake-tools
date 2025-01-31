@@ -281,30 +281,7 @@ export class KitsController {
                 await KitsController.scanForKits(await this.project.getCMakePathofProject());
                 return false;
             } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
-                const dir = await vscode.window.showOpenDialog({
-                    canSelectFiles: false,
-                    canSelectFolders: true,
-                    canSelectMany: false,
-                    openLabel: localize('select.folder', 'Select Folder')
-                });
-                if (!dir || dir.length === 0) {
-                    return false;
-                }
-                const dirPathWithDepth = async (folder: string, depth: number = 5) => {
-                    const dir = await fs.readdir(folder);
-                    const files: string[] = [];
-                    for (const file of dir) {
-                        const filePath = path.join(folder, file);
-                        if (depth > 0 && (await fs.stat(filePath)).isDirectory()) {
-                            files.push(...await dirPathWithDepth(filePath, depth - 1));
-                            files.push(filePath);
-                        }
-                    }
-
-                    return files;
-                };
-
-                await KitsController.scanForKits(await this.project.getCMakePathofProject(), [dir[0].fsPath, ...(await dirPathWithDepth(dir[0].fsPath))]);
+                await KitsController.scanForKitsInSpecificFolder(this.project);
                 return false;
             } else {
                 log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
@@ -589,6 +566,55 @@ export class KitsController {
         KitsController._startPruneOutdatedKitsAsync(cmakePath);
 
         return duplicateRemoved;
+    }
+
+    static async scanForKitsInSpecificFolder(project: CMakeProject) {
+        const dir = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: localize('select.folder', 'Select Folder')
+        });
+        const dirPathWithDepth = async (folder: string, progress: ProgressHandle, cancel: vscode.CancellationToken, depth: number = 5): Promise<string[]> => {
+            if (cancel.isCancellationRequested) {
+                return [];
+            }
+
+            const dir = await fs.readdir(folder);
+            const files: string[] = [];
+            progress.report({ message: folder });
+            for (const file of dir) {
+                const filePath = path.join(folder, file);
+                if (depth > 0 && (await fs.stat(filePath)).isDirectory()) {
+                    files.push(...await dirPathWithDepth(filePath, progress, cancel, depth - 1));
+                    files.push(filePath);
+                }
+            }
+
+            return files;
+        };
+
+        if (!dir || dir.length === 0) {
+            return;
+        }
+
+        const accumulatedDirs: string[] = [];
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: localize('accumulating.folders', 'Recursively accumulating folders to scan'),
+                cancellable: true
+            },
+            async (progress, cancel) => {
+                accumulatedDirs.push(dir[0].fsPath);
+                accumulatedDirs.push(...(await dirPathWithDepth(dir[0].fsPath, progress, cancel)));
+            }
+        );
+
+        await KitsController.scanForKits(
+            await project.getCMakePathofProject(),
+            accumulatedDirs
+        );
     }
 
     static isBetterMatch(newKit: Kit, existingKit?: Kit): boolean {
