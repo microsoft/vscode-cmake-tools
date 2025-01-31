@@ -24,6 +24,7 @@ Improvements:
 - Retire the Show Options Moved Notification [#4039](https://github.com/microsoft/vscode-cmake-tools/issues/4039)
 - Improve the pinned commands experience by defaulting settings and using VS Code state rather than modifying user settings. [#3977](https://github.com/microsoft/vscode-cmake-tools/issues/3977)
 - Skip project building in the CTest test explorer when `cmake.buildBeforeRun` is set to `false`. [#4241](https://github.com/microsoft/vscode-cmake-tools/pull/4241) [@Dabsunter](https://github.com/Dabsunter)
+- Improve consistency in key bindings. [#4124](https://github.com/microsoft/vscode-cmake-tools/issues/4124) [@alex20230721](https://github.com/alex20230721)
 
 Bug Fixes:
 
