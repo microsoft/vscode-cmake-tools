@@ -5,12 +5,14 @@
 Features:
 
 - Add support for Presets v9, which enables more macro expansion for the `include` field. [#3946](https://github.com/microsoft/vscode-cmake-tools/issues/3946)
+- Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078)
 - Add support to configure default folder in workspace setting. [#1078](https://github.com/microsoft/vscode-cmake-tools/issues/1078) [@sanore](https://github.com/sanore)
 - Add support for processing LCOV based coverage info files when tests are
   executed. This adds test execution type, "Run with coverage", on the `ctest`
   section of the Testing tab.
   [#4040](https://github.com/microsoft/vscode-cmake-tools/issues/4040)
 - Add basic CMake language services: quick hover and completions for CMake built-ins. [PR #4204](https://github.com/microsoft/vscode-cmake-tools/pull/4204)
+- Add an option to scan kits from a folder. [#4191](https://github.com/microsoft/vscode-cmake-tools/pull/4191) [@std-microblock](https://github.com/std-microblock)
 
 Improvements:
 
