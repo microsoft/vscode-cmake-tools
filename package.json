@@ -3658,7 +3658,7 @@
         "when": "!inDebugMode && inCMakeProject && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       },
       {
-        "key": "ctrl+f5",
+        "key": "shift+ctrl+f5",
         "command": "cmake.launchTarget",
         "when": "!inDebugMode && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       }
