@@ -43,13 +43,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
         super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
     }
 
-    private _needsReconfigure = true;
     async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
         await onConfigureSettingsChange();
-    }
-    async checkNeedsReconfigure(): Promise<boolean> {
-        return this._needsReconfigure;
     }
 
     async doSetKit(cb: () => Promise<void>): Promise<void> {

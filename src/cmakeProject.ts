@@ -2401,7 +2401,6 @@ export class CMakeProject {
 
         return drv.stopCurrentProcess().then(async () => {
             await this.activeBuild;
-            this.cmakeDriver = Promise.resolve(null);
             this.isBusy.set(false);
             return true;
         }, () => false);
@@ -2415,7 +2414,6 @@ export class CMakeProject {
 
         return drv.stopCurrentProcess().then(async () => {
             await this.activeBuild;
-            this.cmakeDriver = Promise.resolve(null);
             return true;
         }, () => false);
     }

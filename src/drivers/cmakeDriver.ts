@@ -146,6 +146,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this._isConfiguredAtLeastOnce;
     }
 
+    protected _needsReconfigure = true;
+    /**
+     * Check if we need to reconfigure, such as if an important file has changed
+     */
+    public async checkNeedsReconfigure(): Promise<boolean> {
+        return this._needsReconfigure;
+    }
+
     protected async doPreCleanConfigure(): Promise<void> {
         return Promise.resolve();
     }
@@ -163,10 +171,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     protected abstract get isCacheConfigSupported(): boolean;
 
-    /**
-     * Check if we need to reconfigure, such as if an important file has changed
-     */
-    abstract checkNeedsReconfigure(): Promise<boolean>;
     /**
      * Event registration for code model updates
      *
@@ -2031,6 +2035,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (this.configureProcess && this.configureProcess.child) {
             await util.termProc(this.configureProcess.child);
             this.configureProcess = null;
+            this._needsReconfigure = true;
         }
         if (this.cmakeBuildRunner) {
             await this.cmakeBuildRunner.stop();
@@ -2057,6 +2062,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const initBaseDriverWithPresetLoc = localize("init.driver.using.preset", "Initializing base driver using preset");
         const initBaseDriverWithKitLoc = localize("init.driver.using.kit", "Initializing base driver using kit");
         log.debug(`${useCMakePresets ? initBaseDriverWithPresetLoc : initBaseDriverWithKitLoc}`);
+
         // Load up kit or presets before starting any drivers.
         if (useCMakePresets) {
             if (configurePreset) {
