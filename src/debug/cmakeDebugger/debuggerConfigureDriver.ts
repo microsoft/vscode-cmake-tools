@@ -8,6 +8,17 @@ export interface DebuggerInformation {
     debuggerStoppedDueToPreconditions(message: string): void;
 }
 
+/**
+ * Generates a unique pipe name for the CMake debugger.
+ *
+ * On Windows, the pipe name is in the format:
+ * `\\.\pipe\cmake-debugger-pipe\{UUID}`
+ *
+ * On other platforms, the pipe name is in the format:
+ * `/tmp/cmake-debugger-pipe-{UUID}`
+ *
+ * @returns The unique pipe name for the CMake debugger.
+ */
 export function getDebuggerPipeName(): string {
     if (process.platform === 'win32') {
         return `\\\\.\\\\pipe\\\\cmake-debugger-pipe\\\\${uuidv4()}`;
