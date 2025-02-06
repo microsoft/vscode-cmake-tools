@@ -13,6 +13,16 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const cmakeLogger = logging.createLogger('cmake');
 const scriptLogger = logging.createLogger('cmake-script');
 
+/**
+ * Executes a CMake script with the debugger.
+ *
+ * @param scriptPath - The path to the CMake script to execute.
+ * @param scriptArgs - An array of arguments to pass to the script.
+ * @param scriptEnv - A map of environment variables to set for the script.
+ * @param debuggerInformation - Information required to set up the debugger.
+ * @returns A promise that resolves when the script execution is complete.
+ * @throws Will throw an error if the script execution fails.
+ */
 export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: string[], scriptEnv: Map<string, string>, debuggerInformation: DebuggerInformation): Promise<void> {
     const outputConsumer: CMakeOutputConsumer = new CMakeOutputConsumer("", scriptLogger);
 
