@@ -13,9 +13,27 @@ interface PinnedCommandsQuickPickItem extends vscode.QuickPickItem {
     command: string;
 }
 
+/**
+ * Represents a node in the tree view for a pinned command.
+ * Extends the `vscode.TreeItem` class.
+ */
 class PinnedCommandNode extends vscode.TreeItem {
+    /**
+     * The name of the command associated with this node.
+     */
     public commandName: string;
+
+    /**
+     * Indicates whether the command is visible in the UI.
+     */
     public isVisible: boolean;
+
+    /**
+     * Creates an instance of `PinnedCommandNode`.
+     * @param label - The label to display for this tree item.
+     * @param command - The command to execute when this item is selected.
+     * @param isVisible - A boolean indicating if the command is visible.
+     */
     constructor(label: string, command: string, isVisible: boolean) {
         super(label);
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -24,10 +42,17 @@ class PinnedCommandNode extends vscode.TreeItem {
         this.isVisible = isVisible;
     }
 
+    /**
+     * Gets the tree item representation of this node.
+     * @returns The tree item.
+     */
     getTreeItem(): vscode.TreeItem {
         return this;
     }
 
+    /**
+     * Executes the command associated with this node.
+     */
     async runThisCommand() {
         await vscode.commands.executeCommand(this.commandName);
     }

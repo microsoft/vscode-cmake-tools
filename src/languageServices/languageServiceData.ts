@@ -58,6 +58,15 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         this.modules = JSON.parse(await this.getFile("modules.json", locale));
     }
 
+    /**
+     * Provides completion suggestions based on the current word and the type of language construct.
+     *
+     * @param currentWord - The current word being typed by the user.
+     * @param data - The data containing commands, modules, or variables for completion suggestions.
+     * @param type - The type of language construct (Command, Module, or Variable).
+     * @param beforeCurrentWord - Optional. The text before the current word, used to determine the appropriate snippet format.
+     * @returns An array of `vscode.CompletionItem` objects representing the completion suggestions.
+     */
     private getCompletionSuggestionsHelper(currentWord: string, data: Commands | Modules | Variables, type: LanguageType, beforeCurrentWord?: string): vscode.CompletionItem[] {
         function moduleInsertText(module: string, beforeCurrentWord?: string): vscode.SnippetString {
             if (beforeCurrentWord) {

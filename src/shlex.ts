@@ -2,6 +2,13 @@ export interface ShlexOptions {
     mode: 'windows' | 'posix';
 }
 
+/**
+ * Splits a string into an iterable of tokens, similar to how a shell would parse arguments.
+ * Handles quoting and escaping according to the specified mode ('windows' or 'posix').
+ * @param str The string to split into tokens.
+ * @param opt Optional options for splitting. If not provided, defaults to the platform-specific mode ('windows' or 'posix').
+ * @returns An iterable of tokens.
+ */
 export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     opt = opt || {
         mode: process.platform === 'win32' ? 'windows' : 'posix'
@@ -70,6 +77,13 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     }
 }
 
+/**
+ * Quotes a string for safe use in a shell command.
+ * If the string contains special characters, it will be wrapped in double quotes and any existing double quotes will be escaped.
+ * @param str The string to quote.
+ * @param opt Optional options for quoting. If not provided, defaults to the platform-specific mode ('windows' or 'posix').
+ * @returns The quoted string.
+ */
 export function quote(str: string, opt?: ShlexOptions): string {
     opt = opt || {
         mode: process.platform === 'win32' ? 'windows' : 'posix'

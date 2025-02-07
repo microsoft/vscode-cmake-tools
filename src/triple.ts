@@ -7,6 +7,12 @@ export interface TargetTriple {
     libc: string;
 }
 
+/**
+ * Finds the target triple from a given line of text.
+ * The target triple is a string that identifies the target architecture, vendor, and operating system.
+ * @param line The line of text to search for the target triple.
+ * @returns The target triple if found, or null if not found.
+ */
 export function findTargetTriple(line: string): string | null {
     const target_triple_re = /^Target:\s+(.*)/;
     const target_triple_match = target_triple_re.exec(line);
@@ -111,6 +117,12 @@ const TriplePossibleLibC: { key: string; regexp: RegExp }[] = [
     // otherwise system libc
 ];
 
+/**
+ * Computes the target triple string from a TargetTriple object.
+ * The target triple string identifies the target architecture, vendor, operating system, ABI, and libc.
+ * @param target The TargetTriple object containing the target information.
+ * @returns The computed target triple string.
+ */
 export function computeTargetTriple(target: TargetTriple): string {
     let triple = target.targetArch;
     if (target.vendors.length > 0) {
@@ -127,6 +139,12 @@ export function computeTargetTriple(target: TargetTriple): string {
     return triple;
 }
 
+/**
+ * Parses a target triple string into a TargetTriple object.
+ * The target triple string identifies the target architecture, vendor, operating system, ABI, and libc.
+ * @param triple The target triple string to parse.
+ * @returns A TargetTriple object with the parsed information, or undefined if parsing fails.
+ */
 export function parseTargetTriple(triple: string): TargetTriple | undefined {
     const triples = triple.split("-");
     let foundArch = 'unknown';
@@ -197,6 +215,11 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
     };
 }
 
+/**
+ * Extracts the major version from a semantic version string.
+ * @param semver The semantic version string.
+ * @returns The major version as a string.
+ */
 export function majorVersionSemver(semver: string): string {
     const major_version_re = /^(\d+)./;
     const major_version_match = major_version_re.exec(semver);
@@ -206,6 +229,11 @@ export function majorVersionSemver(semver: string): string {
     return '';
 }
 
+/**
+ * Extracts the minor version from a semantic version string.
+ * @param semver The semantic version string.
+ * @returns The minor version as a string.
+ */
 export function minorVersionSemver(semver: string): string {
     const minor_version_re = /^(\d+).(\d+)/;
     const minor_version_match = minor_version_re.exec(semver);
