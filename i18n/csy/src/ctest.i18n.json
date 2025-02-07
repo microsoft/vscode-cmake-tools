@@ -30,5 +30,8 @@
 	"no.launch.config": "Nenašly se žádné konfigurace spuštění.",
 	"choose.launch.config": "Zvolte konfiguraci spuštění, se kterou chcete test ladit.",
 	"test.skip.debug.build.failure": "Kvůli selhání sestavení se neladí testy.",
-	"build.failed": "Sestavení selhalo"
+	"build.failed": "Sestavení selhalo",
+	"run.tests.profile": "Spustit testy",
+	"run.tests.with.coverage.profile": "Spustit testy s rozsahem testování",
+	"debug.tests.profile": "Ladit testy"
 }

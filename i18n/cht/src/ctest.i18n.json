@@ -30,5 +30,8 @@
 	"no.launch.config": "找不到啟動設定。",
 	"choose.launch.config": "選擇要對測試進行偵錯的啟動設定。",
 	"test.skip.debug.build.failure": "由於建置失敗，沒有偵錯中的測試。",
-	"build.failed": "建置失敗"
+	"build.failed": "建置失敗",
+	"run.tests.profile": "執行測試",
+	"run.tests.with.coverage.profile": "執行涵蓋範圍測試",
+	"debug.tests.profile": "偵錯測試"
 }

@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "Starten Sie die Auswahl der Kits. {0} Kits gefunden.",
 	"opening.kit.selection": "QuickPick zur Kitauswahl wird geöffnet.",
 	"scan.for.kits.button": "Nach Kits suchen",
+	"scan.for.kits.in.specific.dir.button": "Rekursiv nach Kits in bestimmten Verzeichnissen suchen (maximale Tiefe: 5)",
 	"unspecified.kit.name": "Nicht angegeben",
 	"select.a.kit.placeholder": "Kit auswählen für {0}",
 	"user.cancelled.kit.selection": "Vom Benutzer abgebrochene Kitauswahl",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "In der Datei \"cmake-tools-kits.json\" wurden Visual Studio-Kits mit den alten IDs gefunden.",
 	"yes.button": "Ja",
 	"delete.duplicate.kits": "Möchten Sie die doppelten Visual Studio-Kits aus \"cmake-tools-kits.json\" löschen?",
-	"no.button": "Nein"
+	"no.button": "Nein",
+	"select.folder": "Ordner auswählen",
+	"accumulating.folders": "Rekursiv akkumulierende Ordner zum Scannen"
 }

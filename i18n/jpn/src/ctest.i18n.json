@@ -30,5 +30,8 @@
 	"no.launch.config": "起動構成が見つかりません。",
 	"choose.launch.config": "テストをデバッグする起動構成を選択します。",
 	"test.skip.debug.build.failure": "ビルド エラーが原因でテストをデバッグしていません。",
-	"build.failed": "ビルドに失敗しました"
+	"build.failed": "ビルドに失敗しました",
+	"run.tests.profile": "テストの実行",
+	"run.tests.with.coverage.profile": "カバレッジを使用してテストを実行",
+	"debug.tests.profile": "テストのデバッグ"
 }

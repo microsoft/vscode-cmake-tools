@@ -30,5 +30,8 @@
 	"no.launch.config": "Nie znaleziono konfiguracji uruchamiania.",
 	"choose.launch.config": "Wybierz konfigurację uruchamiania do debugowania testu.",
 	"test.skip.debug.build.failure": "Testy nie są debugowane z powodu niepowodzenia kompilacji.",
-	"build.failed": "Kompilacja nie powiodła się"
+	"build.failed": "Kompilacja nie powiodła się",
+	"run.tests.profile": "Uruchamianie testów",
+	"run.tests.with.coverage.profile": "Uruchamiaj testy z pokryciem",
+	"debug.tests.profile": "Debugowanie testów"
 }

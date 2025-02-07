@@ -30,5 +30,8 @@
 	"no.launch.config": "Configurations de lancement introuvables.",
 	"choose.launch.config": "Choisissez une configuration de lancement avec qui déboguer le test.",
 	"test.skip.debug.build.failure": "Tests non débogués en raison d’un échec de build.",
-	"build.failed": "Échec de la build"
+	"build.failed": "Échec de la build",
+	"run.tests.profile": "Exécuter les tests",
+	"run.tests.with.coverage.profile": "Exécuter les tests avec couverture",
+	"debug.tests.profile": "Déboguer les tests"
 }

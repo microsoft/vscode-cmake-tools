@@ -30,5 +30,8 @@
 	"no.launch.config": "Конфигурации запуска не найдены.",
 	"choose.launch.config": "Выберите конфигурацию запуска для отладки теста.",
 	"test.skip.debug.build.failure": "Нет отлаживаемых тестов из-за сбоя сборки.",
-	"build.failed": "Сбой сборки"
+	"build.failed": "Сбой сборки",
+	"run.tests.profile": "Запуск тестов",
+	"run.tests.with.coverage.profile": "Запустить тесты с охватом",
+	"debug.tests.profile": "Отладка тестов"
 }

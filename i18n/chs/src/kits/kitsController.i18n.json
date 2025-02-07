@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "开始选择工具包。已找到 {0} 个工具包。",
 	"opening.kit.selection": "正在打开工具包选项快速选择",
 	"scan.for.kits.button": "扫描工具包",
+	"scan.for.kits.in.specific.dir.button": "以递归方式扫描特定目录中的工具包 (最大深度： 5)",
 	"unspecified.kit.name": "未指定",
 	"select.a.kit.placeholder": "为 {0} 选择工具包",
 	"user.cancelled.kit.selection": "用户已取消工具包选择",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "在 cmake-tools-kits.json 中找到了保存的 Visual Studio 工具包和旧 ID。",
 	"yes.button": "是",
 	"delete.duplicate.kits": "是否要从 cmake-tools-kits.json 删除重复的 Visual Studio 工具包?",
-	"no.button": "否"
+	"no.button": "否",
+	"select.folder": "选择文件夹",
+	"accumulating.folders": "递归累积文件夹以进行扫描"
 }

@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "Rozpocznij wybieranie zestawów. Liczba znalezionych zestawów: {0}.",
 	"opening.kit.selection": "Otwieranie elementu QuickPick wyboru zestawu",
 	"scan.for.kits.button": "Skanuj w poszukiwaniu zestawów",
+	"scan.for.kits.in.specific.dir.button": "Skanuj rekursywnie w poszukiwaniu zestawów w określonych katalogach (maksymalna głębokość: 5)",
 	"unspecified.kit.name": "Nieokreślone",
 	"select.a.kit.placeholder": "Wybierz zestaw dla: {0}",
 	"user.cancelled.kit.selection": "Użytkownik anulował wybór zestawu",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "Znaleziono zestawy programu Visual Studio ze starymi identyfikatorami zapisane w pliku cmake-tools-kits.json.",
 	"yes.button": "Tak",
 	"delete.duplicate.kits": "Czy chcesz usunąć zduplikowane zestawy programu Visual Studio z pliku cmake-tools-kits.json?",
-	"no.button": "Nie"
+	"no.button": "Nie",
+	"select.folder": "Wybierz folder",
+	"accumulating.folders": "Rekursywnie akumulowane foldery do skanowania"
 }

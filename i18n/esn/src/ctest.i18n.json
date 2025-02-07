@@ -30,5 +30,8 @@
 	"no.launch.config": "No se encontraron configuraciones de inicio.",
 	"choose.launch.config": "Elija una configuración de inicio con la que depurar la prueba.",
 	"test.skip.debug.build.failure": "No se ejecutan pruebas de depuración debido a una falla en la compilación.",
-	"build.failed": "Error de compilación"
+	"build.failed": "Error de compilación",
+	"run.tests.profile": "Ejecutar pruebas",
+	"run.tests.with.coverage.profile": "Ejecutar pruebas con cobertura",
+	"debug.tests.profile": "Depurar pruebas"
 }

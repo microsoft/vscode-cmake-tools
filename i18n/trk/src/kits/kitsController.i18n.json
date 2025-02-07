@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "Set seçimi başladı. {0} set bulundu.",
 	"opening.kit.selection": "QuickPick set seçimi açılıyor",
 	"scan.for.kits.button": "Setler için tara",
+	"scan.for.kits.in.specific.dir.button": "Belirli dizinlerde setler için özyinelemeli olarak tara (en fazla derinlik: 5)",
 	"unspecified.kit.name": "Belirtilmemiş",
 	"select.a.kit.placeholder": "{0} için bir Set seçin",
 	"user.cancelled.kit.selection": "Kullanıcı Set seçimini iptal etti",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "cmake-tools-kits.json içinde eski kimlikleri kaydedilmiş Visual Studio setleri bulundu.",
 	"yes.button": "Evet",
 	"delete.duplicate.kits": "cmake-tools-kits.json dosyasındaki yinelenen Visual Studio setlerini silmek istiyor musunuz?",
-	"no.button": "Hayır"
+	"no.button": "Hayır",
+	"select.folder": "Klasör Seç",
+	"accumulating.folders": "Taranacak klasörler özyinelemeli olarak biriktiriliyor"
 }

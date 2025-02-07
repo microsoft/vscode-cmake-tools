@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "Avviare la selezione di compilatori. Trovati {0} compilatori.",
 	"opening.compiler.selection": "Apertura selezione del compilatore QuickPick",
 	"scan.for.compilers.button": "Analisi dei compilatori",
+	"scan.for.compilers.in.dir": "Analizza in modo ricorsivo i compilatori nella directory (profondità massima: 5)",
 	"select.a.compiler.placeholder": "Selezionare un kit per {0}",
 	"user.cancelled.compiler.selection": "Selezione del compilatore annullata dall’utente",
 	"user.selected.compiler": "Compilatore {0} selezionato dall’utente",

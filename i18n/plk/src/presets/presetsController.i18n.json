@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "Rozpocznij wybór kompilatora. Znalezione kompilatory: {0}.",
 	"opening.compiler.selection": "Otwieranie kompilatora wyboru QuickPick",
 	"scan.for.compilers.button": "Skanuj pod kątem kompilatorów",
+	"scan.for.compilers.in.dir": "Skanuj rekursywnie w poszukiwaniu kompilatorów w katalogu (maksymalna głębokość: 5)",
 	"select.a.compiler.placeholder": "Wybierz zestaw dla: {0}",
 	"user.cancelled.compiler.selection": "Użytkownik anulował wybór kompilatorów.",
 	"user.selected.compiler": "Użytkownik wybrał kompilator {0}",
