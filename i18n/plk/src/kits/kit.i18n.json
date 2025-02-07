@@ -49,6 +49,7 @@
 	"using.compilers.for.VS2": "Używanie kompilatorów dla Visual Studio (architektura {0})",
 	"search.for.compilers": "Wyszukaj kompilatory na tym komputerze",
 	"unspecified.let.cmake.guess": "Nieokreślone (narzędzie CMake ma zgadnąć kompilatory i środowisko do użycia)",
+	"search.for.compilers.in.dir": "Wyszukaj rekursywnie kompilatory w określonym katalogu (maksymalna głębokość: 5)",
 	"not.reading.nonexistent.kit": "Bez odczytywania pliku nieistniejących zestawów: {0}",
 	"not.reading.invalid.path": "Nie można odczytać nieprawidłowego pliku zestawów: {0}",
 	"reading.kits.file": "Odczytywanie pliku zestawów {0}",

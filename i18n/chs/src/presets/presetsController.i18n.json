@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "开始选择编译器。找到 {0} 编译器。",
 	"opening.compiler.selection": "正在打开编译器选择 QuickPick",
 	"scan.for.compilers.button": "扫描编译器",
+	"scan.for.compilers.in.dir": "以递归方式扫描目录中最大深度 (编译器： 5)",
 	"select.a.compiler.placeholder": "为 {0} 选择工具包",
 	"user.cancelled.compiler.selection": "用户已取消编译器选择",
 	"user.selected.compiler": "用户已选择编译器 {0}",

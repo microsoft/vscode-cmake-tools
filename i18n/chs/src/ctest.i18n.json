@@ -30,5 +30,8 @@
 	"no.launch.config": "未找到启动配置。",
 	"choose.launch.config": "选择要调试测试的启动配置。",
 	"test.skip.debug.build.failure": "由于生成失败而未调试测试。",
-	"build.failed": "生成失败"
+	"build.failed": "生成失败",
+	"run.tests.profile": "运行测试",
+	"run.tests.with.coverage.profile": "运行覆盖率测试",
+	"debug.tests.profile": "调试测试"
 }

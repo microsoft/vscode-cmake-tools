@@ -49,6 +49,7 @@
 	"using.compilers.for.VS2": "Používají se kompilátory pro Visual Studio (architektura {0}).",
 	"search.for.compilers": "Vyhledat kompilátory na tomto počítači",
 	"unspecified.let.cmake.guess": "Neurčeno (Ať nástroje CMake odhadnou, jaké kompilátory a prostředí používat)",
+	"search.for.compilers.in.dir": "Rekurzivně hledat kompilátory v určitém adresáři (maximální hloubka: 5)",
 	"not.reading.nonexistent.kit": "Nečte se soubor neexistujících sad: {0}",
 	"not.reading.invalid.path": "Nečíst neplatný soubor sad: {0}",
 	"reading.kits.file": "Čte se soubor sad {0}.",

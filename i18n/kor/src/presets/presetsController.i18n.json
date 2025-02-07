@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "컴파일러 선택을 시작합니다. {0} 컴파일러를 찾았습니다.",
 	"opening.compiler.selection": "컴파일러 선택 QuickPick를 여는 중",
 	"scan.for.compilers.button": "컴파일러 검색",
+	"scan.for.compilers.in.dir": "디렉터리에서 컴파일러를 재귀적으로 검사합니다(최대 깊이: 5).",
 	"select.a.compiler.placeholder": "{0}용 키트 선택",
 	"user.cancelled.compiler.selection": "사용자가 컴파일러 선택을 취소",
 	"user.selected.compiler": "사용자가 컴파일러 {0} 선택",

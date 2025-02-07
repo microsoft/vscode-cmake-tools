@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "キットの選択を開始します。{0} 個のキットが見つかりました。",
 	"opening.kit.selection": "キット選択 QuickPick を開いています",
 	"scan.for.kits.button": "キットのスキャン",
+	"scan.for.kits.in.specific.dir.button": "特定のディレクトリ内のキットを再帰的にスキャンする (最大深さ: 5)",
 	"unspecified.kit.name": "未指定",
 	"select.a.kit.placeholder": "{0} のキットを選択してください",
 	"user.cancelled.kit.selection": "ユーザーがキットの選択をキャンセルしました",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "cmake-tools-kits.json に保存されている古い ID の Visual Studio キットが見つかりました。",
 	"yes.button": "はい",
 	"delete.duplicate.kits": "cmake-tools-kits.json から重複する Visual Studio キットを削除しますか?",
-	"no.button": "いいえ"
+	"no.button": "いいえ",
+	"select.folder": "フォルダーの選択",
+	"accumulating.folders": "スキャンするフォルダーを再帰的に累積しています"
 }

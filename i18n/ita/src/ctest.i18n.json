@@ -30,5 +30,8 @@
 	"no.launch.config": "Non sono state trovate configurazioni di avvio.",
 	"choose.launch.config": "Scegliere una configurazione di avvio con cui eseguire il debug del test.",
 	"test.skip.debug.build.failure": "Non è possibile eseguire il debug dei test a causa di un errore di compilazione.",
-	"build.failed": "Compilazione non riuscita"
+	"build.failed": "Compilazione non riuscita",
+	"run.tests.profile": "Esegui i test",
+	"run.tests.with.coverage.profile": "Esegui test con code coverage",
+	"debug.tests.profile": "Esegui il debug dei test"
 }

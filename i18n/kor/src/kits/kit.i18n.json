@@ -49,6 +49,7 @@
 	"using.compilers.for.VS2": "Visual Studio에 대한 컴파일러 사용({0} 아키텍처)",
 	"search.for.compilers": "이 컴퓨터에서 컴파일러 검색",
 	"unspecified.let.cmake.guess": "지정되지 않음(CMake에서 사용할 컴파일러 및 환경을 추측하도록 함)",
+	"search.for.compilers.in.dir": "특정 디렉터리의 컴파일러를 재귀적으로 검색합니다(최대 깊이: 5).",
 	"not.reading.nonexistent.kit": "존재하지 않는 키트 파일을 읽지 않음: {0}",
 	"not.reading.invalid.path": "잘못된 키트 파일을 읽지 않음: {0}",
 	"reading.kits.file": "키트 파일 {0}을(를) 읽는 중",

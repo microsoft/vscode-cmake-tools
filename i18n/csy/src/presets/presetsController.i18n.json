@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "Zahajte výběr kompilátorů. Našel se jich tento počet: {0}",
 	"opening.compiler.selection": "Otevírá se výběr kompilátoru QuickPick.",
 	"scan.for.compilers.button": "Hledat kompilátory",
+	"scan.for.compilers.in.dir": "Rekurzivně vyhledávat kompilátory v adresáři (maximální hloubka: 5)",
 	"select.a.compiler.placeholder": "Vyberte sadu pro {0}.",
 	"user.cancelled.compiler.selection": "Uživatel zrušil výběr kompilátoru.",
 	"user.selected.compiler": "Uživatel vybral kompilátor {0}.",

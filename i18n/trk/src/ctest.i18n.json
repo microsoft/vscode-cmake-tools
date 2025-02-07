@@ -30,5 +30,8 @@
 	"no.launch.config": "Başlatma yapılandırması bulunamadı.",
 	"choose.launch.config": "Testte hata ayıklamak için bir başlatma yapılandırması seçin.",
 	"test.skip.debug.build.failure": "Derleme hatası nedeniyle testlerde hata ayıklama gerçekleştirilemiyor.",
-	"build.failed": "Derleme başarısız"
+	"build.failed": "Derleme başarısız",
+	"run.tests.profile": "Testleri Çalıştır",
+	"run.tests.with.coverage.profile": "Testleri Kapsam ile Çalıştır",
+	"debug.tests.profile": "Testlerdeki Hataları Ayıkla"
 }
