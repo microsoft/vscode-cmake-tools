@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "키트 선택을 시작합니다. {0}개 키트를 찾았습니다.",
 	"opening.kit.selection": "키트 선택 QuickPick을 여는 중",
 	"scan.for.kits.button": "키트 검색",
+	"scan.for.kits.in.specific.dir.button": "특정 디렉터리에서 키트를 재귀적으로 검사합니다(최대 깊이: 5).",
 	"unspecified.kit.name": "지정되지 않음",
 	"select.a.kit.placeholder": "{0}용 키트 선택",
 	"user.cancelled.kit.selection": "사용자가 키트 선택을 취소함",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "cmake-tools-kits.json에 저장된 이전 ID가 있는 Visual Studio 키트를 찾았습니다.",
 	"yes.button": "예",
 	"delete.duplicate.kits": "cmake-tools-kits.json에서 중복된 Visual Studio 키트를 삭제하시겠습니까?",
-	"no.button": "아니요"
+	"no.button": "아니요",
+	"select.folder": "폴더 선택",
+	"accumulating.folders": "검색할 폴더를 재귀적으로 누적하는 중"
 }

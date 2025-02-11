@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "開始選取套件。找到 {0} 個套件。",
 	"opening.kit.selection": "正在開啟套件選取 QuickPick",
 	"scan.for.kits.button": "掃描套件",
+	"scan.for.kits.in.specific.dir.button": "以遞歸方式掃描特定目錄中的套件，(深度上限： 5)",
 	"unspecified.kit.name": "未指定",
 	"select.a.kit.placeholder": "選取 {0} 的套件",
 	"user.cancelled.kit.selection": "使用者已取消套件選取",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "找到舊識別碼儲存在 cmake-tools-kits.json 中的 Visual Studio 套件。",
 	"yes.button": "是",
 	"delete.duplicate.kits": "要從 cmake-tools-kits.json 中刪除重複的 Visual Studio 套件嗎?",
-	"no.button": "否"
+	"no.button": "否",
+	"select.folder": "選取資料夾",
+	"accumulating.folders": "遞歸地累計要掃描的資料夾"
 }

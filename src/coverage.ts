@@ -8,6 +8,19 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('ctest-coverage');
 
+/**
+ * Processes coverage information files and updates the provided test run with coverage data.
+ *
+ * @param run - The test run to update with coverage data.
+ * @param coverageInfoFiles - An array of file paths to coverage information files.
+ * @param coverageData - A WeakMap to store the coverage data, mapping `vscode.FileCoverage` to an array of `vscode.FileCoverageDetail`.
+ *
+ * This function reads each coverage information file, parses its contents, and extracts coverage data for lines, branches, and functions.
+ * It then creates `vscode.FileCoverage` objects and populates them with the extracted data, including branch coverage and function declarations.
+ * The coverage data is stored in the provided `coverageData` WeakMap and added to the test run.
+ *
+ * If a coverage information file cannot be opened, a warning is logged and the file is skipped.
+ */
 export async function handleCoverageInfoFiles(run: vscode.TestRun, coverageInfoFiles: string[], coverageData: WeakMap<vscode.FileCoverage, vscode.FileCoverageDetail[]>) {
     for (const coverageInfoFile of coverageInfoFiles) {
         let contents: Uint8Array;

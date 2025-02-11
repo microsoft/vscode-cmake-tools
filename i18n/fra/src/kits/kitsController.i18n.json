@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "Démarrez la sélection des kits. {0} kits trouvés.",
 	"opening.kit.selection": "Ouverture de la sélection rapide de kit",
 	"scan.for.kits.button": "Rechercher des kits",
+	"scan.for.kits.in.specific.dir.button": "Rechercher de manière récursive les kits dans des répertoires spécifiques (profondeur maximale : 5)",
 	"unspecified.kit.name": "Non spécifié",
 	"select.a.kit.placeholder": "Sélectionner un kit pour {0}",
 	"user.cancelled.kit.selection": "L'utilisateur a annulé la sélection du kit",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "Détection de kits Visual Studio avec d'anciens ID enregistrés dans cmake-tools-kits.json.",
 	"yes.button": "Oui",
 	"delete.duplicate.kits": "Voulez-vous supprimer les kits Visual Studio dupliqués de cmake-tools-kits.json ?",
-	"no.button": "Non"
+	"no.button": "Non",
+	"select.folder": "Sélectionner un dossier",
+	"accumulating.folders": "Cumul récursif des dossiers à analyser"
 }

@@ -75,6 +75,14 @@ export enum ConsoleTypes {
     newExternalWindow = 'newExternalWindow'
 }
 
+/**
+ * Creates a GDB debug configuration for VSCode.
+ *
+ * @param debuggerPath - The path to the GDB debugger executable.
+ * @param target - The executable target to be debugged.
+ * @returns A promise that resolves to a VSCode debug configuration object.
+ * @throws An error if GDB is not found in the provided path or the default search path.
+ */
 async function createGDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<VSCodeDebugConfiguration> {
     if (!await checkDebugger(debuggerPath)) {
         debuggerPath = 'gdb';
@@ -102,6 +110,14 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     };
 }
 
+/**
+ * Creates a LLDB debug configuration for VSCode.
+ *
+ * @param debuggerPath - The path to the LLDB debugger executable.
+ * @param target - The executable target to be debugged.
+ * @returns A promise that resolves to a VSCode debug configuration object.
+ * @throws An error if the debugger is not found in the specified path.
+ */
 async function createLLDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<VSCodeDebugConfiguration> {
     if (!await checkDebugger(debuggerPath)) {
         throw new Error(localize('gdb.not.found', 'Unable to find GDB in default search path and {0}.', debuggerPath));
@@ -119,6 +135,12 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     };
 }
 
+/**
+ * Creates a Visual Studio Code debug configuration for an MSVC (Microsoft Visual C++) executable target.
+ *
+ * @param target - The executable target for which to create the debug configuration.
+ * @returns A `VSCodeDebugConfiguration` object configured for debugging the specified target.
+ */
 function createMsvcDebugConfiguration(target: ExecutableTarget): VSCodeDebugConfiguration {
     return {
         type: 'cppvsdbg',
@@ -150,6 +172,17 @@ const debuggerGenerators: DebuggerGenerators = {
     }
 };
 
+/**
+ * Searches for the compiler path in the provided CMake cache.
+ *
+ * This function iterates over a predefined list of programming languages
+ * (CXX, C, CUDA) and checks if the corresponding compiler path is present
+ * in the cache. If found, it returns the compiler path as a string.
+ * If no compiler path is found for any of the languages, it returns null.
+ *
+ * @param cache - The CMake cache to search for the compiler path.
+ * @returns The compiler path as a string if found, otherwise null.
+ */
 function searchForCompilerPathInCache(cache: CMakeCache): string | null {
     const languages = ['CXX', 'C', 'CUDA'];
     for (const lang of languages) {
@@ -162,6 +195,16 @@ function searchForCompilerPathInCache(cache: CMakeCache): string | null {
     return null;
 }
 
+/**
+ * Retrieves the debug configuration from the CMake cache for a given target and platform.
+ * @param cache - The CMake cache containing build configuration information.
+ * @param target - The executable target for which the debug configuration is being retrieved.
+ * @param platform - The platform for which the debug configuration is being retrieved (e.g., 'darwin', 'win32').
+ * @param modeOverride - Optional override for the MI mode (e.g., 'gdb', 'lldb').
+ * @param debuggerPathOverride - Optional override for the debugger path.
+ * @returns A promise that resolves to a VSCode debug configuration or null if no suitable configuration is found.
+ * @throws An error if no compiler is found in the cache.
+ */
 export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string, modeOverride?: MIModes, debuggerPathOverride?: string): Promise<VSCodeDebugConfiguration | null> {
     const entry = cache.get('CMAKE_LINKER');
     if (entry !== null && !modeOverride && !debuggerPathOverride) {

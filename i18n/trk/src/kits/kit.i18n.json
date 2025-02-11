@@ -49,6 +49,7 @@
 	"using.compilers.for.VS2": "Visual Studio için derleyici kullanımı ({0} mimarisi)",
 	"search.for.compilers": "Bu bilgisayarda derleyicileri ara",
 	"unspecified.let.cmake.guess": "Belirtilmemiş (CMake'in hangi derleyicilerin ve ortamın kullanılacağını tahmin etmesine izin verin)",
+	"search.for.compilers.in.dir": "Belirli bir dizindeki derleyiciler için özyinelemeli olarak ara (en fazla derinlik: 5)",
 	"not.reading.nonexistent.kit": "Mevcut olmayan set dosyası okunmuyor: {0}",
 	"not.reading.invalid.path": "Geçersiz setler dosyası okunmuyor: {0}",
 	"reading.kits.file": "{0} set dosyası okunuyor",

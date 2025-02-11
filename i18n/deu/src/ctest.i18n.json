@@ -30,5 +30,8 @@
 	"no.launch.config": "Keine Startkonfigurationen gefunden.",
 	"choose.launch.config": "Wählen Sie eine Startkonfiguration aus, mit der der Test gedebuggt werden soll.",
 	"test.skip.debug.build.failure": "Debuggen für Tests kann aufgrund eines Buildfehlers nicht ausgeführt werden.",
-	"build.failed": "Fehler beim Buildvorgang"
+	"build.failed": "Fehler beim Buildvorgang",
+	"run.tests.profile": "Tests ausführen",
+	"run.tests.with.coverage.profile": "Tests mit Abdeckung ausführen",
+	"debug.tests.profile": "Tests debuggen"
 }

@@ -15,6 +15,7 @@
 	"start.selection.of.kits": "Začněte vybírat sady. Nalezené sady: {0}",
 	"opening.kit.selection": "Otevírá se element QuickPick výběru sady.",
 	"scan.for.kits.button": "Hledat sady",
+	"scan.for.kits.in.specific.dir.button": "Rekurzivně vyhledávat sady v konkrétních adresářích (maximální hloubka: 5)",
 	"unspecified.kit.name": "Neurčeno",
 	"select.a.kit.placeholder": "Vyberte sadu pro {0}.",
 	"user.cancelled.kit.selection": "Uživatel zrušil výběr sady.",
@@ -31,5 +32,7 @@
 	"found.duplicate.kits": "V souboru cmake-tools-kits.json se našly sady Visual Studio se starými ID.",
 	"yes.button": "Ano",
 	"delete.duplicate.kits": "Chcete odstranit duplicitní sady Visual Studio ze souboru cmake-tools-kits.json?",
-	"no.button": "Ne"
+	"no.button": "Ne",
+	"select.folder": "Vybrat složku",
+	"accumulating.folders": "Rekurzivně se hromadí složky ke kontrole."
 }

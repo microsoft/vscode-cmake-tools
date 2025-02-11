@@ -49,6 +49,7 @@
 	"using.compilers.for.VS2": "Verwenden von Compilern für Visual Studio ({0}-Architektur)",
 	"search.for.compilers": "Auf diesem Computer nach Compilern suchen",
 	"unspecified.let.cmake.guess": "Nicht angegeben (zu verwendenden Compiler und Umgebung von CMake ermitteln lassen)",
+	"search.for.compilers.in.dir": "Rekursiv nach Compilern in einem bestimmten Verzeichnis suchen (max. Tiefe: 5)",
 	"not.reading.nonexistent.kit": "Nicht vorhandene Kitdatei wird nicht gelesen: {0}",
 	"not.reading.invalid.path": "Ungültige Kits-Datei wird nicht gelesen: {0}",
 	"reading.kits.file": "Kitdatei wird gelesen: {0}",

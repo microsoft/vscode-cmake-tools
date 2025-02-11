@@ -49,6 +49,7 @@
 	"using.compilers.for.VS2": "正在使用 Visual Studio ({0} 体系结构)的编译器",
 	"search.for.compilers": "在这台计算机上搜索编译器",
 	"unspecified.let.cmake.guess": "未指定(让 CMake 猜测要使用的编译器和环境)",
+	"search.for.compilers.in.dir": "以递归方式搜索特定目录中的编译器 (最大深度： 5)",
 	"not.reading.nonexistent.kit": "未读取不存在的工具包文件: {0}",
 	"not.reading.invalid.path": "未读取无效的工具包文件: {0}",
 	"reading.kits.file": "正在读取工具包文件 {0}",

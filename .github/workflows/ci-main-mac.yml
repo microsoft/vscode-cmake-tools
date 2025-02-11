@@ -69,7 +69,7 @@ jobs:
 
       - name: Upload test logs if tests failed
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: TestLogs
           path: test/**/log.txt

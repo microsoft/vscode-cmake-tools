@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "コンパイラの選択を開始します。{0} のコンパイラが見つかりました。",
 	"opening.compiler.selection": "コンパイラの選択 QuickPick を開いています",
 	"scan.for.compilers.button": "コンパイラのスキャン",
+	"scan.for.compilers.in.dir": "ディレクトリ内のコンパイラを再帰的にスキャンする (最大深度: 5)",
 	"select.a.compiler.placeholder": "{0} のキットを選択してください",
 	"user.cancelled.compiler.selection": "ユーザーがコンパイラの選択を取り消しました",
 	"user.selected.compiler": "ユーザーがコンパイラ {0} を選択しました",
