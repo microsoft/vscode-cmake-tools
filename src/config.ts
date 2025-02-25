@@ -16,7 +16,7 @@ import { Environment } from '@cmt/environmentVariables';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export function defaultNumJobs (): number {
-    return os.cpus().length + 2;
+    return os.cpus().length;
 }
 
 const log = logging.createLogger('config');
