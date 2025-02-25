@@ -1585,7 +1585,7 @@ async function getBuildPresetInheritsImpl(folder: string, name: string, workspac
             name: defaultBuildPreset.name,
             displayName: defaultBuildPreset.displayName,
             description: defaultBuildPreset.description,
-            jobs: parallelJobs || defaultNumJobs(),
+            jobs: parallelJobs,
             configurePreset
         };
         return getBuildPresetInheritsHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true, usePresetsPlusIncluded, errorHandler);

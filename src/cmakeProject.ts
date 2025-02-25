@@ -389,7 +389,7 @@ export class CMakeProject {
             buildPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
-            this.workspaceContext.config.parallelJobs,
+            this.workspaceContext.config.isDefaultValue("parallelJobs") ? undefined : this.workspaceContext.config.parallelJobs,
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
