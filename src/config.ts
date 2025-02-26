@@ -485,7 +485,7 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     get numJobs(): number | undefined {
-        if (this.parallelJobs === undefined) {
+        if (this.isDefaultValue("parallelJobs")) {
             return undefined;
         } else if (this.parallelJobs === 0) {
             return defaultNumJobs();
