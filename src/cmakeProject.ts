@@ -1546,7 +1546,7 @@ export class CMakeProject {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
                     // Now try to copy the compdb to the user-requested path
-                    const copyDest = util.lightNormalizePath(this.workspaceContext.config.copyCompileCommands);
+                    const copyDest = this.workspaceContext.config.copyCompileCommands;
                     const expandedDest = util.platformNormalizePath(await expandString(copyDest, opts));
                     if (compdbPath !== expandedDest) {
                         const parentDir = path.dirname(expandedDest);

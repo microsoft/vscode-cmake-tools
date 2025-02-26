@@ -2358,6 +2358,29 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
 
+    const twxsExtension = vscode.extensions.getExtension('twxs.cmake');
+    const key = "ms-vscode.cmake-tools.twxs.cmake.showWarning";
+    const showTwxsWarning = context.globalState.get(key, true);
+    if (twxsExtension && showTwxsWarning) {
+        const twxsUninstallString = localize('uninstall.twxs.uninstall', 'Uninstall twxs.cmake');
+        void vscode.window.showWarningMessage(localize('uninstall.twxs.cmaketools', 'We recommend that you uninstall the twxs.cmake extension. The CMake Tools extension now provides Language Services and no longer depends on twxs.cmake.'),
+            twxsUninstallString).then(async (selection) => {
+            // Uninstall twxs.cmake if the user clicked the button or cancelled
+            if (selection === twxsUninstallString || selection === undefined) {
+                if (selection === twxsUninstallString) {
+                    // Open extensions pane so user can uninstall the extension.
+                    void vscode.commands.executeCommand(
+                        "workbench.extensions.search",
+                        "twxs.cmake"
+                    );
+                }
+
+                // Don't show this warning again.
+                await context.globalState.update(key, false);
+            }
+        });
+    }
+
     const CMAKE_LANGUAGE = "cmake";
     const CMAKE_SELECTOR: vscode.DocumentSelector = [
         { language: CMAKE_LANGUAGE, scheme: 'file'},
