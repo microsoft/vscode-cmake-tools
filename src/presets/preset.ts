@@ -11,7 +11,7 @@ import { errorHandlerHelper, expandString, ExpansionErrorHandler, ExpansionOptio
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from '@cmt/environmentVariables';
-import { defaultNumJobs, UseVsDeveloperEnvironment } from '@cmt/config';
+import { UseVsDeveloperEnvironment } from '@cmt/config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1585,7 +1585,7 @@ async function getBuildPresetInheritsImpl(folder: string, name: string, workspac
             name: defaultBuildPreset.name,
             displayName: defaultBuildPreset.displayName,
             description: defaultBuildPreset.description,
-            jobs: parallelJobs || defaultNumJobs(),
+            jobs: parallelJobs,
             configurePreset
         };
         return getBuildPresetInheritsHelper(folder, preset, workspaceFolder, sourceDir, parallelJobs, preferredGeneratorName, true, usePresetsPlusIncluded, errorHandler);
