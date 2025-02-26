@@ -171,7 +171,7 @@ export interface ExtensionConfigurationSettings {
     configureArgs: string[];
     buildArgs: string[];
     buildToolArgs: string[];
-    parallelJobs: number | undefined;
+    parallelJobs: number;
     ctestPath: string;
     ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string };
     parseBuildDiagnostics: boolean;
@@ -372,7 +372,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get buildToolArgs(): string[] {
         return this.configData.buildToolArgs;
     }
-    get parallelJobs(): number | undefined {
+    get parallelJobs(): number {
         return this.configData.parallelJobs;
     }
     get ctestParallelJobs(): number | null {
