@@ -10,7 +10,6 @@ Bug Fixes:
 
 - Fix regression where we weren't properly expanding copyCompileCommands path. [#4294](https://github.com/microsoft/vscode-cmake-tools/issues/4294)
 
-
 ## 1.20.52
 
 Features:
