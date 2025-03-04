@@ -799,29 +799,27 @@ export class CTestDriver implements vscode.Disposable {
                     let testDefFile: string | undefined;
                     let testDefLine: number | undefined;
 
-                    if (test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
-                        // Use DEF_SOURCE_LINE CMake test property to find file and line number
-                        // Property must be set in the test's CMakeLists.txt file or its included modules for this to work
-                        const defSourceLineProperty = test.properties.filter(property => property.name === "DEF_SOURCE_LINE")[0];
-                        if (defSourceLineProperty && defSourceLineProperty.value && typeof defSourceLineProperty.value === 'string') {
-                            // Use RegEx to match the format "file_path:line" in value[0]
-                            const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
-                            if (match && match[1] && match[2]) {
-                                testDefFile = match[1];
-                                testDefLine = parseInt(match[2]);
-                                if (isNaN(testDefLine)) {
-                                    testDefLine = undefined;
-                                    testDefFile = undefined;
-                                }
+                    // Use DEF_SOURCE_LINE CMake test property to find file and line number
+                    // Property must be set in the test's CMakeLists.txt file or its included modules for this to work
+                    const defSourceLineProperty = test.properties.filter(property => property.name === "DEF_SOURCE_LINE")[0];
+                    if (defSourceLineProperty && defSourceLineProperty.value && typeof defSourceLineProperty.value === 'string') {
+                        // Use RegEx to match the format "file_path:line" in value[0]
+                        const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
+                        if (match && match[1] && match[2]) {
+                            testDefFile = match[1];
+                            testDefLine = parseInt(match[2]);
+                            if (isNaN(testDefLine)) {
+                                testDefLine = undefined;
+                                testDefFile = undefined;
                             }
                         }
+                    }
 
-                        if (!testDefFile) {
-                            // Use the backtrace graph to find the file and line number
-                            // This finds the CMake module's file and line number and not the test file and line number
-                            testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
-                            testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
-                        }
+                    if (!testDefFile && test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
+                        // Use the backtrace graph to find the file and line number
+                        // This finds the CMake module's file and line number and not the test file and line number
+                        testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
+                        testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
                     }
 
                     const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer, testDefFile ? vscode.Uri.file(testDefFile) : undefined);
