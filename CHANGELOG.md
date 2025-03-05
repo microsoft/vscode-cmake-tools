@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.20.x
+
+Improvements:
+
+- No longer convert paths on lowercase on MacOS to enable cpp tools to resolve them. [#4325](https://github.com/microsoft/vscode-cmake-tools/pull/4325) [@tringenbach](https://github.com/tringenbach)
+
 ## 1.20.53
 
 Improvements:
