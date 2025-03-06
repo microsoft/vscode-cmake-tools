@@ -8,8 +8,8 @@ body:
 - type: markdown
   attributes:
     value: |
-      ### Is there an existing request for this?
-      Please search our [existing issues](https://github.com/microsoft/vscode-cmake-tools/issues) to see if an issue already exists for the issue you'd like to report.
+      ### Is there an existing documentation request for this?
+      Please search our [existing issues](https://github.com/microsoft/vscode-cmake-tools/issues) to see if an issue already exists for the documentation request you'd like to create.
 - type: textarea
   attributes:
     label: Request Overview

@@ -1,5 +1,5 @@
-name: Issue form
-description: Create an issue for the CMake Tools extension.
+name: Bug report form
+description: Create a bug report for the CMake Tools extension.
 title: "[Bug] "
 labels:
   - "bug"
@@ -8,21 +8,21 @@ body:
 - type: markdown
   attributes:
     value: |
-      ### Is there an existing issue for this?
-      Please search our [existing issues](https://github.com/microsoft/vscode-cmake-tools/issues) to see if an issue already exists for the issue you'd like to report.
+      ### Is there an existing bug report for this?
+      Please search our [existing issues](https://github.com/microsoft/vscode-cmake-tools/issues) to see if an issue already exists for the bug you'd like to report.
 - type: textarea
   attributes:
     label: Brief Issue Summary
     description: |
       Put a short summary here.
-      If this is a bug, please provide clear instructions as to how we can reproduce the issue on our end.
+      Please provide clear instructions as to how we can reproduce the bug on our end.
   validations:
     required: true
 - type: textarea
   attributes:
     label: CMake Tools Diagnostics
     description: |
-      For bugs, please run the `CMake: Log Diagnostics` command and paste the output here.
+      Please run the `CMake: Log Diagnostics` command and paste the output here.
     render: shell
   validations:
     required: false
@@ -30,7 +30,7 @@ body:
   attributes:
     label: Debug Log
     description: |
-      For bugs, we would also appreciate it if you used the `"cmake.loggingLevel": "debug"` setting and paste the CMake/Build output from the OUTPUT window.
+      We would also appreciate it if you used the `"cmake.loggingLevel": "debug"` setting and paste the CMake/Build output from the OUTPUT window.
     render: shell
   validations:
     required: false
