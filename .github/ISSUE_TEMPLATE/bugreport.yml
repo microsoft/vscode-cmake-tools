@@ -1,5 +1,9 @@
 name: Issue form
 description: Create an issue for the CMake Tools extension.
+title: "[Bug] "
+labels:
+  - "bug"
+  - "triage"
 body:
 - type: markdown
   attributes:
