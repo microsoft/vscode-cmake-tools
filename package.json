@@ -2505,8 +2505,6 @@
           },
           "description": "%cmake-tools.configuration.cmake.ctestDefaultArgs.description%",
           "default": [
-            "-T",
-            "test",
             "--output-on-failure"
           ],
           "scope": "machine-overridable"
