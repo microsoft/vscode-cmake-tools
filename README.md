@@ -3,6 +3,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 </head>
+
 <h1 align=center style="font-family: roboto; font-weight: 400"> <img width=48 style="margin-bottom: -8px" src="res/logo.svg"/> CMake Tools </h1>
 
 <center>
@@ -10,11 +11,24 @@
 </center>
 <br/>
 
-<div style="justify-content: center; gap: 8px; align-items: center;display: flex; width: 100%; height: 24px; text-align: middle;">
-    <img src="https://img.shields.io/badge/CMake-064F8C?style=for-the-badge&logo=cmake&logoColor=white"/>
-[![Build Status](badge)](test)
-[![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/LICENSE)
+<div style="justify-content: center; gap: 8px; align-items: top; display: flex; width: 100%; height: 22px; text-align: middle;">
+    <img src="https://img.shields.io/badge/VSCode-7d57c2?style=for-the-badge&logo=visual%20studio%20code&logoColor=white"/>
+    <img src="https://img.shields.io/badge/CMake-7d57c2?style=for-the-badge&logo=cmake&logoColor=white"/>
+    <img src="https://img.shields.io/badge/C-7d57c2?style=for-the-badge&logo=c&logoColor=white"/>
+    <img src="https://img.shields.io/badge/C%2B%2B-7d57c2?style=for-the-badge&logo=c%2B%2B&logoColor=white"/>
 </div>
+
+<div style="margin-top: 8px; justify-content: center; gap: 8px; align-items: top; display: flex; width: 100%; height: 22px; text-align: middle;">
+    <img alt="VS Code Marketplace Downloads" src="https://img.shields.io/visual-studio-marketplace/d/ms-vscode.cmake-tools?style=for-the-badge&color=064f8c&cacheSeconds=3600&link=https%3A%2F%2Fmarketplace.visualstudio.com%2Fitems%3FitemName%3Dms-vscode.cmake-tools">
+    <img alt="VS Code Marketplace Version" src="https://img.shields.io/visual-studio-marketplace/v/ms-vscode.cmake-tools?style=for-the-badge&color=be2128&cacheSeconds=3600&link=https%3A%2F%2Fmarketplace.visualstudio.com%2Fitems%2Fms-vscode.cmake-tools%2Fchangelog">
+    <img alt="Closed Issues" src="https://img.shields.io/github/issues-closed/microsoft/vscode-cmake-tools?style=for-the-badge&color=249847&cacheSeconds=3600&link=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Fvscode-cmake-tools%2Fissues">
+</div>
+
+
+
+
+
+
 
 
 <br/>
@@ -31,7 +45,7 @@
 </summary>
 
 <div style="display: flex; flex-wrap: wrap; gap: 16px; width: 100%">
-    <img style="width: calc(50% - 8px);" src="res/graphics/presets-support-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/presets-support-feature.png" alt=""/>
     <img style="width: calc(50% - 8px);" src="res/graphics/cmake-debugging-feature.png"/>
     <img style="width: calc(50% - 8px);" src="res/graphics/cmake-language-service-feature.png"/>
     <img style="width: calc(50% - 8px);" src="res/graphics/test-integration-feature.png"/>
@@ -78,3 +92,9 @@ This extension collects usage data and sends it to Microsoft to help improve our
 ### Credits
 
 This project was started by [@vector-of-bool](https://github.com/vector-of-bool) and is now currently maintained by Microsoft.
+
+### Contributors
+
+<a href = "https://github.com/Tanu-N-Prabhu/Python/graphs/contributors">
+  <img src = "https://contrib.rocks/image?repo=microsoft/vscode-cmake-tools"/>
+</a>
