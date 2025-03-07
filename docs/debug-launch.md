@@ -227,7 +227,7 @@ A couple of examples:
 
 Depending on your configuration or your settings, there may need to be additional configuration options set.
 
-To use a specific launch configuration when debugging tests, set `cmake.ctest.testSuiteDelimiter.debugLaunchTarget` to the desired name of the configuration (e.g. `(ctest) Launch`).
+To use a specific launch configuration when debugging tests, set `cmake.ctest.debugLaunchTarget` to the desired name of the configuration (e.g. `(ctest) Launch`).
 
 ## Run without debugging
 
