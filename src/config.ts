@@ -16,7 +16,7 @@ import { Environment } from '@cmt/environmentVariables';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export function defaultNumJobs (): number {
-    return os.cpus().length + 2;
+    return os.cpus().length;
 }
 
 const log = logging.createLogger('config');
@@ -171,7 +171,7 @@ export interface ExtensionConfigurationSettings {
     configureArgs: string[];
     buildArgs: string[];
     buildToolArgs: string[];
-    parallelJobs: number | undefined;
+    parallelJobs: number;
     ctestPath: string;
     ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; debugLaunchTarget: string | null };
     parseBuildDiagnostics: boolean;
@@ -372,7 +372,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get buildToolArgs(): string[] {
         return this.configData.buildToolArgs;
     }
-    get parallelJobs(): number | undefined {
+    get parallelJobs(): number {
         return this.configData.parallelJobs;
     }
     get ctestParallelJobs(): number | null {
@@ -488,7 +488,7 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     get numJobs(): number | undefined {
-        if (this.parallelJobs === undefined) {
+        if (this.isDefaultValue("parallelJobs")) {
             return undefined;
         } else if (this.parallelJobs === 0) {
             return defaultNumJobs();
