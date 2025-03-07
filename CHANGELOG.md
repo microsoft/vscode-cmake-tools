@@ -1,10 +1,11 @@
 # What's New?
 
-## 1.20.x
+## 1.20.53
 
 Improvements:
 
 - Add notification suggesting users to uninstall twxs.cmake now that we have built-in Language Services. [#4288](https://github.com/microsoft/vscode-cmake-tools/issues/4288)
+- Add templates for feature and documentation requests. [#4334](https://github.com/microsoft/vscode-cmake-tools/issues/4334)
 
 Bug Fixes:
 
