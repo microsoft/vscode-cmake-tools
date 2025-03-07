@@ -16,7 +16,7 @@
 
 <br/>
 <center>
-    <img style="width: 100%" src="res/graphics/cmake-tools-banner-rounded.png"/>
+    <img style="width: 100%" src="res/graphics/cmake-tools-banner.png"/>
 </center>
 
 ## Introduction
