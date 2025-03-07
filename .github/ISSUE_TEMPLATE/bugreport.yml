@@ -25,7 +25,7 @@ body:
       Please run the `CMake: Log Diagnostics` command and paste the output here.
     render: shell
   validations:
-    required: false
+    required: true
 - type: textarea
   attributes:
     label: Debug Log
@@ -33,7 +33,7 @@ body:
       We would also appreciate it if you used the `"cmake.loggingLevel": "debug"` setting and paste the CMake/Build output from the OUTPUT window.
     render: shell
   validations:
-    required: false
+    required: true
 - type: textarea
   attributes:
     label: Additional Information
