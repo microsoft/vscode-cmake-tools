@@ -81,8 +81,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
             preferredGenerators);
     }
 
-    private _needsReconfigure = true;
-
     /**
      * Watcher for the CMake cache file on disk.
      */
@@ -162,9 +160,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
         this._needsReconfigure = true;
         await onConfigureSettingsChange();
     }
-    async checkNeedsReconfigure(): Promise<boolean> {
-        return this._needsReconfigure;
-    }
 
     async doSetKit(cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
@@ -208,7 +203,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     async doCacheConfigure(): Promise<number> {
-        this._needsReconfigure = true;
         await this.updateCodeModel();
         return 0;
     }
@@ -249,6 +243,21 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 if (generator.platform) {
                     args.push('-A');
                     args.push(generator.platform);
+                }
+            } else {
+                if (this.useCMakePresets) {
+                    const presetArchitecture = this.configurePresetArchitecture;
+                    const presetToolset = this.configurePresetToolset;
+                    const platform = presetArchitecture ? getValue(presetArchitecture) : undefined;
+                    const toolset = presetToolset ? getValue(presetToolset) : undefined;
+                    if (toolset) {
+                        args.push('-T');
+                        args.push(toolset);
+                    }
+                    if (platform) {
+                        args.push("-A");
+                        args.push(platform);
+                    }
                 }
             }
         }

@@ -38,6 +38,9 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
 | `cmake.sourceDirectory` | A directory or a list of directories where the root `CMakeLists.txt`s are stored. | `${workspaceFolder}` | yes |
 | `cmake.testEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when debugging, running and testing with CTest. | `null` (no environment variables) | yes |
+| `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer | null | no |
+| `cmake.postRunCoverageTarget` | Target to build after running tests with coverage using the test explorer | null | no |
+| `cmake.coverageInfoFiles` | LCOV coverage info files to be processed after running tests with coverage using the test explorer | [] | yes |
 
 ## Variable substitution
 

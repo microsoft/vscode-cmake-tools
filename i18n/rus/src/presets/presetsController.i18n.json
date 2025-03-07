@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "Начать выбор компиляторов. Найдено компиляторов: {0}.",
 	"opening.compiler.selection": "Открытие списка быстрого выбора компилятора",
 	"scan.for.compilers.button": "Поиск компиляторов",
+	"scan.for.compilers.in.dir": "Рекурсивное сканирование для компиляторов в каталоге (максимальная глубина: 5)",
 	"select.a.compiler.placeholder": "Выберите набор для {0}",
 	"user.cancelled.compiler.selection": "Пользователь отменил выбор компилятора",
 	"user.selected.compiler": "Пользователь выбрал компилятор {0}",

@@ -14,26 +14,52 @@ import * as logging from '@cmt/logging';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 const log = logging.createLogger('workflow');
 
+/**
+ * The WorkflowDriver class is responsible for managing and executing workflows
+ * in the CMake Tools extension.
+ * A workflow preset is defined in a Presets file and involves a sequence of steps
+ * such as configuring, building, testing, and packaging a CMake project.
+ */
 export class WorkflowDriver implements vscode.Disposable {
     /**
-     * @param projectController
+     * Creates an instance of WorkflowDriver.
+     * @param ws The directory context for the workspace.
+     * @param projectController Optional project controller for managing projects.
      */
-    constructor(readonly ws: DirectoryContext, private readonly projectController?: ProjectController) {}
+    constructor(
+        readonly ws: DirectoryContext,
+        private readonly projectController?: ProjectController
+    ) {}
 
-    dispose() {
-    }
+    dispose() {}
 
-    // validatePresetsFile in presetsController is making sure the workflow presets are correct in structure,
-    // so no validation needed here about that (unresolved referenced configure presets, configure step not being first, etc...)
-    public async runWorkflow(driver: CMakeDriver,
+    /**
+     * Runs the specified workflow using the provided CMake driver and presets.
+     * The validatePresetsFile function in presetsController ensures that the workflow
+     * presets are correct in structure, so no validation is needed here.
+     * @param driver The CMake driver to use for running the workflow.
+     * @param workflowPreset Optional workflow preset to use.
+     * @param configurePreset Optional configure preset to use.
+     * @param buildPreset Optional build preset to use.
+     * @param testPreset Optional test preset to use.
+     * @param packagePreset Optional package preset to use.
+     */
+    public async runWorkflow(
+        driver: CMakeDriver,
         workflowPreset?: WorkflowPreset | null,
         configurePreset?: ConfigurePreset | null,
         buildPreset?: BuildPreset | null,
         testPreset?: TestPreset | null,
         packagePreset?: PackagePreset | null,
-        _consumer?: proc.OutputConsumer): Promise<number> {
+        _consumer?: proc.OutputConsumer
+    ): Promise<number> {
         if (driver.useCMakePresets && !driver.workflowPreset) {
-            log.error(localize('workflow.preset.not.set', 'Workflow preset is not set'));
+            log.error(
+                localize(
+                    "workflow.preset.not.set",
+                    "Workflow preset is not set"
+                )
+            );
             return -3;
         }
         const oldConfigurePreset = configurePreset;
@@ -41,79 +67,148 @@ export class WorkflowDriver implements vscode.Disposable {
         const oldTestPreset = testPreset;
         const oldPackagePreset = packagePreset;
 
-        const prj = await this.projectController?.getProjectForFolder(driver.workspaceFolder);
+        const prj = await this.projectController?.getProjectForFolder(
+            driver.workspaceFolder
+        );
         if (!prj) {
-            log.error(localize('no.project.found', 'No project found for folder {0}', driver.workspaceFolder));
+            log.error(
+                localize(
+                    "no.project.found",
+                    "No project found for folder {0}",
+                    driver.workspaceFolder
+                )
+            );
             return -2;
         }
 
         let newConfigurePreset: ConfigurePreset | null = null;
         let newBuildPreset: BuildPreset | null = null;
-        let newTestPreset: TestPreset | null = null ;
+        let newTestPreset: TestPreset | null = null;
         let newPackagePreset: PackagePreset | null = null;
         const workflowSteps = workflowPreset?.steps || [];
         let cleanWorkflowConfigure: boolean = false;
         for (const step of workflowSteps) {
             switch (step.type) {
                 case "configure":
-                    newConfigurePreset = getPresetByName(allConfigurePresets(driver.workspaceFolder), step.name);
+                    newConfigurePreset = getPresetByName(
+                        allConfigurePresets(driver.workspaceFolder),
+                        step.name
+                    );
                     if (newConfigurePreset?.name !== oldConfigurePreset?.name) {
-                        await prj.setConfigurePreset(newConfigurePreset?.name || null);
+                        await prj.setConfigurePreset(
+                            newConfigurePreset?.name || null
+                        );
                         // If the workflow configure preset is different than the current project configure preset
                         // it is better to re-configure clean.
                         cleanWorkflowConfigure = true;
                     }
 
                     if (cleanWorkflowConfigure) {
-                        log.info(localize('workflow.configuring.clean', 'Configuring clean project with the {0} configure preset of the workflow.', newConfigurePreset?.name));
-                        await prj.configureInternal(ConfigureTrigger.workflow, [], ConfigureType.Clean);
+                        log.info(
+                            localize(
+                                "workflow.configuring.clean",
+                                "Configuring clean project with the {0} configure preset of the workflow.",
+                                newConfigurePreset?.name
+                            )
+                        );
+                        await prj.configureInternal(
+                            ConfigureTrigger.workflow,
+                            [],
+                            ConfigureType.Clean
+                        );
                     } else {
-                        log.info(localize('workflow.configuring', 'Configuring project with the {0} configure preset of the workflow.', newConfigurePreset?.name));
+                        log.info(
+                            localize(
+                                "workflow.configuring",
+                                "Configuring project with the {0} configure preset of the workflow.",
+                                newConfigurePreset?.name
+                            )
+                        );
                         await prj.configureInternal(ConfigureTrigger.workflow);
                     }
 
                     break;
 
                 case "build":
-                    newBuildPreset = getPresetByName(allBuildPresets(driver.workspaceFolder), step.name);
+                    newBuildPreset = getPresetByName(
+                        allBuildPresets(driver.workspaceFolder),
+                        step.name
+                    );
                     if (newBuildPreset?.name !== oldBuildPreset?.name) {
                         await prj.setBuildPreset(step.name);
                     }
 
-                    log.info(localize('workflow.building', 'Building project with the {0} build preset of the workflow step.', step.name));
+                    log.info(
+                        localize(
+                            "workflow.building",
+                            "Building project with the {0} build preset of the workflow step.",
+                            step.name
+                        )
+                    );
                     await prj.runBuild();
 
                     break;
 
                 case "test":
-                    newTestPreset = getPresetByName(allTestPresets(driver.workspaceFolder), step.name);
+                    newTestPreset = getPresetByName(
+                        allTestPresets(driver.workspaceFolder),
+                        step.name
+                    );
                     if (newTestPreset?.name !== oldTestPreset?.name) {
                         await prj.setTestPreset(step.name);
                     }
 
-                    log.info(localize('workflow.running.ctest', 'Running ctest for the {0} test preset of the workflow step.', step.name));
+                    log.info(
+                        localize(
+                            "workflow.running.ctest",
+                            "Running ctest for the {0} test preset of the workflow step.",
+                            step.name
+                        )
+                    );
                     await prj.ctest(/*fromWorkflow = */ true);
 
                     break;
 
                 case "package":
-                    newPackagePreset = getPresetByName(allPackagePresets(driver.workspaceFolder), step.name);
+                    newPackagePreset = getPresetByName(
+                        allPackagePresets(driver.workspaceFolder),
+                        step.name
+                    );
                     if (newPackagePreset?.name !== oldPackagePreset?.name) {
                         await prj.setPackagePreset(step.name);
                     }
 
-                    log.info(localize('workflow.packaging', 'Packaging the project with the {0} package preset of the workflow step.', step.name));
+                    log.info(
+                        localize(
+                            "workflow.packaging",
+                            "Packaging the project with the {0} package preset of the workflow step.",
+                            step.name
+                        )
+                    );
                     await prj.cpack(true /*fromWorkflow*/);
 
                     break;
             }
-        };
+        }
 
-        if (newConfigurePreset?.name !== oldConfigurePreset?.name && oldConfigurePreset) {
+        if (
+            newConfigurePreset?.name !== oldConfigurePreset?.name &&
+            oldConfigurePreset
+        ) {
             await prj.setConfigurePreset(oldConfigurePreset?.name);
-            log.info(localize('workflow.restore.configuring', 'Workflow finished. Restore the original {0} configure preset and reconfigure.', oldConfigurePreset?.name ?? ""));
+            log.info(
+                localize(
+                    "workflow.restore.configuring",
+                    "Workflow finished. Restore the original {0} configure preset and reconfigure.",
+                    oldConfigurePreset?.name ?? ""
+                )
+            );
             if (cleanWorkflowConfigure) {
-                await prj.configureInternal(ConfigureTrigger.workflow, [], ConfigureType.Clean);
+                await prj.configureInternal(
+                    ConfigureTrigger.workflow,
+                    [],
+                    ConfigureType.Clean
+                );
             } else {
                 await prj.configureInternal(ConfigureTrigger.workflow);
             }
@@ -127,7 +222,10 @@ export class WorkflowDriver implements vscode.Disposable {
             await prj.setTestPreset(oldTestPreset.name);
         }
 
-        if (newPackagePreset?.name !== oldPackagePreset?.name && oldPackagePreset) {
+        if (
+            newPackagePreset?.name !== oldPackagePreset?.name &&
+            oldPackagePreset
+        ) {
             await prj.setPackagePreset(oldPackagePreset.name);
         }
 

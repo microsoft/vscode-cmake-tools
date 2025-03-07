@@ -8,7 +8,7 @@
       "name": "LinuxIncluded1",
       "description": "Sets generator, build and install directory, vcpkg",
       "generator": "Unix Makefiles",
-      "binaryDir": "${workspaceFolder}/build",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "gcc",

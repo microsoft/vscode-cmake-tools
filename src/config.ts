@@ -16,7 +16,7 @@ import { Environment } from '@cmt/environmentVariables';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export function defaultNumJobs (): number {
-    return os.cpus().length + 2;
+    return os.cpus().length;
 }
 
 const log = logging.createLogger('config');
@@ -171,7 +171,7 @@ export interface ExtensionConfigurationSettings {
     configureArgs: string[];
     buildArgs: string[];
     buildToolArgs: string[];
-    parallelJobs: number | undefined;
+    parallelJobs: number;
     ctestPath: string;
     ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string };
     parseBuildDiagnostics: boolean;
@@ -217,6 +217,9 @@ export interface ExtensionConfigurationSettings {
     automaticReconfigure: boolean;
     pinnedCommands: string[];
     enableAutomaticKitScan: boolean;
+    preRunCoverageTarget: string | null;
+    postRunCoverageTarget: string | null;
+    coverageInfoFiles: string[];
 }
 
 type EmittersOf<T> = {
@@ -369,7 +372,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get buildToolArgs(): string[] {
         return this.configData.buildToolArgs;
     }
-    get parallelJobs(): number | undefined {
+    get parallelJobs(): number {
         return this.configData.parallelJobs;
     }
     get ctestParallelJobs(): number | null {
@@ -482,7 +485,7 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     get numJobs(): number | undefined {
-        if (this.parallelJobs === undefined) {
+        if (this.isDefaultValue("parallelJobs")) {
             return undefined;
         } else if (this.parallelJobs === 0) {
             return defaultNumJobs();
@@ -565,6 +568,18 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableAutomaticKitScan;
     }
 
+    get preRunCoverageTarget(): string | null {
+        return this.configData.preRunCoverageTarget;
+    }
+
+    get postRunCoverageTarget(): string | null {
+        return this.configData.postRunCoverageTarget;
+    }
+
+    get coverageInfoFiles(): string[] {
+        return this.configData.coverageInfoFiles;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
@@ -629,7 +644,10 @@ export class ConfigurationReader implements vscode.Disposable {
         launchBehavior: new vscode.EventEmitter<string>(),
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),
-        enableAutomaticKitScan: new vscode.EventEmitter<boolean>()
+        enableAutomaticKitScan: new vscode.EventEmitter<boolean>(),
+        preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
+        postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
+        coverageInfoFiles: new vscode.EventEmitter<string[]>()
     };
 
     /**

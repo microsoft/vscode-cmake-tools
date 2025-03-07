@@ -49,6 +49,7 @@
 	"using.compilers.for.VS2": "使用 Visual Studio 的編譯器 ({0} 架構)",
 	"search.for.compilers": "搜尋這部電腦上的編譯器",
 	"unspecified.let.cmake.guess": "未指定 (讓 CMake 猜測要使用的編譯器與環境)",
+	"search.for.compilers.in.dir": "以遞歸方式搜尋特定目錄中的編譯程式 (深度上限： 5)",
 	"not.reading.nonexistent.kit": "未讀取不存在的套件檔案: {0}",
 	"not.reading.invalid.path": "未讀取無效套件檔案: {0}",
 	"reading.kits.file": "正在讀取套件檔案 {0}",

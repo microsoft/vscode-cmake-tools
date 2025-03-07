@@ -21,6 +21,7 @@
 	"start.selection.of.compilers": "開始選取編譯器。找到 {0} 個編譯器。",
 	"opening.compiler.selection": "正在開啟編譯器選取範圍 QuickPick",
 	"scan.for.compilers.button": "掃描編譯器",
+	"scan.for.compilers.in.dir": "以遞歸方式掃描目錄 (深度上限的編譯程式： 5)",
 	"select.a.compiler.placeholder": "選取 {0} 的套件",
 	"user.cancelled.compiler.selection": "使用者已取消選取編譯器",
 	"user.selected.compiler": "使用者選取的編譯器 {0}",
