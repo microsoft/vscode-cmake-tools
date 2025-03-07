@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.21
+
+Features:
+
+- Add an option to specify the launch target for debugging CTest tests. [#4273](https://github.com/microsoft/vscode-cmake-tools/pull/4273)
+
 ## 1.20.53
 
 Improvements:

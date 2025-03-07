@@ -2255,6 +2255,12 @@
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription%",
           "scope": "machine-overridable"
         },
+        "cmake.ctest.debugLaunchTarget": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.ctest.debugLaunchTarget.description%",
+          "scope": "resource"
+        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,
