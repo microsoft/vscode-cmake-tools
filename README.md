@@ -10,8 +10,11 @@
 </center>
 <br/>
 
+<div style="justify-content: center; gap: 8px; align-items: center;display: flex; width: 100%; height: 24px; text-align: middle;">
+    <img src="https://img.shields.io/badge/CMake-064F8C?style=for-the-badge&logo=cmake&logoColor=white"/>
 [![Build Status](badge)](test)
 [![License: MIT](https://cdn.prod.website-files.com/5e0f1144930a8bc8aace526c/65dd9eb5aaca434fac4f1c34_License-MIT-blue.svg)](/LICENSE)
+</div>
 
 
 <br/>
@@ -27,6 +30,16 @@
  Features
 </summary>
 
+<div style="display: flex; flex-wrap: wrap; gap: 16px; width: 100%">
+    <img style="width: calc(50% - 8px);" src="res/graphics/presets-support-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/cmake-debugging-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/cmake-language-service-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/test-integration-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/cmake-cache-editor-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/status-and-sidebar-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/cmake-commands-feature.png"/>
+    <img style="width: calc(50% - 8px);" src="res/graphics/tasks-feature.png"/>    
+</div>
 </details>
 
 ## Setup and Installation
