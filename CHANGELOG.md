@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.21
+
+Bug fixes: 
+
+- Fix displaying "Go to Test" in the Test Explorer when the DEF_SOURCE_LINE property is set, but there is no backtrace information present. [4321](https://github.com/microsoft/vscode-cmake-tools/pull/4321) [@rjaegers](https://github.com/rjaegers)
+
 ## 1.20.53
 
 Improvements:
