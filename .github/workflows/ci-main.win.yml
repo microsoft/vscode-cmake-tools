@@ -66,6 +66,9 @@ jobs:
       - name: Run single root test
         run: yarn endToEndTestsSingleRoot
 
+      - name: Run single root test for ctest
+        run: yarn endToEndTestsSingleRootCTest
+
       - name: Run multi root test
         run: yarn endToEndTestsMultiRoot
 
