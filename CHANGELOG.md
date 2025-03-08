@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.21
+
+Improvements:
+
+- Add name de-mangling for C++ symbols in the Test Explorer view when running tests with coverage. [#4340](https://github.com/microsoft/vscode-cmake-tools/pull/4340) [@rjaegers](https://github.com/rjaegers)
+
 ## 1.20.53
 
 Improvements:
