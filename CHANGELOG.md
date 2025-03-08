@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.21
+
+Bug Fixes:
+
+- Fix bug that makes `Configure Task` lists only first folder in workspace. [#3232](https//github.com/microsoft/vscode-cmake-tools/issues/3232)
+
 ## 1.20.53
 
 Improvements:
