@@ -1,0 +1,36 @@
+name: Documentation request form
+description: Create a documentation request for the CMake Tools extension.
+title: "[Docs] "
+labels:
+  - "documentation"
+  - "triage"
+body:
+- type: markdown
+  attributes:
+    value: |
+      ### Is there an existing documentation request for this?
+      Please search our [existing issues](https://github.com/microsoft/vscode-cmake-tools/issues) to see if an issue already exists for the documentation request you'd like to create.
+- type: textarea
+  attributes:
+    label: Request Overview
+    description: |
+      Please give us an overview of what information you would like to see added to the documentation.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Existing Documentation URL
+    description: |
+      If you believe an existing doc needs to be updated, please provide the URL of the page here.
+    render: shell
+  validations:
+    required: false
+- type: textarea
+  attributes:
+    label: Additional Information
+    description: |
+      Optionally provide other information that will give us more context about the documentation you are requesting.
+
+      Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
+  validations:
+    required: false
