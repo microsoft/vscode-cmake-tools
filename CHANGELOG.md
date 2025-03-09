@@ -10,6 +10,7 @@ Improvements:
 Bug Fixes:
 
 - Fix regression where we weren't properly expanding copyCompileCommands path. [#4294](https://github.com/microsoft/vscode-cmake-tools/issues/4294)
+- Fix gnuld error parsing false positive on make errors, false negative due to trailing \r, and false parsing of new "multiple definitions" error [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864) [@0xemgy](https://github.com/0xemgy)
 
 ## 1.20.52
 
