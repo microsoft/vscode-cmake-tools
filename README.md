@@ -29,20 +29,20 @@
 <p align=center>
     <img width="49%" src="res/graphics/presets-support-feature.png" alt="Presets Support"/>
 &nbsp;
-    <img width="49%" src="res/graphics/cmake-debugging-feature.png" alt="CMake Debugging"/>
+    <img width="49%" src="res/graphics/cmake-language-service-feature.png" alt="Built-In CMake Language Services"/>
 </p>
 <p align=center>
-    <img width="49%" src="res/graphics/cmake-commands-feature.png" alt="CMake Commands"/>
+    <img width="49%" src="res/graphics/cmake-debugging-feature.png" alt="CMake Debugging"/>
 &nbsp;
     <img width="49%" src="res/graphics/status-and-sidebar-feature.png" alt="Status & Sidebar"/>
 </p>
 <p align=center>
-    <img width="49%" src="res/graphics/cmake-language-service-feature.png" alt="Built-In CMake Language Services"/>
+    <img width="49%" src="res/graphics/cmake-commands-feature.png" alt="CMake Commands"/>
 &nbsp;
-    <img width="49%" src="res/graphics/tasks-feature.png" alt="Tasks"/>  
+    <img width="49%" src="res/graphics/project-outline-feature.png" alt="Project Outline"/>
 </p>
 <p align=center>
-    <img width="49%" src="res/graphics/cmake-cache-editor-feature.png" alt="CMake Cache Editor"/>
+    <img width="49%" src="res/graphics/tasks-feature.png" alt="Tasks"/>  
 &nbsp;
     <img width="49%" src="res/graphics/test-integration-feature.png" alt="Test Integration"/>
 </p>  
