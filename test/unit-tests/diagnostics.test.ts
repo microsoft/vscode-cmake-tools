@@ -323,6 +323,34 @@ suite('Diagnostics', () => {
         expect(path.posix.normalize(diag.file)).to.eq(diag.file);
         expect(path.posix.isAbsolute(diag.file)).to.be.false;
     });
+    test('Parsing linker error of type "/path/to/ld: path/to/file.obj:path/to/file:line: message"', () => {
+        const lines = ['/path/to/ld: path/to/file.obj:path/to/file:42: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.location.start.character).to.eq(0);
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('path/to/file');
+        expect(diag.severity).to.eq('error');
+        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+        expect(path.posix.isAbsolute(diag.file)).to.be.false;
+    });
+    test('Parsing linker error of type "/path/to/ld.exe: path/to/file.obj:path/to/file:line: message"', () => {
+        const lines = ['/path/to/ld.exe: path/to/file.obj:path/to/file:42: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.location.start.character).to.eq(0);
+        expect(diag.message).to.eq('message');
+        expect(diag.file).to.eq('path/to/file');
+        expect(diag.severity).to.eq('error');
+        expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+        expect(path.posix.isAbsolute(diag.file)).to.be.false;
+    });
     test('Parsing linker error of type "/path/to/ld: path/to/file:line: message"', () => {
         const lines = ['/path/to/ld: path/to/file:42: message'];
         feedLines(build_consumer, [], lines);
@@ -663,6 +691,7 @@ suite('Diagnostics', () => {
         ];
         feedLines(build_consumer, [], lines);
         expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
     });
 
     test('Parse MSVC single proc error', () => {
