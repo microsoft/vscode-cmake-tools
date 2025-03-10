@@ -60,11 +60,11 @@ Ensure that either you've added your CMake executable to your PATH, or you've ad
 
 ## Resources
 - [Docs](docs/README.md) for comprehensive documentation.
-- [Quick Start](https://code.visualstudio.com/docs/cpp/CMake-linux) to get up and running fast.
+- [Quick Start](https://code.visualstudio.com/docs/cpp/CMake-linux) to get up and running fast, by allowing you to generate startup files and presets.
 - [Github](https://github.com/microsoft/vscode-cmake-tools) for source code, issues, and contributing.
 
 ## Contributing
-We encourage an open and collaborative development environment and welcome all contributions. Whether you're fixing bugs, proposing new features, or improving our documentation - we invite you to join the CMake Tools community. Please review our [contribution guidelines](contributing.md) and adhere to our [code of conduct](https://opensource.microsoft.com/codeofconduct/).
+We encourage an open and collaborative development environment and welcome all contributions. Whether you're fixing bugs, proposing new features, or improving our documentation - we invite you to join the CMake Tools community. Please review our [contribution guidelines](CONTRIBUTING.md) and adhere to our [code of conduct](https://opensource.microsoft.com/codeofconduct/).
 
 You can file issues with us using one of our templates:
 
