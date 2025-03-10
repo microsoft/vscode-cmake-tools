@@ -28,7 +28,7 @@ export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     command: string; // Command is either "build", "configure", "install", "test", "package" or "workflow".
     targets?: string[]; // only in "build" command
     preset?: string;
-    options?: { cwd?: string ; environment?: Environment };
+    options?: { cwd?: string; environment?: Environment };
 }
 
 export class CMakeTask extends vscode.Task {
@@ -84,7 +84,40 @@ const localizeCommandType = (cmd: CommandType): string => {
     };
 };
 
-async function getDefaultPresetName(commandType: CommandType, resolve: boolean = false): Promise<string | undefined> {
+/**
+ * Returns the default preset name for the given project and command type.
+ *
+ * @param project Project to get the default preset name for.
+ * @param commandType Command type to get the default preset name for.
+ * @returns The default preset name for the given project and command type.
+ */
+function getDefaultPresetNameForProject(project: CMakeProject | undefined, commandType: CommandType): string | undefined {
+    if (!project) {
+        return undefined;
+    }
+    switch (commandType) {
+        case CommandType.config:
+            return project.configurePreset?.name;
+        case CommandType.build:
+            return project.buildPreset?.name;
+        case CommandType.install:
+            return project.buildPreset?.name;
+        case CommandType.clean:
+            return project.buildPreset?.name;
+        case CommandType.cleanRebuild:
+            return project.buildPreset?.name;
+        case CommandType.test:
+            return project.testPreset?.name;
+        case CommandType.package:
+            return project.packagePreset?.name;
+        case CommandType.workflow:
+            return project.workflowPreset?.name;
+        default:
+            return undefined;
+    }
+}
+
+async function getDefaultPresetNameForActiveProject(commandType: CommandType, resolve: boolean = false): Promise<string | undefined> {
     let result: string | undefined;
     switch (commandType) {
         case CommandType.config:
@@ -133,25 +166,31 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     }
 
     public async provideTasks(): Promise<CMakeTask[]> {
-        const result: CMakeTask[] = [];
-        const project: CMakeProject | undefined = getActiveProject();
-        const targets: string[] | undefined = await project?.getDefaultBuildTargets() || ["all"];
-        if (extensionManager?.workspaceHasAtLeastOneProject()) {
-            result.push(await CMakeTaskProvider.provideTask(CommandType.config, project?.useCMakePresets));
-            result.push(await CMakeTaskProvider.provideTask(CommandType.build, project?.useCMakePresets, targets));
-            result.push(await CMakeTaskProvider.provideTask(CommandType.install, project?.useCMakePresets));
-            result.push(await CMakeTaskProvider.provideTask(CommandType.test, project?.useCMakePresets));
-            result.push(await CMakeTaskProvider.provideTask(CommandType.package, project?.useCMakePresets));
-            result.push(await CMakeTaskProvider.provideTask(CommandType.workflow, project?.useCMakePresets));
-            result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project?.useCMakePresets));
-            result.push(await CMakeTaskProvider.provideTask(CommandType.cleanRebuild, project?.useCMakePresets, targets));
+        const allProjects: CMakeProject[] | undefined = extensionManager?.getAllCMakeProjects();
+        if (!allProjects) {
+            return [];
         }
-
+        const result: CMakeTask[] = [];
+        for (const project of allProjects) {
+            const targets: string[] | undefined = await project.getDefaultBuildTargets() || ["all"];
+            result.push(await CMakeTaskProvider.provideTask(CommandType.config, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.build, project.workspaceFolder, project.useCMakePresets, targets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.install, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.test, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.package, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.workflow, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.cleanRebuild, project.workspaceFolder, project.useCMakePresets, targets));
+        }
         return result;
     }
 
-    public static async provideTask(commandType: CommandType, useCMakePresets?: boolean, targets?: string[], presetName?: string): Promise<CMakeTask> {
+    public static async provideTask(commandType: CommandType, workspaceFolder: vscode.WorkspaceFolder, useCMakePresets?: boolean, targets?: string[], presetName?: string): Promise<CMakeTask> {
         const taskName: string = localizeCommandType(commandType);
+        const project = await extensionManager?.getProjectForFolder(workspaceFolder);
+        if (!project) {
+            log.error(localize("project.not.found", 'Project not found.'));
+        }
         let buildTargets: string[] | undefined;
         let preset: string | undefined;
         if (commandType === CommandType.build || commandType === CommandType.cleanRebuild) {
@@ -160,7 +199,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         if (presetName) {
             preset = presetName;
         } else if (useCMakePresets) {
-            preset = await getDefaultPresetName(commandType);
+            preset = getDefaultPresetNameForProject(project, commandType);
         }
 
         const definition: CMakeTaskDefinition = {
@@ -170,10 +209,14 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             targets: buildTargets,
             preset: preset
         };
-        const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr,
+        // Add the workspace folder name to the task label if it is defined. This is to differentiate between tasks with the same name in different workspaces.
+        if (workspaceFolder !== undefined) {
+            definition.label = `${workspaceFolder.name}: ${definition.label}`;
+        }
+        const task = new vscode.Task(definition, workspaceFolder, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
-                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, {})
+                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, {})
             ), []);
         task.group = (commandType === CommandType.build || commandType === CommandType.cleanRebuild) ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
@@ -184,10 +227,11 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
-            const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
-            const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+            // In this extension, the scope of the task is always a workspace folder.
+            const workspaceFolder: vscode.WorkspaceFolder = task.scope as vscode.WorkspaceFolder;
+            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, resolvedDefinition.options)
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
                 ), []);
             return resolvedTask;
         }
@@ -198,17 +242,18 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
-            const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
-            const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+            // In this extension, the scope of the task is always a workspace folder.
+            const workspaceFolder: vscode.WorkspaceFolder = task.scope as vscode.WorkspaceFolder;
+            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, resolvedDefinition.preset, resolvedDefinition.options)
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
                 ), []);
             return resolvedTask;
         }
         return task;
     }
 
-    public static async findBuildTask(presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
+    public static async findBuildTask(workspaceFolder: string, presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
         // Fetch all CMake task from `tasks.json` files.
         const allTasks: vscode.Task[] = await vscode.tasks.fetchTasks({ type: CMakeTaskProvider.CMakeScriptType });
 
@@ -287,8 +332,13 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         }
 
         // Fetch CMake task from from task provider
-        matchingTargetTasks.push(await CMakeTaskProvider.provideTask(CommandType.build, undefined, targets, presetName));
-        const items: TaskMenu[] = matchingTargetTasks.map<TaskMenu>(task => ({ label: task.name, task: task, description: task.detail}));
+        const workspaceFolderObj: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(workspaceFolder));
+        if (!workspaceFolderObj) {
+            log.error(localize("workspace.folder.not.found", 'Workspace folder not found.'));
+            return undefined;
+        }
+        matchingTargetTasks.push(await CMakeTaskProvider.provideTask(CommandType.build, workspaceFolderObj, undefined, targets, presetName));
+        const items: TaskMenu[] = matchingTargetTasks.map<TaskMenu>(task => ({ label: task.name, task: task, description: task.detail }));
         // Ask the user to pick a task.
         const selection = await vscode.window.showQuickPick(items, { placeHolder: localize('select.build.task', 'Select a build task') });
         return selection?.task;
@@ -305,7 +355,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private targets: string[], private preset?: string, private options?: { cwd?: string ; environment?: Environment }) {
+    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
     }
 
     output(line: string): void {
@@ -362,7 +412,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
     private async correctTargets(project: CMakeProject, commandType: CommandType): Promise<string[]> {
         let targets: string[] = this.targets;
-        const targetIsDefined: boolean = this.targets && this.targets.length > 0 ;
+        const targetIsDefined: boolean = this.targets && this.targets.length > 0;
         const shouldIgnore: boolean = commandType !== CommandType.build;
 
         if (shouldIgnore && targetIsDefined) {
@@ -411,11 +461,19 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         if (preset !== undefined) {
             return preset;
         }
-        return useCMakePresets ? getDefaultPresetName(commandType, true) : undefined;
+        return useCMakePresets ? getDefaultPresetNameForActiveProject(commandType, true) : undefined;
     }
 
-    private getActiveProject(): CMakeProject | undefined {
-        const project: CMakeProject | undefined = getActiveProject();
+    /**
+     *
+     * @returns The CMake project for the current workspace folder if the workspace folder is defined, otherwise the active project.
+     */
+    private async getProject(): Promise<CMakeProject | undefined> {
+        let project: CMakeProject | undefined = getActiveProject();
+        if (this.workspaceFolder !== undefined) {
+            this.writeEmitter.fire("Workspace is " + this.workspaceFolder.uri.path + endOfLine);
+            project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
+        }
         if (!project) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
             this.writeEmitter.fire(localize("task.failed", "Task failed.") + endOfLine);
@@ -426,11 +484,11 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
 
     private async runConfigTask(): Promise<any> {
         this.writeEmitter.fire(localize("config.started", "Config task started...") + endOfLine);
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
-        telemetry.logEvent("task", {taskType: "configure", useCMakePresets: String(project.useCMakePresets)});
+        telemetry.logEvent("task", { taskType: "configure", useCMakePresets: String(project.useCMakePresets) });
         await this.correctTargets(project, CommandType.config);
         const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
 
@@ -463,13 +521,13 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         let args: string[] = [];
 
         if (!project) {
-            project = this.getActiveProject();
+            project = await this.getProject();
             if (!project || !await this.isTaskCompatibleWithPresets(project)) {
                 return -1;
             }
         }
         if (generateLog) {
-            telemetry.logEvent("task", {taskType: commandType, useCMakePresets: String(project.useCMakePresets)});
+            telemetry.logEvent("task", { taskType: commandType, useCMakePresets: String(project.useCMakePresets) });
         }
         targets = await this.correctTargets(project, commandType);
         const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
@@ -495,14 +553,14 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 if (fullCommand) {
                     cmakePath = fullCommand.command;
                     args = fullCommand.args || [];
-                    this.options.environment = EnvironmentUtils.merge([fullCommand.build_env, this.options.environment], {preserveNull: true});
+                    this.options.environment = EnvironmentUtils.merge([fullCommand.build_env, this.options.environment], { preserveNull: true });
                 }
             } else {
                 fullCommand = await cmakeDriver.generateBuildCommandFromSettings(targets);
                 if (fullCommand) {
                     cmakePath = fullCommand.command;
                     args = fullCommand.args ? fullCommand.args : [];
-                    this.options.environment = EnvironmentUtils.merge([ fullCommand.build_env, this.options.environment]);
+                    this.options.environment = EnvironmentUtils.merge([fullCommand.build_env, this.options.environment]);
                 }
             }
         } else {
@@ -542,11 +600,11 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runTestTask(): Promise<any> {
         this.writeEmitter.fire(localize("test.started", "Test task started...") + endOfLine);
 
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
-        telemetry.logEvent("task", {taskType: "test", useCMakePresets: String(project.useCMakePresets)});
+        telemetry.logEvent("task", { taskType: "test", useCMakePresets: String(project.useCMakePresets) });
         await this.correctTargets(project, CommandType.test);
         const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
 
@@ -570,7 +628,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 this.writeEmitter.fire(localize('ctest.finished', 'CTest finished') + endOfLine);
                 this.closeEmitter.fire(0);
             }
-        }  else {
+        } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
             this.writeEmitter.fire(localize("test.failed", "CTest run failed.") + endOfLine);
             this.closeEmitter.fire(-1);
@@ -580,11 +638,11 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runPackageTask(): Promise<any> {
         this.writeEmitter.fire(localize("package.started", "Package task started...") + endOfLine);
 
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
-        telemetry.logEvent("task", {taskType: "package", useCMakePresets: String(project.useCMakePresets)});
+        telemetry.logEvent("task", { taskType: "package", useCMakePresets: String(project.useCMakePresets) });
         await this.correctTargets(project, CommandType.package);
         const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
 
@@ -608,7 +666,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 this.writeEmitter.fire(localize('cpack.finished', 'CPack finished') + endOfLine);
                 this.closeEmitter.fire(0);
             }
-        }  else {
+        } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
             this.writeEmitter.fire(localize("cpack.failed", "CPack run failed.") + endOfLine);
             this.closeEmitter.fire(-1);
@@ -618,11 +676,11 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async runWorkflowTask(): Promise<any> {
         this.writeEmitter.fire(localize("workflow.started", "Workflow task started...") + endOfLine);
 
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
-        telemetry.logEvent("task", {taskType: "workflow", useCMakePresets: String(project.useCMakePresets)});
+        telemetry.logEvent("task", { taskType: "workflow", useCMakePresets: String(project.useCMakePresets) });
         await this.correctTargets(project, CommandType.workflow); // ?????
         const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
 
@@ -646,7 +704,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 this.writeEmitter.fire(localize('workflow.finished', 'Workflow finished') + endOfLine);
                 this.closeEmitter.fire(0);
             }
-        }  else {
+        } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
             this.writeEmitter.fire(localize("workflow.failed", "Workflow run failed.") + endOfLine);
             this.closeEmitter.fire(-1);
@@ -654,11 +712,11 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     private async runCleanRebuildTask(): Promise<any> {
-        const project: CMakeProject | undefined = this.getActiveProject();
+        const project: CMakeProject | undefined = await this.getProject();
         if (!project || !await this.isTaskCompatibleWithPresets(project)) {
             return;
         }
-        telemetry.logEvent("task", {taskType: "cleanRebuild", useCMakePresets: String(project.useCMakePresets)});
+        telemetry.logEvent("task", { taskType: "cleanRebuild", useCMakePresets: String(project.useCMakePresets) });
         const cleanResult = await this.runBuildTask(CommandType.clean, false, false, project);
         if (cleanResult === 0) {
             await this.runBuildTask(CommandType.build, true, false, project);
