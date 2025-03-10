@@ -1072,7 +1072,12 @@ export class CTestDriver implements vscode.Disposable {
         let chosenConfig: ConfigItem | undefined;
         if (allConfigItems.length === 1) {
             chosenConfig = allConfigItems[0];
-        } else {
+        }
+        if (!chosenConfig && this.ws.config.ctestDebugLaunchTarget) {
+            chosenConfig = allConfigItems.find(x => x.label === this.ws.config.ctestDebugLaunchTarget);
+        }
+
+        if (!chosenConfig) {
             // TODO: we can remember the last choice once the CMake side panel work is done
             const chosen = await vscode.window.showQuickPick(allConfigItems, { placeHolder: localize('choose.launch.config', 'Choose a launch configuration to debug the test with.') });
             if (chosen) {
