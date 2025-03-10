@@ -6,6 +6,10 @@ Features:
 
 - Add an option to specify the launch target for debugging CTest tests. [#4273](https://github.com/microsoft/vscode-cmake-tools/pull/4273)
 
+Bug Fixes:
+
+- Fix bug that makes `Configure Task` lists only first folder in workspace. [#3232](https//github.com/microsoft/vscode-cmake-tools/issues/3232)
+
 ## 1.20.53
 
 Improvements:
