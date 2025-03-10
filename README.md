@@ -34,7 +34,7 @@
 <p align=center>
     <img width="49%" src="res/graphics/cmake-debugging-feature.png" alt="CMake Debugging"/>
 &nbsp;
-    <img width="49%" src="res/graphics/status-and-sidebar-feature.png" alt="Status & Sidebar"/>
+    <img width="49%" src="res/graphics/status-and-sidebar-feature.png" alt="Project Status"/>
 </p>
 <p align=center>
     <img width="49%" src="res/graphics/cmake-commands-feature.png" alt="CMake Commands"/>
