@@ -50,11 +50,13 @@
 </details>
 
 ## Setup and Installation
-[Download CMake](https://cmake.org/download/) and add it to PATH.
+Ensure CMake is available on your system. A couple of options are:
+- [Download CMake](https://cmake.org/download/).
+- Utilize the CMake that is bundled with a Visual Studio installation.
 
-TODO: Garrett could you fill anything else the user may need to know here?
+Install the CMake Tools extension from the Extensions pane within VS Code or from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools).
 
-Download the CMake Tools extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools).
+Ensure that either you've added your CMake executable to your PATH, or you've adjusted the `cmake.cmakePath` setting to point to your CMake executable. 
 
 ## Resources
 - [Docs](docs/README.md) for comprehensive documentation.
