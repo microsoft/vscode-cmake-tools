@@ -28,7 +28,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             parallelJobs: 0,
             allowParallelJobs: false,
             testExplorerIntegrationEnabled: true,
-            testSuiteDelimiter: ''
+            testSuiteDelimiter: '',
+            debugLaunchTarget: null
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
