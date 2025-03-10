@@ -68,7 +68,7 @@ We encourage an open and collaborative development environment and welcome all c
 
 You can file issues with us using one of our templates:
 
-[Bug Report](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=bugreport.yml): If you see an error message or encounter an issue while using the CMake Tools extension..
+[Bug Report](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=bugreport.yml): If you see an error message or encounter an issue while using the CMake Tools extension.
 
 [Feature Request](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=featurerequest.yml): If you have a suggestion or need a feature that would enhance development.
 
