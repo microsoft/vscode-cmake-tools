@@ -72,7 +72,7 @@ You can file issues with us using one of our templates:
 
 [Feature Request](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=featurerequest.yml): If you have a suggestion or need a feature that would enhance development.
 
-[Documentation Request](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=docrequest.yml): For requesting changes or additions to the [CMake Tools documentation](docs/README.md).
+[Documentation Request](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=docrequest.yml): Requesting changes or additions to the [CMake Tools documentation](docs/README.md).
 
 ##
 
