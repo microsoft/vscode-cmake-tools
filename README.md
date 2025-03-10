@@ -90,6 +90,6 @@ This project was started by [@vector-of-bool](https://github.com/vector-of-bool)
 
 ### Contributors
 
-<a href="https://github.com/Tanu-N-Prabhu/Python/graphs/contributors">
+<a href="https://github.com/microsoft/vscode-cmake-tools/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=microsoft/vscode-cmake-tools" alt="Contributors"/>
 </a>
