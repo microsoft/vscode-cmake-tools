@@ -111,7 +111,7 @@ export function normalizePath(p: string, opt: PathNormalizationOptions): string 
             norm = norm.toLocaleLowerCase();
             break;
         case 'platform':
-            if (process.platform === 'win32' || process.platform === 'darwin') {
+            if (process.platform === 'win32') {
                 norm = norm.toLocaleLowerCase();
             }
             break;
