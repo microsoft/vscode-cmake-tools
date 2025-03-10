@@ -66,7 +66,7 @@ Ensure that either you've added your CMake executable to your PATH, or you've ad
 ## Contributing
 We encourage an open and collaborative development environment and welcome all contributions. Whether you're fixing bugs, proposing new features, or improving our documentation - we invite you to join the CMake Tools community. Please review our [contribution guidelines](contributing.md) and adhere to our [code of conduct](https://opensource.microsoft.com/codeofconduct/).
 
-You can also file issues with us using one of our templates:
+You can file issues with us using one of our templates:
 
 [Bug Report](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=bugreport.yml): For if you see an error message or encounter an issue while using the CMake Tools extension..
 
