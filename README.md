@@ -70,7 +70,7 @@ You can file issues with us using one of our templates:
 
 [Bug Report](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=bugreport.yml): For if you see an error message or encounter an issue while using the CMake Tools extension..
 
-[Feature Request](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=featurerequest.yml): For if you have a suggestion or need a feature that would enhance development.
+[Feature Request](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=featurerequest.yml): If you have a suggestion or need a feature that would enhance development.
 
 [Documentation Request](https://github.com/microsoft/vscode-cmake-tools/issues/new?template=docrequest.yml): For requesting changes or additions to the [CMake Tools documentation](docs/README.md).
 
