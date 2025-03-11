@@ -19,7 +19,7 @@
 <img style="width: 100%" src="res/graphics/cmake-tools-banner.png" alt="CMake Tools Banner"/>
 
 ## Introduction
-[CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) provides the native developer a full-featured, convenient, and powerful workflow for CMake-based projects in Visual Studio Code.
+[CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) provides the native developer a full-featured, convenient, and powerful workflow for CMake-based projects in Visual Studio Code. We provide built-in CMake language support, presets support, the ability to configure, build, launch, etc. with a single click, and convenient CMake commands that can also be pinned for quick access.
 
 <details open>
 <summary>
