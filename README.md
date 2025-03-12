@@ -19,7 +19,7 @@
 <img style="width: 100%" src="res/graphics/cmake-tools-banner.png" alt="CMake Tools Banner"/>
 
 ## Introduction
-[CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) provides the native developer a full-featured, convenient, and powerful workflow for CMake-based projects in Visual Studio Code. We provide built-in CMake language support, presets support, the ability to configure, build, launch, etc. with a single click, and convenient CMake commands that can also be pinned for quick access.
+[CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) provides the native developer a full-featured, convenient, and powerful workflow for CMake-based projects in Visual Studio Code. It simplifies advanced configurations with support for CMake presets and enhances the development experience by supporting rich IntelliSense features, a built-in debugger for CMake scripts, and configurable CMake tasks. Its customizable interface allows for efficient tailored control of projects, while CTest integration ensures straightforward test execution and monitoring.
 
 <details open>
 <summary>
