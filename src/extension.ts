@@ -1846,7 +1846,7 @@ export class ExtensionManager implements vscode.Disposable {
      * @returns The CMake project for the folder
      */
     async getProjectForFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject | undefined> {
-        return this.projectController.getProjectForFolder(folder.uri.path);
+        return this.projectController.getProjectForFolder(folder.uri.fsPath);
     }
 
     activeConfigurePresetName(): string {
