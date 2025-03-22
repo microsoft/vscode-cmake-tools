@@ -93,7 +93,7 @@ async function commonSetup(configure_preset: string) {
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
     await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
 
-    await vscode.commands.executeCommand('cmake.setConfigurePreset', configure_preset);
+    await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'Windows-' + configure_preset : 'Linux-' + configure_preset);
     await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
     await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
     await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
