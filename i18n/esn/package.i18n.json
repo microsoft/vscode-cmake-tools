@@ -32,7 +32,7 @@
 	"cmake-tools.command.cmake.configureAll.title": "Configurar todos los proyectos",
 	"cmake-tools.command.cmake.configureAllWithDebugger.title": "Configurar todos los proyectos con el depurador de CMake",
 	"cmake-tools.command.cmake.showConfigureCommand.title": "Mostrar comando Configurar",
-	"cmake-tools.command.cmake.build.title": "Versión de compilación",
+	"cmake-tools.command.cmake.build.title": "Compilación",
 	"cmake-tools.command.cmake.buildAll.title": "Compilar todos los proyectos",
 	"cmake-tools.command.cmake.showBuildCommand.title": "Mostrar comando de compilación",
 	"cmake-tools.command.cmake.compileFile.title": "Compilar el archivo activo",
