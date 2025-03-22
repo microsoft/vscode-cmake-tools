@@ -19,6 +19,7 @@ async function main() {
         const extensionTestsEnv: { [key: string]: string | undefined } = {
             "CMT_TESTING": "1",
             "CMT_QUIET_CONSOLE": "1",
+            "CMT_TESTING_OVERRIDE_TEST_EXPLORER": "1",
             "TEST_FILTER": process.env.TEST_FILTER ?? ".*"
         };
 
