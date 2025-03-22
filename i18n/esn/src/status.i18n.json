@@ -22,7 +22,7 @@
 	"run.workflow.tooltip": "Ejecutar flujo de trabajo",
 	"run.workflow": "Ejecutar flujo de trabajo",
 	"build.tooltip": "Compilar el destino seleccionado",
-	"build": "Versión de compilación",
+	"build": "Compilación",
 	"stop": "Detener",
 	"click.to.change.configure.preset.tooltip": "Hacer clic para cambiar la configuración preestablecida",
 	"no.configure.preset.selected": "No hay ninguna configuración preestablecida seleccionada",
