@@ -8,5 +8,5 @@ int main() {
   {
     std::filesystem::create_directory(test_dir);
   }
-  return generic_test("@test_filename@", @success@);
+  return write_generic_test_result("@test_filename@", @success@);
 }

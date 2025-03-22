@@ -15,7 +15,7 @@
  * @return int : 0 if the test is successful, 1 otherwise
  */
 /********************************************************************************/
-int generic_test(const std::string& test_filepath, const bool success) {
+int write_generic_test_result(const std::string& test_filepath, const bool success) {
   std::filesystem::path test_path(test_filepath);
   const auto& test_name{test_path.stem()};
 
