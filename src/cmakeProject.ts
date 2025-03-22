@@ -2806,7 +2806,7 @@ export class CMakeProject {
         env = EnvironmentUtils.merge([configureEnv, env]);
 
         if (debugEnv) {
-            const options = { ... await this.getExpansionOptions(), envOverride: env, penvOverride: configureEnv };
+            const options = { ... await this.getExpansionOptions(), envOverride: configureEnv, penvOverride: configureEnv };
             for (const envPair of debugEnv) {
                 env[envPair.name] = await expandString(envPair.value, options);
             }
