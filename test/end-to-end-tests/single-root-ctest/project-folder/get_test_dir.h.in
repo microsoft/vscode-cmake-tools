@@ -1,0 +1,6 @@
+#include <filesystem>
+
+std::filesystem::path get_test_dir()
+{
+  return {"@TESTS_DIR@"};
+}
