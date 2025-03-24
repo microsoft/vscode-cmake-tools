@@ -217,6 +217,7 @@ export interface ExtensionConfigurationSettings {
     automaticReconfigure: boolean;
     pinnedCommands: string[];
     enableAutomaticKitScan: boolean;
+    enableLanguageServices: boolean;
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
@@ -571,6 +572,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableAutomaticKitScan;
     }
 
+    get enableLanguageServices(): boolean {
+        return this.configData.enableLanguageServices;
+    }
+
     get preRunCoverageTarget(): string | null {
         return this.configData.preRunCoverageTarget;
     }
@@ -648,6 +653,7 @@ export class ConfigurationReader implements vscode.Disposable {
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),
         enableAutomaticKitScan: new vscode.EventEmitter<boolean>(),
+        enableLanguageServices: new vscode.EventEmitter<boolean>(),
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>()

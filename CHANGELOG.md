@@ -5,6 +5,7 @@
 Features:
 
 - Add an option to specify the launch target for debugging CTest tests. [#4273](https://github.com/microsoft/vscode-cmake-tools/pull/4273)
+- Add a setting to enable/disable our built-in language services. [#4290](https://github.com/microsoft/vscode-cmake-tools/issues/4290)
 
 Improvements:
 
