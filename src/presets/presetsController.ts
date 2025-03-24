@@ -2,6 +2,7 @@ import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as lodash from "lodash";
 
 import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
@@ -1411,7 +1412,7 @@ export class PresetsController implements vscode.Disposable {
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
 
-        const allPresets = await this.getAllWorkflowPresets();
+        const allPresets = lodash.cloneDeep(await this.getAllWorkflowPresets());
         allPresets.push(preset.defaultWorkflowPreset);
 
         log.debug(localize('start.selection.of.workflow.presets', 'Start selection of workflow presets. Found {0} presets.', allPresets.length));
