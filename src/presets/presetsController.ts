@@ -2,6 +2,7 @@ import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as lodash from "lodash";
 
 import { CMakeProject, ConfigureTrigger, ConfigureType } from '@cmt/cmakeProject';
 import * as logging from '@cmt/logging';
@@ -201,7 +202,7 @@ export class PresetsController implements vscode.Disposable {
         }, {
             name: SpecialOptions.Custom,
             label: localize('custom.config.preset', 'Custom'),
-            description: localize('description.custom.config.preset', 'Add an custom configure preset')
+            description: localize('description.custom.config.preset', 'Add a custom configure preset')
         }, {
             name: SpecialOptions.CreateFromCompilers,
             label: localize('create.from.compilers', 'Create from Compilers'),
@@ -463,7 +464,7 @@ export class PresetsController implements vscode.Disposable {
         items.push({
             name: SpecialOptions.Custom,
             label: localize('custom.build.preset', 'Custom'),
-            description: localize('description.custom.build.preset', 'Add an custom build preset')
+            description: localize('description.custom.build.preset', 'Add a custom build preset')
         });
 
         const chosenItem = await vscode.window.showQuickPick(items,
@@ -540,7 +541,7 @@ export class PresetsController implements vscode.Disposable {
         items.push({
             name: SpecialOptions.Custom,
             label: localize('custom.test.preset', 'Custom'),
-            description: localize('description.custom.test.preset', 'Add an custom test preset')
+            description: localize('description.custom.test.preset', 'Add a custom test preset')
         });
 
         const chosenItem = await vscode.window.showQuickPick(items,
@@ -698,7 +699,7 @@ export class PresetsController implements vscode.Disposable {
         items.push({
             name: SpecialOptions.Custom,
             label: localize('custom.workflow.preset', 'Custom'),
-            description: localize('description.custom.workflow.preset', 'Add an custom workflow preset')
+            description: localize('description.custom.workflow.preset', 'Add a custom workflow preset')
         });
 
         const chosenItem = await vscode.window.showQuickPick(items,
@@ -1411,7 +1412,7 @@ export class PresetsController implements vscode.Disposable {
 
         preset.expandConfigurePresetForPresets(this.folderPath, 'workflow');
 
-        const allPresets = await this.getAllWorkflowPresets();
+        const allPresets = lodash.cloneDeep(await this.getAllWorkflowPresets());
         allPresets.push(preset.defaultWorkflowPreset);
 
         log.debug(localize('start.selection.of.workflow.presets', 'Start selection of workflow presets. Found {0} presets.', allPresets.length));

@@ -139,7 +139,7 @@ export class PresetsParser {
         log.info(
             localize(
                 "validating.presets.file",
-                'Reading and validating the presets "file {0}"',
+                'Reading and validating the presets file "{0}"',
                 file
             )
         );
