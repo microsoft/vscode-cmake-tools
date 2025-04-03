@@ -32,7 +32,7 @@ export async function handleCoverageInfoFiles(run: vscode.TestRun, coverageInfoF
         }
         const sections = await lcovParser({ from: contents });
         for (const section of sections) {
-            const coverage = new vscode.FileCoverage(vscode.Uri.file(section.path),
+            const coverage = new vscode.FileCoverage(vscode.Uri.file(section.path.trim()),
                 new vscode.TestCoverageCount(
                     section.lines.hit,
                     section.lines.instrumented
