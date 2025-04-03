@@ -78,6 +78,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         ignoreCMakeListsMissing: false,
         automaticReconfigure: false,
         enableAutomaticKitScan: true,
+        enableLanguageServices: true,
         preRunCoverageTarget: null,
         postRunCoverageTarget: null,
         coverageInfoFiles: []
