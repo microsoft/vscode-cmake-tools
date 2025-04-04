@@ -259,6 +259,7 @@ export class VariantManager implements vscode.Disposable {
                     break;
                 }
             }
+            return;
         }
 
         let new_variants = this.loadVariantsFromSettings();
