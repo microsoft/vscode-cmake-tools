@@ -13,7 +13,7 @@ jobs:
       stale-exempt-label: stale-exempt
       only-label: more info needed
     steps:
-    - uses: actions/stale@v4.1.1
+    - uses: actions/stale@v5.1.0
       with:
         stale-issue-label: ${{ env.stale-label }}
         exempt-issue-labels: ${{ env.stale-exempt-label }}

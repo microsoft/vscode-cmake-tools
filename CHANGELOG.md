@@ -15,6 +15,8 @@ Bug Fixes:
 - Fix bug that makes `Configure Task` lists only first folder in workspace. [#3232](https//github.com/microsoft/vscode-cmake-tools/issues/3232)
 - Fix displaying "Go to Test" in the Test Explorer when the DEF_SOURCE_LINE property is set, but there is no backtrace information present. [4321](https://github.com/microsoft/vscode-cmake-tools/pull/4321) [@rjaegers](https://github.com/rjaegers)
 - Fix gnuld error parsing false positive on make errors, false negative due to trailing \r, and false parsing of new "multiple definitions" error [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864) [@0xemgy](https://github.com/0xemgy)
+- Fixes for small bug string bugs. [#4319](https://github.com/microsoft/vscode-cmake-tools/issues/4319), [#4317](https://github.com/microsoft/vscode-cmake-tools/issues/4317), [#4312](https://github.com/microsoft/vscode-cmake-tools/issues/4312)
+- Make tooltips for selecting Launch/Debug Target. [#4373](https://github.com/microsoft/vscode-cmake-tools/issues/4373)
 
 ## 1.20.53
 
