@@ -221,8 +221,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
             }
         }
         // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
-        args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
-        args.push(`-B${util.lightNormalizePath(binaryDir)}`);
+        args.push("-S", `${encodeURI(util.lightNormalizePath(this.sourceDir))}`);
+        args.push("-B", `${encodeURI(util.lightNormalizePath(binaryDir))}`);
 
         if (!has_gen) {
             const generator = (configurePreset) ? {
