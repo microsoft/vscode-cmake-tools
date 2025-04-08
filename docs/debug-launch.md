@@ -207,6 +207,7 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppdbg",
     "request": "launch",
+    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
     "cwd": "${cmake.testWorkingDirectory}",
     "program": "${cmake.testProgram}",
@@ -219,6 +220,7 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppvsdbg",
     "request": "launch",
+    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],
