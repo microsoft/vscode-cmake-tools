@@ -17,6 +17,7 @@ Bug Fixes:
 - Fix gnuld error parsing false positive on make errors, false negative due to trailing \r, and false parsing of new "multiple definitions" error [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864) [@0xemgy](https://github.com/0xemgy)
 - Fixes for small bug string bugs. [#4319](https://github.com/microsoft/vscode-cmake-tools/issues/4319), [#4317](https://github.com/microsoft/vscode-cmake-tools/issues/4317), [#4312](https://github.com/microsoft/vscode-cmake-tools/issues/4312)
 - Fixes localization for "workspace is" string. [#4374](https://github.com/microsoft/vscode-cmake-tools/issues/4374)
+- Make tooltips for selecting Launch/Debug Target. [#4373](https://github.com/microsoft/vscode-cmake-tools/issues/4373)
 
 ## 1.20.53
 
