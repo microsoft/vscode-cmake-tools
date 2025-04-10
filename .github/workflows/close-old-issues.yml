@@ -21,7 +21,7 @@ jobs:
       stale-label: stale-old
       stale-exempt-label: stale-exempt
     steps:
-    - uses: actions/stale@v4.1.1
+    - uses: actions/stale@v5.1.0
       with:
         stale-issue-label: ${{ env.stale-label }}
         exempt-issue-labels: ${{ env.stale-exempt-label }}
