@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as logging from '@cmt/logging';
 
-const lcovParser = require("@friedemannsommer/lcov-parser");
+const { lcovParser } = require("@friedemannsommer/lcov-parser");
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
