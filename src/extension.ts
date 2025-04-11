@@ -106,6 +106,12 @@ export class ExtensionManager implements vscode.Disposable {
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
     private readonly extensionActiveCommandsEmitter = new vscode.EventEmitter<void>();
     private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
+    private readonly CMAKE_LANGUAGE = "cmake";
+    private readonly CMAKE_SELECTOR: vscode.DocumentSelector = [
+        { language: this.CMAKE_LANGUAGE, scheme: "file" },
+        { language: this.CMAKE_LANGUAGE, scheme: "untitled" }
+    ];
+    private languageServicesDisposables: vscode.Disposable[] = [];
 
     private updateTouchBarVisibility(config: TouchBarConfig) {
         const touchBarVisible = config.visibility === "default";
@@ -119,6 +125,17 @@ export class ExtensionManager implements vscode.Disposable {
      * Second-phase async init
      */
     public async init() {
+        if (this.workspaceConfig.enableLanguageServices) {
+            await this.enableLanguageServices();
+            this.workspaceConfig.onChange('enableLanguageServices', async (value) => {
+                if (value) {
+                    await this.enableLanguageServices();
+                } else {
+                    this.disposeLanguageServices();
+                }
+            });
+        }
+
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
@@ -357,6 +374,7 @@ export class ExtensionManager implements vscode.Disposable {
     private activeTestPresetSub: vscode.Disposable = new DummyDisposable();
     private activePackagePresetSub: vscode.Disposable = new DummyDisposable();
     private activeWorkflowPresetSub: vscode.Disposable = new DummyDisposable();
+    private enableLanguageServicesSub: vscode.Disposable = new DummyDisposable();
 
     // Watch the code model so that we may update the tree view
     // <fspath, sub>
@@ -378,6 +396,83 @@ export class ExtensionManager implements vscode.Disposable {
     private readonly configProvider = new CppConfigurationProvider();
     private cppToolsAPI?: cpt.CppToolsApi;
     private configProviderRegistered?: boolean = false;
+
+    private async enableLanguageServices() {
+        try {
+            const languageServices = await LanguageServiceData.create();
+            this.languageServicesDisposables.push(vscode.languages.registerHoverProvider(
+                this.CMAKE_SELECTOR,
+                languageServices
+            ));
+            this.languageServicesDisposables.push(vscode.languages.registerCompletionItemProvider(
+                this.CMAKE_SELECTOR,
+                languageServices
+            ));
+        } catch {
+            log.error(
+                localize(
+                    "language.service.failed",
+                    "Failed to initialize language services"
+                )
+            );
+        }
+
+        this.languageServicesDisposables.push(vscode.languages.setLanguageConfiguration(
+            this.CMAKE_LANGUAGE,
+            {
+                indentationRules: {
+                    // ^(.*\*/)?\s*\}.*$
+                    decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
+                    // ^.*\{[^}"']*$
+                    increaseIndentPattern: /^.*\{[^}"']*$/
+                },
+                wordPattern:
+                    /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
+                comments: {
+                    lineComment: "#"
+                },
+                brackets: [
+                    ["{", "}"],
+                    ["(", ")"]
+                ],
+
+                __electricCharacterSupport: {
+                    brackets: [
+                        {
+                            tokenType: "delimiter.curly.ts",
+                            open: "{",
+                            close: "}",
+                            isElectric: true
+                        },
+                        {
+                            tokenType: "delimiter.square.ts",
+                            open: "[",
+                            close: "]",
+                            isElectric: true
+                        },
+                        {
+                            tokenType: "delimiter.paren.ts",
+                            open: "(",
+                            close: ")",
+                            isElectric: true
+                        }
+                    ]
+                },
+
+                __characterPairSupport: {
+                    autoClosingPairs: [
+                        { open: "{", close: "}" },
+                        { open: "(", close: ")" },
+                        { open: '"', close: '"', notIn: ["string"] }
+                    ]
+                }
+            }
+        ));
+    }
+
+    private disposeLanguageServices() {
+        this.languageServicesDisposables.forEach(sub => sub.dispose());
+    }
 
     private getProjectsForWorkspaceFolder(folder?: vscode.WorkspaceFolder): CMakeProject[]  | undefined {
         folder = this.getWorkspaceFolder(folder);
@@ -554,6 +649,7 @@ export class ExtensionManager implements vscode.Disposable {
      */
     async asyncDispose() {
         this.disposeSubs();
+        this.disposeLanguageServices();
         this.codeModelUpdateSubs.forEach(
             subs => subs.forEach(
                 sub => sub.dispose()
@@ -736,7 +832,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     private disposeSubs() {
         util.disposeAll(this.projectSubscriptions);
-        for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub, this.activePackagePresetSub, this.activeWorkflowPresetSub]) {
+        for (const sub of [this.statusMessageSub, this.targetNameSub, this.buildTypeSub, this.launchTargetSub, this.ctestEnabledSub, this.isBusySub, this.activeConfigurePresetSub, this.activeBuildPresetSub, this.activeTestPresetSub, this.activePackagePresetSub, this.activeWorkflowPresetSub, this.enableLanguageServicesSub]) {
             sub.dispose();
         }
     }
@@ -834,6 +930,7 @@ export class ExtensionManager implements vscode.Disposable {
             this.activeTestPresetSub = new DummyDisposable();
             this.activePackagePresetSub = new DummyDisposable();
             this.activeWorkflowPresetSub = new DummyDisposable();
+            this.enableLanguageServicesSub = new DummyDisposable();
             this.statusBar.setActiveKitName('');
             this.statusBar.setConfigurePresetName('');
             this.statusBar.setBuildPresetName('');
@@ -2399,53 +2496,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
             }
         });
     }
-
-    const CMAKE_LANGUAGE = "cmake";
-    const CMAKE_SELECTOR: vscode.DocumentSelector = [
-        { language: CMAKE_LANGUAGE, scheme: 'file'},
-        { language: CMAKE_LANGUAGE, scheme: 'untitled'}
-    ];
-
-    try {
-        const languageServices = await LanguageServiceData.create();
-        vscode.languages.registerHoverProvider(CMAKE_SELECTOR, languageServices);
-        vscode.languages.registerCompletionItemProvider(CMAKE_SELECTOR, languageServices);
-    } catch {
-        log.error(localize('language.service.failed', 'Failed to initialize language services'));
-    }
-
-    vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
-        indentationRules: {
-            // ^(.*\*/)?\s*\}.*$
-            decreaseIndentPattern: /^(.*\*\/)?\s*\}.*$/,
-            // ^.*\{[^}"']*$
-            increaseIndentPattern: /^.*\{[^}"']*$/
-        },
-        wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
-        comments: {
-            lineComment: '#'
-        },
-        brackets: [
-            ['{', '}'],
-            ['(', ')']
-        ],
-
-        __electricCharacterSupport: {
-            brackets: [
-                { tokenType: 'delimiter.curly.ts', open: '{', close: '}', isElectric: true },
-                { tokenType: 'delimiter.square.ts', open: '[', close: ']', isElectric: true },
-                { tokenType: 'delimiter.paren.ts', open: '(', close: ')', isElectric: true }
-            ]
-        },
-
-        __characterPairSupport: {
-            autoClosingPairs: [
-                { open: '{', close: '}' },
-                { open: '(', close: ')' },
-                { open: '"', close: '"', notIn: ['string'] }
-            ]
-        }
-    });
 
     if (vscode.workspace.getConfiguration('cmake').get('showOptionsMovedNotification')) {
         void vscode.window.showInformationMessage(
