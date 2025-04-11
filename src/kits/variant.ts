@@ -252,10 +252,12 @@ export class VariantManager implements vscode.Disposable {
             path.join(workspaceFolder, '.vscode/cmake-variants.yaml')
         ];
 
+        let foundCandidate = false;
         if (!filepath || !await fs.exists(filepath) || !candidates.includes(filepath)) {
             for (const testpath of candidates) {
                 if (await fs.exists(testpath)) {
                     filepath = testpath;
+                    foundCandidate = true;
                     break;
                 }
             }
@@ -263,7 +265,7 @@ export class VariantManager implements vscode.Disposable {
 
         let new_variants = this.loadVariantsFromSettings();
         // Check once more that we have a file to read
-        if (filepath && await fs.exists(filepath)) {
+        if (foundCandidate && filepath && await fs.exists(filepath)) {
             this.customVariantsFileExists = true;
             const content = (await fs.readFile(filepath)).toString();
             try {
