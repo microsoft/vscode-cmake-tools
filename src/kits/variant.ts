@@ -253,13 +253,17 @@ export class VariantManager implements vscode.Disposable {
         ];
 
         if (!filepath || !await fs.exists(filepath) || !candidates.includes(filepath)) {
+            let foundCandidate = false;
             for (const testpath of candidates) {
                 if (await fs.exists(testpath)) {
                     filepath = testpath;
+                    foundCandidate = true;
                     break;
                 }
             }
-            return;
+            if (!foundCandidate) {
+                return;
+            }
         }
 
         let new_variants = this.loadVariantsFromSettings();
