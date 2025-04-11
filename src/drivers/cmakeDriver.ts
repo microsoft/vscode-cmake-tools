@@ -562,7 +562,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const cache = this.cachePath;
         const cmake_files = this.config.deleteBuildDirOnCleanConfigure ? build_dir : path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
-            log.info(localize('removing', 'Removing {0}', cache));
+            log.info(localize('removing', 'Removing {0}', encodeURI(cache)));
             try {
                 await fs.unlink(cache);
             } catch {
@@ -570,7 +570,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
         }
         if (await fs.exists(cmake_files)) {
-            log.info(localize('removing', 'Removing {0}', cmake_files));
+            log.info(localize('removing', 'Removing {0}', encodeURI(cmake_files)));
             await fs.rmdir(cmake_files);
         }
     }
