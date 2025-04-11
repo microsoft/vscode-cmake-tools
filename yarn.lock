@@ -165,10 +165,10 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@friedemannsommer/lcov-parser@^4.0.1":
-  version "4.0.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@friedemannsommer/lcov-parser/-/lcov-parser-4.0.1.tgz#192445df2095bb061fd889ea0b0f0f94bf7c58b7"
-  integrity sha512-NjXrxLeh77FUAL6TzVJyvYvgA2AS+t2hlfRmfOyE5HR3g+2HdLNFTP2l+zTypn5JTnV4jfXgwSO46JLhvJeXlw==
+"@friedemannsommer/lcov-parser@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@friedemannsommer/lcov-parser/-/lcov-parser-5.0.0.tgz#dbda48ac22ece7f3d5df7fb183d68267025eccf4"
+  integrity sha512-YeK97qJgG/AEPee19qA1TtAFgXR1OSjKK9nIOnUPVF3eLFam+VMRii1GGtG60uAeqSWaGwBkTQ6RvYkSULDrTA==
 
 "@gulp-sourcemaps/identity-map@^2.0.1":
   version "2.0.1"
