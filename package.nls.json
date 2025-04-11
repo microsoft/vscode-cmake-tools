@@ -14,7 +14,12 @@
     "cmake-tools.command.cmake.viewPackageSettings.title": "View the settings overriding your Package Preset",
     "cmake-tools.command.cmake.selectPackagePreset.title": "Select Package Preset",
     "cmake-tools.command.cmake.selectWorkflowPreset.title": "Select Workflow Preset",
-    "cmake-tools.command.cmake.viewLog.title": "Open the CMake Tools Log File",
+    "cmake-tools.command.cmake.viewLog.title": {
+        "message": "Open the CMake Tools Log File",
+        "comment": [
+            "The text 'CMake Tools' should not be localized."
+        ]
+    },
     "cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
     "cmake-tools.command.cmake.editKits.title": "Edit User-Local CMake Kits",
     "cmake-tools.command.cmake.scanForKits.title": "Scan for Kits",
@@ -67,7 +72,12 @@
     "cmake-tools.command.cmake.selectLaunchTarget.title": "Set Launch/Debug Target",
     "cmake-tools.command.cmake.stop.title": "Cancel Build",
     "cmake-tools.command.cmake.stopAll.title": "Cancel Build for All Projects",
-    "cmake-tools.command.cmake.resetState.title": "Reset CMake Tools Extension State (For troubleshooting)",
+    "cmake-tools.command.cmake.resetState.title": {
+        "message": "Reset CMake Tools Extension State (For troubleshooting)",
+        "comment": [
+            "The text 'CMake Tools' should not be localized."
+        ]
+    },
     "cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
     "cmake-tools.command.cmake.selectActiveFolder.title": "Select Active Folder",
     "cmake-tools.command.cmake.outline.runUtilityTarget.title": "Run Utility",
@@ -77,7 +87,12 @@
     "cmake-tools.command.cmake.outline.setLaunchTarget.title": "Set Launch/Debug Target",
     "cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Open CMakeLists.txt",
     "cmake-tools.command.cmake.folders.setActiveFolder.title": "Set Active Folder",
-    "cmake-tools.configuration.title": "CMake Tools configuration",
+    "cmake-tools.configuration.title": {
+        "message": "CMake Tools configuration",
+        "comment": [
+            "The text 'CMake Tools' should not be localized."
+        ]
+    },
     "cmake-tools.configuration.cmake.cmakePath.description": "Name/path of the CMake executable to use.",
     "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go.",
     "cmake-tools.configuration.cmake.installPrefix.description": "The directory where CMake installed files will go.",
@@ -272,8 +287,14 @@
     },
     "cmake-tools.configuration.cmake.launchBehavior.description": "Controls what happens with the launch terminal when you launch a target.",
     "cmake-tools.configuration.cmake.automaticReconfigure.description": "Automatically configure CMake project directories when the kit or the configuration preset is changed.",
-    "cmake-tools.configuration.cmake.pinnedCommands.description":"List of CMake commands to always pin by default. These will appear in the CMake Tools sidebar 'Pinned Commands' section.",
+    "cmake-tools.configuration.cmake.pinnedCommands.description": {
+        "message": "List of CMake commands to always pin by default. These will appear in the CMake Tools sidebar 'Pinned Commands' section.",
+        "comment": [
+            " The text 'CMake', 'CMake Tools', and 'Pinned Commands' should not be localized."
+        ]
+    },
     "cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Enable automatic scanning for kits when a kit isn't selected. This will only take affect when CMake Presets aren't being used.",
+    "cmake-tools.configuration.cmake.enableLanguageServices.description": "Enable language services for CMake files. This will enable syntax highlighting, code completion, and other features.",
     "cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Target to build before running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Target to build after running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.coverageInfoFiles.description": "LCOV coverage info files to be processed after running tests with coverage using the test explorer.",
