@@ -294,6 +294,7 @@
         ]
     },
     "cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Enable automatic scanning for kits when a kit isn't selected. This will only take affect when CMake Presets aren't being used.",
+    "cmake-tools.configuration.cmake.enableLanguageServices.description": "Enable language services for CMake files. This will enable syntax highlighting, code completion, and other features.",
     "cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Target to build before running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Target to build after running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.coverageInfoFiles.description": "LCOV coverage info files to be processed after running tests with coverage using the test explorer.",
