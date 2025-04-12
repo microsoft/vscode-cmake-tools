@@ -14,6 +14,6 @@
 	"circular.variable.reference": "循环变量引用",
 	"command.not.supported": "命令不支持字符串: {0}",
 	"exception.executing.command.full": "对字符串执行命令 {0} 时出现异常: {1} {2}",
-	"exception.executing.command": "异常执行命令",
+	"exception.executing.command": "执行命令时出现异常",
 	"expand.expandstringhelper": "已展开 {0}"
 }

@@ -67,7 +67,7 @@
 	"create.workflow.preset": "Создание из предустановки рабочего процесса",
 	"description.create.test.preset": "Создание предустановки рабочего процесса на основе существующей предустановки рабочего процесса",
 	"custom.workflow.preset": "Настраиваемый",
-	"description.custom.workflow.preset": "Добавление пользовательской предустановки рабочего процесса",
+	"description.custom.workflow.preset": "Добавить пользовательскую предустановку рабочего процесса",
 	"add.a.workflow.preset.placeholder": "Добавьте предустановку рабочего процесса для {0}",
 	"user.cancelled.add.workflow.preset": "Пользователь отменил добавление предустановки рабочего процесса",
 	"select.one.workflow.preset.placeholder": "Выберите одну базовую предустановку рабочего процесса",

@@ -39,7 +39,7 @@
 	"inherit.build.preset": "Hériter du build prédéfini",
 	"description.inherit.build.preset": "Hériter d’une présélection de build existante",
 	"custom.build.preset": "Personnalisé",
-	"description.custom.build.preset": "Ajouter une présélection de build personnalisée",
+	"description.custom.build.preset": "Ajouter une présélection de génération personnalisée",
 	"add.a.build.preset.placeholder": "Ajouter une présélection de build pour {0}",
 	"user.cancelled.add.build.preset": "L’utilisateur a annulé l’ajout de présélection de build",
 	"select.a.config.preset.placeholder": "Sélectionner une présélection de configuration",
