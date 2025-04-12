@@ -262,6 +262,9 @@ export class VariantManager implements vscode.Disposable {
                 }
             }
         }
+        else {
+            foundCandidate = true;
+        }
 
         let new_variants = this.loadVariantsFromSettings();
         // Check once more that we have a file to read
