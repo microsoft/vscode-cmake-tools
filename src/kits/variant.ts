@@ -261,8 +261,7 @@ export class VariantManager implements vscode.Disposable {
                     break;
                 }
             }
-        }
-        else {
+        } else {
             foundCandidate = true;
         }
 
