@@ -3,6 +3,7 @@ import * as util from '@cmt/util';
 import {setContextAndStore} from '@cmt/extension';
 import * as logging from '@cmt/logging';
 import * as nls from 'vscode-nls';
+import { ConfigurationReader } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -24,7 +25,7 @@ export interface CMakeExecutable {
 
 const cmakeInfo = new Map<string, CMakeExecutable>();
 
-export async function getCMakeExecutableInformation(path: string): Promise<CMakeExecutable> {
+export async function getCMakeExecutableInformation(path: string, config?: ConfigurationReader): Promise<CMakeExecutable> {
     const cmake: CMakeExecutable = {
         path,
         isPresent: false,
@@ -50,7 +51,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         }
 
         try {
-            const execOpt: proc.ExecutionOptions = { showOutputOnError: true };
+            const execOpt: proc.ExecutionOptions = { showOutputOnError: true, environment: config?.environment };
             const execVersion = await proc.execute(path, ['--version'], null, execOpt).result;
             if (execVersion.retc === 0 && execVersion.stdout) {
                 console.assert(execVersion.stdout);
