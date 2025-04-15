@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { lcovParser } from "@friedemannsommer/lcov-parser";
 import * as nls from 'vscode-nls';
 import * as logging from '@cmt/logging';
+import { platformNormalizePath } from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -32,7 +33,7 @@ export async function handleCoverageInfoFiles(run: vscode.TestRun, coverageInfoF
         }
         const sections = await lcovParser({ from: contents });
         for (const section of sections) {
-            const coverage = new vscode.FileCoverage(vscode.Uri.file(section.path),
+            const coverage = new vscode.FileCoverage(vscode.Uri.file(platformNormalizePath(section.path.trim())),
                 new vscode.TestCoverageCount(
                     section.lines.hit,
                     section.lines.instrumented
