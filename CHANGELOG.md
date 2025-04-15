@@ -20,6 +20,7 @@ Bug Fixes:
 - Fixes localization for "workspace is" string. [#4374](https://github.com/microsoft/vscode-cmake-tools/issues/4374)
 - Make tooltips for selecting Launch/Debug Target. [#4373](https://github.com/microsoft/vscode-cmake-tools/issues/4373)
 - Fix bug where unrelated symlinks are read as variant files [#4304](https://github.com/microsoft/vscode-cmake-tools/issues/4304) [@vitorramos](https://github.com/vitorramos).
+- Fix incorrect IntelliSense configuration when a `UTILITY` has source files. [#4404](https://github.com/microsoft/vscode-cmake-tools/issues/4404)
 
 ## 1.20.53
 
