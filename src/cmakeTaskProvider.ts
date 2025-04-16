@@ -471,7 +471,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async getProject(): Promise<CMakeProject | undefined> {
         let project: CMakeProject | undefined = getActiveProject();
         if (this.workspaceFolder !== undefined) {
-            this.writeEmitter.fire("Workspace is " + this.workspaceFolder.uri.path + endOfLine);
+            this.writeEmitter.fire(localize("workspace.is", "Workspace is {0}", this.workspaceFolder.uri.path + endOfLine));
             project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
         }
         if (!project) {

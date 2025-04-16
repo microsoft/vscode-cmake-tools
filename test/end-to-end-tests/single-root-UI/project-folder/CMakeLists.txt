@@ -48,7 +48,7 @@ add_custom_target(runTestTarget DEPENDS TestBuildProcess
     COMMENT "Run test target"
 )
 
-find_program(LCOV lcov REQUIRED)
+find_program(LCOV lcov)
 set(LCOV_BASE lcov-base.info)
 set(LCOV_TEST lcov-test.info)
 set(LCOV_TOTAL lcov.info)

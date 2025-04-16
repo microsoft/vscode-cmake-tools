@@ -57,6 +57,29 @@ suite('Build using Presets', () => {
 
         expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
+
+        // Read and parse the codemodel JSON file
+        const replyDir = path.join(testEnv.projectFolder.buildDirectory.location, '.cmake', 'api', 'v1', 'reply');
+        const files = await fs.readdir(replyDir);
+        const codemodelFile = files.find(file => file.startsWith('codemodel'));
+        if (!codemodelFile) {
+            throw new Error('Codemodel file not found');
+        }
+        const codemodelPath = path.join(replyDir, codemodelFile);
+        const codemodelContent = await fs.readFile(codemodelPath, 'utf8');
+        const codemodel = JSON.parse(codemodelContent);
+
+        // Extract the number of targets
+        const targets = codemodel.configurations[0].targets;
+        const numberOfTargets = targets.length;
+
+        // Check if the number of targets is as expected
+        expect(numberOfTargets).to.be.eq(33, `Expected 33 targets, but found ${numberOfTargets}`);
+
+        // Verify the number of target files created in the CMake File API response directory
+        const targetFiles = files.filter(file => file.startsWith('target'));
+        const numberOfTargetFiles = targetFiles.length;
+        expect(numberOfTargetFiles).to.be.eq(33, `Expected 33 target files, but found ${numberOfTargetFiles}`);
     }).timeout(100000);
 
     // from v3 on configure presets are not required to have a generator defined

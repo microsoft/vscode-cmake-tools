@@ -3624,6 +3624,12 @@
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
         },
+        "cmake.enableLanguageServices": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.enableLanguageServices.description%",
+          "scope": "machine"
+        },
         "cmake.preRunCoverageTarget": {
           "type": "string",
           "default": null,
