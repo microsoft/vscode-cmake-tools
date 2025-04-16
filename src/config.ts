@@ -174,7 +174,7 @@ export interface ExtensionConfigurationSettings {
     buildToolArgs: string[];
     parallelJobs: number;
     ctestPath: string;
-    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; debugLaunchTarget: string | null };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: Object; debugLaunchTarget: string | null };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -396,6 +396,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get testSuiteDelimiterMaxOccurrence(): number {
         return this.configData.ctest.testSuiteDelimiterMaxOccurrence;
+    }
+    get ctestFailurePatterns(): Object {
+        return this.configData.ctest.failurePatterns;
     }
     get ctestDebugLaunchTarget(): string | null {
         return this.configData.ctest.debugLaunchTarget;
@@ -624,7 +627,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         cpackPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; debugLaunchTarget: string | null }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: Object; debugLaunchTarget: string | null }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
