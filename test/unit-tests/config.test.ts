@@ -29,6 +29,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             allowParallelJobs: false,
             testExplorerIntegrationEnabled: true,
             testSuiteDelimiter: '',
+            failurePatterns: [],
             debugLaunchTarget: null
         },
         parseBuildDiagnostics: true,
