@@ -20,7 +20,6 @@
       "generator": "Visual Studio 16 2019",
       "binaryDir": "${workspaceFolder}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe"
       }
