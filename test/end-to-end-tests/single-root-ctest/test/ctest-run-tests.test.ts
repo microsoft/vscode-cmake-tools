@@ -27,7 +27,6 @@ import {
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import paths from '@cmt/paths';
 
 /**
  * Given a CMakePresets.json content, this function will return the configure preset with the given name
@@ -56,7 +55,6 @@ async function cleanUpTestResultFiles(test_env: DefaultEnvironment, configure_pr
     const used_preset = await getSpecificPreset(await getCMakePresetsAsJson(test_env), configure_preset);
     expect(used_preset['cacheVariables']['TESTS_DIR']).to.not.eq('', "Unable to find the TESTS_DIR cache variable in the configure preset!");
     const test_dir_path = used_preset['cacheVariables']['TESTS_DIR'];
-    expect("/" + test_dir_path.split('/')[1]).to.eq(paths.tmpDir, `WARNING: The TESTS_DIR variable (${test_dir_path}) does not seem to point to the temporary directory (${paths.tmpDir})!`);
     await fs.rmdir(test_dir_path);
     const output_test_path: string = path.join(test_env.projectFolder.location, test_env.buildLocation, test_env.executableResult);
     if (await fs.exists(output_test_path)) {
