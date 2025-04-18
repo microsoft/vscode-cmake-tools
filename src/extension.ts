@@ -132,6 +132,7 @@ export class ExtensionManager implements vscode.Disposable {
                     await this.enableLanguageServices();
                 } else {
                     this.disposeLanguageServices();
+                    telemetry.logEvent('disableLanguageServices');
                 }
             });
         }
@@ -294,6 +295,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (isMultiProject) {
             telemetryProperties['autoSelectActiveFolder'] = `${this.workspaceConfig.autoSelectActiveFolder}`;
         }
+        telemetryProperties['enableLanguageServices'] = `${this.workspaceConfig.enableLanguageServices}`;
         telemetry.sendOpenTelemetry(telemetryProperties);
 
         // do these last
