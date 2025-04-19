@@ -21,6 +21,7 @@
 	"enable.cmake.presets": "Włącz CMakePresets",
 	"dismiss": "Odrzuć",
 	"task.not.compatible.with.preset.setting": "Wybrane zadanie żąda obiektu CMakePreset, ale obszar roboczy nie jest skonfigurowany dla obiektów CMakePresets",
+	"workspace.is": "Obszar roboczy to {0}",
 	"cmake.tools.not.found": "Nie znaleziono narzędzia CMake.",
 	"task.failed": "Zadanie nie powiodło się.",
 	"config.started": "Rozpoczęto zadanie konfiguracji...",
