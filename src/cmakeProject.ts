@@ -2815,6 +2815,9 @@ export class CMakeProject {
     }
 
     async cacheVariable(name?: string, defaultValue?: string): Promise<string | null> {
+        if (await this.needsReconfigure()) {
+            await this.configureInternal(ConfigureTrigger.api, [], ConfigureType.Normal);
+        }
         if (!name) {
             void vscode.window.showErrorMessage(localize('cachevariable.missing.required.argument.name', 'cacheVariable: missing required argument "name".'));
             return null;
