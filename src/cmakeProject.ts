@@ -2283,13 +2283,13 @@ export class CMakeProject {
             return await vscode.window.showInputBox({ prompt: localize('enter.target.name', 'Enter a target name') }) || null;
         } else {
             const folders: string[] = [];
-            const items_group: (RichTarget | NamedTarget | FolderTarget)[] = [];
+            const itemsGroup: (RichTarget | NamedTarget | FolderTarget)[] = [];
 
             // group the data
             drv.uniqueTargets.forEach((t) => {
                 switch (t.type) {
                     case 'named': {
-                        items_group.push(t);
+                        itemsGroup.push(t);
                         break;
                     }
                     case 'rich': {
@@ -2297,17 +2297,17 @@ export class CMakeProject {
                         if (this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown && t.folder) {
                             if (!folders.includes(t.folder.name)) {
                                 folders.push(t.folder.name);
-                                items_group.push({ type: 'folder', name: t.folder.name });
+                                itemsGroup.push({ type: 'folder', name: t.folder.name });
                             }
                         } else {
-                            items_group.push(t);
+                            itemsGroup.push(t);
                         }
                         break;
                     }
                 }
             });
 
-            const choices_group = items_group.map((t): vscode.QuickPickItem => {
+            const choicesGroup = itemsGroup.map((t): vscode.QuickPickItem => {
                 switch (t.type) {
                     case 'named': {
                         return {
@@ -2324,18 +2324,18 @@ export class CMakeProject {
                 }
             });
 
-            const sel_group = await vscode.window.showQuickPick(choices_group, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+            const selGroup = await vscode.window.showQuickPick(choicesGroup, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
 
             // exit if we do not group the folders or if we got something other than a folder
-            if (!sel_group || !this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown || !folders.includes(sel_group.label)) {
-                return sel_group ? sel_group.label : null;
+            if (!selGroup || !this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown || !folders.includes(selGroup.label)) {
+                return selGroup ? selGroup.label : null;
             }
 
             const items: (RichTarget | NamedTarget)[] = [];
 
             // the user has selected a folder group
             drv.uniqueTargets.forEach((t) => {
-                if (t.type === 'rich' && t.folder && t.folder.name === sel_group.label) {
+                if (t.type === 'rich' && t.folder && t.folder.name === selGroup.label) {
                     items.push(t);
                 }
             });
