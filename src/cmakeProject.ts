@@ -2814,12 +2814,17 @@ export class CMakeProject {
         return env;
     }
 
-    async cacheVariable(name?: string): Promise<string | null> {
-        const drv = await this.getCMakeDriverInstance();
-        if (!name || !drv) {
+    async cacheVariable(name?: string, defaultValue?: string): Promise<string | null> {
+        if (!name) {
+            void vscode.window.showErrorMessage(localize('cachevariable.missing.required.argument.name', 'cacheVariable: missing required argument "name".'));
             return null;
         }
-        return (await CMakeCache.fromPath(drv.cachePath))?.get(name)?.value;
+        const value = (await CMakeCache.fromPath(await this.cachePath))?.get(name)?.value ?? defaultValue;
+        if (value === null || value === undefined) {
+            void vscode.window.showErrorMessage(localize('cachevariable.not.found', `Variable "${name}" not found in CMake cache, and no default provided.`));
+            return null;
+        }
+        return value;
     }
 
     /**

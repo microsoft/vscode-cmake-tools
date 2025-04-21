@@ -1805,7 +1805,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     cacheVariable(args: { name?: string; default?: string }) {
         telemetry.logEvent("substitution", { input: "cacheVariable", ...args });
-        return this.queryCMakeProject(async cmakeProject => await cmakeProject.cacheVariable(args.name) ?? args.default ?? null);
+        return this.queryCMakeProject(cmakeProject => cmakeProject.cacheVariable(args.name, args.default));
     }
 
     debugTarget(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string): Promise<vscode.DebugSession | null> {
