@@ -3650,6 +3650,12 @@
           "default": [],
           "description": "%cmake-tools.configuration.cmake.coverageInfoFiles.description%",
           "scope": "resource"
+        },
+        "cmake.useFolderPropertyInBuildTargetDropdown": {
+            "type": "boolean",
+            "default": true,
+            "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
+            "scope": "resource"
         }
       }
     },
