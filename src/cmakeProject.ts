@@ -2327,7 +2327,7 @@ export class CMakeProject {
             const selGroup = await vscode.window.showQuickPick(choicesGroup, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
 
             // exit if we do not group the folders or if we got something other than a folder
-            if (!selGroup || !this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown || !folders.includes(selGroup.label)) {
+            if (!selGroup || !this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown || selGroup.description !== "FOLDER") {
                 return selGroup ? selGroup.label : null;
             }
 
