@@ -2282,60 +2282,80 @@ export class CMakeProject {
         if (!drv.targets.length) {
             return await vscode.window.showInputBox({ prompt: localize('enter.target.name', 'Enter a target name') }) || null;
         } else {
-            type Target = RichTarget | NamedTarget | FolderTarget;
-            let currentFolder: string | undefined;
+            const folders: string[] = [];
+            const items_group: (RichTarget | NamedTarget | FolderTarget)[] = [];
 
-            for (let i = 0; i < 2; i++) {
-                const items: Target[] = [];
-                const folders: string[] = [];
-
-                drv.uniqueTargets.forEach((t) => {
-                    if (!currentFolder) {
-                        if (t.type === 'named') {
-                            items.push(t);
-                        } else if (t.type === 'rich') {
-                            if (!t.folder) {
-                                items.push(t);
-                            } else if (t.folder && !folders.includes(t.folder.name)) {
+            // group the data
+            drv.uniqueTargets.forEach((t) => {
+                switch (t.type) {
+                    case 'named': {
+                        items_group.push(t);
+                        break;
+                    }
+                    case 'rich': {
+                        // check if we need to group by folder
+                        if (this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown && t.folder) {
+                            if (!folders.includes(t.folder.name)) {
                                 folders.push(t.folder.name);
-                                items.push({ type: 'folder', name: t.folder.name });
+                                items_group.push({ type: 'folder', name: t.folder.name });
                             }
+                        } else {
+                            items_group.push(t);
                         }
-                    } else {
-                        if (t.type === 'rich' && t.folder && t.folder.name === currentFolder) {
-                            items.push(t);
-                        }
+                        break;
                     }
-                });
-
-                const choices = items.map((t): vscode.QuickPickItem => {
-                    switch (t.type) {
-                        case 'named': {
-                            return {
-                                label: t.name,
-                                description: localize('target.to.build.description', 'Target to build')
-                            };
-                        }
-                        case 'rich': {
-                            return { label: t.name, description: t.targetType, detail: t.filepath };
-                        }
-                        case 'folder': {
-                            return { label: t.name, description: 'FOLDER' };
-                        }
-                    }
-                });
-
-                const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
-                if (!sel) {
-                    return null;
-                } else if (!folders.includes(sel.label) || currentFolder === sel.label) {
-                    return sel.label;
-                } else {
-                    currentFolder = sel.label;
                 }
+            });
+
+            const choices_group = items_group.map((t): vscode.QuickPickItem => {
+                switch (t.type) {
+                    case 'named': {
+                        return {
+                            label: t.name,
+                            description: localize('target.to.build.description', 'Target to build')
+                        };
+                    }
+                    case 'rich': {
+                        return { label: t.name, description: t.targetType, detail: t.filepath };
+                    }
+                    case 'folder': {
+                        return { label: t.name, description: 'FOLDER' };
+                    }
+                }
+            });
+
+            const sel_group = await vscode.window.showQuickPick(choices_group, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+
+            // exit if we do not group the folders or if we got something other than a folder
+            if (!sel_group || !this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown || !folders.includes(sel_group.label)) {
+                return sel_group ? sel_group.label : null;
             }
 
-            return null;
+            const items: (RichTarget | NamedTarget)[] = [];
+
+            // the user has selected a folder group
+            drv.uniqueTargets.forEach((t) => {
+                if (t.type === 'rich' && t.folder && t.folder.name === sel_group.label) {
+                    items.push(t);
+                }
+            });
+
+            const choices = items.map((t): vscode.QuickPickItem => {
+                switch (t.type) {
+                    case 'named': {
+                        return {
+                            label: t.name,
+                            description: localize('target.to.build.description', 'Target to build')
+                        };
+                    }
+                    case 'rich': {
+                        return { label: t.name, description: t.targetType, detail: t.filepath };
+                    }
+                }
+            });
+
+            const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+            return sel ? sel.label : null;
         }
     }
 
