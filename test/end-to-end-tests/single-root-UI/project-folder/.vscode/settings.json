@@ -1,0 +1,10 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.useCMakePresets": "never",
+    "cmake.configureOnOpen": false,
+    "cmake.preRunCoverageTarget": "init-coverage",
+    "cmake.postRunCoverageTarget": "capture-coverage",
+    "cmake.coverageInfoFiles": [
+        "${workspaceFolder}/build/lcov.info"
+    ]
+}

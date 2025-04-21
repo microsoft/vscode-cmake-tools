@@ -44,9 +44,9 @@ jobs:
     - checkout: self
     - checkout: VS-Platform
     - task: UseNode@1
-      displayName: "Use Node 18.x"
+      displayName: "Use Node 20.x"
       inputs:
-        version: "18.x"
+        version: "20.x"
     - script: npm install
       displayName: "npm install"
       workingDirectory: $(Build.SourcesDirectory)/vscode-cmake-tools/tools/pr-creator

@@ -7,11 +7,11 @@
 import * as proc from 'child_process';
 import * as iconv from 'iconv-lite';
 
-import { createLogger } from './logging';
-import rollbar from './rollbar';
-import * as util from './util';
+import { createLogger } from '@cmt/logging';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { Environment, EnvironmentUtils } from './environmentVariables';
+import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -95,7 +95,7 @@ export interface ExecutionResult {
 
 export interface ExecutionOptions {
     environment?: Environment;
-    shell?: boolean;
+    shell?: boolean | string;
     silent?: boolean;
     cwd?: string;
     encoding?: BufferEncoding;
@@ -111,6 +111,18 @@ export function buildCmdStr(command: string, args?: string[]): string {
         cmdarr = cmdarr.concat(args);
     }
     return cmdarr.map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a).join(' ');
+}
+
+export function determineShell(command: string): string | boolean {
+    if (command.endsWith('.cmd') || command.endsWith('.bat')) {
+        return 'cmd';
+    }
+
+    if (command.endsWith('.ps1')) {
+        return 'powershell';
+    }
+
+    return false;
 }
 
 /**
@@ -146,6 +158,11 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             log.debug(localize('execution.environment', '  with environment: {0}', JSON.stringify(final_env)));
         }
     }
+
+    if (process.platform === "win32" && options.shell === undefined) {
+        options.shell = determineShell(command);
+    }
+
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
         shell: !!options.shell

@@ -3,12 +3,12 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import * as vscode from 'vscode';
 
 import { CMakeCache, CacheEntry } from '@cmt/cache';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/drivers';
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
@@ -16,8 +16,8 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
-import { CodeModelContent } from './codeModel';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/presets/preset';
+import { CodeModelContent } from '@cmt/drivers/codeModel';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
 
@@ -43,13 +43,9 @@ export class CMakeLegacyDriver extends CMakeDriver {
         super(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler);
     }
 
-    private _needsReconfigure = true;
     async doConfigureSettingsChange(): Promise<void> {
         this._needsReconfigure = true;
         await onConfigureSettingsChange();
-    }
-    async checkNeedsReconfigure(): Promise<boolean> {
-        return this._needsReconfigure;
     }
 
     async doSetKit(cb: () => Promise<void>): Promise<void> {

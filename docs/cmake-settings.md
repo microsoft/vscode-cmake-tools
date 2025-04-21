@@ -9,6 +9,7 @@ Options that support substitution, in the table below, allow variable references
 |Setting  |Description | Default value | Supports substitution |
 |---------|---------|---------|-----|
 | `cmake.autoSelectActiveFolder`| If 'false', your active folder only changes if you manually run the `CMake: Select Active Folder` command. | 'true' | no |
+| `cmake.defaultActiveFolder`| The name of active folder, which be used as default (Only works when ´cmake.autoSelectActiveFolder´ is disabled). | "" | no |
 | `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |
@@ -37,6 +38,9 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
 | `cmake.sourceDirectory` | A directory or a list of directories where the root `CMakeLists.txt`s are stored. | `${workspaceFolder}` | yes |
 | `cmake.testEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when debugging, running and testing with CTest. | `null` (no environment variables) | yes |
+| `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer | null | no |
+| `cmake.postRunCoverageTarget` | Target to build after running tests with coverage using the test explorer | null | no |
+| `cmake.coverageInfoFiles` | LCOV coverage info files to be processed after running tests with coverage using the test explorer | [] | yes |
 
 ## Variable substitution
 
@@ -83,9 +87,11 @@ Supported commands for substitution:
 |`cmake.getLaunchTargetPath`|The full path to the target executable, including the filename. The existence of the target is not validated.|
 |`cmake.getLaunchTargetDirectory`|The full path to the target executable's directory. The existence of the directory is not validated.|
 |`cmake.getLaunchTargetFilename`|The name of the target executable file without any path information. The existence of the target is not validated.|
+|`cmake.getLaunchTargetName`|The name to the target. The existence of the target is not validated.|
 |`cmake.launchTargetPath`|The full path to the target executable, including the filename. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
 |`cmake.launchTargetDirectory`|The full path to the target executable's directory. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
 |`cmake.launchTargetFilename`|The name of the target executable file without any path information. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
+|`cmake.launchTargetName`|The name of the target. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
 |`cmake.buildTargetName`|The current target selected for build.|
 |`cmake.buildType`|Same as `${buildType}`. The current CMake build type.|
 |`cmake.buildKit`|Same as `${buildKit}`. The current CMake kit name.|

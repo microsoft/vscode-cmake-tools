@@ -4,10 +4,10 @@
  */
 
 import * as vscode from 'vscode';
-import { createLogger } from './logging';
-import { replaceAll, fixPaths, errorToString } from './util';
+import { createLogger } from '@cmt/logging';
+import { replaceAll, fixPaths, errorToString } from '@cmt/util';
 import * as nls from 'vscode-nls';
-import { EnvironmentWithNull, EnvironmentUtils } from './environmentVariables';
+import { EnvironmentWithNull, EnvironmentUtils } from '@cmt/environmentVariables';
 import * as matchAll from 'string.prototype.matchall';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -48,13 +48,19 @@ export interface KitContextVars extends RequiredExpansionContextVars {
     buildKitVersionMinor: string;
 }
 
-export interface PresetContextVars extends RequiredExpansionContextVars {
+export interface PresetContextVars extends PresetContextNotPresetSpecificVars, RequiredExpansionContextVars {
+    [key: string]: string;
+    presetName: string;
+}
+
+export interface PresetContextNotPresetSpecificVars {
     [key: string]: string;
     sourceDir: string;
     sourceParentDir: string;
     sourceDirName: string;
-    presetName: string;
     fileDir: string;
+    hostSystemName: string;
+    pathListSep: string;
 }
 
 export interface MinimalPresetContextVars extends RequiredExpansionContextVars {
@@ -68,7 +74,7 @@ export interface ExpansionOptions {
     /**
      * Plain `${variable}` style expansions.
      */
-    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars;
+    vars: KitContextVars | PresetContextVars | MinimalPresetContextVars | PresetContextNotPresetSpecificVars;
     /**
      * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
      *
@@ -101,7 +107,7 @@ export interface ExpansionOptions {
 
 export interface ExpansionErrorHandler {
     errorList: [string, string][];
-    tempErrorList: [string, string][];
+    tempErrorList: [string, string][]; // This is primarily used to store errors that will then be re-used and modified with additional context to be added into the `errorList`
 }
 
 /**

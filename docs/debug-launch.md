@@ -207,6 +207,7 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppdbg",
     "request": "launch",
+    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
     "cwd": "${cmake.testWorkingDirectory}",
     "program": "${cmake.testProgram}",
@@ -219,6 +220,7 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppvsdbg",
     "request": "launch",
+    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],
@@ -227,9 +229,11 @@ A couple of examples:
 
 Depending on your configuration or your settings, there may need to be additional configuration options set.
 
+To use a specific launch configuration when debugging tests, set `cmake.ctest.debugLaunchTarget` to the desired name of the configuration (e.g. `(ctest) Launch`).
+
 ## Run without debugging
 
-You can run a target without debugging it, by running the *CMake: Run Without Debugging* from VS Code's command palette, by selecting the play button in the status bar or the play button to the left of the Launch node, or by pressing the keyboard shortcut (the default **Ctrl+F5**).
+You can run a target without debugging it, by running the *CMake: Run Without Debugging* from VS Code's command palette, by selecting the play button in the status bar or the play button to the left of the Launch node, or by pressing the keyboard shortcut (**Shift+Ctrl+F5**).
 
 ![Image of launching the selected target in the terminal window](images/launch-target.png)
 

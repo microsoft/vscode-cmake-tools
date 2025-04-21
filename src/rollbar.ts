@@ -2,10 +2,10 @@
  * Wrapper around Rollbar, for error reporting.
  */
 
-import * as logging from './logging';
+import * as logging from '@cmt/logging';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
-import { logEvent } from './telemetry';
+import { logEvent } from '@cmt/telemetry';
 import * as lodash from "lodash";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -97,7 +97,9 @@ class RollbarController {
      */
     error(what: string, additional: object = {}): void {
         log.error(what, JSON.stringify(additional, (key, value) => stringifyReplacer(key, value)));
-        debugger;
+        if (process.env.NODE_ENV === 'development') {
+            debugger;
+        }
     }
 
     info(what: string, additional: object = {}): void {

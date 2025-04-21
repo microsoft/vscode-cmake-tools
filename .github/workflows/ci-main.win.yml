@@ -2,9 +2,9 @@ name: CI (Windows)
 
 on:
   push:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**' ]
   pull_request:
-    branches: [ main, rel ]
+    branches: [ main, 'release/**' ]
 
 jobs:
   build:
@@ -14,10 +14,13 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
+      - name: Setup LCOV
+        uses: hrishikesh-kadam/setup-lcov@v1
+
       - name: Setup Node environment
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
 
       - name: Install Yarn
         run: npm install -g yarn
@@ -33,7 +36,10 @@ jobs:
 
       # The cmake server mode has been removed since CMake 3.20
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@v3.18.3
+        uses: lukka/get-cmake@v3.30.3
+        with:
+            cmakeVersion: 3.18.3
+            ninjaVersion: 1.10.1
 
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0
@@ -51,18 +57,21 @@ jobs:
       - name: Run unit tests
         run: yarn unitTests
 
+      - name: Run integration tests
+        run: yarn integrationTests
+
       - name: Run successful-build test
-        run: yarn extensionTestsSuccessfulBuild
+        run: yarn endToEndTestsSuccessfulBuild
 
       - name: Run single root test
-        run: yarn extensionTestsSingleRoot
+        run: yarn endToEndTestsSingleRoot
 
       - name: Run multi root test
-        run: yarn extensionTestsMultiRoot
+        run: yarn endToEndTestsMultiRoot
 
       - name: Upload test logs if tests failed
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: TestLogs
           path: test/**/log.txt

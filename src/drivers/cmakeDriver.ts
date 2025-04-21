@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lodash from "lodash";
 
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
 import { ConfigureCancelInformation, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
@@ -16,7 +16,7 @@ import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ProgressMessage } from '@cmt/drivers/drivers';
 import * as expand from '@cmt/expand';
-import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment } from '@cmt/kit';
+import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
@@ -24,17 +24,17 @@ import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
-import { ConfigureArguments, VariantOption } from '@cmt/variant';
+import { ConfigureArguments, VariantOption } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
-import * as preset from '@cmt/preset';
+import * as preset from '@cmt/presets/preset';
 import * as codeModel from '@cmt/drivers/codeModel';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CMakeTask, CMakeTaskProvider, CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
-import { getValue } from '@cmt/preset';
+import { getValue } from '@cmt/presets/preset';
 import { CacheEntry } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
-import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { onBuildSettingsChange, onTestSettingsChange, onPackageSettingsChange } from '@cmt/ui/util';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -148,6 +148,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this._isConfiguredAtLeastOnce;
     }
 
+    protected _needsReconfigure = true;
+    /**
+     * Check if we need to reconfigure, such as if an important file has changed
+     */
+    public async checkNeedsReconfigure(): Promise<boolean> {
+        return this._needsReconfigure;
+    }
+
     protected async doPreCleanConfigure(): Promise<void> {
         return Promise.resolve();
     }
@@ -165,10 +173,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     protected abstract get isCacheConfigSupported(): boolean;
 
-    /**
-     * Check if we need to reconfigure, such as if an important file has changed
-     */
-    abstract checkNeedsReconfigure(): Promise<boolean>;
     /**
      * Event registration for code model updates
      *
@@ -392,6 +396,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this._useCMakePresets;
     }
 
+    get configurePresetArchitecture(): string | preset.ValueStrategy | undefined {
+        return this._configurePreset?.architecture;
+    }
+
+    get configurePresetToolset(): string | preset.ValueStrategy | undefined {
+        return this._configurePreset?.toolset;
+    }
+
     private _configurePreset: preset.ConfigurePreset | null = null;
 
     private _buildPreset: preset.BuildPreset | null = null;
@@ -552,7 +564,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const cache = this.cachePath;
         const cmake_files = this.config.deleteBuildDirOnCleanConfigure ? build_dir : path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
-            log.info(localize('removing', 'Removing {0}', cache));
+            log.info(localize('removing', 'Removing {0}', encodeURI(cache)));
             try {
                 await fs.unlink(cache);
             } catch {
@@ -560,7 +572,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
         }
         if (await fs.exists(cmake_files)) {
-            log.info(localize('removing', 'Removing {0}', cmake_files));
+            log.info(localize('removing', 'Removing {0}', encodeURI(cmake_files)));
             await fs.rmdir(cmake_files);
         }
     }
@@ -1992,7 +2004,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
             const useBuildTask: boolean = this.config.buildTask && isBuildCommand === true;
             if (useBuildTask) {
-                const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this._buildPreset?.name, targets, this.expansionOptions);
+                const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this.workspaceFolder, this._buildPreset?.name, targets, this.expansionOptions);
                 if (task) {
                     const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
                     if (resolvedTask) {
@@ -2025,6 +2037,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (this.configureProcess && this.configureProcess.child) {
             await util.termProc(this.configureProcess.child);
             this.configureProcess = null;
+            this._needsReconfigure = true;
         }
         if (this.cmakeBuildRunner) {
             await this.cmakeBuildRunner.stop();
@@ -2051,6 +2064,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const initBaseDriverWithPresetLoc = localize("init.driver.using.preset", "Initializing base driver using preset");
         const initBaseDriverWithKitLoc = localize("init.driver.using.kit", "Initializing base driver using kit");
         log.debug(`${useCMakePresets ? initBaseDriverWithPresetLoc : initBaseDriverWithKitLoc}`);
+
         // Load up kit or presets before starting any drivers.
         if (useCMakePresets) {
             if (configurePreset) {

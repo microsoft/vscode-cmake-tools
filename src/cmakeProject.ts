@@ -1,7 +1,7 @@
 import { CMakeCache } from '@cmt/cache';
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { CompilationDatabase } from '@cmt/compilationDatabase';
-import * as debuggerModule from '@cmt/debugger';
+import * as debuggerModule from '@cmt/debug/debugger';
 import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import { Strand } from '@cmt/strand';
@@ -23,34 +23,34 @@ import {
     ExecutableTarget,
     NoGeneratorError
 } from '@cmt/drivers/drivers';
-import { CTestDriver } from './ctest';
-import { CPackDriver } from './cpack';
-import { WorkflowDriver } from './workflow';
-import { CMakeBuildConsumer } from './diagnostics/build';
-import { CMakeOutputConsumer } from './diagnostics/cmake';
-import { FileDiagnostic, populateCollection } from './diagnostics/util';
-import { expandStrings, expandString, ExpansionOptions } from './expand';
-import { CMakeGenerator, Kit, SpecialKits } from './kit';
-import * as logging from './logging';
-import { fs } from './pr';
+import { CTestDriver } from '@cmt/ctest';
+import { CPackDriver } from '@cmt/cpack';
+import { WorkflowDriver } from '@cmt/workflow';
+import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
+import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
+import { FileDiagnostic, populateCollection } from '@cmt/diagnostics/util';
+import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
+import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
+import * as logging from '@cmt/logging';
+import { fs } from '@cmt/pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
-import { FireLate, Property } from './prop';
-import rollbar from './rollbar';
-import * as telemetry from './telemetry';
-import { VariantManager } from './variant';
+import { FireLate, Property } from '@cmt/prop';
+import rollbar from '@cmt/rollbar';
+import * as telemetry from '@cmt/telemetry';
+import { VariantManager } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
-import { ConfigurationWebview } from './cacheView';
-import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from './extension';
-import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from './config';
-import * as preset from '@cmt/preset';
+import { ConfigurationWebview } from '@cmt/ui/cacheView';
+import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';
+import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from '@cmt/config';
+import * as preset from '@cmt/presets/preset';
 import * as util from '@cmt/util';
-import { Environment, EnvironmentUtils } from './environmentVariables';
-import { KitsController } from './kitsController';
-import { PresetsController } from './presetsController';
-import paths from './paths';
-import { ProjectController } from './projectController';
+import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
+import { KitsController } from '@cmt/kits/kitsController';
+import { PresetsController } from '@cmt/presets/presetsController';
+import paths from '@cmt/paths';
+import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
-import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from './debug/debuggerConfigureDriver';
+import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { ConfigurationType } from 'vscode-cmake-tools';
 import { NamedTarget, RichTarget } from '@cmt/drivers/cmakeDriver';
 
@@ -76,7 +76,7 @@ export enum ConfigureTrigger {
     api = "api",
     runTests = "runTests",
     package = "package",
-    workflow =  "workflow",
+    workflow = "workflow",
     badHomeDir = "badHomeDir",
     configureOnOpen = "configureOnOpen",
     configureWithCache = "configureWithCache",
@@ -324,7 +324,7 @@ export class CMakeProject {
         preset.updateCachedExpandedPreset(this.folderPath, expandedConfigurePreset, "configurePresets");
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
-        expandedConfigurePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedConfigurePreset.__parentEnvironment, expandedConfigurePreset.environment]);
+        expandedConfigurePreset.environment = EnvironmentUtils.mergePreserveNull([expandedConfigurePreset.__parentEnvironment, expandedConfigurePreset.environment]);
 
         return expandedConfigurePreset;
     }
@@ -399,7 +399,7 @@ export class CMakeProject {
             buildPreset,
             lightNormalizePath(this.folderPath || '.'),
             this.sourceDir,
-            this.workspaceContext.config.parallelJobs,
+            this.workspaceContext.config.numJobs,
             this.getPreferredGeneratorName(),
             true,
             this.configurePreset?.name);
@@ -421,7 +421,7 @@ export class CMakeProject {
         }
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
-        expandedBuildPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedBuildPreset.__parentEnvironment, expandedBuildPreset.environment]);
+        expandedBuildPreset.environment = EnvironmentUtils.mergePreserveNull([expandedBuildPreset.__parentEnvironment, expandedBuildPreset.environment]);
 
         return expandedBuildPreset;
     }
@@ -515,7 +515,7 @@ export class CMakeProject {
         }
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
-        expandedTestPreset.environment =  EnvironmentUtils.mergePreserveNull([expandedTestPreset.__parentEnvironment, expandedTestPreset.environment]);
+        expandedTestPreset.environment = EnvironmentUtils.mergePreserveNull([expandedTestPreset.__parentEnvironment, expandedTestPreset.environment]);
 
         return expandedTestPreset;
     }
@@ -609,7 +609,7 @@ export class CMakeProject {
         }
 
         // Make sure we pass CMakeDriver the preset defined env as well as the parent env
-        expandedPackagePreset.environment =  EnvironmentUtils.mergePreserveNull([expandedPackagePreset.__parentEnvironment, expandedPackagePreset.environment]);
+        expandedPackagePreset.environment = EnvironmentUtils.mergePreserveNull([expandedPackagePreset.__parentEnvironment, expandedPackagePreset.environment]);
 
         return expandedPackagePreset;
     }
@@ -882,7 +882,7 @@ export class CMakeProject {
      * Dispose the instance
      */
     dispose() {
-        log.debug(localize('disposing.extension', 'Disposing CMake Tools extension'));
+        log.debug(localize({key: 'disposing.extension', comment: ["'CMake Tools' shouldn't be localized"]}, 'Disposing CMake Tools extension'));
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
@@ -1012,7 +1012,7 @@ export class CMakeProject {
                             // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
                             selectedFile = cmakeListsFile[0].fsPath;
                         }
-                    } else if (selection.label === dontAskAgain)  {
+                    } else if (selection.label === dontAskAgain) {
                         await vscode.workspace.getConfiguration('cmake', this.workspaceFolder).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
                     } else {
                         // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
@@ -1251,7 +1251,7 @@ export class CMakeProject {
      * Second phase of two-phase init. Called by `create`.
      */
     private async init(sourceDirectory: string) {
-        log.debug(localize('second.phase.init', 'Starting CMake Tools second-phase init'));
+        log.debug(localize({key: 'second.phase.init', comment: ["'CMake Tools' shouldn't be localized'"]}, 'Starting CMake Tools second-phase init'));
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
         this.doStatusChange(this.workspaceContext.config.options);
         // Restore the debug target
@@ -1551,13 +1551,13 @@ export class CMakeProject {
             }
         } else {
             // single file with known path
-            const compdbPath = path.join(await this.binaryDir, 'compile_commands.json');
+            const compdbPath = util.platformNormalizePath(path.join(await this.binaryDir, 'compile_commands.json'));
             if (await fs.exists(compdbPath)) {
                 compdbPaths.push(compdbPath);
                 if (this.workspaceContext.config.copyCompileCommands) {
                     // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
-                    const expandedDest = await expandString(copyDest, opts);
+                    const expandedDest = util.platformNormalizePath(await expandString(copyDest, opts));
                     if (compdbPath !== expandedDest) {
                         const parentDir = path.dirname(expandedDest);
                         try {
@@ -1649,11 +1649,14 @@ export class CMakeProject {
             }
             await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
+            debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.with.cache', "Configured CMake with cache. CMake debugger is not supported with cache."));
             return result;
         }
 
         if (trigger === ConfigureTrigger.configureWithCache) {
-            log.debug(localize('no.cache.available', 'Unable to configure with existing cache'));
+            const message = localize('no.cache.available', 'Unable to configure with existing cache');
+            log.debug(message);
+            debuggerInformation?.debuggerStoppedDueToPreconditions(message);
             return { result: -1, resultType: ConfigureResultType.NoCache };
         }
 
@@ -1750,9 +1753,9 @@ export class CMakeProject {
                                     const doNotShowAgainTitle = localize('options.configureWithDebuggerOnFail.do.not.show', "Don't Show Again");
                                     void vscode.window.showErrorMessage<MessageItem>(
                                         localize('configure.failed.tryWithDebugger', 'Configure failed. Would you like to attempt to configure with the CMake Debugger?'),
-                                        {title: yesButtonTitle},
-                                        {title: localize('no.configureWithDebugger.button', 'Cancel')},
-                                        {title: doNotShowAgainTitle})
+                                        { title: yesButtonTitle },
+                                        { title: localize('no.configureWithDebugger.button', 'Cancel') },
+                                        { title: doNotShowAgainTitle })
                                         .then(async chosen => {
                                             if (chosen) {
                                                 if (chosen.title === yesButtonTitle) {
@@ -1770,6 +1773,8 @@ export class CMakeProject {
                                                 }
                                             }
                                         });
+                                } else if (result.result !== 0) {
+                                    debuggerInformation?.debuggerStoppedDueToPreconditions(localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to: \"{0}\"", ConfigureResultType[result.resultType]));
                                 }
 
                                 await this.cTestController.refreshTests(drv);
@@ -1782,12 +1787,14 @@ export class CMakeProject {
                             }
                         } else {
                             progress.report({ message: localize('configure.failed', 'Failed to configure project') });
+                            debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.driver.available.no.debug', 'Cannot configure with CMake debugger due to no CMake driver being available.'));
                             return { result: -1, resultType: ConfigureResultType.NormalOperation };
                         }
                     });
                 } catch (e: any) {
                     const error = e as Error;
                     progress.report({ message: error.message });
+                    debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.due.to.error', 'Cannot configure with CMake debugger due to error: {0}', error.message));
                     return { result: -1, resultType: ConfigureResultType.NormalOperation };
                 }
             }
@@ -2139,6 +2146,7 @@ export class CMakeProject {
                         if (fileDiags) {
                             populateCollection(collections.build, fileDiags);
                         }
+                        await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);
                         return rc === null ? -1 : rc;
                     }
@@ -2237,8 +2245,14 @@ export class CMakeProject {
         return 0;
     }
 
-    async buildWithTarget(): Promise<number> {
-        const target = await this.showTargetSelector();
+    async buildWithTarget(specified_target?: string): Promise<number> {
+        const target_selector = async (spec_target: string | undefined) => {
+            if (!spec_target) {
+                return this.showTargetSelector();
+            }
+            return spec_target;
+        };
+        const target = await target_selector(specified_target);
         if (target === null) {
             return -1;
         }
@@ -2436,7 +2450,6 @@ export class CMakeProject {
 
         return drv.stopCurrentProcess().then(async () => {
             await this.activeBuild;
-            this.cmakeDriver = Promise.resolve(null);
             this.isBusy.set(false);
             return true;
         }, () => false);
@@ -2450,7 +2463,6 @@ export class CMakeProject {
 
         return drv.stopCurrentProcess().then(async () => {
             await this.activeBuild;
-            this.cmakeDriver = Promise.resolve(null);
             return true;
         }, () => false);
     }
@@ -2617,6 +2629,17 @@ export class CMakeProject {
     }
 
     /**
+     * Implementation of `cmake.launchTargetName`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     */
+    async launchTargetNameForSubstitution(): Promise<string | null> {
+        const targetPath = await this.launchTargetPath();
+        if (targetPath === null) {
+            return null;
+        }
+        return path.parse(targetPath).name;
+    }
+
+    /**
      * Implementation of `cmake.getLaunchTargetPath`. This does not ensure the target exists.
      */
     async getLaunchTargetPath(): Promise<string | null> {
@@ -2660,6 +2683,17 @@ export class CMakeProject {
             return null;
         }
         return path.basename(targetPath);
+    }
+
+    /**
+     * Implementation of `cmake.getLaunchTargetName`. This does not ensure the target exists.
+     */
+    async getLaunchTargetName(): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath();
+        if (targetPath === null) {
+            return null;
+        }
+        return path.parse(targetPath).name;
     }
 
     /**
@@ -2821,7 +2855,7 @@ export class CMakeProject {
         env = EnvironmentUtils.merge([configureEnv, env]);
 
         if (debugEnv) {
-            const options = {... await this.getExpansionOptions(), envOverride: env, penvOverride: configureEnv };
+            const options = { ... await this.getExpansionOptions(), envOverride: env, penvOverride: configureEnv };
             for (const envPair of debugEnv) {
                 env[envPair.name] = await expandString(envPair.value, options);
             }
@@ -3110,7 +3144,7 @@ export class CMakeProject {
                 label: 'CTest',
                 description: localize('ctest.support', 'CTest support')
             }
-        ], { canPickMany: true, placeHolder: localize('select.additional.options', 'Select additional options')}));
+        ], { canPickMany: true, placeHolder: localize('select.additional.options', 'Select additional options') }));
 
         // select current c/cpp files to add as targets, if any. If none, or none are selected, create a new one
         const files = await fs.readdir(this.sourceDir);
@@ -3127,7 +3161,7 @@ export class CMakeProject {
         const type = targetType.label;
         const lang = targetLang.label;
         const langName = lang === "C++" ? "C CXX" : "C";
-        const langExt  = lang === "C++" ? "cpp" : "c";
+        const langExt = lang === "C++" ? "cpp" : "c";
 
         let failedToCreate = false;
 
@@ -3140,7 +3174,7 @@ export class CMakeProject {
         }
 
         let init = [
-            'cmake_minimum_required(VERSION 3.5.0)',
+            'cmake_minimum_required(VERSION 3.10.0)',
             `project(${projectName} VERSION 0.1.0 LANGUAGES ${langName})`,
             '\n'
         ].join('\n');

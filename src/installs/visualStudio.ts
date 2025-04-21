@@ -10,9 +10,9 @@ import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import * as iconv from 'iconv-lite';
 import * as codepages from '@cmt/codePageTable';
 
-import * as logging from '../logging';
-import * as proc from '../proc';
-import { thisExtensionPath } from '../util';
+import * as logging from '@cmt/logging';
+import * as proc from '@cmt/proc';
+import { thisExtensionPath } from '@cmt/util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -135,7 +135,7 @@ export function targetArchFromGeneratorPlatform(generatorPlatform?: string) {
     if (!generatorPlatform) {
         return undefined;
     }
-    return vsArchFromGeneratorPlatform[generatorPlatform] || generatorPlatform;
+    return vsArchFromGeneratorPlatform[generatorPlatform.toLowerCase()] || generatorPlatform;
 }
 
 /**

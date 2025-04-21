@@ -3,7 +3,7 @@ import * as net from 'net';
 import * as path from 'path';
 
 import * as cache from '@cmt/cache';
-import { CMakeGenerator } from '@cmt/kit';
+import { CMakeGenerator } from '@cmt/kits/kit';
 import { createLogger } from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
@@ -385,7 +385,9 @@ export class CMakeServerClient {
                 break;
             }
             if (mat.length !== 3) {
-                debugger;
+                if (process.env.NODE_ENV === 'development') {
+                    debugger;
+                }
                 throw new global.Error(localize('protocol.error.cmake', 'Protocol error talking to CMake! Got this input: {0}', input));
             }
             this.accInput = mat[2];
@@ -474,7 +476,9 @@ export class CMakeServerClient {
                 }
             }
         }
-        debugger;
+        if (process.env.NODE_ENV === 'development') {
+            debugger;
+        }
         log.warning(localize('cant.yet.handle.message', 'Can\'t yet handle the {0} messages', some.type));
     }
 
@@ -587,7 +591,9 @@ export class CMakeServerClient {
                 pipe.on('error', e => {
                     pipe.end();
                     if (!this.shutDownFlag) {
-                        debugger;
+                        if (process.env.NODE_ENV === 'development') {
+                            debugger;
+                        }
                         rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'),
                             { pipe: pipeFile },
                             params.onPipeError(e));

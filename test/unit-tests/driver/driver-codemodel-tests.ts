@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
@@ -11,7 +11,7 @@ import * as path from 'path';
 
 chai.use(chaiString);
 
-import { Kit, CMakeGenerator } from '@cmt/kit';
+import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import { CMakeDriver, CMakePreconditionProblemSolver } from '@cmt/drivers/cmakeDriver';
 import { CMakeLegacyDriver } from '@cmt/drivers/cmakeLegacyDriver';
 
@@ -231,7 +231,8 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             expect(target).to.be.not.undefined;
 
             // maybe could be used to exclude file list from utility targets
-            expect(target!.fileGroups![0].isGenerated).to.be.true;
+            const last = target!.fileGroups!.length - 1;
+            expect(target!.fileGroups![last].isGenerated).to.be.true;
         }).timeout(90000);
 
         test('Test sysroot access', async () => {

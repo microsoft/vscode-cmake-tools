@@ -4,6 +4,7 @@ import { expect } from '@test/util';
 function createConfig(conf: Partial<ExtensionConfigurationSettings>): ConfigurationReader {
     const ret = new ConfigurationReader({
         autoSelectActiveFolder: false,
+        defaultActiveFolder: null,
         cmakePath: '',
         buildDirectory: '',
         installPrefix: null,
@@ -27,7 +28,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             parallelJobs: 0,
             allowParallelJobs: false,
             testExplorerIntegrationEnabled: true,
-            testSuiteDelimiter: ''
+            testSuiteDelimiter: '',
+            debugLaunchTarget: null
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
@@ -64,7 +66,6 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         touchbar: {
             visibility: "default"
         },
-        showOptionsMovedNotification: true,
         options: {
             advanced: {},
             statusBarVisibility: "visible"
@@ -76,7 +77,11 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         launchBehavior: 'reuseTerminal',
         ignoreCMakeListsMissing: false,
         automaticReconfigure: false,
-        enableAutomaticKitScan: true
+        enableAutomaticKitScan: true,
+        enableLanguageServices: true,
+        preRunCoverageTarget: null,
+        postRunCoverageTarget: null,
+        coverageInfoFiles: []
     });
     ret.updatePartial(conf);
     return ret;

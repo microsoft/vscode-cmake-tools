@@ -10,13 +10,13 @@ import * as os from 'os';
 import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { CppDebugConfiguration } from './debugger';
-import { Environment } from './environmentVariables';
+import { CppDebugConfiguration } from '@cmt/debug/debugger';
+import { Environment } from '@cmt/environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export function defaultNumJobs (): number {
-    return os.cpus().length + 2;
+    return os.cpus().length;
 }
 
 const log = logging.createLogger('config');
@@ -154,6 +154,7 @@ export interface OptionConfig {
 
 export interface ExtensionConfigurationSettings {
     autoSelectActiveFolder: boolean;
+    defaultActiveFolder: string | null;
     cmakePath: string;
     buildDirectory: string;
     installPrefix: string | null;
@@ -170,9 +171,9 @@ export interface ExtensionConfigurationSettings {
     configureArgs: string[];
     buildArgs: string[];
     buildToolArgs: string[];
-    parallelJobs: number | undefined;
+    parallelJobs: number;
     ctestPath: string;
-    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; debugLaunchTarget: string | null };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -206,7 +207,6 @@ export interface ExtensionConfigurationSettings {
     loggingLevel: LogLevelKey;
     additionalKits: string[];
     touchbar: TouchBarConfig;
-    showOptionsMovedNotification: boolean;
     options: OptionConfig;
     useCMakePresets: UseCMakePresets;
     useVsDeveloperEnvironment: UseVsDeveloperEnvironment;
@@ -217,6 +217,10 @@ export interface ExtensionConfigurationSettings {
     automaticReconfigure: boolean;
     pinnedCommands: string[];
     enableAutomaticKitScan: boolean;
+    enableLanguageServices: boolean;
+    preRunCoverageTarget: string | null;
+    postRunCoverageTarget: string | null;
+    coverageInfoFiles: string[];
 }
 
 type EmittersOf<T> = {
@@ -314,6 +318,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get autoSelectActiveFolder(): boolean {
         return this.configData.autoSelectActiveFolder;
     }
+    get defaultActiveFolder(): string | null {
+        return this.configData.defaultActiveFolder;
+    }
     buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope): string {
         if (multiProject && this.isDefaultValue('buildDirectory', workspaceFolder)) {
             return '${sourceDirectory}/build';
@@ -366,7 +373,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get buildToolArgs(): string[] {
         return this.configData.buildToolArgs;
     }
-    get parallelJobs(): number | undefined {
+    get parallelJobs(): number {
         return this.configData.parallelJobs;
     }
     get ctestParallelJobs(): number | null {
@@ -380,6 +387,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get testSuiteDelimiter(): string {
         return this.configData.ctest.testSuiteDelimiter;
+    }
+    get ctestDebugLaunchTarget(): string | null {
+        return this.configData.ctest.debugLaunchTarget;
     }
     get parseBuildDiagnostics(): boolean {
         return !!this.configData.parseBuildDiagnostics;
@@ -479,7 +489,7 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     get numJobs(): number | undefined {
-        if (this.parallelJobs === undefined) {
+        if (this.isDefaultValue("parallelJobs")) {
             return undefined;
         } else if (this.parallelJobs === 0) {
             return defaultNumJobs();
@@ -562,8 +572,25 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableAutomaticKitScan;
     }
 
+    get enableLanguageServices(): boolean {
+        return this.configData.enableLanguageServices;
+    }
+
+    get preRunCoverageTarget(): string | null {
+        return this.configData.preRunCoverageTarget;
+    }
+
+    get postRunCoverageTarget(): string | null {
+        return this.configData.postRunCoverageTarget;
+    }
+
+    get coverageInfoFiles(): string[] {
+        return this.configData.coverageInfoFiles;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
+        defaultActiveFolder: new vscode.EventEmitter<string | null>(),
         cmakePath: new vscode.EventEmitter<string>(),
         buildDirectory: new vscode.EventEmitter<string>(),
         installPrefix: new vscode.EventEmitter<string | null>(),
@@ -583,7 +610,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         cpackPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; debugLaunchTarget: string | null }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
@@ -616,7 +643,6 @@ export class ConfigurationReader implements vscode.Disposable {
         loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
         additionalKits: new vscode.EventEmitter<string[]>(),
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
-        showOptionsMovedNotification: new vscode.EventEmitter<boolean>(),
         options: new vscode.EventEmitter<OptionConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         useVsDeveloperEnvironment: new vscode.EventEmitter<UseVsDeveloperEnvironment>(),
@@ -626,7 +652,11 @@ export class ConfigurationReader implements vscode.Disposable {
         launchBehavior: new vscode.EventEmitter<string>(),
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),
-        enableAutomaticKitScan: new vscode.EventEmitter<boolean>()
+        enableAutomaticKitScan: new vscode.EventEmitter<boolean>(),
+        enableLanguageServices: new vscode.EventEmitter<boolean>(),
+        preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
+        postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
+        coverageInfoFiles: new vscode.EventEmitter<string[]>()
     };
 
     /**

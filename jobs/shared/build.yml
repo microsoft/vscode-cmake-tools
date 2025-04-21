@@ -13,19 +13,17 @@ steps:
     signType: $(SignType)
     zipSources: false
 - task: NodeTool@0
-  displayName: Use Node 18.x
+  displayName: Use Node 20.x
   inputs:
-    versionSpec: 18.x
+    versionSpec: 20.x
 - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
   displayName: Use Yarn 1.x
 - task: CmdLine@2
   displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
   inputs:
     script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-- task: Npm@0
-  displayName: npm install VSCE
-  inputs:
-    arguments: -g vsce
+- script: npm install -g @vscode/vsce
+  displayName: 'install vsce'
 - task: PowerShell@2
   displayName: Set build name
   inputs:
@@ -58,7 +56,7 @@ steps:
   displayName: Build files
   inputs:
     script: |
-      npm run vscode:prepublish
+      yarn compile-production
 - task: MSBuild@1
   displayName: Sign files
   inputs:
@@ -70,6 +68,16 @@ steps:
     script: |
       mkdir $(Build.ArtifactStagingDirectory)\vsix
       if "${{parameters.IsPreRelease}}"=="1" (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+- task: CmdLine@2
+  displayName: Generate Extension Manifest
+  inputs:
+    script: |
+      vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
+- task: CmdLine@2
+  displayName: Prepare manifest for signing
+  inputs:
+    script: |
+      copy $(Build.ArtifactStagingDirectory)\vsix\extension.manifest $(Build.ArtifactStagingDirectory)\vsix\extension.signature.p7s
 - task: MSBuild@1
   displayName: Sign VSIX
   inputs:

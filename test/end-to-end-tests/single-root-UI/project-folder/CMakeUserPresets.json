@@ -1,0 +1,61 @@
+{
+  "version": 4,
+  "include": [
+    "include/IncludedPresets1.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "LinuxUser1",
+      "description": "Sets generator, build and install directory, vcpkg",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "environment": {
+        "TEST_VARIANT_ENV": "0cbfb6ae-f2ec-4017-8ded-89df8759c502"
+      }
+    },
+    {
+      "name": "WindowsUser1",
+      "description": "Sets generator, build and install directory, vcpkg",
+      "generator": "Visual Studio 16 2019",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      },
+      "environment": {
+        "TEST_VARIANT_ENV": "0cbfb6ae-f2ec-4017-8ded-89df8759c502"
+      }
+    },
+    {
+      "name": "NoGenerator",
+      "description": "Skips setting a generator",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "environment": {
+        "TEST_VARIANT_ENV": "0cbfb6ae-f2ec-4017-8ded-89df8759c502"
+      }
+    },
+    {
+        "name": "TestInheritFromPreset",
+        "inherits": "Linux1"
+    },
+    {
+      "name": "LinuxUser2",
+      "description": "LinuxUser1 with Coverage enabled",
+      "inherits": "LinuxUser1",
+      "cacheVariables": {
+        "USE_COVERAGE": "ON"
+      }
+    }
+  ]
+}

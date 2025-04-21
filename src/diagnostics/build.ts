@@ -8,22 +8,22 @@ import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
-import * as gcc from './gcc';
-import * as ghs from './ghs';
-import * as diab from './diab';
-import * as gnu_ld from './gnu-ld';
-import * as mvsc from './msvc';
-import * as iar from './iar';
-import { FileDiagnostic, RawDiagnosticParser } from './util';
+import * as gcc from '@cmt/diagnostics/gcc';
+import * as ghs from '@cmt/diagnostics/ghs';
+import * as diab from '@cmt/diagnostics/diab';
+import * as gnu_ld from '@cmt/diagnostics/gnu-ld';
+import * as mvsc from '@cmt/diagnostics/msvc';
+import * as iar from '@cmt/diagnostics/iar';
+import { FileDiagnostic, RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ConfigurationReader } from '@cmt/config';
 
 export class Compilers {
     [compiler: string]: RawDiagnosticParser;
 
     gcc = new gcc.Parser();
+    gnuld = new gnu_ld.Parser();
     ghs = new ghs.Parser();
     diab = new diab.Parser();
-    gnuLD = new gnu_ld.Parser();
     msvc = new mvsc.Parser();
     iar = new iar.Parser();
 }
@@ -82,7 +82,7 @@ export class CompileOutputConsumer implements OutputConsumer {
             MSVC: this.compilers.msvc.diagnostics,
             GHS: this.compilers.ghs.diagnostics,
             DIAB: this.compilers.diab.diagnostics,
-            link: this.compilers.gnuLD.diagnostics,
+            GNULD: this.compilers.gnuld.diagnostics,
             IAR: this.compilers.iar.diagnostics
         };
         const parsers = util.objectPairs(by_source)

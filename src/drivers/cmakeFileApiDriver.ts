@@ -1,5 +1,5 @@
 import { CMakeCache, CacheEntry } from '@cmt/cache';
-import { CMakeExecutable } from '@cmt/cmake/cmakeExecutable';
+import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import { ConfigurationReader } from '@cmt/config';
 import {
     createQueryFileForApi,
@@ -18,7 +18,7 @@ import {
     NoGeneratorError
 } from '@cmt/drivers/drivers';
 import * as codeModel from '@cmt/drivers/codeModel';
-import { CMakeGenerator, Kit } from '@cmt/kit';
+import { CMakeGenerator, Kit } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
@@ -26,9 +26,9 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/preset';
+import { BuildPreset, ConfigurePreset, getValue, TestPreset, PackagePreset, WorkflowPreset } from '@cmt/presets/preset';
 import * as nls from 'vscode-nls';
-import { DebuggerInformation } from '@cmt/debug/debuggerConfigureDriver';
+import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { onConfigureSettingsChange } from '@cmt/ui/util';
@@ -80,8 +80,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
             workflowPreset,
             preferredGenerators);
     }
-
-    private _needsReconfigure = true;
 
     /**
      * Watcher for the CMake cache file on disk.
@@ -162,9 +160,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
         this._needsReconfigure = true;
         await onConfigureSettingsChange();
     }
-    async checkNeedsReconfigure(): Promise<boolean> {
-        return this._needsReconfigure;
-    }
 
     async doSetKit(cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
@@ -208,7 +203,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     async doCacheConfigure(): Promise<number> {
-        this._needsReconfigure = true;
         await this.updateCodeModel();
         return 0;
     }
@@ -227,8 +221,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
             }
         }
         // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
-        args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
-        args.push(`-B${util.lightNormalizePath(binaryDir)}`);
+        args.push("-S", `${util.lightNormalizePath(this.sourceDir)}`);
+        args.push("-B", `${util.lightNormalizePath(binaryDir)}`);
 
         if (!has_gen) {
             const generator = (configurePreset) ? {
@@ -249,6 +243,21 @@ export class CMakeFileApiDriver extends CMakeDriver {
                 if (generator.platform) {
                     args.push('-A');
                     args.push(generator.platform);
+                }
+            } else {
+                if (this.useCMakePresets) {
+                    const presetArchitecture = this.configurePresetArchitecture;
+                    const presetToolset = this.configurePresetToolset;
+                    const platform = presetArchitecture ? getValue(presetArchitecture) : undefined;
+                    const toolset = presetToolset ? getValue(presetToolset) : undefined;
+                    if (toolset) {
+                        args.push('-T');
+                        args.push(toolset);
+                    }
+                    if (platform) {
+                        args.push("-A");
+                        args.push(platform);
+                    }
                 }
             }
         }
