@@ -2814,6 +2814,14 @@ export class CMakeProject {
         return env;
     }
 
+    async cacheVariable(name?: string): Promise<string | null> {
+        const drv = await this.getCMakeDriverInstance();
+        if (!name || !drv) {
+            return null;
+        }
+        return (await CMakeCache.fromPath(drv.cachePath))?.get(name)?.value;
+    }
+
     /**
      * Implementation of `cmake.debugTarget`
      */
