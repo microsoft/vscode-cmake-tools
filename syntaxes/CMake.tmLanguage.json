@@ -102,9 +102,7 @@
     "string": {
       "name": "string.quoted.double-slash.cmake",
       "begin": "\"",
-      "beginCaptures": { "0": { "name": "string.quoted.double.begin.cmake" } },
       "end": "\"",
-      "endCaptures": { "0": { "name": "string.quoted.double.end.cmake" } },
       "patterns": [
         {
           "name": "constant.character.escape.cmake",
