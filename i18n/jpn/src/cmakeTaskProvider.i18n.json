@@ -21,6 +21,7 @@
 	"enable.cmake.presets": "CMakePresets を有効にする",
 	"dismiss": "無視",
 	"task.not.compatible.with.preset.setting": "選択したタスクは CMakePreset を要求しますが、ワークスペースは CMakePresets 用に構成されていません",
+	"workspace.is": "ワークスペースは {0} です",
 	"cmake.tools.not.found": "CMake ツールが見つかりません。",
 	"task.failed": "タスクが失敗しました",
 	"config.started": "構成タスクを開始しました...",

@@ -21,6 +21,7 @@
 	"enable.cmake.presets": "Povolit CMakePresets",
 	"dismiss": "Zavřít",
 	"task.not.compatible.with.preset.setting": "Vybraná úloha vyžaduje CMakePreset, ale pracovní prostor není nakonfigurovaný pro CMakePresets.",
+	"workspace.is": "Pracovní prostor je {0}",
 	"cmake.tools.not.found": "Nástroje CMake Tools se nenašly.",
 	"task.failed": "Úloha selhala.",
 	"config.started": "Úloha konfigurace se spustila…",

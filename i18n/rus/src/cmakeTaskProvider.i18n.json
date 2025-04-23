@@ -21,6 +21,7 @@
 	"enable.cmake.presets": "Включить CMakePresets",
 	"dismiss": "Закрыть",
 	"task.not.compatible.with.preset.setting": "Выбранная задача запрашивает CMakePreset, но рабочая область не настроена для CMakePresets.",
+	"workspace.is": "Рабочая область: {0}",
 	"cmake.tools.not.found": "Средства CMake не найдены.",
 	"task.failed": "Сбой задачи",
 	"config.started": "Задача config запущена...",
