@@ -7,35 +7,35 @@
     "patterns": [
         {
             "match": "//+.*$|#+.*$",
-            "name": "comment.source.cmakecache"
+            "name": "comment.line.double-slash.cmakecache"
         },
         {
             "comment": "Properties on Cache Entries",
             "match": "\\b-ADVANCED\\b",
-            "name": "entity.source.cmakecache"
+            "name": "support.variable.cmakecache"
         },
         {
             "comment": "Literal values",
             "match": "\\b(?i:(YES|NO|ON|OFF|TRUE|FALSE|Y|N|\\d+))$",
-            "name": "constant.source.cmakecache"
+            "name": "constant.language.cmakecache"
         },
         {
             "comment": "Normal Strings",
             "begin": "=",
             "end": "$",
-            "name": "string.source.cmakecache"
+            "name": "string.unquoted.cmakecache"
         },
         {
             "comment": "Cache Entry Names",
             "match": "^\\b(?i:(\\w+))\\b",
-            "name": "variable.source.cmakecache"
+            "name": "variable.other.cmakecache"
         },
         {
             "comment": "Cache Entry Types",
             "begin": ":",
             "end": "=",
             "match": "(BOOL|STRING|FILEPATH|PATH|STATIC|INTERNAL)",
-            "name": "keyword.source.cmakecache"
+            "name": "constant.language.cmakecache"
         }
     ],
     "repository": {}
