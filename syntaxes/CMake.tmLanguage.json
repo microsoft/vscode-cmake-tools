@@ -163,7 +163,10 @@
       "begin": "\\$\\<",
       "beginCaptures": { "0": { "name": "keyword.other.generator-expression.begin.cmake" } },
       "end": "[\\>\\s\\t\\r\\n]",
-      "endCaptures": { "0": { "name": "keyword.other.generator-expression.end.cmake" } }
+      "endCaptures": { "0": { "name": "keyword.other.generator-expression.end.cmake" } },
+      "patterns": [
+        { "include": "#generatorExpression" }
+      ]
     }
   }
 }
