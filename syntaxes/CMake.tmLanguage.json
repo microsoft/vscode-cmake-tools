@@ -165,7 +165,10 @@
       "end": "[\\>\\s\\t\\r\\n]",
       "endCaptures": { "0": { "name": "keyword.other.generator-expression.end.cmake" } },
       "patterns": [
-        { "include": "#generatorExpression" }
+        { "include": "#generatorExpression" },
+        { "include": "#variableReference" },
+        { "include": "#envVariableReference" },
+        { "include": "#cacheVariableReference" }
       ]
     }
   }
