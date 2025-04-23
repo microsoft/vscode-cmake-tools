@@ -107,7 +107,7 @@
       "patterns": [
         {
           "name": "constant.character.escape.cmake",
-          "match": "\\(.|$)"
+          "match": "\\\\(.|$)"
         },
         { "include": "#variableReference" },
         { "include": "#envVariableReference" },
