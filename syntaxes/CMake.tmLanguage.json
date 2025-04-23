@@ -27,7 +27,8 @@
     { "include": "#returnControl" },
     { "include": "#bracketComment" },
     { "include": "#bracketArgument" },
-    { "include": "#lineComment" }
+    { "include": "#lineComment" },
+    { "include": "#string" }
   ],
   "repository": {
     "commandInvocationIdentifier": {
@@ -100,7 +101,7 @@
     },
     "string": {
       "name": "string.quoted.double-slash.cmake",
-      "begin": "(?&lt;!\\)",
+      "begin": "\"",
       "beginCaptures": { "0": { "name": "string.quoted.double.begin.cmake" } },
       "end": "\"",
       "endCaptures": { "0": { "name": "string.quoted.double.end.cmake" } },
