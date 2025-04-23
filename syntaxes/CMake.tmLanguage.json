@@ -101,6 +101,7 @@
       "name": "variable.other.cache.cmake",
       "match": "\\$CACHE\\{\\w+\\}"
     },
+    // TODO: This is the quoted argument, but we still need the unquoted argument, and possibly the escape sequences
     "string": {
       "name": "string.quoted.double-slash.cmake",
       "begin": "\"",
