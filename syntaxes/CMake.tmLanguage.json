@@ -9,7 +9,6 @@
     { "include": "#changeBehaviorVariables" },
     { "include": "#controlBuildVariables" },
     { "include": "#provideInformationVariables" },
-    { "include": "#commandInvocationIdentifier" },
     { "include": "#cacheEntryProperties" },
     { "include": "#sourceFileProperties" },
     { "include": "#testProperties" },
@@ -20,7 +19,9 @@
     { "include": "#variableReference" },
     { "include": "#envVariableReference" },
     { "include": "#cacheVariableReference" },
+    { "include": "#commandInvocationIdentifier" },
     { "include": "#operators" },
+    { "include": "#boolean" },
     { "include": "#commandControl" },
     { "include": "#conditionalControl" },
     { "include": "#loopControl" },
@@ -115,7 +116,11 @@
     },
     "operators": {
       "name": "keyword.operator.cmake",
-      "match": "\\b(?i:ABSOLUTE|AND|BOOL|CACHE|COMMAND|COMMENT|DEFINED|DOC|EQUAL|EXISTS|EXT|FALSE|GREATER|GREATER_EQUAL|IGNORE|INTERNAL|IN_LIST|IS_ABSOLUTE|IS_DIRECTORY|IS_NEWER_THAN|IS_SYMLINK|LESS|LESS_EQUAL|MATCHES|NAME|NAMES|NAME_WE|NO|NOT|NOTFOUND|OFF|ON|OR|PATH|PATHS|POLICY|PROGRAM|STREQUAL|STRGREATER|STRGREATER_EQUAL|STRING|STRLESS|STRLESS_EQUAL|TARGET|TEST|TRUE|VERSION_EQUAL|VERSION_GREATER|VERSION_GREATER_EQUAL|VERSION_LESS|YES)\\b"
+      "match": "\\b(?i:ABSOLUTE|AND|COMMAND|DEFINED|DIRECTORY|EQUAL|EXISTS|GREATER|GREATER_EQUAL|IN_LIST|IS_ABSOLUTE|IS_DIRECTORY|IS_NEWER_THAN|IS_SYMLINK|LAST_EXT|LESS|LESS_EQUAL|MATCHES|NAME|NAME_WE|NAME_WLE|NOT|NOTFOUND|OR|PATH|PATHS|POLICY|PROGRAM|REALPATH|STREQUAL|STRGREATER|STRGREATER_EQUAL|STRING|STRLESS|STRLESS_EQUAL|TARGET|TEST|VERSION_EQUAL|VERSION_GREATER|VERSION_GREATER_EQUAL|VERSION_LESS)\\b"
+    },
+    "boolean": {
+      "name": "constant.language.boolean.cmake",
+      "match": "\\b(?i:FALSE|NO|OFF|ON|TRUE|YES)\\b"
     },
     "commandControl": {
       "name": "keyword.control.command.cmake",
