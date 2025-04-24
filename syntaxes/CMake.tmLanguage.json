@@ -29,8 +29,10 @@
     { "include": "#bracketComment" },
     { "include": "#bracketArgument" },
     { "include": "#lineComment" },
+    { "include": "#quoted" },
     { "include": "#string" },
-    { "include": "#generatorExpression" }
+    { "include": "#generatorExpression" },
+    { "include": "#unquoted" }
   ],
   "repository": {
     "commandInvocationIdentifier": {
@@ -101,20 +103,31 @@
       "name": "variable.other.cache.cmake",
       "match": "\\$CACHE\\{\\w+\\}"
     },
-    // TODO: This is the quoted argument, but we still need the unquoted argument, and possibly the escape sequences
-    "string": {
+    "quoted": {
       "name": "string.quoted.double-slash.cmake",
       "begin": "\"",
       "end": "\"",
       "patterns": [
-        {
-          "name": "constant.character.escape.cmake",
-          "match": "\\\\(.|$)"
-        },
+        { "include": "#escape" },
         { "include": "#variableReference" },
         { "include": "#envVariableReference" },
         { "include": "#cacheVariableReference" }
       ]
+    },
+    "unquoted": {
+      "name": "string.unquoted.cmake",
+      "begin": "[^\\s()#\"\\\\][^\\s()#\"\\\\]*",
+      "end": "(?=\\s|\\(|\\)|#|\"|\\\\|$)",
+      "patterns": [
+        { "include": "#escape" },
+        { "include": "#variableReference" },
+        { "include": "#envVariableReference" },
+        { "include": "#cacheVariableReference" }
+      ]
+    },
+    "escape": {
+      "name": "constant.character.escape.cmake",
+      "match": "\\\\(.|$)"
     },
     "operators": {
       "name": "keyword.operator.cmake",
