@@ -153,7 +153,7 @@ export function searchOutputForFailures(patterns: FailurePatternsConfig, output:
     const messages = [];
     patterns = Array.isArray(patterns) ? patterns : [patterns];
     for (let pattern of patterns) {
-        pattern = typeof pattern === 'string' ? pattern = { regexp: pattern } : pattern;
+        pattern = typeof pattern === 'string' ? { regexp: pattern } : pattern;
         pattern.file ??= 1;
         pattern.line ??= 2;
         pattern.message ??= 3;
