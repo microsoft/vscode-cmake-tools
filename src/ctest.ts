@@ -149,7 +149,7 @@ interface FailurePattern {
 type FailurePatternsConfig = string | string[] | FailurePattern[];
 
 export function searchOutputForFailures(patterns: FailurePatternsConfig, output: string): vscode.TestMessage[] {
-    output = stripCarriageReturns(output);
+    output = normalizeLF(output);
     const messages = [];
     patterns = Array.isArray(patterns) ? patterns : [patterns];
     for (let pattern of patterns) {
@@ -178,7 +178,7 @@ function matchToTestMessage(pat: FailurePattern, match: RegExpMatchArray): vscod
     const actual = pat.actual ? match[pat.actual] : undefined;
     const expected = pat.expected ? match[pat.expected] : undefined;
 
-    const testMessage = new vscode.TestMessage(message);
+    const testMessage = new vscode.TestMessage(normalizeCRLF(message));
     testMessage.location = new vscode.Location(
         vscode.Uri.file(file), new vscode.Position(line, 0)
     );
@@ -187,8 +187,12 @@ function matchToTestMessage(pat: FailurePattern, match: RegExpMatchArray): vscod
     return testMessage;
 }
 
-function stripCarriageReturns(s: string) {
-    return s.replace(RegExp(/\r\n?/, 'g'), '\n');
+function normalizeLF(s: string) {
+    return s.replace(/\r\n?/g, '\n');
+}
+
+function normalizeCRLF(s: string) {
+    return s = s.replace(/\r?\n/g, '\r\n');
 }
 
 function parseLineMatch(line: string | null) {
