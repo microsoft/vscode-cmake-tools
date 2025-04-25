@@ -31,13 +31,14 @@ Selecting this button shows a quick pick list for all the targets CMake Tools is
 You can build a single target without changing the current build target from the VS Code command palette by running the **CMake: Build Target** command, or by pressing the keyboard shortcut (default is `Shift+F7`). CMake will build any dependent targets, even if they aren't directly selected.
 
 ## Create a build task
+
 You can also define a build task from the VS Code command palette by running the **Tasks: Configure Task** command.
 
 ![Configure a build task](images/configure_task.png)
 
 By choosing the "CMake: build" task, the following task will be created in "${workspaceFolder}/.vscode/tasks.json" file.
 
-```
+```json
 {
     "version": "2.0.0",
     "tasks": [
@@ -58,7 +59,7 @@ By choosing the "CMake: build" task, the following task will be created in "${wo
 
 The default target is set to "all" target (named ALL_BUILD in some generators). You can modify the "targets" value with a single target or a list of targets that can be built. Here is an example of two customized build tasks in which the name of the task, the list of targets, and the description of the tasks is modified:
 
-```
+```json
 {
     "version": "2.0.0",
     "tasks": [
@@ -103,9 +104,9 @@ For advanced scenarios, additional flags to `--build` can be set with [cmake.bui
 
 ### The build environment
 
-Environment variables are inherited from the calling Visual Studio Code process, with additional variables from the [cmake.buildEnvironment](cmake-settings.md#cmake-settings) and [cmake.environment](cmake-settings.md#cmake-settings) settings.
+Environment variables are inherited from the calling Visual Studio Code process, along with any additional variables set in the CMake [CMake Presets Environment](cmake-presets.md#set-and-reference-environment-variables).
 
-If you are using a [Visual Studio Kit](kits.md#visual-Studio), CMake Tools runs the build with the appropriate environment variables set to build with the chosen version of Visual Studio, much like how it sets these environment variables during [the CMakeTools configure step](configure.md#the-cmake-tools-configure-step).
+If you are using either a cl.exe compiler or Ninja, and you have `cmake.useVsDeveloperEnvironment` set to `auto`, CMake Tools will attempt to detect and paply the appropriate environment variables set to build with the chosen version of Visual Studio. CMake Tools will do this no matter what if you set `cmake.useVsDeveloperEnviornment` to `always`.
 
 ## Clean build
 

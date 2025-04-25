@@ -5,6 +5,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
  If you are new, try the [CMake Tools quick start](https://code.visualstudio.com/docs/cpp/CMake-linux) and see the [frequently asked questions](faq.md).
 
 [How to](how-to.md)
+
 * [Create a new project](how-to.md#create-a-new-project)
 * [Configure a project](how-to.md#configure-a-project)
 * [Build a project](how-to.md#build-a-project)
@@ -12,42 +13,8 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [Pass command-line arguments to the debugger](debug-launch.md#debug-using-a-launchjson-file)
 * [Set up include paths for C++ IntelliSense](how-to.md#set-up-include-paths-for-c-intellisense)
 
-[Kits](kits.md)
-* [How kits are found and defined](kits.md#how-kits-are-found-and-defined)
-* [Kit options](kits.md#kit-options)
-
-[Configure](configure.md)
-* [CMake configuration process overview](configure.md#cmake-configuration-process-overview)
-* [The CMake tools configure step](configure.md#the-cmake-tools-configure-step)
-* [The configure step outside of CMake Tools](configure.md#the-configure-step-outside-of-cmake-tools)
-* [Clean configure](configure.md#clean-configure)
-
-[Variants](variants.md)
-* [Variant YAML example](variants.md#example-yaml-variants-file)
-* [Variant schema](variants.md#variant-schema)
-* [Variant settings](variants.md#variant-settings)
-* [Variant options](variants.md#variant-options)
-* [How variants are applied](variants.md#how-variants-are-applied)
-* [Large variant file example](variants.md#large-variant-file-example)
-
-[Build](build.md)
-* [Build the default target](build.md#build-the-default-target)
-* [Build a single target](build.md#build-a-single-target)
-* [How CMake tools builds your project](build.md#how-cmake-tools-builds)
-* [Clean build](build.md#clean-build)
-
-[Debug and launch](debug-launch.md)
-* [Select a launch target](debug-launch.md#select-a-launch-target)
-* [Quick debugging](debug-launch.md#quick-debugging)
-* [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file)
-* [Run without debugging](debug-launch.md#run-without-debugging)
-* [Debugging CMake](debug.md)
-
-[Configure CMake Tools settings](cmake-settings.md)
-* [CMake Tools settings](cmake-settings.md#cmake-settings)
-* [Variable substitution](cmake-settings.md#variable-substitution)
-
 [Use CMakePresets](cmake-presets.md)
+
 * [Configure and build with CMake Presets](cmake-presets.md#configure-and-build-with-cmake-presets)
 * [Supported CMake and CMakePresets.json versions](cmake-presets.md#supported-cmake-and-cmakepresetsjson-versions)
 * [Enable CMakePresets.json in the CMake Tools extension](cmake-presets.md#enable-cmakepresetsjson-in-the-cmake-tools-extension)
@@ -73,7 +40,49 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [Sourcing the environment when building with command line generators on Windows](cmake-presets.md#sourcing-the-environment-when-building-with-command-line-generators-on-windows)
 * [Example CMakePresets.json file](cmake-presets.md#example-cmakepresetsjson-file)
 
+[Configure](configure.md)
+
+* [CMake configuration process overview](configure.md#cmake-configuration-process-overview)
+* [The CMake tools configure step](configure.md#the-cmake-tools-configure-step)
+* [The configure step outside of CMake Tools](configure.md#the-configure-step-outside-of-cmake-tools)
+* [Clean configure](configure.md#clean-configure)
+
+[Build](build.md)
+
+* [Build the default target](build.md#build-the-default-target)
+* [Build a single target](build.md#build-a-single-target)
+* [How CMake tools builds your project](build.md#how-cmake-tools-builds)
+* [Clean build](build.md#clean-build)
+
+[Debug and launch](debug-launch.md)
+
+* [Select a launch target](debug-launch.md#select-a-launch-target)
+* [Quick debugging](debug-launch.md#quick-debugging)
+* [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file)
+* [Run without debugging](debug-launch.md#run-without-debugging)
+* [Debugging CMake](debug.md)
+
+[Configure CMake Tools settings](cmake-settings.md)
+
+* [CMake Tools settings](cmake-settings.md#cmake-settings)
+* [Variable substitution](cmake-settings.md#variable-substitution)
+
+[Kits](kits.md)
+
+* [How kits are found and defined](kits.md#how-kits-are-found-and-defined)
+* [Kit options](kits.md#kit-options)
+
+[Variants](variants.md)
+
+* [Variant YAML example](variants.md#example-yaml-variants-file)
+* [Variant schema](variants.md#variant-schema)
+* [Variant settings](variants.md#variant-settings)
+* [Variant options](variants.md#variant-options)
+* [How variants are applied](variants.md#how-variants-are-applied)
+* [Large variant file example](variants.md#large-variant-file-example)
+
 [Troubleshoot CMake Tools](troubleshoot.md#troubleshoot-cmake-tools)
+
 * [Common issues and resolutions](troubleshoot.md#common-issues-and-resolutions)
 * [CMake Tools is unable to provide IntelliSense configuration](troubleshoot.md#error-cmake-tools-is-unable-to-provide-intellisense-configuration)
 * [Green squiggles beneath #include directives](troubleshoot.md#green-squiggles-beneath-include-directives)
@@ -84,6 +93,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [Get help](troubleshoot.md#get-help)
 
 [Frequently asked questions](faq.md)
+
 * [How can I get help?](faq.md#how-can-i-get-help)
 * [What about CMake language support?](faq.md#what-about-cmake-language-support)
 * [How do I learn about CMake?](faq.md#how-do-i-learn-about-cmake)
@@ -91,6 +101,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [How do I perform common tasks](faq.md#how-do-i-perform-common-tasks)
 
 [How to contribute](../CONTRIBUTING.md)
+
 * [Developer Reference](../CONTRIBUTING.md#developer-reference)
 * [Build the CMake Tools extension](../CONTRIBUTING.md#build-the-cmake-tools-extension)
 * [Coding guidelines](../CONTRIBUTING.md#coding-guidelines)
