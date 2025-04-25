@@ -98,6 +98,15 @@ export interface ExecutableTarget {
 }
 
 /**
+ * A target with a name, but no output. Only used for targets that have a
+ * folder property.
+ */
+export interface FolderTarget {
+    type: 'folder';
+    name: string;
+}
+
+/**
  * A target with a name, but no output. This may be created via `add_custom_command()`.
  */
 export interface NamedTarget {

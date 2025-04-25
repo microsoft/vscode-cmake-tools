@@ -52,7 +52,7 @@ import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { ConfigurationType } from 'vscode-cmake-tools';
-import { NamedTarget, RichTarget } from '@cmt/drivers/cmakeDriver';
+import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -122,15 +122,6 @@ export interface DiagnosticsSettings {
 
 export interface ConfigureCancelInformation {
     canceled: boolean;
-}
-
-/**
- * A target with a name, but no output. Only used for targets that have a
- * folder property.
- */
-interface FolderTarget {
-    type: 'folder';
-    name: string;
 }
 
 /**
