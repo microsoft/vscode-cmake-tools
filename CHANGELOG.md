@@ -45,6 +45,7 @@ Features:
   section of the Testing tab.
   [#4040](https://github.com/microsoft/vscode-cmake-tools/issues/4040)
 - Add basic CMake language services: quick hover and completions for CMake built-ins. [PR #4204](https://github.com/microsoft/vscode-cmake-tools/pull/4204)
+- Add an option to scan kits from a folder. [#4191](https://github.com/microsoft/vscode-cmake-tools/pull/4191) [@std-microblock](https://github.com/std-microblock)
 
 Improvements:
 
