@@ -3653,7 +3653,7 @@
         },
         "cmake.useFolderPropertyInBuildTargetDropdown": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
             "scope": "resource"
         }
