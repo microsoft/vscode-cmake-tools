@@ -595,9 +595,9 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
     return toolchains.toolchains.reduce((acc, el) => {
         if (el.compiler.path) {
             if (el.compiler.target) {
-                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
+                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target, sourceFileExtensions: el.sourceFileExtensions });
             } else {
-                acc.set(el.language, { path: el.compiler.path });
+                acc.set(el.language, { path: el.compiler.path, sourceFileExtensions: el.sourceFileExtensions });
             }
         }
         return acc;

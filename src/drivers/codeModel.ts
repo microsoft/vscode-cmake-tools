@@ -12,7 +12,8 @@ export type CodeModelFileGroup = api.CodeModel.FileGroup & { frameworks?: { path
 export type CodeModelProject = api.CodeModel.Project;
 // TODO: If requested, move folder, dependencies, and isGeneratorProvided definition to the public API repo to avoid this intersection type.
 export type CodeModelTarget = api.CodeModel.Target & { folder?: { name: string }; dependencies?: { backtrace: number; id: string }[]; isGeneratorProvided?: boolean; install?: {destinations: {path: string}[];  prefix: {path: string}}};
-export type CodeModelToolchain = api.CodeModel.Toolchain;
+// TODO: If requested, move sourceFileExtensions to the public API repo to avoid this intersection type.
+export type CodeModelToolchain = api.CodeModel.Toolchain & {sourceFileExtensions?: string[]};
 export type TargetTypeString = api.CodeModel.TargetType;
 
 /**
