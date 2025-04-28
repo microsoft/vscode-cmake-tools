@@ -331,12 +331,6 @@ export class ProjectController implements vscode.Disposable {
      * @returns The newly created CMakeProject backend for the given folder
      */
     private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
-        // TODO: This is the main part of the logic that we need to modify.
-        // We want the following events / flow.
-        // Add Folder: Simply adds the folder to our map, simply because it is there. We likely want to add a listener or two for settings like "excluded".
-        // Acknowledge Folder: This is where we actually load the folder because we only acknowledge non-excluded folders and folders that actually have CMake. We should have a listener for settings like "sourceDirectory" and "buildDirectory".
-        // Ignore Folder: This is where we actively ensure that we have ignored the folder. We should remove any project specific listeners, dispose, etc. But DON'T remove from our generic folder map.
-        // Remove Folder: This is where we actually remove the folder from our map. We also need to ensure that we've removed any project specific listeners, dispose, etc.
         let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
 
         // Load for the workspace.
@@ -351,8 +345,6 @@ export class ProjectController implements vscode.Disposable {
         }
 
         this.ignoredFoldersSub.set(folder, workspaceContext.config.onChange('ignoredFolders', async (ignoredFolders: string[]) => {
-            // TODO: I think we need a better design here, essentially we need to react to folders being removed.
-            // This is possibly the part where I feel like we need a FolderController above the ProjectController.
             await this.doIgnoredFoldersChange(ignoredFolders);
         }));
         this.folderToProjectsMap.set(folder, projects);
@@ -455,6 +447,7 @@ export class ProjectController implements vscode.Disposable {
                     if (this.activeProject?.sourceDir === projects[i].sourceDir) {
                         activeProjectPath = projects[i].sourceDir;
                     }
+                    projects[i].removeTestExplorerRoot(projects[i].folderPath);
                     projects[i].dispose();
                     projects.splice(i, 1);
                 }
@@ -469,6 +462,7 @@ export class ProjectController implements vscode.Disposable {
 
                     activeProjectPath = undefined;
                 }
+                cmakeProject.addTestExplorerRoot(cmakeProject.folderPath);
                 projects.push(cmakeProject);
             }
             await ProjectController.checkBuildDirectories(workspaceContext.config, folder);
@@ -581,11 +575,13 @@ export class ProjectController implements vscode.Disposable {
                 return folderPath === normalizedIgnoredFolder;
             });
 
+            const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
             if (isIgnored) {
-                await this.ignoreFolder(folder);
+                if (projects && projects.length > 0) {
+                    await this.ignoreFolder(folder);
+                }
             } else {
                 // If the folder is not ignored, check if it was previously ignored and add it back
-                const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
                 if (!projects || projects.length === 0) {
                     await this.addFolder(folder);
                 }
