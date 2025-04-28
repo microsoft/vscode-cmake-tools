@@ -34,16 +34,17 @@ export class ProjectController implements vscode.Disposable {
     private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly useCMakePresetsSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly hideDebugButtonSub  = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
+    private readonly ignoredFoldersSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
-    private readonly beforeAddFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
-    private readonly afterAddFolderEmitter = new vscode.EventEmitter<FolderProjectType>();
-    private readonly beforeRemoveFolderEmitter = new vscode.EventEmitter<CMakeProject[]>();
-    private readonly afterRemoveFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
+    private readonly beforeAcknowledgeFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
+    private readonly afterAcknowledgeFolderEmitter = new vscode.EventEmitter<FolderProjectType>();
+    private readonly beforeIgnoreFolderEmitter = new vscode.EventEmitter<CMakeProject[]>();
+    private readonly afterIgnoreFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly subscriptions: vscode.Disposable[] = [
-        this.beforeAddFolderEmitter,
-        this.afterAddFolderEmitter,
-        this.beforeRemoveFolderEmitter,
-        this.afterRemoveFolderEmitter
+        this.beforeAcknowledgeFolderEmitter,
+        this.afterAcknowledgeFolderEmitter,
+        this.beforeIgnoreFolderEmitter,
+        this.afterIgnoreFolderEmitter
     ];
 
     // Subscription on active project
@@ -70,17 +71,17 @@ export class ProjectController implements vscode.Disposable {
         this.isBusySub
     ];
 
-    get onBeforeAddFolder() {
-        return this.beforeAddFolderEmitter.event;
+    get onBeforeAcknowledgeFolder() {
+        return this.beforeAcknowledgeFolderEmitter.event;
     }
-    get onAfterAddFolder() {
-        return this.afterAddFolderEmitter.event;
+    get onAfterAcknowledgeFolder() {
+        return this.afterAcknowledgeFolderEmitter.event;
     }
-    get onBeforeRemoveFolder() {
-        return this.beforeRemoveFolderEmitter.event;
+    get onBeforeIgnoreFolder() {
+        return this.beforeIgnoreFolderEmitter.event;
     }
-    get onAfterRemoveFolder() {
-        return this.afterRemoveFolderEmitter.event;
+    get onAfterIgnoreFolder() {
+        return this.afterIgnoreFolderEmitter.event;
     }
 
     /**
@@ -336,26 +337,68 @@ export class ProjectController implements vscode.Disposable {
         // Acknowledge Folder: This is where we actually load the folder because we only acknowledge non-excluded folders and folders that actually have CMake. We should have a listener for settings like "sourceDirectory" and "buildDirectory".
         // Ignore Folder: This is where we actively ensure that we have ignored the folder. We should remove any project specific listeners, dispose, etc. But DON'T remove from our generic folder map.
         // Remove Folder: This is where we actually remove the folder from our map. We also need to ensure that we've removed any project specific listeners, dispose, etc.
-        this.beforeAddFolderEmitter.fire(folder);
         let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
-        if (projects) {
-            rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
+
+        // Load for the workspace.
+        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+        const ignoredFolders = workspaceContext.config.ignoredFolders;
+        let folderAcnknowledged: boolean = false;
+        if (ignoredFolders.findIndex((f) => util.normalizePath(f, { normCase: 'always'}) === util.normalizePath(folder.uri.fsPath, { normCase: 'always' })) === -1) {
+            projects = await this.acknowledgeFolder(folder, workspaceContext);
+            folderAcnknowledged = true;
         } else {
-            // Load for the workspace.
-            const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
-            projects = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext, this);
-            this.folderToProjectsMap.set(folder, projects);
-            const config: ConfigurationReader | undefined = workspaceContext.config;
-            if (config) {
-                this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories, config.options)));
-                this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(config, folder)));
-                this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(config, folder)));
-                this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
-                this.hideDebugButtonSub.set(folder, config.onChange('options', async (options: OptionConfig) => this.doStatusChange(folder, options)));
-            }
+            projects ??= [];
         }
-        this.afterAddFolderEmitter.fire({ folder: folder, projects: projects });
+
+        this.ignoredFoldersSub.set(folder, workspaceContext.config.onChange('ignoredFolders', async (ignoredFolders: string[]) => {
+            // TODO: I think we need a better design here, essentially we need to react to folders being removed.
+            // This is possibly the part where I feel like we need a FolderController above the ProjectController.
+            await this.doIgnoredFoldersChange(ignoredFolders);
+        }));
+        this.folderToProjectsMap.set(folder, projects);
+        if (folderAcnknowledged) {
+            this.afterAcknowledgeFolderEmitter.fire({ folder: folder, projects: projects });
+        }
+
         return projects;
+    }
+
+    private async acknowledgeFolder(folder: vscode.WorkspaceFolder, workspaceContext: DirectoryContext): Promise<CMakeProject[]> {
+        this.beforeAcknowledgeFolderEmitter.fire(folder);
+        const projects: CMakeProject[] = await ProjectController.createCMakeProjectsForWorkspaceFolder(workspaceContext, this);
+        const config: ConfigurationReader | undefined = workspaceContext.config;
+        if (config) {
+            this.sourceDirectorySub.set(folder, config.onChange('sourceDirectory', async (sourceDirectories: string | string[]) => this.doSourceDirectoryChange(folder, sourceDirectories, config.options)));
+            this.buildDirectorySub.set(folder, config.onChange('buildDirectory', async () => this.refreshDriverSettings(config, folder)));
+            this.installPrefixSub.set(folder, config.onChange('installPrefix', async () => this.refreshDriverSettings(config, folder)));
+            this.useCMakePresetsSub.set(folder, config.onChange('useCMakePresets', async (useCMakePresets: string) => this.doUseCMakePresetsChange(folder, useCMakePresets)));
+            this.hideDebugButtonSub.set(folder, config.onChange('options', async (options: OptionConfig) => this.doStatusChange(folder, options)));
+        }
+        return projects;
+    }
+
+    private async ignoreFolder(folder: vscode.WorkspaceFolder): Promise<void> {
+        const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
+        if (cmakeProjects) {
+            this.beforeIgnoreFolderEmitter.fire(cmakeProjects);
+        }
+        // clear the folderToProjectsMap
+        this.folderToProjectsMap.set(folder, []);
+
+        void this.sourceDirectorySub.get(folder)?.dispose();
+        this.sourceDirectorySub.delete(folder);
+
+        void this.buildDirectorySub.get(folder)?.dispose();
+        this.buildDirectorySub.delete(folder);
+
+        void this.installPrefixSub.get(folder)?.dispose();
+        this.installPrefixSub.delete(folder);
+
+        void this.useCMakePresetsSub.get(folder)?.dispose();
+        this.useCMakePresetsSub.delete(folder);
+
+        this.afterIgnoreFolderEmitter.fire(folder);
+        return;
     }
 
     /**
@@ -379,17 +422,10 @@ export class ProjectController implements vscode.Disposable {
             project.dispose();
         }
 
-        void this.sourceDirectorySub.get(folder)?.dispose();
-        this.sourceDirectorySub.delete(folder);
+        void this.ignoredFoldersSub.get(folder)?.dispose();
+        this.ignoredFoldersSub.delete(folder);
 
-        void this.buildDirectorySub.get(folder)?.dispose();
-        this.buildDirectorySub.delete(folder);
-
-        void this.installPrefixSub.get(folder)?.dispose();
-        this.installPrefixSub.delete(folder);
-
-        void this.useCMakePresetsSub.get(folder)?.dispose();
-        this.useCMakePresetsSub.delete(folder);
+        await this.ignoreFolder(folder);
     }
 
     private async doSourceDirectoryChange(folder: vscode.WorkspaceFolder, value: string | string[], options: OptionConfig) {
@@ -524,16 +560,36 @@ export class ProjectController implements vscode.Disposable {
     private async doWorkspaceFolderChange(event: vscode.WorkspaceFoldersChangeEvent) {
         // Un-register each CMake Tools we have loaded for each removed workspace
         for (const folder of event.removed) {
-            const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
-            if (cmakeProjects) {
-                this.beforeRemoveFolderEmitter.fire(cmakeProjects);
-            }
             await this.removeFolder(folder);
-            this.afterRemoveFolderEmitter.fire(folder);
         }
         // Load a new CMake Tools instance for each folder that has been added.
         for (const folder of event.added) {
             await this.addFolder(folder);
+        }
+    }
+
+    /**
+     * Handle when the `ignoredFolders` setting is modified.
+     */
+    private async doIgnoredFoldersChange(ignoredFolders: string[]) {
+        for (const folder of this.folderToProjectsMap.keys()) {
+            const folderPath = util.normalizePath(folder.uri.fsPath, { normCase: 'always' });
+
+            // Check if the folder is in the ignored folders list
+            const isIgnored = ignoredFolders.some((ignoredFolder) => {
+                const normalizedIgnoredFolder = util.normalizePath(ignoredFolder, { normCase: 'always' });
+                return folderPath === normalizedIgnoredFolder;
+            });
+
+            if (isIgnored) {
+                await this.ignoreFolder(folder);
+            } else {
+                // If the folder is not ignored, check if it was previously ignored and add it back
+                const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
+                if (!projects || projects.length === 0) {
+                    await this.addFolder(folder);
+                }
+            }
         }
     }
 

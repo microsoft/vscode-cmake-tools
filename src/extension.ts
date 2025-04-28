@@ -162,7 +162,7 @@ export class ExtensionManager implements vscode.Disposable {
 
         this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
 
-        this.projectController.onAfterAddFolder(async (folderProjectMap: FolderProjectType) => {
+        this.projectController.onAfterAcknowledgeFolder(async (folderProjectMap: FolderProjectType) => {
             const folder: vscode.WorkspaceFolder = folderProjectMap.folder;
             if (this.projectController.numOfWorkspaceFolders === 1) {
                 // First folder added
@@ -187,13 +187,13 @@ export class ExtensionManager implements vscode.Disposable {
             }
         });
 
-        this.projectController.onBeforeRemoveFolder(async projects => {
+        this.projectController.onBeforeIgnoreFolder(async projects => {
             for (const project of projects) {
                 project.removeTestExplorerRoot(project.folderPath);
             }
         });
 
-        this.projectController.onAfterRemoveFolder(async folder => {
+        this.projectController.onAfterIgnoreFolder(async folder => {
             console.assert((vscode.workspace.workspaceFolders === undefined && this.projectController.numOfWorkspaceFolders === 0) ||
                 (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this.projectController.numOfWorkspaceFolders));
             this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
@@ -278,7 +278,6 @@ export class ExtensionManager implements vscode.Disposable {
             await this.projectController.loadAllFolders();
             isMultiProject = this.projectController.hasMultipleProjects;
             await setContextAndStore(multiProjectModeKey, isMultiProject);
-            this.projectOutline.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
             }
