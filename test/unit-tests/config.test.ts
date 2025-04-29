@@ -81,7 +81,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         enableLanguageServices: true,
         preRunCoverageTarget: null,
         postRunCoverageTarget: null,
-        coverageInfoFiles: []
+        coverageInfoFiles: [],
+        useFolderPropertyInBuildTargetDropdown: true
     });
     ret.updatePartial(conf);
     return ret;
