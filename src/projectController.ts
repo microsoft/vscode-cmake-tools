@@ -39,14 +39,14 @@ export class ProjectController implements vscode.Disposable {
     private readonly afterAcknowledgeFolderEmitter = new vscode.EventEmitter<FolderProjectType>();
     private readonly beforeIgnoreFolderEmitter = new vscode.EventEmitter<CMakeProject[]>();
     private readonly afterIgnoreFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
+    private ignoredFoldersSub: vscode.Disposable = new DummyDisposable();
     private readonly subscriptions: vscode.Disposable[] = [
         this.beforeAcknowledgeFolderEmitter,
         this.afterAcknowledgeFolderEmitter,
         this.beforeIgnoreFolderEmitter,
-        this.afterIgnoreFolderEmitter
+        this.afterIgnoreFolderEmitter,
+        this.ignoredFoldersSub
     ];
-
-    private ignoredFoldersSub: vscode.Disposable = new DummyDisposable();
 
     // Subscription on active project
     private targetNameSub: vscode.Disposable = new DummyDisposable();
@@ -208,7 +208,8 @@ export class ProjectController implements vscode.Disposable {
                 e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this.doWorkspaceFolderChange(e))),
             vscode.workspace.onDidOpenTextDocument((textDocument: vscode.TextDocument) => this.doOpenTextDocument(textDocument)),
             vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => this.doSaveTextDocument(textDocument)),
-            vscode.workspace.onDidRenameFiles(this.onDidRenameFiles, this)
+            vscode.workspace.onDidRenameFiles(this.onDidRenameFiles, this),
+            this.workspaceContext.onChange('ignoredFolders', async (ignoredFolders: string[]) => this.doIgnoredFoldersChange(ignoredFolders))
         ];
     }
 
@@ -349,9 +350,6 @@ export class ProjectController implements vscode.Disposable {
                 projects ??= [];
             }
 
-            this.ignoredFoldersSub = this.workspaceContext.onChange('ignoredFolders', async (ignoredFolders: string[]) => {
-                await this.doIgnoredFoldersChange(ignoredFolders);
-            });
             this.folderToProjectsMap.set(folder, projects);
         }
 
@@ -420,8 +418,6 @@ export class ProjectController implements vscode.Disposable {
         for (const project of cmakeProjects) {
             project.dispose();
         }
-
-        this.ignoredFoldersSub.dispose();
 
         await this.ignoreFolder(folder);
     }
