@@ -155,7 +155,7 @@ export interface OptionConfig {
 export interface ExtensionConfigurationSettings {
     autoSelectActiveFolder: boolean;
     defaultActiveFolder: string | null;
-    ignoredFolders: string[];
+    exclude: string[];
     cmakePath: string;
     buildDirectory: string;
     installPrefix: string | null;
@@ -322,8 +322,8 @@ export class ConfigurationReader implements vscode.Disposable {
     get defaultActiveFolder(): string | null {
         return this.configData.defaultActiveFolder;
     }
-    get ignoredFolders(): string[] {
-        return this.configData.ignoredFolders;
+    get exclude(): string[] {
+        return this.configData.exclude;
     }
 
     buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope): string {
@@ -596,7 +596,7 @@ export class ConfigurationReader implements vscode.Disposable {
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
-        ignoredFolders: new vscode.EventEmitter<string[]>(),
+        exclude: new vscode.EventEmitter<string[]>(),
         cmakePath: new vscode.EventEmitter<string>(),
         buildDirectory: new vscode.EventEmitter<string>(),
         installPrefix: new vscode.EventEmitter<string | null>(),

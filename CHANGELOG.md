@@ -6,7 +6,7 @@ Features:
 
 - Add an option to specify the launch target for debugging CTest tests. [#4273](https://github.com/microsoft/vscode-cmake-tools/pull/4273)
 - Add a setting to enable/disable our built-in language services. [#4290](https://github.com/microsoft/vscode-cmake-tools/issues/4290)
-- Add `cmake.ignoredFolders` setting that allows users to set folders that they want the CMake Tools extension to ignore, as well as general improvements detecting whether it's a CMake project. [#4112](https://github.com/microsoft/vscode-cmake-tools/issues/4112)
+- Add `cmake.exclude` setting that allows users to set folders that they want the CMake Tools extension to ignore, as well as general improvements detecting whether it's a CMake project. [#4112](https://github.com/microsoft/vscode-cmake-tools/issues/4112)
 
 Improvements:
 

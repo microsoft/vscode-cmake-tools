@@ -39,13 +39,13 @@ export class ProjectController implements vscode.Disposable {
     private readonly afterAcknowledgeFolderEmitter = new vscode.EventEmitter<FolderProjectType>();
     private readonly beforeIgnoreFolderEmitter = new vscode.EventEmitter<CMakeProject[]>();
     private readonly afterIgnoreFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
-    private ignoredFoldersSub: vscode.Disposable = new DummyDisposable();
+    private excludedSub: vscode.Disposable = new DummyDisposable();
     private readonly subscriptions: vscode.Disposable[] = [
         this.beforeAcknowledgeFolderEmitter,
         this.afterAcknowledgeFolderEmitter,
         this.beforeIgnoreFolderEmitter,
         this.afterIgnoreFolderEmitter,
-        this.ignoredFoldersSub
+        this.excludedSub
     ];
 
     // Subscription on active project
@@ -209,7 +209,7 @@ export class ProjectController implements vscode.Disposable {
             vscode.workspace.onDidOpenTextDocument((textDocument: vscode.TextDocument) => this.doOpenTextDocument(textDocument)),
             vscode.workspace.onDidSaveTextDocument((textDocument: vscode.TextDocument) => this.doSaveTextDocument(textDocument)),
             vscode.workspace.onDidRenameFiles(this.onDidRenameFiles, this),
-            this.workspaceContext.onChange('ignoredFolders', async (ignoredFolders: string[]) => this.doIgnoredFoldersChange(ignoredFolders))
+            this.workspaceContext.onChange('exclude', async (excludedFolders: string[]) => this.doExcludedFoldersChange(excludedFolders))
         ];
     }
 
@@ -341,9 +341,9 @@ export class ProjectController implements vscode.Disposable {
         } else {
             // Load for the workspace.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
-            const ignoredFolders = workspaceContext.config.ignoredFolders;
+            const excludedFolders = workspaceContext.config.exclude;
 
-            if (ignoredFolders.findIndex((f) => util.normalizePath(f, { normCase: 'always'}) === util.normalizePath(folder.uri.fsPath, { normCase: 'always' })) === -1) {
+            if (excludedFolders.findIndex((f) => util.normalizePath(f, { normCase: 'always'}) === util.normalizePath(folder.uri.fsPath, { normCase: 'always' })) === -1) {
                 projects = await this.acknowledgeFolder(folder, workspaceContext);
                 folderAcnknowledged = true;
             } else {
@@ -565,14 +565,14 @@ export class ProjectController implements vscode.Disposable {
     }
 
     /**
-     * Handle when the `ignoredFolders` setting is modified.
+     * Handle when the `excludedFolders` setting is modified.
      */
-    private async doIgnoredFoldersChange(ignoredFolders: string[]) {
+    private async doExcludedFoldersChange(excludedFolders: string[]) {
         for (const folder of this.folderToProjectsMap.keys()) {
             const folderPath = util.normalizePath(folder.uri.fsPath, { normCase: 'always' });
 
             // Check if the folder is in the ignored folders list
-            const isIgnored = ignoredFolders.some((ignoredFolder) => {
+            const isIgnored = excludedFolders.some((ignoredFolder) => {
                 const normalizedIgnoredFolder = util.normalizePath(ignoredFolder, { normCase: 'always' });
                 return folderPath === normalizedIgnoredFolder;
             });
