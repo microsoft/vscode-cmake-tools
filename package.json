@@ -2051,7 +2051,7 @@
           },
           "default": [],
           "description": "%cmake-tools.configuration.cmake.ignoredFolders.description%",
-          "scope": "resource"
+          "scope": "window"
         },
         "cmake.cmakePath": {
           "type": "string",

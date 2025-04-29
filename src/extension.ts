@@ -178,6 +178,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             const subs: vscode.Disposable[] = [];
             for (const project of folderProjectMap.projects) {
+                project.addTestExplorerRoot(project.folderPath);
                 subs.push(project.onCodeModelChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
@@ -354,7 +355,7 @@ export class ExtensionManager implements vscode.Disposable {
     projectStatus = new ProjectStatus();
 
     // NOTE: (from sidebar) The project controller manages all the projects in the workspace
-    public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus);
+    public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus, this.workspaceConfig);
     /**
      * The status bar controller
      */
@@ -684,7 +685,6 @@ export class ExtensionManager implements vscode.Disposable {
             return;
         }
         const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
-        project.addTestExplorerRoot(project.folderPath);
         // Scan for kits even under presets mode, so we can create presets from compilers.
         // Silent re-scan when detecting a breaking change in the kits definition.
         // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.

@@ -34,7 +34,6 @@ export class ProjectController implements vscode.Disposable {
     private readonly installPrefixSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly useCMakePresetsSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
     private readonly hideDebugButtonSub  = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
-    private readonly ignoredFoldersSub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAcknowledgeFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private readonly afterAcknowledgeFolderEmitter = new vscode.EventEmitter<FolderProjectType>();
@@ -46,6 +45,8 @@ export class ProjectController implements vscode.Disposable {
         this.beforeIgnoreFolderEmitter,
         this.afterIgnoreFolderEmitter
     ];
+
+    private ignoredFoldersSub: vscode.Disposable = new DummyDisposable();
 
     // Subscription on active project
     private targetNameSub: vscode.Disposable = new DummyDisposable();
@@ -201,7 +202,7 @@ export class ProjectController implements vscode.Disposable {
         return this.numOfWorkspaceFolders > 1;
     }
 
-    constructor(readonly extensionContext: vscode.ExtensionContext, readonly projectStatus: ProjectStatus) {
+    constructor(readonly extensionContext: vscode.ExtensionContext, readonly projectStatus: ProjectStatus, readonly workspaceContext: ConfigurationReader) {
         this.subscriptions = [
             vscode.workspace.onDidChangeWorkspaceFolders(
                 e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this.doWorkspaceFolderChange(e))),
@@ -333,21 +334,27 @@ export class ProjectController implements vscode.Disposable {
     private async addFolder(folder: vscode.WorkspaceFolder): Promise<CMakeProject[]> {
         let projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
 
-        // Load for the workspace.
-        const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
-        const ignoredFolders = workspaceContext.config.ignoredFolders;
         let folderAcnknowledged: boolean = false;
-        if (ignoredFolders.findIndex((f) => util.normalizePath(f, { normCase: 'always'}) === util.normalizePath(folder.uri.fsPath, { normCase: 'always' })) === -1) {
-            projects = await this.acknowledgeFolder(folder, workspaceContext);
-            folderAcnknowledged = true;
+        if (projects) {
+            rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
         } else {
-            projects ??= [];
+            // Load for the workspace.
+            const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+            const ignoredFolders = workspaceContext.config.ignoredFolders;
+
+            if (ignoredFolders.findIndex((f) => util.normalizePath(f, { normCase: 'always'}) === util.normalizePath(folder.uri.fsPath, { normCase: 'always' })) === -1) {
+                projects = await this.acknowledgeFolder(folder, workspaceContext);
+                folderAcnknowledged = true;
+            } else {
+                projects ??= [];
+            }
+
+            this.ignoredFoldersSub = this.workspaceContext.onChange('ignoredFolders', async (ignoredFolders: string[]) => {
+                await this.doIgnoredFoldersChange(ignoredFolders);
+            });
+            this.folderToProjectsMap.set(folder, projects);
         }
 
-        this.ignoredFoldersSub.set(folder, workspaceContext.config.onChange('ignoredFolders', async (ignoredFolders: string[]) => {
-            await this.doIgnoredFoldersChange(ignoredFolders);
-        }));
-        this.folderToProjectsMap.set(folder, projects);
         if (folderAcnknowledged) {
             this.afterAcknowledgeFolderEmitter.fire({ folder: folder, projects: projects });
         }
@@ -414,8 +421,7 @@ export class ProjectController implements vscode.Disposable {
             project.dispose();
         }
 
-        void this.ignoredFoldersSub.get(folder)?.dispose();
-        this.ignoredFoldersSub.delete(folder);
+        this.ignoredFoldersSub.dispose();
 
         await this.ignoreFolder(folder);
     }
@@ -583,7 +589,10 @@ export class ProjectController implements vscode.Disposable {
             } else {
                 // If the folder is not ignored, check if it was previously ignored and add it back
                 if (!projects || projects.length === 0) {
-                    await this.addFolder(folder);
+                    const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+                    const createdProjects = await this.acknowledgeFolder(folder, workspaceContext);
+                    this.folderToProjectsMap.set(folder, createdProjects);
+                    this.afterAcknowledgeFolderEmitter.fire({ folder: folder, projects: createdProjects });
                 }
             }
         }
