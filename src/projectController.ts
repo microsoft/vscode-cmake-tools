@@ -27,6 +27,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('workspace');
 
 export type FolderProjectType = { folder: vscode.WorkspaceFolder; projects: CMakeProject[] };
+export type AfterAcknowledgeFolderType = { isInitial: boolean; folderProjectType: FolderProjectType };
 export class ProjectController implements vscode.Disposable {
     private readonly folderToProjectsMap = new Map<vscode.WorkspaceFolder, CMakeProject[]>();
     private readonly sourceDirectorySub = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
@@ -36,7 +37,7 @@ export class ProjectController implements vscode.Disposable {
     private readonly hideDebugButtonSub  = new Map<vscode.WorkspaceFolder, vscode.Disposable>();
 
     private readonly beforeAcknowledgeFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
-    private readonly afterAcknowledgeFolderEmitter = new vscode.EventEmitter<FolderProjectType>();
+    private readonly afterAcknowledgeFolderEmitter = new vscode.EventEmitter<AfterAcknowledgeFolderType>();
     private readonly beforeIgnoreFolderEmitter = new vscode.EventEmitter<CMakeProject[]>();
     private readonly afterIgnoreFolderEmitter = new vscode.EventEmitter<vscode.WorkspaceFolder>();
     private excludedSub: vscode.Disposable = new DummyDisposable();
@@ -257,6 +258,16 @@ export class ProjectController implements vscode.Disposable {
         return allCMakeProjects;
     }
 
+    getCMakeFoldersWithProject(): vscode.WorkspaceFolder[] {
+        const folders: vscode.WorkspaceFolder[] = [];
+        this.folderToProjectsMap.forEach((projects, folder) => {
+            if (projects.length > 0) {
+                folders.push(folder);
+            }
+        });
+        return folders;
+    }
+
     /**
      * Load all the folders currently open in VSCode
      */
@@ -354,7 +365,7 @@ export class ProjectController implements vscode.Disposable {
         }
 
         if (folderAcnknowledged) {
-            this.afterAcknowledgeFolderEmitter.fire({ folder: folder, projects: projects });
+            this.afterAcknowledgeFolderEmitter.fire({ isInitial: true, folderProjectType: { folder: folder, projects: projects }});
         }
 
         return projects;
@@ -374,11 +385,12 @@ export class ProjectController implements vscode.Disposable {
         return projects;
     }
 
-    private async ignoreFolder(folder: vscode.WorkspaceFolder): Promise<void> {
+    private async excludeFolder(folder: vscode.WorkspaceFolder): Promise<void> {
         const cmakeProjects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
         if (cmakeProjects) {
             this.beforeIgnoreFolderEmitter.fire(cmakeProjects);
         }
+
         // clear the folderToProjectsMap
         this.folderToProjectsMap.set(folder, []);
 
@@ -419,7 +431,7 @@ export class ProjectController implements vscode.Disposable {
             project.dispose();
         }
 
-        await this.ignoreFolder(folder);
+        await this.excludeFolder(folder);
     }
 
     private async doSourceDirectoryChange(folder: vscode.WorkspaceFolder, value: string | string[], options: OptionConfig) {
@@ -580,7 +592,7 @@ export class ProjectController implements vscode.Disposable {
             const projects: CMakeProject[] | undefined = this.getProjectsForWorkspaceFolder(folder);
             if (isIgnored) {
                 if (projects && projects.length > 0) {
-                    await this.ignoreFolder(folder);
+                    await this.excludeFolder(folder);
                 }
             } else {
                 // If the folder is not ignored, check if it was previously ignored and add it back
@@ -588,7 +600,7 @@ export class ProjectController implements vscode.Disposable {
                     const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
                     const createdProjects = await this.acknowledgeFolder(folder, workspaceContext);
                     this.folderToProjectsMap.set(folder, createdProjects);
-                    this.afterAcknowledgeFolderEmitter.fire({ folder: folder, projects: createdProjects });
+                    this.afterAcknowledgeFolderEmitter.fire({ isInitial: false, folderProjectType: { folder: folder, projects: createdProjects }});
                 }
             }
         }
