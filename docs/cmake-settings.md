@@ -56,7 +56,6 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.generator` | Set to a string to override CMake Tools preferred generator logic. If set, CMake will unconditionally use it as the `-G` CMake generator command line argument. | `null` | no |
 | `cmake.ignoreCMakeListsMissing` | If `true`, do not show error when opening a project without CMakeLists.txt. | `false` | no |
 | `cmake.ignoredFolders` | CMake Tools will ignore the folders defined in this setting. | `[]` | no |
-| `cmake.ignoredFolders` | CMake Tools will ignore the folders defined in this setting. | `[]` | no |
 | `cmake.ignoreKitEnv` | If `true`, ignore kit environment variables. | `false` | no |
 | `cmake.installPrefix` | If specified, sets a value for `CMAKE_INSTALL_PREFIX` when running CMake configure. If not set, no value will be passed.</br>If `CMAKE_INSTALL_PREFIX` is set via `cmake.configureArgs` or `cmake.configureSettings`, `cmake.installPrefix` will be ignored.| `null` (no value specified) | yes |
 | `cmake.launchBehavior` | Behavior when launching a CMake target. | `reuseTerminal` | no |
