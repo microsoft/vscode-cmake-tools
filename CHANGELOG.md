@@ -22,6 +22,7 @@ Bug Fixes:
 - Make tooltips for selecting Launch/Debug Target. [#4373](https://github.com/microsoft/vscode-cmake-tools/issues/4373)
 - Fix bug where unrelated symlinks are read as variant files [#4304](https://github.com/microsoft/vscode-cmake-tools/issues/4304) [@vitorramos](https://github.com/vitorramos).
 - Fix evaluation of conditions in presets. [#4425](https://github.com/microsoft/vscode-cmake-tools/issues/4425)
+- Fix ENOENT error at vscode startup on some circumstances [#2855](https://github.com/microsoft/vscode-cmake-tools/issues/2855) Contributed by STMicroelectronics
 
 ## 1.20.53
 
