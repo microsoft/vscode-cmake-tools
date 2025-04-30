@@ -299,6 +299,7 @@ export class ExtensionManager implements vscode.Disposable {
             telemetryProperties['autoSelectActiveFolder'] = `${this.workspaceConfig.autoSelectActiveFolder}`;
         }
         telemetryProperties['enableLanguageServices'] = `${this.workspaceConfig.enableLanguageServices}`;
+        telemetryProperties['excludedFoldersCount'] = `${this.workspaceConfig.exclude.length}`;
         telemetry.sendOpenTelemetry(telemetryProperties);
 
         // do these last
