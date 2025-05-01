@@ -222,6 +222,7 @@ export interface ExtensionConfigurationSettings {
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
+    useFolderPropertyInBuildTargetDropdown: boolean;
 }
 
 type EmittersOf<T> = {
@@ -593,6 +594,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.coverageInfoFiles;
     }
 
+    get useFolderPropertyInBuildTargetDropdown(): boolean {
+        return this.configData.useFolderPropertyInBuildTargetDropdown;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
@@ -662,7 +667,8 @@ export class ConfigurationReader implements vscode.Disposable {
         enableLanguageServices: new vscode.EventEmitter<boolean>(),
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
-        coverageInfoFiles: new vscode.EventEmitter<string[]>()
+        coverageInfoFiles: new vscode.EventEmitter<string[]>(),
+        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>()
     };
 
     /**
