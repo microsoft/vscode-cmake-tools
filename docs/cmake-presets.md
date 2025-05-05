@@ -5,6 +5,7 @@ CMake supports two files that allow users to specify common configure, build, an
 `CMakePresets.json` is for saving project-wide builds. `CMakeUserPresets.json` is for developers to save their own local builds. Their integration is available in CMake Tools version 1.7 and later.
 
 This article contains information about `CMakePresets.json` integration in the CMake Tools extension for Visual Studio Code. Here are helpful links:
+
 - For more information on the format of `CMakePresets.json`, see the official [CMake documentation](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html).
 - For more information on the Microsoft vendor maps and macro expansion, see [`CMakePresets.json` and `CMakeUserPresets.json` Microsoft vendor maps](https://docs.microsoft.com/cpp/build/cmake-presets-json-reference).
 - For more information on how to use `CMakePresets.json` in Visual Studio, see [Configure and build with CMake Presets in Visual Studio](https://docs.microsoft.com/cpp/build/cmake-presets-vs).
@@ -70,9 +71,21 @@ Select a Test Preset to make it the active Test Preset. This is the `testPreset`
 
 All Test Presets must specify an associated `configurePreset` value. CMake Tools will hide Test Presets that don't apply to the active Configure Preset. For more information, see the [list of Test Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#test-preset).
 
+### CMake: Select Package Preset
+
+**CMake: Select Package Preset** lists the default Package Presets and the union of non-hidden Package Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The default Package Preset will not perform a packaging.
+
+Select a Package Preset to make it the active Package Preset. This is the `packagePreset` value that will be used when you invoke **CMake: Run CPack** to package. This will package your code in the format specified in the presets file.
+
+### CMake: Select Workflow Preset
+
+**CMake: Select Workflow Preset** lists the default Workflow Presets and the union of non-hidden Workflow Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The default Workflow Preset will simply configure the project.
+
+Selecte a Workflow Preset to make it the active Workflow Preset. This is the `workflowPreset` value that will be used when you invoke **CMake: Run Workflow**.
+
 ### CMake: Run Tests
 
-To invoke CTest, run **CMake: Run Tests** from the command palette. 
+To invoke CTest, run **CMake: Run Tests** from the command palette.
 When integration with the test explorer is enabled, using `cmake.ctest.testExplorerIntegrationEnabled`, the method of test execution will depend on `cmake.ctest.allowParallelJobs`. With `cmake.ctest.allowParallelJobs` disabled, each test will be run individually so that we can accurately track progress in the Test Explorer. When it is enabled, they will all be run in parallel, which is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
 
 ### CMake Tools side bar Project Status View behavior
@@ -94,10 +107,10 @@ To add a new Configure Preset to `CMakePresets.json`, run the **CMake: Add Confi
 
 ![Screenshot of the list of configure presets.](images/add-configure-preset-vscode.png)
 
- - Select **Inherit from Configure Preset** to inherit from an existing Configure Preset. For more information about inheritance, see the [list of Configure Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset).
- - Select the **Toolchain File** template to configure your CMake project with a CMake toolchain file.
- - Select the **Custom** template to configure an empty Configure Preset.
- - Select **[Scan for Compilers]** to search for C/C++ compilers on your machine.
+- Select **Inherit from Configure Preset** to inherit from an existing Configure Preset. For more information about inheritance, see the [list of Configure Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset).
+- Select the **Toolchain File** template to configure your CMake project with a CMake toolchain file.
+- Select the **Custom** template to configure an empty Configure Preset.
+- Select **[Scan for Compilers]** to search for C/C++ compilers on your machine.
 
 The selected template will be added to `CMakePresets.json` if `CMakePresets.json` exists. Otherwise, the template will be copied into a new `CMakePresets.json` file. For more information on editing Configure Presets, see [Edit presets](#edit-presets).
 
@@ -117,6 +130,7 @@ For more information on editing Build Presets, see the [list of Build Presets](h
 ### Add new Test Presets
 
 To add a new Test Preset to `CMakePresets.json`, run the **CMake: Add Test Preset** command. This command lists several Test Preset templates in the command palette:
+
 - Select **Create from Configure Preset** to display a list of `configurePresets` values defined in `CMakePresets.json`. After you select a Configure Preset, an empty Test Preset associated with the selected Configure Preset will be created.
 - Select **Inherit from Test Preset** to display a list of `testPresets` values defined in `CMakePresets.json`. After you select a Test Preset, a new Test Preset that inherits from the selected Test Preset will be created.
 - Select the **Custom** template to configure an empty Test Preset.
@@ -183,7 +197,7 @@ You can reference environment variables by using the `$env{<variable-name>}` and
 
 The target architecture (x64, Win32, ARM64, or ARM) can be set with `architecture.value`. This is equivalent to passing `-A` to CMake from the command line. For more information, see [Platform Selection](https://cmake.org/cmake/help/latest/generator/Visual%20Studio%2016%202019.html#platform-selection).
 
-> [!Note]
+> [!NOTE]
 > Currently, Visual Studio Generators expect the Win32 syntax and command-line generators (like Ninja) expect the x86 syntax when you're building for x86.
 
 You can set the host architecture (x64 or x86) and toolset by using `toolset.value`. This is equivalent to passing `-T` to CMake from the command line. For more information, see [Toolset Selection](https://cmake.org/cmake/help/latest/generator/Visual%20Studio%2016%202019.html#toolset-selection).
@@ -212,9 +226,9 @@ Set the path to `vcpkg.cmake` with the `VCPKG_ROOT` environment variable in `CMa
  },
 ```
 
-`VCPKG_ROOT` should be set to the root of your vcpkg installation. For more information, see [vcpkg environment variables](https://learn.microsoft.com/en-us/vcpkg/users/config-environment#vcpkg_root).
+`VCPKG_ROOT` should be set to the root of your vcpkg installation. For more information, see [vcpkg environment variables](https://learn.microsoft.com/vcpkg/users/config-environment#vcpkg_root).
 
-If you're already using a CMake toolchain file and want to enable vcpkg integration, see [Using multiple toolchain files](https://learn.microsoft.com/en-us/vcpkg/users/buildsystems/cmake-integration#using-multiple-toolchain-files). Follow those instructions to use an external toolchain file with a project by using vcpkg.
+If you're already using a CMake toolchain file and want to enable vcpkg integration, see [Using multiple toolchain files](https://learn.microsoft.com/vcpkg/users/buildsystems/cmake-integration#using-multiple-toolchain-files). Follow those instructions to use an external toolchain file with a project by using vcpkg.
 
 ## Substitute commands in `launch.json` and `settings.json`
 
@@ -222,7 +236,7 @@ CMake Tools supports command substitution for launch commands when `CMakePresets
 
 ## Ignored settings
 
-`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test, except for settings that can be used as temporary overrides (see below). This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line. 
+`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test, except for settings that can be used as temporary overrides (see below). This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line.
 
 The following settings in `settings.json` either duplicate options in `CMakePresets.json` or no longer apply. These settings will be ignored when `CMakePresets.json` integration is enabled.
 
@@ -259,7 +273,7 @@ The following settings can be used temporarily when CMakePresets integration is 
 ## Unsupported commands
 
 The following commands are not supported when `CMakePresets.json` integration is enabled:
-- **CMake: Quick Start**
+
 - **CMake: Select Variant**
 - **CMake: Scan for Kits**
 - **CMake: Select a Kit**
@@ -282,7 +296,7 @@ If you're working on Windows, CMake must be on `PATH`.
 
 Other troubleshooting steps include:
 
-- Confirm that `cmake.exe` and your generator are installed and on `PATH`. If you're working on Windows, run the **CMake: Scan for Compilers** command so the extension can detect build tools installed with Visual Studio.
+- Confirm that `cmake.exe` and your generator are installed and on `PATH`, unless you've provided an absolute path. If you're working on Windows, run the **CMake: Scan for Compilers** command so the extension can detect build tools installed with Visual Studio.
 - Delete the cache and reconfigure the project (**CMake: Delete Cache and Reconfigure**).
 - Reset the CMake Tools extension state (**CMake: Reset CMake Tools Extension State**).
 - Increase the logging level (`cmake.loggingLevel` in `settings.json`) and/or check the log file (**CMake: Open the CMake Tools Log File**).

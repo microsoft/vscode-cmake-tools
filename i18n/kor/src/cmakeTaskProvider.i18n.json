@@ -21,6 +21,7 @@
 	"enable.cmake.presets": "CMakePresets 활성화",
 	"dismiss": "해고하다",
 	"task.not.compatible.with.preset.setting": "선택한 작업이 CMakePreset을 요청하지만 작업 영역이 CMakePresets에 대해 구성되지 않았습니다.",
+	"workspace.is": "작업 영역은 {0}입니다",
 	"cmake.tools.not.found": "CMake 도구를 찾을 수 없습니다.",
 	"task.failed": "작업이 실패했습니다.",
 	"config.started": "구성 작업이 시작되었습니다...",

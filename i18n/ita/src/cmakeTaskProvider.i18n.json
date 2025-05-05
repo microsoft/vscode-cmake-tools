@@ -21,6 +21,7 @@
 	"enable.cmake.presets": "Abilitare CMakePresets",
 	"dismiss": "Ignora",
 	"task.not.compatible.with.preset.setting": "L'attività selezionata richiede un CMakePreset, ma l'area di lavoro non è configurata per CMakePresets",
+	"workspace.is": "L'area di lavoro è {0}",
 	"cmake.tools.not.found": "CMake Tools non è stato trovato.",
 	"task.failed": "Attività non riuscita.",
 	"config.started": "Attività di configurazione avviata...",
