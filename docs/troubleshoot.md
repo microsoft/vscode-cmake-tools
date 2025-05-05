@@ -34,12 +34,10 @@ CMake Tools provides optional logging that isn't enabled by default. Use the [cm
 
 ### Check the log file
 
-Regardless of the user-visible log level, CMake Tools writes all log entries, for all levels, to a user-local log file. Open the VS Code command pallette and run the *CMake: Open the CMake Tools log file* command to view this log file.
+Regardless of the user-visible log level, CMake Tools writes all log entries, for all levels, to a user-local log file. Open the VS Code command pallette and run the **CMake: Open the CMake Tools log file** command to view this log file.
 
 This file is user-local, not workspace-local. This file includes all log entries since the extension was installed and may be very large.
 
 ## Get help
 
 Check the [CMake Tools issue tracker](https://github.com/microsoft/vscode-cmake-tools/issues) and [What's New](../CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report. Feel free to open an issue if your problem hasn't been reported.
-
-Please visit [the support chat](https://gitter.im/vscode-cmake-tools/support). This is a community chat. Microsoft does not monitor it.

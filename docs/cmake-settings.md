@@ -6,41 +6,87 @@ Options that support substitution, in the table below, allow variable references
 
 ## CMake settings
 
-|Setting  |Description | Default value | Supports substitution |
+| Setting  | Description | Default value | Supports substitution |
 |---------|---------|---------|-----|
-| `cmake.autoSelectActiveFolder`| If 'false', your active folder only changes if you manually run the `CMake: Select Active Folder` command. | 'true' | no |
-| `cmake.defaultActiveFolder`| The name of active folder, which be used as default (Only works when ´cmake.autoSelectActiveFolder´ is disabled). | "" | no |
+| `cmake.additionalCompilerSearchDirs`| List of paths to search for additional compilers, like a MinGW installation. This means that GCC does not need to be on your `$PATH` for it to be found via kit scanning. For example: `["C:\\MinGW\\bin"]` (Search in C:\MinGW\bin for a MinGW installation) | `[]` | no |
+| `cmake.additionalKits` | Array of paths to custom kit files. These are in addition to the default kit files. | `[]` | no |
+| `cmake.allowCommentsInPresetsFile` | Allow the use of JSON extensions such as comments in CMakePresets.json. Please note that your CMakePresets.json file may be considered invalid by other IDEs or on the command line if you use non-standard JSON. | `false` | no |
+| `cmake.allowUnsupportedPresetsVersions` | Enables the use of presets files that are using features from the versions that Cmake Tools extension doesn't currently support. Unknown properties and macros will be ignored. | `false` | no |
+| `cmake.automaticReconfigure` | Automatically configure CMake project directories when the kit or the configuration preset is changed. | `true` | no |
+| `cmake.autoSelectActiveFolder`| If 'false', your active folder only changes if you manually run the `CMake: Select Active Folder` command. | `true` | no |
 | `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |
 | `cmake.buildEnvironment`| An object containing `key:value` pairs of environment variables, which will be passed only to the compiler. | `null` (no environment variables specified) | yes |
+| `cmake.buildTask` | If `true`, generate VS Code tasks for building. | `false` | no |
 | `cmake.buildToolArgs` | An array of additional arguments to pass to the underlying build tool. | `[]` (empty array-no additional arguments) | yes |
-|  `cmake.cacheInit` | Path, or list of paths, to cache-initialization files. Passed to CMake via the `-C` command-line argument. | `[]` (empty array-no cache initializer files) | no |
-| `cmake.cmakePath`| Specify location of the cmake executable. | `cmake` (causes CMake Tools to search the `PATH` environment variable, as well as some hard-coded locations.) | Supports substitution for `workspaceRoot`, `workspaceFolder`, `workspaceRootFolderName`, `userHome`, `${command:...}` and `${env:...}`. Other substitutions result in an empty string. |
+| `cmake.cacheInit` | Path, or list of paths, to cache-initialization files. Passed to CMake via the `-C` command-line argument. | `[]` (empty array-no cache initializer files) | no |
+| `cmake.clearOutputBeforeBuild` | If `true`, clear output before building. | `true` | no |
 | `cmake.cmakeCommunicationMode` | Specifies the protocol for communicating between the extension and CMake | `automatic` | no |
+| `cmake.cmakePath`| Specify location of the cmake executable. | `cmake` (causes CMake Tools to search the `PATH` environment variable, as well as some hard-coded locations.) | Supports substitution for `workspaceRoot`, `workspaceFolder`, `workspaceRootFolderName`, `userHome`, `${command:...}` and `${env:...}`. Other substitutions result in an empty string. |
 | `cmake.configureArgs` | Arguments to CMake that will be passed during the configure process. Prefer to use `cmake.configureSettings` or [CMake variants](variants.md).</br> It is not recommended to pass `-D` arguments using this setting. | `[]` (empty array-no arguments) | yes |
 | `cmake.configureEnvironment` | An object containing `key:value` pairs of environment variables, which will be passed to CMake only when configuring.| `null` (no environment variable pairs) | yes |
 | `cmake.configureOnEdit` | Automatically configure CMake project directories when the path in the `cmake.sourceDirectory` setting is updated or when `CMakeLists.txt` or `*.cmake` files are saved. | `true` | no |
-| `cmake.configureOnOpen` | Automatically configure CMake project directories when they are opened. | `null` (prompt for configure) | no |
-| `cmake.configureSettings` | An object containing `key:value` pairs, which will be passed to CMake when configuring. The same as passing `-DVAR_NAME=ON` via `cmake.configureArgs`. NOTE: If you are setting an array argument within `cmake.configureSettings`, you should use array notation, i.e. `"CONFIGURE_SETTINGS_LIST": [ "a", "b" ]` | `null` (no values) | yes |
-| `cmake.loadCompileCommands` | Controls whether the extension reads compile_commands.json to enable single file compilation. | `true` | no |
+| `cmake.configureOnOpen` | Automatically configure CMake project directories when they are opened. | `true` | no |
+| `cmake.configureSettings` | An object containing `key:value` pairs, which will be passed to CMake when configuring. The same as passing `-DVAR_NAME=ON` via `cmake.configureArgs`. NOTE: If you are setting an array argument within `cmake.configureSettings`, you should use array notation, i.e. `"CONFIGURE_SETTINGS_LIST": [ "a", "b" ]` | `{}` (no values) | yes |
 | `cmake.copyCompileCommands`| If not `null`, copies the `compile_commands.json` file generated by CMake to the path specified by this setting whenever CMake successfully configures. |  `null` (do not copy the file) | yes |
+| `cmake.coverageInfoFiles` | LCOV coverage info files to be processed after running tests with coverage using the test explorer. | `[]` | yes |
+| `cmake.cpackArgs` | An array of additional arguments to pass to cpack. | `[]` | yes |
+| `cmake.cpackEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when running cpack. | `{}` | yes |
+| `cmake.cpackPath` | Path to cpack executable. | `null` | no |
+| `cmake.ctest.allowParallelJobs` | If `true`, allow running test jobs in parallel. | `false` | no |
+| `cmake.ctest.debugLaunchTarget` | Target to debug during CTest execution. | `null` | no |
+| `cmake.ctest.parallelJobs` | Specify the number of jobs to run in parallel for ctest. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable test parallelism. | `0` | no |
+| `cmake.ctest.testExplorerIntegrationEnabled` | If `true`, configure CMake to generate information needed by the test explorer. | `true` | no |
+| `cmake.ctest.testSuiteDelimiter` | Character(s) that separate test suite name components. | `null` | no |
+| `cmake.ctestArgs` | An array of additional arguments to pass to CTest. | `[]` | yes |
+| `cmake.ctestDefaultArgs` | Default arguments to pass to CTest. | `["-T", "test", "--output-on-failure"]` | no |
+| `cmake.ctestPath` | Path to CTest executable. | `null` | no |
 | `cmake.debugConfig`| The debug configuration to use when debugging a target | `null` (no values) | yes |
-| `cmake.defaultVariants` | Override the default set of variants that will be supplied when no variants file is present. See [CMake variants](variants.md). | | no |
-| `cmake.environment` | An object containing `key:value` pairs of environment variables, which will be available when configuring, building, or testing with CTest. | `null` (no environment variables) | yes |
-| `cmake.generator` | Set to a string to override CMake Tools preferred generator logic. If set, CMake will unconditionally use it as the `-G` CMake generator command line argument. ||no|
+| `cmake.defaultActiveFolder`| The name of active folder, which be used as default (Only works when `cmake.autoSelectActiveFolder` is disabled). | `""` | no |
+| `cmake.defaultVariants` | Override the default set of variants that will be supplied when no variants file is present. See [CMake variants](variants.md). | See package.json | no |
+| `cmake.deleteBuildDirOnCleanConfigure` | If `true`, delete build directory during clean configure. | `false` | no |
+| `cmake.emscriptenSearchDirs` | List of paths to search for Emscripten. | `[]` | no |
+| `cmake.enableAutomaticKitScan` | Enable automatic kit scanning. | `true` | no |
+| `cmake.enabledOutputParsers` | List of enabled output parsers. | `["cmake", "gcc", "gnuld", "msvc", "ghs", "diab"]` | no |
+| `cmake.enableLanguageServices` | If `true`, enable CMake language services. | `true` | no |
+| `cmake.enableTraceLogging` | If `true`, enable trace logging. | `false` | no |
+| `cmake.environment` | An object containing `key:value` pairs of environment variables, which will be available when configuring, building, or testing with CTest. | `{}` (no environment variables) | yes |
+| `cmake.exclude` | CMake Tools will ignore the folders defined in this setting. | `[]` | no |
+| `cmake.exportCompileCommandsFile` | If `true`, generate the compile_commands.json file. | `true` | no |
+| `cmake.generator` | Set to a string to override CMake Tools preferred generator logic. If set, CMake will unconditionally use it as the `-G` CMake generator command line argument. | `null` | no |
+| `cmake.ignoreCMakeListsMissing` | If `true`, do not show error when opening a project without CMakeLists.txt. | `false` | no |
+| `cmake.ignoreKitEnv` | If `true`, ignore kit environment variables. | `false` | no |
 | `cmake.installPrefix` | If specified, sets a value for `CMAKE_INSTALL_PREFIX` when running CMake configure. If not set, no value will be passed.</br>If `CMAKE_INSTALL_PREFIX` is set via `cmake.configureArgs` or `cmake.configureSettings`, `cmake.installPrefix` will be ignored.| `null` (no value specified) | yes |
+| `cmake.launchBehavior` | Behavior when launching a CMake target. | `reuseTerminal` | no |
+| `cmake.loadCompileCommands` | Controls whether the extension reads compile_commands.json to enable single file compilation. | `true` | no |
 | `cmake.loggingLevel` | A string setting that specifies how much output CMake Tools produces in its output channel. Set to one of `"trace"`, `"debug"`, `"info"`, `"note"`, `"warning"`, `"error"`, or `"fatal"`. `"trace"` is the most verbose.</br></br>Regardless of the logging level, CMake Tools writes all levels of logging to the CMake Tools log file. This file is useful if you need to [troubleshoot CMake Tools](troubleshoot.md) | `"info"` | no |
-| `cmake.skipConfigureIfCachePresent` | A boolean setting that allows users to skip the configure process if there is a CMake cache present | `false` | no
-| `cmake.additionalCompilerSearchDirs`| List of paths to search for additional compilers, like a MinGW installation. This means that GCC does not need to be on your `$PATH` for it to be found via kit scanning. For example: `["C:\\MinGW\\bin"]` (Search in C:\MinGW\bin for a MinGW installation) | [] | no |
-| `cmake.parallelJobs` | Specify the number of jobs run in parallel during the build. Using the value `1` will disable build parallelism. | | no |
-| `cmake.preferredGenerators` | A list of strings of generator names to try, in order, when configuring a CMake project for the first time. | | no |
+| `cmake.mergedCompileCommands` | Path where to create a merged compile_commands.json file. | `null` | no |
+| `cmake.mingwSearchDirs` | **DEPRECATED**. List of paths to search for MinGW. Use `cmake.additionalCompilerSearchDirs` instead. | `[]` | no |
+| `cmake.options.advanced` | Advanced options for CMake Tools. | See package.json | no |
+| `cmake.options.statusBarVisibility` | Controls visibility of the status bar. | `hidden` | no |
+| `cmake.outputLogEncoding` | Encoding to use for tool output. | `auto` | no |
+| `cmake.parallelJobs` | Specify the number of jobs run in parallel during the build. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable build parallelism. | `0` | no |
+| `cmake.parseBuildDiagnostics` | If `true`, parse compiler output for diagnostics. | `true` | no |
+| `cmake.pinnedCommands` | List of commands pinned to the command palette. | `["workbench.action.tasks.configureTaskRunner", "workbench.action.tasks.runTask"]` | no |
+| `cmake.platform` | CMake platform to use. | `null` | no |
+| `cmake.postRunCoverageTarget` | Target to build after running tests with coverage using the test explorer. | `null` | no |
+| `cmake.preferredGenerators` | A list of strings of generator names to try, in order, when configuring a CMake project for the first time. | `[]` | no |
+| `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer. | `null` | no |
+| `cmake.revealLog` | Controls when the CMake output log should be revealed. | `always` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
+| `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |
+| `cmake.showConfigureWithDebuggerNotification` | If `true`, show notification when configure with debugger. | `true` | no |
+| `cmake.showNotAllDocumentsSavedQuestion` | If `true`, show not all documents saved question. | `true` | no |
+| `cmake.showSystemKits` | If `true`, show system kits in kit selection. | `true` | no |
+| `cmake.skipConfigureIfCachePresent` | If `true`, skip configure if CMake cache is present. | `null` | no |
 | `cmake.sourceDirectory` | A directory or a list of directories where the root `CMakeLists.txt`s are stored. | `${workspaceFolder}` | yes |
-| `cmake.testEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when debugging, running and testing with CTest. | `null` (no environment variables) | yes |
-| `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer | null | no |
-| `cmake.postRunCoverageTarget` | Target to build after running tests with coverage using the test explorer | null | no |
-| `cmake.coverageInfoFiles` | LCOV coverage info files to be processed after running tests with coverage using the test explorer | [] | yes |
+| `cmake.testEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when debugging, running and testing with CTest. | `{}` (no environment variables) | yes |
+| `cmake.toolset` | CMake toolset to use. | `null` | no |
+| `cmake.touchbar.advanced` | Advanced options for touchbar. | See package.json | no |
+| `cmake.touchbar.visibility` | Controls visibility of the touchbar. | `default` | no |
+| `cmake.useCMakePresets` | Controls when to use CMake presets. | `auto` | no |
+| `cmake.useVsDeveloperEnvironment` | Controls when to use Visual Studio Developer Environment for building. | `auto` | no |
 
 ## Variable substitution
 
@@ -98,7 +144,7 @@ Supported commands for substitution:
 |`cmake.buildDirectory`|The full path to the directory where CMake cache files are located.|
 |`cmake.tasksBuildCommand`|The CMake command used to build your project based on the currently selected Kit + Variant + Target. Suitable for use within `tasks.json`.|
 |`cmake.activeFolderName`|The name of the active folder (e.g. in a multi-root workspace)|
-|`cmake.activeFolderPath`|The asolute path of the active folder (e.g. in a multi-root workspace)|
+|`cmake.activeFolderPath`|The absolute path of the active folder (e.g. in a multi-root workspace)|
 |`cmake.activeConfigurePresetName`|The name of the active configure preset.|
 |`cmake.activeBuildPresetName`|The name of the active build preset.|
 |`cmake.activeTestPresetName`|The name of the active test preset.|

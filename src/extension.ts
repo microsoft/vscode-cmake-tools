@@ -15,7 +15,7 @@ import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
-import { ProjectController, FolderProjectType} from '@cmt/projectController';
+import { ProjectController, AfterAcknowledgeFolderType} from '@cmt/projectController';
 
 import {
     SpecialKits,
@@ -132,6 +132,7 @@ export class ExtensionManager implements vscode.Disposable {
                     await this.enableLanguageServices();
                 } else {
                     this.disposeLanguageServices();
+                    telemetry.logEvent('disableLanguageServices');
                 }
             });
         }
@@ -161,13 +162,15 @@ export class ExtensionManager implements vscode.Disposable {
 
         this.onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this.onDidChangeActiveTextEditor(e), this);
 
-        this.projectController.onAfterAddFolder(async (folderProjectMap: FolderProjectType) => {
-            const folder: vscode.WorkspaceFolder = folderProjectMap.folder;
-            if (this.projectController.numOfWorkspaceFolders === 1) {
-                // First folder added
-                await this.updateActiveProject(folder);
-            } else {
-                await this.initActiveProject();
+        this.projectController.onAfterAcknowledgeFolder(async (obj: AfterAcknowledgeFolderType) => {
+            const folder: vscode.WorkspaceFolder = obj.folderProjectType.folder;
+            if (obj.isInitial) {
+                if (this.projectController.numOfWorkspaceFolders === 1) {
+                    // First folder added
+                    await this.updateActiveProject(folder);
+                } else {
+                    await this.initActiveProject();
+                }
             }
             await setContextAndStore(multiProjectModeKey, this.projectController.hasMultipleProjects);
             this.projectOutline.addFolder(folder);
@@ -176,7 +179,8 @@ export class ExtensionManager implements vscode.Disposable {
                 this.codeModelUpdateSubs.delete(folder.uri.fsPath);
             }
             const subs: vscode.Disposable[] = [];
-            for (const project of folderProjectMap.projects) {
+            for (const project of obj.folderProjectType.projects) {
+                project.addTestExplorerRoot(project.folderPath);
                 subs.push(project.onCodeModelChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
@@ -186,22 +190,23 @@ export class ExtensionManager implements vscode.Disposable {
             }
         });
 
-        this.projectController.onBeforeRemoveFolder(async projects => {
+        this.projectController.onBeforeIgnoreFolder(async projects => {
             for (const project of projects) {
                 project.removeTestExplorerRoot(project.folderPath);
             }
         });
 
-        this.projectController.onAfterRemoveFolder(async folder => {
+        this.projectController.onAfterIgnoreFolder(async folder => {
             console.assert((vscode.workspace.workspaceFolders === undefined && this.projectController.numOfWorkspaceFolders === 0) ||
                 (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this.projectController.numOfWorkspaceFolders));
             this.codeModelUpdateSubs.get(folder.uri.fsPath)?.forEach(sub => sub.dispose());
             this.codeModelUpdateSubs.delete(folder.uri.fsPath);
-            if (!vscode.workspace.workspaceFolders?.length) {
+            const workspaceFolders = this.projectController.getCMakeFoldersWithProject();
+            if (workspaceFolders.length === 0) {
                 await this.updateActiveProject(undefined);
             } else {
                 if (this.activeFolderPath() === folder.uri.fsPath) {
-                    await this.updateActiveProject(vscode.workspace.workspaceFolders[0]);
+                    await this.updateActiveProject(workspaceFolders[0]);
                 } else {
                     this.setupSubscriptions();
                 }
@@ -274,10 +279,9 @@ export class ExtensionManager implements vscode.Disposable {
 
         let isMultiProject = false;
         if (vscode.workspace.workspaceFolders) {
-            await this.projectController.loadAllProjects();
+            await this.projectController.loadAllFolders();
             isMultiProject = this.projectController.hasMultipleProjects;
             await setContextAndStore(multiProjectModeKey, isMultiProject);
-            this.projectOutline.addAllCurrentFolders();
             if (this.workspaceConfig.autoSelectActiveFolder && isMultiProject) {
                 this.statusBar.setAutoSelectActiveProject(true);
             }
@@ -294,6 +298,8 @@ export class ExtensionManager implements vscode.Disposable {
         if (isMultiProject) {
             telemetryProperties['autoSelectActiveFolder'] = `${this.workspaceConfig.autoSelectActiveFolder}`;
         }
+        telemetryProperties['enableLanguageServices'] = `${this.workspaceConfig.enableLanguageServices}`;
+        telemetryProperties['excludedFoldersCount'] = `${this.workspaceConfig.exclude.length}`;
         telemetry.sendOpenTelemetry(telemetryProperties);
 
         // do these last
@@ -353,7 +359,7 @@ export class ExtensionManager implements vscode.Disposable {
     projectStatus = new ProjectStatus();
 
     // NOTE: (from sidebar) The project controller manages all the projects in the workspace
-    public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus);
+    public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus, this.workspaceConfig);
     /**
      * The status bar controller
      */
@@ -683,7 +689,6 @@ export class ExtensionManager implements vscode.Disposable {
             return;
         }
         const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
-        project.addTestExplorerRoot(project.folderPath);
         // Scan for kits even under presets mode, so we can create presets from compilers.
         // Silent re-scan when detecting a breaking change in the kits definition.
         // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
@@ -772,9 +777,10 @@ export class ExtensionManager implements vscode.Disposable {
 
     private async initActiveProject(): Promise<CMakeProject | undefined> {
         let folder: vscode.WorkspaceFolder | undefined;
-        if (vscode.workspace.workspaceFolders && vscode.window.activeTextEditor && this.workspaceConfig.autoSelectActiveFolder) {
+        const workspaceFoldersWithProjects = this.projectController.getCMakeFoldersWithProject();
+        if (workspaceFoldersWithProjects.length > 0 && vscode.window.activeTextEditor && this.workspaceConfig.autoSelectActiveFolder) {
             folder = vscode.workspace.getWorkspaceFolder(vscode.window.activeTextEditor.document.uri);
-            await this.updateActiveProject(folder ?? vscode.workspace.workspaceFolders[0], folder ? vscode.window.activeTextEditor : undefined);
+            await this.updateActiveProject(folder ?? workspaceFoldersWithProjects[0], folder ? vscode.window.activeTextEditor : undefined);
             return this.getActiveProject();
         }
         const activeFolder = this.extensionContext.workspaceState.get<string>('activeFolder');
@@ -787,11 +793,11 @@ export class ExtensionManager implements vscode.Disposable {
         if (defaultActiveFolder) {
             // do not use the active text editor for updating active project
             activeTextEditor = undefined;
-            folder = vscode.workspace.workspaceFolders!.find(candidate => candidate.uri.path.endsWith(defaultActiveFolder));
+            folder = workspaceFoldersWithProjects!.find(candidate => candidate.uri.path.endsWith(defaultActiveFolder));
         }
 
         if (!folder) {
-            folder = vscode.workspace.workspaceFolders![0];
+            folder = workspaceFoldersWithProjects![0];
         }
         await this.updateActiveProject(folder, activeTextEditor);
         return this.getActiveProject();
