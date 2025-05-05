@@ -15,7 +15,7 @@ import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
-import { ProjectController, FolderProjectType, AfterAcknowledgeFolderType} from '@cmt/projectController';
+import { ProjectController, AfterAcknowledgeFolderType} from '@cmt/projectController';
 
 import {
     SpecialKits,
