@@ -6,6 +6,8 @@ Features:
 
 - Add an option to specify the launch target for debugging CTest tests. [#4273](https://github.com/microsoft/vscode-cmake-tools/pull/4273)
 - Add a setting to enable/disable our built-in language services. [#4290](https://github.com/microsoft/vscode-cmake-tools/issues/4290)
+- Add an option to group the default build target dropdown using CMake groups [#3953](https://github.com/microsoft/vscode-cmake-tools/pull/3953) [@itzandroidtab](https://github.com/itzandroidtab)
+- Add `cmake.exclude` setting that allows users to set folders that they want the CMake Tools extension to ignore. [#4112](https://github.com/microsoft/vscode-cmake-tools/issues/4112)
 - Add a command to substitute CMake Cache variables in `launch.json` and `tasks.json`. [#4422](https://github.com/microsoft/vscode-cmake-tools/pull/4422)
 
 Improvements:
@@ -21,6 +23,7 @@ Bug Fixes:
 - Fixes localization for "workspace is" string. [#4374](https://github.com/microsoft/vscode-cmake-tools/issues/4374)
 - Make tooltips for selecting Launch/Debug Target. [#4373](https://github.com/microsoft/vscode-cmake-tools/issues/4373)
 - Fix bug where unrelated symlinks are read as variant files [#4304](https://github.com/microsoft/vscode-cmake-tools/issues/4304) [@vitorramos](https://github.com/vitorramos).
+- Fix evaluation of conditions in presets. [#4425](https://github.com/microsoft/vscode-cmake-tools/issues/4425)
 
 ## 1.20.53
 

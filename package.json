@@ -132,12 +132,12 @@
         {
             "language": "cmake",
             "scopeName": "source.cmake",
-            "path": "./syntaxes/CMake.tmLanguage"
+            "path": "./syntaxes/CMake.tmLanguage.json"
         },
         {
             "language": "cmake-cache",
             "scopeName": "source.cmakecache",
-            "path": "./syntaxes/CMakeCache.tmLanguage"
+            "path": "./syntaxes/CMakeCache.tmLanguage.json"
         }
     ],
     "commands": [
@@ -2045,6 +2045,15 @@
           "description": "%cmake-tools.configuration.cmake.defaultActiveFolder.description%",
           "scope": "window"
         },
+        "cmake.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.exclude.description%",
+          "scope": "window"
+        },
         "cmake.cmakePath": {
           "type": "string",
           "default": "cmake",
@@ -3651,6 +3660,12 @@
           "default": [],
           "description": "%cmake-tools.configuration.cmake.coverageInfoFiles.description%",
           "scope": "resource"
+        },
+        "cmake.useFolderPropertyInBuildTargetDropdown": {
+            "type": "boolean",
+            "default": false,
+            "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
+            "scope": "resource"
         }
       }
     },

@@ -470,7 +470,7 @@ export class CMakeServerDriver extends CMakeDriver {
  * @t the RichTarget currently being examined.
  */
 function targetReducer(set: RichTarget[], t: RichTarget): RichTarget[] {
-    if (!set.find(t2 => t.name === t2.name && t.filepath === t2.filepath && t.targetType === t2.targetType)) {
+    if (!set.find(t2 => t.name === t2.name && t.filepath === t2.filepath && t.targetType === t2.targetType && t.folder === t2.folder)) {
         set.push(t);
     }
     return set;

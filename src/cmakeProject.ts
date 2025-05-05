@@ -52,6 +52,7 @@ import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { ConfigurationType } from 'vscode-cmake-tools';
+import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2272,7 +2273,65 @@ export class CMakeProject {
         if (!drv.targets.length) {
             return await vscode.window.showInputBox({ prompt: localize('enter.target.name', 'Enter a target name') }) || null;
         } else {
-            const choices = drv.uniqueTargets.map((t): vscode.QuickPickItem => {
+            const folders: string[] = [];
+            const itemsGroup: (RichTarget | NamedTarget | FolderTarget)[] = [];
+
+            // group the data
+            drv.uniqueTargets.forEach((t) => {
+                switch (t.type) {
+                    case 'named': {
+                        itemsGroup.push(t);
+                        break;
+                    }
+                    case 'rich': {
+                        // check if we need to group by folder
+                        if (this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown && t.folder) {
+                            if (!folders.includes(t.folder.name)) {
+                                folders.push(t.folder.name);
+                                itemsGroup.push({ type: 'folder', name: t.folder.name });
+                            }
+                        } else {
+                            itemsGroup.push(t);
+                        }
+                        break;
+                    }
+                }
+            });
+
+            const choicesGroup = itemsGroup.map((t): vscode.QuickPickItem => {
+                switch (t.type) {
+                    case 'named': {
+                        return {
+                            label: t.name,
+                            description: localize('target.to.build.description', 'Target to build')
+                        };
+                    }
+                    case 'rich': {
+                        return { label: t.name, description: t.targetType, detail: t.filepath };
+                    }
+                    case 'folder': {
+                        return { label: t.name, description: 'FOLDER' };
+                    }
+                }
+            });
+
+            const selGroup = await vscode.window.showQuickPick(choicesGroup, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+
+            // exit if we do not group the folders or if we got something other than a folder
+            if (!selGroup || !this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown || selGroup.description !== "FOLDER") {
+                return selGroup ? selGroup.label : null;
+            }
+
+            const items: (RichTarget | NamedTarget)[] = [];
+
+            // the user has selected a folder group
+            drv.uniqueTargets.forEach((t) => {
+                if (t.type === 'rich' && t.folder && t.folder.name === selGroup.label) {
+                    items.push(t);
+                }
+            });
+
+            const choices = items.map((t): vscode.QuickPickItem => {
                 switch (t.type) {
                     case 'named': {
                         return {
@@ -2285,6 +2344,7 @@ export class CMakeProject {
                     }
                 }
             });
+
             const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
             return sel ? sel.label : null;
         }

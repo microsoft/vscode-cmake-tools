@@ -5,6 +5,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     const ret = new ConfigurationReader({
         autoSelectActiveFolder: false,
         defaultActiveFolder: null,
+        exclude: [],
         cmakePath: '',
         buildDirectory: '',
         installPrefix: null,
@@ -81,7 +82,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         enableLanguageServices: true,
         preRunCoverageTarget: null,
         postRunCoverageTarget: null,
-        coverageInfoFiles: []
+        coverageInfoFiles: [],
+        useFolderPropertyInBuildTargetDropdown: true
     });
     ret.updatePartial(conf);
     return ret;

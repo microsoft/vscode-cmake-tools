@@ -155,6 +155,7 @@ export interface OptionConfig {
 export interface ExtensionConfigurationSettings {
     autoSelectActiveFolder: boolean;
     defaultActiveFolder: string | null;
+    exclude: string[];
     cmakePath: string;
     buildDirectory: string;
     installPrefix: string | null;
@@ -221,6 +222,7 @@ export interface ExtensionConfigurationSettings {
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
+    useFolderPropertyInBuildTargetDropdown: boolean;
 }
 
 type EmittersOf<T> = {
@@ -321,6 +323,10 @@ export class ConfigurationReader implements vscode.Disposable {
     get defaultActiveFolder(): string | null {
         return this.configData.defaultActiveFolder;
     }
+    get exclude(): string[] {
+        return this.configData.exclude;
+    }
+
     buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope): string {
         if (multiProject && this.isDefaultValue('buildDirectory', workspaceFolder)) {
             return '${sourceDirectory}/build';
@@ -588,9 +594,14 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.coverageInfoFiles;
     }
 
+    get useFolderPropertyInBuildTargetDropdown(): boolean {
+        return this.configData.useFolderPropertyInBuildTargetDropdown;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
+        exclude: new vscode.EventEmitter<string[]>(),
         cmakePath: new vscode.EventEmitter<string>(),
         buildDirectory: new vscode.EventEmitter<string>(),
         installPrefix: new vscode.EventEmitter<string | null>(),
@@ -656,7 +667,8 @@ export class ConfigurationReader implements vscode.Disposable {
         enableLanguageServices: new vscode.EventEmitter<boolean>(),
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
-        coverageInfoFiles: new vscode.EventEmitter<string[]>()
+        coverageInfoFiles: new vscode.EventEmitter<string[]>(),
+        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>()
     };
 
     /**
