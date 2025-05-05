@@ -596,6 +596,10 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             if (config.name === opts.activeBuildTypeVariant || (!opts.activeBuildTypeVariant && config.name === "")) {
                 for (const project of config.projects) {
                     for (const target of project.targets) {
+                        if (target.type === 'UTILITY') {
+                            continue;
+                        }
+
                         // Now some shenanigans since header files don't have config data:
                         // 1. Accumulate some "defaults" based on the set of all options for each file group
                         // 2. Pass these "defaults" down when rebuilding the config data
