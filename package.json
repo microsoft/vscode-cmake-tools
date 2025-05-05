@@ -131,12 +131,12 @@
         {
             "language": "cmake",
             "scopeName": "source.cmake",
-            "path": "./syntaxes/CMake.tmLanguage"
+            "path": "./syntaxes/CMake.tmLanguage.json"
         },
         {
             "language": "cmake-cache",
             "scopeName": "source.cmakecache",
-            "path": "./syntaxes/CMakeCache.tmLanguage"
+            "path": "./syntaxes/CMakeCache.tmLanguage.json"
         }
     ],
     "commands": [
@@ -3659,6 +3659,12 @@
           "default": [],
           "description": "%cmake-tools.configuration.cmake.coverageInfoFiles.description%",
           "scope": "resource"
+        },
+        "cmake.useFolderPropertyInBuildTargetDropdown": {
+            "type": "boolean",
+            "default": false,
+            "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
+            "scope": "resource"
         }
       }
     },
