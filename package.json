@@ -709,6 +709,16 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.addFileToCMakeLists",
+        "title": "Add File to CMake Lists",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.removeFileFromCMakeLists",
+        "title": "Remove File from CMake Lists",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.debugTarget",
         "title": "%cmake-tools.command.cmake.debugTarget.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -3842,6 +3852,150 @@
             "default": false,
             "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
             "scope": "resource"
+        },
+        "cmake.modifyLists.addNewSourceFiles": {
+          "type": "string",
+          "default": "yes",
+          "enum": [
+            "no",
+            "yes",
+            "ask"
+          ],
+          "description": "Add source files to CMake lists when they are created.",
+          "enumDescriptions": [
+            "Do not automatically add source files to CMake lists",
+            "Automatically add source files to CMake lists",
+            "Show a preview panel of proposed changes to apply"
+          ],
+          "order": 100,
+          "scope": "resource"
+        },
+        "cmake.modifyLists.removeDeletedSourceFiles": {
+          "type": "string",
+          "default": "yes",
+          "enum": [
+            "no",
+            "yes",
+            "ask"
+          ],
+          "description": "Remove source files from CMake lists when they are deleted.",
+          "enumDescriptions": [
+            "Do not automatically remove source files from CMake lists",
+            "Automatically remove source files from CMake lists",
+            "Show a preview panel of proposed changes to apply"
+          ],
+          "order": 101,
+          "scope": "resource"
+        },
+        "cmake.modifyLists.variableSelection": {
+          "type": "string",
+          "enum": [
+            "never",
+            "auto",
+            "askFirstParentDir",
+            "askParentDirs"
+          ],
+          "default": "never",
+          "markdownDescription": "How to choose which `set()` or `list(APPEND/PREPEND/INSERT)` command invocation to edit when adding source files to CMake lists.",
+          "markdownEnumDescriptions": [
+            "Do not look for variable modification command invocations, only look for source command invocations.",
+            "Choose the best candidate automatically.",
+            "Present a Quick Pick with options from the first `CMakeLists.txt` found when searching up from the location of the new source file.",
+            "Present a Quick Pick with options from all `CMakeLists.txt` files found when searching up from the location of the new source file."
+          ],
+          "order": 102,
+          "scope": "resource"
+        },
+        "cmake.modifyLists.sourceVariables": {
+          "type": "array",
+          "items": {
+              "type": "string"
+          },
+          "default": [
+            "SRC",
+            "SRCS",
+            "SOURCES",
+            "SOURCE_FILES",
+            "*_SRC",
+            "*_SRCS",
+            "*_SOURCES",
+            "*_SOURCE_FILES"
+          ],
+          "markdownDescription": "Variables to add source files to. Variables appearing earlier in this list will be given higher priority. Only used if `#cmake.modifyLists.variableSelection#` is not `never`. Supports glob patterns.",
+          "order": 103,
+          "scope": "resource"
+        },
+        "cmake.modifyLists.targetSelection": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "askNearestSourceDir",
+            "askParentSourceDirs"
+          ],
+          "default": "askParentSourceDirs",
+          "description": "How to choose which target to add new source files to when adding source files to CMake lists.",
+          "enumDescriptions": [
+            "Choose the best candidate automatically.",
+            "Present a Quick Pick with targets whose source directories are closest to location of the new source file.",
+            "Present a Quick Pick with targets whose source directories contain the location of the new source file."
+          ],
+          "order": 104,
+          "scope": "resource"
+        },
+        "cmake.modifyLists.targetCommandInvocationSelection": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "askFirstParentDir",
+            "askParentDirs"
+          ],
+          "default": "askParentDirs",
+          "description": "How to choose which of a target's source command invocations to edit when adding source files to CMake lists.",
+          "enumDescriptions": [
+            "Choose the best candidate automatically.",
+            "Present a Quick Pick with options from the CMake list file in the parent directory closest to the location of the new source file.",
+            "Present a Quick Pick with options from all CMake list files in the parent directories of the new source file."
+          ],
+          "order": 105,
+          "scope": "resource"
+        },
+        "cmake.modifyLists.targetSourceCommands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "target_sources",
+            "add_executable",
+            "add_library"
+          ],
+          "markdownDescription": "Commands to treat as target source commands when adding source files CMake lists. Commands appearing earlier in this list will be given higher priority. Supports glob patterns.\n\nIf you are using the File API (see `#cmake.cmakeCommunicationMode#`), user-defined functions and macros which call the commands in this list are detected automatically and added to it.",
+          "order": 106,
+          "scope": "resource"
+        },
+        "cmake.modifyLists.scopeSelection": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask"
+          ],
+          "default": "ask",
+          "description": "How to choose which of a target's visibility scopes, file sets, or source keyword parameters to edit when adding source files to CMake lists.",
+          "enumDescriptions": [
+            "Choose the best candidate automatically.",
+            "Present a Quick Pick with options from the selected target source command invocation."
+          ],
+          "order": 107,
+          "scope": "resource"
+        },
+          "cmake.modifyLists.sourceListKeywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns",
+          "order": 108,
+          "scope": "resource"
         }
       }
     },
