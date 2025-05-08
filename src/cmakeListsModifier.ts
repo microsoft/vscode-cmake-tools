@@ -236,8 +236,10 @@ export class CMakeListsModifier implements vscode.Disposable {
             function invocationCompare(a: CommandInvocation, b: CommandInvocation) {
                 return targetSourceCommandInvocationCompare(settings.targetSourceCommands, a, b);
             }
-            let invocations = await targetSourceCommandInvocations(
-                project, target, cmakeListsASTs, settings.targetSourceCommands);
+            let invocations = (await targetSourceCommandInvocations(
+                project, target, cmakeListsASTs, settings.targetSourceCommands))
+                .filter(i =>
+                    isFileInsideFolder(newSourceUri, path.dirname(i.document.fileName)));
             if (errorIfSourceInInvocations(invocations, target.name, newSourceUri)) {
                 return;
             }
