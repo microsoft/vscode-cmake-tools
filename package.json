@@ -2264,6 +2264,12 @@
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription%",
           "scope": "machine-overridable"
         },
+        "cmake.ctest.testSuiteDelimiterMaxOccurrence": {
+          "type": "number",
+          "default": 0,
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription%",
+          "scope": "machine-overridable"
+        },
         "cmake.ctest.debugLaunchTarget": {
           "type": "string",
           "default": null,

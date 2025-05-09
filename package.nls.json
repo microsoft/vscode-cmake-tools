@@ -127,6 +127,9 @@
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     }, 
+    "cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription": {
+        "message": "Maximum number of times the delimiter may be used to split the name of the test. `0` means no limit."
+    },
 	"cmake-tools.configuration.cmake.ctest.debugLaunchTarget.description": "Target name from launch.json to start when debugging a test with CTest. By default and in case of a non-existing target, this will show a picker with all available targets.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
     "cmake-tools.configuration.cmake.enabledOutputParsers.description": {

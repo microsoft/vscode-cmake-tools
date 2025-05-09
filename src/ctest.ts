@@ -694,10 +694,30 @@ export class CTestDriver implements vscode.Disposable {
         let parentSuiteItem = testExplorerRoot;
         let testLabel = testName;
 
+        function limited_split(regexString: string, subject: string, maxCount: number): string[] {
+            if (maxCount === 0) {
+                maxCount = Number.MAX_SAFE_INTEGER;
+            }
+            const delimiterRegExp = new RegExp(regexString, 'dg');
+            const parts = [];
+            let lastStart = 0;
+            while (parts.length < maxCount) {
+                const match: any = delimiterRegExp.exec(subject);
+                if (match === null || match.indices === null) {
+                    break;
+                }
+
+                parts.push(subject.substring(lastStart, match.indices[0][0]));
+                lastStart = match.indices[0][1];
+            }
+
+            parts.push(subject.substring(lastStart));
+            return parts;
+        }
+
         // If a suite delimiter is set, create a suite tree
         if (this.ws.config.testSuiteDelimiter) {
-            const delimiterRegExp = new RegExp(this.ws.config.testSuiteDelimiter);
-            const parts = testName.split(delimiterRegExp);
+            const parts = limited_split(this.ws.config.testSuiteDelimiter, testName, this.ws.config.testSuiteDelimiterMaxOccurrence);
             testLabel = parts.pop() || testName; // The last part is the test label
 
             // Create a suite item for each suite ID part if it doesn't exist yet at that tree level
