@@ -167,7 +167,7 @@
 
 "@friedemannsommer/lcov-parser@^5.0.0":
   version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@friedemannsommer/lcov-parser/-/lcov-parser-5.0.0.tgz#dbda48ac22ece7f3d5df7fb183d68267025eccf4"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@friedemannsommer/lcov-parser/-/lcov-parser-5.0.0.tgz#dbda48ac22ece7f3d5df7fb183d68267025eccf4"
   integrity sha512-YeK97qJgG/AEPee19qA1TtAFgXR1OSjKK9nIOnUPVF3eLFam+VMRii1GGtG60uAeqSWaGwBkTQ6RvYkSULDrTA==
 
 "@gulp-sourcemaps/identity-map@^2.0.1":
