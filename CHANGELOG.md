@@ -12,6 +12,7 @@ Features:
 Improvements:
 
 - No longer convert paths on lowercase on MacOS to enable cpp tools to resolve them. [#4325](https://github.com/microsoft/vscode-cmake-tools/pull/4325) [@tringenbach](https://github.com/tringenbach)
+- Speedup & reduce heap allocations in shlex split module function. Significant gains for mid-large compile_commands.json - CompilationDatabase construction. [#4458](https://github.com/microsoft/vscode-cmake-tools/pull/4458) [@borjamunozf](https://github.com/borjamunozf)
 
 Bug Fixes:
 

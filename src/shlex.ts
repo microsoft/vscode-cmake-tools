@@ -76,7 +76,6 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     }
 }
 
-
 /**
  * Quotes a string for safe use in a shell command.
  * If the string contains special characters, it will be wrapped in double quotes and any existing double quotes will be escaped.
