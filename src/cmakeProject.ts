@@ -2884,7 +2884,7 @@ export class CMakeProject {
         }
         const value = (await CMakeCache.fromPath(await this.cachePath))?.get(name)?.value ?? defaultValue;
         if (value === null || value === undefined) {
-            void vscode.window.showErrorMessage(localize('cachevariable.not.found', `Variable "${name}" not found in CMake cache, and no default provided.`));
+            void vscode.window.showErrorMessage(localize('cachevariable.not.found', 'Variable {0} not found in CMake cache, and no default provided.', `"${name}"`));
             return null;
         }
         return value;
