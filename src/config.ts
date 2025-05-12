@@ -152,6 +152,17 @@ export interface OptionConfig {
     statusBarVisibility: StatusBarOptionVisibility;
 }
 
+export interface FailurePattern {
+    regexp: string;
+    file?: number;
+    line?: number;
+    message?: number;
+    actual?: number;
+    expected?: number;
+}
+
+export type FailurePatternsConfig = (FailurePattern | string)[] | string;
+
 export interface ExtensionConfigurationSettings {
     autoSelectActiveFolder: boolean;
     defaultActiveFolder: string | null;
@@ -174,7 +185,7 @@ export interface ExtensionConfigurationSettings {
     buildToolArgs: string[];
     parallelJobs: number;
     ctestPath: string;
-    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: Object; debugLaunchTarget: string | null };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -397,7 +408,7 @@ export class ConfigurationReader implements vscode.Disposable {
     get testSuiteDelimiterMaxOccurrence(): number {
         return this.configData.ctest.testSuiteDelimiterMaxOccurrence;
     }
-    get ctestFailurePatterns(): Object {
+    get ctestFailurePatterns(): FailurePatternsConfig {
         return this.configData.ctest.failurePatterns;
     }
     get ctestDebugLaunchTarget(): string | null {
@@ -627,7 +638,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         cpackPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: Object; debugLaunchTarget: string | null }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
