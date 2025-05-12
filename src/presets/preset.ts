@@ -2391,7 +2391,7 @@ export function testArgs(preset: TestPreset): string[] {
         preset.execution.resourceSpecFile && result.push('--resource-spec-file', preset.execution.resourceSpecFile);
         preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
         preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);
-        preset.execution.repeat && result.push(`--repeat ${preset.execution.repeat.mode}:${preset.execution.repeat.count}`);
+        preset.execution.repeat && result.push('--repeat', `${preset.execution.repeat.mode}:${preset.execution.repeat.count}`);
         preset.execution.interactiveDebugging && result.push('--interactive-debug-mode 1');
         preset.execution.interactiveDebugging === false && result.push('--interactive-debug-mode 0');
         preset.execution.scheduleRandom && result.push('--schedule-random');
