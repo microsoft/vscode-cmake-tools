@@ -17,6 +17,7 @@ import { extensionManager } from '@cmt/extension';
 import { CMakeProject } from '@cmt/cmakeProject';
 import { handleCoverageInfoFiles } from '@cmt/coverage';
 import { CommandResult } from 'vscode-cmake-tools';
+import { FailurePattern, FailurePatternsConfig } from '@cmt/config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -136,17 +137,6 @@ interface ProjectCoverageConfig {
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
 }
-
-interface FailurePattern {
-    regexp: string;
-    file?: number;
-    line?: number;
-    message?: number;
-    actual?: number;
-    expected?: number;
-}
-
-type FailurePatternsConfig = string | string[] | FailurePattern[];
 
 export function searchOutputForFailures(patterns: FailurePatternsConfig, output: string): vscode.TestMessage[] {
     output = normalizeLF(output);
