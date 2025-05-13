@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import { lcovParser } from "@friedemannsommer/lcov-parser";
 import * as nls from 'vscode-nls';
 import * as logging from '@cmt/logging';
 import { demangle } from 'demangler-js';
 import { platformNormalizePath } from './util';
+
+const { lcovParser } = require("@friedemannsommer/lcov-parser");
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
