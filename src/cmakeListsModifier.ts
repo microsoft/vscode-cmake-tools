@@ -293,11 +293,11 @@ export class CMakeListsModifier implements vscode.Disposable {
 
         const cmakeDocument = sourceList.document;
         const insertPos = sourceList.insertPosition;
-        const prefix = await indentPrefix(sourceList.invocation, insertPos);
+        const indent = freshLineIndent(sourceList.invocation, insertPos);
         const newSourceArgument = quoteArgument(sourceList.relativePath(newSourceUri));
         const edit = new vscode.WorkspaceEdit();
         edit.insert(
-            cmakeDocument.uri, insertPos, `${prefix}${newSourceArgument}`,
+            cmakeDocument.uri, insertPos, `\n${indent}${newSourceArgument}`,
             {
                 label: 'CMake: Add new source file',
                 needsConfirmation: settings.addNewSourceFiles === 'ask'
@@ -1298,41 +1298,107 @@ async function quickPick<T>(
     return selected.payload;
 }
 
-async function indentPrefix(invocation: CommandInvocation, insertPos: vscode.Position) {
-    const activeEditor = vscode.window.activeTextEditor;
-    // Wish this didn't flash the CMake file in the UI, but the API doesn't
-    // expose another way to get the inferred indentation.
-    const editor = await vscode.window.showTextDocument(
-        invocation.document, {
-            preview: true,
-            preserveFocus: true
+function freshLineIndent(invocation: CommandInvocation, insertPos: vscode.Position) {
+    const currentLine = invocation.document.lineAt(insertPos.line);
+    const currentLineIndent =
+        currentLine.text.slice(0, currentLine.firstNonWhitespaceCharacterIndex);
+
+    if (invocation.line !== insertPos.line) {
+        // Just keep the current indentation
+        return currentLineIndent;
+    }
+
+    const guessed = guessIndentConfig(invocation.document);
+    const currentLineIndentSize = Array.from(currentLineIndent)
+        .reduce((n, c) => n + (c === '\t' ? guessed.tabSize : 1), 0);
+    const freshLineIndentSize = currentLineIndentSize + guessed.indentSize;
+
+    if (guessed.insertSpaces) {
+        return ' '.repeat(freshLineIndentSize);
+    }
+
+    const tabs = Math.floor(freshLineIndentSize / guessed.tabSize);
+    const spaces = freshLineIndentSize % guessed.tabSize;
+    return '\t'.repeat(tabs) + ' '.repeat(spaces);
+}
+
+interface IndentConfig {
+    tabSize: number;
+    indentSize: number;
+    insertSpaces: boolean;
+}
+
+function guessIndentConfig(document: vscode.TextDocument): IndentConfig {
+    const { tabSize, indentSize, insertSpaces } = indentSettings(document);
+
+    let tabs = false;
+    let minSpaces = 0; let maxSpaces = 0;
+    for (const line of documentLines(document)) {
+        const indent = line.text.slice(0, line.firstNonWhitespaceCharacterIndex);
+        if (indent.startsWith('\t')) {
+            tabs = true;
+        } else if (indent.startsWith(' ')) {
+            const matches = indent.match('^( *)') as RegExpMatchArray;
+            const spacesSize = matches[1].length;
+            if (!minSpaces || spacesSize < minSpaces) {
+                minSpaces = spacesSize;
+            }
+            if (spacesSize > maxSpaces) {
+                maxSpaces = spacesSize;
+            }
         }
-    );
-    const tabSize = editor.options.tabSize as number;
-    const indentSize = editor.options.indentSize as number;
-    const insertSpaces = editor.options.insertSpaces;
-    if (activeEditor) {
-        await vscode.window.showTextDocument(activeEditor.document);
     }
-    const thisLine = invocation.document.lineAt(insertPos.line);
-    const thisLineIndent = thisLine.text.slice(0, thisLine.firstNonWhitespaceCharacterIndex);
-    const thisLineIndentSize = Array.from(thisLineIndent)
-        .reduce((n, c) => n + (c === '\t' ? tabSize : 1), 0);
-    const insertingOnFirstLineOfInvocation = invocation.line === insertPos.line;
-    const freshLineIndentSize = insertingOnFirstLineOfInvocation
-        ? thisLineIndentSize + indentSize
-        : thisLineIndentSize;
-    let tabs;
-    let spaces;
-    if (insertSpaces) {
-        tabs = 0;
-        spaces = freshLineIndentSize;
-    } else {
-        spaces = freshLineIndentSize % tabSize;
-        tabs = Math.floor(freshLineIndentSize / tabSize);
+
+    const spaces = !!maxSpaces;
+
+    if (spaces && tabs) {
+        return {
+            tabSize: maxSpaces + minSpaces,
+            indentSize: minSpaces,
+            insertSpaces: false
+        };
     }
-    const freshLineIndent = '\t'.repeat(tabs) + ' '.repeat(spaces);
-    return `\n${freshLineIndent}`;
+    if (spaces && !tabs) {
+        return {
+            tabSize,
+            indentSize: minSpaces,
+            insertSpaces: true
+        };
+    }
+    if (!spaces && tabs) {
+        return {
+            tabSize,
+            indentSize,
+            insertSpaces: false
+        };
+    }
+
+    // document contained no indented lines, fall back to workspace settings
+    return {
+        tabSize,
+        indentSize,
+        insertSpaces
+    };
+}
+
+/**
+ * Get the IndentConfig from the workspace configuration
+ */
+function indentSettings(document: vscode.TextDocument, languageId: string = 'cmake'): IndentConfig {
+    const config = vscode.workspace.getConfiguration(
+        'editor', { uri: document.uri, languageId });
+    const tabSize = config.get<number>('tabSize', 8);
+    const indentSizeRaw = config.get<number|'tabSize'>('indentSize', 4);
+    const indentSize = indentSizeRaw === 'tabSize' ? tabSize : indentSizeRaw;
+    const insertSpaces = config.get<boolean>('insertSpaces', false);
+
+    return { tabSize, indentSize, insertSpaces };
+}
+
+function* documentLines(document: vscode.TextDocument): Generator<vscode.TextLine> {
+    for (let i = 0; i < document.lineCount; i++) {
+        yield document.lineAt(i);
+    }
 }
 
 function compareSortKeys(aKeys: (number|string)[], bKeys: (number|string)[]): number {
