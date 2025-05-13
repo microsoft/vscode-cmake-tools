@@ -214,6 +214,14 @@ suite('CppTools tests', () => {
                     sourceDirectory: smokeFolder,
                     targets: [
                         {
+                            name: 'utilityTarget',
+                            type: 'UTILITY',
+                            fileGroups: [{
+                                sources: [sourceFile3],
+                                isGenerated: false
+                            }]
+                        },
+                        {
                             name: 'target3',
                             type: 'EXECUTABLE',
                             fileGroups: [{
@@ -319,6 +327,14 @@ suite('CppTools tests', () => {
                     name: 'cpptools-test2',
                     sourceDirectory: smokeFolder,
                     targets: [
+                        {
+                            name: 'utilityTarget',
+                            type: 'UTILITY',
+                            fileGroups: [{
+                                sources: [sourceFile3],
+                                isGenerated: false
+                            }]
+                        },
                         {
                             name: 'target3',
                             type: 'EXECUTABLE',
