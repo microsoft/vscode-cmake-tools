@@ -1067,7 +1067,6 @@ class ScopeSourceList extends SourceList {
     }
 
     protected details(file: string): string {
-        const detailParts = [];
         if (this.fileSet?.name) {
             return `${this.scope} Scope: ${this.scopeDetails(this.target, file)}`;
         } else {
