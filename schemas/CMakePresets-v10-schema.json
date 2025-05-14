@@ -9,6 +9,9 @@
             "type": "string",
             "description": "The schema against which to verify this document."
         },
+        "$comment": {
+            "$ref": "#/definitions/$comment"
+        },
         "version": {
             "type": "integer",
             "description": "A required integer representing the version of the JSON schema."
@@ -17,6 +20,9 @@
             "type": "object",
             "description": "An optional object representing the minimum version of CMake needed to build this project.",
             "properties": {
+                "$comment": {
+                    "$ref": "#/definitions/$comment"
+                },
                 "major": {
                     "type": "integer",
                     "description": "An optional integer representing the major version."
@@ -39,6 +45,9 @@
                 "type": "object",
                 "description": "A configure preset object.",
                 "properties": {
+                    "$comment": {
+                        "$ref": "#/definitions/$comment"
+                    },
                     "name": {
                         "type": "string",
                         "description": "A required string representing the machine-friendly name of the preset. This identifier is used in the --preset argument. There must not be two presets in the union of CMakePresets.json and CMakeUserPresets.json in the same directory with the same name.",
@@ -314,6 +323,9 @@
                                 "type": "object",
                                 "description": "An optional object representing the platform for generators that support it.",
                                 "properties": {
+                                    "$comment": {
+                                        "$ref": "#/definitions/$comment"
+                                    },
                                     "value": {
                                         "type": "string",
                                         "description": "An optional string representing the value."
@@ -341,6 +353,9 @@
                                 "type": "object",
                                 "description": "An optional object representing the toolset for generators that support it.",
                                 "properties": {
+                                    "$comment": {
+                                        "$ref": "#/definitions/$comment"
+                                    },
                                     "value": {
                                         "type": "string",
                                         "description": "An optional string representing the value."
@@ -570,6 +585,9 @@
                         "type": "object",
                         "description": "An optional object specifying warnings.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "dev": {
                                 "type": "boolean",
                                 "description": "An optional boolean. Equivalent to passing -Wdev or -Wno-dev on the command line. This may not be set to false if errors.dev is set to true."
@@ -597,6 +615,9 @@
                         "type": "object",
                         "description": "An optional object specifying errors.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "dev": {
                                 "type": "boolean",
                                 "description": "An optional boolean. Equivalent to passing -Werror=dev or -Wno-error=dev on the command line. This may not be set to true if warnings.dev is set to false."
@@ -612,6 +633,9 @@
                         "type": "object",
                         "description": "An optional object specifying debug options.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "output": {
                                 "type": "boolean",
                                 "description": "An optional boolean. Setting this to true is equivalent to passing --debug-output on the command line."
@@ -631,6 +655,9 @@
                         "type": "object",
                         "description": "An optional object specifying trace options. Supported in version 7",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "mode": {
                                 "type": "string",
                                 "description": "An optional string that specifies the trace mode.",
@@ -701,6 +728,9 @@
             "items": {
                 "type": "object",
                 "properties": {
+                    "$comment": {
+                        "$ref": "#/definitions/$comment"
+                    },
                     "name": {
                         "type": "string",
                         "description": "A required string representing the machine-friendly name of the preset. This identifier is used in the --preset argument. There must not be two presets (configure, build, or test) in the union of CMakePresets.json and CMakeUserPresets.json in the same directory with the same name.",
@@ -835,6 +865,9 @@
             "items": {
                 "type": "object",
                 "properties": {
+                    "$comment": {
+                        "$ref": "#/definitions/$comment"
+                    },
                     "name": {
                         "type": "string",
                         "description": "A required string representing the machine-friendly name of the preset. This identifier is used in the --preset argument. There must not be two presets (configure, build, or test) in the union of CMakePresets.json and CMakeUserPresets.json in the same directory with the same name.",
@@ -920,6 +953,9 @@
                         "type": "object",
                         "description": "An optional object specifying output options.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "shortProgress": {
                                 "type": "boolean",
                                 "description": "An optional boolean. If true, equivalent to passing --progress on the command line."
@@ -989,10 +1025,16 @@
                         "type": "object",
                         "description": "An optional object specifying how to filter the tests to run.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "include": {
                                 "type": "object",
                                 "description": "An optional object specifying which tests to include.",
                                 "properties": {
+                                    "$comment": {
+                                        "$ref": "#/definitions/$comment"
+                                    },
                                     "name": {
                                         "type": "string",
                                         "description": "An optional string specifying a regex for test names. Equivalent to passing --tests-regex on the command line."
@@ -1007,6 +1049,9 @@
                                                 "type": "object",
                                                 "description": "An optional object specifying tests to include by test index.",
                                                 "properties": {
+                                                    "$comment": {
+                                                        "$ref": "#/definitions/$comment"
+                                                    },
                                                     "start": {
                                                         "type": "integer",
                                                         "description": "An optional integer specifying a test index to start testing at."
@@ -1047,6 +1092,9 @@
                                 "type": "object",
                                 "description": "An optional object specifying which tests to exclude.",
                                 "properties": {
+                                    "$comment": {
+                                        "$ref": "#/definitions/$comment"
+                                    },
                                     "name": {
                                         "type": "string",
                                         "description": "An optional string specifying a regex for test names. Equivalent to passing --exclude-regex on the command line."
@@ -1059,6 +1107,9 @@
                                         "type": "object",
                                         "description": "An optional object specifying which fixtures to exclude from adding tests.",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "any": {
                                                 "type": "string",
                                                 "description": "An optional string specifying a regex for text fixtures to exclude from adding any tests. Equivalent to --fixture-exclude-any on the command line."
@@ -1083,6 +1134,9 @@
                         "type": "object",
                         "description": "An optional object specifying options for test execution.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "stopOnFailure": {
                                 "type": "boolean",
                                 "description": "An optional boolean. If true, equivalent to passing --stop-on-failure on the command line."
@@ -1115,6 +1169,9 @@
                                 "type": "object",
                                 "description": "An optional object specifying how to repeat tests. Equivalent to passing --repeat on the command line.",
                                 "properties": {
+                                    "$comment": {
+                                        "$ref": "#/definitions/$comment"
+                                    },
                                     "mode": {
                                         "type": "string",
                                         "description": "A required string. Must be one of the following values: \"until-fail\", \"until-pass\", or \"after-timeout\".",
@@ -1175,6 +1232,9 @@
             "items": {
                 "type": "object",
                 "properties": {
+                    "$comment": {
+                        "$ref": "#/definitions/$comment"
+                    },
                     "name": {
                         "type": "string",
                         "description": "A required string representing the machine-friendly name of the preset. This identifier is used in the --preset argument. There must not be two package presets in the union of CMakePresets.json and CMakeUserPresets.json in the same directory with the same name, but a package preset may have the same name as a configure, build, test or workflow preset.",
@@ -1283,6 +1343,9 @@
                         "type": "object",
                         "description": "An optional object specifying output options.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "debug": {
                                 "type": "boolean",
                                 "description": "An optional boolean specifying whether or not to print debug information. If true, equivalent to passing --debug on the command line."
@@ -1319,6 +1382,9 @@
             "items": {
                 "type": "object",
                 "properties": {
+                    "$comment": {
+                        "$ref": "#/definitions/$comment"
+                    },
                     "name": {
                         "type": "string",
                         "description": "A required string representing the machine-friendly name of the preset. This identifier is used in the '--workflow --preset' CMake argument. There must not be two workflow presets in the union of CMakePresets.json and CMakeUserPresets.json in the same directory with the same name, but a workflow preset may have the same name as a configure, build, test or package preset.",
@@ -1343,6 +1409,9 @@
                         "items": {
                             "type": "object",
                             "properties": {
+                                "$comment": {
+                                    "$ref": "#/definitions/$comment"
+                                },
                                 "type": {
                                     "type": "string",
                                     "description": "A required string representing the type of the preset associated with this workflow step. The first must be of 'configure' type, while all others may be either 'build', 'test' or 'package'.",
@@ -1397,6 +1466,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1416,6 +1488,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1440,6 +1515,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1464,6 +1542,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1491,6 +1572,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1518,6 +1602,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1542,6 +1629,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1566,6 +1656,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1588,6 +1681,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1610,6 +1706,9 @@
                 {
                     "type": "object",
                     "properties": {
+                        "$comment": {
+                            "$ref": "#/definitions/$comment"
+                        },
                         "type": {
                             "type": "string",
                             "description": "A required string specifying the type of the condition.",
@@ -1636,6 +1735,23 @@
                 {
                     "type": "null",
                     "description": "Null indicates that the condition always evaluates to true and is not inherited."
+                }
+            ]
+        },
+        "$comment": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "description": "The single-line comment"
+                },
+                {
+                    "type": "array",
+                    "description": "The multi-line comment",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string",
+                        "description": "One line of the multi-line comment"
+                    }
                 }
             ]
         }
