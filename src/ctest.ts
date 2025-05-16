@@ -17,6 +17,7 @@ import { ProjectController } from '@cmt/projectController';
 import { extensionManager } from '@cmt/extension';
 import { CMakeProject } from '@cmt/cmakeProject';
 import { handleCoverageInfoFiles } from '@cmt/coverage';
+import { FailurePattern, FailurePatternsConfig } from '@cmt/config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -130,6 +131,61 @@ interface ProjectCoverageConfig {
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
+}
+
+export function searchOutputForFailures(patterns: FailurePatternsConfig, output: string): vscode.TestMessage[] {
+    output = normalizeLF(output);
+    const messages = [];
+    patterns = Array.isArray(patterns) ? patterns : [patterns];
+    for (let pattern of patterns) {
+        pattern = typeof pattern === 'string' ? { regexp: pattern } : pattern;
+        pattern.file ??= 1;
+        pattern.line ??= 2;
+        pattern.message ??= 3;
+
+        try {
+            for (const match of output.matchAll(RegExp(pattern.regexp, "g"))) {
+                if (pattern.file && match[pattern.file]) {
+                    messages.push(matchToTestMessage(pattern, match));
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    return messages;
+}
+
+function matchToTestMessage(pat: FailurePattern, match: RegExpMatchArray): vscode.TestMessage {
+    const file = match[pat.file as number];
+    const line = pat.line ? parseLineMatch(match[pat.line]) : 0;
+    const message = pat.message && match[pat.message]?.trim() || 'Test Failed';
+    const actual = pat.actual ? match[pat.actual] : undefined;
+    const expected = pat.expected ? match[pat.expected] : undefined;
+
+    const testMessage = new vscode.TestMessage(normalizeCRLF(message));
+    testMessage.location = new vscode.Location(
+        vscode.Uri.file(file), new vscode.Position(line, 0)
+    );
+    testMessage.expectedOutput = expected;
+    testMessage.actualOutput = actual;
+    return testMessage;
+}
+
+function normalizeLF(s: string) {
+    return s.replace(/\r\n?/g, '\n');
+}
+
+function normalizeCRLF(s: string) {
+    return s = s.replace(/\r?\n/g, '\r\n');
+}
+
+function parseLineMatch(line: string | null) {
+    const i = parseInt(line || '');
+    if (i) {
+        return i - 1;
+    }
+    return 0;
 }
 
 function parseXmlString<T>(xml: string): Promise<T> {
@@ -410,7 +466,13 @@ export class CTestDriver implements vscode.Disposable {
         } else {
             log.info(message.message);
         }
-        run.failed(test, message, duration);
+        const outputMessages = searchOutputForFailures(
+            this.ws.config.ctestFailurePatterns as FailurePatternsConfig,
+            // string cast OK; never passed TestMessage with MarkdownString message
+            message.message as string
+        );
+        const messages = outputMessages.length ? outputMessages : message;
+        run.failed(test, messages, duration);
     }
 
     /**
