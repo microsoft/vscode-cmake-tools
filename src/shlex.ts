@@ -13,21 +13,23 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     opt = opt || {
         mode: process.platform === 'win32' ? 'windows' : 'posix'
     };
+
     const quoteChars = opt.mode === 'posix' ? '\'"' : '"';
     const escapeChars = '\\';
     let escapeChar: string | undefined;
-    let token: string | undefined;
+    let token: string[] = [];
     let isSubQuote: boolean = false;
 
     for (let i = 0; i < str.length; ++i) {
         const char = str.charAt(i);
+
         if (escapeChar) {
             if (char === '\n') {
                 // Do nothing
             } else if (escapeChars.includes(char)) {
-                token = (token || '') + char;
+                token.push(char);
             } else {
-                token = (token || '') + escapeChar + char;
+                token.push(escapeChar, char);  // Append escape sequence
             }
             // We parsed an escape seq. Reset to no escape
             escapeChar = undefined;
@@ -35,45 +37,42 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
         }
 
         if (escapeChars.includes(char)) {
-            // We're parsing an escape sequence.
+            // Start escape sequence
             escapeChar = char;
             continue;
         }
 
         if (isSubQuote) {
             if (quoteChars.includes(char)) {
-                // Reached the end of a sub-quoted token.
+                // End of sub-quoted token
                 isSubQuote = false;
-                token = (token || '') + char;
+                token.push(char);
                 continue;
             }
-            // Another quoted char
-            token = (token || '') + char;
+            token.push(char);
             continue;
         }
 
         if (quoteChars.includes(char)) {
-            // Beginning of a sub-quoted token
+            // Beginning of a subquoted token
             isSubQuote = true;
-            // Accumulate
-            token = (token || '') + char;
+            token.push(char);
             continue;
         }
 
         if (!isSubQuote && /[\t \n\r\f]/.test(char)) {
-            if (token !== undefined) {
-                yield token;
+            if (token.length > 0) {
+                yield token.join('');
             }
-            token = undefined;
+            token = [];
             continue;
         }
 
-        // Accumulate
-        token = (token || '') + char;
+        token.push(char);
     }
 
-    if (token !== undefined) {
-        yield token;
+    if (token.length > 0) {
+        yield token.join('');
     }
 }
 
