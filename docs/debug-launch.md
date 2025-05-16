@@ -186,8 +186,28 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
 
 The value of the `program` attribute is expanded by CMake Tools to be the absolute path of the program to run.
 
+### Cache variable substitution
+
+You can substitute the value of any variable in the CMake cache by adding a `command`-type input for the `cmake.cacheVariable` command to the `inputs` section of `launch.json` with `args.name` as the name of the cache variable. That input can then be used with input variable substitution of values in the `configuration` section of `launch.json`. The optional `args.default` can provide a default value if the named variable isn't found in the CMake cache.
+
+```jsonc
+{
+    "version": "0.2.0",
+    "inputs": [
+        {
+            "id": "cmakeCache.TOOLCHAIN_FILE",
+            "type": "command",
+            "command": "cmake.cacheVariable",
+            "args": {
+                "name": "CMAKE_TOOLCHAIN_FILE"
+            }
+        }
+    ]
+}
+```
+
 > **Note:**
-> You must successfully [configure](configure.md) before `cmake.launchTargetPath` and `cmake.getLaunchTargetDirectory` will resolve correctly.
+> You must successfully [configure](configure.md) before `cmake.launchTargetPath`, `cmake.getLaunchTargetDirectory` and `cmake.cacheVariable` will resolve correctly.
 
 ## Debugging tests
 

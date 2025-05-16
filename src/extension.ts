@@ -1809,6 +1809,11 @@ export class ExtensionManager implements vscode.Disposable {
         return this.queryCMakeProject(cmakeProject => cmakeProject.tasksBuildCommand(), folder);
     }
 
+    cacheVariable(args: { name?: string; default?: string }) {
+        telemetry.logEvent("substitution", { input: "cacheVariable", ...args });
+        return this.queryCMakeProject(cmakeProject => cmakeProject.cacheVariable(args.name, args.default));
+    }
+
     debugTarget(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string): Promise<vscode.DebugSession | null> {
         telemetry.logEvent("debug", { all: "false" });
         return this.runCMakeCommand(cmakeProject => cmakeProject.debugTarget(name), folder, undefined, true, sourceDir);
@@ -2371,6 +2376,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'buildType',
         'buildDirectory',
         'executableTargets',
+        'cacheVariable',
         'debugTarget',
         'debugTargetAll',
         'launchTarget',
