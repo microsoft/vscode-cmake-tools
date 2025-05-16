@@ -34,7 +34,7 @@ export interface CppDebugConfiguration {
     externalConsole?: boolean;
     console?: ConsoleTypes;
     logging?: DebuggerLogging;
-    visualizerFile?: string;
+    visualizerFile?: string | string[];
     args?: string[];
     cwd?: string;
     environment?: proc.DebuggerEnvironmentVariable[];
