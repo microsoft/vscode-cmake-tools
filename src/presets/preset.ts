@@ -262,6 +262,7 @@ export interface ConfigurePreset extends Preset {
     vendor?: VendorVsSettings | VendorType;
     toolchainFile?: string;
     installDir?: string;
+    graphviz?: string;
 
     // Private fields
     __developerEnvironmentArchitecture?: string; // Private field to indicate which VS Dev Env architecture we're using, if VS Dev Env is used.
@@ -1349,6 +1350,10 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
         expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts, errorHandler));
     }
 
+    if (preset.graphviz) {
+        expandedPreset.graphviz = util.lightNormalizePath(await expandString(preset.graphviz, expansionOpts, errorHandler));
+    }
+
     if (preset.cacheVariables) {
         expandedPreset.cacheVariables = {};
         for (const cacheVarName in preset.cacheVariables) {
@@ -2259,6 +2264,9 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     }
     if (preset.installDir) {
         result.push(`-DCMAKE_INSTALL_PREFIX=${preset.installDir}`);
+    }
+    if (preset.graphviz) {
+        result.push(`--graphviz=${preset.graphviz}`);
     }
 
     // Warnings
