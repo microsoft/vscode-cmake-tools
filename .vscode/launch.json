@@ -119,6 +119,32 @@
             },
         },
         {
+            "name": "Run single-root-ctest Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceFolder}/test/end-to-end-tests/single-root-ctest/project-folder",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/end-to-end-tests/single-root-ctest/index"
+            ],
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js",
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/**",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/end-to-end-tests/single-root-ctest/*",
+                "${workspaceFolder}/out/test/end-to-end-tests/single-root-ctest/test/*"
+            ],
+            "preLaunchTask": "Pretest",
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
+            },
+        },
+        {
             "name": "Run multi-root-UI Tests",
             "type": "extensionHost",
             "request": "launch",
