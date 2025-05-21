@@ -35,6 +35,7 @@
   },
   "icon": "res/logo.png",
   "activationEvents": [
+    "onCommand:cmake.cacheVariable",
     "onCommand:cmake.activeFolderName",
     "onCommand:cmake.activeFolderPath",
     "onCommand:cmake.activeConfigurePresetName",
@@ -131,12 +132,12 @@
         {
             "language": "cmake",
             "scopeName": "source.cmake",
-            "path": "./syntaxes/CMake.tmLanguage"
+            "path": "./syntaxes/CMake.tmLanguage.json"
         },
         {
             "language": "cmake-cache",
             "scopeName": "source.cmakecache",
-            "path": "./syntaxes/CMakeCache.tmLanguage"
+            "path": "./syntaxes/CMakeCache.tmLanguage.json"
         }
     ],
     "commands": [
@@ -2044,6 +2045,15 @@
           "description": "%cmake-tools.configuration.cmake.defaultActiveFolder.description%",
           "scope": "window"
         },
+        "cmake.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.exclude.description%",
+          "scope": "window"
+        },
         "cmake.cmakePath": {
           "type": "string",
           "default": "cmake",
@@ -2253,6 +2263,12 @@
           "type": "string",
           "default": null,
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription%",
+          "scope": "machine-overridable"
+        },
+        "cmake.ctest.testSuiteDelimiterMaxOccurrence": {
+          "type": "number",
+          "default": 0,
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription%",
           "scope": "machine-overridable"
         },
         "cmake.ctest.debugLaunchTarget": {
@@ -3662,6 +3678,12 @@
           "default": [],
           "description": "%cmake-tools.configuration.cmake.coverageInfoFiles.description%",
           "scope": "resource"
+        },
+        "cmake.useFolderPropertyInBuildTargetDropdown": {
+            "type": "boolean",
+            "default": false,
+            "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
+            "scope": "resource"
         }
       }
     },
@@ -3781,6 +3803,7 @@
     "@types/chai": "^4.2.15",
     "@types/chai-as-promised": "^7.1.3",
     "@types/chai-string": "^1.4.2",
+    "@types/demangler-js": "^0.1.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json5": "~0.0.30",
     "@types/lodash": "4.14.202",
@@ -3831,10 +3854,11 @@
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
-    "@friedemannsommer/lcov-parser": "^4.0.1",
+    "@friedemannsommer/lcov-parser": "^5.0.0",
     "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^7.1.0",
     "chokidar": "^3.5.1",
+    "demangler-js": "^0.1.7",
     "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.0.0",

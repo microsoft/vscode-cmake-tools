@@ -1297,7 +1297,7 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
     // Put the preset.environment on top of combined environment in the `__parentEnvironment` field.
     // If for some reason the preset.__parentEnvironment is undefined, default to process.env.
     // NOTE: Based on logic in `tryApplyVsDevEnv`, `preset.__parentEnvironment` should never be undefined at this point.
-    const env = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
+    const env = EnvironmentUtils.mergePreserveNull([process.env, preset.__parentEnvironment, preset.environment]);
 
     // Expand strings under the context of current preset, also, pass preset.__parentEnvironment as a penvOverride so we include devenv if present.
     // `preset.__parentEnvironment` is allowed to be undefined here because in expansion, it will default to process.env.
@@ -1676,7 +1676,7 @@ async function getBuildPresetInheritsHelper(folder: string, preset: BuildPreset,
 }
 
 export async function expandBuildPresetVariables(preset: BuildPreset, name: string, workspaceFolder: string, sourceDir: string, errorHandler?: ExpansionErrorHandler): Promise<BuildPreset> {
-    const env = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
+    const env = EnvironmentUtils.mergePreserveNull([process.env, preset.__parentEnvironment, preset.environment]);
 
     // Expand strings under the context of current preset
     const expandedPreset: BuildPreset = { name };
@@ -1852,7 +1852,7 @@ async function getTestPresetInheritsHelper(folder: string, preset: TestPreset, w
 }
 
 export async function expandTestPresetVariables(preset: TestPreset, name: string, workspaceFolder: string, sourceDir: string, errorHandler?: ExpansionErrorHandler): Promise<TestPreset> {
-    const env = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
+    const env = EnvironmentUtils.mergePreserveNull([process.env, preset.__parentEnvironment, preset.environment]);
 
     const expandedPreset: TestPreset = { name };
     const expansionOpts: ExpansionOptions = await getExpansionOptions(workspaceFolder, sourceDir, preset, env, preset.__parentEnvironment);
@@ -2066,7 +2066,7 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 }
 
 export async function expandPackagePresetVariables(preset: PackagePreset, name: string, workspaceFolder: string, sourceDir: string, errorHandler?: ExpansionErrorHandler): Promise<PackagePreset> {
-    const env = EnvironmentUtils.mergePreserveNull([preset.__parentEnvironment ?? process.env, preset.environment]);
+    const env = EnvironmentUtils.mergePreserveNull([process.env, preset.__parentEnvironment, preset.environment]);
 
     const expandedPreset: PackagePreset = { name };
     // Package presets cannot expand the macro ${generator} so this can't be included in opts
@@ -2255,10 +2255,10 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     }
 
     if (preset.toolchainFile) {
-        result.push(`-DCMAKE_TOOLCHAIN_FILE=${encodeURI(preset.toolchainFile)}`);
+        result.push(`-DCMAKE_TOOLCHAIN_FILE=${preset.toolchainFile}`);
     }
     if (preset.installDir) {
-        result.push(`-DCMAKE_INSTALL_PREFIX=${encodeURI(preset.installDir)}`);
+        result.push(`-DCMAKE_INSTALL_PREFIX=${preset.installDir}`);
     }
 
     // Warnings
@@ -2391,7 +2391,7 @@ export function testArgs(preset: TestPreset): string[] {
         preset.execution.resourceSpecFile && result.push('--resource-spec-file', preset.execution.resourceSpecFile);
         preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
         preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);
-        preset.execution.repeat && result.push(`--repeat ${preset.execution.repeat.mode}:${preset.execution.repeat.count}`);
+        preset.execution.repeat && result.push('--repeat', `${preset.execution.repeat.mode}:${preset.execution.repeat.count}`);
         preset.execution.interactiveDebugging && result.push('--interactive-debug-mode 1');
         preset.execution.interactiveDebugging === false && result.push('--interactive-debug-mode 0');
         preset.execution.scheduleRandom && result.push('--schedule-random');
