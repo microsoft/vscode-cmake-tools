@@ -1,4 +1,5 @@
-import { DefaultEnvironment, expect } from '@test/util';
+// Disable as it's blocking tests in PR's, we should investigate this further in order to re-enable.
+/**import { DefaultEnvironment, expect } from '@test/util';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -14,8 +15,7 @@ const enum TestResultState {
     Errored = 6
 };
 
-// Disable as it's blocking tests in PR's, we should investigate this further in order to re-enable.
-/**suite('Coverage integration', () => {
+suite('Coverage integration', () => {
     let testEnv: DefaultEnvironment;
 
     suiteSetup(async function (this: Mocha.Context) {
