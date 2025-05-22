@@ -22,7 +22,7 @@
     "syntaxes"
   ],
   "engines": {
-    "vscode": "^1.88.0"
+    "vscode": "^1.95.0"
   },
   "categories": [
     "Other",
@@ -71,6 +71,30 @@
   ],
   "main": "./dist/main",
   "contributes": {
+    "languageModelTools": [
+      {
+        "name": "cmake-tools-build",
+        "tags": [
+          "cmake",
+          "build"
+        ],
+        "toolReferenceName": "cmakeToolsBuild",
+        "displayName": "CMake Tools Build",
+        "modelDescription": "Building a CMake project with the CMake Tools extension",
+        "userDescription": "Building a CMake project with the CMake Tools extension",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(cmake-tools-build)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "buildTarget": {
+              "type": "string",
+              "description": "The specific build target to build. This is optional- if not specified, the default target will be built."
+            }
+          }
+        }
+      }
+    ],
     "icons": {
       "cmake-tools-build": {
         "description": "CMake build icon",
@@ -3800,7 +3824,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.88.0",
+    "@types/vscode": "1.95.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@types/uuid": "~8.3.3",

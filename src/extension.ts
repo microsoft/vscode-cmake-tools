@@ -50,6 +50,7 @@ import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugg
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from "@cmt/ctest";
 import { LanguageServiceData } from './languageServices/languageServiceData';
+import { BuildTool } from './languageModelTools/buildTool';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2447,6 +2448,10 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         // Notification of active project change (e.g. when cmake.sourceDirectory changes)
         vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange())
     ]);
+
+    context.subscriptions.push(
+        vscode.lm.registerTool("cmake-tools-build", new BuildTool())
+    );
 
     return { getApi: (version: api.Version) => {
         // Since our API is backwards compatible, we can make our version number match that which was requested.
