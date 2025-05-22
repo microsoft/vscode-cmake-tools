@@ -2874,6 +2874,22 @@ export class CMakeProject {
         return env;
     }
 
+    async cacheVariable(name?: string, defaultValue?: string): Promise<string | null> {
+        if (await this.needsReconfigure()) {
+            await this.configureInternal(ConfigureTrigger.api, [], ConfigureType.Normal);
+        }
+        if (!name) {
+            void vscode.window.showErrorMessage(localize('cachevariable.missing.required.argument.name', 'cacheVariable: missing required argument "name".'));
+            return null;
+        }
+        const value = (await CMakeCache.fromPath(await this.cachePath))?.get(name)?.value ?? defaultValue;
+        if (value === null || value === undefined) {
+            void vscode.window.showErrorMessage(localize('cachevariable.not.found', 'Variable "{0}" not found in CMake cache, and no default provided.', name));
+            return null;
+        }
+        return value;
+    }
+
     /**
      * Implementation of `cmake.debugTarget`
      */
