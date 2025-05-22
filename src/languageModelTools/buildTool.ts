@@ -5,6 +5,7 @@ interface IBuildToolOptions {
     target?: string;
 }
 
+// TODO: Implement telemetry for num of arguments and prepareInvocation and invoke.
 export class BuildTool implements vscode.LanguageModelTool<IBuildToolOptions> {
     async invoke(_options: vscode.LanguageModelToolInvocationOptions<IBuildToolOptions>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult> {
         const result = await extensionManager?.build();

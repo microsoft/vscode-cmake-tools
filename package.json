@@ -80,8 +80,8 @@
         ],
         "toolReferenceName": "cmakeToolsBuild",
         "displayName": "CMake Tools Build",
-        "modelDescription": "Building a CMake project with the CMake Tools extension",
-        "userDescription": "Building a CMake project with the CMake Tools extension",
+        "modelDescription": "Build a CMake project. If a CMake project is asked to be built, this tool can be used to build it.",
+        "userDescription": "Build a CMake project with the CMake Tools extension",
         "canBeReferencedInPrompt": true,
         "icon": "$(cmake-tools-build)",
         "inputSchema": {
@@ -92,7 +92,8 @@
               "description": "The specific build target to build. This is optional- if not specified, the default target will be built."
             }
           }
-        }
+        },
+        "when": "cmake:enableFullFeatureSet"
       },
       {
         "name": "cmake-tools-ctest",
@@ -103,8 +104,8 @@
         ],
         "toolReferenceName": "cmakeToolsCtest",
         "displayName": "CMake Tools CTest",
-        "modelDescription": "Executing the ctest tests for a CMake project with the CMake Tools extension",
-        "userDescription": "Executing the ctest tests for a CMake project with the CMake Tools extension",
+        "modelDescription": "Execute the ctest tests for a CMake project",
+        "userDescription": "Execute the ctest tests for a CMake project with the CMake Tools extension",
         "canBeReferencedInPrompt": true,
         "inputSchema": {
           "type": "object",
@@ -118,7 +119,8 @@
               }
             }
           }
-        }
+        },
+        "when": "cmake:enableFullFeatureSet"
       }
     ],
     "icons": {

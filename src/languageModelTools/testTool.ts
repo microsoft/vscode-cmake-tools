@@ -5,6 +5,7 @@ interface ITestToolOptions {
     tests?: string[];
 }
 
+// TODO: Implement telemetry for num of arguments and prepareInvocation and invoke.
 export class TestTool implements vscode.LanguageModelTool<ITestToolOptions> {
     async invoke(_options: vscode.LanguageModelToolInvocationOptions<ITestToolOptions>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult> {
         const result = await extensionManager?.ctest();
