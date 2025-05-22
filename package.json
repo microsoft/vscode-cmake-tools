@@ -93,6 +93,32 @@
             }
           }
         }
+      },
+      {
+        "name": "cmake-tools-ctest",
+        "tags": [
+          "cmake",
+          "ctest",
+          "test"
+        ],
+        "toolReferenceName": "cmakeToolsCtest",
+        "displayName": "CMake Tools CTest",
+        "modelDescription": "Executing the ctest tests for a CMake project with the CMake Tools extension",
+        "userDescription": "Executing the ctest tests for a CMake project with the CMake Tools extension",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tests": {
+              "type": "array",
+              "description": "The specific build target to build. This is optional- if not specified, the default target will be built.",
+              "items": {
+                "type": "string",
+                "description": "The specific test to run. This is optional- if not specified, all tests will be run."
+              }
+            }
+          }
+        }
       }
     ],
     "icons": {

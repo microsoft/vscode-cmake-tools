@@ -1,4 +1,3 @@
-import { title } from 'process';
 import * as vscode from 'vscode';
 import { extensionManager } from '@cmt/extension';
 

@@ -51,6 +51,7 @@ import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@
 import { deIntegrateTestExplorer } from "@cmt/ctest";
 import { LanguageServiceData } from './languageServices/languageServiceData';
 import { BuildTool } from './languageModelTools/buildTool';
+import { TestTool } from './languageModelTools/testTool';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2450,7 +2451,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     ]);
 
     context.subscriptions.push(
-        vscode.lm.registerTool("cmake-tools-build", new BuildTool())
+        vscode.lm.registerTool("cmake-tools-build", new BuildTool()),
+        vscode.lm.registerTool("cmake-tools-ctest", new TestTool())
     );
 
     return { getApi: (version: api.Version) => {
