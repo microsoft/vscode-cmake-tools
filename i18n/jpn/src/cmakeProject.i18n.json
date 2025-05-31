@@ -157,6 +157,8 @@
 	"project.configuration.failed": "プロジェクトの構成に失敗しました。",
 	"install.failed": "インストールに失敗",
 	"launch.with.overrides": "注: ターゲットを起動していて、VS Code設定からいくつかの環境のオーバーライドが適用されています。",
+	"cachevariable.missing.required.argument.name": "cacheVariable: 必要な引数 \"name\" が指定されていません。",
+	"cachevariable.not.found": "変数 \"{0}\" は CMake キャッシュに見つかりませんでした。また、既定値も指定されていません。",
 	"set.up.and.build.project.before.debugging": "デバッグする前に、CMake プロジェクトを設定してビルドしてください。",
 	"target.debugging.unsupported": "ターゲットのデバッグは、レガシ ドライバーではサポートされなくなりました",
 	"learn.more.button": "詳細情報",

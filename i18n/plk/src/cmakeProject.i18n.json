@@ -157,6 +157,8 @@
 	"project.configuration.failed": "Konfigurowanie projektu nie powiodło się.",
 	"install.failed": "Instalacja nie powiodła się",
 	"launch.with.overrides": "UWAGA: uruchamiasz element docelowy i z ustawień programu VS Code są stosowane pewne zastąpienia środowiska.",
+	"cachevariable.missing.required.argument.name": "cacheVariable: brakuje wymaganego argumentu „name”.",
+	"cachevariable.not.found": "Nie znaleziono zmiennej „{0}” w pamięci podręcznej narzędzia CMake i nie podano wartości domyślnej.",
 	"set.up.and.build.project.before.debugging": "Skonfiguruj i skompiluj projekt narzędzia CMake przed debugowaniem.",
 	"target.debugging.unsupported": "Debugowanie elementu docelowego nie jest już obsługiwane w przypadku starszego sterownika",
 	"learn.more.button": "Dowiedz się więcej",
