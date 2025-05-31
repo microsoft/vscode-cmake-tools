@@ -157,6 +157,8 @@
 	"project.configuration.failed": "Fehler bei der Konfiguration des Projekts.",
 	"install.failed": "Installationsfehler",
 	"launch.with.overrides": "HINWEIS: Sie starten ein Ziel, und es werden einige Umgebungsüberschreibungen aus Ihren VS Code-Einstellungen angewendet.",
+	"cachevariable.missing.required.argument.name": "cacheVariable: Das erforderliche Argument \"name\" fehlt.",
+	"cachevariable.not.found": "Die Variable \"{0}\" wurde im CMake-Cache nicht gefunden, und es wurde kein Standardwert angegeben.",
 	"set.up.and.build.project.before.debugging": "Richten Sie vor dem Debuggen Ihr CMake-Projekt ein, und erstellen Sie es.",
 	"target.debugging.unsupported": "Das Zieldebuggen wird mit dem Legacytreiber nicht mehr unterstützt.",
 	"learn.more.button": "Weitere Informationen",
