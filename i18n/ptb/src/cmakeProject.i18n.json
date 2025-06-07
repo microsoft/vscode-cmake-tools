@@ -157,6 +157,8 @@
 	"project.configuration.failed": "Falha na configuração do projeto.",
 	"install.failed": "A instalação falhou",
 	"launch.with.overrides": "OBSERVAÇÃO: você está iniciando um destino e há algumas substituições de ambiente sendo aplicadas nas configurações do VS Code.",
+	"cachevariable.missing.required.argument.name": "cacheVariable: faltando o argumento necessário \"name\".",
+	"cachevariable.not.found": "Variável \"{0}\" não encontrada no cache do CMake e nenhum padrão fornecido.",
 	"set.up.and.build.project.before.debugging": "Configure e compile o seu projeto do CMake antes da depuração.",
 	"target.debugging.unsupported": "Não há mais suporte para depuração de destino com o driver herdado",
 	"learn.more.button": "Saiba mais",
