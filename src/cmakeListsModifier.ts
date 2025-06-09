@@ -186,7 +186,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             }
 
             let variableSourceList: SourceList | null = null;
-            if (settings.variableSelection === 'auto' || variableSourceLists.length < 2) {
+            if (settings.variableSelection === 'auto' || varSourceLists.length < 2) {
                 variableSourceList = varSourceLists[0];
             } else {
                 variableSourceList = await showVariableSourceListOptions(
