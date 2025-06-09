@@ -1108,7 +1108,7 @@ class ScopeSourceList extends SourceList {
             isHeader(uri) || isCxxModule(uri) ? HEADER_SCOPES : SOURCE_SCOPES;
         return [
             -Number(!!this.fileSet),
-            this.fileSet ? -this.fileSet?.name : '',
+            this.fileSet ? this.fileSet?.name : '',
             scopePriorities.indexOf(this.scope)
         ].concat(super.sortKeys(uri));
     }
