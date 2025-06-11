@@ -2371,7 +2371,19 @@
               }
             },
             "visualizerFile": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "default": ""
+                },
+                {
+                  "type": "array",
+                  "default": [],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
               "description": "%cmake-tools.configuration.cmake.debugConfig.visualizerFile.description%"
             },
             "args": {
