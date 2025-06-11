@@ -157,6 +157,8 @@
 	"project.configuration.failed": "設定專案失敗。",
 	"install.failed": "安裝失敗",
 	"launch.with.overrides": "注意: 您正在啟動目標，且您的 VS Code 設定中正在套用某些環境覆寫。",
+	"cachevariable.missing.required.argument.name": "cacheVariable: 缺少必要的參數 \"name\"。",
+	"cachevariable.not.found": "在 CMake 快取中找不到變數「{0}」，也未提供預設值。",
 	"set.up.and.build.project.before.debugging": "先設定並建置 CMake 專案再偵錯。",
 	"target.debugging.unsupported": "舊版驅動程式已不再支援目標偵錯",
 	"learn.more.button": "深入了解",
