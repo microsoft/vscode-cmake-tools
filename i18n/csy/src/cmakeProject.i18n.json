@@ -157,6 +157,8 @@
 	"project.configuration.failed": "Konfigurace projektu se nezdařila.",
 	"install.failed": "Instalace selhala.",
 	"launch.with.overrides": "POZNÁMKA: Spouštíte cíl a používají některá přepisující nastavení prostředí z vašeho nastavení VS Code.",
+	"cachevariable.missing.required.argument.name": "cacheVariable: Chybí povinný argument name.",
+	"cachevariable.not.found": "V mezipaměti CMake nebyla nalezena proměnná {0} a nebyla zadána žádná výchozí hodnota.",
 	"set.up.and.build.project.before.debugging": "Před zahájením ladění nastavte a sestavte projekt CMake.",
 	"target.debugging.unsupported": "U starší verze ovladače už není podporované ladění cíle.",
 	"learn.more.button": "Další informace",
