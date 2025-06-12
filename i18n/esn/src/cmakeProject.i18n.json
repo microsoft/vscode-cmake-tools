@@ -157,6 +157,8 @@
 	"project.configuration.failed": "Error de configuración del proyecto.",
 	"install.failed": "Error en la instalación",
 	"launch.with.overrides": "NOTA: está iniciando un destino y se están aplicando algunas invalidaciones de entorno de la configuración de VS Code.",
+	"cachevariable.missing.required.argument.name": "cacheVariable: falta el argumento requerido \"name\".",
+	"cachevariable.not.found": "No se encontró la variable \"{0}\" en la caché de CMake y no se proporcionó ningún valor predeterminado.",
 	"set.up.and.build.project.before.debugging": "Configure y compile el proyecto de CMake antes de la depuración.",
 	"target.debugging.unsupported": "La depuración de destino ya no se admite con el controlador heredado.",
 	"learn.more.button": "Más información",

@@ -157,6 +157,8 @@
 	"project.configuration.failed": "Не удалось настроить проект.",
 	"install.failed": "Сбой установки",
 	"launch.with.overrides": "ПРИМЕЧАНИЕ. Вы запускаете цель, и в настройках VS Code применяются некоторые переопределения среды.",
+	"cachevariable.missing.required.argument.name": "cacheVariable: отсутствует необходимый аргумент \"name\".",
+	"cachevariable.not.found": "Переменная \"{0}\" не найдена в кэше CMake и для нее не задано значение по умолчанию.",
 	"set.up.and.build.project.before.debugging": "Настройте и создайте проект CMake перед отладкой.",
 	"target.debugging.unsupported": "Отладка целевых объектов с устаревшим драйвером больше не поддерживается.",
 	"learn.more.button": "Дополнительные сведения",
