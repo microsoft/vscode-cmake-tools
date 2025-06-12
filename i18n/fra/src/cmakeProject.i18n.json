@@ -157,6 +157,8 @@
 	"project.configuration.failed": "Échec de la configuration du projet.",
 	"install.failed": "Échec de l’installation",
 	"launch.with.overrides": "REMARQUE : vous lancez une cible et des remplacements d’environnement sont appliqués à partir de vos paramètres de VS Code.",
+	"cachevariable.missing.required.argument.name": "cacheVariable : l'argument obligatoire « name » est manquant.",
+	"cachevariable.not.found": "La variable «{0}» est introuvable dans le cache CMake et aucune valeur par défaut n’est fournie.",
 	"set.up.and.build.project.before.debugging": "Configurez et générez votre projet CMake avant le débogage.",
 	"target.debugging.unsupported": "Le débogage cible n'est plus pris en charge avec le pilote hérité",
 	"learn.more.button": "En savoir plus",
