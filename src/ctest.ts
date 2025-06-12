@@ -210,12 +210,14 @@ export async function readTestResultsFile(testXml: string): Promise<CTestResults
     }
 }
 
-class CTestOutputLogger implements OutputConsumer {
+export class CTestOutputLogger extends proc.CommandConsumer implements OutputConsumer {
     output(line: string) {
+        this._stdout.push(line);
         log.info(line);
     }
     error(line: string) {
-        this.output(line);
+        log.error(line);
+        this._stderr.push(line);
     }
 }
 
@@ -653,10 +655,10 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     }
 
-    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], cancellationToken: vscode.CancellationToken, customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
+    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], cancellationToken: vscode.CancellationToken, _customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
             ctestPath, ctestArgs,
-            ((customizedTask && consumer) ? consumer : new CTestOutputLogger()),
+            ((consumer) ? consumer : new CTestOutputLogger()),
             { environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir });
 
         const cancellationHandler = cancellationToken.onCancellationRequested(async () => {
@@ -974,10 +976,10 @@ export class CTestDriver implements vscode.Disposable {
             if (projectCoverageConfig.preRunCoverageTarget) {
                 log.info(localize('test.buildingPreRunCoverageTarget', 'Building the preRunCoverageTarget for project {0} before running tests with coverage.', projectCoverageConfig.project.sourceDir));
                 const rc = await projectCoverageConfig.project.build([projectCoverageConfig.preRunCoverageTarget]);
-                if (rc !== 0) {
+                if (rc.result !== 0) {
                     log.error(localize('test.preRunCoverageTargetFailure', 'Building the preRunCoverageTarget \'{0}\' on project in {1} failed. Skipping running tests.', projectCoverageConfig.preRunCoverageTarget, projectCoverageConfig.project.sourceDir));
                     run.end();
-                    return rc;
+                    return rc.result;
                 }
             }
         }
@@ -986,9 +988,9 @@ export class CTestDriver implements vscode.Disposable {
             if (projectCoverageConfig.postRunCoverageTarget) {
                 log.info(localize('test.buildingPostRunCoverageTarget', 'Building the postRunCoverageTarget \'{0}\' for project {1} after the tests have run with coverage.', projectCoverageConfig.postRunCoverageTarget, projectCoverageConfig.project.sourceDir));
                 const rc = await projectCoverageConfig.project.build([projectCoverageConfig.postRunCoverageTarget]);
-                if (rc !== 0) {
+                if (rc.result !== 0) {
                     log.error(localize('test.postRunCoverageTargetFailure', 'Building target postRunCoverageTarget on project in {0} failed. Skipping handling of coverage data.', projectCoverageConfig.project.sourceDir));
-                    return rc;
+                    return rc.result;
                 }
             }
         }
@@ -1291,7 +1293,7 @@ export class CTestDriver implements vscode.Disposable {
                             extensionManager.cleanOutputChannel();
                         }
                         const buildResult = await project.build(undefined, false, false);
-                        if (buildResult !== 0) {
+                        if (buildResult.result !== 0) {
                             status = 2;
                         }
                     } catch (e) {

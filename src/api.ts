@@ -12,7 +12,7 @@ import { assertNever } from '@cmt/util';
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
 
-    version: api.Version = api.Version.v2;
+    version: api.Version = api.Version.v4;
 
     showUIElement(element: api.UIElement): Promise<void> {
         return this.setUIElementVisibility(element, true);
@@ -83,20 +83,44 @@ class CMakeProjectWrapper implements api.Project {
         return withErrorCheck('configure', async () => (await this.project.configure()).result);
     }
 
+    async configureWithResult(): Promise<api.CommandResult> {
+        return this.project.configure();
+    }
+
     build(targets?: string[]): Promise<void> {
-        return withErrorCheck('build', () => this.project.build(targets));
+        return withErrorCheck('build', async () => (await this.project.build(targets)).result);
+    }
+
+    async buildWithResult(targets?: string[]): Promise<api.CommandResult> {
+        return this.project.build(targets);
+    }
+
+    async ctestWithResult(_tests?: string[]): Promise<api.CommandResult> {
+        throw new Error('ctestWithResult is not implemented in CMakeToolsApiImpl');
     }
 
     install(): Promise<void> {
         return withErrorCheck('install', () => this.project.install());
     }
 
+    installWithResult(): Promise<api.CommandResult> {
+        throw new Error('installWithResult is not implemented in CMakeToolsApiImpl');
+    }
+
     clean(): Promise<void> {
         return withErrorCheck('clean', () => this.project.clean());
     }
 
+    async cleanWithResult(): Promise<api.CommandResult> {
+        throw new Error('cleanWithResult is not implemented in CMakeToolsApiImpl');
+    }
+
     reconfigure(): Promise<void> {
         return withErrorCheck('reconfigure', async () => (await this.project.cleanConfigure()).result);
+    }
+
+    async reconfigureWithResult(): Promise<api.CommandResult> {
+        throw new Error('reconfigureWithResult is not implemented in CMakeToolsApiImpl');
     }
 
     async getBuildDirectory(): Promise<string | undefined> {
@@ -105,5 +129,13 @@ class CMakeProjectWrapper implements api.Project {
 
     async getActiveBuildType(): Promise<string | undefined> {
         return (await this.project.currentBuildType()) ?? undefined;
+    }
+
+    async listBuildTargets(): Promise<string[] | undefined> {
+        throw new Error('listBuildTargets is not implemented in CMakeToolsApiImpl');
+    }
+
+    async listTests(): Promise<string[] | undefined> {
+        throw new Error('listTests is not implemented in CMakeToolsApiImpl');
     }
 }

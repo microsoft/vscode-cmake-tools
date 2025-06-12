@@ -43,6 +43,7 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
     constructor() {
         this.extension = vscode.extensions.getExtension("ms-vscode.cmake-tools")!;
     }
+    languageModelAccessInformation!: vscode.LanguageModelAccessInformation;
     public clean() {
         (this.workspaceState as TestMemento).clear();
         (this.globalState as StateMemento).clear();
@@ -91,6 +92,7 @@ export class SmokeTestExtensionContext implements vscode.ExtensionContext {
     constructor(public readonly extensionPath: string) {
         this.extension = vscode.extensions.getExtension("ms-vscode.cmake-tools")!;
     }
+    languageModelAccessInformation!: vscode.LanguageModelAccessInformation;
     public clean() {
         (this.workspaceState as TestMemento).clear();
         (this.globalState as StateMemento).clear();

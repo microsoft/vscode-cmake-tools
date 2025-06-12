@@ -51,8 +51,9 @@ import paths from '@cmt/paths';
 import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
-import { ConfigurationType } from 'vscode-cmake-tools';
 import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
+
+import { CommandResult, ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1534,7 +1535,7 @@ export class CMakeProject {
             // recursively search the build directory for all
             const searchRoot = await this.binaryDir;
             if (await fs.exists(searchRoot)) {
-                (await fs.walk(searchRoot)).forEach(e => {
+                (await fs.walk(searchRoot)).forEach((e: { name: string; path: string }) => {
                     if (e.name === 'compile_commands.json') {
                         compdbPaths.push(e.path);
                     }
@@ -1904,6 +1905,8 @@ export class CMakeProject {
         log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
         const result = await cb(consumer);
+        result.stdout = consumer.stdout;
+        result.stderr = consumer.stderr;
         populateCollection(collections.cmake, consumer.diagnostics);
         return result;
     }
@@ -2035,12 +2038,12 @@ export class CMakeProject {
         return drv ? this.tasksBuildCommandDrv(drv) : null;
     }
 
-    private activeBuild: Promise<number> = Promise.resolve(0);
+    private activeBuild: Promise<CommandResult> = Promise.resolve({result: 0});
 
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<CommandResult> {
         if (!showCommandOnly) {
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
@@ -2057,14 +2060,18 @@ export class CMakeProject {
             } else {
                 throw new Error(localize('failed.to.get.build.command', 'Failed to get build command'));
             }
-            return 0;
+            return {
+                result: 0
+            };
         }
 
         const configResult = await this.ensureConfigured();
         if (configResult === null) {
             throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
         } else if (configResult !== 0) {
-            return configResult;
+            return {
+                result: configResult
+            };
         }
         drv = await this.getCMakeDriverInstance();
         if (!drv) {
@@ -2101,7 +2108,9 @@ export class CMakeProject {
                 } else {
                     buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                 }
-                return rc === null ? -1 : rc;
+                return {
+                    result: rc === null ? -1 : rc
+                };
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
                 return await vscode.window.withProgress(
@@ -2139,7 +2148,11 @@ export class CMakeProject {
                         }
                         await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);
-                        return rc === null ? -1 : rc;
+                        return {
+                            result: rc === null ? -1 : rc,
+                            stdout: consumer!.stdout,
+                            stderr: consumer!.stderr
+                        };
                     }
                 );
             }
@@ -2155,7 +2168,7 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true): Promise<number> {
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true): Promise<CommandResult> {
         this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand);
         return this.activeBuild;
     }
@@ -2251,7 +2264,7 @@ export class CMakeProject {
         if (target === this.targetsInPresetName) {
             targets = this.buildPreset?.targets;
         }
-        return this.build(util.isString(targets) ? [targets] : targets);
+        return (await this.build(util.isString(targets) ? [targets] : targets)).result;
     }
 
     private readonly targetsInPresetName = localize('targests.in.preset', '[Targets In Preset]');
@@ -2354,7 +2367,7 @@ export class CMakeProject {
      * Implementaiton of `cmake.clean`
      */
     async clean(): Promise<number> {
-        return this.build(['clean'], false, false);
+        return (await this.build(['clean'], false, false)).result;
     }
 
     /**
@@ -2365,7 +2378,7 @@ export class CMakeProject {
         if (cleanResult !== 0) {
             return cleanResult;
         }
-        return this.build();
+        return (await this.build()).result;
     }
 
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
@@ -2377,7 +2390,7 @@ export class CMakeProject {
             extensionManager.cleanOutputChannel();
         }
         const buildResult = await this.build(undefined, false, false);
-        if (buildResult !== 0) {
+        if (buildResult.result !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));
         }
 
@@ -2388,10 +2401,10 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false): Promise<number> {
+    async ctest(fromWorkflow: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
         const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv);
-        return (retc) ? 0 : -1;
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, consumer);
+        return retc;
     }
 
     async cpack(fromWorkflow: boolean = false): Promise<number> {
@@ -2399,7 +2412,7 @@ export class CMakeProject {
         const drv = await this.preTest(fromWorkflow);
         const retc = await this.cPackageController.runCPack(drv);
         this.isBusy.set(false);
-        return (retc) ? 0 : -1;
+        return retc;
     }
 
     async workflow(): Promise<number> {
@@ -2447,7 +2460,7 @@ export class CMakeProject {
      * Implementation of `cmake.install`
      */
     async install(): Promise<number> {
-        return this.build(['install'], false, false);
+        return (await this.build(['install'], false, false)).result;
     }
 
     /**
@@ -2824,7 +2837,7 @@ export class CMakeProject {
                 }
 
                 const buildResult = await this.build(buildTargets);
-                if (buildResult !== 0) {
+                if (buildResult.result !== 0) {
                     log.debug(localize('build.failed', 'Build failed'));
                     return null;
                 }
