@@ -139,7 +139,7 @@ interface ProjectCoverageConfig {
 }
 
 export function searchOutputForFailures(patterns: FailurePatternsConfig, output: string): vscode.TestMessage[] {
-    output = normalizeLF(output);
+    output = util.normalizeLF(output);
     const messages = [];
     patterns = Array.isArray(patterns) ? patterns : [patterns];
     for (let pattern of patterns) {
@@ -168,21 +168,13 @@ function matchToTestMessage(pat: FailurePattern, match: RegExpMatchArray): vscod
     const actual = pat.actual ? match[pat.actual] : undefined;
     const expected = pat.expected ? match[pat.expected] : undefined;
 
-    const testMessage = new vscode.TestMessage(normalizeCRLF(message));
+    const testMessage = new vscode.TestMessage(util.normalizeCRLF(message));
     testMessage.location = new vscode.Location(
         vscode.Uri.file(file), new vscode.Position(line, 0)
     );
     testMessage.expectedOutput = expected;
     testMessage.actualOutput = actual;
     return testMessage;
-}
-
-function normalizeLF(s: string) {
-    return s.replace(/\r\n?/g, '\n');
-}
-
-function normalizeCRLF(s: string) {
-    return s = s.replace(/\r?\n/g, '\r\n');
 }
 
 function parseLineMatch(line: string | null) {
@@ -699,7 +691,7 @@ export class CTestDriver implements vscode.Disposable {
 
         let output = testResult.output;
         // https://code.visualstudio.com/api/extension-guides/testing#test-output
-        output = output.replace(/\r?\n/g, '\r\n');
+        output = util.normalizeCRLF(output);
         if (test.uri && test.range) {
             run.appendOutput(output, new vscode.Location(test.uri, test.range.end), test);
         } else {
