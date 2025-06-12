@@ -116,7 +116,7 @@ export class CMakeParser {
                 case QUOTED:
                     arg.value = unescape(arg.raw.slice(1, -1)); break;
                 case BRACKETED:
-                    arg.value = arg.raw.replace(/^\[(=*)\[(.*)\]\1\]$/, '$1'); break;
+                    arg.value = arg.raw.replace(/^\[(=*)\[(.*)\]\1\]$/, '$2'); break;
                 case UNQUOTED: default:
                     arg.value = unescape(arg.raw); break;
             }
