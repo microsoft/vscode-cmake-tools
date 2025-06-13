@@ -29,6 +29,7 @@ Bug Fixes:
 - Fix evaluation of conditions in presets. [#4425](https://github.com/microsoft/vscode-cmake-tools/issues/4425)
 - Fix ENOENT error at vscode startup on some circumstances [#2855](https://github.com/microsoft/vscode-cmake-tools/issues/2855) Contributed by STMicroelectronics
 - Fix repeat execution option in test presets [#4443](https://github.com/microsoft/vscode-cmake-tools/issues/4443)
+- Fix bug that makes some build hang [#4424](https://github.com/microsoft/vscode-cmake-tools/issues/4424) and [#4465](https://github.com/microsoft/vscode-cmake-tools/issues/4465)
 
 ## 1.20.53
 
