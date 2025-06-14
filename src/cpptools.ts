@@ -66,7 +66,7 @@ interface TargetDefaults {
 
 function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean, canUseCxx26: boolean): StandardVersion {
     const isGnu = canUseGnu && std.startsWith('gnu');
-    if (std.endsWith('++26') || std.endsWith('++2c') || std == 'c++latest') {
+    if (std.endsWith('++26') || std.endsWith('++2c') || std === 'c++latest') {
         if (canUseCxx26) {
             return isGnu ? 'gnu++26' : 'c++26';
         } else if (canUseCxx23) {
@@ -74,7 +74,7 @@ function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean,
         } else {
             return isGnu ? 'gnu++20' : 'c++20';
         }
-    } else if (std.endsWith('++23') || std.endsWith('++2b') || std == 'c++23preview') {
+    } else if (std.endsWith('++23') || std.endsWith('++2b') || std === 'c++23preview') {
         if (canUseCxx23) {
             return isGnu ? 'gnu++23' : 'c++23';
         } else {
