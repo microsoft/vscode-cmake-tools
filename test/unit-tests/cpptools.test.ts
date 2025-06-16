@@ -30,7 +30,7 @@ suite('CppTools tests', () => {
         expect(info.standard).to.eql('c++26');
         info = parseCompileFlags(cpptoolsVersion7, ['/std:c++23preview']);
         expect(info.standard).to.eql('c++23');
-       
+
         // Verify CppTools API version 6
         info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
         expect(info.standard).to.eql('c++23');
