@@ -64,23 +64,11 @@ interface TargetDefaults {
     defines?: string[];
 }
 
-function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean, canUseCxx26: boolean): StandardVersion {
+function parseCppStandard(std: string, canUseGnu: boolean): StandardVersion {
     const isGnu = canUseGnu && std.startsWith('gnu');
-    if (std.endsWith('++26') || std.endsWith('++2c') || std === 'c++latest') {
-        if (canUseCxx26) {
-            return isGnu ? 'gnu++26' : 'c++26';
-        } else if (canUseCxx23) {
-            return isGnu ? 'gnu++23' : 'c++23';
-        } else {
-            return isGnu ? 'gnu++20' : 'c++20';
-        }
-    } else if (std.endsWith('++23') || std.endsWith('++2b') || std === 'c++23preview') {
-        if (canUseCxx23) {
-            return isGnu ? 'gnu++23' : 'c++23';
-        } else {
-            return isGnu ? 'gnu++20' : 'c++20';
-        }
-    } else if (std.endsWith('++20') || std.endsWith('++2a')) {
+    if (std === 'c++latest' || std.endsWith('++26') || std.endsWith('++2c') ||
+        std.endsWith('++23') || std.endsWith('++2b') || std === 'c++23preview' ||
+        std.endsWith('++20') || std.endsWith('++2a')) {
         return isGnu ? 'gnu++20' : 'c++20';
     } else if (std.endsWith('++17') || std.endsWith('++1z')) {
         return isGnu ? 'gnu++17' : 'c++17';
@@ -163,8 +151,6 @@ function parseTargetArch(target: string): Architecture {
 export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], lang?: string): CompileFlagInformation {
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
-    const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
-    const canUseCxx26 = (cptVersion >= cpptools.Version.v7);
     // No need to parse language standard for CppTools API v6 and above
     const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
@@ -215,7 +201,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
         } else if (extractStdFlag && (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:'))) {
             const std = value.substring(5);
             if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
-                const s = parseCppStandard(std, canUseGnuStd, canUseCxx23, canUseCxx26);
+                const s = parseCppStandard(std, canUseGnuStd);
                 if (!s) {
                     log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
                 } else {
@@ -229,7 +215,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
                     standard = s;
                 }
             } else if (lang === undefined) {
-                let s = parseCppStandard(std, canUseGnuStd, canUseCxx23, canUseCxx26);
+                let s = parseCppStandard(std, canUseGnuStd);
                 if (!s) {
                     s = parseCStandard(std, canUseGnuStd);
                 }

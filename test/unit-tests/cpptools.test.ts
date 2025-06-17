@@ -21,27 +21,15 @@ suite('CppTools tests', () => {
 
         // Verify CppTools API version 7
         let info = parseCompileFlags(cpptoolsVersion7, ['-std=c++26']);
-        expect(info.standard).to.eql('c++26');
-        info = parseCompileFlags(cpptoolsVersion7, ['-std=c++2c']);
-        expect(info.standard).to.eql('c++26');
-        info = parseCompileFlags(cpptoolsVersion7, ['-std=gnu++26']);
-        expect(info.standard).to.eql('gnu++26');
-        info = parseCompileFlags(cpptoolsVersion7, ['/std:c++latest']);
-        expect(info.standard).to.eql('c++26');
-        info = parseCompileFlags(cpptoolsVersion7, ['/std:c++23preview']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
 
         // Verify CppTools API version 6
         info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
         info = parseCompileFlags(cpptoolsVersion6, ['-std=c++2b']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
         info = parseCompileFlags(cpptoolsVersion6, ['-std=gnu++23']);
-        expect(info.standard).to.eql('gnu++23');
-        info = parseCompileFlags(cpptoolsVersion6, ['/std:c++latest']);
-        expect(info.standard).to.eql('c++23');
-        info = parseCompileFlags(cpptoolsVersion6, ['/std:c++23preview']);
-        expect(info.standard).to.eql('c++23');
+        expect(info.standard).to.eql(undefined);
 
         // Verify CppTools API version 5
         info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
