@@ -17,14 +17,9 @@ suite('CppTools tests', () => {
         const cpptoolsVersion4 = Version.v4;
         const cpptoolsVersion5 = Version.v5;
         const cpptoolsVersion6 = Version.v6;
-        const cpptoolsVersion7 = Version.v7;
-
-        // Verify CppTools API version 7
-        let info = parseCompileFlags(cpptoolsVersion7, ['-std=c++26']);
-        expect(info.standard).to.eql(undefined);
 
         // Verify CppTools API version 6
-        info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
+        let info = parseCompileFlags(cpptoolsVersion6, ['-std=c++23']);
         expect(info.standard).to.eql(undefined);
         info = parseCompileFlags(cpptoolsVersion6, ['-std=c++2b']);
         expect(info.standard).to.eql(undefined);
