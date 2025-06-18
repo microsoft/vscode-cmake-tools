@@ -6075,7 +6075,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---------------------------------------------------------
 
-vscode-cpptools 6.0.1 - MIT
+vscode-cpptools 6.1.0 - MIT
 https://github.com/Microsoft/vscode-cpptools-api#readme
 
 Copyright (c) Microsoft Corporation

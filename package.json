@@ -3869,7 +3869,7 @@
     "rimraf": "^3.0.2",
     "string.prototype.matchall": "^4.0.10",
     "tmp": "^0.2.1",
-    "vscode-cpptools": "^6.0.1",
+    "vscode-cpptools": "^6.1.0",
     "@vscode/extension-telemetry": "^0.9.6",
     "vscode-nls": "^5.0.0",
     "vscode-tas-client": "^0.1.45",
