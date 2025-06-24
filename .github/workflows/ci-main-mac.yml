@@ -36,7 +36,7 @@ jobs:
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@latest
         with:
-            cmakeVersion: 3.31.6
+            cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
 
       - name: Build fake compilers for tests
