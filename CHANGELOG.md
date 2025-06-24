@@ -6,20 +6,30 @@ Features:
 
 - Add an option to specify the launch target for debugging CTest tests. [#4273](https://github.com/microsoft/vscode-cmake-tools/pull/4273)
 - Add a setting to enable/disable our built-in language services. [#4290](https://github.com/microsoft/vscode-cmake-tools/issues/4290)
+- Add an option to group the default build target dropdown using CMake groups [#3953](https://github.com/microsoft/vscode-cmake-tools/pull/3953) [@itzandroidtab](https://github.com/itzandroidtab)
+- Add `cmake.exclude` setting that allows users to set folders that they want the CMake Tools extension to ignore. [#4112](https://github.com/microsoft/vscode-cmake-tools/issues/4112)
+- Add a command to substitute CMake Cache variables in `launch.json` and `tasks.json`. [#4422](https://github.com/microsoft/vscode-cmake-tools/pull/4422)
+- Add support for presets v10. [#4459](https://github.com/microsoft/vscode-cmake-tools/issues/4459), [#4445](https://github.com/microsoft/vscode-cmake-tools/issues/4452)
 
 Improvements:
 
+- Add name de-mangling for C++ symbols in the Test Explorer view when running tests with coverage. [#4340](https://github.com/microsoft/vscode-cmake-tools/pull/4340) [@rjaegers](https://github.com/rjaegers)
 - No longer convert paths on lowercase on MacOS to enable cpp tools to resolve them. [#4325](https://github.com/microsoft/vscode-cmake-tools/pull/4325) [@tringenbach](https://github.com/tringenbach)
+- Speedup & reduce heap allocations in shlex split module function. Significant gains for mid-large compile_commands.json - CompilationDatabase construction. [#4458](https://github.com/microsoft/vscode-cmake-tools/pull/4458) [@borjamunozf](https://github.com/borjamunozf)
 
 Bug Fixes:
 
 - Fix bug that makes `Configure Task` lists only first folder in workspace. [#3232](https//github.com/microsoft/vscode-cmake-tools/issues/3232)
-- Fix displaying "Go to Test" in the Test Explorer when the DEF_SOURCE_LINE property is set, but there is no backtrace information present. [4321](https://github.com/microsoft/vscode-cmake-tools/pull/4321) [@rjaegers](https://github.com/rjaegers)
+- Fix displaying "Go to Test" in the Test Explorer when the DEF_SOURCE_LINE property is set, but there is no backtrace information present. [#4321](https://github.com/microsoft/vscode-cmake-tools/pull/4321) [@rjaegers](https://github.com/rjaegers)
 - Fix gnuld error parsing false positive on make errors, false negative due to trailing \r, and false parsing of new "multiple definitions" error [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864) [@0xemgy](https://github.com/0xemgy)
 - Fixes for small bug string bugs. [#4319](https://github.com/microsoft/vscode-cmake-tools/issues/4319), [#4317](https://github.com/microsoft/vscode-cmake-tools/issues/4317), [#4312](https://github.com/microsoft/vscode-cmake-tools/issues/4312)
 - Fixes localization for "workspace is" string. [#4374](https://github.com/microsoft/vscode-cmake-tools/issues/4374)
 - Make tooltips for selecting Launch/Debug Target. [#4373](https://github.com/microsoft/vscode-cmake-tools/issues/4373)
 - Fix bug where unrelated symlinks are read as variant files [#4304](https://github.com/microsoft/vscode-cmake-tools/issues/4304) [@vitorramos](https://github.com/vitorramos).
+- Fix evaluation of conditions in presets. [#4425](https://github.com/microsoft/vscode-cmake-tools/issues/4425)
+- Fix ENOENT error at vscode startup on some circumstances [#2855](https://github.com/microsoft/vscode-cmake-tools/issues/2855) Contributed by STMicroelectronics
+- Fix repeat execution option in test presets [#4443](https://github.com/microsoft/vscode-cmake-tools/issues/4443)
+- Fix bug that makes some build hang [#4424](https://github.com/microsoft/vscode-cmake-tools/issues/4424) and [#4465](https://github.com/microsoft/vscode-cmake-tools/issues/4465)
 
 ## 1.20.53
 

@@ -5,6 +5,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     const ret = new ConfigurationReader({
         autoSelectActiveFolder: false,
         defaultActiveFolder: null,
+        exclude: [],
         cmakePath: '',
         buildDirectory: '',
         installPrefix: null,
@@ -29,6 +30,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             allowParallelJobs: false,
             testExplorerIntegrationEnabled: true,
             testSuiteDelimiter: '',
+            testSuiteDelimiterMaxOccurrence: 0,
             debugLaunchTarget: null
         },
         parseBuildDiagnostics: true,
@@ -81,7 +83,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         enableLanguageServices: true,
         preRunCoverageTarget: null,
         postRunCoverageTarget: null,
-        coverageInfoFiles: []
+        coverageInfoFiles: [],
+        useFolderPropertyInBuildTargetDropdown: true
     });
     ret.updatePartial(conf);
     return ret;

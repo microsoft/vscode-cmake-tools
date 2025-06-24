@@ -21,6 +21,7 @@
 	"enable.cmake.presets": "Activer CMakePresets",
 	"dismiss": "Ignorer",
 	"task.not.compatible.with.preset.setting": "La tâche sélectionnée demande un CMakePreset, mais l’espace de travail n’est pas configuré pour CMakePresets",
+	"workspace.is": "L’espace de travail est {0}",
 	"cmake.tools.not.found": "Outils CMake introuvables.",
 	"task.failed": "Échec de la tâche.",
 	"config.started": "Tâche de configuration démarrée...",
