@@ -612,7 +612,17 @@ export async function getExtensionLocalizedPackageJson(): Promise<{[key: string]
         localizedFilePath = path.join(thisExtensionPath(), "package.nls.json");
     }
     const localizedStrings = fs.readFileSync(localizedFilePath, "utf8");
-    return JSON.parse(localizedStrings);
+
+    // Parse the JSON. Then, some package.nls.json entries have an object with this format:
+    //  { "message": <content>, "comment": [<locComments>]}
+    //  To handle this, we will pull out the content of the "message" field
+    const parseJSON = JSON.parse(localizedStrings);
+    for (const key in parseJSON) {
+        if (parseJSON[key].hasOwnProperty("message")) {
+            parseJSON[key] = parseJSON[key].message;
+        }
+    }
+    return parseJSON;
 }
 
 interface CommandPalette {
