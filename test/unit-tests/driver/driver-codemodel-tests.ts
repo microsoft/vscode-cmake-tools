@@ -40,10 +40,10 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
         let kitDefault: Kit;
         if (process.platform === 'win32') {
             kitDefault = {
-                name: 'Visual Studio Community 2019',
-                visualStudio: 'VisualStudio.16.0',
+                name: 'Visual Studio Community 2022',
+                visualStudio: 'VisualStudio.17.0',
                 visualStudioArchitecture: 'x64',
-                preferredGenerator: {name: 'Visual Studio 16 2019', platform: 'x64', toolset: 'host=x64'}
+                preferredGenerator: {name: 'Visual Studio 17 2022', platform: 'x64', toolset: 'host=x64'}
             } as Kit;
         } else {
             kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;

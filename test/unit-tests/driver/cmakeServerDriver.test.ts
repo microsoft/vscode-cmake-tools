@@ -13,7 +13,9 @@ async function cmakeServerDriverFactory(cmake: CMakeExecutable, config: Configur
 // CMake 3.18.3 has problems on macOS, but we don't have an action to install 3.18.2 right now.
 // CMake Server is deprecated and unavailable after 3.20 so we will just skip the tests on macOS.
 // We still have coverage on other platforms.
-if (process.platform !== 'darwin') {
+// Also removing support for CMake Server on Windows as we switch to windows-2022 and beyond. CMake version 3.20 and below
+// don't have VS 2022 support, and CMake 3.20 and beyond don't have server support, so we will disable the tests on Windows as well.
+if (process.platform !== 'darwin' && process.platform !== 'win32') {
     makeDriverTestsuite('Server', cmakeServerDriverFactory);
     makeCodeModelDriverTestsuite('Server', cmakeServerDriverFactory);
 }
