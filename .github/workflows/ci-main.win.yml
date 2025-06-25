@@ -38,14 +38,14 @@ jobs:
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@latest
         with:
-            cmakeVersion: 3.19.7
+            cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
 
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0
         with:
           source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
-          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
+          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin -G Visual Studio 17 2022
           install-build: true
 
       - name: Run backend tests
