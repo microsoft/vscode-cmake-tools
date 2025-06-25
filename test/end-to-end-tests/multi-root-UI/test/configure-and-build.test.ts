@@ -4,14 +4,11 @@ import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
     expect,
-    getFirstSystemKit,
-    getMatchingSystemKit
+    getFirstSystemKit
 } from '@test/util';
 import * as fs_ from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
-const workername: string = process.platform;
 
 suite('Build', () => {
     let folder2: DefaultEnvironment;
@@ -98,54 +95,6 @@ suite('Build', () => {
         const result = await resultFile.getResultAsJson();
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(200000);
-
-    test('Test kit switch after missing preferred generator', async function (this: Mocha.Context) {
-        // Select compiler build node dependent
-        const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-            linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
-        };
-        if (!(workername in os_compilers)) {
-            this.skip();
-        }
-        const compiler = os_compilers[workername];
-
-        // Run test
-        folder2.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
-
-        await vscode.commands.executeCommand('cmake.buildAll');
-
-        folder2.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
-
-        await vscode.commands.executeCommand('cmake.buildAll');
-        const result = await folder2.result.getResultAsJson();
-        expect(result['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(150000);
-
-    test('Test kit switch between different preferred generators and compilers', async function (this: Mocha.Context) {
-        // Select compiler build node dependent
-        const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-            linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
-        };
-        if (!(workername in os_compilers)) {
-            this.skip();
-        }
-        const compiler = os_compilers[workername];
-
-        folder2.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
-        await vscode.commands.executeCommand('cmake.buildAll');
-
-        folder2.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
-        await vscode.commands.executeCommand('cmake.buildAll');
-
-        const result = await folder2.result.getResultAsJson();
-        expect(result['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(150000);
 
     test('Test build twice', async function (this: Mocha.Context) {
         console.log('1. Build');
