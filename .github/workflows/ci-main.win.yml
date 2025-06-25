@@ -45,7 +45,7 @@ jobs:
         uses: urkle/action-cmake-build@v1.0.0
         with:
           source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
-          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin -G Visual Studio 17 2022
+          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
           install-build: true
 
       - name: Run backend tests
