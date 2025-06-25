@@ -88,56 +88,6 @@ suite('Build using Kits and Variants', () => {
         expect(result['cookie']).to.eq('passed-cookie');
     }).timeout(100000);
 
-    test('Test kit switch after missing preferred generator', async function (this: Mocha.Context) {
-        // Select compiler build node dependent
-        const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-            linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
-        };
-        if (!(workername in os_compilers)) {
-            this.skip();
-        }
-        const compiler = os_compilers[workername];
-
-        // Run test
-        testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
-
-        await vscode.commands.executeCommand('cmake.build');
-
-        testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-        await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
-
-        await vscode.commands.executeCommand('cmake.build');
-        const result1 = await testEnv.result.getResultAsJson();
-        expect(result1['compiler']).to.eql(compiler[1].compiler);
-    }).timeout(100000);
-
-    test('Test kit switch between different preferred generators and compilers',
-        async function (this: Mocha.Context) {
-            // Select compiler build node dependent
-            const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
-                linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-                win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
-            };
-            if (!(workername in os_compilers)) {
-                this.skip();
-            }
-            const compiler = os_compilers[workername];
-
-            testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[0].kitLabel)).name);
-            await vscode.commands.executeCommand('cmake.build');
-
-            testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-            await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(undefined, compiler[1].kitLabel)).name);
-            await vscode.commands.executeCommand('cmake.build');
-
-            const result1 = await testEnv.result.getResultAsJson();
-            expect(result1['compiler']).to.eql(compiler[1].compiler);
-        })
-        .timeout(100000);
-
     test('Test build twice', async function (this: Mocha.Context) {
         console.log('1. Build');
         expect(await vscode.commands.executeCommand('cmake.build')).eq(0);

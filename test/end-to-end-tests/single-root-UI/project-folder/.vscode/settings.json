@@ -6,6 +6,5 @@
     "cmake.postRunCoverageTarget": "capture-coverage",
     "cmake.coverageInfoFiles": [
         "${workspaceFolder}/build/lcov.info"
-    ],
-    "cmake.loggingLevel": "debug"
+    ]
 }
