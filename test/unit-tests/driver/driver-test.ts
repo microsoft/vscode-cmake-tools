@@ -63,11 +63,11 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             let secondaryKit: Kit;
             if (process.platform === "win32") {
                 secondaryKit = {
-                    name: "Visual Studio Community 2019 - amd64",
-                    visualStudio: "VisualStudio.16.0",
+                    name: "Visual Studio Community 2022 - amd64",
+                    visualStudio: "VisualStudio.17.0",
                     visualStudioArchitecture: "x64",
                     preferredGenerator: {
-                        name: "Visual Studio 16 2019",
+                        name: "Visual Studio 17 2022",
                         platform: "x64"
                     }
                 } as Kit;
@@ -694,10 +694,10 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                     driver.cmakeCacheEntries.get("CMAKE_GENERATOR")!.value
                 ).to.be.eq("Ninja");
 
-                // Change the generator from Ninja to 'Visual Studio 16 2019'/'Unix Makefiles'.
+                // Change the generator from Ninja to 'Visual Studio 17 2022'/'Unix Makefiles'.
                 if (process.platform === "win32") {
                     await driver.setKit(secondaryKit, [
-                        { name: "Visual Studio 16 2019", platform: "x64" }
+                        { name: "Visual Studio 17 2022", platform: "x64" }
                     ]);
                 } else {
                     await driver.setKit(secondaryKit, [

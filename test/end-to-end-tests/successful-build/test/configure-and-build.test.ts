@@ -131,8 +131,8 @@ suite('Build', () => {
                     { kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja' }
                 ],
                 win32: [
-                    {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
-                    {kitLabel: /^Generator switch test VS 2019 Ninja/, generator: 'Ninja'}
+                    {kitLabel: /^Generator switch test VS 2022/, generator: 'Visual Studio 17 2022'},
+                    {kitLabel: /^Generator switch test VS 2022 Ninja/, generator: 'Ninja'}
                 ]
             };
             if (!(workername in os_compilers)) {
@@ -165,8 +165,8 @@ suite('Build', () => {
                 { kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja' }
             ],
             win32: [
-                {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
-                {kitLabel: /^Generator switch test VS 2019 no generator/, generator: 'Ninja'}
+                {kitLabel: /^Generator switch test VS 2022/, generator: 'Visual Studio 17 2022'},
+                {kitLabel: /^Generator switch test VS 2022 no generator/, generator: 'Ninja'}
             ]
         };
         if (!(workername in os_compilers)) {
