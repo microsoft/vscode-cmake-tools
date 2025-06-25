@@ -4,14 +4,11 @@ import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
     expect,
-    getFirstSystemKit,
-    getMatchingSystemKit
+    getFirstSystemKit
 } from '@test/util';
 import * as fs_ from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
-const workername: string = process.platform;
 
 suite('Build', () => {
     let folder2: DefaultEnvironment;
