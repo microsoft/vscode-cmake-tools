@@ -180,10 +180,10 @@
 	"project.name.no.spaces": "プロジェクト名に空白文字を含めることはできません",
 	"create.cpp": "C++ プロジェクトの作成",
 	"create.c": "C プロジェクトの作成",
-	"create.library": "ライブラリの作成",
 	"create.executable": "実行可能ファイルの作成",
-	"cpack.support": "CPack サポート",
+	"create.library": "ライブラリの作成",
 	"ctest.support": "CTest サポート",
+	"cpack.support": "CPack サポート",
 	"select.additional.options": "その他のオプションを選択する",
 	"select.cpp.files": "CMakeLists.txt ファイルに含めるターゲットを選択します",
 	"create.file.failed": "新しい {0} ファイルを作成できませんでした。ターゲットを CMakeLists.txt に追加する。"

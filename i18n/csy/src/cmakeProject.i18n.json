@@ -180,10 +180,10 @@
 	"project.name.no.spaces": "Název projektu nemůže obsahovat mezery.",
 	"create.cpp": "Vytvořit projekt jazyka C++",
 	"create.c": "Vytvořit projekt jazyka C",
-	"create.library": "Vytvořit knihovnu",
 	"create.executable": "Vytvořit spustitelný soubor",
-	"cpack.support": "Podpora CPacku",
+	"create.library": "Vytvořit knihovnu",
 	"ctest.support": "Podpora CTestu",
+	"cpack.support": "Podpora CPacku",
 	"select.additional.options": "Vyberte další možnosti",
 	"select.cpp.files": "Vyberte cíle, které chcete zahrnout do souboru CMakeLists.txt.",
 	"create.file.failed": "Nepovedlo se vytvořit nový soubor {0}. Přidejte cíl do CMakeLists.txt."

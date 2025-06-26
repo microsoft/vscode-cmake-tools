@@ -180,10 +180,10 @@
 	"project.name.no.spaces": "Proje adı boşluk içeremez",
 	"create.cpp": "C++ projesi oluşturun",
 	"create.c": "C projesi oluşturun",
-	"create.library": "Kitaplık oluştur",
 	"create.executable": "Yürütülebilir dosya oluştur",
-	"cpack.support": "CPack desteği",
+	"create.library": "Kitaplık oluştur",
 	"ctest.support": "CTest desteği",
+	"cpack.support": "CPack desteği",
 	"select.additional.options": "Ek seçenekleri belirleyin",
 	"select.cpp.files": "CMakeLists.txt dosyasına eklenecek hedefleri seçin",
 	"create.file.failed": "Yeni bir {0} dosyası oluşturulamadı. Hedefi CMakeLists.txt dosyasına ekleyin."

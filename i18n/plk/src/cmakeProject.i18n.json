@@ -180,10 +180,10 @@
 	"project.name.no.spaces": "Nazwa nie może zawierać spacji",
 	"create.cpp": "Stwórz projekt języka C++",
 	"create.c": "Stwórz projekt języka C",
-	"create.library": "Utwórz bibliotekę",
 	"create.executable": "Utwórz plik wykonywalny",
-	"cpack.support": "Obsługa pakietu CPack",
+	"create.library": "Utwórz bibliotekę",
 	"ctest.support": "Obsługa narzędzia CTest",
+	"cpack.support": "Obsługa pakietu CPack",
 	"select.additional.options": "Wybierz opcje dodatkowe",
 	"select.cpp.files": "Wybierz elementy docelowe do uwzględnienia w pliku CMakeLists.txt",
 	"create.file.failed": "Nie można utworzyć nowego pliku {0}. Dodaj element docelowy do pliku CMakeLists.txt."

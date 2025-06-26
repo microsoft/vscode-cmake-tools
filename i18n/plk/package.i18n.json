@@ -168,7 +168,7 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Włącz rejestrowanie śledzenia w pliku i na konsoli (bardzo dużo danych).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Wybierz aktywny folder automatycznie.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Ustaw domyślny aktywny folder (działa tylko wtedy, gdy właściwość cmake.autoSelectActiveFolder jest wyłączona).",
-	"cmake-tools.configuration.cmake.exclude.description": "The extension will ignore the folders listed in this setting. The folders should be listed as absolute paths.",
+	"cmake-tools.configuration.cmake.exclude.description": "Rozszerzenie zignoruje foldery wymienione w tym ustawieniu. Foldery powinny być wymienione jako ścieżki bezwzględne.",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "Konfiguruje zaawansowane ustawienia wyświetlania przez rozszerzenie przycisków na pasku Touch Bar komputera MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "Konfiguruje sposób wyświetlania przez rozszerzenie przycisków na pasku Touch Bar komputera MacBook.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "Pokaż przyciski paska Touch Bar w obsługiwanych systemach.",

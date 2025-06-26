@@ -168,7 +168,7 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "為檔案及主控台啟用追蹤記錄 (雜訊非常多)。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "自動選取使用中的資料夾。",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "設定預設作用中資料夾 (只有在 cmake.autoSelectActiveFolder 停用時才有效)。",
-	"cmake-tools.configuration.cmake.exclude.description": "The extension will ignore the folders listed in this setting. The folders should be listed as absolute paths.",
+	"cmake-tools.configuration.cmake.exclude.description": "此延伸模組將忽略此設定中列出的資料夾。資料夾應以絕對路徑列出。",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "設定延伸模組在 MacBook 觸控列上顯示按鈕之進階設定的方式。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "設定延伸模組在 MacBook 觸控列上顯示按鈕的方式。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "在支援的系統上顯示觸控列按鈕。",
