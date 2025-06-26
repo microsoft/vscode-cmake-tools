@@ -463,9 +463,10 @@ export async function getVcVarsBatScript(vsInstall: VSInstallation, hostArch: st
  * @param hostArch The toolset host architecture
  * @param targetArch The toolset target architecture. If unspecified this defaults to `hostArch`
  * @param toolsetVersion The toolset version. If specified `inst` is assumed to have this toolset installed.
+ * @param extraArguments The extra arguments passed to `vcvarsall.bat`.
  */
-export async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string, toolsetVersion?: string): Promise<Environment | null> {
-    log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
+export async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string, toolsetVersion?: string, extraArguments?: string[]): Promise<Environment | null> {
+    log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch} extraArguments:${JSON.stringify(extraArguments)}`);
     const commonDir = path.join(inst.installationPath, 'Common7', 'Tools');
     const majorVersion = parseInt(inst.installationVersion);
     const devbat = await getVcVarsBatScript(inst, hostArch, targetArch);
@@ -474,6 +475,9 @@ export async function varsForVSInstallation(inst: VSInstallation, hostArch: stri
     }
 
     const devBatArgs = [getHostTargetArchString(hostArch, targetArch, majorVersion < 15, true)];
+    if (Array.isArray(extraArguments)) {
+        devBatArgs.push(...extraArguments);
+    }
     if (toolsetVersion && majorVersion >= 15) {
         devBatArgs.push(`-vcvars_ver=${toolsetVersion}`);
     }

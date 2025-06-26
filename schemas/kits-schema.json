@@ -55,6 +55,13 @@
                 "type": "string",
                 "description": "Architecture to target"
             },
+            "visualStudioArguments": {
+                "type": "array",
+                "description": "Arguments to vcvarsall.bat",
+                "items": {
+                    "type": "string"
+                }
+            },
             "environmentSetupScript": {
                 "type": "string",
                 "description": "The absolute path to a script that modifies the environment for the Kit"
