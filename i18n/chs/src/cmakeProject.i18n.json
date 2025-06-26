@@ -180,10 +180,10 @@
 	"project.name.no.spaces": "项目名称不能包含空间",
 	"create.cpp": "创建 C++ 项目",
 	"create.c": "创建 C 项目",
-	"create.library": "创建库",
 	"create.executable": "创建可执行文件",
-	"cpack.support": "CPack 支持",
+	"create.library": "创建库",
 	"ctest.support": "CTest 支持",
+	"cpack.support": "CPack 支持",
 	"select.additional.options": "选择其他选项",
 	"select.cpp.files": "选择要包含在 CMakeLists.txt 文件中的目标",
 	"create.file.failed": "未能创建新的 {0} 文件。将目标添加到 CMakeLists.txt。"

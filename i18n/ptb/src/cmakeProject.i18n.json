@@ -180,10 +180,10 @@
 	"project.name.no.spaces": "O nome do projeto não pode conter espaços",
 	"create.cpp": "Criar um projeto C++",
 	"create.c": "Criar um projeto C",
-	"create.library": "Criar uma biblioteca",
 	"create.executable": "Criar um executável",
-	"cpack.support": "Suporte ao CPack",
+	"create.library": "Criar uma biblioteca",
 	"ctest.support": "Suporte ao CTest",
+	"cpack.support": "Suporte ao CPack",
 	"select.additional.options": "Selecionar opções adicionais",
 	"select.cpp.files": "Selecionar destinos a serem incluídos no arquivo CMakeLists.txt",
 	"create.file.failed": "Falha ao criar um novo arquivo {0}. Adicione o destino ao CMakeLists.txt."

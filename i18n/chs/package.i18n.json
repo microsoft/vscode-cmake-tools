@@ -168,7 +168,7 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "对文件和控制台启用跟踪日志记录(噪音很大)。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "自动选择活动文件夹。",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "设置默认活动文件夹(仅在禁用 cmake.autoSelectActiveFolder 时有效)。",
-	"cmake-tools.configuration.cmake.exclude.description": "The extension will ignore the folders listed in this setting. The folders should be listed as absolute paths.",
+	"cmake-tools.configuration.cmake.exclude.description": "该扩展将忽略此设置中列出的文件夹。文件夹应列为绝对路径。",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "配置扩展如何在 MacBook 触摸栏上显示按钮的高级设置。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "配置扩展在 MacBook 触控栏上显示按钮的方式。",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "在支持的系统上显示触控栏按钮。",

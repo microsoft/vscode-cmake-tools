@@ -180,10 +180,10 @@
 	"project.name.no.spaces": "Der Projektname darf keine Leerzeichen enthalten.",
 	"create.cpp": "C++-Projekt erstellen",
 	"create.c": "C-Projekt erstellen",
-	"create.library": "Bibliothek erstellen",
 	"create.executable": "Ausführbare Datei erstellen",
-	"cpack.support": "CPack-Unterstützung",
+	"create.library": "Bibliothek erstellen",
 	"ctest.support": "CTest-Unterstützung",
+	"cpack.support": "CPack-Unterstützung",
 	"select.additional.options": "Zusätzliche Optionen auswählen",
 	"select.cpp.files": "Ziele auswählen, die in die CMakeLists.txt-Datei eingeschlossen werden sollen",
 	"create.file.failed": "Fehler beim Erstellen einer neuen {0}-Datei. Ziel zu CMakeLists.txt hinzufügen."

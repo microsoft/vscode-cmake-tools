@@ -168,7 +168,7 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "파일 및 콘솔에 대한 추적 로깅을 사용합니다(매우 불안정함).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "활성 폴더를 자동으로 선택합니다.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "기본 활성 폴더를 설정합니다(cmake.autoSelectActiveFolder를 사용하지 않도록 설정한 경우에만 작동).",
-	"cmake-tools.configuration.cmake.exclude.description": "The extension will ignore the folders listed in this setting. The folders should be listed as absolute paths.",
+	"cmake-tools.configuration.cmake.exclude.description": "확장은 이 설정에 나열된 폴더를 무시합니다. 폴더는 절대 경로로 나열되어야 합니다.",
 	"cmake-tools.configuration.cmake.touchbar.advanced.description": "확장에서 MacBook 터치 바에 단추를 표시하는 방법에 대한 고급 설정을 구성합니다.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.description": "확장이 MacBook Touch Bar에 단추를 표시하는 방식을 구성합니다.",
 	"cmake-tools.configuration.cmake.touchbar.visibility.default.description": "지원되는 시스템에 Touch Bar 단추를 표시합니다.",
