@@ -74,6 +74,12 @@ jobs:
         with:
           run: yarn endToEndTestsSingleRoot
 
+      - name: Run single root test for ctest
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: yarn endToEndTestsSingleRootCTest
+
+
       - name: Run multi root test
         uses: GabrielBB/xvfb-action@v1.6
         with:
