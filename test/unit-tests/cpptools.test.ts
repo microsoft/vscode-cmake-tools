@@ -35,6 +35,8 @@ suite('CppTools tests', () => {
         expect(info.standard).to.eql('gnu++14');
         info = parseCompileFlags(cpptoolsVersion5, []);
         expect(info.standard).to.eql(undefined);
+        info = parseCompileFlags(cpptoolsVersion5, ['/std:c++latest']);
+        expect(info.standard).to.eql('c++20');
 
         // Verify CppTools API version 4
         info = parseCompileFlags(cpptoolsVersion4, ['-DFOO=BAR']);
