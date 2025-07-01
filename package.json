@@ -3793,6 +3793,7 @@
     "integrationTests": "yarn run pretest && node ./out/test/integration-tests/runTest.js",
     "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
     "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
+    "endToEndTestsSingleRootCTest": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-ctest/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
     "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/unit-tests/backend/**/*.test.ts",
     "build-product-icon-font": "yarn --cwd ./tools/product-icon-font-generator/ install && yarn --cwd ./tools/product-icon-font-generator/ build && node ./tools/product-icon-font-generator/dist/index.js --source-directory ./res/product-icons/ --output-directory ./res/ --woff2"

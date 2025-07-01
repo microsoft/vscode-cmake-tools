@@ -1,0 +1,91 @@
+{
+  "version": 9,
+  "configurePresets": [
+    {
+      "name": "LinuxBase",
+      "description": "Sets compilers for linux based systems",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${workspaceFolder}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "WindowsBase",
+      "description": "Sets compilers for linux based systems",
+      "hidden": true,
+      "generator": "Visual Studio 16 2019",
+      "binaryDir": "${workspaceFolder}/build",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      }
+    },
+    {
+      "name": "2Successes",
+      "description": "Configures 2 tests that end successfully",
+      "hidden": true,
+      "cacheVariables": {
+        "TESTS_DIR": "${workspaceFolder}/build/vscode-cmake-tools-tests",
+        "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt",
+        "TESTS_NAMES": "Suite1.TestA;Suite2.TestB",
+        "TESTS_SUCCESS": "true;true"
+      }
+    },
+    {
+      "name": "2Successes1Failure",
+      "description": "Configures 2 tests that end successfully and 1 that fails",
+      "hidden": true,
+      "cacheVariables": {
+        "TESTS_DIR": "${workspaceFolder}/build/vscode-cmake-tools-tests",
+        "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt;test_c.txt",
+        "TESTS_NAMES": "Suite1.TestA;Suite2.TestB;Suite2.TestC",
+        "TESTS_SUCCESS": "true;false;true"
+      }
+    },
+    {
+      "name": "3Failures",
+      "description": "Configures 3 tests that fail",
+      "hidden": true,
+      "cacheVariables": {
+        "TESTS_DIR": "${workspaceFolder}/build/vscode-cmake-tools-tests",
+        "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt;test_c.txt",
+        "TESTS_NAMES": "Suite1.TestA;Suite2.TestB;Suite2.TestC",
+        "TESTS_SUCCESS": "false;false;false"
+      }
+    },
+    {
+      "name": "Linux-2Successes",
+      "inherits": ["LinuxBase", "2Successes"],
+      "description": "Configures 2 tests that end successfully under linux"
+    },
+    {
+      "name": "Linux-2Successes1Failure",
+      "inherits": ["LinuxBase", "2Successes1Failure"],
+      "description": "Configures 2 tests that end successfully and 1 that fails under linux"
+    },
+    {
+      "name": "Linux-3Failures",
+      "inherits": ["LinuxBase", "3Failures"],
+      "description": "Configures 3 tests that fail under linux"
+    },
+    {
+      "name": "Windows-2Successes",
+      "inherits": ["WindowsBase", "2Successes"],
+      "description": "Configures 2 tests that end successfully under windows"
+    },
+    {
+      "name": "Windows-2Successes1Failure",
+      "inherits": ["WindowsBase", "2Successes1Failure"],
+      "description": "Configures 2 tests that end successfully and 1 that fails under windows"
+    },
+    {
+      "name": "Windows-3Failures",
+      "inherits": ["WindowsBase", "3Failures"],
+      "description": "Configures 3 tests that fail under windows"
+    }
+  ]
+}
