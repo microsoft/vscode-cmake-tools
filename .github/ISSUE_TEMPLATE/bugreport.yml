@@ -20,9 +20,9 @@ body:
     required: true
 - type: textarea
   attributes:
-    label: CMake Tools Diagnostics
+    label: C/C++ Diagnostics
     description: |
-      Please run the `CMake: Log Diagnostics` command and paste the output here.
+      Please run the `C/C++: Log Diagnostics` command and paste the output here.
     render: shell
   validations:
     required: true
