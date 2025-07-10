@@ -100,19 +100,19 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     install(): Promise<void> {
-        return withErrorCheck('install', () => this.project.install());
+        return withErrorCheck('install', async () => (await this.project.install()).result);
     }
 
     installWithResult(): Promise<api.CommandResult> {
-        throw new Error('installWithResult is not implemented in CMakeToolsApiImpl');
+        return this.project.install();
     }
 
     clean(): Promise<void> {
-        return withErrorCheck('clean', () => this.project.clean());
+        return withErrorCheck('clean', async () => (await this.project.clean()).result);
     }
 
     async cleanWithResult(): Promise<api.CommandResult> {
-        throw new Error('cleanWithResult is not implemented in CMakeToolsApiImpl');
+        return this.project.clean();
     }
 
     reconfigure(): Promise<void> {
@@ -120,7 +120,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     async reconfigureWithResult(): Promise<api.CommandResult> {
-        throw new Error('reconfigureWithResult is not implemented in CMakeToolsApiImpl');
+        return this.project.cleanConfigure();
     }
 
     async getBuildDirectory(): Promise<string | undefined> {

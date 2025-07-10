@@ -2366,15 +2366,15 @@ export class CMakeProject {
     /**
      * Implementaiton of `cmake.clean`
      */
-    async clean(): Promise<number> {
-        return (await this.build(['clean'], false, false)).result;
+    async clean(): Promise<CommandResult> {
+        return (await this.build(['clean'], false, false));
     }
 
     /**
      * Implementation of `cmake.cleanRebuild`
      */
     async cleanRebuild(): Promise<number> {
-        const cleanResult = await this.clean();
+        const cleanResult = (await this.clean()).result;
         if (cleanResult !== 0) {
             return cleanResult;
         }
@@ -2459,8 +2459,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.install`
      */
-    async install(): Promise<number> {
-        return (await this.build(['install'], false, false)).result;
+    async install(): Promise<CommandResult> {
+        return (await this.build(['install'], false, false));
     }
 
     /**
@@ -2824,7 +2824,7 @@ export class CMakeProject {
         const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
         if (buildOnLaunch || isReconfigurationNeeded) {
             if (this.isInstallTarget(chosen.name)) {
-                const installResult = await this.install();
+                const installResult = (await this.install()).result;
                 if (installResult !== 0) {
                     log.debug(localize('install.failed', 'Install failed'));
                     return null;
