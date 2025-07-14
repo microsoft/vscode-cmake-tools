@@ -2565,8 +2565,7 @@ export class CMakeProject {
             return null;
         } if (executableTargets.length === 1) {
             const target = executableTargets[0];
-            await this.workspaceContext.state.setLaunchTargetName(this.folderName, target.name, this.isMultiProjectFolder);
-            this._launchTargetName.set(target.name);
+            await this.setLaunchTargetName(target.name);
             return target.path;
         }
 
@@ -2584,9 +2583,16 @@ export class CMakeProject {
         if (!chosen) {
             return null;
         }
-        await this.workspaceContext.state.setLaunchTargetName(this.folderName, chosen.label, this.isMultiProjectFolder);
-        this._launchTargetName.set(chosen.label);
+        await this.setLaunchTargetName(chosen.label);
         return chosen.detail;
+    }
+
+    private async setLaunchTargetName(name: string) {
+        await this.workspaceContext.state.setLaunchTargetName(this.folderName, name, this.isMultiProjectFolder);
+        if (this.workspaceContext.config.setBuildTargetSameAsLaunchTarget) {
+            await this.setDefaultBuildTarget(name);
+        }
+        this._launchTargetName.set(name);
     }
 
     async getCurrentLaunchTarget(): Promise<ExecutableTarget | null> {
