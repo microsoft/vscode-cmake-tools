@@ -20,7 +20,7 @@ export enum StateMessage {
  * collecting warnings and errors from the configure step. It should be used
  * in conjunction with `proc.execute`.
  */
-export class CMakeOutputConsumer extends CommandConsumer implements OutputConsumer {
+export class CMakeOutputConsumer extends CommandConsumer {
     constructor(readonly sourceDir: string, readonly logger?: Logger) {
         super();
     }
@@ -53,7 +53,7 @@ export class CMakeOutputConsumer extends CommandConsumer implements OutputConsum
         if (this.logger) {
             this.logger.info(line);
         }
-        this._stdout.push(line);
+        super.output(line);
         this._parseDiags(line);
         this._parseStateMessages(line);
     }
@@ -90,7 +90,7 @@ export class CMakeOutputConsumer extends CommandConsumer implements OutputConsum
         if (this.logger) {
             this.logger.error(line);
         }
-        this._stderr.push(line);
+        super.error(line);
         this._parseDiags(line);
     }
 

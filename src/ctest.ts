@@ -17,6 +17,7 @@ import { ProjectController } from '@cmt/projectController';
 import { extensionManager } from '@cmt/extension';
 import { CMakeProject } from '@cmt/cmakeProject';
 import { handleCoverageInfoFiles } from '@cmt/coverage';
+import { CommandResult } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -210,14 +211,14 @@ export async function readTestResultsFile(testXml: string): Promise<CTestResults
     }
 }
 
-export class CTestOutputLogger extends proc.CommandConsumer implements OutputConsumer {
-    output(line: string) {
-        this._stdout.push(line);
+export class CTestOutputLogger extends proc.CommandConsumer {
+    override output(line: string) {
         log.info(line);
+        super.output(line);
     }
-    error(line: string) {
+    override error(line: string) {
         log.error(line);
-        this._stderr.push(line);
+        super.error(line);
     }
 }
 
@@ -311,7 +312,7 @@ export class CTestDriver implements vscode.Disposable {
         return ctestArgs;
     }
 
-    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer): Promise<CommandResult> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
             log.showChannel();
@@ -324,7 +325,7 @@ export class CTestDriver implements vscode.Disposable {
 
             if (!testExplorer) {
                 log.info(localize('test.explorer.not.enabled', 'ctest integration disabled. Please see the `cmake.ctest.testExplorerIntegrationEnabled` setting.'));
-                return -1;
+                return { result: -1 };
             }
 
             const tests = this.testItemCollectionToArray(testExplorer.items);
@@ -348,35 +349,35 @@ export class CTestDriver implements vscode.Disposable {
         }
     }
 
-    private async runCTestDirectly(driver: CMakeDriver, customizedTask: boolean = false, cancellationToken: vscode.CancellationToken, testPreset?: TestPreset, consumer?: proc.OutputConsumer): Promise<number> {
+    private async runCTestDirectly(driver: CMakeDriver, customizedTask: boolean = false, cancellationToken: vscode.CancellationToken, testPreset?: TestPreset, consumer?: proc.CommandConsumer): Promise<CommandResult> {
         // below code taken from #3032 PR (before changes in how tests are run)
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
         if (ctestpath === null) {
             log.info(localize('ctest.path.not.set', 'CTest path is not set'));
-            return -2;
+            return { result: -2 };
         }
 
         const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
 
         if (!driver.testPreset && driver.useCMakePresets) {
             log.error('test.preset.not.set', 'Test preset is not set');
-            return -3;
+            return { result: -3 };
         }
 
         const testResults = await this.runCTestImpl(driver, ctestpath, ctestArgs, cancellationToken, customizedTask, consumer);
 
-        let returnCode: number = 0;
+        let returnValue: CommandResult = { result: 0, stdout: consumer?.stdout, stderr: consumer?.stderr };
         if (testResults) {
             for (let i = 0; i < testResults.site.testing.test.length; i++) {
                 const status = testResults.site.testing.test[i].status;
                 if (status === "notrun" || status === "failed") {
-                    returnCode = -1;
+                    returnValue.result = -1;
                     break;
                 }
             }
         }
 
-        return returnCode;
+        return returnValue;
     }
 
     private ctestsEnqueued(tests: vscode.TestItem[], run: vscode.TestRun) {
@@ -499,7 +500,7 @@ export class CTestDriver implements vscode.Disposable {
         }
     };
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.OutputConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<number> {
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.CommandConsumer, entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<CommandResult> {
         let returnCode: number = 0;
         const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
 
@@ -585,7 +586,7 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        return returnCode;
+        return { result: returnCode, stdout: consumer?.stdout, stderr: consumer?.stderr };
     };
 
     private testResultsAnalysis(testResult: Test, test: vscode.TestItem, returnCode: number, run: vscode.TestRun) {
@@ -655,7 +656,7 @@ export class CTestDriver implements vscode.Disposable {
         return returnCode;
     }
 
-    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], cancellationToken: vscode.CancellationToken, _customizedTask: boolean = false, consumer?: proc.OutputConsumer): Promise<CTestResults | undefined> {
+    private async runCTestImpl(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], cancellationToken: vscode.CancellationToken, _customizedTask: boolean = false, consumer?: proc.CommandConsumer): Promise<CTestResults | undefined> {
         const child = driver.executeCommand(
             ctestPath, ctestArgs,
             ((consumer) ? consumer : new CTestOutputLogger()),
@@ -996,7 +997,7 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         await this.handleCoverageOnProjects(run, projectCoverageConfigs);
-        return runResult;
+        return runResult.result;
     }
 
     private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken, isCoverageRun = false) {

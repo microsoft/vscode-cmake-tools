@@ -127,7 +127,7 @@ export class CompileOutputConsumer implements OutputConsumer {
  * tool writes a status message which can be parsed as containing a progress
  * indicator.
  */
-export class CMakeBuildConsumer extends proc.CommandConsumer implements OutputConsumer, vscode.Disposable {
+export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.Disposable {
     constructor(readonly logger: Logger | null, config: ConfigurationReader) {
         super();
         this.compileConsumer = new CompileOutputConsumer(config);
@@ -152,7 +152,7 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements OutputCo
         if (this.logger) {
             this.logger.error(line);
         }
-        this._stderr.push(line);
+        super.error(line);
     }
 
     output(line: string) {
@@ -160,7 +160,7 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements OutputCo
         if (this.logger) {
             this.logger.info(line);
         }
-        this._stdout.push(line);
+        super.output(line);
         const progress = this._percent_re.exec(line);
         if (progress) {
             const percent = progress[1];

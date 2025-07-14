@@ -8,6 +8,7 @@ import * as api from 'vscode-cmake-tools';
 import CMakeProject from '@cmt/cmakeProject';
 import { ExtensionManager } from '@cmt/extension';
 import { assertNever } from '@cmt/util';
+import { CTestOutputLogger } from '@cmt/ctest';
 
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
@@ -96,7 +97,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     async ctestWithResult(_tests?: string[]): Promise<api.CommandResult> {
-        throw new Error('ctestWithResult is not implemented in CMakeToolsApiImpl');
+        return this.project.ctest(undefined, new CTestOutputLogger());
     }
 
     install(): Promise<void> {

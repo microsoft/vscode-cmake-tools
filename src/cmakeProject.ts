@@ -23,7 +23,7 @@ import {
     ExecutableTarget,
     NoGeneratorError
 } from '@cmt/drivers/drivers';
-import { CTestDriver } from '@cmt/ctest';
+import { CTestDriver, CTestOutputLogger } from '@cmt/ctest';
 import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
@@ -2381,7 +2381,7 @@ export class CMakeProject {
         return (await this.build()).result;
     }
 
-    public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
+    public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.CommandConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
@@ -2401,9 +2401,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, consumer?: proc.OutputConsumer): Promise<number> {
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer): Promise<CommandResult> {
         const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, consumer);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer);
         return retc;
     }
 
