@@ -132,7 +132,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     async listBuildTargets(): Promise<string[] | undefined> {
-        throw new Error('listBuildTargets is not implemented in CMakeToolsApiImpl');
+        return (await this.project.targets).map(target => target.name);    
     }
 
     async listTests(): Promise<string[] | undefined> {
