@@ -97,6 +97,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     async ctestWithResult(_tests?: string[]): Promise<api.CommandResult> {
+        // TODO: We need to pass the tests parameter to the ctest method and utilize it. 
         return this.project.ctest(undefined, new CTestOutputLogger());
     }
 
