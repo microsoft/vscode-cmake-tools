@@ -698,17 +698,17 @@ export class CTestDriver implements vscode.Disposable {
             if (maxCount === 0) {
                 maxCount = Number.MAX_SAFE_INTEGER;
             }
-            const delimiterRegExp = new RegExp(regexString, 'dg');
+            const delimiterRegExp = new RegExp(regexString, 'g');
             const parts = [];
             let lastStart = 0;
             while (parts.length < maxCount) {
-                const match: any = delimiterRegExp.exec(subject);
-                if (match === null || match.indices === null) {
+                const match = delimiterRegExp.exec(subject);
+                if (match === null) { // Remove match.indices check
                     break;
                 }
 
-                parts.push(subject.substring(lastStart, match.indices[0][0]));
-                lastStart = match.indices[0][1];
+                parts.push(subject.substring(lastStart, match.index!));
+                lastStart = match.index! + match[0].length;
             }
 
             parts.push(subject.substring(lastStart));
