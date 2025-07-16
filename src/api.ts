@@ -84,44 +84,44 @@ class CMakeProjectWrapper implements api.Project {
         return withErrorCheck('configure', async () => (await this.project.configure()).result);
     }
 
-    async configureWithResult(): Promise<api.CommandResult> {
-        return this.project.configure();
+    async configureWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
+        return this.project.configure(undefined, cancellationToken);
     }
 
     build(targets?: string[]): Promise<void> {
         return withErrorCheck('build', async () => (await this.project.build(targets)).result);
     }
 
-    async buildWithResult(targets?: string[]): Promise<api.CommandResult> {
-        return this.project.build(targets);
+    async buildWithResult(targets?: string[], cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
+        return this.project.build(targets, undefined, undefined, cancellationToken);
     }
 
-    async ctestWithResult(tests?: string[]): Promise<api.CommandResult> {
-        return this.project.ctest(undefined, new CTestOutputLogger(), tests);
+    async ctestWithResult(tests?: string[], cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
+        return this.project.ctest(undefined, new CTestOutputLogger(), tests, cancellationToken);
     }
 
     install(): Promise<void> {
         return withErrorCheck('install', async () => (await this.project.install()).result);
     }
 
-    installWithResult(): Promise<api.CommandResult> {
-        return this.project.install();
+    installWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
+        return this.project.install(cancellationToken);
     }
 
     clean(): Promise<void> {
         return withErrorCheck('clean', async () => (await this.project.clean()).result);
     }
 
-    async cleanWithResult(): Promise<api.CommandResult> {
-        return this.project.clean();
+    async cleanWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
+        return this.project.clean(cancellationToken);
     }
 
     reconfigure(): Promise<void> {
         return withErrorCheck('reconfigure', async () => (await this.project.cleanConfigure()).result);
     }
 
-    async reconfigureWithResult(): Promise<api.CommandResult> {
-        return this.project.cleanConfigure();
+    async reconfigureWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
+        return this.project.cleanConfigure(undefined, cancellationToken);
     }
 
     async getBuildDirectory(): Promise<string | undefined> {

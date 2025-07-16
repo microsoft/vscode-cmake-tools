@@ -331,7 +331,7 @@ export class CTestDriver implements vscode.Disposable {
         return ctestArgs;
     }
 
-    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[]): Promise<CommandResult> {
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
             log.showChannel();
@@ -350,7 +350,8 @@ export class CTestDriver implements vscode.Disposable {
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
             const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-            const returnCode = await this.runCTestHelper(tests, run, run.token, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun);
+            const combinedToken = util.createCombinedCancellationToken(run.token, cancellationToken);
+            const returnCode = await this.runCTestHelper(tests, run, combinedToken, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun);
             run.end();
             return returnCode;
         } else {
@@ -361,8 +362,9 @@ export class CTestDriver implements vscode.Disposable {
                     cancellable: true
                 },
                 async (progress, cancel) => {
+                    const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
                     progress.report({ message: localize('running.tests', 'Running tests') });
-                    return this.runCTestDirectly(driver, customizedTask, cancel, testPreset, consumer, specificTestsToRun);
+                    return this.runCTestDirectly(driver, customizedTask, combinedToken, testPreset, consumer, specificTestsToRun);
                 }
             );
         }

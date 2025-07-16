@@ -1623,11 +1623,11 @@ export class CMakeProject {
      *          All other configure calls in this extension are able to provide
      *          proper trigger information.
      */
-    configure(extraArgs: string[] = []): Thenable<ConfigureResult> {
-        return this.configureInternal(ConfigureTrigger.api, extraArgs, ConfigureType.Normal);
+    configure(extraArgs: string[] = [], cancellationToken?: vscode.CancellationToken): Thenable<ConfigureResult> {
+        return this.configureInternal(ConfigureTrigger.api, extraArgs, ConfigureType.Normal, undefined, cancellationToken);
     }
 
-    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
+    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation, cancellationToken?: vscode.CancellationToken): Promise<ConfigureResult> {
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // Don't show a progress bar when the extension is using Cache for configuration.
@@ -1663,7 +1663,8 @@ export class CMakeProject {
                 const cancelInformation: ConfigureCancelInformation = {
                     canceled: false
                 };
-                cancel.onCancellationRequested(() => {
+                const combinedCancelToken = util.createCombinedCancellationToken(cancel, cancellationToken);
+                combinedCancelToken.onCancellationRequested(() => {
                     // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
                     cancelInformation.canceled = true;
                     rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
@@ -1806,8 +1807,8 @@ export class CMakeProject {
      *          All other configure calls in this extension are able to provide
      *          proper trigger information.
      */
-    cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) {
-        return this.configureInternal(trigger, [], ConfigureType.Clean);
+    cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api, cancellationToken?: vscode.CancellationToken) {
+        return this.configureInternal(trigger, [], ConfigureType.Clean, undefined, cancellationToken);
     }
 
     /**
@@ -2043,7 +2044,7 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<CommandResult> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
         if (!showCommandOnly) {
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
@@ -2128,7 +2129,8 @@ export class CMakeProject {
                                 oldProgress += increment;
                             }
                         });
-                        cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
+                        const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
+                        combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextAndStore(isBuildingKey, true);
@@ -2168,8 +2170,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true): Promise<CommandResult> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken);
         return this.activeBuild;
     }
 
@@ -2366,8 +2368,8 @@ export class CMakeProject {
     /**
      * Implementaiton of `cmake.clean`
      */
-    async clean(): Promise<CommandResult> {
-        return (await this.build(['clean'], false, false));
+    async clean(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        return (await this.build(['clean'], false, false, cancellationToken));
     }
 
     /**
@@ -2401,9 +2403,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[]): Promise<CommandResult> {
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
         const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken);
         return retc;
     }
 
@@ -2459,8 +2461,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.install`
      */
-    async install(): Promise<CommandResult> {
-        return (await this.build(['install'], false, false));
+    async install(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        return (await this.build(['install'], false, false, cancellationToken));
     }
 
     /**

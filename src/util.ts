@@ -1378,3 +1378,25 @@ function globWrapper(globPattern: string, cwd: string): Promise<boolean> {
         });
     });
 }
+
+export function createCombinedCancellationToken(...tokens: (vscode.CancellationToken | undefined)[]): vscode.CancellationToken {
+    const combinedSource = new vscode.CancellationTokenSource();
+
+    const disposables: vscode.Disposable[] = [];
+
+    for (const token of tokens) {
+        if (token !== undefined) {
+            if (token.isCancellationRequested) {
+                combinedSource.cancel();
+                break;
+            }
+            disposables.push(token.onCancellationRequested(() => combinedSource.cancel()));
+        }
+    }
+
+    combinedSource.token.onCancellationRequested(() => {
+        disposables.forEach(d => d.dispose());
+    });
+
+    return combinedSource.token;
+}
