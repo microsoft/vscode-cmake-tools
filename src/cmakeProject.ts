@@ -2401,9 +2401,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer): Promise<CommandResult> {
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[]): Promise<CommandResult> {
         const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun);
         return retc;
     }
 

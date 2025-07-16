@@ -96,9 +96,8 @@ class CMakeProjectWrapper implements api.Project {
         return this.project.build(targets);
     }
 
-    async ctestWithResult(_tests?: string[]): Promise<api.CommandResult> {
-        // TODO: We need to pass the tests parameter to the ctest method and utilize it. 
-        return this.project.ctest(undefined, new CTestOutputLogger());
+    async ctestWithResult(tests?: string[]): Promise<api.CommandResult> {
+        return this.project.ctest(undefined, new CTestOutputLogger(), tests);
     }
 
     install(): Promise<void> {
@@ -138,6 +137,6 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     async listTests(): Promise<string[] | undefined> {
-        throw new Error('listTests is not implemented in CMakeToolsApiImpl');
+        return this.project.cTestController.getTestNames();
     }
 }
