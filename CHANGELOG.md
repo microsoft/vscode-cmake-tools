@@ -46,6 +46,7 @@ Improvements:
 - Add `cmake.removeStaleKitsOnScan` setting to optionally remove stale compiler kits from the kit picker after a "Scan for Kits" when they are no longer rediscovered. This is useful after compiler upgrades that leave older versions outside `PATH`. Set `"keep": true` in a kit entry to prevent automatic removal. [#3852](https://github.com/microsoft/vscode-cmake-tools/issues/3852)
 - Add `pr-readiness` Copilot skill to verify PRs have a descriptive title, meaningful description, and a properly formatted CHANGELOG entry. [#4862](https://github.com/microsoft/vscode-cmake-tools/pull/4862)
 - Updated IntelliSense tooltips with changes from CMake 4.3.1. [#4872](https://github.com/microsoft/vscode-cmake-tools/pull/4872)
+- When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)
 
 Bug Fixes:
 - Fix `tasks.json` schema validation rejecting valid CMake task commands `package` and `workflow`. [#4167](https://github.com/microsoft/vscode-cmake-tools/issues/4167)
