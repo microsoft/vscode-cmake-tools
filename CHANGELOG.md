@@ -20,6 +20,7 @@ Improvements:
 - Add name de-mangling for C++ symbols in the Test Explorer view when running tests with coverage. [#4340](https://github.com/microsoft/vscode-cmake-tools/pull/4340) [@rjaegers](https://github.com/rjaegers)
 - No longer convert paths on lowercase on MacOS to enable cpp tools to resolve them. [#4325](https://github.com/microsoft/vscode-cmake-tools/pull/4325) [@tringenbach](https://github.com/tringenbach)
 - Speedup & reduce heap allocations in shlex split module function. Significant gains for mid-large compile_commands.json - CompilationDatabase construction. [#4458](https://github.com/microsoft/vscode-cmake-tools/pull/4458) [@borjamunozf](https://github.com/borjamunozf)
+- In the Test Explorer, associate CTest tests with outermost function or macro invocation that calls `add_test()` instead of with the `add_test()` call itself. [#4490](https://github.com/microsoft/vscode-cmake-tools/issues/4490) [@malsyned](https://github.com/malsyned)
 
 Bug Fixes:
 

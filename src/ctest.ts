@@ -698,17 +698,17 @@ export class CTestDriver implements vscode.Disposable {
             if (maxCount === 0) {
                 maxCount = Number.MAX_SAFE_INTEGER;
             }
-            const delimiterRegExp = new RegExp(regexString, 'dg');
+            const delimiterRegExp = new RegExp(regexString, 'g');
             const parts = [];
             let lastStart = 0;
             while (parts.length < maxCount) {
-                const match: any = delimiterRegExp.exec(subject);
-                if (match === null || match.indices === null) {
+                const match = delimiterRegExp.exec(subject);
+                if (match === null) { // Remove match.indices check
                     break;
                 }
 
-                parts.push(subject.substring(lastStart, match.indices[0][0]));
-                lastStart = match.indices[0][1];
+                parts.push(subject.substring(lastStart, match.index!));
+                lastStart = match.index! + match[0].length;
             }
 
             parts.push(subject.substring(lastStart));
@@ -835,11 +835,16 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     }
 
-                    if (!testDefFile && test.backtrace !== undefined && this.tests!.backtraceGraph.nodes[test.backtrace] !== undefined) {
+                    const nodes = this.tests!.backtraceGraph.nodes;
+                    if (!testDefFile && test.backtrace !== undefined && nodes[test.backtrace] !== undefined) {
                         // Use the backtrace graph to find the file and line number
                         // This finds the CMake module's file and line number and not the test file and line number
-                        testDefFile = this.tests!.backtraceGraph.files[this.tests!.backtraceGraph.nodes[test.backtrace].file];
-                        testDefLine = this.tests!.backtraceGraph.nodes[test.backtrace].line;
+                        let node = nodes[test.backtrace];
+                        while (node.parent !== undefined && nodes[node.parent].command !== undefined) {
+                            node = nodes[node.parent];
+                        }
+                        testDefFile = this.tests!.backtraceGraph.files[node.file];
+                        testDefLine = node.line;
                     }
 
                     const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer, testDefFile ? vscode.Uri.file(testDefFile) : undefined);
