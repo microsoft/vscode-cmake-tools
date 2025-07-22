@@ -282,7 +282,7 @@ function parseLineMatch(line: string | null) {
 
 function parseXmlString<T>(xml: string): Promise<T> {
     return new Promise((resolve, reject) => {
-        xml2js.parseString(xml, (err: any, result: T | PromiseLike<T>) => {
+        xml2js.parseString(xml, (err, result) => {
             if (err) {
                 reject(err);
             } else {
