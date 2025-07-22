@@ -7582,10 +7582,10 @@ vscode-cmake-tools@^1.2.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cmake-tools/-/vscode-cmake-tools-1.2.0.tgz"
   integrity sha512-79K8i0l+AfPV28XPoCFCL1BgTVRTPrKZ7YY2KCPOJyy18G/CiriXVa1Gic7A2a16xOoIcsbZRRXoNO0BZTGp9w==
 
-vscode-cpptools@^6.1.0:
-  version "6.1.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cpptools/-/vscode-cpptools-6.1.0.tgz"
-  integrity sha512-+40xMmzSlvaMwWEDIjhHl9+W1RH9xaEbiFAAgLWgyL1FXxQWBguWRHgS91qBJbuFAB9H4UBuK94iFMs+7BFclA==
+vscode-cpptools@^7.1.1:
+  version "7.1.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cpptools/-/vscode-cpptools-7.1.1.tgz#adde3b6d627ddae5397224daa3e41952b219126b"
+  integrity sha1-rd47bWJ92uU5ciTao+QZUrIZEms=
 
 vscode-nls-dev@^3.3.2:
   version "3.3.2"
