@@ -58,10 +58,10 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     }
 }
 
-async function withErrorCheck(name: string, action: () => Promise<number>): Promise<void> {
+async function withErrorCheck(name: string, action: () => Promise<api.CommandResult>): Promise<void> {
     const code = await action();
-    if (code !== 0) {
-        throw new Error(`${name} failed with code ${code}`);
+    if (code.result !== 0) {
+        throw new Error(`${name} failed with code ${code.result}, stdout: ${code.stdout ?? ''}, stderr: ${code.stderr ?? ''}`);
     }
 }
 
@@ -81,7 +81,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     configure(): Promise<void> {
-        return withErrorCheck('configure', async () => (await this.project.configure()).result);
+        return withErrorCheck('configure', async () => (await this.project.configure()));
     }
 
     async configureWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
@@ -89,7 +89,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     build(targets?: string[]): Promise<void> {
-        return withErrorCheck('build', async () => (await this.project.build(targets)).result);
+        return withErrorCheck('build', () => this.project.build(targets));
     }
 
     async buildWithResult(targets?: string[], cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
@@ -101,7 +101,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     install(): Promise<void> {
-        return withErrorCheck('install', async () => (await this.project.install()).result);
+        return withErrorCheck('install', () => this.project.install());
     }
 
     installWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
@@ -109,7 +109,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     clean(): Promise<void> {
-        return withErrorCheck('clean', async () => (await this.project.clean()).result);
+        return withErrorCheck('clean', () => this.project.clean());
     }
 
     async cleanWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
@@ -117,7 +117,7 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     reconfigure(): Promise<void> {
-        return withErrorCheck('reconfigure', async () => (await this.project.cleanConfigure()).result);
+        return withErrorCheck('reconfigure', async () => (await this.project.cleanConfigure()));
     }
 
     async reconfigureWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
