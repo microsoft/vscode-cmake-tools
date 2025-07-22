@@ -1,5 +1,9 @@
 # What's New?
 
+Improvements:
+
+- When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515)
+
 ## 1.21
 
 Features:

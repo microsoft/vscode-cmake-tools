@@ -134,7 +134,7 @@ interface ProjectCoverageConfig {
 
 function parseXmlString<T>(xml: string): Promise<T> {
     return new Promise((resolve, reject) => {
-        xml2js.parseString(xml, (err, result) => {
+        xml2js.parseString(xml, (err: any, result: T | PromiseLike<T>) => {
             if (err) {
                 reject(err);
             } else {
@@ -1270,44 +1270,90 @@ export class CTestDriver implements vscode.Disposable {
         return currentTestItem.id;
     }
 
+    /**
+     * Determine and build all targets needed to rebuild the selected TestItems. Returns a false if anything goes
+     * wrong, and returns an early success if build-before-run is disabled.
+     */
     private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
         // If buildBeforeRun is set to false, we skip the build step
         if (!this.ws.config.buildBeforeRun) {
             return true;
         }
 
-        // Folder => status
-        const builtFolder = new Map<string, number>();
-        let status: number = 0;
+        const foundTarget = new Map<CMakeProject, Map<string, vscode.TestItem[]>>();
         for (const test of tests) {
-            const folder = this.getTestRootFolder(test);
-            if (!builtFolder.has(folder)) {
-                const project = await this.projectController?.getProjectForFolder(folder);
-                if (!project) {
-                    status = 1;
-                } else {
-                    try {
-                        if (extensionManager !== undefined && extensionManager !== null) {
-                            extensionManager.cleanOutputChannel();
-                        }
-                        const buildResult = await project.build(undefined, false, false);
-                        if (buildResult !== 0) {
-                            status = 2;
-                        }
-                    } catch (e) {
-                        status = 2;
-                    }
-                }
-            }
-            builtFolder.set(folder, status);
-            if (status === 1) {
-                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
-            } else if (status === 2) {
-                this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
+            if (!await this.getTestTargets(test, foundTarget, run)) {
+                return false;
             }
         }
 
-        return Array.from(builtFolder.values()).filter(v => v !== 0).length === 0;
+        return this.buildTestTargets(foundTarget, run);
+    }
+
+    /**
+     * Given the TestItem, determine the owning CMakeProject and build targets to build the tests. If the given
+     * TestItem is a suite, then recurse. Information is passed back through the foundTarget parameter. A failure to
+     * identify the project of the test will result in a ctest error and a false value being returned.
+     */
+    private async getTestTargets(test: vscode.TestItem, foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
+        if (test.children.size > 0) {
+            const children = this.testItemCollectionToArray(test.children);
+            for (const child of children) {
+                await this.getTestTargets(child, foundTarget, run);
+            }
+        } else {
+            const testProgram = this.testProgram(test.id);
+            const folder = this.getTestRootFolder(test);
+            const project = await this.projectController?.getProjectForFolder(folder);
+            if (!project) {
+                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+                return false;
+            }
+            if (!foundTarget.has(project!)) {
+                foundTarget.set(project!, new Map<string, vscode.TestItem[]>([[testProgram, [test]]]));
+            } else if (!foundTarget.get(project!)?.has(testProgram)) {
+                foundTarget.get(project!)?.set(testProgram, [test]);
+            } else {
+                foundTarget.get(project!)?.get(testProgram)?.push(test);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Build the targets provided in foundTarget. CMake will be invoked once per CMakeProject for efficiency. On error,
+     * the associated tests will be flagged with a ctest error and a false value will be returned.
+     */
+    private async buildTestTargets(foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
+        let overallSuccess = true;
+        for (const [project, targets] of foundTarget) {
+            const binaryDir = (await project.binaryDir).toString();
+            const accmulatedTestList: vscode.TestItem[] = [];
+            const accumulatedTargets: string[] = [];
+            let success: boolean = true;
+            for  (const [targetName, testList] of targets) {
+                accumulatedTargets.push(path.relative(binaryDir, targetName));
+                accmulatedTestList.concat(testList);
+            }
+            try {
+                if (extensionManager !== undefined && extensionManager !== null) {
+                    extensionManager.cleanOutputChannel();
+                }
+                const buildResult = await project.build(accumulatedTargets, false, false);
+                if (buildResult !== 0) {
+                    success = false;
+                }
+            } catch (e) {
+                success = false;
+            }
+            if (!success) {
+                overallSuccess = false;
+                accmulatedTestList.forEach(test => {
+                    this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
+                });
+            }
+        };
+        return overallSuccess;
     }
 
     /**
