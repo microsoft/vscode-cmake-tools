@@ -134,7 +134,7 @@ interface ProjectCoverageConfig {
 
 function parseXmlString<T>(xml: string): Promise<T> {
     return new Promise((resolve, reject) => {
-        xml2js.parseString(xml, (err: any, result: T | PromiseLike<T>) => {
+        xml2js.parseString(xml, (err, result) => {
             if (err) {
                 reject(err);
             } else {
@@ -1314,12 +1314,15 @@ export class CTestDriver implements vscode.Disposable {
                 this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
                 return false;
             }
-            if (!foundTarget.has(project!)) {
-                foundTarget.set(project!, new Map<string, vscode.TestItem[]>([[testProgram, [test]]]));
-            } else if (!foundTarget.get(project!)?.has(testProgram)) {
-                foundTarget.get(project!)?.set(testProgram, [test]);
+            if (!foundTarget.has(project)) {
+                foundTarget.set(project, new Map<string, vscode.TestItem[]>([[testProgram, [test]]]));
             } else {
-                foundTarget.get(project!)?.get(testProgram)?.push(test);
+                const prj = foundTarget.get(project)!;
+                if (!prj.has(testProgram)) {
+                    prj.set(testProgram, [test]);
+                } else {
+                    prj.get(testProgram)!.push(test);
+                }
             }
         }
         return true;
