@@ -508,8 +508,8 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
             } else {
-                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result.result) + endOfLine);
-                this.closeEmitter.fire(result.result);
+                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result.exitCode) + endOfLine);
+                this.closeEmitter.fire(result.exitCode);
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));

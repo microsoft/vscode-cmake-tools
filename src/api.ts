@@ -65,8 +65,8 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
 
 async function withErrorCheck(name: string, action: () => Promise<api.CommandResult>): Promise<void> {
     const code = await action();
-    if (code.result !== 0) {
-        throw new Error(`${name} failed with code ${code.result}, stdout: ${code.stdout ?? ''}, stderr: ${code.stderr ?? ''}`);
+    if (code.exitCode !== 0) {
+        throw new Error(`${name} failed with code ${code.exitCode}, stdout: ${code.stdout ?? ''}, stderr: ${code.stderr ?? ''}`);
     }
 }
 

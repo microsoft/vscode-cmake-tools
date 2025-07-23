@@ -344,7 +344,7 @@ export class CTestDriver implements vscode.Disposable {
 
             if (!testExplorer) {
                 log.info(localize('test.explorer.not.enabled', 'ctest integration disabled. Please see the `cmake.ctest.testExplorerIntegrationEnabled` setting.'));
-                return { result: -1 };
+                return { exitCode: -1 };
             }
 
             const tests = this.testItemCollectionToArray(testExplorer.items);
@@ -375,7 +375,7 @@ export class CTestDriver implements vscode.Disposable {
         const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
         if (ctestpath === null) {
             log.info(localize('ctest.path.not.set', 'CTest path is not set'));
-            return { result: -2 };
+            return { exitCode: -2 };
         }
 
         const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
@@ -389,17 +389,17 @@ export class CTestDriver implements vscode.Disposable {
 
         if (!driver.testPreset && driver.useCMakePresets) {
             log.error('test.preset.not.set', 'Test preset is not set');
-            return { result: -3 };
+            return { exitCode: -3 };
         }
 
         const testResults = await this.runCTestImpl(driver, ctestpath, ctestArgs, cancellationToken, customizedTask, consumer);
 
-        let returnValue: CommandResult = { result: 0, stdout: consumer?.stdout, stderr: consumer?.stderr };
+        let returnValue: CommandResult = { exitCode: 0, stdout: consumer?.stdout, stderr: consumer?.stderr };
         if (testResults) {
             for (let i = 0; i < testResults.site.testing.test.length; i++) {
                 const status = testResults.site.testing.test[i].status;
                 if (status === "notrun" || status === "failed") {
-                    returnValue.result = -1;
+                    returnValue.exitCode = -1;
                     break;
                 }
             }
@@ -623,7 +623,7 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        return { result: returnCode, stdout: consumer?.stdout, stderr: consumer?.stderr };
+        return { exitCode: returnCode, stdout: consumer?.stdout, stderr: consumer?.stderr };
     };
 
     private testResultsAnalysis(testResult: Test, test: vscode.TestItem, returnCode: number, run: vscode.TestRun) {
@@ -860,6 +860,26 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
+     * Extracts test information from CMake. If it doesn't hit an error when executing, it will update the tests using the given handler.
+     * @param driver Driver to execute cmake with.
+     * @param ctestPath Path to the ctest executable.
+     * @param ctestArgs Arguments to pass to ctest. This will include the -N or --show-only=json-v1 argument based on the cmake version.
+     * @param updateTests Callback to update the tests. Using a callback allows us to handle both the legacy CTest format and the new CTestInfo format.
+     * @returns The exit code of the ctest command.
+     */
+    async extractTestsCommand(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], updateTests: (result: proc.ExecutionResult) => void): Promise<number> {
+        const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true }).result;
+        if (result.retc !== 0) {
+            // There was an error running CTest. Odd...
+            log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
+            return result.retc || -3;
+        }
+
+        updateTests(result);
+        return 0;
+    }
+
+    /**
      * Refreshes our cached list of tests and updates the test explorer (if enabled).
      * @brief Refresh the list of CTest tests
      * @returns 0 when successful
@@ -883,45 +903,36 @@ export class CTestDriver implements vscode.Disposable {
 
         const ctestArgs = await this.getCTestArgs(driver);
         
+        // The difference between the following two branches is dependent on the cmake version. 
+        // first branch is for CMake versions < 3.14, second branch is for CMake versions >= 3.14
+        // The branches are needed because test information is provided in different formats.
         if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
-            // ctest --show-only=json-v1 was added in CMake 3.14
-            const result = await driver.executeCommand(ctestpath, ['-N', ...(ctestArgs ?? [])], undefined, { cwd: driver.binaryDir, silent: true }).result;
-            if (result.retc !== 0) {
-                // There was an error running CTest. Odd...
-                log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
-                return result.retc || -3;
-            }
-            const tests = result.stdout?.split('\n')
-                .map(l => l.trim())
-                .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
-                .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
-                .map(([, id, tname]) => ({ id: parseInt(id!), name: tname! })) ?? [];
+            return this.extractTestsCommand(driver, ctestpath, ['-N', ...(ctestArgs ?? [])], (result) => {
+                 const tests = result.stdout?.split('\n')
+                    .map(l => l.trim())
+                    .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
+                    .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
+                    .map(([, id, tname]) => ({ id: parseInt(id!), name: tname! })) ?? [];
 
-            this.legacyTests = tests;
+                this.legacyTests = tests;
 
-            if (refreshTestExplorer && this.legacyTests) {
-                this.refreshTestsInTestExplorer(driver, ctestArgs, "LegacyCTest");
-            }
+                if (refreshTestExplorer && this.legacyTests) {
+                    this.refreshTestsInTestExplorer(driver, ctestArgs, "LegacyCTest");
+                }
+            });
         } else {
-            const result = await driver.executeCommand(ctestpath, ['--show-only=json-v1', ...(ctestArgs ?? [])], undefined, { cwd: driver.binaryDir, silent: true }).result;
-            if (result.retc !== 0) {
-                // There was an error running CTest. Odd...
-                log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
-                return result.retc || -3;
-            }
+            return this.extractTestsCommand(driver, ctestpath, ['--show-only=json-v1', ...(ctestArgs ?? [])], (result) => {
+                try {
+                    this.tests = JSON.parse(result.stdout.slice(result.stdout.indexOf("{"))) ?? undefined;
+                } catch {
+                    this.tests = undefined;
+                }
 
-            try {
-                this.tests = JSON.parse(result.stdout.slice(result.stdout.indexOf("{"))) ?? undefined;
-            } catch {
-                this.tests = undefined;
-            }
-
-            if (refreshTestExplorer && this.tests) {
-                this.refreshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
-            }
+                if (refreshTestExplorer && this.tests) {
+                    this.refreshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
+                }
+            });            
         }
-
-        return 0;
     }
 
     getTestNames(): string[] | undefined {
@@ -1034,10 +1045,10 @@ export class CTestDriver implements vscode.Disposable {
             if (projectCoverageConfig.preRunCoverageTarget) {
                 log.info(localize('test.buildingPreRunCoverageTarget', 'Building the preRunCoverageTarget for project {0} before running tests with coverage.', projectCoverageConfig.project.sourceDir));
                 const rc = await projectCoverageConfig.project.build([projectCoverageConfig.preRunCoverageTarget]);
-                if (rc.result !== 0) {
+                if (rc.exitCode !== 0) {
                     log.error(localize('test.preRunCoverageTargetFailure', 'Building the preRunCoverageTarget \'{0}\' on project in {1} failed. Skipping running tests.', projectCoverageConfig.preRunCoverageTarget, projectCoverageConfig.project.sourceDir));
                     run.end();
-                    return rc.result;
+                    return rc.exitCode;
                 }
             }
         }
@@ -1046,15 +1057,15 @@ export class CTestDriver implements vscode.Disposable {
             if (projectCoverageConfig.postRunCoverageTarget) {
                 log.info(localize('test.buildingPostRunCoverageTarget', 'Building the postRunCoverageTarget \'{0}\' for project {1} after the tests have run with coverage.', projectCoverageConfig.postRunCoverageTarget, projectCoverageConfig.project.sourceDir));
                 const rc = await projectCoverageConfig.project.build([projectCoverageConfig.postRunCoverageTarget]);
-                if (rc.result !== 0) {
+                if (rc.exitCode !== 0) {
                     log.error(localize('test.postRunCoverageTargetFailure', 'Building target postRunCoverageTarget on project in {0} failed. Skipping handling of coverage data.', projectCoverageConfig.project.sourceDir));
-                    return rc.result;
+                    return rc.exitCode;
                 }
             }
         }
 
         await this.handleCoverageOnProjects(run, projectCoverageConfigs);
-        return runResult.result;
+        return runResult.exitCode;
     }
 
     private async runTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken, isCoverageRun = false) {
@@ -1357,7 +1368,7 @@ export class CTestDriver implements vscode.Disposable {
                             extensionManager.cleanOutputChannel();
                         }
                         const buildResult = await project.build(undefined, false, false);
-                        if (buildResult.result !== 0) {
+                        if (buildResult.exitCode !== 0) {
                             status = 2;
                         }
                     } catch (e) {

@@ -1073,11 +1073,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
         if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-            return { result: -1, resultType: ConfigureResultType.ForcedCancel };
+            return { exitCode: -1, resultType: ConfigureResultType.ForcedCancel };
         }
         if (this.cmakeBuildRunner.isBuildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
-            return { result: -1, resultType: ConfigureResultType.ConfigureInProgress };
+            return { exitCode: -1, resultType: ConfigureResultType.ConfigureInProgress };
         }
         this.isConfigInProgress = true;
         await this.doPreCleanConfigure();
@@ -1465,15 +1465,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         if (trigger === ConfigureTrigger.configureWithCache && !shouldUseCachedConfiguration) {
             log.debug(localize('no.cached.config', "No cached config could be used for IntelliSense"));
-            return { result: -2, resultType: ConfigureResultType.NoCache };
+            return { exitCode: -2, resultType: ConfigureResultType.NoCache };
         }
         if (this.isConfigInProgress) {
             await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-            return { result: -1, resultType: ConfigureResultType.ConfigureInProgress };
+            return { exitCode: -1, resultType: ConfigureResultType.ConfigureInProgress };
         }
         if (this.cmakeBuildRunner.isBuildInProgress()) {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
-            return { result: -1, resultType: ConfigureResultType.BuildInProgress };
+            return { exitCode: -1, resultType: ConfigureResultType.BuildInProgress };
         }
         this.isConfigInProgress = true;
         try {
@@ -1490,7 +1490,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             const pre_check_ok = await this._beforeConfigureOrBuild(showCommandOnly);
             if (!pre_check_ok) {
-                return { result: -2, resultType: ConfigureResultType.Other };
+                return { exitCode: -2, resultType: ConfigureResultType.Other };
             }
 
             let expanded_flags: string[];
@@ -1500,7 +1500,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 const configurePreset: preset.ConfigurePreset | undefined | null = (trigger === ConfigureTrigger.taskProvider) ? presetOverride : this._configurePreset;
                 if (!configurePreset) {
                     log.debug(localize('no.config.Preset', 'No configure preset selected'));
-                    return { result: -3, resultType: ConfigureResultType.NoConfigurePreset };
+                    return { exitCode: -3, resultType: ConfigureResultType.NoConfigurePreset };
                 }
                 // For now, fields in presets are expanded when the preset is selected
                 expanded_flags = await this.generateConfigArgsFromPreset(configurePreset);
@@ -1523,7 +1523,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (shouldUseCachedConfiguration) {
                 retc = await this.doCacheConfigure();
                 this._isConfiguredAtLeastOnce = true;
-                return { result: retc, resultType: ConfigureResultType.NormalOperation };
+                return { exitCode: retc, resultType: ConfigureResultType.NormalOperation };
             } else {
                 retc = await this.doConfigure(expanded_flags, trigger, consumer, showCommandOnly, defaultPresetName, presetOverride, options, debuggerInformation);
                 this._isConfiguredAtLeastOnce = true;
@@ -1663,10 +1663,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
             telemetryProperties.Canceled = cancelInformation?.canceled ? "true" : "false";
             telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
-            return { result: retc, resultType: ConfigureResultType.NormalOperation };
+            return { exitCode: retc, resultType: ConfigureResultType.NormalOperation };
         } catch {
             log.info(localize('configure.failed', 'Failed to configure project'));
-            return { result: -1, resultType: ConfigureResultType.NormalOperation };
+            return { exitCode: -1, resultType: ConfigureResultType.NormalOperation };
         } finally {
             this.isConfigInProgress = false;
         }

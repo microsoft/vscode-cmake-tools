@@ -37,7 +37,7 @@ suite('Environment', () => {
         });
 
         // Configure
-        expect((await cmakeProject.configure()).result).to.be.eq(0, '[configureEnvironment] configure failed');
+        expect((await cmakeProject.configure()).exitCode).to.be.eq(0, '[configureEnvironment] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
@@ -59,7 +59,7 @@ suite('Environment', () => {
         testEnv.config.updatePartial({ buildEnvironment: { _BUILD_ENV: '${workspaceRootFolderName}' } });
 
         // Configure
-        expect((await cmakeProject.configure()).result).to.be.eq(0, '[buildEnvironment] configure failed');
+        expect((await cmakeProject.configure()).exitCode).to.be.eq(0, '[buildEnvironment] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
@@ -81,7 +81,7 @@ suite('Environment', () => {
         testEnv.config.updatePartial({ environment: { _ENV: '${workspaceRootFolderName}' } });
 
         // Configure
-        expect((await cmakeProject.configure()).result).to.be.eq(0, '[environment] configure failed');
+        expect((await cmakeProject.configure()).exitCode).to.be.eq(0, '[environment] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
