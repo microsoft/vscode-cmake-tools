@@ -360,6 +360,8 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         super();
     }
 
+    // These two override methods are used to write output and error messages to the terminal, as well
+    // as call the parent class's output and error methods, which store the stdout and stderr messages for returning that info later.
     override output(line: string): void {
         this.writeEmitter.fire(line + endOfLine);
         super.output(line);
