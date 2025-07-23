@@ -774,7 +774,7 @@ export class CTestDriver implements vscode.Disposable {
         return { test: testItem, parentSuite: parentSuiteItem };
     }
 
-    async refereshTestsInTestExplorer(driver: CMakeDriver, ctestArgs: string[] | undefined, testType: TestsType): Promise<void> {
+    async refreshTestsInTestExplorer(driver: CMakeDriver, ctestArgs: string[] | undefined, testType: TestsType): Promise<void> {
         const sourceDir = util.platformNormalizePath(driver.sourceDir);
 
         const initializedTestExplorer = this.ensureTestExplorerInitialized();
@@ -860,12 +860,11 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
+     * Refreshes our cached list of tests and updates the test explorer (if enabled).
      * @brief Refresh the list of CTest tests
      * @returns 0 when successful
      */
     async refreshTests(driver: CMakeDriver): Promise<number> {
-        // NOTE: If the cmake.ctest.testExplorerIntegrationEnabled is disabled, we should return early and not initialize
-        // the testExplorer.
         const refreshTestExplorer = driver.config.testExplorerIntegrationEnabled && !(util.isTestMode() && !util.overrideTestModeForTestExplorer());
 
         // TODO: There's no way to mark tests as outdated now.
@@ -900,8 +899,8 @@ export class CTestDriver implements vscode.Disposable {
 
             this.legacyTests = tests;
 
-            if (refreshTestExplorer && this._legacyTests) {
-                this.refereshTestsInTestExplorer(driver, ctestArgs, "LegacyCTest");
+            if (refreshTestExplorer && this.legacyTests) {
+                this.refreshTestsInTestExplorer(driver, ctestArgs, "LegacyCTest");
             }
         } else {
             const result = await driver.executeCommand(ctestpath, ['--show-only=json-v1', ...(ctestArgs ?? [])], undefined, { cwd: driver.binaryDir, silent: true }).result;
@@ -918,7 +917,7 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             if (refreshTestExplorer && this.tests) {
-                this.refereshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
+                this.refreshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
             }
         }
 
@@ -1226,8 +1225,8 @@ export class CTestDriver implements vscode.Disposable {
                     return test.command[0];
                 }
             }
-        } else if (this._legacyTests) {
-            for (const test of this._legacyTests) {
+        } else if (this.legacyTests) {
+            for (const test of this.legacyTests) {
                 if (test.name === testName) {
                     return test.name;
                 }
