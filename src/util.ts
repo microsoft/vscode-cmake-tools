@@ -1379,6 +1379,11 @@ function globWrapper(globPattern: string, cwd: string): Promise<boolean> {
     });
 }
 
+/**
+ * Creates a combined cancellation token from multiple tokens.
+ * @param tokens The cancellation tokens to combine.
+ * @returns A new cancellation token that is canceled (and disposed) when any of the combined tokens are canceled.
+ */
 export function createCombinedCancellationToken(...tokens: (vscode.CancellationToken | undefined)[]): vscode.CancellationToken {
     const combinedSource = new vscode.CancellationTokenSource();
 
@@ -1393,6 +1398,9 @@ export function createCombinedCancellationToken(...tokens: (vscode.CancellationT
             disposables.push(token.onCancellationRequested(() => combinedSource.cancel()));
         }
     }
+
+    // add the combined token to the disposables, we should dispose our source when our token is cancelled.
+    disposables.push(combinedSource);
 
     combinedSource.token.onCancellationRequested(() => {
         disposables.forEach(d => d.dispose());
