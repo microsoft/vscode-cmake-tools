@@ -37,6 +37,7 @@ import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { onBuildSettingsChange, onTestSettingsChange, onPackageSettingsChange } from '@cmt/ui/util';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
+import { CommandResult } from 'vscode-cmake-tools';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
@@ -68,8 +69,7 @@ export enum ConfigureResultType {
     Other
 }
 
-export interface ConfigureResult {
-    result: number;
+export interface ConfigureResult extends CommandResult {
     resultType: ConfigureResultType;
 }
 

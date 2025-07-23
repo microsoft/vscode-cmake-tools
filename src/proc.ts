@@ -38,6 +38,24 @@ export interface ProgressData {
     value: number;
 }
 
+export abstract class CommandConsumer implements OutputConsumer {
+    output(line: string): void {
+        this._stdout.push(line);
+    }
+    error(error: string): void {
+        this._stderr.push(error);
+    }
+    get stdout() {
+        return this._stdout.join('\n');
+    }
+    protected readonly _stdout = new Array<string>();
+
+    get stderr() {
+        return this._stderr.join('\n');
+    }
+    protected readonly _stderr = new Array<string>();
+}
+
 /**
  * Interface for objects that can consume line-based output
  */
