@@ -870,7 +870,7 @@ export class CTestDriver implements vscode.Disposable {
      * @param updateTests Callback to update the tests. Using a callback allows us to handle both the legacy CTest format and the new CTestInfo format.
      * @returns The exit code of the ctest command.
      */
-    async extractTestsCommand(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], updateTests: (result: proc.ExecutionResult) => void): Promise<number> {
+    async extractTestsCommand(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], updateTests: (result: proc.ExecutionResult) => Promise<void>): Promise<number> {
         const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true }).result;
         if (result.retc !== 0) {
             // There was an error running CTest. Odd...
