@@ -258,6 +258,13 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         // Fetch all CMake task from `tasks.json` files.
         const allTasks: vscode.Task[] = await vscode.tasks.fetchTasks({ type: CMakeTaskProvider.CMakeScriptType });
 
+        // Fetch CMake task from from task provider
+        const workspaceFolderObj: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(workspaceFolder));
+        if (!workspaceFolderObj) {
+            log.error(localize("workspace.folder.not.found", 'Workspace folder not found.'));
+            return undefined;
+        }
+
         const tasks: (CMakeTask | undefined)[] = await Promise.all(allTasks.map(async (task: any) => {
             if (!task.definition.label || !task.group || (task.group && task.group.id !== vscode.TaskGroup.Build.id)) {
                 return undefined;
@@ -282,7 +289,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 options: task.definition.options
             };
 
-            const buildTask: CMakeTask = new vscode.Task(definition, vscode.TaskScope.Workspace, task.definition.label, CMakeTaskProvider.CMakeSourceStr);
+            const buildTask: CMakeTask = new vscode.Task(definition, workspaceFolderObj, task.definition.label, CMakeTaskProvider.CMakeSourceStr);
             buildTask.detail = task.detail;
             if (task.group.isDefault) {
                 buildTask.isDefault = true;
@@ -332,12 +339,6 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             }
         }
 
-        // Fetch CMake task from from task provider
-        const workspaceFolderObj: vscode.WorkspaceFolder | undefined = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(workspaceFolder));
-        if (!workspaceFolderObj) {
-            log.error(localize("workspace.folder.not.found", 'Workspace folder not found.'));
-            return undefined;
-        }
         matchingTargetTasks.push(await CMakeTaskProvider.provideTask(CommandType.build, workspaceFolderObj, undefined, targets, presetName));
         const items: TaskMenu[] = matchingTargetTasks.map<TaskMenu>(task => ({ label: task.name, task: task, description: task.detail }));
         // Ask the user to pick a task.

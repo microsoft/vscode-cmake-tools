@@ -132,12 +132,12 @@
         {
             "language": "cmake",
             "scopeName": "source.cmake",
-            "path": "./syntaxes/CMake.tmLanguage.json"
+            "path": "./syntaxes/CMake.tmLanguage"
         },
         {
             "language": "cmake-cache",
             "scopeName": "source.cmakecache",
-            "path": "./syntaxes/CMakeCache.tmLanguage.json"
+            "path": "./syntaxes/CMakeCache.tmLanguage"
         }
     ],
     "commands": [
@@ -2371,7 +2371,19 @@
               }
             },
             "visualizerFile": {
-              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "default": ""
+                },
+                {
+                  "type": "array",
+                  "default": [],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
               "description": "%cmake-tools.configuration.cmake.debugConfig.visualizerFile.description%"
             },
             "args": {
@@ -3754,11 +3766,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v8-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v8-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
       }
     ]
   },
@@ -3857,7 +3869,7 @@
     "rimraf": "^3.0.2",
     "string.prototype.matchall": "^4.0.10",
     "tmp": "^0.2.1",
-    "vscode-cpptools": "^6.1.0",
+    "vscode-cpptools": "^7.1.1",
     "@vscode/extension-telemetry": "^0.9.6",
     "vscode-nls": "^5.0.0",
     "vscode-tas-client": "^0.1.45",
