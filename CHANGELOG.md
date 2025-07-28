@@ -9,12 +9,14 @@ Features:
 - Add an option to group the default build target dropdown using CMake groups [#3953](https://github.com/microsoft/vscode-cmake-tools/pull/3953) [@itzandroidtab](https://github.com/itzandroidtab)
 - Add `cmake.exclude` setting that allows users to set folders that they want the CMake Tools extension to ignore. [#4112](https://github.com/microsoft/vscode-cmake-tools/issues/4112)
 - Add a command to substitute CMake Cache variables in `launch.json` and `tasks.json`. [#4422](https://github.com/microsoft/vscode-cmake-tools/pull/4422)
+- Add support for presets v10. [#4459](https://github.com/microsoft/vscode-cmake-tools/issues/4459), [#4445](https://github.com/microsoft/vscode-cmake-tools/issues/4452)
 
 Improvements:
 
 - Add name de-mangling for C++ symbols in the Test Explorer view when running tests with coverage. [#4340](https://github.com/microsoft/vscode-cmake-tools/pull/4340) [@rjaegers](https://github.com/rjaegers)
 - No longer convert paths on lowercase on MacOS to enable cpp tools to resolve them. [#4325](https://github.com/microsoft/vscode-cmake-tools/pull/4325) [@tringenbach](https://github.com/tringenbach)
 - Speedup & reduce heap allocations in shlex split module function. Significant gains for mid-large compile_commands.json - CompilationDatabase construction. [#4458](https://github.com/microsoft/vscode-cmake-tools/pull/4458) [@borjamunozf](https://github.com/borjamunozf)
+- In the Test Explorer, associate CTest tests with outermost function or macro invocation that calls `add_test()` instead of with the `add_test()` call itself. [#4490](https://github.com/microsoft/vscode-cmake-tools/issues/4490) [@malsyned](https://github.com/malsyned)
 
 Bug Fixes:
 
@@ -28,6 +30,9 @@ Bug Fixes:
 - Fix evaluation of conditions in presets. [#4425](https://github.com/microsoft/vscode-cmake-tools/issues/4425)
 - Fix ENOENT error at vscode startup on some circumstances [#2855](https://github.com/microsoft/vscode-cmake-tools/issues/2855) Contributed by STMicroelectronics
 - Fix repeat execution option in test presets [#4443](https://github.com/microsoft/vscode-cmake-tools/issues/4443)
+- Fix bug that makes some build hang [#4424](https://github.com/microsoft/vscode-cmake-tools/issues/4424) and [#4465](https://github.com/microsoft/vscode-cmake-tools/issues/4465)
+- Fix issue with switching to presets during Quick Start. [#4409](https://github.com/microsoft/vscode-cmake-tools/issues/4409)
+- Fix bug that shows empty lines in Pinned Commands view. [#4406](https://github.com/microsoft/vscode-cmake-tools/issues/4406)
 
 ## 1.20.53
 

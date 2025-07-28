@@ -1296,9 +1296,8 @@ export class CMakeProject {
         if (useCMakePresets === undefined) {
             useCMakePresets = this.workspaceContext.config.useCMakePresets;
         }
-        this._useCMakePresets = useCMakePresets === 'always' ? true : useCMakePresets === 'never' ? false : await this.hasPresetsFiles();
+        const usingCMakePresets = useCMakePresets === 'always' ? true : useCMakePresets === 'never' ? false : await this.hasPresetsFiles();
 
-        const usingCMakePresets = this.useCMakePresets;
         if (usingCMakePresets !== this.wasUsingCMakePresets) {
             this.wasUsingCMakePresets = usingCMakePresets;
             await this.setUseCMakePresets(usingCMakePresets);
@@ -3126,6 +3125,8 @@ export class CMakeProject {
         // Regardless of the following configure return code,
         // we want full feature set view for the whole workspace.
         await enableFullFeatureSet(true);
+        await this.doUseCMakePresetsChange();
+
         return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).exitCode;
     }
 
@@ -3164,12 +3165,12 @@ export class CMakeProject {
 
         const targetType = await vscode.window.showQuickPick([
             {
-                label: 'Library',
-                description: localize('create.library', 'Create a library')
-            },
-            {
                 label: 'Executable',
                 description: localize('create.executable', 'Create an executable')
+            },
+            {
+                label: 'Library',
+                description: localize('create.library', 'Create a library')
             }
         ]);
 
@@ -3179,12 +3180,12 @@ export class CMakeProject {
 
         const addlOptions = (await vscode.window.showQuickPick([
             {
-                label: 'CPack',
-                description: localize('cpack.support', 'CPack support')
-            },
-            {
                 label: 'CTest',
                 description: localize('ctest.support', 'CTest support')
+            },
+            {
+                label: 'CPack',
+                description: localize('cpack.support', 'CPack support')
             }
         ], { canPickMany: true, placeHolder: localize('select.additional.options', 'Select additional options') }));
 

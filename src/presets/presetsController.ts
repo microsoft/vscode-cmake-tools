@@ -196,17 +196,19 @@ export class PresetsController implements vscode.Disposable {
             });
         }
         items.push({
-            name: SpecialOptions.ToolchainFile,
-            label: localize('toolchain.file', 'Toolchain File'),
-            description: localize('description.toolchain.file', 'Configure with a CMake toolchain file')
-        }, {
-            name: SpecialOptions.Custom,
-            label: localize('custom.config.preset', 'Custom'),
-            description: localize('description.custom.config.preset', 'Add a custom configure preset')
-        }, {
             name: SpecialOptions.CreateFromCompilers,
             label: localize('create.from.compilers', 'Create from Compilers'),
             description: localize('description.create.from.compilers', 'Create from a pair of compilers on this computer')
+        },
+        {
+            name: SpecialOptions.Custom,
+            label: localize('custom.config.preset', 'Custom'),
+            description: localize('description.custom.config.preset', 'Add a custom configure preset')
+        },
+        {
+            name: SpecialOptions.ToolchainFile,
+            label: localize('toolchain.file', 'Toolchain File'),
+            description: localize('description.toolchain.file', 'Configure with a CMake toolchain file')
         });
 
         const chosenItem = await vscode.window.showQuickPick(items,

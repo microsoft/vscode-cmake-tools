@@ -78,7 +78,12 @@
             "The text 'CMake Tools' should not be localized."
         ]
     },
-    "cmake-tools.command.cmake.openSettings.title": "Open CMake Tools Extension Settings",
+    "cmake-tools.command.cmake.openSettings.title": {
+        "message": "Open CMake Tools Extension Settings",
+        "comment": [
+            "The text 'CMake Tools' should not be localized."
+        ]
+    },
     "cmake-tools.command.cmake.selectActiveFolder.title": "Select Active Folder",
     "cmake-tools.command.cmake.outline.runUtilityTarget.title": "Run Utility",
     "cmake-tools.command.cmake.outline.debugTarget.title": "Debug",
