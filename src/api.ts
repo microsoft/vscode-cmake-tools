@@ -87,7 +87,7 @@ class CMakeProjectWrapper implements api.Project {
 
     configure(): Promise<void> {
         logApiTelemetry('configure');
-        return withErrorCheck('configure', async () => (await this.project.configure()));
+        return withErrorCheck('configure', async () => (this.project.configure()));
     }
 
     async configureWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
@@ -132,7 +132,7 @@ class CMakeProjectWrapper implements api.Project {
 
     reconfigure(): Promise<void> {
         logApiTelemetry('reconfigure');
-        return withErrorCheck('reconfigure', async () => (await this.project.cleanConfigure()));
+        return withErrorCheck('reconfigure', async () => (this.project.cleanConfigure()));
     }
 
     async reconfigureWithResult(cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
@@ -165,4 +165,4 @@ function logApiTelemetry(method: string): void {
     logEvent("api", {
         method: method
     });
-} 
+}

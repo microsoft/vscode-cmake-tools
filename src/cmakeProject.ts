@@ -2367,8 +2367,8 @@ export class CMakeProject {
     /**
      * Implementaiton of `cmake.clean`
      */
-    async clean(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        return (await this.build(['clean'], false, false, cancellationToken));
+    clean(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        return this.build(['clean'], false, false, cancellationToken);
     }
 
     /**
@@ -2460,8 +2460,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.install`
      */
-    async install(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        return (await this.build(['install'], false, false, cancellationToken));
+    install(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        return this.build(['install'], false, false, cancellationToken);
     }
 
     /**

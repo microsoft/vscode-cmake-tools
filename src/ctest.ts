@@ -304,7 +304,7 @@ export class CTestDriver implements vscode.Disposable {
         ctestArgs = initialArgs.slice(0);
 
         if (customizedTask && testPreset) {
-            // don't include testsToRun here because we don't support this out of the customized task. 
+            // don't include testsToRun here because we don't support this out of the customized task.
             ctestArgs = ctestArgs.concat(testArgs(testPreset));
         } else if (!customizedTask && driver.useCMakePresets) {
             if (!driver.testPreset) {
@@ -381,9 +381,7 @@ export class CTestDriver implements vscode.Disposable {
         const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
         if (testsToRun && testsToRun.length > 0) {
             ctestArgs.push("-R");
-            const testsNamesRegex = testsToRun.map(t => {
-                return `^${util.escapeStringForRegex(t)}\$`;
-            }).join('|');
+            const testsNamesRegex = testsToRun.map(t => `^${util.escapeStringForRegex(t)}\$`).join('|');
             ctestArgs.push(testsNamesRegex);
         }
 
@@ -394,7 +392,7 @@ export class CTestDriver implements vscode.Disposable {
 
         const testResults = await this.runCTestImpl(driver, ctestpath, ctestArgs, cancellationToken, customizedTask, consumer);
 
-        let returnValue: CommandResult = { exitCode: 0, stdout: consumer?.stdout, stderr: consumer?.stderr };
+        const returnValue: CommandResult = { exitCode: 0, stdout: consumer?.stdout, stderr: consumer?.stderr };
         if (testResults) {
             for (let i = 0; i < testResults.site.testing.test.length; i++) {
                 const status = testResults.site.testing.test[i].status;
@@ -908,7 +906,7 @@ export class CTestDriver implements vscode.Disposable {
 
         const ctestArgs = await this.getCTestArgs(driver);
         
-        // The difference between the following two branches is dependent on the cmake version. 
+        // The difference between the following two branches is dependent on the cmake version.
         // first branch is for CMake versions < 3.14, second branch is for CMake versions >= 3.14
         // The branches are needed because test information is provided in different formats.
         if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
