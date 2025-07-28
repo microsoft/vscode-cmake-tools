@@ -905,13 +905,13 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         const ctestArgs = await this.getCTestArgs(driver);
-        
+
         // The difference between the following two branches is dependent on the cmake version.
         // first branch is for CMake versions < 3.14, second branch is for CMake versions >= 3.14
         // The branches are needed because test information is provided in different formats.
         if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
-            return this.extractTestsCommand(driver, ctestpath, ['-N', ...(ctestArgs ?? [])], (result) => {
-                 const tests = result.stdout?.split('\n')
+            return this.extractTestsCommand(driver, ctestpath, ['-N', ...(ctestArgs ?? [])], async (result) => {
+                const tests = result.stdout?.split('\n')
                     .map(l => l.trim())
                     .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
                     .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
@@ -920,11 +920,11 @@ export class CTestDriver implements vscode.Disposable {
                 this.legacyTests = tests;
 
                 if (refreshTestExplorer && this.legacyTests) {
-                    this.refreshTestsInTestExplorer(driver, ctestArgs, "LegacyCTest");
+                    await this.refreshTestsInTestExplorer(driver, ctestArgs, "LegacyCTest");
                 }
             });
         } else {
-            return this.extractTestsCommand(driver, ctestpath, ['--show-only=json-v1', ...(ctestArgs ?? [])], (result) => {
+            return this.extractTestsCommand(driver, ctestpath, ['--show-only=json-v1', ...(ctestArgs ?? [])], async (result) => {
                 try {
                     this.tests = JSON.parse(result.stdout.slice(result.stdout.indexOf("{"))) ?? undefined;
                 } catch {
@@ -932,9 +932,9 @@ export class CTestDriver implements vscode.Disposable {
                 }
 
                 if (refreshTestExplorer && this.tests) {
-                    this.refreshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
+                    await this.refreshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
                 }
-            });            
+            });
         }
     }
 
