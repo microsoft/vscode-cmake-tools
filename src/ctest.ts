@@ -878,7 +878,7 @@ export class CTestDriver implements vscode.Disposable {
             return result.retc || -3;
         }
 
-        updateTests(result);
+        await updateTests(result);
         return 0;
     }
 
