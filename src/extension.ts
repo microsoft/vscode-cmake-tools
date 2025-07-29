@@ -1348,7 +1348,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     cleanConfigure(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("deleteCacheAndReconfigure");
-        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigure), folder, undefined, true);
+        return this.runCMakeCommand(async cmakeProject => (await cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigure)).exitCode, folder, undefined, true);
     }
 
     cleanConfigureWithDebugger(folder?: vscode.WorkspaceFolder) {
@@ -1365,12 +1365,12 @@ export class ExtensionManager implements vscode.Disposable {
 
     cleanConfigureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
-        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureWithDebugger, debuggerInformation), folder, undefined, true);
+        return this.runCMakeCommand(async cmakeProject => (await cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureWithDebugger, debuggerInformation)).exitCode, folder, undefined, true);
     }
 
     cleanConfigureAll() {
         telemetry.logEvent("deleteCacheAndReconfigure");
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
+        return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll)).exitCode, undefined, true);
     }
 
     cleanConfigureAllWithDebugger(trigger?: ConfigureTrigger) {
@@ -1448,9 +1448,9 @@ export class ExtensionManager implements vscode.Disposable {
 
     build(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string, showCommandOnly?: boolean, isBuildCommand?: boolean) {
         telemetry.logEvent("build", { all: "false"});
-        return this.runCMakeCommand(cmakeProject => {
+        return this.runCMakeCommand(async cmakeProject => {
             const targets = name ? [name] : undefined;
-            return cmakeProject.build(targets, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand);
+            return (await cmakeProject.build(targets, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand)).exitCode;
         },
         folder,
         this.ensureActiveBuildPreset,
@@ -1464,9 +1464,9 @@ export class ExtensionManager implements vscode.Disposable {
 
     buildAll(name?: string | string[]) {
         telemetry.logEvent("build", { all: "true"});
-        return this.runCMakeCommandForAll(cmakeProject => {
+        return this.runCMakeCommandForAll(async cmakeProject => {
             const targets = util.isArrayOfString(name) ? name : util.isString(name) ? [name] : undefined;
-            return cmakeProject.build(targets);
+            return (await cmakeProject.build(targets)).exitCode;
         },
         this.ensureActiveBuildPreset,
         true);
