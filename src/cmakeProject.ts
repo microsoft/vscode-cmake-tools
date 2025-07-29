@@ -23,7 +23,7 @@ import {
     ExecutableTarget,
     NoGeneratorError
 } from '@cmt/drivers/drivers';
-import { CTestDriver, CTestOutputLogger } from '@cmt/ctest';
+import { CTestDriver } from '@cmt/ctest';
 import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';

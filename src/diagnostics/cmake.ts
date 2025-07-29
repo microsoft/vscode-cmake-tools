@@ -3,7 +3,7 @@
  */ /** */
 
 import { Logger } from '@cmt/logging';
-import { CommandConsumer, OutputConsumer } from '@cmt/proc';
+import { CommandConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
