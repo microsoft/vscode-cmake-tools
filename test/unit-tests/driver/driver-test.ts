@@ -14,7 +14,6 @@ chai.use(chaiString);
 
 import { Kit, CMakeGenerator } from '@cmt/kits/kit';
 import { CMakePreconditionProblems, CMakeDriver, CMakePreconditionProblemSolver, NoGeneratorError, ConfigureResultType } from '@cmt/drivers/cmakeDriver';
-import { exitCode } from 'process';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
