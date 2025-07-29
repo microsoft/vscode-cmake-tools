@@ -3,7 +3,7 @@
  */ /** */
 
 import { Logger } from '@cmt/logging';
-import { OutputConsumer } from '@cmt/proc';
+import { CommandConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
@@ -20,8 +20,11 @@ export enum StateMessage {
  * collecting warnings and errors from the configure step. It should be used
  * in conjunction with `proc.execute`.
  */
-export class CMakeOutputConsumer implements OutputConsumer {
-    constructor(readonly sourceDir: string, readonly logger?: Logger) {}
+export class CMakeOutputConsumer extends CommandConsumer {
+    constructor(readonly sourceDir: string, readonly logger?: Logger) {
+        super();
+    }
+
     /**
      * The diagnostics that this consumer has accumulated. It will be populated
      * during calls to `output()` and `error()`
@@ -50,6 +53,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
         if (this.logger) {
             this.logger.info(line);
         }
+        super.output(line);
         this._parseDiags(line);
         this._parseStateMessages(line);
     }
@@ -86,6 +90,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
         if (this.logger) {
             this.logger.error(line);
         }
+        super.error(line);
         this._parseDiags(line);
     }
 
