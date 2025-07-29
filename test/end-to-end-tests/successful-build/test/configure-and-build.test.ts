@@ -63,7 +63,7 @@ suite('Build', () => {
         testEnv.config.updatePartial({ cacheInit: 'TestCacheInit.cmake' });
         expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.be.eq(0);
         await cmakeProject.setDefaultTarget('runTestTarget');
-        expect(await cmakeProject.build()).to.be.eq(0);
+        expect((await cmakeProject.build()).exitCode).to.be.eq(0);
         const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
         expect(result['cookie']).to.eq('cache-init-cookie');
@@ -91,12 +91,12 @@ suite('Build', () => {
             testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
             await cmakeProject.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
 
-            let retc = await cmakeProject.build();
+            let retc = (await cmakeProject.build()).exitCode;
             expect(retc).eq(0);
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
             await cmakeProject.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-            retc = await cmakeProject.build();
+            retc = (await cmakeProject.build()).exitCode;
 
             expect(retc).eq(0);
             const result1 = await testEnv.result.getResultAsJson();

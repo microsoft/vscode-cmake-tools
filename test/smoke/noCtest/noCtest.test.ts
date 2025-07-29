@@ -20,8 +20,8 @@ suite('Smoke test: No ctest in bin dir', () => {
                         cmakePath: path.join(ctx.projectDir.uri.fsPath, 'bin', cmake_filename)
                     });
                     expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.eq(0);
-                    expect(await cmakeProject.build()).to.eq(0);
-                    expect(await cmakeProject.ctest()).to.eq(0);
+                    expect((await cmakeProject.build()).exitCode).to.eq(0);
+                    expect((await cmakeProject.ctest()).exitCode).to.eq(0);
                 }
             }));
         });

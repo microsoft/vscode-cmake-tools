@@ -16,7 +16,7 @@ suite('Debug/Launch interface', () => {
         cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}/");
         await cmakeProject.setKit(await getFirstSystemKit());
         testEnv.projectFolder.buildDirectory.clear();
-        expect(await cmakeProject.build()).to.be.eq(0);
+        expect((await cmakeProject.build()).exitCode).to.be.eq(0);
     });
 
     teardown(async function (this: Mocha.Context) {
