@@ -131,9 +131,33 @@
         "comment": [
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
-    }, 
+    },
     "cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription": {
         "message": "Maximum number of times the delimiter may be used to split the name of the test. `0` means no limit."
+    },
+    "cmake-tools.configuration.cmake.ctest.failurePatterns.markdownDescription": {
+        "message": "Regular expressions for searching CTest output for additional details about failures. All patterns are tried and test failure details from each are collected.\n\nPatterns must have at minimum one capture group to match the name of the `file` where the failure occurred. They can optionally also capture `line`, `message`, `expected`, and `actual`.\n\nFor example, to match a failure line like `path/to/file:47: text of error message`, this pattern matcher could be used:\n```json\n{\n  \"regexp\": \"(.+):(\\\\d+): ?(.*)\",\n  \"file\": 1,\n  \"line\": 2,\n  \"message\": 3\n}\n```\n",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.ctest.failurePatterns.regexp": {
+        "message": "The regular expression to find a failure in the output."
+    },
+    "cmake-tools.configuration.cmake.ctest.failurePatterns.file": {
+        "message": "The match group index of the filename. If omitted 1 is used."
+    },
+    "cmake-tools.configuration.cmake.ctest.failurePatterns.line": {
+        "message": "The match group index of the failure's line. Defaults to 2."
+    },
+    "cmake-tools.configuration.cmake.ctest.failurePatterns.message": {
+        "message": "The match group index of the message. Defaults to 3."
+    },
+    "cmake-tools.configuration.cmake.ctest.failurePatterns.actual": {
+        "message": "The match group index of the actual test output. Defaults to undefined."
+    },
+    "cmake-tools.configuration.cmake.ctest.failurePatterns.expected": {
+        "message": "The match group index of the expected test output. Defaults to undefined."
     },
 	"cmake-tools.configuration.cmake.ctest.debugLaunchTarget.description": "Target name from launch.json to start when debugging a test with CTest. By default and in case of a non-existing target, this will show a picker with all available targets.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
@@ -274,7 +298,7 @@
         "comment": [
             "The text in parentheses () should not be localized or altered in any way. Also the square brackets and parentheses themselves [] () should not be altered or as well. However, the text inside the square brackets [] should be localized."
         ]
-    }, 
+    },
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
     "cmake-tools.configuration.views.cmake.pinnedCommands.description": "Pinned Commands",
     "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files.",
