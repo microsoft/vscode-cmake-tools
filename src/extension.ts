@@ -50,6 +50,7 @@ import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugg
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from "@cmt/ctest";
 import { LanguageServiceData } from './languageServices/languageServiceData';
+import { CMakeListsModifier } from './cmakeListsModifier';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -396,6 +397,11 @@ export class ExtensionManager implements vscode.Disposable {
     });
 
     /**
+     * Automatic modifier of CMakeLists.txt files
+     */
+    private readonly cmakeListsModifier = new CMakeListsModifier();
+
+    /**
      * CppTools project configuration provider. Tells cpptools how to search for
      * includes, preprocessor defs, etc.
      */
@@ -664,6 +670,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.onDidChangeActiveTextEditorSub.dispose();
         void this.kitsWatcher.close();
         this.projectOutlineTreeView.dispose();
+        this.cmakeListsModifier.dispose();
         this.extensionActiveCommandsEmitter.dispose();
         pinnedCommands.dispose();
         if (this.cppToolsAPI) {
@@ -849,6 +856,16 @@ export class ExtensionManager implements vscode.Disposable {
         }
         const folder: vscode.WorkspaceFolder = cmakeProject.workspaceFolder;
         this.projectOutline.updateCodeModel(cmakeProject, cmakeProject.codeModelContent);
+        rollbar.invokeAsync('Update code model for automatic list file modifier', {}, async () => {
+            let cache: CMakeCache;
+            try {
+                cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
+            } catch (e: any) {
+                rollbar.exception(localize('filed.to.open.cache.file.on.code.model.update', 'Failed to open CMake cache file on code model update'), e);
+                return;
+            }
+            this.cmakeListsModifier.updateCodeModel(cmakeProject, cache);
+        });
         rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
             if (vscode.workspace.getConfiguration('C_Cpp', folder.uri).get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
                 log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because {0} is set to {1}', '"C_Cpp.intelliSenseEngine"', '"Disabled"'));
@@ -1657,6 +1674,14 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForProject(cmakeProject => cmakeProject.quickStart(folder));
     }
 
+    addFileToCMakeLists(file?: vscode.Uri) {
+        return this.runCMakeCommand(project => this.cmakeListsModifier.addSourceFileToCMakeLists(file, project));
+    }
+
+    removeFileFromCMakeLists(file?: vscode.Uri) {
+        return this.runCMakeCommand(project => this.cmakeListsModifier.removeSourceFileFromCMakeLists(file, project));
+    }
+
     resolveFolderTargetNameArgs(args?: FolderTargetNameArgsType): [ folder?: vscode.WorkspaceFolder | string, targetName?: string ] {
         let folder: vscode.WorkspaceFolder | string | undefined;
         let targetName: string | undefined;
@@ -2363,6 +2388,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'stop',
         'stopAll',
         'quickStart',
+        'addFileToCMakeLists',
+        'removeFileFromCMakeLists',
         'launchTargetPath',
         'launchTargetDirectory',
         'launchTargetFilename',
