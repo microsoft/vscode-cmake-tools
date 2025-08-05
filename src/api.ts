@@ -85,6 +85,26 @@ class CMakeProjectWrapper implements api.Project {
         return this.project.onSelectedConfigurationChangedApiEvent;
     }
 
+    get configurePreset() {
+        return this.project.configurePreset ?? undefined;
+    }
+
+    get buildPreset() {
+        return this.project.buildPreset ?? undefined;
+    }
+
+    get testPreset() {
+        return this.project.testPreset ?? undefined;
+    }
+
+    get packagePreset() {
+        return this.project.packagePreset ?? undefined;
+    }
+
+    get useCMakePresets() {
+        return this.project.useCMakePresets;
+    }
+
     configure(): Promise<void> {
         logApiTelemetry('configure');
         return withErrorCheck('configure', async () => (this.project.configure()));
