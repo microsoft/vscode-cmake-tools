@@ -280,6 +280,9 @@ export class ExtensionManager implements vscode.Disposable {
         this.workspaceConfig.onChange('mingwSearchDirs', async _ => { // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         });
+        this.workspaceConfig.onChange('outlineViewType', async _ => {
+            this.updateCodeModel(getActiveProject());
+        });
         KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
 
         let isMultiProject = false;
