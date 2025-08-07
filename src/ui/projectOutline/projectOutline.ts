@@ -8,6 +8,7 @@ import CMakeProject from '@cmt/cmakeProject';
 import { populateViewCodeModel } from '@cmt/ui/projectOutline/targetsViewCodeModel';
 import { fs } from '@cmt/pr';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
+import { ConfigurationReader } from '@cmt/config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -574,7 +575,8 @@ export class ProjectNode extends BaseNode {
     constructor(
         readonly name: string,
         readonly folder: vscode.WorkspaceFolder,
-        readonly sourceDirectory: string
+        readonly sourceDirectory: string,
+        readonly config: ConfigurationReader
     ) {
         // id: project_name:project_directory
         super(`${name}:${sourceDirectory}`);
@@ -658,12 +660,22 @@ export class ProjectNode extends BaseNode {
             if (target.isGeneratorProvided) {
                 continue;
             }
-
-            if (target.folder) {
-                addToTree(tree, target.folder.name, target);
+            
+            if (this.config.outlineViewType === "tree") {
+                const srcdir = target.sourceDirectory || '';
+                const relpath = path.relative(pr.sourceDirectory, srcdir);
+                addToTree(tree, relpath, target);
             } else {
-                addToTree(tree, '', target);
+                if (target.folder) {
+                    addToTree(tree, target.folder.name, target);
+                } else {
+                    addToTree(tree, '', target);
+                }
             }
+        }
+
+        if (this.config.outlineViewType === "tree") {
+            collapseTreeInplace(tree);
         }
 
         this._rootDir.update({
@@ -750,7 +762,7 @@ export class WorkspaceFolderNode extends BaseNode {
             // Remove stale entries for this cmakeProject so that a renamed
             // project replaces the old node instead of appearing alongside it.
             this.removeNodes(cmakeProject);
-            item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
+            item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath, cmakeProject.workspaceContext.config);
             this.setNode(cmakeProject, rootProject.name, item);
         }
         item.update(rootProject, ctx);
