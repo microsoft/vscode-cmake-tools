@@ -91,6 +91,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         additionalBuildProblemMatchers: [],
         shell: null,
         setBuildTargetSameAsLaunchTarget: false,
+        outlineViewType: "list",
         modifyLists: {
             addNewSourceFiles: 'ask',
             removeDeletedSourceFiles: 'ask',
