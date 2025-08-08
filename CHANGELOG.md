@@ -4,6 +4,7 @@
 
 Features:
 
+- Add bookmarks and filtering of outline view. [#4539](https://github.com/microsoft/vscode-cmake-tools/pull/4539) [@bradphelan](https://github.com/bradphelan)
 - Add an option to specify the launch target for debugging CTest tests. [#4273](https://github.com/microsoft/vscode-cmake-tools/pull/4273)
 - Add a setting to enable/disable our built-in language services. [#4290](https://github.com/microsoft/vscode-cmake-tools/issues/4290)
 - Add an option to group the default build target dropdown using CMake groups [#3953](https://github.com/microsoft/vscode-cmake-tools/pull/3953) [@itzandroidtab](https://github.com/itzandroidtab)
