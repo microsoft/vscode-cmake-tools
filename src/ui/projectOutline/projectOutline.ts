@@ -19,7 +19,7 @@ interface NamedItem {
 /**
  * Base class of nodes in all tree nodes
  */
-abstract class BaseNode {
+export abstract class BaseNode {
     constructor(public readonly id: string) {}
 
     /**
@@ -33,6 +33,56 @@ abstract class BaseNode {
     abstract getTreeItem(): vscode.TreeItem;
 
     abstract getOrderTuple(): string[];
+}
+
+/**
+ * Filter node that appears at the top of the tree to show and edit the current filter
+ */
+export class FilterNode extends BaseNode {
+    constructor(private searchTerm: string) {
+        super('cmake.outline.filter');
+    }
+
+    getChildren(): BaseNode[] {
+        return [];
+    }
+
+    getOrderTuple(): string[] {
+        return ['0-filter']; // Ensures it appears first
+    }
+
+    updateSearchTerm(term: string) {
+        this.searchTerm = term;
+    }
+
+    getTreeItem(): vscode.TreeItem {
+        const item = new vscode.TreeItem(
+            this.searchTerm ? `Filter: "${this.searchTerm}"` : 'Filter: (none)',
+            vscode.TreeItemCollapsibleState.None
+        );
+        item.id = this.id;
+        item.tooltip = this.searchTerm ?
+            'Click to edit filter or clear with X button' :
+            'Click to set a filter for the project outline';
+        item.contextValue = 'filter';
+
+        // Add appropriate icon and command
+        if (this.searchTerm) {
+            item.iconPath = new vscode.ThemeIcon('filter-filled');
+            item.description = `(${this.searchTerm.length} chars)`;
+        } else {
+            item.iconPath = new vscode.ThemeIcon('filter');
+            item.description = 'Click to filter';
+        }
+
+        item.command = {
+            command: 'cmake.outline.search',
+            title: 'Edit Filter',
+            arguments: []
+        };
+
+        return item;
+    }
 }
 
 /**
@@ -662,6 +712,67 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
 
     private readonly _folders = new Map<string, WorkspaceFolderNode>();
     private _selected_workspace?: WorkspaceFolderNode;
+    private _searchTerm: string = '';
+    private readonly _filterNode = new FilterNode('');
+
+    public async setSearchTerm(term: string) {
+        this._searchTerm = term;
+        this._filterNode.updateSearchTerm(term);
+        await vscode.commands.executeCommand(
+            'setContext',
+            'cmake:outlineFiltered',
+            !!this._searchTerm
+        );
+        // Update description to show current filter
+        const description = this._searchTerm ? `Filtered: "${this._searchTerm}"` : '';
+        this._changeEvent.fire(null);
+    }
+
+    public getSearchTerm(): string {
+        return this._searchTerm;
+    }
+
+    private _filter(node: BaseNode): boolean {
+        if (!this._searchTerm) {
+            return true;
+        }
+
+        // Always show FilterNode
+        if (node instanceof FilterNode) {
+            return true;
+        }
+
+        return this._nodeContainsMatch(node);
+    }
+
+    private _nodeContainsMatch(node: BaseNode): boolean {
+        const searchLower = this._searchTerm.toLowerCase();
+
+        // Check if this node itself matches
+        if (this._nodeMatchesFilter(node, searchLower)) {
+            return true;
+        }
+
+        // Check if any child contains a match
+        return node.getChildren().some(child => this._nodeContainsMatch(child));
+    }
+
+    private _nodeMatchesFilter(node: BaseNode, searchLower: string): boolean {
+        if (node instanceof TargetNode) {
+            return node.name.toLowerCase().includes(searchLower);
+        }
+
+        if (node instanceof DirectoryNode) {
+            return node.pathPart.toLowerCase().includes(searchLower);
+        }
+
+        if (node instanceof SourceFileNode) {
+            return node.name.toLowerCase().includes(searchLower);
+        }
+
+        // Project and workspace nodes don't match directly
+        return false;
+    }
 
     addAllCurrentFolders() {
         for (const wsf of vscode.workspace.workspaceFolders || []) {
@@ -705,16 +816,25 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
 
     getChildren(node?: BaseNode): BaseNode[] {
         try {
+            let children: BaseNode[] = [];
             if (node) {
-                return node.getChildren();
-            }
-            // Request for root nodes
-            if (this._folders.size === 1) {
-                for (const folder of this._folders.values()) {
-                    return folder.getChildren();
+                children = node.getChildren();
+            } else {
+                // Request for root nodes - include filter node at the top
+                if (this._folders.size === 1) {
+                    for (const folder of this._folders.values()) {
+                        children = [this._filterNode, ...folder.getChildren()];
+                        break; // Only process the first (and only) folder
+                    }
+                } else if (this._folders.size > 1) {
+                    children = [this._filterNode, ...this._folders.values()];
+                } else {
+                    // No folders, just return the filter node
+                    children = [this._filterNode];
                 }
             }
-            return [...this._folders.values()];
+            // Apply filtering - the _filter method will handle showing children of matching nodes
+            return children.filter((child) => child instanceof FilterNode || this._filter(child));
         } catch (e) {
             rollbar.error(localize('error.rendering.children.nodes', 'Error while rendering children nodes'));
             return [];
@@ -741,5 +861,32 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
 
     async getTreeItem(node: BaseNode) {
         return node.getTreeItem();
+    }
+
+    /** Find a TargetNode anywhere in the outline by its stable id. */
+    public findTargetNodeById(id: string): TargetNode | undefined {
+        const dfs = (node: BaseNode): TargetNode | undefined => {
+            if (node instanceof TargetNode && node.id === id) {
+                return node;
+            }
+            for (const child of node.getChildren()) {
+                const found = dfs(child);
+                if (found) {
+                    return found;
+                }
+            }
+            return undefined;
+        };
+
+        for (const folder of this._folders.values()) {
+            // Traverse children under each folder without applying global filtering
+            for (const child of folder.getChildren()) {
+                const found = dfs(child);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+        return undefined;
     }
 }
