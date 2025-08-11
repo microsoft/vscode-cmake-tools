@@ -1971,7 +1971,7 @@ export class CMakeProject {
             return { exitCode: -1 };
         }
         if (await this.needsReconfigure()) {
-            return (await this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken));
+            return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken);
         } else {
             return { exitCode: 0 };
         }
