@@ -21,7 +21,7 @@ Bugs:
 - Ensure Visual Studio developer environment propagation preserves `VCPKG_ROOT`, enabling vcpkg-dependent configure runs after using the Set Visual Studio Developer Environment command. [microsoft/vscode-cpptools#14083](https://github.com/microsoft/vscode-cpptools/issues/14083)
 - Fix auto-focusing the "Search" input field in the CMake Cache view. [#4552](https://github.com/microsoft/vscode-cmake-tools/pull/4552) [@simhof-basyskom](https://github.com/simhof-basyskom)
 - Remove the demangling feature in the code coverage implementation for now since it doesn't work properly. 
-
+- Fix incorrect IntelliSense configuration when a `UTILITY` has source files. [#4404](https://github.com/microsoft/vscode-cmake-tools/issues/4404)
 
 ## 1.21
 
@@ -53,7 +53,6 @@ Bug Fixes:
 - Fix bug that makes some build hang [#4424](https://github.com/microsoft/vscode-cmake-tools/issues/4424) and [#4465](https://github.com/microsoft/vscode-cmake-tools/issues/4465)
 - Fix issue with switching to presets during Quick Start. [#4409](https://github.com/microsoft/vscode-cmake-tools/issues/4409)
 - Fix bug that shows empty lines in Pinned Commands view. [#4406](https://github.com/microsoft/vscode-cmake-tools/issues/4406)
-- Fix incorrect IntelliSense configuration when a `UTILITY` has source files. [#4404](https://github.com/microsoft/vscode-cmake-tools/issues/4404)
 
 ## 1.20.53
 
