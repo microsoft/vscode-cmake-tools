@@ -14,6 +14,7 @@ import * as diab from '@cmt/diagnostics/diab';
 import * as gnu_ld from '@cmt/diagnostics/gnu-ld';
 import * as mvsc from '@cmt/diagnostics/msvc';
 import * as iar from '@cmt/diagnostics/iar';
+import * as iwyu from '@cmt/diagnostics/iwyu';
 import { FileDiagnostic, RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ConfigurationReader } from '@cmt/config';
 
@@ -26,6 +27,7 @@ export class Compilers {
     diab = new diab.Parser();
     msvc = new mvsc.Parser();
     iar = new iar.Parser();
+    iwyu = new iwyu.Parser();
 }
 
 export class CompileOutputConsumer implements OutputConsumer {
@@ -83,7 +85,8 @@ export class CompileOutputConsumer implements OutputConsumer {
             GHS: this.compilers.ghs.diagnostics,
             DIAB: this.compilers.diab.diagnostics,
             GNULD: this.compilers.gnuld.diagnostics,
-            IAR: this.compilers.iar.diagnostics
+            IAR: this.compilers.iar.diagnostics,
+            IWYU: this.compilers.iwyu.diagnostics
         };
         const parsers = util.objectPairs(by_source)
             .filter(([source, _]) => this.config.enableOutputParsers?.includes(source.toLowerCase()) ?? false);
