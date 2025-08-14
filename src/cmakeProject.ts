@@ -3135,6 +3135,7 @@ export class CMakeProject {
     private async createCMakeListsFile(mainListFile: string): Promise<Number> {
         const projectName = await vscode.window.showInputBox({
             prompt: localize('new.project.name', 'Enter a name for the new project'),
+            value: util.removeAllPatterns(path.basename(path.dirname(mainListFile)), [' ']),
             validateInput: (value: string): string => {
                 if (!value.length) {
                     return localize('project.name.required', 'A project name is required');
