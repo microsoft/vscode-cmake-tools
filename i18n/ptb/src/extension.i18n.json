@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Relendo os kits",
 	"language.service.failed": "Falha ao inicializar os serviços de idioma",
-	"dispose.cmake.tools": "Descartar Ferramentas CMake",
+	"dispose.cmake.tools": "Descartar CMake Tools",
 	"configuring.workspace.on.open": "Configurando o workspace no {0} aberto",
 	"configure.now.button": "Configurar Agora",
 	"configure.recommended": "É recomendável reconfigurar após atualizar para uma nova definição de kits.",
@@ -47,10 +47,10 @@
 	"cmake.finished.returned.unserializable": "{0} concluído (retornou um valor não serializável)",
 	"loading.extension.commands": "Carregando comandos de extensão",
 	"register.command": "Registrar o comando de extensão de CMakeTools {0}",
-	"uninstall.old.cmaketools": "Desinstale as versões mais antigas da extensão de Ferramentas CMake. Iniciando com a versão 1.2.0, a extensão passou a ser publicada pela Microsoft.",
+	"uninstall.old.cmaketools": "Desinstale as versões mais antigas da extensão de CMake Tools. Iniciando com a versão 1.2.0, a extensão passou a ser publicada pela Microsoft.",
 	"uninstall.twxs.uninstall": "Desinstalar twxs.cmake",
-	"uninstall.twxs.cmaketools": "Recomendamos que você desinstale a extensão twxs.cmake. A extensão de ferramentas do CMake agora fornece Serviços de Linguagem e não depende mais de twxs.cmake.",
-	"options.moved.notification.body": "Algumas opções da barra de status nas Ferramentas do CMake agora foram movidas para a Exibição de Status do Projeto na barra lateral de Ferramentas do CMake. Você pode personalizar sua exibição com a propriedade ''cmake.options'' nas configurações.",
+	"uninstall.twxs.cmaketools": "Recomendamos que você desinstale a extensão twxs.cmake. A extensão do CMake Tools agora fornece Serviços de Linguagem e não depende mais de twxs.cmake.",
+	"options.moved.notification.body": "Algumas opções da barra de status nos CMake Tools agora foram movidas para a Exibição de Status do Projeto na barra lateral de CMake Tools. Você pode personalizar sua exibição com a propriedade ''cmake.options'' nas configurações.",
 	"options.moved.notification.configure.cmake.options": "Configurar a Visibilidade das Opções do CMake",
 	"options.moved.notification.do.not.show": "Não Mostrar Novamente",
 	"deactivate.cmaketools": "Desativar CMakeTools"
