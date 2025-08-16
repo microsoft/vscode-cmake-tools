@@ -22,7 +22,7 @@
 	"dismiss": "关闭",
 	"task.not.compatible.with.preset.setting": "所选任务请求 CMakePreset，但没有为 CMakePreset 配置工作区",
 	"workspace.is": "工作区为 {0}",
-	"cmake.tools.not.found": "找不到 CMake 工具。",
+	"cmake.tools.not.found": "找不到 CMake Tools。",
 	"task.failed": "任务失败。",
 	"config.started": "配置任务已启动...",
 	"configure.on.edit": "使用预设运行配置任务时，将 configureOnEdit 设置为 true 可能会覆盖任务配置。",

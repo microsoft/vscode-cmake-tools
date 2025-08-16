@@ -22,7 +22,7 @@
 	"dismiss": "Ignorer",
 	"task.not.compatible.with.preset.setting": "La tâche sélectionnée demande un CMakePreset, mais l’espace de travail n’est pas configuré pour CMakePresets",
 	"workspace.is": "L’espace de travail est {0}",
-	"cmake.tools.not.found": "Outils CMake introuvables.",
+	"cmake.tools.not.found": "CMake Tools introuvables.",
 	"task.failed": "Échec de la tâche.",
 	"config.started": "Tâche de configuration démarrée...",
 	"configure.on.edit": "Lors de l’exécution des tâches de configuration à l’aide de présélections, la définition de configureOnEdit sur « true » peut potentiellement remplacer les configurations de tâches.",
