@@ -15,6 +15,7 @@ import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
+import { CommandResult } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -346,7 +347,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     }
 }
 
-export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsumer {
+export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vscode.Pseudoterminal {
     private writeEmitter = new vscode.EventEmitter<string>();
     private closeEmitter = new vscode.EventEmitter<number>();
     public get onDidWrite(): vscode.Event<string> {
@@ -357,14 +358,19 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
+        super();
     }
 
-    output(line: string): void {
+    // These two override methods are used to write output and error messages to the terminal, as well
+    // as call the parent class's output and error methods, which store the stdout and stderr messages for returning that info later.
+    override output(line: string): void {
         this.writeEmitter.fire(line + endOfLine);
+        super.output(line);
     }
 
-    error(error: string): void {
+    override error(error: string): void {
         this.writeEmitter.fire(error + endOfLine);
+        super.error(error);
     }
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
@@ -505,8 +511,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
             } else {
-                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result.result) + endOfLine);
-                this.closeEmitter.fire(result.result);
+                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result.exitCode) + endOfLine);
+                this.closeEmitter.fire(result.exitCode);
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
@@ -621,7 +627,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                     return;
                 }
             }
-            const result: number | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
+            const result: CommandResult | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
             if (result === undefined) {
                 this.writeEmitter.fire(localize('ctest.run.terminated', 'CTest run was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);

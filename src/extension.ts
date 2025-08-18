@@ -1348,7 +1348,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     cleanConfigure(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("deleteCacheAndReconfigure");
-        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigure), folder, undefined, true);
+        return this.runCMakeCommand(async cmakeProject => (await cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigure)).exitCode, folder, undefined, true);
     }
 
     cleanConfigureWithDebugger(folder?: vscode.WorkspaceFolder) {
@@ -1365,12 +1365,12 @@ export class ExtensionManager implements vscode.Disposable {
 
     cleanConfigureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("deleteCacheAndReconfigureWithDebugger");
-        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureWithDebugger, debuggerInformation), folder, undefined, true);
+        return this.runCMakeCommand(async cmakeProject => (await cmakeProject.cleanConfigureWithDebugger(ConfigureTrigger.commandCleanConfigureWithDebugger, debuggerInformation)).exitCode, folder, undefined, true);
     }
 
     cleanConfigureAll() {
         telemetry.logEvent("deleteCacheAndReconfigure");
-        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
+        return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll)).exitCode, undefined, true);
     }
 
     cleanConfigureAllWithDebugger(trigger?: ConfigureTrigger) {
@@ -1392,7 +1392,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string) {
         return this.runCMakeCommand(
-            async cmakeProject => (await cmakeProject.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal)).result,
+            async cmakeProject => (await cmakeProject.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal)).exitCode,
             folder, undefined, true, sourceDir);
     }
 
@@ -1412,7 +1412,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     configureWithDebuggerInternal(debuggerInformation: DebuggerInformation, folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean, sourceDir?: string, trigger?: ConfigureTrigger) {
         return this.runCMakeCommand(
-            async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation)).result,
+            async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureWithDebugger, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.NormalWithDebugger, debuggerInformation)).exitCode,
             folder, undefined, true, sourceDir);
     }
 
@@ -1421,7 +1421,7 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     configureAll() {
-        return this.runCMakeCommandForAll(async cmakeProject => ((await cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal)).result), undefined, true);
+        return this.runCMakeCommandForAll(async cmakeProject => ((await cmakeProject.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal)).exitCode), undefined, true);
     }
 
     configureAllWithDebugger(trigger?: ConfigureTrigger) {
@@ -1438,7 +1438,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     configureAllWithDebuggerInternal(debuggerInformation: DebuggerInformation, trigger?: ConfigureTrigger) {
         // I need to add ConfigureTriggers that account for coming from the project status view or project outline.
-        return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation)).result, undefined, true);
+        return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.configureInternal(trigger ?? ConfigureTrigger.commandConfigureAllWithDebugger, [], ConfigureType.NormalWithDebugger, debuggerInformation)).exitCode, undefined, true);
     }
 
     editCacheUI() {
@@ -1448,9 +1448,9 @@ export class ExtensionManager implements vscode.Disposable {
 
     build(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string, showCommandOnly?: boolean, isBuildCommand?: boolean) {
         telemetry.logEvent("build", { all: "false"});
-        return this.runCMakeCommand(cmakeProject => {
+        return this.runCMakeCommand(async cmakeProject => {
             const targets = name ? [name] : undefined;
-            return cmakeProject.build(targets, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand);
+            return (await cmakeProject.build(targets, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand)).exitCode;
         },
         folder,
         this.ensureActiveBuildPreset,
@@ -1464,9 +1464,9 @@ export class ExtensionManager implements vscode.Disposable {
 
     buildAll(name?: string | string[]) {
         telemetry.logEvent("build", { all: "true"});
-        return this.runCMakeCommandForAll(cmakeProject => {
+        return this.runCMakeCommandForAll(async cmakeProject => {
             const targets = util.isArrayOfString(name) ? name : util.isString(name) ? [name] : undefined;
-            return cmakeProject.build(targets);
+            return (await cmakeProject.build(targets)).exitCode;
         },
         this.ensureActiveBuildPreset,
         true);
@@ -2450,7 +2450,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
 
     return { getApi: (version: api.Version) => {
         // Since our API is backwards compatible, we can make our version number match that which was requested.
-        if (version === api.Version.v1 || version === api.Version.v2) {
+        if (version === api.Version.v1 || version === api.Version.v2 || version === api.Version.v3 || version === api.Version.v4) {
             ext.api.version = version;
         }
         return ext.api;
