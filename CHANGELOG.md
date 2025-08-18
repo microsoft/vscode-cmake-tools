@@ -13,6 +13,7 @@ Improvements:
 
 - In the Test Explorer, associate CTest tests with outermost function or macro invocation that calls `add_test()` instead of with the `add_test()` call itself. [#4490](https://github.com/microsoft/vscode-cmake-tools/issues/4490) [@malsyned](https://github.com/malsyned)
 - Better support of cmake v4.1 and its error index files in cmake-file-api replies [#4575](https://github.com/microsoft/vscode-cmake-tools/issues/4575) Contributed by STMicroelectronics
+- Added support for clang-cl vendor detection: `${buildKitVendor}`, `${buildKitVersionMajor}`, etc. now expand correctly when using clang-cl on Windows [#4524](https://github.com/microsoft/vscode-cmake-tools/pull/4524) [@wchou158](https://github.com/wchou158)
 
 Bugs:
 - Fix Compiler Warnings not shown in Problems Window [#4567]https://github.com/microsoft/vscode-cmake-tools/issues/4567
