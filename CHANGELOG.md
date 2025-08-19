@@ -51,6 +51,7 @@ Bug Fixes:
 - Fix bug that makes some build hang [#4424](https://github.com/microsoft/vscode-cmake-tools/issues/4424) and [#4465](https://github.com/microsoft/vscode-cmake-tools/issues/4465)
 - Fix issue with switching to presets during Quick Start. [#4409](https://github.com/microsoft/vscode-cmake-tools/issues/4409)
 - Fix bug that shows empty lines in Pinned Commands view. [#4406](https://github.com/microsoft/vscode-cmake-tools/issues/4406)
+- Fix auto-focusing the "Search" input field in the CMake Cache view. [#4552](https://github.com/microsoft/vscode-cmake-tools/pull/4552) [@simhof-basyskom](https://github.com/simhof-basyskom)
 
 ## 1.20.53
 
