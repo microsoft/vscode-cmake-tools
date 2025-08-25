@@ -28,8 +28,6 @@ variables:
   value: unset
 - name: TeamName
   value: C++ Cross Platform and Cloud
-- name: SignType
-  value: real
 - name: Codeql.Language
   value: javascript
 
@@ -44,11 +42,26 @@ extends:
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
+    - stage: verify_parameters
+      jobs:
+      - job: verify
+        steps:
+        - checkout: none
+        # Introduce pipeline compilation errors to block scheduling if the requisite parameters are not set
+        - ${{ if not(eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}:
+          - 'This pipeline can only be run on main branch.'
+
     - stage: stage
       jobs:
       - job: Job_1
         displayName: Build pre-release
         templateContext:
+          mb: # Enable the MicroBuild Signing toolset
+            signing:
+              enabled: true
+              signType: real
+              zipSources: false
+              signWithProd: true
           outputs:
           - output: pipelineArtifact
             displayName: 'Publish VSIX'
@@ -99,3 +112,4 @@ extends:
         - template: /jobs/shared/build.yml@self
           parameters:
             ReleaseVersion: $(ReleaseVersion)
+            signType: real
