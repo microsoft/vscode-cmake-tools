@@ -22,7 +22,7 @@
 	"dismiss": "關閉",
 	"task.not.compatible.with.preset.setting": "選取的工作要求 CMakePreset，但未設定 CMakePresets 的工作區",
 	"workspace.is": "工作區為 {0}",
-	"cmake.tools.not.found": "找不到 CMake 工具。",
+	"cmake.tools.not.found": "找不到 CMake Tools。",
 	"task.failed": "工作失敗。",
 	"config.started": "設定工作已開始...",
 	"configure.on.edit": "使用預設執行設定工作時，將 configureOnEdit 設定為 True 可能會覆寫工作設定。",
