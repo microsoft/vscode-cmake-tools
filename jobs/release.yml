@@ -6,7 +6,7 @@ parameters:
 - name: signType
   displayName: Signing Type
   type: string
-  default: test
+  default: real
   values:
     - test
     - real
