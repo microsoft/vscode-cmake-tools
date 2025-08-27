@@ -41,17 +41,28 @@ extends:
         name: VSEngSS-MicroBuild2022-1ES
     customBuildTags:
     - ES365AIMigrationTooling
+
     stages:
     - stage: verify_parameters
       jobs:
       - job: verify
+        displayName: Verify parameters
         steps:
         - checkout: none
-        # Introduce pipeline compilation errors to block scheduling if the requisite parameters are not set
-        - ${{ if not(eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}:
-          - 'This pipeline can only be run on main branch.'
+        # breaking issue: variables['Build.SourceBranch'] is evaluating to ''.
+        # TODO: Figure out why
+        #- ${{ if not(eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}:
+        #  - 'This pipeline can only be run on main branch.'
+
+        # Workaround for the previous check not working
+        - powershell: |
+            Write-Host "##vso[task.logissue type=error]This pipeline can only be run from the main branch. Actual: $(Build.SourceBranch)"
+            exit 1
+          displayName: 'Enforce main branch'
+          condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
 
     - stage: stage
+      dependsOn: verify_parameters
       jobs:
       - job: Job_1
         displayName: Build pre-release
