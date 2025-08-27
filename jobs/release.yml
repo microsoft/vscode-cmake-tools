@@ -67,11 +67,20 @@ extends:
       - job: verify
         steps:
         - checkout: none
-        # Introduce pipeline compilation errors to block scheduling if the requisite parameters are not set
-        - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')) }}
-          -'This pipeline can only be run on a release branch.'
+        # breaking issue: variables['Build.SourceBranch'] is evaluating to ''.
+        # TODO: Figure out why
+        #- ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/release')) }}:
+        #  - 'This pipeline can only be run on release branch.'
+        
+        # Workaround for the previous check not working
+        - powershell: |
+            Write-Host "##vso[task.logissue type=error]This pipeline can only be run from the release branch. Actual: $(Build.SourceBranch)"
+            exit 1
+          displayName: 'Enforce release branch'
+          condition: not(startsWith(variables['Build.SourceBranch'], 'refs/heads/release'))
 
     - stage: stage
+      dependsOn: verify_parameters
       jobs:
       - job: Job_1
         displayName: Build release
