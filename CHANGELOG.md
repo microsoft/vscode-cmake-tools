@@ -1,5 +1,14 @@
 # What's New?
 
+## 1.22
+
+Features:
+
+
+Improvements:
+
+- Added support for clang-cl vendor detection: `${buildKitVendor}`, `${buildKitVersionMajor}`, etc. now expand correctly when using clang-cl on Windows [#4524](https://github.com/microsoft/vscode-cmake-tools/pull/4524) [@wchou158](https://github.com/wchou158)
+
 ## 1.21
 
 Features:
