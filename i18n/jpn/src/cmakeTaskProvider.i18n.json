@@ -22,7 +22,7 @@
 	"dismiss": "無視",
 	"task.not.compatible.with.preset.setting": "選択したタスクは CMakePreset を要求しますが、ワークスペースは CMakePresets 用に構成されていません",
 	"workspace.is": "ワークスペースは {0} です",
-	"cmake.tools.not.found": "CMake ツールが見つかりません。",
+	"cmake.tools.not.found": "CMake Tools が見つかりません。",
 	"task.failed": "タスクが失敗しました",
 	"config.started": "構成タスクを開始しました...",
 	"configure.on.edit": "プリセットを使用して構成タスクを実行している場合、configureOnEdit を true に設定すると、タスク構成が上書きされる可能性があります。",
