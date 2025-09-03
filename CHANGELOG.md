@@ -1,5 +1,11 @@
 # What's New?
 
+# 1.22
+
+Features:
+
+- Add output parser for [include-what-you-use](https://github.com/include-what-you-use). [PR #4548](https://github.com/microsoft/vscode-cmake-tools/pull/4548) [@malsyned](https://github.com/malsyned)
+
 ## 1.21
 
 Features:
