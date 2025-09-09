@@ -22,7 +22,7 @@
 	"dismiss": "Descartar",
 	"task.not.compatible.with.preset.setting": "La tarea seleccionada solicita un CMakePreset, pero el área de trabajo no está configurada para CMakePresets.",
 	"workspace.is": "El área de trabajo es {0}",
-	"cmake.tools.not.found": "Las herramientas de CMake no se han encontrado.",
+	"cmake.tools.not.found": "No se han encontrado CMake Tools.",
 	"task.failed": "Error en la tarea",
 	"config.started": "Tarea de configuración iniciada...",
 	"configure.on.edit": "Al ejecutar tareas de configuración mediante ajustes preestablecidos, establecer configureOnEdit en true puede sobrescribir las configuraciones de tareas.",

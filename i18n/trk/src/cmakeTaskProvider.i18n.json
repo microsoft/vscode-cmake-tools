@@ -22,7 +22,7 @@
 	"dismiss": "Kapat",
 	"task.not.compatible.with.preset.setting": "Seçili görev bir CMakePreset istiyor, ancak çalışma alanı CMakePresets için yapılandırılmamış",
 	"workspace.is": "Çalışma alanı {0}",
-	"cmake.tools.not.found": "CMake Araçları bulunamadı.",
+	"cmake.tools.not.found": "Cmake Tools bulunamadı.",
 	"task.failed": "Görev başarısız oldu.",
 	"config.started": "Yapılandırma görevi başlatıldı...",
 	"configure.on.edit": "Yapılandırma görevleri ön ayarlar kullanılarak çalıştırıldığında configureOnEdit true olarak ayarlanırsa görev yapılandırmalarının üzerine olanak dahilinde yazılabilir.",
