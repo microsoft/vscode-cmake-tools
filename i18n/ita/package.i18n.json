@@ -73,7 +73,7 @@
 	"cmake-tools.command.cmake.stop.title": "Annulla compilazione",
 	"cmake-tools.command.cmake.stopAll.title": "Annulla la compilazione per tutti i progetti",
 	"cmake-tools.command.cmake.resetState.title": "Reimposta lo stato dell'estensione di CMake Tools (per la risoluzione dei problemi)",
-	"cmake-tools.command.cmake.openSettings.title": "Aprire le impostazioni dell'estensione degli strumenti CMake",
+	"cmake-tools.command.cmake.openSettings.title": "Apri le impostazioni dell'estensione CMake Tools",
 	"cmake-tools.command.cmake.selectActiveFolder.title": "Seleziona la cartella attiva",
 	"cmake-tools.command.cmake.outline.runUtilityTarget.title": "Esegui l'utilità",
 	"cmake-tools.command.cmake.outline.debugTarget.title": "Debug",
