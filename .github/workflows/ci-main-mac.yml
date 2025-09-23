@@ -51,6 +51,12 @@ jobs:
           echo "CMake path:"
           which cmake
           cmake --version
+          sudo rm /usr/local/bin/cmake
+          sudo rm /usr/local/bin/cmake-gui
+          sudo rm /usr/local/bin/ccmake
+          sudo rm /usr/local/bin/cmcldeps
+          sudo rm /usr/local/bin/cpack
+          sudo rm /usr/local/bin/ctest
 
       
       - name: Run successful-build test
