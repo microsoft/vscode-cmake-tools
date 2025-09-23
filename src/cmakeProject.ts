@@ -1410,6 +1410,9 @@ export class CMakeProject {
 
     async getCMakeExecutable() {
         log.warning(`LOOK AT ME GETTING CMAKE EXECUTABLE, process.env.path: ${process.env.PATH}`);
+        const darwinIndex = process.env.PATH?.indexOf("cmake-3.18.3-Darwin-x86_64");
+        const defaultIndex = process.env.PATH?.indexOf("/usr/local/bin");
+        log.warning(`LOOK AT ME, darwinIndex: ${darwinIndex}, defaultIndex: ${defaultIndex}`);
         if (process.env.PATH?.includes("cmake-3.18.3-Darwin-x86_64")) {
             log.warning("LOOK AT ME, PATH INCLUDES cmake-3.18.3-Darwin-x86_64");
         }
