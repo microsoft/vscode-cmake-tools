@@ -51,7 +51,6 @@ jobs:
           echo "CMake path:"
           which cmake
           cmake --version
-          # Fix: Only remove files that exist
           sudo rm -f /usr/local/bin/cmake
           sudo rm -f /usr/local/bin/cmake-gui
           sudo rm -f /usr/local/bin/ccmake
