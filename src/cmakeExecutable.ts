@@ -39,6 +39,8 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
     if (path && path.length !== 0) {
         const normalizedPath = util.platformNormalizePath(path);
         if (cmakeInfo.has(normalizedPath)) {
+            log.warning(`LOOK AT ME LOOK AT ME CMake Executable found in cache: ${normalizedPath}`);
+            log.warning(`LOOK AT ME LOOK AT ME CMake Executable: ${cmakeInfo.get(normalizedPath)?.path}`);
             const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
             if (cmakeExe.isPresent) {
                 await setCMakeDebuggerAvailableContext(

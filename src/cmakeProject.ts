@@ -1404,6 +1404,7 @@ export class CMakeProject {
 
     async getCMakePathofProject(): Promise<string> {
         const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        log.warning(`LOOK AT ME OVERWRITE: ${overWriteCMakePathSetting ?? '<undefined>'}`);
         return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting) || '';
     }
 
