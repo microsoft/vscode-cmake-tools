@@ -39,35 +39,25 @@ jobs:
             cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
 
-      - name: Setup custom bin directory with correct CMake
+      - name: Create CMake wrapper script
         run: |
-          # Create a custom bin directory that will have higher priority in PATH
-          mkdir -p $HOME/cmake_bin
-          
-          # Find the exact location of the installed CMake
+          # Find our desired CMake
           CMAKE_PATH=$(find /Users/runner -name "cmake" -type f -path "*/CMake.app/Contents/bin/*" | head -n 1)
-          echo "Found CMake at: $CMAKE_PATH"
-          
-          # Verify the CMake was found
           if [ -z "$CMAKE_PATH" ]; then
             echo "::error::Could not find installed CMake binary"
             exit 1
           fi
           
-          # Create symbolic links for all binaries in the CMake bin directory
-          for binary in $(find "$(dirname "$CMAKE_PATH")" -type f -executable); do
-            ln -sf "$binary" "$HOME/cmake_bin/$(basename "$binary")"
-            echo "Created symlink for $(basename "$binary")"
-          done
+          # Create a wrapper script that redirects to our desired CMake
+          echo '#!/bin/bash' > /tmp/cmake_wrapper
+          echo "exec $CMAKE_PATH \"\$@\"" >> /tmp/cmake_wrapper
+          chmod +x /tmp/cmake_wrapper
           
-          # Add the directory to PATH (making sure it's first)
-          echo "PATH=$HOME/cmake_bin:$PATH" >> $GITHUB_ENV
+          # Back up the original (don't delete it)
+          sudo mv /usr/local/bin/cmake /usr/local/bin/cmake.original
+          sudo cp /tmp/cmake_wrapper /usr/local/bin/cmake
           
-          # For debugging
-          echo "Modified PATH will be: $HOME/cmake_bin:$PATH"
-      
-      - name: Verify CMake version
-        run: |
+          # Verify
           which cmake
           cmake --version
 
