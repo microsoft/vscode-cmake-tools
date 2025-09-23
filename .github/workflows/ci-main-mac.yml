@@ -39,18 +39,35 @@ jobs:
             cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
 
-      - name: Ensure correct CMake version is used
+      - name: Setup custom bin directory with correct CMake
         run: |
+          # Create a custom bin directory that will have higher priority in PATH
+          mkdir -p $HOME/cmake_bin
+          
           # Find the exact location of the installed CMake
           CMAKE_PATH=$(find /Users/runner -name "cmake" -type f -path "*/CMake.app/Contents/bin/*" | head -n 1)
           echo "Found CMake at: $CMAKE_PATH"
-
-          # Add the directory to PATH
-          echo "PATH=$(dirname $CMAKE_PATH):$PATH" >> $GITHUB_ENV
-
-          # Debug - verify which cmake will be used
-          echo "After PATH update, which cmake will find:"
-          echo $PATH
+          
+          # Verify the CMake was found
+          if [ -z "$CMAKE_PATH" ]; then
+            echo "::error::Could not find installed CMake binary"
+            exit 1
+          fi
+          
+          # Create symbolic links for all binaries in the CMake bin directory
+          for binary in $(find "$(dirname "$CMAKE_PATH")" -type f -executable); do
+            ln -sf "$binary" "$HOME/cmake_bin/$(basename "$binary")"
+            echo "Created symlink for $(basename "$binary")"
+          done
+          
+          # Add the directory to PATH (making sure it's first)
+          echo "PATH=$HOME/cmake_bin:$PATH" >> $GITHUB_ENV
+          
+          # For debugging
+          echo "Modified PATH will be: $HOME/cmake_bin:$PATH"
+      
+      - name: Verify CMake version
+        run: |
           which cmake
           cmake --version
 
