@@ -46,6 +46,12 @@ jobs:
           configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
           install-build: true
 
+      - name: Test cmake path
+        run: |
+          echo "CMake path:"
+          which cmake
+          cmake --version
+      
       - name: Run successful-build test
         run: yarn endToEndTestsSuccessfulBuild
 
