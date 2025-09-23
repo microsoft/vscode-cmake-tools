@@ -1416,6 +1416,7 @@ export class CMakeProject {
                 versionToString(cmakeExe.version),
                 versionToString(this.minCMakeVersion)));
         }
+        log.warning(`LOOK AT ME LOOK AT ME, CMake Executable: ${cmakeExe.path}`);
         return cmakeExe;
     }
 
