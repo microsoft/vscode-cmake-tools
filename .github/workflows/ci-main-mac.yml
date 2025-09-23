@@ -50,7 +50,9 @@ jobs:
         run: |
           echo "CMake path:"
           which cmake
+          echo "CMAKE_EXECUTABLE=$(which cmake)" >> $GITHUB_ENV
           cmake --version
+
       
       - name: Run successful-build test
         run: yarn endToEndTestsSuccessfulBuild
