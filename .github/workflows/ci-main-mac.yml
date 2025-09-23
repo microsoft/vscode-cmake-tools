@@ -39,6 +39,21 @@ jobs:
             cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
 
+      - name: Ensure correct CMake version is used
+        run: |
+          # Find the exact location of the installed CMake
+          CMAKE_PATH=$(find /Users/runner -name "cmake" -type f -path "*/CMake.app/Contents/bin/*" | head -n 1)
+          echo "Found CMake at: $CMAKE_PATH"
+
+          # Add the directory to PATH
+          echo "PATH=$(dirname $CMAKE_PATH):$PATH" >> $GITHUB_ENV
+
+          # Debug - verify which cmake will be used
+          echo "After PATH update, which cmake will find:"
+          echo $PATH
+          which cmake
+          cmake --version
+
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0
         with:
