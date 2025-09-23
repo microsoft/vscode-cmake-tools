@@ -1409,6 +1409,7 @@ export class CMakeProject {
     }
 
     async getCMakeExecutable() {
+        log.warning(`LOOK AT ME GETTING CMAKE EXECUTABLE, process.env.path: ${process.env.PATH}`);
         const cmakePath: string = await this.getCMakePathofProject();
         log.warning(`LOOK AT ME CMAKE INITIAL PATH: ${cmakePath}`);
         const cmakeExe = await getCMakeExecutableInformation(cmakePath);
