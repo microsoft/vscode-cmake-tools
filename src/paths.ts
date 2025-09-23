@@ -12,6 +12,10 @@ import { expandString } from '@cmt/expand';
 import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
 
+import * as logging from '@cmt/logging';
+
+const log = logging.createLogger('paths');
+
 interface VSCMakePaths {
     cmake?: string;
     ninja?: string;
@@ -253,12 +257,16 @@ class Paths {
 
         let raw = overWriteCMakePathSetting;
         if (!raw) {
+            log.warning(`LOOK AT ME NO OVERWRITE, wsc.config.rawCMakePath: ${wsc.config.rawCMakePath}`);
             raw = await this.expandStringPath(wsc.config.rawCMakePath, wsc);
+            log.warning(`LOOK AT ME EXPANDED raw: ${raw}`);
         }
 
         if (raw === 'auto' || raw === 'cmake') {
             // We start by searching $PATH for cmake
+            log.warning(`LOOK AT ME AUTO or CMAKE, searching PATH`);
             const on_path = await this.which('cmake');
+            log.warning(`LOOK AT ME which cmake: ${on_path}`);
             if (on_path) {
                 return on_path;
             }

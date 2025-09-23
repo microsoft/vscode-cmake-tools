@@ -26,6 +26,7 @@ export interface CMakeExecutable {
 const cmakeInfo = new Map<string, CMakeExecutable>();
 
 export async function getCMakeExecutableInformation(path: string, config?: ConfigurationReader): Promise<CMakeExecutable> {
+    log.warning(`LOOK AT ME LOOK AT ME, CMake Executable requested: ${path}`);
     const cmake: CMakeExecutable = {
         path,
         isPresent: false,
@@ -82,6 +83,7 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
             }
         } catch {
         }
+        log.warning(`LOOK AT ME LOOK AT ME set cmake info map, CMake Executable: ${cmake.path}`);
         cmakeInfo.set(normalizedPath, cmake);
     }
     return cmake;

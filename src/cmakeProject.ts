@@ -1410,6 +1410,7 @@ export class CMakeProject {
 
     async getCMakeExecutable() {
         const cmakePath: string = await this.getCMakePathofProject();
+        log.warning(`LOOK AT ME CMAKE INITIAL PATH: ${cmakePath}`);
         const cmakeExe = await getCMakeExecutableInformation(cmakePath);
         if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
             rollbar.error(localize('cmake.version.not.supported',
