@@ -23,6 +23,10 @@ async function main() {
         };
 
         // Download VS Code, unzip it and run the integration test
+        console.warn(`LOOK AT ME, environment PATH before starting: ${process.env.PATH}`);
+        const darwinIndex = process.env.PATH?.indexOf("cmake-3.18.3-Darwin-x86_64");
+        const defaultIndex = process.env.PATH?.indexOf("/usr/local/bin");
+        console.warn(`LOOK AT ME, darwinIndex: ${darwinIndex}, defaultIndex: ${defaultIndex}`);
         await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
     } catch (err) {
         console.error(err);
