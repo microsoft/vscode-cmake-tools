@@ -42,9 +42,6 @@ jobs:
       - name: Remove conflicting system CMake installation 
         # The electron test runner modifies PATH priority, so we remove system CMake to ensure our installed version of CMake is used
         run: |
-          echo "CMake path:"
-          which cmake
-          cmake --version
           sudo rm -f /usr/local/bin/cmake
           sudo rm -f /usr/local/bin/cmake-gui
           sudo rm -f /usr/local/bin/ccmake
