@@ -39,7 +39,8 @@ jobs:
             cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
       
-      - name: Test cmake path
+      - name: Remove conflicting system CMake installation 
+        # The electron test runner modifies PATH priority, so we remove system CMake to ensure our installed version of CMake is used
         run: |
           echo "CMake path:"
           which cmake
