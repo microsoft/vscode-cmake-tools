@@ -14,7 +14,7 @@ import { logEvent } from './telemetry';
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
 
-    version: api.Version = api.Version.v4;
+    version: api.Version = api.Version.v5;
 
     showUIElement(element: api.UIElement): Promise<void> {
         logApiTelemetry('showUIElement');
