@@ -7577,10 +7577,10 @@ vinyl@^2.0.0, vinyl@^2.1.0:
     remove-trailing-separator "^1.0.1"
     replace-ext "^1.0.0"
 
-vscode-cmake-tools@^1.4.0:
-  version "1.4.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cmake-tools/-/vscode-cmake-tools-1.4.0.tgz#fe076adac6d2d1ae751d78aab84a051abcf39a42"
-  integrity sha1-/gdq2sbS0a51HXiquEoFGrzzmkI=
+vscode-cmake-tools@^1.5.0:
+  version "1.5.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cmake-tools/-/vscode-cmake-tools-1.5.0.tgz#208d15ab4364861f7bad17282bb4f1d47539248a"
+  integrity sha1-II0Vq0Nkhh97rRcoK7Tx1HU5JIo=
 
 vscode-cpptools@^7.1.1:
   version "7.1.1"
