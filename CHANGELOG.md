@@ -11,6 +11,7 @@ Features:
 - Add a command to substitute CMake Cache variables in `launch.json` and `tasks.json`. [#4422](https://github.com/microsoft/vscode-cmake-tools/pull/4422)
 - Add support for presets v10. [#4459](https://github.com/microsoft/vscode-cmake-tools/issues/4459), [#4445](https://github.com/microsoft/vscode-cmake-tools/issues/4452)
 - Add pre-fill project name using current folder name [#4533](https://github.com/microsoft/vscode-cmake-tools/pull/4533) [@HO-COOH](https://github.com/HO-COOH)
+- Add API v5 which adds presets api. [#4510](https://github.com/microsoft/vscode-cmake-tools/issues/4510) [@OrkunTokdemir](https://github.com/OrkunTokdemir)
 
 Improvements:
 
