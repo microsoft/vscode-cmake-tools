@@ -35,6 +35,7 @@ Bug Fixes:
 - Fix issue with switching to presets during Quick Start. [#4409](https://github.com/microsoft/vscode-cmake-tools/issues/4409)
 - Fix bug that shows empty lines in Pinned Commands view. [#4406](https://github.com/microsoft/vscode-cmake-tools/issues/4406)
 - Fix Compiler Warnings not shown in Problems Window [#4567]https://github.com/microsoft/vscode-cmake-tools/issues/4567
+- Fix bug in which clicking "Run Test" for filtered tests executed all tests instead [#4501](https://github.com/microsoft/vscode-cmake-tools/pull/4501) [@hippo91](https://github.com/hippo91)
 
 ## 1.20.53
 
