@@ -1413,7 +1413,12 @@ export function createCombinedCancellationToken(...tokens: (vscode.CancellationT
     disposables.push(combinedSource);
 
     combinedSource.token.onCancellationRequested(() => {
-        disposables.forEach(d => d.dispose());
+        // Defer disposal to allow all listeners to be notified first
+        setImmediate(() => {
+            disposables.forEach(d => {
+                d.dispose();
+            });
+        });
     });
 
     return combinedSource.token;
