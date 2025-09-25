@@ -74,6 +74,7 @@ class CMakeProjectWrapper implements api.Project {
     constructor(private readonly project: CMakeProject) {}
 
     get codeModel() {
+        logApiTelemetry('getCodeModel');
         return this.project.codeModelContent ?? undefined;
     }
 
@@ -86,22 +87,27 @@ class CMakeProjectWrapper implements api.Project {
     }
 
     get configurePreset() {
+        logApiTelemetry('getConfigurePreset');
         return this.project.configurePreset ?? undefined;
     }
 
     get buildPreset() {
+        logApiTelemetry('getBuildPreset');
         return this.project.buildPreset ?? undefined;
     }
 
     get testPreset() {
+        logApiTelemetry('getTestPreset');
         return this.project.testPreset ?? undefined;
     }
 
     get packagePreset() {
+        logApiTelemetry('getPackagePreset');
         return this.project.packagePreset ?? undefined;
     }
 
     get useCMakePresets() {
+        logApiTelemetry('getUseCMakePresets');
         return this.project.useCMakePresets;
     }
 
