@@ -1897,6 +1897,11 @@
           "group": "1_targetActions@6"
         },
         {
+          "command": "cmake.outline.toggleBookmark",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/",
+          "group": "inline"
+        },
+        {
           "command": "cmake.outline.setDefaultTarget",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canRun=true|canBuild=true/ && viewItem =~ /isDefault=false/",
           "group": "2_targetState@1"

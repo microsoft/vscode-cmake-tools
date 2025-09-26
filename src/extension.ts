@@ -31,7 +31,7 @@ import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/ui/projectOutline/projectOutline';
+import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode } from '@cmt/ui/projectOutline/projectOutline';
 import { BookmarksProvider } from '@cmt/ui/bookmarks';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
@@ -2458,12 +2458,25 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         ),
         vscode.commands.registerCommand(
             "cmake.outline.toggleBookmark",
-            async (node?: TargetNode) => {
-                if (node && node instanceof TargetNode) {
-                    const wasAdded = await ext.getBookmarksProvider().toggleBookmark(node);
-                    const action = wasAdded ? 'added to' : 'removed from';
-                    void vscode.window.showInformationMessage(`Target "${node.name}" ${action} bookmarks`);
+            async (node?: BaseNode) => {
+                if (!node) {
+                    return;
                 }
+
+                let nodeName: string = '';
+                if (node instanceof TargetNode) {
+                    nodeName = node.name;
+                } else if (node instanceof SourceFileNode) {
+                    nodeName = node.name;
+                } else if (node instanceof DirectoryNode) {
+                    nodeName = node.pathPart;
+                } else {
+                    nodeName = node.id;
+                }
+
+                const wasAdded = await ext.getBookmarksProvider().toggleBookmark(node);
+                const action = wasAdded ? 'added to' : 'removed from';
+                void vscode.window.showInformationMessage(`"${nodeName}" ${action} bookmarks`);
             }
         ),
         vscode.commands.registerCommand(

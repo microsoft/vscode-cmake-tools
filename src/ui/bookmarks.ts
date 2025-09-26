@@ -1,35 +1,34 @@
 import * as vscode from "vscode";
 import * as logging from "@cmt/logging";
-import { TargetNode, BaseNode } from "@cmt/ui/projectOutline/projectOutline";
+import { TargetNode, BaseNode, DirectoryNode, SourceFileNode } from "@cmt/ui/projectOutline/projectOutline";
 
 const log = logging.createLogger("bookmarks");
 
-export interface BookmarkedTarget {
+export interface BookmarkedItem {
     id: string;
     name: string;
     projectName: string;
-    folderPath: string;
+    folderName: string; // Store folder name instead of path for display
     type: string;
-    // Not persisted; reattached after reload
-    targetNode?: TargetNode;
+    sourceNode?: BaseNode; // Store original node reference (not persisted)
 }
 
 export class BookmarkNode extends BaseNode {
-    constructor(public readonly bookmark: BookmarkedTarget, id: string) {
+    constructor(public readonly bookmark: BookmarkedItem, id: string) {
         super(id);
     }
 
     getChildren(): BaseNode[] {
-        // Return the children from the original target node if it exists
-        if (this.bookmark.targetNode) {
-            return this.bookmark.targetNode.getChildren();
+        // Return the children from the original node if it exists
+        if (this.bookmark.sourceNode) {
+            return this.bookmark.sourceNode.getChildren();
         }
         return [];
     }
 
     getTreeItem(): vscode.TreeItem {
         const item = new vscode.TreeItem(
-            `${this.bookmark.name} (${this.bookmark.projectName})`
+            `${this.bookmark.name} (${this.bookmark.projectName || this.bookmark.folderName})`
         );
 
         // Set collapsible state based on whether there are children
@@ -39,16 +38,17 @@ export class BookmarkNode extends BaseNode {
             item.collapsibleState = vscode.TreeItemCollapsibleState.None;
         }
 
-        item.tooltip = `${this.bookmark.name}\nProject: ${this.bookmark.projectName}\nType: ${this.bookmark.type}\nFolder: ${this.bookmark.folderPath}`;
+        item.tooltip = `${this.bookmark.name}\nProject: ${this.bookmark.projectName || "N/A"}\nType: ${this.bookmark.type}\nFolder: ${this.bookmark.folderName}`;
         item.contextValue = `nodeType=bookmark;type=${this.bookmark.type}`;
         item.iconPath = new vscode.ThemeIcon("bookmark");
         return item;
     }
 
     getOrderTuple(): string[] {
-        return [this.bookmark.name, this.bookmark.projectName];
+        return [this.bookmark.name, this.bookmark.projectName || this.bookmark.folderName];
     }
 }
+
 export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
     private readonly _onDidChangeTreeData =
         new vscode.EventEmitter<BaseNode | null>();
@@ -56,7 +56,7 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
         return this._onDidChangeTreeData.event;
     }
 
-    private bookmarks = new Map<string, BookmarkedTarget>();
+    private bookmarks = new Map<string, BookmarkedItem>();
     private resolveTargetById?: (id: string) => TargetNode | undefined;
 
     constructor(private context: vscode.ExtensionContext) {
@@ -68,7 +68,7 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
             id: string;
             name: string;
             projectName: string;
-            folderPath: string;
+            folderName: string;
             type: string;
         }[]>("cmake.bookmarks", []);
         this.bookmarks.clear();
@@ -84,7 +84,7 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
             id: b.id,
             name: b.name,
             projectName: b.projectName,
-            folderPath: b.folderPath,
+            folderName: b.folderName,
             type: b.type
         }));
         await this.context.workspaceState.update(
@@ -101,9 +101,9 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
     getChildren(element?: BaseNode): BaseNode[] {
         if (!element) {
             // Return root level bookmarks
-            return Array.from(this.bookmarks.values()).map(
-                (bookmark) => new BookmarkNode(bookmark, bookmark.id)
-            );
+            return Array.from(this.bookmarks.values())
+                .map((bookmark) => new BookmarkNode(bookmark, bookmark.id))
+                .sort((a, b) => a.bookmark.name.localeCompare(b.bookmark.name));
         }
 
         // For any node (bookmark or its children), return its children
@@ -116,17 +116,19 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
         void this.reattachTargets();
     }
 
-    /** Try to reattach saved bookmarks to live TargetNodes using the resolver. */
+    /** Try to reattach saved bookmarks to live nodes using the resolver. */
     public async reattachTargets() {
         if (!this.resolveTargetById) {
             return;
         }
         let changed = false;
         for (const [id, bm] of this.bookmarks) {
-            const resolved = this.resolveTargetById(id);
-            if (resolved && bm.targetNode !== resolved) {
-                bm.targetNode = resolved;
-                changed = true;
+            if (bm.type === 'TARGET') {
+                const resolved = this.resolveTargetById(id);
+                if (resolved && bm.sourceNode !== resolved) {
+                    bm.sourceNode = resolved;
+                    changed = true;
+                }
             }
         }
         if (changed) {
@@ -134,20 +136,61 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
         }
     }
 
-    async addBookmark(targetNode: TargetNode) {
-        const bookmark: BookmarkedTarget = {
-            id: targetNode.id,
-            name: targetNode.name,
-            projectName: targetNode.projectName,
-            folderPath: targetNode.folder.uri.fsPath,
-            type: (targetNode as any)._type || "UNKNOWN",
-            targetNode: targetNode
-        };
+    async toggleBookmark(node: BaseNode): Promise<boolean> {
+        if (!node) {
+            return false;
+        }
 
-        this.bookmarks.set(bookmark.id, bookmark);
-        await this.saveBookmarks();
-        this._onDidChangeTreeData.fire(null);
-        log.info(`Added bookmark: ${bookmark.name}`);
+        let bookmark: BookmarkedItem;
+
+        if (node instanceof TargetNode) {
+            bookmark = {
+                id: node.id,
+                name: node.name,
+                projectName: node.projectName,
+                folderName: node.folder.name,
+                type: 'TARGET',
+                sourceNode: node
+            };
+        } else if (node instanceof SourceFileNode) {
+            bookmark = {
+                id: node.id,
+                name: node.name,
+                projectName: '',
+                folderName: node.folder.name,
+                type: 'FILE',
+                sourceNode: node
+            };
+        } else if (node instanceof DirectoryNode) {
+            // DirectoryNode doesn't have folder property directly
+            // Extract folder name from workspace context or use pathPart
+            bookmark = {
+                id: node.id,
+                name: node.pathPart,
+                projectName: '',
+                folderName: this.getFolderNameFromPath(node.pathPart),
+                type: 'DIRECTORY',
+                sourceNode: node
+            };
+        } else {
+            return false;
+        }
+
+        if (this.isBookmarked(bookmark.id)) {
+            await this.removeBookmark(bookmark.id);
+            return false;
+        } else {
+            this.bookmarks.set(bookmark.id, bookmark);
+            await this.saveBookmarks();
+            this._onDidChangeTreeData.fire(null);
+            return true;
+        }
+    }
+
+    private getFolderNameFromPath(path: string): string {
+        // Extract a folder name from a path
+        const parts = path.split('/');
+        return parts[parts.length - 1] || path;
     }
 
     async removeBookmark(targetId: string) {
@@ -161,18 +204,9 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
         }
         return false;
     }
+
     isBookmarked(targetId: string): boolean {
         return this.bookmarks.has(targetId);
-    }
-
-    async toggleBookmark(targetNode: TargetNode): Promise<boolean> {
-        if (this.isBookmarked(targetNode.id)) {
-            await this.removeBookmark(targetNode.id);
-            return false; // Removed
-        } else {
-            await this.addBookmark(targetNode);
-            return true; // Added
-        }
     }
 
     async clearAllBookmarks() {
@@ -183,11 +217,11 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
         log.info(`Cleared ${count} bookmarks`);
     }
 
-    getBookmark(targetId: string): BookmarkedTarget | undefined {
+    getBookmark(targetId: string): BookmarkedItem | undefined {
         return this.bookmarks.get(targetId);
     }
 
-    getAllBookmarks(): BookmarkedTarget[] {
+    getAllBookmarks(): BookmarkedItem[] {
         return Array.from(this.bookmarks.values());
     }
 }

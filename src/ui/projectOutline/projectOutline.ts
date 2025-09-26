@@ -723,8 +723,6 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
             'cmake:outlineFiltered',
             !!this._searchTerm
         );
-        // Update description to show current filter
-        const description = this._searchTerm ? `Filtered: "${this._searchTerm}"` : '';
         this._changeEvent.fire(null);
     }
 
