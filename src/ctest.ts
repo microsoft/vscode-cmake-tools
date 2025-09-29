@@ -1077,8 +1077,29 @@ export class CTestDriver implements vscode.Disposable {
             return;
         }
 
-        const requestedTests = request.include || this.testItemCollectionToArray(testExplorer.items);
-        const tests = this.uniqueTests(requestedTests);
+        // Helper to collect all leaf tests from a list of test items (suites or tests)
+        function flattenTests(items: readonly vscode.TestItem[]): vscode.TestItem[] {
+            const result: vscode.TestItem[] = [];
+            function collect(item: vscode.TestItem) {
+                if (item.children.size === 0) {
+                    result.push(item);
+                } else {
+                    item.children.forEach(collect);
+                }
+            }
+            items.forEach(collect);
+            return result;
+        }
+
+        // Expand suites in include and exclude to all their leaf tests
+        const requestedTests = request.include
+            ? flattenTests(request.include)
+            : this.testItemCollectionToArray(testExplorer.items).flatMap(item => flattenTests([item]));
+        const excludeTests = request.exclude ? flattenTests(request.exclude) : [];
+        const excludeSet = new Set(excludeTests.map(item => item.id));
+
+        const filteredRequestedTests = requestedTests.filter(test => !excludeSet.has(test.id));
+        const tests = this.uniqueTests(filteredRequestedTests);
 
         if (!await this.checkTestPreset(tests)) {
             return;

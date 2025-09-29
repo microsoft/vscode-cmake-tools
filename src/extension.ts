@@ -2450,7 +2450,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
 
     return { getApi: (version: api.Version) => {
         // Since our API is backwards compatible, we can make our version number match that which was requested.
-        if (version === api.Version.v1 || version === api.Version.v2 || version === api.Version.v3 || version === api.Version.v4) {
+        if (version === api.Version.v1 || version === api.Version.v2 || version === api.Version.v3 || version === api.Version.v4 || version === api.Version.v5) {
             ext.api.version = version;
         }
         return ext.api;
