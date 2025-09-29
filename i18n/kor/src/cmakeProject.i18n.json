@@ -45,7 +45,7 @@
 	"loading.new.workflow.preset": "CMake 드라이버로 새 워크플로 사전 설정 로드 중",
 	"unable.to.set.workflow.preset": "워크플로 사전 설정 {0}을(를) 설정할 수 없습니다.",
 	"error.on.switch.workflow.preset": "워크플로 사전 설정 전환 시 오류 발생({0})",
-	"disposing.extension": "CMake 도구 확장 삭제",
+	"disposing.extension": "CMake Tools 확장 삭제",
 	"extension.dispose": "확장 삭제",
 	"using.user.generator": "사용자 구성의 생성기를 사용하는 중: {0}",
 	"configuration.already.in.progress": "구성이 이미 진행 중입니다.",

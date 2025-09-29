@@ -3,6 +3,7 @@ import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as vscode from "vscode";
 import * as lodash from "lodash";
+import * as api from 'vscode-cmake-tools';
 
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
@@ -34,27 +35,16 @@ export interface PresetsFile {
 
 export type VendorType = { [key: string]: any };
 
-export interface Preset {
-    name: string;
-    displayName?: string;
-    description?: string;
-    hidden?: boolean;
-    inherits?: string | string[];
-    environment?: EnvironmentWithNull;
-    vendor?: VendorType;
-    condition?: Condition | boolean | null;
-    isUserPreset?: boolean;
-
+export interface PresetPrivate {
     __parentEnvironment?: EnvironmentWithNull; // Private field that contains the parent environment, which might be a modified VS Dev Env, or simply process.env.
     __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
     __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
     __file?: PresetsFile; // Private field to indicate the file where this preset was defined.
 }
+export interface Preset extends api.Preset, PresetPrivate {}
 
-export interface ValueStrategy {
-    value?: string;
-    strategy?: 'set' | 'external';
-}
+export type ValueStrategy = api.ValueStrategy;
+export type CacheVarType = api.CacheVarType;
 
 export interface WarningOptions {
     dev?: boolean;
@@ -84,13 +74,6 @@ enum TraceMode {
 enum FormatMode {
     Human = "human",
     Json = "json-v1"
-}
-
-export interface TraceOptions {
-    mode?: string;
-    format?: string;
-    source?: string[];
-    redirect: string;
 }
 
 export interface Condition {
@@ -235,8 +218,6 @@ export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], re
     return undefined;
 }
 
-export type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
-
 export type OsName = "Windows" | "Linux" | "macOS";
 
 export type VendorVsSettings = {
@@ -247,45 +228,19 @@ export type VendorVsSettings = {
     [key: string]: any;
 };
 
-export interface ConfigurePreset extends Preset {
-    generator?: string;
-    architecture?: string | ValueStrategy;
-    toolset?: string | ValueStrategy;
-    binaryDir?: string;
-    cmakeExecutable?: string;
-    // Make the cache value to be possibly undefined for type checking
-    cacheVariables?: { [key: string]: CacheVarType | undefined };
-    warnings?: WarningOptions;
-    errors?: ErrorOptions;
-    debug?: DebugOptions;
-    trace?: TraceOptions;
-    vendor?: VendorVsSettings | VendorType;
-    toolchainFile?: string;
-    installDir?: string;
-    graphviz?: string;
-
+export interface ConfigurePreset extends PresetPrivate, api.ConfigurePreset {
     // Private fields
     __developerEnvironmentArchitecture?: string; // Private field to indicate which VS Dev Env architecture we're using, if VS Dev Env is used.
 }
 
-export interface InheritsConfigurePreset extends Preset {
-    configurePreset?: string;
-    inheritConfigureEnvironment?: boolean; // Defaults to true
-}
+export interface InheritsConfigurePreset extends api.InheritsConfigurePreset, PresetPrivate {}
 
-export interface BuildPreset extends InheritsConfigurePreset {
-    jobs?: number;
-    targets?: string | string[];
-    configuration?: string;
-    cleanFirst?: boolean;
-    verbose?: boolean;
-    nativeToolOptions?: string[];
-
-    // Private fields
+export interface BuildPresetPrivate {
     __binaryDir?: string; // Getting this from the config preset
     __generator?: string; // Getting this from the config preset
     __targets?: string | string[]; // This field is translated to build args, so we can overwrite the target arguments.
 }
+export interface BuildPreset extends api.BuildPreset, BuildPresetPrivate, PresetPrivate {}
 
 /**
  * Should NOT cache anything. Need to make a copy if any fields need to be changed.
@@ -296,86 +251,18 @@ export const defaultBuildPreset: BuildPreset = {
     description: localize('default.build.preset.description', 'An empty build preset that does not add any arguments')
 };
 
-export interface OutputOptions {
-    shortProgress?: boolean;
-    verbosity?: 'default' | 'verbose' | 'extra';
-    debug?: boolean;
-    outputOnFailure?: boolean;
-    quiet?: boolean;
-    outputLogFile?: string;
-    outputJUnitFile?: string;
-    labelSummary?: boolean;
-    subprojectSummary?: boolean;
-    maxPassedTestOutputSize?: number;
-    maxFailedTestOutputSize?: number;
-    testOutputTruncation?: 'tail' | 'heads' | 'middle';
-    maxTestNameWidth?: number;
-}
-
-export interface IncludeFilter {
-    name?: string;
-    label?: string;
-    useUnion?: boolean;
-    index?: string | { start?: number; end?: number; stride?: number; specificTests?: number[] };
-}
-
-export interface ExcludeFilter {
-    name?: string;
-    label?: string;
-    fixtures?: { any?: string; setup?: string; cleanup?: string };
-}
-
-export interface TestFilter {
-    include?: IncludeFilter;
-    exclude?: ExcludeFilter;
-}
-
-export interface ExecutionOptions {
-    stopOnFailure?: boolean;
-    enableFailover?: boolean;
-    jobs?: number;
-    resourceSpecFile?: string;
-    testLoad?: number;
-    showOnly?: 'human' | 'json-v1';
-    repeat?: { mode: 'until-fail' | 'until-pass' | 'after-timeout'; count: number };
-    interactiveDebugging?: boolean;
-    scheduleRandom?: boolean;
-    timeout?: number;
-    noTestsAction?: 'default' | 'error' | 'ignore';
-}
-
-export interface TestPreset extends InheritsConfigurePreset {
-    configuration?: string;
-    overwriteConfigurationFile?: string[];
-    output?: OutputOptions;
-    filter?: TestFilter;
-    execution?: ExecutionOptions;
-
-    // Private fields
+export interface TestPresetPrivate {
     __binaryDir?: string; // Getting this from the config preset
     __generator?: string; // Getting this from the config preset
 }
 
-export interface PackageOutputOptions {
-    debug?: boolean;
-    verbose?: boolean;
-}
+export interface TestPreset extends api.TestPreset, TestPresetPrivate, PresetPrivate {}
 
-export interface PackagePreset extends InheritsConfigurePreset {
-    configurations?: string[];
-    generators?: string[];
-    variables?: { [key: string]: string | null | undefined };
-    configFile?: string;
-    output?: PackageOutputOptions;
-    packageName?: string;
-    packageVersion?: string;
-    packageDirectory?: string;
-    vendorName?: string;
-
-    // Private fields
+export interface PackagePresetPrivate {
     __binaryDir?: string; // Getting this from the config preset
     __generator?: string; // Getting this from the config preset
 }
+export interface PackagePreset extends api.PackagePreset, PackagePresetPrivate, PresetPrivate {}
 
 export interface WorkflowStepsOptions {
     type: string;
