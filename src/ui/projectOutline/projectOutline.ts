@@ -714,6 +714,7 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
     private _selected_workspace?: WorkspaceFolderNode;
     private _searchTerm: string = '';
     private readonly _filterNode = new FilterNode('');
+    private _bookmarksProvider?: any;
 
     public async setSearchTerm(term: string) {
         this._searchTerm = term;
@@ -770,6 +771,21 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
 
         // Project and workspace nodes don't match directly
         return false;
+    }
+
+    public setBookmarksProvider(provider: any) {
+        this._bookmarksProvider = provider;
+    }
+
+    public isNodeBookmarked(node: BaseNode): boolean {
+        if (!this._bookmarksProvider) {
+            return false;
+        }
+        return this._bookmarksProvider.isBookmarked(node.id);
+    }
+
+    public refresh(node?: BaseNode) {
+        this._changeEvent.fire(node ?? null);
     }
 
     addAllCurrentFolders() {
@@ -858,7 +874,14 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
     }
 
     async getTreeItem(node: BaseNode) {
-        return node.getTreeItem();
+        const item = node.getTreeItem();
+
+        if (this.isNodeBookmarked(node)) {
+            const existing = item.contextValue ?? "";
+            item.contextValue = existing ? `${existing};bookmarked=true` : "bookmarked=true";
+        }
+
+        return item;
     }
 
     /** Find a TargetNode anywhere in the outline by its stable id. */

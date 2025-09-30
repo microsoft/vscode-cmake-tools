@@ -898,8 +898,14 @@
         "title": "Toggle Bookmark",
         "category": "CMake",
         "icon": "$(bookmark)"
+      },
+      {
+        "command": "cmake.outline.removeBookmarkInline",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Remove Bookmark",
+        "category": "CMake",
+        "icon": "$(close)"
       }
-
     ],
     "taskDefinitions": [
       {
@@ -1898,7 +1904,12 @@
         },
         {
           "command": "cmake.outline.toggleBookmark",
-          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/ && !(viewItem =~ /bookmarked=true/)",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.removeBookmarkInline",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/ && viewItem =~ /bookmarked=true/",
           "group": "inline"
         },
         {

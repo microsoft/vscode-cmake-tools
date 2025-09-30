@@ -39,7 +39,7 @@ export class BookmarkNode extends BaseNode {
         }
 
         item.tooltip = `${this.bookmark.name}\nProject: ${this.bookmark.projectName || "N/A"}\nType: ${this.bookmark.type}\nFolder: ${this.bookmark.folderName}`;
-        item.contextValue = `nodeType=bookmark;type=${this.bookmark.type}`;
+        item.contextValue = `nodeType=bookmark;type=${this.bookmark.type};bookmarked=true`;
         item.iconPath = new vscode.ThemeIcon("bookmark");
         return item;
     }

@@ -101,6 +101,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.api = new CMakeToolsApiImpl(this);
         // Wire bookmarks to resolve TargetNodes from the outline using stable IDs
         this.bookmarksProvider.setTargetResolver((id: string) => this.projectOutline.findTargetNodeById(id));
+        this.projectOutline.setBookmarksProvider(this.bookmarksProvider);
     }
 
     private contextValues: {[key: string]: any} = {};
@@ -2477,6 +2478,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
                 const wasAdded = await ext.getBookmarksProvider().toggleBookmark(node);
                 const action = wasAdded ? 'added to' : 'removed from';
                 void vscode.window.showInformationMessage(`"${nodeName}" ${action} bookmarks`);
+                ext.getProjectOutline().refresh(); // Refresh the outline to show the bookmark icon change
             }
         ),
         vscode.commands.registerCommand(
@@ -2485,7 +2487,20 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
                 if (bookmarkNode?.bookmark) {
                     await ext.getBookmarksProvider().removeBookmark(bookmarkNode.bookmark.id);
                     void vscode.window.showInformationMessage(`Bookmark for "${bookmarkNode.bookmark.name}" removed`);
+                    ext.getProjectOutline().refresh(); // Refresh the outline to remove the bookmark from the list
                 }
+            }
+        ),
+        vscode.commands.registerCommand(
+            "cmake.outline.removeBookmarkInline",
+            async (node?: BaseNode) => {
+                if (!node) {
+                    return;
+                }
+                await ext.getBookmarksProvider().removeBookmark(node.id);
+                const nodeName = node instanceof TargetNode ? node.name : node instanceof SourceFileNode ? node.name : node instanceof DirectoryNode ? node.pathPart : node.id;
+                void vscode.window.showInformationMessage(`Bookmark for "${nodeName}" removed`);
+                ext.getProjectOutline().refresh(); // Refresh the outline to remove the bookmark from the list
             }
         ),
         vscode.commands.registerCommand(
@@ -2498,6 +2513,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
                 if (result === 'Yes') {
                     await ext.getBookmarksProvider().clearAllBookmarks();
                     void vscode.window.showInformationMessage('All bookmarks cleared');
+                    ext.getProjectOutline().refresh(); // Refresh the outline to remove all bookmarks from the list
                 }
             }
         ),
