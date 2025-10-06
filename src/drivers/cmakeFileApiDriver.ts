@@ -60,6 +60,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         sourceDir: string,
         isMultiProject: boolean,
         useCMakePresets: boolean,
+        expandCMakePresets: boolean,
         kit: Kit | null,
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
@@ -72,6 +73,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
         log.debug(localize('creating.instance.of', 'Creating instance of {0}', "CMakeFileApiDriver"));
         return this.createDerived(new CMakeFileApiDriver(cmake, config, sourceDir, isMultiProject, workspaceRootPath, preconditionHandler),
             useCMakePresets,
+            expandCMakePresets,
             kit,
             configurePreset,
             buildPreset,
@@ -214,15 +216,20 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
         // Dup args so we can modify them
         const args = Array.from(args_);
-        let has_gen = false;
-        for (const arg of args) {
-            if (arg.startsWith("-DCMAKE_GENERATOR:STRING=")) {
-                has_gen = true;
+
+        let has_gen = this.useCMakePresets && !this.expandCMakePresets;
+        if (!has_gen) {
+            for (const arg of args) {
+                if (arg.startsWith("-DCMAKE_GENERATOR:STRING=")) {
+                    has_gen = true;
+                }
             }
         }
         // -S and -B were introduced in CMake 3.13 and this driver assumes CMake >= 3.15
-        args.push("-S", `${util.lightNormalizePath(this.sourceDir)}`);
-        args.push("-B", `${util.lightNormalizePath(binaryDir)}`);
+        if (!this.useCMakePresets || this.expandCMakePresets) {
+            args.push("-S", `${util.lightNormalizePath(this.sourceDir)}`);
+            args.push("-B", `${util.lightNormalizePath(binaryDir)}`);
+        }
 
         if (!has_gen) {
             const generator = (configurePreset) ? {
@@ -286,9 +293,17 @@ export class CMakeFileApiDriver extends CMakeDriver {
             log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
             const env = await this.getConfigureEnvironment(configurePreset, options?.environment);
 
+            let cwd = "";
+
+            if (this.expandCMakePresets) {
+                cwd = options?.cwd ?? binaryDir;
+            } else {
+                cwd = this.sourceDir;
+            }
+
             const child = this.executeCommand(cmake, args, outputConsumer, {
                 environment: env,
-                cwd: options?.cwd ?? binaryDir
+                cwd
             });
             this.configureProcess = child;
 

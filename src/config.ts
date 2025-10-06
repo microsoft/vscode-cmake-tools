@@ -210,6 +210,7 @@ export interface ExtensionConfigurationSettings {
     touchbar: TouchBarConfig;
     options: OptionConfig;
     useCMakePresets: UseCMakePresets;
+    expandCMakePresets: boolean;
     useVsDeveloperEnvironment: UseVsDeveloperEnvironment;
     allowCommentsInPresetsFile: boolean;
     allowUnsupportedPresetsVersions: boolean;
@@ -473,6 +474,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get useCMakePresets(): UseCMakePresets {
         return this.configData.useCMakePresets;
     }
+    get expandCMakePresets(): boolean {
+        return this.configData.expandCMakePresets;
+    }
     get useVsDeveloperEnvironment(): UseVsDeveloperEnvironment {
         return this.configData.useVsDeveloperEnvironment;
     }
@@ -659,6 +663,7 @@ export class ConfigurationReader implements vscode.Disposable {
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
         options: new vscode.EventEmitter<OptionConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
+        expandCMakePresets: new vscode.EventEmitter<boolean>(),
         useVsDeveloperEnvironment: new vscode.EventEmitter<UseVsDeveloperEnvironment>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),

@@ -196,9 +196,16 @@ export class CMakeProject {
      * Whether we use presets
      */
     private _useCMakePresets = false; // The default value doesn't matter, value is set when folder is loaded
+    private _expandCMakePresets = false; // The default value doesn't matter, value is set when folder is loaded
+
     get useCMakePresets(): boolean {
         return this._useCMakePresets;
     }
+
+    get expandCMakePresets(): boolean {
+        return this._expandCMakePresets;
+    }
+
     async setUseCMakePresets(useCMakePresets: boolean) {
         if (this.targetName.value === this.initTargetName) {
             if (useCMakePresets) {
@@ -874,7 +881,7 @@ export class CMakeProject {
      * Dispose the instance
      */
     dispose() {
-        log.debug(localize({key: 'disposing.extension', comment: ["'CMake Tools' shouldn't be localized"]}, 'Disposing CMake Tools extension'));
+        log.debug(localize({ key: 'disposing.extension', comment: ["'CMake Tools' shouldn't be localized"] }, 'Disposing CMake Tools extension'));
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
@@ -1114,6 +1121,7 @@ export class CMakeProject {
                         this.sourceDir,
                         this.isMultiProjectFolder,
                         this.useCMakePresets,
+                        this.expandCMakePresets,
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
@@ -1130,6 +1138,7 @@ export class CMakeProject {
                         this.sourceDir,
                         this.isMultiProjectFolder,
                         this.useCMakePresets,
+                        this.expandCMakePresets,
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
@@ -1146,6 +1155,7 @@ export class CMakeProject {
                         this.sourceDir,
                         this.isMultiProjectFolder,
                         this.useCMakePresets,
+                        this.expandCMakePresets,
                         this.activeKit,
                         this.configurePreset,
                         this.buildPreset,
@@ -1243,7 +1253,7 @@ export class CMakeProject {
      * Second phase of two-phase init. Called by `create`.
      */
     private async init(sourceDirectory: string) {
-        log.debug(localize({key: 'second.phase.init', comment: ["'CMake Tools' shouldn't be localized'"]}, 'Starting CMake Tools second-phase init'));
+        log.debug(localize({ key: 'second.phase.init', comment: ["'CMake Tools' shouldn't be localized'"] }, 'Starting CMake Tools second-phase init'));
         await this.setSourceDir(await util.normalizeAndVerifySourceDir(sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
         this.doStatusChange(this.workspaceContext.config.options);
         // Restore the debug target
@@ -1292,12 +1302,16 @@ export class CMakeProject {
         return false;
     }
 
-    async doUseCMakePresetsChange(useCMakePresets?: string) {
+    async doUseCMakePresetsChange(useCMakePresets?: string, expandCMakePresets?: boolean) {
         if (useCMakePresets === undefined) {
             useCMakePresets = this.workspaceContext.config.useCMakePresets;
         }
+        if (expandCMakePresets === undefined) {
+            expandCMakePresets = this.workspaceContext.config.expandCMakePresets;
+        }
         const usingCMakePresets = useCMakePresets === 'always' ? true : useCMakePresets === 'never' ? false : await this.hasPresetsFiles();
 
+        this._expandCMakePresets = expandCMakePresets;
         if (usingCMakePresets !== this.wasUsingCMakePresets) {
             this.wasUsingCMakePresets = usingCMakePresets;
             await this.setUseCMakePresets(usingCMakePresets);
@@ -1327,7 +1341,6 @@ export class CMakeProject {
                     this.onDidOpenTextDocumentListener = undefined;
                 }
             }
-
             this.onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
         }
     }
@@ -2038,7 +2051,7 @@ export class CMakeProject {
         return drv ? this.tasksBuildCommandDrv(drv) : null;
     }
 
-    private activeBuild: Promise<CommandResult> = Promise.resolve({exitCode: 0});
+    private activeBuild: Promise<CommandResult> = Promise.resolve({ exitCode: 0 });
 
     /**
      * Implementation of `cmake.build`
