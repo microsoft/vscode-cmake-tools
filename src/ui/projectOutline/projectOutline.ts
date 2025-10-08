@@ -57,27 +57,27 @@ export class FilterNode extends BaseNode {
 
     getTreeItem(): vscode.TreeItem {
         const item = new vscode.TreeItem(
-            this.searchTerm ? `Filter: "${this.searchTerm}"` : 'Filter: (none)',
+            this.searchTerm ? localize('filter.active', 'Filter: "{0}"', this.searchTerm) : localize('filter.none', 'Filter: (none)'),
             vscode.TreeItemCollapsibleState.None
         );
         item.id = this.id;
         item.tooltip = this.searchTerm ?
-            'Click to edit filter or clear with X button' :
-            'Click to set a filter for the project outline';
+            localize('filter.tooltip.edit', 'Click to edit filter or clear with X button') :
+            localize('filter.tooltip.set', 'Click to set a filter for the project outline');
         item.contextValue = 'filter';
 
         // Add appropriate icon and command
         if (this.searchTerm) {
             item.iconPath = new vscode.ThemeIcon('filter-filled');
-            item.description = `(${this.searchTerm.length} chars)`;
+            item.description = localize('filter.char.count', '({0} chars)', this.searchTerm.length);
         } else {
             item.iconPath = new vscode.ThemeIcon('filter');
-            item.description = 'Click to filter';
+            item.description = localize('filter.click.to.filter', 'Click to filter');
         }
 
         item.command = {
             command: 'cmake.outline.search',
-            title: 'Edit Filter',
+            title: localize('edit.filter', 'Edit Filter'),
             arguments: []
         };
 

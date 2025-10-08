@@ -2443,7 +2443,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             "cmake.outline.search",
             async () => {
                 const result = await vscode.window.showInputBox({
-                    prompt: "Enter a search term to filter the Project Outline",
+                    prompt: localize('search.project.outline', 'Enter a search term to filter the Project Outline'),
                     value: ext.getProjectOutline().getSearchTerm()
                 });
                 if (result !== undefined) {
@@ -2476,8 +2476,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
                 }
 
                 const wasAdded = await ext.getBookmarksProvider().toggleBookmark(node);
-                const action = wasAdded ? 'added to' : 'removed from';
-                void vscode.window.showInformationMessage(`"${nodeName}" ${action} bookmarks`);
+                const action = wasAdded ? localize('added.to', 'added to') : localize('removed.from', 'removed from');
+                void vscode.window.showInformationMessage(localize('bookmark.toggled', '"{0}" {1} bookmarks', nodeName, action));
                 ext.getProjectOutline().refresh(); // Refresh the outline to show the bookmark icon change
             }
         ),
@@ -2486,7 +2486,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             async (bookmarkNode?: any) => {
                 if (bookmarkNode?.bookmark) {
                     await ext.getBookmarksProvider().removeBookmark(bookmarkNode.bookmark.id);
-                    void vscode.window.showInformationMessage(`Bookmark for "${bookmarkNode.bookmark.name}" removed`);
+                    void vscode.window.showInformationMessage(localize('bookmark.removed', 'Bookmark for "{0}" removed', bookmarkNode.bookmark.name));
                     ext.getProjectOutline().refresh(); // Refresh the outline to remove the bookmark from the list
                 }
             }
@@ -2499,7 +2499,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
                 }
                 await ext.getBookmarksProvider().removeBookmark(node.id);
                 const nodeName = node instanceof TargetNode ? node.name : node instanceof SourceFileNode ? node.name : node instanceof DirectoryNode ? node.pathPart : node.id;
-                void vscode.window.showInformationMessage(`Bookmark for "${nodeName}" removed`);
+                void vscode.window.showInformationMessage(localize('bookmark.removed', 'Bookmark for "{0}" removed', nodeName));
                 ext.getProjectOutline().refresh(); // Refresh the outline to remove the bookmark from the list
             }
         ),
@@ -2507,12 +2507,12 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             "cmake.bookmarks.clearAll",
             async () => {
                 const result = await vscode.window.showWarningMessage(
-                    'Are you sure you want to clear all bookmarks?',
-                    'Yes', 'No'
+                    localize('clear.all.bookmarks.confirm', 'Are you sure you want to clear all bookmarks?'),
+                    localize('yes', 'Yes'), localize('no', 'No')
                 );
-                if (result === 'Yes') {
+                if (result === localize('yes', 'Yes')) {
                     await ext.getBookmarksProvider().clearAllBookmarks();
-                    void vscode.window.showInformationMessage('All bookmarks cleared');
+                    void vscode.window.showInformationMessage(localize('all.bookmarks.cleared', 'All bookmarks cleared'));
                     ext.getProjectOutline().refresh(); // Refresh the outline to remove all bookmarks from the list
                 }
             }

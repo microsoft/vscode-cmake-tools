@@ -1,7 +1,10 @@
 import * as vscode from "vscode";
 import * as logging from "@cmt/logging";
+import * as nls from "vscode-nls";
 import { TargetNode, BaseNode, DirectoryNode, SourceFileNode } from "@cmt/ui/projectOutline/projectOutline";
 
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger("bookmarks");
 
 export interface BookmarkedItem {
@@ -38,7 +41,11 @@ export class BookmarkNode extends BaseNode {
             item.collapsibleState = vscode.TreeItemCollapsibleState.None;
         }
 
-        item.tooltip = `${this.bookmark.name}\nProject: ${this.bookmark.projectName || "N/A"}\nType: ${this.bookmark.type}\nFolder: ${this.bookmark.folderName}`;
+        item.tooltip = localize('bookmark.tooltip', '{0}\nProject: {1}\nType: {2}\nFolder: {3}',
+            this.bookmark.name,
+            this.bookmark.projectName || localize('not.available', 'N/A'),
+            this.bookmark.type,
+            this.bookmark.folderName);
         item.contextValue = `nodeType=bookmark;type=${this.bookmark.type};bookmarked=true`;
         item.iconPath = new vscode.ThemeIcon("bookmark");
         return item;
@@ -75,7 +82,7 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
         for (const bookmark of saved) {
             this.bookmarks.set(bookmark.id, { ...bookmark });
         }
-        log.info(`Loaded ${this.bookmarks.size} bookmarks`);
+        log.info(localize('loaded.bookmarks', 'Loaded {0} bookmarks', this.bookmarks.size));
     }
 
     private async saveBookmarks() {
@@ -91,7 +98,7 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
             "cmake.bookmarks",
             bookmarksArray
         );
-        log.info(`Saved ${bookmarksArray.length} bookmarks`);
+        log.info(localize('saved.bookmarks', 'Saved {0} bookmarks', bookmarksArray.length));
     }
 
     getTreeItem(element: BaseNode): vscode.TreeItem {
@@ -199,7 +206,7 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
             this.bookmarks.delete(targetId);
             await this.saveBookmarks();
             this._onDidChangeTreeData.fire(null);
-            log.info(`Removed bookmark: ${bookmark?.name}`);
+            log.info(localize('removed.bookmark', 'Removed bookmark: {0}', bookmark?.name));
             return true;
         }
         return false;
@@ -214,7 +221,7 @@ export class BookmarksProvider implements vscode.TreeDataProvider<BaseNode> {
         this.bookmarks.clear();
         await this.saveBookmarks();
         this._onDidChangeTreeData.fire(null);
-        log.info(`Cleared ${count} bookmarks`);
+        log.info(localize('cleared.bookmarks', 'Cleared {0} bookmarks', count));
     }
 
     getBookmark(targetId: string): BookmarkedItem | undefined {
