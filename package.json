@@ -2389,7 +2389,8 @@
               "msvc",
               "ghs",
               "diab",
-              "iar"
+              "iar",
+              "iwyu"
             ]
           },
           "default": [
