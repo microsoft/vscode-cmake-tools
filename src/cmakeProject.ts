@@ -1961,19 +1961,19 @@ export class CMakeProject {
         return needsReconfigure;
     }
 
-    async ensureConfigured(): Promise<number | null> {
+    async ensureConfigured(cancellationToken?: vscode.CancellationToken): Promise<CommandResult | null> {
         const drv = await this.getCMakeDriverInstance();
         if (!drv) {
             return null;
         }
         // First, save open files
         if (!await this.maybeAutoSaveAll()) {
-            return -1;
+            return { exitCode: -1 };
         }
         if (await this.needsReconfigure()) {
-            return (await this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal)).exitCode;
+            return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken);
         } else {
-            return 0;
+            return { exitCode: 0 };
         }
     }
 
@@ -2065,12 +2065,14 @@ export class CMakeProject {
             };
         }
 
-        const configResult = await this.ensureConfigured();
+        const configResult = await this.ensureConfigured(cancellationToken);
         if (configResult === null) {
             throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
-        } else if (configResult !== 0) {
+        } else if (configResult.exitCode !== 0) {
             return {
-                exitCode: configResult
+                exitCode: configResult.exitCode,
+                stdout: configResult.stdout,
+                stderr: configResult.stderr
             };
         }
         drv = await this.getCMakeDriverInstance();
@@ -2182,7 +2184,7 @@ export class CMakeProject {
      */
     async tryCompileFile(filePath: string): Promise<vscode.Terminal | null> {
         const configResult = await this.ensureConfigured();
-        if (configResult === null || configResult !== 0) {
+        if (configResult === null || configResult.exitCode !== 0) {
             // Config failed?
             return null;
         }
@@ -3133,6 +3135,7 @@ export class CMakeProject {
     private async createCMakeListsFile(mainListFile: string): Promise<Number> {
         const projectName = await vscode.window.showInputBox({
             prompt: localize('new.project.name', 'Enter a name for the new project'),
+            value: util.removeAllPatterns(path.basename(path.dirname(mainListFile)), [' ']),
             validateInput: (value: string): string => {
                 if (!value.length) {
                     return localize('project.name.required', 'A project name is required');

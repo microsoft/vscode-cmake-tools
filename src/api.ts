@@ -14,7 +14,7 @@ import { logEvent } from './telemetry';
 export class CMakeToolsApiImpl implements api.CMakeToolsApi {
     constructor(private readonly manager: ExtensionManager) {}
 
-    version: api.Version = api.Version.v4;
+    version: api.Version = api.Version.v5;
 
     showUIElement(element: api.UIElement): Promise<void> {
         logApiTelemetry('showUIElement');
@@ -74,6 +74,7 @@ class CMakeProjectWrapper implements api.Project {
     constructor(private readonly project: CMakeProject) {}
 
     get codeModel() {
+        logApiTelemetry('getCodeModel');
         return this.project.codeModelContent ?? undefined;
     }
 
@@ -83,6 +84,31 @@ class CMakeProjectWrapper implements api.Project {
 
     get onSelectedConfigurationChanged() {
         return this.project.onSelectedConfigurationChangedApiEvent;
+    }
+
+    get configurePreset() {
+        logApiTelemetry('getConfigurePreset');
+        return this.project.configurePreset ?? undefined;
+    }
+
+    get buildPreset() {
+        logApiTelemetry('getBuildPreset');
+        return this.project.buildPreset ?? undefined;
+    }
+
+    get testPreset() {
+        logApiTelemetry('getTestPreset');
+        return this.project.testPreset ?? undefined;
+    }
+
+    get packagePreset() {
+        logApiTelemetry('getPackagePreset');
+        return this.project.packagePreset ?? undefined;
+    }
+
+    get useCMakePresets() {
+        logApiTelemetry('getUseCMakePresets');
+        return this.project.useCMakePresets;
     }
 
     configure(): Promise<void> {

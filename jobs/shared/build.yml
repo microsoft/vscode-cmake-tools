@@ -5,13 +5,10 @@ parameters:
 - name: ReleaseVersion
   type: string
   default: unset
+- name: signType
+  type: string
 
 steps:
-- task: MicroBuildSigningPlugin@3
-  displayName: Install MicroBuild Signing
-  inputs:
-    signType: $(SignType)
-    zipSources: false
 - task: NodeTool@0
   displayName: Use Node 20.x
   inputs:
@@ -61,7 +58,7 @@ steps:
   displayName: Sign files
   inputs:
     solution: $(Build.SourcesDirectory)\jobs\signing\SignFiles.proj
-    msbuildArguments: /p:SignType=$(SignType)
+    msbuildArguments: /p:SignType=${{ parameters.signType }}
 - task: CmdLine@2
   displayName: vsce package
   inputs:
@@ -82,7 +79,7 @@ steps:
   displayName: Sign VSIX
   inputs:
     solution: $(Build.SourcesDirectory)\jobs\signing\SignVsix.proj
-    msbuildArguments: /p:SignType=$(SignType)
+    msbuildArguments: /p:SignType=${{ parameters.signType }}
 - task: CmdLine@2
   displayName: Write the version to version.txt
   inputs:
