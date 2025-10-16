@@ -863,6 +863,48 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.search",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Search Project Outline",
+        "category": "CMake",
+        "icon": "$(search)"
+      },
+      {
+        "command": "cmake.outline.clearFilter",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Clear Filter",
+        "category": "CMake",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "cmake.outline.removeBookmark",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Remove Bookmark",
+        "category": "CMake",
+        "icon": "$(close)"
+      },
+      {
+        "command": "cmake.bookmarks.clearAll",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Clear All Bookmarks",
+        "category": "CMake",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "cmake.outline.toggleBookmark",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Toggle Bookmark",
+        "category": "CMake",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "cmake.outline.removeBookmarkInline",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Remove Bookmark",
+        "category": "CMake",
+        "icon": "$(close)"
       }
     ],
     "taskDefinitions": [
@@ -1666,9 +1708,16 @@
           "when": "view == cmake.outline && cmake:enableFullFeatureSet",
           "group": "1_cmakeOutline"
         },
+
+
         {
           "command": "cmake.pinnedCommands.add",
           "when": "view == cmake.pinnedCommands && cmake:enableFullFeatureSet",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cmake.bookmarks.clearAll",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
           "group": "navigation@1"
         }
       ],
@@ -1809,6 +1858,16 @@
           "group": "inline"
         },
         {
+          "command": "cmake.outline.search",
+          "when": "view == cmake.outline && viewItem == 'filter'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.clearFilter",
+          "when": "view == cmake.outline && viewItem == 'filter' && cmake:outlineFiltered",
+          "group": "inline"
+        },
+        {
           "command": "cmake.outline.buildTarget",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canBuild=true|canRun=true/",
           "group": "inline"
@@ -1837,6 +1896,21 @@
           "command": "cmake.outline.revealInCMakeLists",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=target/",
           "group": "1_targetActions@5"
+        },
+        {
+          "command": "cmake.outline.toggleBookmark",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=target/",
+          "group": "1_targetActions@6"
+        },
+        {
+          "command": "cmake.outline.toggleBookmark",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/ && !(viewItem =~ /bookmarked=true/)",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.removeBookmarkInline",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/ && viewItem =~ /bookmarked=true/",
+          "group": "inline"
         },
         {
           "command": "cmake.outline.setDefaultTarget",
@@ -1932,6 +2006,26 @@
           "command": "cmake.pinnedCommands.run",
           "when": "view == cmake.pinnedCommands && cmake:enableFullFeatureSet",
           "group": "inline"
+        },
+        {
+          "command": "cmake.outline.removeBookmark",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "bookmarkActions@1"
+        },
+        {
+          "command": "cmake.outline.debugTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "bookmarkActions@2"
+        },
+        {
+          "command": "cmake.outline.launchTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "bookmarkActions@3"
         }
       ],
       "editor/title/context": [
@@ -3086,6 +3180,7 @@
                     "hidden",
                     "inherit"
                   ],
+                  "default": "hidden",
                   "markdownEnumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
@@ -3796,6 +3891,11 @@
         {
           "id": "cmake.pinnedCommands",
           "name": "%cmake-tools.configuration.views.cmake.pinnedCommands.description%",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "id": "cmake.bookmarks",
+          "name": "Bookmarks",
           "when": "cmake:enableFullFeatureSet"
         }
       ]
