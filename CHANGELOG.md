@@ -13,6 +13,7 @@ Features:
 - Add support for presets v10. [#4459](https://github.com/microsoft/vscode-cmake-tools/issues/4459), [#4445](https://github.com/microsoft/vscode-cmake-tools/issues/4452)
 - Add pre-fill project name using current folder name [#4533](https://github.com/microsoft/vscode-cmake-tools/pull/4533) [@HO-COOH](https://github.com/HO-COOH)
 - Add API v5 which adds presets api. [#4510](https://github.com/microsoft/vscode-cmake-tools/issues/4510) [@OrkunTokdemir](https://github.com/OrkunTokdemir)
+- Add an option to extract details about failing tests from CTest output using regular expressions. [#4420](https://github.com/microsoft/vscode-cmake-tools/issues/4420)
 
 Improvements:
 
