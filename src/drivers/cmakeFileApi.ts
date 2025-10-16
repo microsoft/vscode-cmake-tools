@@ -284,7 +284,13 @@ export async function loadIndexFile(replyPath: string): Promise<Index.IndexFile 
 
     const indexFiles = files.filter(filename => filename.startsWith('index-')).sort();
     if (indexFiles.length === 0) {
-        throw Error('No index file found.');
+        const errorFiles = files.filter(filename => filename.startsWith('error-')).sort();
+        if (errorFiles.length > 0) {
+            log.error('Error during cmake configure, no index file found.');
+        } else {
+            log.error('No index file found.');
+        }
+        return null;
     }
     const indexFilePath = path.join(replyPath, indexFiles[indexFiles.length - 1]);
     const fileContent = await tryReadFile(indexFilePath);
@@ -484,7 +490,7 @@ function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject
     const targetRootSource = convertToAbsolutePath(targetObject.paths.source, rootPaths.source);
     targetObject.sources.forEach(sourceFile => {
         const fileAbsolutePath = convertToAbsolutePath(sourceFile.path, rootPaths.source);
-        const fileRelativePath = path.relative(targetRootSource, fileAbsolutePath).replace('\\', '/');
+        const fileRelativePath = path.relative(targetRootSource, fileAbsolutePath).replace(/\\/g, '/');
         if (sourceFile.compileGroupIndex !== undefined) {
             fileGroup[sourceFile.compileGroupIndex].sources.push(fileRelativePath);
         } else {

@@ -51,8 +51,9 @@ import paths from '@cmt/paths';
 import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
-import { ConfigurationType } from 'vscode-cmake-tools';
 import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
+
+import { CommandResult, ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1533,7 +1534,7 @@ export class CMakeProject {
             // recursively search the build directory for all
             const searchRoot = await this.binaryDir;
             if (await fs.exists(searchRoot)) {
-                (await fs.walk(searchRoot)).forEach(e => {
+                (await fs.walk(searchRoot)).forEach((e: { name: string; path: string }) => {
                     if (e.name === 'compile_commands.json') {
                         compdbPaths.push(e.path);
                     }
@@ -1621,18 +1622,18 @@ export class CMakeProject {
      *          All other configure calls in this extension are able to provide
      *          proper trigger information.
      */
-    configure(extraArgs: string[] = []): Thenable<ConfigureResult> {
-        return this.configureInternal(ConfigureTrigger.api, extraArgs, ConfigureType.Normal);
+    configure(extraArgs: string[] = [], cancellationToken?: vscode.CancellationToken): Thenable<ConfigureResult> {
+        return this.configureInternal(ConfigureTrigger.api, extraArgs, ConfigureType.Normal, undefined, cancellationToken);
     }
 
-    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation): Promise<ConfigureResult> {
+    async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation, cancellationToken?: vscode.CancellationToken): Promise<ConfigureResult> {
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
         if (drv && drv.shouldUseCachedConfiguration(trigger)) {
             const result: ConfigureResult = await drv.configure(trigger, []);
-            if (result.result === 0) {
+            if (result.exitCode === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
             } else {
                 log.showChannel(true);
@@ -1647,7 +1648,7 @@ export class CMakeProject {
             const message = localize('no.cache.available', 'Unable to configure with existing cache');
             log.debug(message);
             debuggerInformation?.debuggerStoppedDueToPreconditions(message);
-            return { result: -1, resultType: ConfigureResultType.NoCache };
+            return { exitCode: -1, resultType: ConfigureResultType.NoCache };
         }
 
         const res = await vscode.window.withProgress(
@@ -1661,7 +1662,8 @@ export class CMakeProject {
                 const cancelInformation: ConfigureCancelInformation = {
                     canceled: false
                 };
-                cancel.onCancellationRequested(() => {
+                const combinedCancelToken = util.createCombinedCancellationToken(cancel, cancellationToken);
+                combinedCancelToken.onCancellationRequested(() => {
                     // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
                     cancelInformation.canceled = true;
                     rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
@@ -1731,10 +1733,10 @@ export class CMakeProject {
                                 const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
                                 const showDebuggerConfigurationString = "showConfigureWithDebuggerNotification";
 
-                                if (result.result === 0) {
+                                if (result.exitCode === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
-                                } else if (result.result !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && !cancelInformation.canceled && result.resultType === ConfigureResultType.NormalOperation) {
+                                } else if (result.exitCode !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && !cancelInformation.canceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     log.showChannel(true);
                                     const yesButtonTitle: string = localize(
                                         "yes.configureWithDebugger.button",
@@ -1763,7 +1765,7 @@ export class CMakeProject {
                                                 }
                                             }
                                         });
-                                } else if (result.result !== 0) {
+                                } else if (result.exitCode !== 0) {
                                     debuggerInformation?.debuggerStoppedDueToPreconditions(localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to: \"{0}\"", ConfigureResultType[result.resultType]));
                                 }
 
@@ -1778,19 +1780,19 @@ export class CMakeProject {
                         } else {
                             progress.report({ message: localize('configure.failed', 'Failed to configure project') });
                             debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.driver.available.no.debug', 'Cannot configure with CMake debugger due to no CMake driver being available.'));
-                            return { result: -1, resultType: ConfigureResultType.NormalOperation };
+                            return { exitCode: -1, resultType: ConfigureResultType.NormalOperation };
                         }
                     });
                 } catch (e: any) {
                     const error = e as Error;
                     progress.report({ message: error.message });
                     debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.due.to.error', 'Cannot configure with CMake debugger due to error: {0}', error.message));
-                    return { result: -1, resultType: ConfigureResultType.NormalOperation };
+                    return { exitCode: -1, resultType: ConfigureResultType.NormalOperation };
                 }
             }
         );
         // check if the an error occured during the configuration
-        if (res.result !== 0) {
+        if (res.exitCode !== 0) {
             log.showChannel(true);
         }
         return res;
@@ -1804,8 +1806,8 @@ export class CMakeProject {
      *          All other configure calls in this extension are able to provide
      *          proper trigger information.
      */
-    cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) {
-        return this.configureInternal(trigger, [], ConfigureType.Clean);
+    cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api, cancellationToken?: vscode.CancellationToken) {
+        return this.configureInternal(trigger, [], ConfigureType.Clean, undefined, cancellationToken);
     }
 
     /**
@@ -1875,13 +1877,13 @@ export class CMakeProject {
     private async doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<ConfigureResult>): Promise<ConfigureResult> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
-            return { result: -1, resultType: ConfigureResultType.Other };
+            return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
                 await vscode.window.showErrorMessage(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
                 log.debug(localize('no.kit.abort', 'No kit selected. Abort configure'));
-                return { result: -1, resultType: ConfigureResultType.Other };
+                return { exitCode: -1, resultType: ConfigureResultType.Other };
             }
             // Make sure variant manager has initialized before checking for variant
             if (!this.variantManager.hasInitialized()) {
@@ -1892,17 +1894,19 @@ export class CMakeProject {
                 await this.variantManager.selectVariant();
                 if (!this.variantManager.haveVariant) {
                     log.debug(localize('no.variant.abort', 'No variant selected. Abort configure'));
-                    return { result: -1, resultType: ConfigureResultType.Other };
+                    return { exitCode: -1, resultType: ConfigureResultType.Other };
                 }
             }
         } else if (!this.configurePreset) {
             await vscode.window.showErrorMessage(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
             log.debug(localize('no.preset.abort', 'No preset selected. Abort configure'));
-            return { result: -1, resultType: ConfigureResultType.Other };
+            return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
         log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
         const result = await cb(consumer);
+        result.stdout = consumer.stdout;
+        result.stderr = consumer.stderr;
         populateCollection(collections.cmake, consumer.diagnostics);
         return result;
     }
@@ -1957,19 +1961,19 @@ export class CMakeProject {
         return needsReconfigure;
     }
 
-    async ensureConfigured(): Promise<number | null> {
+    async ensureConfigured(cancellationToken?: vscode.CancellationToken): Promise<CommandResult | null> {
         const drv = await this.getCMakeDriverInstance();
         if (!drv) {
             return null;
         }
         // First, save open files
         if (!await this.maybeAutoSaveAll()) {
-            return -1;
+            return { exitCode: -1 };
         }
         if (await this.needsReconfigure()) {
-            return (await this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal)).result;
+            return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken);
         } else {
-            return 0;
+            return { exitCode: 0 };
         }
     }
 
@@ -2034,12 +2038,12 @@ export class CMakeProject {
         return drv ? this.tasksBuildCommandDrv(drv) : null;
     }
 
-    private activeBuild: Promise<number> = Promise.resolve(0);
+    private activeBuild: Promise<CommandResult> = Promise.resolve({exitCode: 0});
 
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
         if (!showCommandOnly) {
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
@@ -2056,14 +2060,20 @@ export class CMakeProject {
             } else {
                 throw new Error(localize('failed.to.get.build.command', 'Failed to get build command'));
             }
-            return 0;
+            return {
+                exitCode: 0
+            };
         }
 
-        const configResult = await this.ensureConfigured();
+        const configResult = await this.ensureConfigured(cancellationToken);
         if (configResult === null) {
             throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
-        } else if (configResult !== 0) {
-            return configResult;
+        } else if (configResult.exitCode !== 0) {
+            return {
+                exitCode: configResult.exitCode,
+                stdout: configResult.stdout,
+                stderr: configResult.stderr
+            };
         }
         drv = await this.getCMakeDriverInstance();
         if (!drv) {
@@ -2100,7 +2110,9 @@ export class CMakeProject {
                 } else {
                     buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                 }
-                return rc === null ? -1 : rc;
+                return {
+                    exitCode: rc === null ? -1 : rc
+                };
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
                 return await vscode.window.withProgress(
@@ -2118,7 +2130,8 @@ export class CMakeProject {
                                 oldProgress += increment;
                             }
                         });
-                        cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
+                        const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
+                        combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
                         log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextAndStore(isBuildingKey, true);
@@ -2138,7 +2151,11 @@ export class CMakeProject {
                         }
                         await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);
-                        return rc === null ? -1 : rc;
+                        return {
+                            exitCode: rc === null ? -1 : rc,
+                            stdout: consumer!.stdout,
+                            stderr: consumer!.stderr
+                        };
                     }
                 );
             }
@@ -2154,8 +2171,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true): Promise<number> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken);
         return this.activeBuild;
     }
 
@@ -2167,7 +2184,7 @@ export class CMakeProject {
      */
     async tryCompileFile(filePath: string): Promise<vscode.Terminal | null> {
         const configResult = await this.ensureConfigured();
-        if (configResult === null || configResult !== 0) {
+        if (configResult === null || configResult.exitCode !== 0) {
             // Config failed?
             return null;
         }
@@ -2197,7 +2214,7 @@ export class CMakeProject {
                 localize('project.not.yet.configured', 'This project has not yet been configured'),
                 localize('configure.now.button', 'Configure Now')));
             if (doConfigure) {
-                if ((await this.configureInternal()).result !== 0) {
+                if ((await this.configureInternal()).exitCode !== 0) {
                     return;
                 }
             } else {
@@ -2250,7 +2267,7 @@ export class CMakeProject {
         if (target === this.targetsInPresetName) {
             targets = this.buildPreset?.targets;
         }
-        return this.build(util.isString(targets) ? [targets] : targets);
+        return (await this.build(util.isString(targets) ? [targets] : targets)).exitCode;
     }
 
     private readonly targetsInPresetName = localize('targests.in.preset', '[Targets In Preset]');
@@ -2352,22 +2369,22 @@ export class CMakeProject {
     /**
      * Implementaiton of `cmake.clean`
      */
-    async clean(): Promise<number> {
-        return this.build(['clean'], false, false);
+    clean(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        return this.build(['clean'], false, false, cancellationToken);
     }
 
     /**
      * Implementation of `cmake.cleanRebuild`
      */
     async cleanRebuild(): Promise<number> {
-        const cleanResult = await this.clean();
+        const cleanResult = (await this.clean()).exitCode;
         if (cleanResult !== 0) {
             return cleanResult;
         }
-        return this.build();
+        return (await this.build()).exitCode;
     }
 
-    public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.OutputConsumer) {
+    public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.CommandConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
@@ -2376,7 +2393,7 @@ export class CMakeProject {
             extensionManager.cleanOutputChannel();
         }
         const buildResult = await this.build(undefined, false, false);
-        if (buildResult !== 0) {
+        if (buildResult.exitCode !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));
         }
 
@@ -2387,10 +2404,10 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false): Promise<number> {
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
         const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv);
-        return (retc) ? 0 : -1;
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken);
+        return retc;
     }
 
     async cpack(fromWorkflow: boolean = false): Promise<number> {
@@ -2398,7 +2415,7 @@ export class CMakeProject {
         const drv = await this.preTest(fromWorkflow);
         const retc = await this.cPackageController.runCPack(drv);
         this.isBusy.set(false);
-        return (retc) ? 0 : -1;
+        return retc;
     }
 
     async workflow(): Promise<number> {
@@ -2445,8 +2462,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.install`
      */
-    async install(): Promise<number> {
-        return this.build(['install'], false, false);
+    install(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        return this.build(['install'], false, false, cancellationToken);
     }
 
     /**
@@ -2556,7 +2573,7 @@ export class CMakeProject {
     async setLaunchTargetByName(name?: string | null) {
         if (await this.needsReconfigure()) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
-            if (rc.result !== 0) {
+            if (rc.exitCode !== 0) {
                 return null;
             }
         }
@@ -2661,7 +2678,7 @@ export class CMakeProject {
     async getLaunchTargetPath(): Promise<string | null> {
         if (await this.needsReconfigure()) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
-            if (rc.result !== 0) {
+            if (rc.exitCode !== 0) {
                 return null;
             }
         }
@@ -2793,7 +2810,7 @@ export class CMakeProject {
         const isReconfigurationNeeded = await this.needsReconfigure();
         if (isReconfigurationNeeded) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
-            if (rc.result !== 0) {
+            if (rc.exitCode !== 0) {
                 log.debug(localize('project.configuration.failed', 'Configuration of project failed.'));
                 return null;
             }
@@ -2816,7 +2833,7 @@ export class CMakeProject {
         const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
         if (buildOnLaunch || isReconfigurationNeeded) {
             if (this.isInstallTarget(chosen.name)) {
-                const installResult = await this.install();
+                const installResult = (await this.install()).exitCode;
                 if (installResult !== 0) {
                     log.debug(localize('install.failed', 'Install failed'));
                     return null;
@@ -2829,7 +2846,7 @@ export class CMakeProject {
                 }
 
                 const buildResult = await this.build(buildTargets);
-                if (buildResult !== 0) {
+                if (buildResult.exitCode !== 0) {
                     log.debug(localize('build.failed', 'Build failed'));
                     return null;
                 }
@@ -3117,12 +3134,14 @@ export class CMakeProject {
         // we want full feature set view for the whole workspace.
         await enableFullFeatureSet(true);
         await this.doUseCMakePresetsChange();
-        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).result;
+
+        return (await this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal)).exitCode;
     }
 
     private async createCMakeListsFile(mainListFile: string): Promise<Number> {
         const projectName = await vscode.window.showInputBox({
             prompt: localize('new.project.name', 'Enter a name for the new project'),
+            value: util.removeAllPatterns(path.basename(path.dirname(mainListFile)), [' ']),
             validateInput: (value: string): string => {
                 if (!value.length) {
                     return localize('project.name.required', 'A project name is required');

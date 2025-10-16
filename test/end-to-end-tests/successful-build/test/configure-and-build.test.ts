@@ -61,9 +61,9 @@ suite('Build', () => {
 
     test('Configure with cache-initializer', async () => {
         testEnv.config.updatePartial({ cacheInit: 'TestCacheInit.cmake' });
-        expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).result).to.be.eq(0);
+        expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.be.eq(0);
         await cmakeProject.setDefaultTarget('runTestTarget');
-        expect(await cmakeProject.build()).to.be.eq(0);
+        expect((await cmakeProject.build()).exitCode).to.be.eq(0);
         const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
         const result = await resultFile.getResultAsJson();
         expect(result['cookie']).to.eq('cache-init-cookie');
@@ -91,12 +91,12 @@ suite('Build', () => {
             testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
             await cmakeProject.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
 
-            let retc = await cmakeProject.build();
+            let retc = (await cmakeProject.build()).exitCode;
             expect(retc).eq(0);
 
             testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
             await cmakeProject.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-            retc = await cmakeProject.build();
+            retc = (await cmakeProject.build()).exitCode;
 
             expect(retc).eq(0);
             const result1 = await testEnv.result.getResultAsJson();
@@ -145,12 +145,12 @@ suite('Build', () => {
             newSettings.generator = 'Ninja';  // VS generators don't create compile_commands.json
             testEnv.config.updatePartial(newSettings);
         }
-        let retc = (await cmakeProject.cleanConfigure(ConfigureTrigger.runTests)).result;
+        let retc = (await cmakeProject.cleanConfigure(ConfigureTrigger.runTests)).exitCode;
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
         newSettings.copyCompileCommands = compdb_cp_path;
         testEnv.config.updatePartial(newSettings);
-        retc = (await cmakeProject.configureInternal(ConfigureTrigger.runTests)).result;
+        retc = (await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode;
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
     }).timeout(100000);
