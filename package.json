@@ -2365,6 +2365,68 @@
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription%",
           "scope": "machine-overridable"
         },
+        "cmake.ctest.failurePatterns": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "regexp"
+                    ],
+                    "properties": {
+                      "regexp": {
+                        "type": "string",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.regexp%"
+                      },
+                      "file": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.file%",
+                        "default": 1
+                      },
+                      "line": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.line%",
+                        "default": 2
+                      },
+                      "message": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.message%",
+                        "default": 3
+                      },
+                      "actual": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.actual%"
+                      },
+                      "expected": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.expected%"
+                      }
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": [
+            {
+              "regexp": "(.*?):(\\d+): *(?:error: *)(.*)"
+            },
+            {
+              "regexp": "(.*?)\\((\\d+)\\): *(?:error: *)(.*)"
+            }
+          ],
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.failurePatterns.markdownDescription%",
+          "scope": "machine-overridable"
+        },
         "cmake.ctest.debugLaunchTarget": {
           "type": "string",
           "default": null,

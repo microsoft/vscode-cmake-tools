@@ -1423,3 +1423,21 @@ export function createCombinedCancellationToken(...tokens: (vscode.CancellationT
 
     return combinedSource.token;
 }
+
+/**
+ * Convert all line endings in a string to '\n'
+ * @param s the string to normalize
+ * @returns @c s with all line endings converted to '\n'
+ */
+export function normalizeLF(s: string) {
+    return s.replace(/\r\n?/g, '\n');
+}
+
+/**
+ * Convert all line endings in a string to '\r\n'
+ * @param s the string to normalize
+ * @returns @c s with all line endings converted to '\r\n'
+ */
+export function normalizeCRLF(s: string) {
+    return s = s.replace(/\r?\n/g, '\r\n');
+}
