@@ -330,11 +330,15 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 if (defaultTask.length >= 1) {
                     return defaultTask[0];
                 } else {
+                    // If there are two tasks, both of them are templates, either build or clean rebuild, select the build one - the first one
+                    if (matchingTargetTasks.length === 2) {
+                        return matchingTargetTasks[0];
+                    }
                     // If there is no default task, matchingTargetTasks is a mixture of template and defined tasks.
                     // If there is only one task, that task is a template, so return the template.
-                    // If there are only two tasks, the first one is always a template, and the second one is the defined task that we are searching for.
-                    // But if there are more than two tasks, it means that there are multiple defiend tasks and none are set as default. So ask the user to choose one later.
-                    if (matchingTargetTasks.length === 1 || matchingTargetTasks.length === 2) {
+                    // If there are three tasks, the first two are always templates, and the third one is the defined task that we are searching for.
+                    // But if there are more than three tasks, it means that there are multiple defiend tasks and none are set as default. So ask the user to choose one later.
+                    if (matchingTargetTasks.length === 1 || matchingTargetTasks.length === 3) {
                         return matchingTargetTasks[matchingTargetTasks.length - 1];
                     }
                 }
