@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.22
+
+Features:
+
+- Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
+
 ## 1.21
 
 Features:

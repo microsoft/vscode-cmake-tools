@@ -3,6 +3,7 @@ import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecut
 import { ConfigurationReader } from '@cmt/config';
 import { ConfigureTrigger } from '@cmt/cmakeProject';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
+import { versionLess } from '@cmt/util';
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiString from 'chai-string';
@@ -283,5 +284,40 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 expect(sources).to.include(path.normalize(sourcefile_name).toLowerCase());
             }
         }).timeout(90000);
+
+        function testToolchain(withArguments: boolean) {
+            return async function (this: Mocha.Context) {
+                const cmakeVersion = (await getCMakeExecutableInformation(cmakePath)).version ?? { major: 0, minor: 0, patch: 0 };
+                // toolchains was only added to the file API in CMake 3.20
+                // also, CMAKE_<LANG>_COMPILER with arguments is only supported from CMake 3.19 on
+                if (versionLess(cmakeVersion, '3.20')) {
+                    this.skip();
+                }
+                const compiler = getTestRootFilePath(`test/fakebin/cross-compile-gcc${process.platform === 'win32' ? '.exe' : ''}`);
+                expect(compiler).to.satisfy(fs.existsSync, `${compiler} not found. Run 'yarn pretest-buildfakebin'.`);
+
+                const codemodel_data = await generateCodeModelForConfiguredDriver(
+                    this,
+                    [
+                        '-DCMAKE_TOOLCHAIN_FILE=toolchain-' + (withArguments ? 'with' : 'no') + '-args.cmake',
+                        '-DTEST_FULL_COMPILER_PATH=' + compiler
+                    ]
+                );
+                expect(codemodel_data).to.be.not.null;
+                const toolchain = codemodel_data?.toolchains?.get('CXX');
+                expect(toolchain).to.exist;
+                expect(toolchain?.path).to.equal(compiler);
+                // commandFragment was only added to the file API in CMake 4.3
+                if (!withArguments || versionLess(cmakeVersion, '4.2.20251203')) {
+                    expect(toolchain?.commandFragment).to.be.undefined;
+                } else {
+                    expect(toolchain?.commandFragment).to.equal('--hello world --something=other');
+                }
+            };
+        }
+
+        test('Test toolchain without compiler arguments', testToolchain(false)).timeout(90000);
+
+        test('Test toolchain with compiler arguments', testToolchain(true)).timeout(90000);
     });
 }
