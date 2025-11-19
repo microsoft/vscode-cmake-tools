@@ -200,6 +200,7 @@ export namespace Toolchains {
 
     export interface Compiler {
         path?: string;
+        commandFragment?: string;
         id?: string;
         version?: string;
         target?: string;
@@ -594,11 +595,15 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
 
     return toolchains.toolchains.reduce((acc, el) => {
         if (el.compiler.path) {
+            const tc: CodeModelToolchain = { path: el.compiler.path };
             if (el.compiler.target) {
-                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
-            } else {
-                acc.set(el.language, { path: el.compiler.path });
+                tc.target = el.compiler.target;
             }
+            if (el.compiler.commandFragment) {
+                // available (optional) since toolchains object version 1.1 (CMake 4.3)
+                tc.commandFragment = el.compiler.commandFragment;
+            }
+            acc.set(el.language, tc);
         }
         return acc;
     }, new Map<string, CodeModelToolchain>());

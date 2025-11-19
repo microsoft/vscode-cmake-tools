@@ -227,13 +227,20 @@ suite('CppTools tests', () => {
                         }]
                 }]
             }],
-            toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
+            toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', {
+                path: 'path_from_toolchain_object',
+                commandFragment: '--fragment from -toolchain=object'
+            }]])
         };
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModel3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
         let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile3)]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');
+        expect(configurations[0].configuration.compilerFragments).to.be.undefined;
+        expect(configurations[0].configuration.compilerArgs?.[0]).to.eq('--fragment');
+        expect(configurations[0].configuration.compilerArgs?.[1]).to.eq('from');
+        expect(configurations[0].configuration.compilerArgs?.[2]).to.eq('-toolchain=object');
 
         configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
@@ -333,13 +340,18 @@ suite('CppTools tests', () => {
                         }]
                 }]
             }],
-            toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
+            toolchains: new Map<string, codeModel.CodeModelToolchain>([['CXX', {
+                path: 'path_from_toolchain_object',
+                commandFragment: '--fragment "from" -toolchain=object'
+            }]])
         };
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModel3, activeTarget: 'target3', activeBuildTypeVariant: 'Release', folder: smokeFolder });
         let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile3)]);
         expect(configurations.length).to.eq(1);
         expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');
+        expect(configurations[0].configuration.compilerFragments?.[0]).to.eq('--fragment "from" -toolchain=object');
+        expect(configurations[0].configuration.compilerArgs).to.be.empty;
 
         configurations = await provider.provideConfigurations([uri1]);
         expect(configurations.length).to.eq(1);
