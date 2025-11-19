@@ -40,6 +40,7 @@ Bug Fixes:
 - Fix bug that shows empty lines in Pinned Commands view. [#4406](https://github.com/microsoft/vscode-cmake-tools/issues/4406)
 - Fix Compiler Warnings not shown in Problems Window [#4567]https://github.com/microsoft/vscode-cmake-tools/issues/4567
 - Fix bug in which clicking "Run Test" for filtered tests executed all tests instead [#4501](https://github.com/microsoft/vscode-cmake-tools/pull/4501) [@hippo91](https://github.com/hippo91)
+- Fix bug in which running "CMake: Build" would always run "CMake: Clean Rebuild" when `cmake.buildTask` is enabled [#4421](https://github.com/microsoft/vscode-cmake-tools/issues/4421) [@RedSkittleFox](https://github.com/RedSkittleFox)
 
 ## 1.20.53
 
