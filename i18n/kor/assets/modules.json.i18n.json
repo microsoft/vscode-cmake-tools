@@ -204,7 +204,7 @@
 	"assets/modules.json.FindPkgConfig": "CMake용 pkg-config 모듈.",
 	"assets/modules.json.FindPNG": "PNG 이미지 형식의 공식 참조 라이브러리인 libpng를 찾습니다.",
 	"assets/modules.json.FindPostgreSQL": "PostgreSQL 설치를 찾습니다.",
-	"assets/modules.json.FindProducer": "생산자가 OpenSceneGraph에 직접 속하지는 않지만 기본 사용자는 OSG이므로 OpenSceneGraph 구성 요소를 찾는 데 사용되는 Findosg* 제품군의 이 부분을 고려합니다. OSGDIR을 환경 경로로 수락합니다.",
+	"assets/modules.json.FindProducer": "Producer가 OpenSceneGraph에 직접 속하지는 않지만 기본 사용자는 OSG이므로 OpenSceneGraph 구성 요소를 찾는 데 사용되는 Findosg* 제품군의 이 부분을 고려합니다. OSGDIR을 환경 경로로 수락합니다.",
 	"assets/modules.json.FindProtobuf": "Google 프로토콜 버퍼 라이브러리를 찾아 구성합니다.",
 	"assets/modules.json.FindPython": "Python 인터프리터, 컴파일러 및 개발 환경(디렉터리 및 라이브러리 포함)을 찾습니다.",
 	"assets/modules.json.FindPython2": "Python 2 인터프리터, 컴파일러 및 개발 환경(디렉터리 및 라이브러리 포함)을 찾습니다.",
