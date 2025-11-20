@@ -74,6 +74,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             statusBarVisibility: "visible"
         },
         useCMakePresets: 'never',
+        expandCMakePresets: true,
         useVsDeveloperEnvironment: 'auto',
         allowCommentsInPresetsFile: false,
         allowUnsupportedPresetsVersions: false,
