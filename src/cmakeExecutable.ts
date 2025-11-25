@@ -69,10 +69,13 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
                 // Support for CMake using an internal default generator when one isn't provided
                 cmake.isDefaultGeneratorSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalDefaultGeneratorVersion);
             }
-            const debuggerPresent = await proc.execute(path, ['-E', 'capabilities'], null, execOpt).result;
-            if (debuggerPresent.retc === 0 && debuggerPresent.stdout) {
-                console.assert(debuggerPresent.stdout);
-                const stdoutJson = JSON.parse(debuggerPresent.stdout);
+            const capabilities = await proc.execute(path, ['-E', 'capabilities'], null, execOpt).result;
+            if (capabilities.retc === 0 && capabilities.stdout) {
+                console.assert(capabilities.stdout);
+                const stdoutJson = JSON.parse(capabilities.stdout);
+                if (cmake.isServerModeSupported && !stdoutJson["serverMode"]) {
+                    cmake.isServerModeSupported = false;
+                }
                 cmake.isDebuggerSupported = stdoutJson["debugger"];
                 await setCMakeDebuggerAvailableContext(
                     cmake.isDebuggerSupported?.valueOf() ?? false
