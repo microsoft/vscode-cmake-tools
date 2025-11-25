@@ -13,6 +13,7 @@ import * as proc from '@cmt/proc';
 import * as sinon from 'sinon';
 import { Subprocess } from '@cmt/proc';
 import { ChildProcess } from 'child_process';
+import { fs } from '@cmt/pr';
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
@@ -177,6 +178,7 @@ suite('Select debugger', () => {
         const target = { name: 'Test', path: 'Target' };
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
         const debuggerPath = getTestResourceFilePath(`../fakebin/gdb${process.platform === 'win32' ? '.exe' : ''}`);
+        expect(debuggerPath).to.satisfy(fs.existsSync, `${debuggerPath} not found. Run 'yarn pretest-buildfakebin'.`);
 
         const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.MIModes.gdb, debuggerPath);
         expect(config).to.not.be.null;
@@ -214,6 +216,7 @@ suite('Select debugger', () => {
         const target = { name: 'Test', path: 'Target' };
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
         const debuggerPath = getTestResourceFilePath(`../fakebin/lldb-mi${process.platform === 'win32' ? '.exe' : ''}`);
+        expect(debuggerPath).to.satisfy(fs.existsSync, `${debuggerPath} not found. Run 'yarn pretest-buildfakebin'.`);
 
         const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', undefined, debuggerPath);
         expect(config).to.not.be.null;
