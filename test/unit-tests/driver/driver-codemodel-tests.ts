@@ -246,7 +246,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 return;
             }
 
-            const codemodel_data = await generateCodeModelForConfiguredDriver(this, ['-DCMAKE_SYSROOT=/tmp']);
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this, ['-DCMAKE_SYSROOT=/tmp', '-DCMAKE_C_COMPILER_WORKS=1', '-DCMAKE_CXX_COMPILER_WORKS=1']);
             expect(codemodel_data).to.be.not.null;
 
             const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'EXECUTABLE');
