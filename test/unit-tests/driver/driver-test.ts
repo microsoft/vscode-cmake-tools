@@ -21,7 +21,7 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function cleanupBuildDir(build_dir: string): boolean {
-    fs.rmSync(build_dir, {recursive: true, force: true});
+    fs.rmSync(build_dir, { recursive: true, force: true });
     return !fs.existsSync(build_dir);
 }
 
@@ -51,7 +51,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 name: 'Visual Studio Community 2022 - amd64',
                 visualStudio: 'VisualStudio.17.0',
                 visualStudioArchitecture: 'x64',
-                preferredGenerator: {name: 'Visual Studio 17 2022', platform: 'x64'}
+                preferredGenerator: { name: 'Visual Studio 17 2022', platform: 'x64' }
             } as Kit;
         } else {
             secondaryKit = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;
@@ -152,7 +152,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 expect(false, 'configure did not detect the invalid generator').to.be.true;
             } catch (e) {
                 if (!(e instanceof NoGeneratorError)) {
-                    expect(false, `configure threw the wrong Error type: ${typeof(e)}`).to.be.true;
+                    expect(false, `configure threw the wrong Error type: ${typeof (e)}`).to.be.true;
                 }
             }
         }).timeout(60000);
@@ -433,7 +433,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
             // Change the generator from Ninja to 'Visual Studio 17 2022'/'Unix Makefiles'.
             if (process.platform === 'win32') {
-                await driver.setKit(secondaryKit, [{name: 'Visual Studio 17 2022', platform: 'x64'}]);
+                await driver.setKit(secondaryKit, [{ name: 'Visual Studio 17 2022', platform: 'x64' }]);
             } else {
                 await driver.setKit(secondaryKit, [{ name: 'Unix Makefiles' }]);
             }
