@@ -432,8 +432,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         let compilerToolchains: CodeModelToolchain | undefined;
         if ("toolchains" in opts.codeModelContent) {
             compilerToolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
-            || opts.codeModelContent.toolchains?.get('CXX')
-            || opts.codeModelContent.toolchains?.get('C');
+                || opts.codeModelContent.toolchains?.get('CXX')
+                || opts.codeModelContent.toolchains?.get('C');
         }
         // If none of those work, fall back to the same order, but in the cache.
         const compilerCache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
