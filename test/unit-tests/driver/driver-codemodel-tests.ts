@@ -21,7 +21,7 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function cleanupBuildDir(build_dir: string): boolean {
-    fs.rmSync(build_dir, {recursive: true, force: true});
+    fs.rmSync(build_dir, { recursive: true, force: true });
     return !fs.existsSync(build_dir);
 }
 
@@ -43,7 +43,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 name: 'Visual Studio Community 2022',
                 visualStudio: 'VisualStudio.17.0',
                 visualStudioArchitecture: 'x64',
-                preferredGenerator: {name: 'Visual Studio 17 2022', platform: 'x64', toolset: 'host=x64'}
+                preferredGenerator: { name: 'Visual Studio 17 2022', platform: 'x64', toolset: 'host=x64' }
             } as Kit;
         } else {
             kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;
