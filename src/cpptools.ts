@@ -323,7 +323,7 @@ function fallbackConfiguration(configurations: Map<string, cpptools.SourceFileCo
         return undefined;
     }
     for (const item of configurations.values()) {
-        const { configuration: { includePath, defines, intelliSenseMode, standard} } = item;
+        const { configuration: { includePath, defines, intelliSenseMode, standard } } = item;
         if (includePath.length || defines.length || intelliSenseMode || standard) {
             return item;
         }
@@ -499,8 +499,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         let compilerToolchains: CodeModelToolchain | undefined;
         if ("toolchains" in opts.codeModelContent) {
             compilerToolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
-            || opts.codeModelContent.toolchains?.get('CXX')
-            || opts.codeModelContent.toolchains?.get('C');
+                || opts.codeModelContent.toolchains?.get('CXX')
+                || opts.codeModelContent.toolchains?.get('C');
         }
         // If none of those work, fall back to the same order, but in the cache.
         const compilerCache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
