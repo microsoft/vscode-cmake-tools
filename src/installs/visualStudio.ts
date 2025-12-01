@@ -318,6 +318,7 @@ async function collectDevBatVars(hostArch: string, devBat: string, args: string[
     const envFileName = batFileName + '.env';
     const bat = [
         `@echo off`,
+        `chcp 65001`,
         `cd /d "%~dp0"`,
         `set "VS${majorVersion}0COMNTOOLS=${commonDir}"`,
         `set "INCLUDE="`,
