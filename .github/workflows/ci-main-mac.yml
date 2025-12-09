@@ -37,15 +37,18 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Install CMake
+      - name: Install CMake/Ninja (Intel)
+        if: matrix.os == 'macos-15-intel'
         uses: lukka/get-cmake@latest
         with:
             cmakeVersion: 3.18.3
+            ninjaVersion: 1.10.1
 
-      - name: Install Ninja
+      - name: Install CMake/Ninja (Apple Silicon)
+        if: matrix.os == 'macos-15'
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
-        run: brew install ninja
+        run: brew install cmake ninja
       
       - name: Remove conflicting system CMake installation 
         # The electron test runner modifies PATH priority, so we remove system CMake to ensure our installed version of CMake is used
