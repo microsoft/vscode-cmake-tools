@@ -8,7 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13 # TODO: This is a workaround until macos-14 is fixed: https://github.com/actions/runner-images/issues/10624
+    strategy:
+      matrix:
+        os: [macos-15-intel, macos-latest] # macos-15-intel (x86_64) and macos-latest (ARM64)
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
@@ -81,6 +84,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: TestLogs
+          name: TestLogs-${{ matrix.os }}
           path: test/**/log.txt
           if-no-files-found: warn

@@ -22,6 +22,7 @@ Improvements:
 - Speedup & reduce heap allocations in shlex split module function. Significant gains for mid-large compile_commands.json - CompilationDatabase construction. [#4458](https://github.com/microsoft/vscode-cmake-tools/pull/4458) [@borjamunozf](https://github.com/borjamunozf)
 - In the Test Explorer, associate CTest tests with outermost function or macro invocation that calls `add_test()` instead of with the `add_test()` call itself. [#4490](https://github.com/microsoft/vscode-cmake-tools/issues/4490) [@malsyned](https://github.com/malsyned)
 - Better support of cmake v4.1 and its error index files in cmake-file-api replies [#4575](https://github.com/microsoft/vscode-cmake-tools/issues/4575) Contributed by STMicroelectronics
+- Migrate macOS CI from deprecated macOS-13 to macOS-15 with matrix strategy for both Intel and ARM64 architectures.
 
 Bug Fixes:
 
