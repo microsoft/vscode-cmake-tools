@@ -30,7 +30,7 @@ suite('cmake', () => {
     });
 
     test('No cmake present message', async () => {
-        testEnv.config.updatePartial({ cmakePath: 'cmake' });
+        testEnv.config.updatePartial({ cmakePath: 'cmake3' });
         await cmakeProject.allTargetName;  // Using an cmaketools command which creates the instance once.
 
         expect(testEnv.errorMessagesQueue.length).to.eql(1);  // Expect only cmake error message
