@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15] # macos-15-intel (x86_64) and macos-15 (ARM64)
+        os: [macos-15] # macos-15 (ARM64)
     runs-on: ${{ matrix.os }}
 
     steps:
