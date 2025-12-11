@@ -8,11 +8,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-15] # macos-15 (ARM64)
-    runs-on: ${{ matrix.os }}
+    runs-on: macos
 
     steps:
       - uses: actions/checkout@v3
@@ -42,14 +38,6 @@ jobs:
         with:
             cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
-
-      - name: Install native Ninja (Apple Silicon)
-        if: matrix.os == 'macos-15'
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-        run: |
-          brew install ninja
-          echo "/opt/homebrew/bin" >> $GITHUB_PATH
       
       - name: Remove conflicting system CMake installation 
         # The electron test runner modifies PATH priority, so we remove system CMake to ensure our installed version of CMake is used
