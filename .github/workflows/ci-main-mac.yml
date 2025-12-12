@@ -81,6 +81,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: TestLogs-${{ matrix.os }}
+          name: TestLogs
           path: test/**/log.txt
           if-no-files-found: warn
