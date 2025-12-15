@@ -432,8 +432,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         let compilerToolchains: CodeModelToolchain | undefined;
         if ("toolchains" in opts.codeModelContent) {
             compilerToolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
-            || opts.codeModelContent.toolchains?.get('CXX')
-            || opts.codeModelContent.toolchains?.get('C');
+                || opts.codeModelContent.toolchains?.get('CXX')
+                || opts.codeModelContent.toolchains?.get('C');
         }
         // If none of those work, fall back to the same order, but in the cache.
         const compilerCache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
@@ -449,22 +449,34 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        let compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
+        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments).slice(0) : [];
         const getAsFlags = (fragments?: string[]) => {
             if (!fragments) {
                 return [];
             }
             return [...util.flatMap(fragments, fragment => shlex.split(fragment))];
         };
-        let flags: string[] = [];
+        const flags: string[] = [];
         let extraDefinitions: string[] = [];
         let standard: StandardVersion;
         let targetArch: Architecture;
         let intelliSenseMode: IntelliSenseMode;
         let defines = (fileGroup.defines || target.defines || []);
-        if (!useFragments) {
+        if (useFragments) {
+            if (compilerToolchains?.commandFragment) {
+                compileCommandFragments.unshift(compilerToolchains.commandFragment);
+            }
+        } else {
+            if (compilerToolchains?.commandFragment) {
+                // This is incorrect: shlex.split() does not do what one would
+                // expect, it treats quotes and backslashes differently than a
+                // shell would. But maybe it's good enough for a legacy codepath,
+                // what are the chances that anyone has old CppTools but new
+                // CMake Tools and new CMake?
+                flags.push(...shlex.split(compilerToolchains.commandFragment));
+            }
             // Send the intelliSenseMode and standard only for CppTools API v5 and below.
-            flags = getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments);
+            flags.push(...getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments));
             ({ extraDefinitions, standard, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang));
             defines = defines.concat(extraDefinitions);
             intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch);
@@ -491,7 +503,6 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
         if (targetFromToolchains) {
             if (useFragments) {
-                compileCommandFragments = compileCommandFragments.slice(0);
                 compileCommandFragments.push(`--target=${targetFromToolchains}`);
             } else {
                 flags.push(`--target=${targetFromToolchains}`);
