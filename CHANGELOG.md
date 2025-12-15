@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.22
+
+Bug Fixes:
+
+- Fix incorrect IntelliSense configuration when a `UTILITY` has source files. [#4404](https://github.com/microsoft/vscode-cmake-tools/issues/4404)
+
 ## 1.21
 
 Features:
