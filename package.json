@@ -863,6 +863,48 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title%",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.search",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Search Project Outline",
+        "category": "CMake",
+        "icon": "$(search)"
+      },
+      {
+        "command": "cmake.outline.clearFilter",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Clear Filter",
+        "category": "CMake",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "cmake.outline.removeBookmark",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Remove Bookmark",
+        "category": "CMake",
+        "icon": "$(close)"
+      },
+      {
+        "command": "cmake.bookmarks.clearAll",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Clear All Bookmarks",
+        "category": "CMake",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "cmake.outline.toggleBookmark",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Toggle Bookmark",
+        "category": "CMake",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "cmake.outline.removeBookmarkInline",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "Remove Bookmark",
+        "category": "CMake",
+        "icon": "$(close)"
       }
     ],
     "taskDefinitions": [
@@ -1666,9 +1708,16 @@
           "when": "view == cmake.outline && cmake:enableFullFeatureSet",
           "group": "1_cmakeOutline"
         },
+
+
         {
           "command": "cmake.pinnedCommands.add",
           "when": "view == cmake.pinnedCommands && cmake:enableFullFeatureSet",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cmake.bookmarks.clearAll",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
           "group": "navigation@1"
         }
       ],
@@ -1809,6 +1858,16 @@
           "group": "inline"
         },
         {
+          "command": "cmake.outline.search",
+          "when": "view == cmake.outline && viewItem == 'filter'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.clearFilter",
+          "when": "view == cmake.outline && viewItem == 'filter' && cmake:outlineFiltered",
+          "group": "inline"
+        },
+        {
           "command": "cmake.outline.buildTarget",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canBuild=true|canRun=true/",
           "group": "inline"
@@ -1837,6 +1896,21 @@
           "command": "cmake.outline.revealInCMakeLists",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=target/",
           "group": "1_targetActions@5"
+        },
+        {
+          "command": "cmake.outline.toggleBookmark",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=target/",
+          "group": "1_targetActions@6"
+        },
+        {
+          "command": "cmake.outline.toggleBookmark",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/ && !(viewItem =~ /bookmarked=true/)",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.removeBookmarkInline",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=(target|file|directory)/ && viewItem =~ /bookmarked=true/",
+          "group": "inline"
         },
         {
           "command": "cmake.outline.setDefaultTarget",
@@ -1932,6 +2006,26 @@
           "command": "cmake.pinnedCommands.run",
           "when": "view == cmake.pinnedCommands && cmake:enableFullFeatureSet",
           "group": "inline"
+        },
+        {
+          "command": "cmake.outline.removeBookmark",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "bookmarkActions@1"
+        },
+        {
+          "command": "cmake.outline.debugTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "bookmarkActions@2"
+        },
+        {
+          "command": "cmake.outline.launchTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "group": "bookmarkActions@3"
         }
       ],
       "editor/title/context": [
@@ -2269,6 +2363,68 @@
           "type": "number",
           "default": 0,
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription%",
+          "scope": "machine-overridable"
+        },
+        "cmake.ctest.failurePatterns": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "regexp"
+                    ],
+                    "properties": {
+                      "regexp": {
+                        "type": "string",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.regexp%"
+                      },
+                      "file": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.file%",
+                        "default": 1
+                      },
+                      "line": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.line%",
+                        "default": 2
+                      },
+                      "message": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.message%",
+                        "default": 3
+                      },
+                      "actual": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.actual%"
+                      },
+                      "expected": {
+                        "type": "integer",
+                        "description": "%cmake-tools.configuration.cmake.ctest.failurePatterns.expected%"
+                      }
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": [
+            {
+              "regexp": "(.*?):(\\d+): *(?:error: *)(.*)"
+            },
+            {
+              "regexp": "(.*?)\\((\\d+)\\): *(?:error: *)(.*)"
+            }
+          ],
+          "markdownDescription": "%cmake-tools.configuration.cmake.ctest.failurePatterns.markdownDescription%",
           "scope": "machine-overridable"
         },
         "cmake.ctest.debugLaunchTarget": {
@@ -3024,6 +3180,7 @@
                     "hidden",
                     "inherit"
                   ],
+                  "default": "hidden",
                   "markdownEnumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
@@ -3735,6 +3892,11 @@
           "id": "cmake.pinnedCommands",
           "name": "%cmake-tools.configuration.views.cmake.pinnedCommands.description%",
           "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "id": "cmake.bookmarks",
+          "name": "Bookmarks",
+          "when": "cmake:enableFullFeatureSet"
         }
       ]
     },
@@ -3861,7 +4023,7 @@
     "demangler-js": "^0.1.7",
     "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
-    "js-yaml": "^4.0.0",
+    "js-yaml": "^4.1.1",
     "json5": "^2.2.2",
     "minimist": "^1.2.6",
     "open": "^7.4.1",
@@ -3891,7 +4053,8 @@
     "xml2js": "^0.5.0",
     "tsconfig-paths*/json5": "^1.0.2",
     "minimatch": "^3.0.5",
-    "**/braces": "^3.0.3"
+    "**/braces": "^3.0.3",
+    "js-yaml": "4.1.1"
   },
   "packageManager": "yarn@1.22.19"
 }

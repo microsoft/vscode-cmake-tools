@@ -1612,7 +1612,7 @@ export class PresetsController implements vscode.Disposable {
         ]);
 
         this._presetsWatchers?.dispose();
-        this._presetsWatchers = new FileWatcher(this._referencedFiles, events, { ignoreInitial: true });
+        this._presetsWatchers = new FileWatcher(this._referencedFiles, events, { ignoreInitial: true, followSymlinks: false });
     };
 
     dispose() {

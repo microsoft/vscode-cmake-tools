@@ -192,7 +192,7 @@
 	"assets/modules.json.FindosgViewer": "这是用于查找 OpenSceneGraph 组件的 Findosg* 套件的一部分。每个组件都是单独的，你必须选择加入每个模块。还必须选择使用 OpenGL 和 OpenThreads (如果需要，还需要选择 Producer)，因为这些模块不会为你执行此操作。此操作的目的是支持你逐步控制自己的系统，以防需要选择退出特定组件或更改特定模块的查找行为(例如，可能因为默认 FindOpenGL 模块不适用于系统)。如果要使用包含所有内容的更方便的模块，请使用 FindOpenSceneGraph 而不是 Findosg*.cmake 模块。",
 	"assets/modules.json.FindosgVolume": "这是用于查找 OpenSceneGraph 组件的 Findosg* 套件的一部分。每个组件都是单独的，你必须选择加入每个模块。还必须选择使用 OpenGL 和 OpenThreads (如果需要，还需要选择 Producer)，因为这些模块不会为你执行此操作。此操作的目的是支持你逐步控制自己的系统，以防需要选择退出特定组件或更改特定模块的查找行为(例如，可能因为默认 FindOpenGL 模块不适用于系统)。如果要使用包含所有内容的更方便的模块，请使用 FindOpenSceneGraph 而不是 Findosg*.cmake 模块。",
 	"assets/modules.json.FindosgWidget": "这是用于查找 OpenSceneGraph 组件的 Findosg* 套件的一部分。每个组件都是单独的，你必须选择加入每个模块。还必须选择使用 OpenGL 和 OpenThreads (如果需要，还需要选择 Producer)，因为这些模块不会为你执行此操作。此操作的目的是支持你逐步控制自己的系统，以防需要选择退出特定组件或更改特定模块的查找行为(例如，可能因为默认 FindOpenGL 模块不适用于系统)。如果要使用包含所有内容的更方便的模块，请使用 FindOpenSceneGraph 而不是 Findosg*.cmake 模块。",
-	"assets/modules.json.Findosg_functions": "此 CMake 文件包含两个宏，可帮助搜索 OSG 库和节点包。有关完整文档，请参阅 FindOpenSceneGraph。",
+	"assets/modules.json.Findosg_functions": "此 CMake 文件包含两个宏，可帮助搜索 OSG 库和 NodeKit。有关完整文档，请参阅 FindOpenSceneGraph。",
 	"assets/modules.json.FindPackageHandleStandardArgs": "此模块提供的函数旨在用于实现 find_package(<PackageName>) 调用的 Find 模块。",
 	"assets/modules.json.FindPackageMessage": "此函数旨在用于 FindXXX.cmake 模块文件。它将为每个唯一查找结果打印一次消息。这对于告知用户找到包的位置非常有用。第一个参数了指定包的名称(XXX)。第二个参数指定要显示的消息。第三个参数列出了有关查找结果的详细信息，以便如果更改结果，将会再次显示该消息。该宏还遵循 find_package 命令的 QUIET 参数。",
 	"assets/modules.json.FindPatch": "该模块定义了以下变量:",
