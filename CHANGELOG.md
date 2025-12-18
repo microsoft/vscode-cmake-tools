@@ -19,6 +19,8 @@ Bugs:
 - Fix bug in which clicking "Run Test" for filtered tests executed all tests instead [#4501](https://github.com/microsoft/vscode-cmake-tools/pull/4501) [@hippo91](https://github.com/hippo91)
 - Migrate macOS CI from deprecated macOS-13 to macOS-15 Image [#4633](https://github.com/microsoft/vscode-cmake-tools/pull/4633)
 - Ensure Visual Studio developer environment propagation preserves `VCPKG_ROOT`, enabling vcpkg-dependent configure runs after using the Set Visual Studio Developer Environment command. [microsoft/vscode-cpptools#14083](https://github.com/microsoft/vscode-cpptools/issues/14083)
+- Fix auto-focusing the "Search" input field in the CMake Cache view. [#4552](https://github.com/microsoft/vscode-cmake-tools/pull/4552) [@simhof-basyskom](https://github.com/simhof-basyskom)
+
 
 ## 1.21
 
