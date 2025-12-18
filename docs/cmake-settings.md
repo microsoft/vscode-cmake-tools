@@ -48,7 +48,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.deleteBuildDirOnCleanConfigure` | If `true`, delete build directory during clean configure. | `false` | no |
 | `cmake.emscriptenSearchDirs` | List of paths to search for Emscripten. | `[]` | no |
 | `cmake.enableAutomaticKitScan` | Enable automatic kit scanning. | `true` | no |
-| `cmake.enabledOutputParsers` | List of enabled output parsers. | `["cmake", "gcc", "gnuld", "msvc", "ghs", "diab"]` | no |
+| `cmake.enabledOutputParsers` | List of enabled output parsers. | `["cmake", "gcc", "gnuld", "msvc", "ghs", "diab", "iwyu"]` | no |
 | `cmake.enableLanguageServices` | If `true`, enable CMake language services. | `true` | no |
 | `cmake.enableTraceLogging` | If `true`, enable trace logging. | `false` | no |
 | `cmake.environment` | An object containing `key:value` pairs of environment variables, which will be available when configuring, building, or testing with CTest. | `{}` (no environment variables) | yes |

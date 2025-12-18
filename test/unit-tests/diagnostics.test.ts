@@ -784,4 +784,195 @@ suite('Diagnostics', () => {
         diagnostic = resolved[0];
         expect(diagnostic.filepath).to.eq(resolvePath('main.cpp', project_dir));
     });
+
+    test('Parse IWYU', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '#include <stdbool.h>           // for bool',
+            '#include <stdint.h>            // for uint32_t, uint8_t',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '- #include <alloca.h>  // lines 24-24',
+            '- #include <stdalign.h>  // lines 25-26',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include <stdbool.h>           // for bool',
+            '#include <stdint.h>            // for uint32_t, uint8_t',
+            '#include <stdio.h>             // for fprintf, FILE, printf, NULL, stdout',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(4);
+        const [add, rem1, rem2, all] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(add.file).to.eq('/home/user/src/project/main.c');
+        expect(add.location.start.line).to.eq(0);
+        expect(add.location.start.character).to.eq(0);
+        expect(add.location.end.line).to.eq(0);
+        expect(add.location.end.character).to.eq(999);
+        expect(add.code).to.eq(undefined);
+        expect(add.message).to.eq('should add these lines:\n#include <stdbool.h>           // for bool\n#include <stdint.h>            // for uint32_t, uint8_t');
+        expect(add.severity).to.eq('warning');
+
+        expect(rem1.file).to.eq('/home/user/src/project/main.c');
+        expect(rem1.location.start.line).to.eq(23);
+        expect(rem1.location.start.character).to.eq(0);
+        expect(rem1.location.end.line).to.eq(23);
+        expect(rem1.location.end.character).to.eq(999);
+        expect(rem1.code).to.eq(undefined);
+        expect(rem1.message).to.eq('should remove: #include <alloca.h>');
+        expect(rem1.severity).to.eq('warning');
+
+        expect(rem2.file).to.eq('/home/user/src/project/main.c');
+        expect(rem2.location.start.line).to.eq(24);
+        expect(rem2.location.start.character).to.eq(0);
+        expect(rem2.location.end.line).to.eq(25);
+        expect(rem2.location.end.character).to.eq(999);
+        expect(rem2.code).to.eq(undefined);
+        expect(rem2.message).to.eq('should remove: #include <stdalign.h>');
+        expect(rem2.severity).to.eq('warning');
+
+        expect(all.file).to.eq('/home/user/src/project/main.c');
+        expect(all.location.start.line).to.eq(0);
+        expect(all.location.start.character).to.eq(0);
+        expect(all.location.end.line).to.eq(0);
+        expect(all.location.end.character).to.eq(999);
+        expect(all.code).to.eq(undefined);
+        expect(all.message).to.eq('The full include-list:\n#include <stdbool.h>           // for bool\n#include <stdint.h>            // for uint32_t, uint8_t\n#include <stdio.h>             // for fprintf, FILE, printf, NULL, stdout\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all.severity).to.eq('note');
+    });
+
+    test('Parse IWYU with only additions', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '#include <stdbool.h>           // for bool',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include <stdbool.h>           // for bool',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(2);
+        const [add, all] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(add.file).to.eq('/home/user/src/project/main.c');
+        expect(add.location.start.line).to.eq(0);
+        expect(add.location.start.character).to.eq(0);
+        expect(add.location.end.line).to.eq(0);
+        expect(add.location.end.character).to.eq(999);
+        expect(add.code).to.eq(undefined);
+        expect(add.message).to.eq('should add these lines:\n#include <stdbool.h>           // for bool');
+        expect(add.severity).to.eq('warning');
+
+        expect(all.file).to.eq('/home/user/src/project/main.c');
+        expect(all.location.start.line).to.eq(0);
+        expect(all.location.start.character).to.eq(0);
+        expect(all.location.end.line).to.eq(0);
+        expect(all.location.end.character).to.eq(999);
+        expect(all.code).to.eq(undefined);
+        expect(all.message).to.eq('The full include-list:\n#include <stdbool.h>           // for bool\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all.severity).to.eq('note');
+    });
+
+    test('Parse IWYU with only removals', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '- #include <alloca.h>  // lines 24-24',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(2);
+        const [rem, all] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(rem.file).to.eq('/home/user/src/project/main.c');
+        expect(rem.location.start.line).to.eq(23);
+        expect(rem.location.start.character).to.eq(0);
+        expect(rem.location.end.line).to.eq(23);
+        expect(rem.location.end.character).to.eq(999);
+        expect(rem.code).to.eq(undefined);
+        expect(rem.message).to.eq('should remove: #include <alloca.h>');
+        expect(rem.severity).to.eq('warning');
+
+        expect(all.file).to.eq('/home/user/src/project/main.c');
+        expect(all.location.start.line).to.eq(0);
+        expect(all.location.start.character).to.eq(0);
+        expect(all.location.end.line).to.eq(0);
+        expect(all.location.end.character).to.eq(999);
+        expect(all.code).to.eq(undefined);
+        expect(all.message).to.eq('The full include-list:\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all.severity).to.eq('note');
+    });
+
+    test('Parse IWYU with multiple files', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '#include <stdbool.h>           // for bool',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include <stdbool.h>           // for bool',
+            '---',
+            '/home/user/src/project/module.c should add these lines:',
+            '',
+            '/home/user/src/project/module.c should remove these lines:',
+            '- #include <alloca.h>  // lines 24-24',
+            '',
+            'The full include-list for /home/user/src/project/module.c:',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(4);
+        const [add, all1, rem, all2] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(add.file).to.eq('/home/user/src/project/main.c');
+        expect(add.location.start.line).to.eq(0);
+        expect(add.location.start.character).to.eq(0);
+        expect(add.location.end.line).to.eq(0);
+        expect(add.location.end.character).to.eq(999);
+        expect(add.code).to.eq(undefined);
+        expect(add.message).to.eq('should add these lines:\n#include <stdbool.h>           // for bool');
+        expect(add.severity).to.eq('warning');
+
+        expect(all1.file).to.eq('/home/user/src/project/main.c');
+        expect(all1.location.start.line).to.eq(0);
+        expect(all1.location.start.character).to.eq(0);
+        expect(all1.location.end.line).to.eq(0);
+        expect(all1.location.end.character).to.eq(999);
+        expect(all1.code).to.eq(undefined);
+        expect(all1.message).to.eq('The full include-list:\n#include <stdbool.h>           // for bool');
+        expect(all1.severity).to.eq('note');
+
+        expect(rem.file).to.eq('/home/user/src/project/module.c');
+        expect(rem.location.start.line).to.eq(23);
+        expect(rem.location.start.character).to.eq(0);
+        expect(rem.location.end.line).to.eq(23);
+        expect(rem.location.end.character).to.eq(999);
+        expect(rem.code).to.eq(undefined);
+        expect(rem.message).to.eq('should remove: #include <alloca.h>');
+        expect(rem.severity).to.eq('warning');
+
+        expect(all2.file).to.eq('/home/user/src/project/module.c');
+        expect(all2.location.start.line).to.eq(0);
+        expect(all2.location.start.character).to.eq(0);
+        expect(all2.location.end.line).to.eq(0);
+        expect(all2.location.end.character).to.eq(999);
+        expect(all2.code).to.eq(undefined);
+        expect(all2.message).to.eq('The full include-list:\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all2.severity).to.eq('note');
+    });
 });
