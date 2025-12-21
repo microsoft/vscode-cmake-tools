@@ -822,7 +822,7 @@ export class CTestDriver implements vscode.Disposable {
                 parentSuiteItem = suiteItem;
             }
         }
-        const testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        const testItem = parentSuiteItem.children.get(testName) || initializedTestExplorer.createTestItem(testName, testLabel, uri);
         return { test: testItem, parentSuite: parentSuiteItem };
     }
 
