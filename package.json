@@ -4044,18 +4044,18 @@
   "resolutions": {
     "ansi-regex": "^5.0.1",
     "chokidar": "^3.5.1",
-    "glob-parent": "^5.1.2",
+    "glob-parent": "^6.0.2",
     "hosted-git-info": "^3.0.8",
-    "https-proxy-agent": "^5.0.0",
     "**/minimist": "^1.2.5",
     "nanoid": "^3.1.31",
     "postcss": "^8.2.10",
     "yargs-parser": "^20.2.4",
     "xml2js": "^0.5.0",
-    "tsconfig-paths*/json5": "^1.0.2",
-    "minimatch": "^3.0.5",
+    "**/mocha/minimatch": "^3.0.5",
     "**/braces": "^3.0.3",
-    "js-yaml": "4.1.1"
+    "js-yaml": "^4.1.1",
+    "tmp": "^0.2.4",
+    "jws": "^4.0.1"
   },
   "packageManager": "yarn@1.22.19"
 }
