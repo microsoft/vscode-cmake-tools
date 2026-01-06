@@ -1356,7 +1356,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // since some compilers can output their version without a specific switch.
         let version;
         if (compiler?.versionOutputRegexp) {
-            version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch, RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
+            version = await this.testCompilerVersion(compilerPath, compilerDir, compiler?.versionSwitch, RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
         } else {
             version = "unknown";
         }
