@@ -162,6 +162,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         sourceDir: string,
         isMultiProject: boolean,
         useCMakePresets: boolean,
+        expandCMakePresets: boolean,
         kit: Kit | null,
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
@@ -174,6 +175,7 @@ export class CMakeLegacyDriver extends CMakeDriver {
         log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
         return this.createDerived(new CMakeLegacyDriver(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler),
             useCMakePresets,
+            expandCMakePresets,
             kit,
             configurePreset,
             buildPreset,
