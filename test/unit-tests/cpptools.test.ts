@@ -272,7 +272,11 @@ suite('CppTools tests', () => {
         const provider = new CppConfigurationProvider();
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
         const sourceFile1 = path.join(here, 'main.cpp');
+        const headerFile1 = path.join(here, 'main.h');
+        const rcFile1 = path.join(here, 'main.rc');
         const uri1 = vscode.Uri.file(sourceFile1);
+        const uri1_h = vscode.Uri.file(headerFile1);
+        const uri1_rc = vscode.Uri.file(rcFile1);
         const codeModel1: codeModel.CodeModelContent = {
             configurations: [{
                 name: "Release",
@@ -289,7 +293,17 @@ suite('CppTools tests', () => {
                                 defines: ['DEFINE1'],
                                 compileCommandFragments: ['-DFRAGMENT1'],
                                 language: 'CXX'
-                            }]
+                            },
+                            {
+                                sources: [headerFile1],
+                                isGenerated: false
+                            },
+                            {
+                                sources: [rcFile1],
+                                isGenerated: false,
+                                compileCommandFragments: ['-DFRAGMENT_RC'],
+                                language: 'RC'
+                            }],
                         },
                         {
                             name: 'target2',
@@ -346,6 +360,12 @@ suite('CppTools tests', () => {
         expect(configurations[0].configuration.defines).to.contain('DEFINE1');
         expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT1');
         expect(configurations[0].configuration.compilerArgs).to.be.empty;
+
+        configurations = await provider.provideConfigurations([uri1_h]);
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT1');
+
+        configurations = await provider.provideConfigurations([uri1_rc]);
+        expect(configurations[0].configuration.compilerFragments).to.contain('-DFRAGMENT_RC');
 
         provider.updateConfigurationData({ cache, codeModelContent: codeModel1, activeTarget: 'target2', activeBuildTypeVariant: 'Release', folder: here });
         configurations = await provider.provideConfigurations([uri1]);
