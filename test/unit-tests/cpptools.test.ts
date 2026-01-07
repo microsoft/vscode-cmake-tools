@@ -303,7 +303,7 @@ suite('CppTools tests', () => {
                                 isGenerated: false,
                                 compileCommandFragments: ['-DFRAGMENT_RC'],
                                 language: 'RC'
-                            }],
+                            }]
                         },
                         {
                             name: 'target2',
