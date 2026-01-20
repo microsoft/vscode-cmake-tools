@@ -1,4 +1,6 @@
 {
+    "cmake-tools.command.cmake.addFileToCMakeLists.title": "Add File to CMake Lists",
+    "cmake-tools.command.cmake.removeFileFromCMakeLists.title": "Remove File from CMake Lists",
     "cmake-tools.command.cmake.openCMakePresets.title": "Open CMakePresets.json",
     "cmake-tools.command.cmake.addConfigurePreset.title": "Add Configure Preset",
     "cmake-tools.command.cmake.addBuildPreset.title": "Add Build Preset",
@@ -383,5 +385,57 @@
     "cmake-tools.debugger.label": "CMake Debugger",
     "cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Append Build Directory to Current Workspace",
     "cmake-tools.command.workbench.action.tasks.configureTaskRunner.title":"Configure Task",
-    "cmake-tools.command.workbench.action.tasks.runTask.title":"Run Task"
+    "cmake-tools.command.workbench.action.tasks.runTask.title":"Run Task",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.description": "Add source files to CMake lists when they are created.",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.no.description": "Do not automatically add source files to CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.yes.description": "Automatically add source files to CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.ask.description": "Show a preview panel of proposed changes to apply",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.description": "Remove source files from CMake lists when they are deleted.",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.no.description": "Do not automatically remove source files from CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.yes.description": "Automatically remove source files from CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.ask.description": "Show a preview panel of proposed changes to apply",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.markdownDescription": {
+        "message": "How to choose which `set()` or `list(APPEND/PREPEND/INSERT)` command invocation to edit when adding source files to CMake lists.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.never.description": "Do not look for variable modification command invocations, only look for source command invocations.",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.askFirstParentDir.description": {
+        "message": "Present a Quick Pick with options from the first `CMakeLists.txt` found when searching up from the location of the new source file.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.askParentDirs.description": {
+        "message": "Present a Quick Pick with options from all `CMakeLists.txt` files found when searching up from the location of the new source file.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.sourceVariables.markdownDescription": {
+        "message": "Variables to add source files to. Variables appearing earlier in this list will be given higher priority. Only used if `#cmake.modifyLists.variableSelection#` is not `never`. Supports glob patterns.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.description": "How to choose which target to add new source files to when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.askNearestSourceDir.description": "Present a Quick Pick with targets whose source directories are closest to location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.askParentSourceDirs.description": "Present a Quick Pick with targets whose source directories contain the location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.description": "How to choose which of a target's source command invocations to edit when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askFirstParentDir.description": "Present a Quick Pick with options from the CMake list file in the parent directory closest to the location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askParentDirs.description": "Present a Quick Pick with options from all CMake list files in the parent directories of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSourceCommands.markdownDescription": {
+        "message": "Commands to treat as target source commands when adding source files CMake lists. Commands appearing earlier in this list will be given higher priority. Supports glob patterns.\n\nIf you are using the File API (see `#cmake.cmakeCommunicationMode#`), user-defined functions and macros which call the commands in this list are detected automatically and added to it.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.description": "How to choose which of a target's visibility scopes, file sets, or source keyword parameters to edit when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Present a Quick Pick with options from the selected target source command invocation.",
+    "cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns"
 }

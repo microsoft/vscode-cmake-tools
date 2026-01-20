@@ -710,12 +710,12 @@
       },
       {
         "command": "cmake.addFileToCMakeLists",
-        "title": "Add File to CMake Lists",
+        "title": "%cmake-tools.command.cmake.addFileToCMakeLists.title%",
         "category": "CMake"
       },
       {
         "command": "cmake.removeFileFromCMakeLists",
-        "title": "Remove File from CMake Lists",
+        "title": "%cmake-tools.command.cmake.removeFileFromCMakeLists.title%",
         "category": "CMake"
       },
       {
@@ -3861,11 +3861,11 @@
             "yes",
             "ask"
           ],
-          "description": "Add source files to CMake lists when they are created.",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.description%",
           "enumDescriptions": [
-            "Do not automatically add source files to CMake lists",
-            "Automatically add source files to CMake lists",
-            "Show a preview panel of proposed changes to apply"
+            "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.no.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.yes.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.ask.description%"
           ],
           "order": 100,
           "scope": "resource"
@@ -3878,11 +3878,11 @@
             "yes",
             "ask"
           ],
-          "description": "Remove source files from CMake lists when they are deleted.",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.description%",
           "enumDescriptions": [
-            "Do not automatically remove source files from CMake lists",
-            "Automatically remove source files from CMake lists",
-            "Show a preview panel of proposed changes to apply"
+            "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.no.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.yes.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.ask.description%"
           ],
           "order": 101,
           "scope": "resource"
@@ -3896,12 +3896,12 @@
             "askParentDirs"
           ],
           "default": "never",
-          "markdownDescription": "How to choose which `set()` or `list(APPEND/PREPEND/INSERT)` command invocation to edit when adding source files to CMake lists.",
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.variableSelection.markdownDescription%",
           "markdownEnumDescriptions": [
-            "Do not look for variable modification command invocations, only look for source command invocations.",
-            "Choose the best candidate automatically.",
-            "Present a Quick Pick with options from the first `CMakeLists.txt` found when searching up from the location of the new source file.",
-            "Present a Quick Pick with options from all `CMakeLists.txt` files found when searching up from the location of the new source file."
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.never.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.askFirstParentDir.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.askParentDirs.description%"
           ],
           "order": 102,
           "scope": "resource"
@@ -3921,7 +3921,7 @@
             "*_SOURCES",
             "*_SOURCE_FILES"
           ],
-          "markdownDescription": "Variables to add source files to. Variables appearing earlier in this list will be given higher priority. Only used if `#cmake.modifyLists.variableSelection#` is not `never`. Supports glob patterns.",
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.sourceVariables.markdownDescription%",
           "order": 103,
           "scope": "resource"
         },
@@ -3933,11 +3933,11 @@
             "askParentSourceDirs"
           ],
           "default": "askParentSourceDirs",
-          "description": "How to choose which target to add new source files to when adding source files to CMake lists.",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.targetSelection.description%",
           "enumDescriptions": [
-            "Choose the best candidate automatically.",
-            "Present a Quick Pick with targets whose source directories are closest to location of the new source file.",
-            "Present a Quick Pick with targets whose source directories contain the location of the new source file."
+            "%cmake-tools.configuration.cmake.modifyLists.targetSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetSelection.askNearestSourceDir.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetSelection.askParentSourceDirs.description%"
           ],
           "order": 104,
           "scope": "resource"
@@ -3950,11 +3950,11 @@
             "askParentDirs"
           ],
           "default": "askParentDirs",
-          "description": "How to choose which of a target's source command invocations to edit when adding source files to CMake lists.",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.description%",
           "enumDescriptions": [
-            "Choose the best candidate automatically.",
-            "Present a Quick Pick with options from the CMake list file in the parent directory closest to the location of the new source file.",
-            "Present a Quick Pick with options from all CMake list files in the parent directories of the new source file."
+            "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askFirstParentDir.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askParentDirs.description%"
           ],
           "order": 105,
           "scope": "resource"
@@ -3969,7 +3969,7 @@
             "add_executable",
             "add_library"
           ],
-          "markdownDescription": "Commands to treat as target source commands when adding source files CMake lists. Commands appearing earlier in this list will be given higher priority. Supports glob patterns.\n\nIf you are using the File API (see `#cmake.cmakeCommunicationMode#`), user-defined functions and macros which call the commands in this list are detected automatically and added to it.",
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.targetSourceCommands.markdownDescription%",
           "order": 106,
           "scope": "resource"
         },
@@ -3980,10 +3980,10 @@
             "ask"
           ],
           "default": "ask",
-          "description": "How to choose which of a target's visibility scopes, file sets, or source keyword parameters to edit when adding source files to CMake lists.",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.description%",
           "enumDescriptions": [
-            "Choose the best candidate automatically.",
-            "Present a Quick Pick with options from the selected target source command invocation."
+            "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description%"
           ],
           "order": 107,
           "scope": "resource"
@@ -3993,7 +3993,7 @@
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns",
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription%",
           "order": 108,
           "scope": "resource"
         }

@@ -7,11 +7,10 @@ import rollbar from "./rollbar";
 import * as minimatch from 'minimatch';
 import { CMakeCache } from "./cache";
 import { CMakeAST, CMakeParser, CommandInvocationAST, Token } from "./cmakeParser";
+import * as nls from 'vscode-nls';
 
-// TODO: Localize
-// import * as nls from 'vscode-nls';
-// nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
-// const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const LIST_KEYWORDS = ['APPEND', 'PREPEND', 'INSERT'];
 
@@ -116,7 +115,7 @@ export class CMakeListsModifier implements vscode.Disposable {
     }
 
     private filesCreated(e: vscode.FileCreateEvent) {
-        rollbar.invokeAsync('Add newly created files to CMakeLists.txt', async () => {
+        rollbar.invokeAsync(localize('add.newly.created.files', 'Add newly created files to CMakeLists.txt'), async () => {
             for (const uri of e.files) {
                 if (await this.isSourceFile(uri)) {
                     await this.addSourceFileToCMakeLists(uri, this.project, false);
@@ -126,7 +125,7 @@ export class CMakeListsModifier implements vscode.Disposable {
     }
 
     private filesDeleted(e: vscode.FileDeleteEvent) {
-        rollbar.invokeAsync('Remove a deleted file from CMakeLists.txt', async () => {
+        rollbar.invokeAsync(localize('remove.deleted.file', 'Remove a deleted file from CMakeLists.txt'), async () => {
             for (const uri of e.files) {
                 await this.removeSourceFileFromCMakeLists(uri, this.project, false);
             }
@@ -149,11 +148,11 @@ export class CMakeListsModifier implements vscode.Disposable {
         const model = project?.codeModelContent;
 
         if (uri?.scheme !== 'file') {
-            void vscode.window.showErrorMessage(`${uri} is not a local file. Not adding to CMake lists.`);
+            void vscode.window.showErrorMessage(localize('not.local.file.add', '{0} is not a local file. Not adding to CMake lists.', uri?.toString()));
             return;
         }
         if (!project || !model) {
-            void vscode.window.showWarningMessage('Adding a file without a valid code model');
+            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
             return;
         }
         // Work around for focus race condition with Save As dialog closing
@@ -200,7 +199,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             const allTargets = allBuildTargets(model, buildType);
             const references = sourceFileTargets(allTargets, newSourceUri);
             if (references.length) {
-                const msg = `${newSourceFileName} already in target ${references[0].name}.`;
+                const msg = localize('file.already.in.target', '{0} already in target {1}.', newSourceFileName, references[0].name);
                 if (always) {
                     void vscode.window.showErrorMessage(msg);
                 } else {
@@ -219,7 +218,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             }
             if (!targets.length) {
                 void vscode.window.showErrorMessage(
-                    `No targets found. ${newSourceFileName} not added to build system.`);
+                    localize('no.targets.found', 'No targets found. {0} not added to build system.', newSourceFileName));
                 return;
             }
             let target: codeModel.CodeModelTarget | null;
@@ -252,7 +251,7 @@ export class CMakeListsModifier implements vscode.Disposable {
 
             if (!invocations.length) {
                 void vscode.window.showErrorMessage(
-                    `No source command invocations found for ${target.name}. ${newSourceFileName} not added to build system.`
+                    localize('no.source.command.invocations', 'No source command invocations found for {0}. {1} not added to build system.', target.name, newSourceFileName)
                 );
                 return;
             }
@@ -270,7 +269,7 @@ export class CMakeListsModifier implements vscode.Disposable {
 
             if (invocation.document.isDirty) {
                 void vscode.window.showErrorMessage(
-                    `Not modifying ${invocation.document.fileName} to add ${newSourceFileName} because it has unsaved changes.`);
+                    localize('not.modifying.unsaved.add', 'Not modifying {0} to add {1} because it has unsaved changes.', invocation.document.fileName, newSourceFileName));
                 return;
             }
 
@@ -299,7 +298,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         edit.insert(
             cmakeDocument.uri, insertPos, `\n${indent}${newSourceArgument}`,
             {
-                label: 'CMake: Add new source file',
+                label: localize('edit.label.add.source.file', 'CMake: Add new source file'),
                 needsConfirmation: settings.addNewSourceFiles === 'ask'
             });
         try {
@@ -327,12 +326,12 @@ export class CMakeListsModifier implements vscode.Disposable {
         const model = this.project?.codeModelContent;
 
         if (uri?.scheme !== 'file') {
-            void vscode.window.showErrorMessage(`${uri} is not a local file. Not removing from CMake lists.`);
+            void vscode.window.showErrorMessage(localize('not.local.file.remove', '{0} is not a local file. Not removing from CMake lists.', uri?.toString()));
             return;
         }
 
         if (!project || !model) {
-            void vscode.window.showWarningMessage('Deleting a file without a valid code model');
+            void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
             return;
         }
 
@@ -381,7 +380,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         }
 
         if (!edit.size && always) {
-            void vscode.window.showErrorMessage(`${path.basename(deletedUri.fsPath)} not found in CMake lists.`);
+            void vscode.window.showErrorMessage(localize('file.not.found.in.cmake.lists', '{0} not found in CMake lists.', path.basename(deletedUri.fsPath)));
             return;
         }
 
@@ -463,7 +462,7 @@ function messageIfSourceInInvocation(
     }
     const { document, ast: { args } } = invocation;
     const line = document.positionAt(args[indices[0]].offset).line;
-    const message = `${sourceUri.fsPath} already in ${destination} at ${document.fileName}:${line}`;
+    const message = localize('file.already.in.destination', '{0} already in {1} at {2}:{3}', sourceUri.fsPath, destination, document.fileName, line);
     if (type === 'error') {
         void vscode.window.showErrorMessage(message);
     } else {
@@ -520,7 +519,7 @@ async function findCMakeLists(project: CMakeProject, newSourceUri: vscode.Uri) {
             try {
                 cmakeListsASTs.push(new CMakeParser(cml).parseDocument());
             } catch (e) {
-                void vscode.window.showWarningMessage(`Parse error while examining CMakeLists.txt files. Details: ${e}`);
+                void vscode.window.showWarningMessage(localize('parse.error.examining.cmake.lists', 'Parse error while examining CMakeLists.txt files. Details: {0}', String(e)));
             }
         } catch (e) {}
         cmlUri = vscode.Uri.joinPath(cmlUri, '..', '..', 'CMakeLists.txt');
@@ -581,7 +580,7 @@ async function showVariableSourceListOptions(
 ): Promise<SourceList | null> {
     return await quickPick(
         sourceLists.map(c => c.quickPickItem(newSourceFileName)),
-        { title: `CMake: Add ${newSourceFileName} to which variable?` }
+        { title: localize('add.to.which.variable', 'CMake: Add {0} to which variable?', newSourceFileName) }
     ) as SourceList | null;
 }
 
@@ -652,7 +651,7 @@ async function showTargetOptions(
     project: CMakeProject, newSourceFileName: string
 ) {
     const binDir = await project.binaryDir;
-    const targetQPTitle = `CMake: Add ${newSourceFileName} to which target?`;
+    const targetQPTitle = localize('add.to.which.target', 'CMake: Add {0} to which target?', newSourceFileName);
     const targetQPItems = targets.map(target => {
         const artifacts = target.artifacts?.map(
             artifact => path.relative(binDir, artifact));
@@ -739,12 +738,12 @@ async function sourceCommandInvocationsFromBacktrace(
         try {
             ast = new CMakeParser(document, offset).parseCommandInvocation();
         } catch (e) {
-            void vscode.window.showWarningMessage(`Parse error while finding command invocations to add to. CMake file modified since last configure? Details: ${e}`);
+            void vscode.window.showWarningMessage(localize('parse.error.finding.invocations', 'Parse error while finding command invocations to add to. CMake file modified since last configure? Details: {0}', String(e)));
             return;
         }
 
         if (command !== ast.command.value) {
-            void vscode.window.showWarningMessage(`Found "${ast.command.value}", expected "${command}". CMake file modified since last configure? Details: ${document.fileName}:${line}`);
+            void vscode.window.showWarningMessage(localize('unexpected.command.found', 'Found "{0}", expected "{1}". CMake file modified since last configure? Details: {2}:{3}', ast.command.value, command, document.fileName, line));
             return;
         }
 
@@ -797,7 +796,7 @@ async function showCommandInvocationOptions(
     target: codeModel.CodeModelTarget,
     newSourceFileName: string
 ) {
-    const commandInvocationQPTitle = `CMake: Add ${newSourceFileName} to which command invocation of ${target.name}?`;
+    const commandInvocationQPTitle = localize('add.to.which.command.invocation', 'CMake: Add {0} to which command invocation of {1}?', newSourceFileName, target.name);
     const commandInvocationQPItems = sourceCommandInvocations.map(invocation => ({
         label: invocation.document.lineAt(invocation.line).text,
         detail: `${path.relative(project.sourceDir, invocation.document.fileName)}:${invocation.line}`,
@@ -864,7 +863,7 @@ async function showTargetSourceListOptions(
     invocation: CommandInvocation
 ): Promise<SourceList | null> {
     const title =
-        `CMake: Add ${newSourceFilename} to which Scope, File Set, or Keyword of ${invocation.command}?`;
+        localize('add.to.which.scope.fileset.keyword', 'CMake: Add {0} to which Scope, File Set, or Keyword of {1}?', newSourceFilename, invocation.command);
     const items = sourceLists.map(sourceList =>
         sourceList.quickPickItem(newSourceFilename));
 
@@ -1031,26 +1030,26 @@ class ScopeSourceList extends SourceList {
 
     private scopeDetails(target: string, file: string): string {
         switch (this.scope) {
-            case 'PRIVATE': return `${file} will be used to build ${target}`;
-            case 'PUBLIC': return `${file} will be used to build both ${target} and targets that use ${target}`;
-            case 'INTERFACE': return `${file} will be used to build targets that use ${target}`;
+            case 'PRIVATE': return localize('scope.private.detail', '{0} will be used to build {1}', file, target);
+            case 'PUBLIC': return localize('scope.public.detail', '{0} will be used to build both {1} and targets that use {1}', file, target);
+            case 'INTERFACE': return localize('scope.interface.detail', '{0} will be used to build targets that use {1}', file, target);
         }
         throw Error('scopeDetails() called with unrecognized scope name');
     }
 
     private fileSetDetails(file: string) {
         switch (this.resolveFileSetType()) {
-            case 'HEADERS': return `${file} will be used via a language's #include mechanism`;
-            case 'CXX_MODULES': return `${file} contains C++ interface module or partition units.`;
+            case 'HEADERS': return localize('fileset.headers.detail', '{0} will be used via a language\'s #include mechanism', file);
+            case 'CXX_MODULES': return localize('fileset.cxx.modules.detail', '{0} contains C++ interface module or partition units.', file);
         }
         throw Error('fileSetDetails() called on scope list with missing or unrecognized FILE_SET');
     }
 
     public get label(): string {
         if (this.fileSet?.name) {
-            return `${this.fileSet.name} File Set`;
+            return localize('label.fileset', '{0} File Set', this.fileSet.name);
         } else {
-            return `${this.scope} Scope`;
+            return localize('label.scope', '{0} Scope', this.scope);
         }
     }
 
@@ -1059,7 +1058,7 @@ class ScopeSourceList extends SourceList {
 
         if (this.fileSet) {
             if (this.fileSet.type) {
-                descParts.push(`Type: ${this.fileSet.type}`);
+                descParts.push(localize('fileset.type', 'Type: {0}', this.fileSet.type));
             }
             descParts.push(this.fileSetDetails(file));
         }
@@ -1068,7 +1067,7 @@ class ScopeSourceList extends SourceList {
 
     protected details(file: string): string {
         if (this.fileSet?.name) {
-            return `${this.scope} Scope: ${this.scopeDetails(this.target, file)}`;
+            return localize('scope.with.fileset.detail', '{0} Scope: {1}', this.scope, this.scopeDetails(this.target, file));
         } else {
             return this.scopeDetails(this.target, file);
         }
@@ -1134,7 +1133,7 @@ class MultiValueSourceList extends SourceList {
     }
 
     protected description(_file: string): string {
-        return `Keyword of ${this.invocation.command} command`;
+        return localize('keyword.of.command', 'Keyword of {0} command', this.invocation.command);
     }
 
     protected sortKeys(uri: vscode.Uri): (number | string)[] {
@@ -1152,11 +1151,11 @@ class SimpleSourceList extends SourceList {
     }
 
     public get label(): string {
-        return `${this.invocation.command} Command`;
+        return localize('command.label', '{0} Command', this.invocation.command);
     }
 
     protected description(file: string): string {
-        return `Add ${file} to the list of arguments to ${this.invocation.command} command`;
+        return localize('add.to.command.arguments', 'Add {0} to the list of arguments to {1} command', file, this.invocation.command);
     }
 }
 
@@ -1263,7 +1262,7 @@ function addDeletionsForInvocation(
     const argIndices = findSourceInArgs(deletedSourceUri, invocation);
     if (argIndices.length && document.isDirty) {
         void vscode.window.showErrorMessage(
-            `Not modifying ${invocation.document.fileName} to delete ${basename} because it has unsaved changes.`);
+            localize('not.modifying.unsaved.delete', 'Not modifying {0} to delete {1} because it has unsaved changes.', invocation.document.fileName, basename));
         return;
     }
     for (const i of argIndices) {
@@ -1274,11 +1273,11 @@ function addDeletionsForInvocation(
             document.positionAt(arg.endOffset)
         );
         const editDesc =
-            `CMake: Remove ${basename} from ${listDescription}`;
+            localize('remove.from.list.description', 'CMake: Remove {0} from {1}', basename, listDescription);
         edit.delete(
             document.uri, delRange,
             {
-                label: 'CMake: Remove deleted source file',
+                label: localize('edit.label.remove.source.file', 'CMake: Remove deleted source file'),
                 needsConfirmation: needsConfirmation,
                 description: editDesc
             }
