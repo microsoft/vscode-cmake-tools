@@ -3988,7 +3988,7 @@
           "order": 107,
           "scope": "resource"
         },
-          "cmake.modifyLists.sourceListKeywords": {
+        "cmake.modifyLists.sourceListKeywords": {
           "type": "array",
           "items": {
             "type": "string"
