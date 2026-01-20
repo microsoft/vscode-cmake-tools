@@ -97,7 +97,9 @@ export class CMakeListsModifier implements vscode.Disposable {
         // Add hard-coded extensions
         for (const lang of languages) {
             const langExtensionGroups = LANGUAGE_EXTENSIONS[lang];
-            addAll(extensions, ...Object.values(langExtensionGroups).flat(1));
+            if (langExtensionGroups) {
+                addAll(extensions, ...Object.values(langExtensionGroups).flat(1));
+            }
         }
         // Add in any extensions explicitly mentioned by the toolchain.
         // Toolchains don't include header file extensions, so this can only
@@ -462,7 +464,7 @@ function messageIfSourceInInvocation(
     }
     const { document, ast: { args } } = invocation;
     const line = document.positionAt(args[indices[0]].offset).line;
-    const message = localize('file.already.in.destination', '{0} already in {1} at {2}:{3}', sourceUri.fsPath, destination, document.fileName, line);
+    const message = localize('file.already.in.destination', '{0} already in {1} at {2}:{3}', sourceUri.fsPath, destination, document.fileName, line + 1);
     if (type === 'error') {
         void vscode.window.showErrorMessage(message);
     } else {
@@ -489,6 +491,7 @@ function sourceCommandInvocationsFromCMakeLists(
 ) {
     return topLevelInvocations(invocationsFromCMakeASTs(cmakeListsASTs))
         .filter(invocation => builtins.includes(invocation.command)
+            && invocation.ast.args.length > 0
             && invocation.ast.args[0].value === target.name);
 }
 
@@ -743,7 +746,7 @@ async function sourceCommandInvocationsFromBacktrace(
         }
 
         if (command !== ast.command.value) {
-            void vscode.window.showWarningMessage(localize('unexpected.command.found', 'Found "{0}", expected "{1}". CMake file modified since last configure? Details: {2}:{3}', ast.command.value, command, document.fileName, line));
+            void vscode.window.showWarningMessage(localize('unexpected.command.found', 'Found "{0}", expected "{1}". CMake file modified since last configure? Details: {2}:{3}', ast.command.value, command, document.fileName, line + 1));
             return;
         }
 
@@ -946,7 +949,7 @@ abstract class SourceList {
         if (settings && command.value === 'set') {
             return [ new SetSourceList(invocation, project.sourceDir, settings) ];
         }
-        if (settings && command.value === 'list' && LIST_KEYWORDS.includes(args[0].value)) {
+        if (settings && command.value === 'list' && args.length > 0 && LIST_KEYWORDS.includes(args[0].value)) {
             return [ new ListAppendSourceList(invocation, project.sourceDir, settings) ];
         }
         if (!target) {
@@ -1002,18 +1005,25 @@ class ScopeSourceList extends SourceList {
         // Parse FILE_SET header if present
         if (index < args.length && args[index].value === 'FILE_SET') {
             index++;
-            fileSetName = args[index++].value;
-            if (args[index].value === 'TYPE') {
-                index++;
-                fileSetType = args[index++].value;
+            if (index < args.length) {
+                fileSetName = args[index++].value;
             }
-            if (args[index++].value === 'BASE_DIRS') {
+            if (index < args.length && args[index].value === 'TYPE') {
+                index++;
+                if (index < args.length) {
+                    fileSetType = args[index++].value;
+                }
+            }
+            if (index < args.length && args[index].value === 'BASE_DIRS') {
+                index++;
                 while (index < args.length && args[index].value !== 'FILES') {
                     const arg = args[index++].value;
                     const argPath = path.resolve(invocation.sourceDir, arg);
                     baseDirs.push(argPath);
                 }
-                index++;
+                if (index < args.length) {
+                    index++;
+                }
             }
         }
 
