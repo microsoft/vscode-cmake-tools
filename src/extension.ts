@@ -31,7 +31,8 @@ import rollbar from '@cmt/rollbar';
 import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
-import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode } from '@cmt/ui/projectOutline/projectOutline';
+import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode } from '@cmt/ui/projectOutline/projectOutline';
+import { BookmarksProvider } from '@cmt/ui/bookmarks';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
@@ -98,6 +99,9 @@ export class ExtensionManager implements vscode.Disposable {
     constructor(public readonly extensionContext: vscode.ExtensionContext) {
         telemetry.activate(extensionContext);
         this.api = new CMakeToolsApiImpl(this);
+        // Wire bookmarks to resolve TargetNodes from the outline using stable IDs
+        this.bookmarksProvider.setTargetResolver((id: string) => this.projectOutline.findTargetNodeById(id));
+        this.projectOutline.setBookmarksProvider(this.bookmarksProvider);
     }
 
     private contextValues: {[key: string]: any} = {};
@@ -396,6 +400,15 @@ export class ExtensionManager implements vscode.Disposable {
     });
 
     /**
+     * The bookmarks tree data provider
+     */
+    private readonly bookmarksProvider = new BookmarksProvider(this.extensionContext);
+    private readonly bookmarksTreeView = vscode.window.createTreeView('cmake.bookmarks', {
+        treeDataProvider: this.bookmarksProvider,
+        showCollapseAll: false
+    });
+
+    /**
      * CppTools project configuration provider. Tells cpptools how to search for
      * includes, preprocessor defs, etc.
      */
@@ -664,6 +677,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.onDidChangeActiveTextEditorSub.dispose();
         void this.kitsWatcher.close();
         this.projectOutlineTreeView.dispose();
+        this.bookmarksTreeView.dispose();
         this.extensionActiveCommandsEmitter.dispose();
         pinnedCommands.dispose();
         if (this.cppToolsAPI) {
@@ -849,6 +863,8 @@ export class ExtensionManager implements vscode.Disposable {
         }
         const folder: vscode.WorkspaceFolder = cmakeProject.workspaceFolder;
         this.projectOutline.updateCodeModel(cmakeProject, cmakeProject.codeModelContent);
+        // Try to reattach bookmarks to live TargetNodes after outline refresh
+        void this.bookmarksProvider.reattachTargets();
         rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
             if (vscode.workspace.getConfiguration('C_Cpp', folder.uri).get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
                 log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because {0} is set to {1}', '"C_Cpp.intelliSenseEngine"', '"Disabled"'));
@@ -2241,6 +2257,14 @@ export class ExtensionManager implements vscode.Disposable {
         return this.onActiveProjectChangedEmitter.event;
     }
     private readonly onActiveProjectChangedEmitter = new vscode.EventEmitter<vscode.Uri | undefined>();
+
+    getProjectOutline() {
+        return this.projectOutline;
+    }
+
+    getBookmarksProvider() {
+        return this.bookmarksProvider;
+    }
 }
 
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle): Promise<api.CMakeToolsExtensionExports> {
@@ -2414,6 +2438,85 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
         // add parameters that give a more specific configureTrigger
         vscode.commands.registerCommand('cmake.outline.configureAllWithDebugger', () => runCommand('configureAllWithDebugger', ConfigureTrigger.projectOutlineConfigureAllWithDebugger)),
+        // add parameters that give a more specific configureTrigger
+        vscode.commands.registerCommand(
+            "cmake.outline.search",
+            async () => {
+                const result = await vscode.window.showInputBox({
+                    prompt: localize('search.project.outline', 'Enter a search term to filter the Project Outline'),
+                    value: ext.getProjectOutline().getSearchTerm()
+                });
+                if (result !== undefined) {
+                    await ext.getProjectOutline().setSearchTerm(result);
+                }
+            }
+        ),
+        vscode.commands.registerCommand(
+            "cmake.outline.clearFilter",
+            async () => {
+                await ext.getProjectOutline().setSearchTerm("");
+            }
+        ),
+        vscode.commands.registerCommand(
+            "cmake.outline.toggleBookmark",
+            async (node?: BaseNode) => {
+                if (!node) {
+                    return;
+                }
+
+                let nodeName: string = '';
+                if (node instanceof TargetNode) {
+                    nodeName = node.name;
+                } else if (node instanceof SourceFileNode) {
+                    nodeName = node.name;
+                } else if (node instanceof DirectoryNode) {
+                    nodeName = node.pathPart;
+                } else {
+                    nodeName = node.id;
+                }
+
+                const wasAdded = await ext.getBookmarksProvider().toggleBookmark(node);
+                const action = wasAdded ? localize('added.to', 'added to') : localize('removed.from', 'removed from');
+                void vscode.window.showInformationMessage(localize('bookmark.toggled', '"{0}" {1} bookmarks', nodeName, action));
+                ext.getProjectOutline().refresh(); // Refresh the outline to show the bookmark icon change
+            }
+        ),
+        vscode.commands.registerCommand(
+            "cmake.outline.removeBookmark",
+            async (bookmarkNode?: any) => {
+                if (bookmarkNode?.bookmark) {
+                    await ext.getBookmarksProvider().removeBookmark(bookmarkNode.bookmark.id);
+                    void vscode.window.showInformationMessage(localize('bookmark.removed', 'Bookmark for "{0}" removed', bookmarkNode.bookmark.name));
+                    ext.getProjectOutline().refresh(); // Refresh the outline to remove the bookmark from the list
+                }
+            }
+        ),
+        vscode.commands.registerCommand(
+            "cmake.outline.removeBookmarkInline",
+            async (node?: BaseNode) => {
+                if (!node) {
+                    return;
+                }
+                await ext.getBookmarksProvider().removeBookmark(node.id);
+                const nodeName = node instanceof TargetNode ? node.name : node instanceof SourceFileNode ? node.name : node instanceof DirectoryNode ? node.pathPart : node.id;
+                void vscode.window.showInformationMessage(localize('bookmark.removed', 'Bookmark for "{0}" removed', nodeName));
+                ext.getProjectOutline().refresh(); // Refresh the outline to remove the bookmark from the list
+            }
+        ),
+        vscode.commands.registerCommand(
+            "cmake.bookmarks.clearAll",
+            async () => {
+                const result = await vscode.window.showWarningMessage(
+                    localize('clear.all.bookmarks.confirm', 'Are you sure you want to clear all bookmarks?'),
+                    localize('yes', 'Yes'), localize('no', 'No')
+                );
+                if (result === localize('yes', 'Yes')) {
+                    await ext.getBookmarksProvider().clearAllBookmarks();
+                    void vscode.window.showInformationMessage(localize('all.bookmarks.cleared', 'All bookmarks cleared'));
+                    ext.getProjectOutline().refresh(); // Refresh the outline to remove all bookmarks from the list
+                }
+            }
+        ),
         vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
         vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
         vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),

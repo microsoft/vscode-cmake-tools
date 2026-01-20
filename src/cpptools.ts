@@ -598,7 +598,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         target.fileGroups?.reverse();
                         const grps = target.fileGroups || [];
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-                        const compileCommandFragments = [...util.first(grps, grp => grp.compileCommandFragments || [])];
+                        const compileCommandFragments = [...util.first(grps.filter(grp => grp.language !== 'RC'), grp => grp.compileCommandFragments || [])];
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
                         const sysroot = target.sysroot;
                         this.targets.push({ name: target.name, type: target.type });

@@ -4474,7 +4474,7 @@ SOFTWARE.
 
 ---------------------------------------------------------
 
-js-yaml 4.1.0 - MIT
+js-yaml 4.1.1 - MIT
 https://github.com/nodeca/js-yaml#readme
 
 Copyright (c) 2011-2015 by Vitaly Puzrin

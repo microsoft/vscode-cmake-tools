@@ -281,6 +281,7 @@ const msvcEnvVars = [
     'WindowsSDKVersion',
     'WindowsSDK_ExecutablePath_x64',
     'WindowsSDK_ExecutablePath_x86',
+    'VCPKG_ROOT',
 
     /* These are special also need to be cached */
     'CL',
