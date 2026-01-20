@@ -20,6 +20,7 @@ Bugs:
 - Migrate macOS CI from deprecated macOS-13 to macOS-15 Image [#4633](https://github.com/microsoft/vscode-cmake-tools/pull/4633)
 - Ensure Visual Studio developer environment propagation preserves `VCPKG_ROOT`, enabling vcpkg-dependent configure runs after using the Set Visual Studio Developer Environment command. [microsoft/vscode-cpptools#14083](https://github.com/microsoft/vscode-cpptools/issues/14083)
 - Fix auto-focusing the "Search" input field in the CMake Cache view. [#4552](https://github.com/microsoft/vscode-cmake-tools/pull/4552) [@simhof-basyskom](https://github.com/simhof-basyskom)
+- Remove the demangling feature in the code coverage implementation for now since it doesn't work properly. 
 
 
 ## 1.21
@@ -34,14 +35,13 @@ Features:
 
 Improvements:
 
-- Add name de-mangling for C++ symbols in the Test Explorer view when running tests with coverage. [#4340](https://github.com/microsoft/vscode-cmake-tools/pull/4340) [@rjaegers](https://github.com/rjaegers)
 - No longer convert paths on lowercase on MacOS to enable cpp tools to resolve them. [#4325](https://github.com/microsoft/vscode-cmake-tools/pull/4325) [@tringenbach](https://github.com/tringenbach)
 - Speedup & reduce heap allocations in shlex split module function. Significant gains for mid-large compile_commands.json - CompilationDatabase construction. [#4458](https://github.com/microsoft/vscode-cmake-tools/pull/4458) [@borjamunozf](https://github.com/borjamunozf)
 
 Bug Fixes:
 
 - Fix bug that makes `Configure Task` lists only first folder in workspace. [#3232](https//github.com/microsoft/vscode-cmake-tools/issues/3232)
-- Fix displaying "Go to Test" in the Test Explorer when the DEF_SOURCE_LINE property is set, but there is no backtrace information present. [#4321](https://github.com/microsoft/vscode-cmake-tools/pull/4321) [@rjaegers](https://github.com/rjaegers)
+- Fix displaying "Go to Test" in the Test Explorer when the DEF_SOURCE_LINE property is set, but there is no backtrace information present. [4321](https://github.com/microsoft/vscode-cmake-tools/pull/4321) [@rjaegers](https://github.com/rjaegers)
 - Fix gnuld error parsing false positive on make errors, false negative due to trailing \r, and false parsing of new "multiple definitions" error [#2864](https://github.com/microsoft/vscode-cmake-tools/issues/2864) [@0xemgy](https://github.com/0xemgy)
 - Fixes for small bug string bugs. [#4319](https://github.com/microsoft/vscode-cmake-tools/issues/4319), [#4317](https://github.com/microsoft/vscode-cmake-tools/issues/4317), [#4312](https://github.com/microsoft/vscode-cmake-tools/issues/4312)
 - Fixes localization for "workspace is" string. [#4374](https://github.com/microsoft/vscode-cmake-tools/issues/4374)
