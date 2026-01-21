@@ -14,6 +14,121 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const LIST_KEYWORDS = ['APPEND', 'PREPEND', 'INSERT'];
 
+// Debounce interval for batching file events (in ms)
+const FILE_EVENT_DEBOUNCE_MS = 300;
+
+/**
+ * Represents a single edit candidate with all necessary information for UI and application
+ */
+export interface CandidateEdit {
+    /** The document URI to edit */
+    uri: vscode.Uri;
+    /** The range to modify (for deletions) or position to insert at */
+    range: vscode.Range;
+    /** The new text to insert (empty string for deletions) */
+    newText: string;
+    /** Short label for QuickPick display */
+    label: string;
+    /** Description for QuickPick */
+    description: string;
+    /** Detail text for QuickPick */
+    detail: string;
+    /** Sort priority (lower = better) */
+    sortKeys: (number | string)[];
+    /** Single-line preview of the change */
+    previewSnippet: string;
+    /** The source list this edit belongs to */
+    sourceList?: SourceList;
+    /** The target this edit relates to */
+    target?: codeModel.CodeModelTarget;
+    /** Whether this is a deletion or insertion */
+    isDelete: boolean;
+    /** The source file being added/removed */
+    sourceUri: vscode.Uri;
+}
+
+/**
+ * Result of candidate collection
+ */
+interface AddCandidatesResult {
+    candidates: CandidateEdit[];
+    sourceList?: SourceList;
+    /** Whether candidates are variable source lists (vs target source lists) */
+    isVariableCandidate?: boolean;
+    error?: string;
+    info?: string;
+}
+
+/**
+ * Structured error with optional file URI for "Open File" action
+ */
+interface EditError {
+    message: string;
+    fileUri?: vscode.Uri;
+}
+
+interface RemoveCandidatesResult {
+    candidates: CandidateEdit[];
+    errors: EditError[];
+}
+
+/**
+ * Virtual document provider for showing diff previews
+ */
+class CMakeEditPreviewProvider implements vscode.TextDocumentContentProvider {
+    private static instance: CMakeEditPreviewProvider;
+    private pendingEdits = new Map<string, CandidateEdit[]>();
+    private onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+
+    public static readonly scheme = 'cmake-edit-preview';
+
+    public readonly onDidChange = this.onDidChangeEmitter.event;
+
+    public static getInstance(): CMakeEditPreviewProvider {
+        if (!this.instance) {
+            this.instance = new CMakeEditPreviewProvider();
+        }
+        return this.instance;
+    }
+
+    public setEdits(originalUri: vscode.Uri, edits: CandidateEdit[]): vscode.Uri {
+        const key = originalUri.toString();
+        this.pendingEdits.set(key, edits);
+        const previewUri = vscode.Uri.parse(`${CMakeEditPreviewProvider.scheme}:${originalUri.path}?${encodeURIComponent(key)}`);
+        this.onDidChangeEmitter.fire(previewUri);
+        return previewUri;
+    }
+
+    public clearEdits(originalUri: vscode.Uri): void {
+        this.pendingEdits.delete(originalUri.toString());
+    }
+
+    public async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
+        const key = decodeURIComponent(uri.query);
+        const edits = this.pendingEdits.get(key);
+        if (!edits?.length) {
+            return '';
+        }
+
+        // Get the original document
+        const originalUri = vscode.Uri.parse(key);
+        const originalDoc = await vscode.workspace.openTextDocument(originalUri);
+        let content = originalDoc.getText();
+
+        // Apply edits in reverse order (from end to start) to maintain offsets
+        const sortedEdits = [...edits].sort((a, b) =>
+            b.range.start.compareTo(a.range.start));
+
+        for (const edit of sortedEdits) {
+            const startOffset = originalDoc.offsetAt(edit.range.start);
+            const endOffset = originalDoc.offsetAt(edit.range.end);
+            content = content.slice(0, startOffset) + edit.newText + content.slice(endOffset);
+        }
+
+        return content;
+    }
+}
+
 /**
  * The order of identifiers in the following identifier lists affect sort order
  * in QuickPicks. Lower indices get sorted earlier.
@@ -76,6 +191,21 @@ export class CMakeListsModifier implements vscode.Disposable {
     private project?: CMakeProject;
     private documentSelector: vscode.DocumentFilter[] = [];
     private codeModelDisposables: vscode.Disposable[] = [];
+    private previewProvider: CMakeEditPreviewProvider;
+    private previewProviderRegistration?: vscode.Disposable;
+
+    // Known source file extensions for path-based filtering (used for deleted files)
+    private knownExtensions = new Set<string>();
+
+    // Debounce state for batching file events
+    private pendingAddFiles: vscode.Uri[] = [];
+    private pendingDeleteFiles: vscode.Uri[] = [];
+    private addDebounceTimer?: NodeJS.Timeout;
+    private deleteDebounceTimer?: NodeJS.Timeout;
+
+    constructor() {
+        this.previewProvider = CMakeEditPreviewProvider.getInstance();
+    }
 
     updateCodeModel(project: CMakeProject, cache: CMakeCache) {
         this.project = project;
@@ -112,6 +242,16 @@ export class CMakeListsModifier implements vscode.Disposable {
         this.codeModelDispose();
         const extensionGlobs = Array.from(extensions).map(ext => `**/*.${ext}`);
         this.documentSelector = extensionGlobs.map(glob => ({ scheme: 'file', pattern: glob }));
+        this.knownExtensions = extensions;
+
+        // Register the preview provider if not already registered
+        if (!this.previewProviderRegistration) {
+            this.previewProviderRegistration = vscode.workspace.registerTextDocumentContentProvider(
+                CMakeEditPreviewProvider.scheme,
+                this.previewProvider
+            );
+        }
+
         vscode.workspace.onDidCreateFiles(this.filesCreated, this, this.codeModelDisposables);
         vscode.workspace.onDidDeleteFiles(this.filesDeleted, this, this.codeModelDisposables);
     }
@@ -120,18 +260,70 @@ export class CMakeListsModifier implements vscode.Disposable {
         rollbar.invokeAsync(localize('add.newly.created.files', 'Add newly created files to CMakeLists.txt'), async () => {
             for (const uri of e.files) {
                 if (await this.isSourceFile(uri)) {
-                    await this.addSourceFileToCMakeLists(uri, this.project, false);
+                    this.pendingAddFiles.push(uri);
                 }
             }
+
+            // Debounce: wait for more files before processing
+            if (this.addDebounceTimer) {
+                clearTimeout(this.addDebounceTimer);
+            }
+            this.addDebounceTimer = setTimeout(() => {
+                this.processPendingAddFiles().catch(e => rollbar.exception(localize('error.processing.add.files', 'Error processing added files'), e as Error));
+            }, FILE_EVENT_DEBOUNCE_MS);
         });
+    }
+
+    private async processPendingAddFiles() {
+        const files = [...this.pendingAddFiles];
+        this.pendingAddFiles = [];
+
+        if (files.length === 0) {
+            return;
+        }
+
+        if (files.length === 1) {
+            await this.addSourceFileToCMakeLists(files[0], this.project, false);
+        } else {
+            // Batch processing for multiple files
+            await this.addMultipleSourceFilesToCMakeLists(files, this.project);
+        }
     }
 
     private filesDeleted(e: vscode.FileDeleteEvent) {
         rollbar.invokeAsync(localize('remove.deleted.file', 'Remove a deleted file from CMakeLists.txt'), async () => {
             for (const uri of e.files) {
-                await this.removeSourceFileFromCMakeLists(uri, this.project, false);
+                // Filter by extension since we can't open deleted files
+                const ext = path.extname(uri.fsPath).slice(1);
+                if (ext && this.knownExtensions.has(ext)) {
+                    this.pendingDeleteFiles.push(uri);
+                }
             }
+
+            // Debounce: wait for more files before processing
+            if (this.deleteDebounceTimer) {
+                clearTimeout(this.deleteDebounceTimer);
+            }
+            this.deleteDebounceTimer = setTimeout(() => {
+                this.processPendingDeleteFiles().catch(e => rollbar.exception(localize('error.processing.delete.files', 'Error processing deleted files'), e as Error));
+            }, FILE_EVENT_DEBOUNCE_MS);
         });
+    }
+
+    private async processPendingDeleteFiles() {
+        const files = [...this.pendingDeleteFiles];
+        this.pendingDeleteFiles = [];
+
+        if (files.length === 0) {
+            return;
+        }
+
+        if (files.length === 1) {
+            await this.removeSourceFileFromCMakeLists(files[0], this.project, false);
+        } else {
+            // Batch processing for multiple files
+            await this.removeMultipleSourceFilesFromCMakeLists(files, this.project);
+        }
     }
 
     private async isSourceFile(uri: vscode.Uri) {
@@ -139,28 +331,20 @@ export class CMakeListsModifier implements vscode.Disposable {
         return vscode.languages.match(this.documentSelector, textDocument);
     }
 
-    async addSourceFileToCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always=true) {
-        const settings = vscode.workspace.getConfiguration('cmake.modifyLists', uri);
-        if (settings.addNewSourceFiles === 'no' && !always) {
-            return;
+    /**
+     * Collect all candidate edits for adding a source file.
+     * This separates discovery from interaction.
+     */
+    private async collectAddCandidates(
+        newSourceUri: vscode.Uri,
+        project: CMakeProject,
+        settings: vscode.WorkspaceConfiguration
+    ): Promise<AddCandidatesResult> {
+        const model = project.codeModelContent;
+        if (!model) {
+            return { candidates: [], error: localize('add.file.no.code.model', 'Adding a file without a valid code model') };
         }
 
-        uri = uri ?? vscode.window.activeTextEditor?.document.uri;
-        project = project ?? this.project;
-        const model = project?.codeModelContent;
-
-        if (uri?.scheme !== 'file') {
-            void vscode.window.showErrorMessage(localize('not.local.file.add', '{0} is not a local file. Not adding to CMake lists.', uri?.toString()));
-            return;
-        }
-        if (!project || !model) {
-            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
-            return;
-        }
-        // Work around for focus race condition with Save As dialog closing
-        await this.workAroundSaveAsFocusBug(uri);
-
-        const newSourceUri = uri;
         const buildType = await project.currentBuildType();
         const newSourceFileName = path.basename(newSourceUri.fsPath);
         const cmakeListsASTs = await findCMakeLists(project, newSourceUri);
@@ -169,8 +353,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             return a.compare(newSourceUri, b);
         }
 
-        let sourceList: SourceList;
-
+        // Try variable source lists first
         let varSourceLists = variableSourceLists(cmakeListsASTs, project, settings);
         varSourceLists.sort(sourceListCompare);
         if (settings.variableSelection === 'askFirstParentDir') {
@@ -182,138 +365,725 @@ export class CMakeListsModifier implements vscode.Disposable {
 
         const tryVariables = varSourceLists.length && settings.variableSelection !== 'never';
         if (tryVariables) {
-            if (infoIfSourceInSourceLists(varSourceLists, newSourceUri)) {
-                return;
-            }
-
-            let variableSourceList: SourceList | null = null;
-            if (settings.variableSelection === 'auto' || varSourceLists.length < 2) {
-                variableSourceList = varSourceLists[0];
-            } else {
-                variableSourceList = await showVariableSourceListOptions(
-                    varSourceLists, newSourceFileName);
-            }
-            if (!variableSourceList) {
-                return;
-            }
-            sourceList = variableSourceList;
-        } else {
-            const allTargets = allBuildTargets(model, buildType);
-            const references = sourceFileTargets(allTargets, newSourceUri);
-            if (references.length) {
-                const msg = localize('file.already.in.target', '{0} already in target {1}.', newSourceFileName, references[0].name);
-                if (always) {
-                    void vscode.window.showErrorMessage(msg);
-                } else {
-                    void vscode.window.showInformationMessage(msg);
+            // Check if source already in variable lists
+            for (const sourceList of varSourceLists) {
+                const err = checkSourceInInvocation(sourceList.invocation, sourceList.destination, newSourceUri);
+                if (err) {
+                    return { candidates: [], info: err };
                 }
-                return;
             }
 
-            let targets = candidateTargetsForSource(allTargets, newSourceUri);
-            targets.sort(targetCompare);
-            if (settings.targetSelection === 'askNearestSourceDir') {
-                targets = targets.filter(target => sameFile(
-                    target.sourceDirectory as string,
-                    targets[0].sourceDirectory as string
-                ));
-            }
-            if (!targets.length) {
-                void vscode.window.showErrorMessage(
-                    localize('no.targets.found', 'No targets found. {0} not added to build system.', newSourceFileName));
-                return;
-            }
-            let target: codeModel.CodeModelTarget | null;
-            if (settings.targetSelection === 'auto' || targets.length < 2) {
-                target = targets[0];
-            } else {
-                target = await showTargetOptions(targets, project, newSourceFileName);
-            }
-            if (!target) {
-                return;
-            }
+            // Build candidates from variable source lists
+            const candidates = varSourceLists.map(sourceList =>
+                this.buildAddCandidate(sourceList, newSourceUri));
 
-            const invocationSelection = settings.targetCommandInvocationSelection;
-            function invocationCompare(a: CommandInvocation, b: CommandInvocation) {
-                return targetSourceCommandInvocationCompare(settings.targetSourceCommands, a, b);
-            }
-            let invocations = (await targetSourceCommandInvocations(
+            return { candidates, sourceList: varSourceLists[0], isVariableCandidate: true };
+        }
+
+        // Try target source commands
+        const allTargets = allBuildTargets(model, buildType);
+        const references = sourceFileTargets(allTargets, newSourceUri);
+        if (references.length) {
+            const msg = localize('file.already.in.target', '{0} already in target {1}.', newSourceFileName, references[0].name);
+            return { candidates: [], info: msg };
+        }
+
+        let targets = candidateTargetsForSource(allTargets, newSourceUri);
+        targets.sort(targetCompare);
+        if (settings.targetSelection === 'askNearestSourceDir') {
+            targets = targets.filter(target => sameFile(
+                target.sourceDirectory as string,
+                targets[0].sourceDirectory as string
+            ));
+        }
+        if (!targets.length) {
+            return {
+                candidates: [],
+                error: localize('no.targets.found', 'No targets found. {0} not added to build system.', newSourceFileName)
+            };
+        }
+
+        // Collect candidates from all targets and invocations
+        const candidates: CandidateEdit[] = [];
+        for (const target of targets) {
+            const invocations = (await targetSourceCommandInvocations(
                 project, target, cmakeListsASTs, settings.targetSourceCommands))
                 .filter(i =>
                     isFileInsideFolder(newSourceUri, path.dirname(i.document.fileName)));
-            if (errorIfSourceInInvocations(invocations, target.name, newSourceUri)) {
-                return;
-            }
-            invocations.sort(invocationCompare);
-            if (invocationSelection === 'askFirstParentDir') {
-                invocations = invocations.filter(invocation => sameFile(
-                    invocation.document.fileName,
-                    invocations[0].document.fileName));
+
+            // Check if source already in invocations
+            for (const invocation of invocations) {
+                const err = checkSourceInInvocation(invocation, target.name, newSourceUri);
+                if (err) {
+                    // Return as info, not error - let caller decide severity based on 'always'
+                    return { candidates: [], info: err };
+                }
             }
 
-            if (!invocations.length) {
-                void vscode.window.showErrorMessage(
-                    localize('no.source.command.invocations', 'No source command invocations found for {0}. {1} not added to build system.', target.name, newSourceFileName)
-                );
-                return;
-            }
+            // Sort the invocations using the compare function
+            const sortedInvocations = [...invocations].sort((a, b) =>
+                targetSourceCommandInvocationCompare(settings.targetSourceCommands, a, b));
 
-            let invocation: CommandInvocation | null = null;
-            if (invocationSelection === 'auto' || invocations.length < 2) {
-                invocation = invocations[0];
-            } else {
-                invocation = await showCommandInvocationOptions(
-                    invocations, project, target, newSourceFileName);
-            }
-            if (!invocation) {
-                return;
-            }
+            for (const invocation of sortedInvocations) {
+                const sourceLists = targetSourceListOptions(
+                    project, target, invocation, newSourceUri, settings);
+                sourceLists.sort(sourceListCompare);
 
-            if (invocation.document.isDirty) {
-                void vscode.window.showErrorMessage(
-                    localize('not.modifying.unsaved.add', 'Not modifying {0} to add {1} because it has unsaved changes.', invocation.document.fileName, newSourceFileName));
-                return;
+                for (const sourceList of sourceLists) {
+                    candidates.push(this.buildAddCandidate(sourceList, newSourceUri, target));
+                }
             }
-
-            const sourceLists = targetSourceListOptions(
-                project, target, invocation, newSourceUri, settings);
-            sourceLists.sort(sourceListCompare);
-
-            let targetSourceList: SourceList | null;
-            if (settings.scopeSelection === 'auto' || sourceLists.length < 2) {
-                targetSourceList = sourceLists[0];
-            } else {
-                targetSourceList = await showTargetSourceListOptions(
-                    sourceLists, newSourceFileName, invocation);
-            }
-            if (!targetSourceList) {
-                return;
-            }
-            sourceList = targetSourceList;
         }
 
-        const cmakeDocument = sourceList.document;
+        if (!candidates.length) {
+            return {
+                candidates: [],
+                error: localize('no.source.command.invocations', 'No source command invocations found. {0} not added to build system.', newSourceFileName)
+            };
+        }
+
+        // Sort all candidates
+        candidates.sort((a, b) => compareSortKeys(a.sortKeys, b.sortKeys));
+
+        return { candidates };
+    }
+
+    private buildAddCandidate(
+        sourceList: SourceList,
+        newSourceUri: vscode.Uri,
+        target?: codeModel.CodeModelTarget
+    ): CandidateEdit {
         const insertPos = sourceList.insertPosition;
         const indent = freshLineIndent(sourceList.invocation, insertPos);
         const newSourceArgument = quoteArgument(sourceList.relativePath(newSourceUri));
-        const edit = new vscode.WorkspaceEdit();
-        edit.insert(
-            cmakeDocument.uri, insertPos, `\n${indent}${newSourceArgument}`,
-            {
-                label: localize('edit.label.add.source.file', 'CMake: Add new source file'),
-                needsConfirmation: settings.addNewSourceFiles === 'ask'
-            });
-        try {
-            await vscode.workspace.applyEdit(edit);
-            await cmakeDocument.save();
-        } catch (e) {
-            void vscode.window.showErrorMessage(`${e}`);
+        const newText = `\n${indent}${newSourceArgument}`;
+
+        const document = sourceList.document;
+        const lineText = document.lineAt(insertPos.line).text;
+
+        return {
+            uri: document.uri,
+            range: new vscode.Range(insertPos, insertPos),
+            newText,
+            label: sourceList.label,
+            description: target?.name || sourceList.destination,
+            detail: `${path.relative(path.dirname(document.fileName), document.fileName)}:${insertPos.line + 1}`,
+            sortKeys: sourceList.getSortKeys(newSourceUri),
+            previewSnippet: `${lineText.trim()} + ${newSourceArgument}`,
+            sourceList,
+            target,
+            isDelete: false,
+            sourceUri: newSourceUri
+        };
+    }
+
+    /**
+     * Collect all candidate edits for removing a source file.
+     */
+    private async collectRemoveCandidates(
+        deletedUri: vscode.Uri,
+        project: CMakeProject,
+        settings: vscode.WorkspaceConfiguration
+    ): Promise<RemoveCandidatesResult> {
+        const model = project.codeModelContent;
+        if (!model) {
+            return { candidates: [], errors: [{ message: localize('delete.file.no.code.model', 'Deleting a file without a valid code model') }] };
         }
 
-        // TODO: Allow adding new scopes, new file sets, new target_sources
-        // (if there's only an add_library/add_executable), CMakeFiles.txt
+        const buildType = await project.currentBuildType();
+        const cmakeListsASTs = await findCMakeLists(project, deletedUri);
+        const candidates: CandidateEdit[] = [];
+        const errors: EditError[] = [];
 
-        // TODO: Test with single-config generator, incl. with no buildType
+        // Check variable source lists
+        const varSourceLists = variableSourceLists(cmakeListsASTs, project, settings);
+        const seen = new Set<string>();
+        if (varSourceLists.length && settings.variableSelection !== 'never') {
+            for (const sourceList of varSourceLists) {
+                const key = `${sourceList.document.fileName}:${sourceList.invocation.offset}`;
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                const deleteEdits = this.buildDeleteCandidates(
+                    deletedUri, sourceList.invocation, sourceList.label);
+                if (deleteEdits.dirtyError) {
+                    errors.push(deleteEdits.dirtyError);
+                }
+                candidates.push(...deleteEdits.candidates);
+            }
+        }
+
+        // Check target source lists
+        const targets = sourceFileTargets(allBuildTargets(model, buildType), deletedUri);
+        for (const target of targets) {
+            const invocations = await targetSourceCommandInvocations(
+                project, target, cmakeListsASTs, settings.targetSourceCommands);
+            for (const invocation of invocations) {
+                const deleteEdits = this.buildDeleteCandidates(
+                    deletedUri, invocation, `target ${target.name} sources`, target);
+                if (deleteEdits.dirtyError) {
+                    errors.push(deleteEdits.dirtyError);
+                }
+                candidates.push(...deleteEdits.candidates);
+            }
+        }
+
+        return { candidates, errors };
+    }
+
+    private buildDeleteCandidates(
+        deletedUri: vscode.Uri,
+        invocation: CommandInvocation,
+        listDescription: string,
+        target?: codeModel.CodeModelTarget
+    ): { candidates: CandidateEdit[]; dirtyError?: EditError } {
+        const basename = path.basename(deletedUri.fsPath);
+        const { document, ast } = invocation;
+        const argIndices = findSourceInArgs(deletedUri, invocation);
+
+        if (argIndices.length && document.isDirty) {
+            return {
+                candidates: [],
+                dirtyError: {
+                    message: localize('not.modifying.unsaved.delete', 'Not modifying {0} to delete {1} because it has unsaved changes.', document.fileName, basename),
+                    fileUri: document.uri
+                }
+            };
+        }
+
+        const candidates: CandidateEdit[] = [];
+        for (const i of argIndices) {
+            const arg = ast.args[i];
+            const prevToken = i ? ast.args[i - 1] : ast.lparen;
+            const delRange = new vscode.Range(
+                document.positionAt(prevToken.endOffset),
+                document.positionAt(arg.endOffset)
+            );
+
+            const lineText = document.lineAt(document.positionAt(arg.offset).line).text;
+
+            candidates.push({
+                uri: document.uri,
+                range: delRange,
+                newText: '',
+                label: basename,
+                description: listDescription,
+                detail: `${path.basename(document.fileName)}:${document.positionAt(arg.offset).line + 1}`,
+                sortKeys: [0],
+                previewSnippet: lineText.trim(),
+                target,
+                isDelete: true,
+                sourceUri: deletedUri
+            });
+        }
+
+        return { candidates };
+    }
+
+    /**
+     * Pick the best candidate using QuickPick steps when needed.
+     * Returns null if user cancels.
+     */
+    private async pickAddCandidate(
+        candidates: CandidateEdit[],
+        settings: vscode.WorkspaceConfiguration,
+        newSourceFileName: string,
+        isVariableCandidate: boolean
+    ): Promise<CandidateEdit | null> {
+        if (candidates.length === 0) {
+            return null;
+        }
+
+        // Determine selection mode based on candidate source
+        // Variable candidates obey variableSelection, target candidates obey targetSelection
+        const selectionMode = isVariableCandidate
+            ? settings.variableSelection as string
+            : settings.targetSelection as string;
+
+        if (candidates.length === 1 || selectionMode === 'auto') {
+            return candidates[0];
+        }
+
+        // For variable candidates, just show the variable list picker
+        if (isVariableCandidate) {
+            const varItems = candidates.map(c => ({
+                label: c.label,
+                description: c.description,
+                detail: c.previewSnippet,
+                payload: c
+            }));
+
+            return quickPick(varItems, {
+                title: localize('add.to.which.variable', 'CMake: Add {0} to which variable?', newSourceFileName)
+            });
+        }
+
+        // Group by unique targets
+        const targetGroups = new Map<string, CandidateEdit[]>();
+        for (const candidate of candidates) {
+            const key = candidate.target?.name || candidate.sourceList?.destination || '';
+            if (!targetGroups.has(key)) {
+                targetGroups.set(key, []);
+            }
+            targetGroups.get(key)!.push(candidate);
+        }
+
+        let selectedCandidate = candidates[0];
+
+        // If multiple targets, ask which target
+        if (targetGroups.size > 1) {
+            const targetItems = Array.from(targetGroups.entries()).map(([name, cands]) => ({
+                label: name,
+                description: cands[0].target?.type,
+                detail: cands[0].detail,
+                payload: cands[0]
+            }));
+
+            const selected = await quickPick(targetItems, {
+                title: localize('add.to.which.target', 'CMake: Add {0} to which target?', newSourceFileName)
+            });
+            if (!selected) {
+                return null;
+            }
+            selectedCandidate = selected;
+        }
+
+        // If multiple source lists within the selected target, ask which one
+        const targetCandidates = candidates.filter(c =>
+            (c.target?.name || c.sourceList?.destination) ===
+            (selectedCandidate.target?.name || selectedCandidate.sourceList?.destination));
+
+        if (targetCandidates.length > 1 && settings.scopeSelection !== 'auto') {
+            const listItems = targetCandidates.map(c => ({
+                label: c.label,
+                description: c.description,
+                detail: c.previewSnippet,
+                payload: c
+            }));
+
+            const selected = await quickPick(listItems, {
+                title: localize('add.to.which.scope.fileset.keyword', 'CMake: Add {0} to which Scope, File Set, or Keyword?', newSourceFileName)
+            });
+            if (!selected) {
+                return null;
+            }
+            selectedCandidate = selected;
+        }
+
+        return selectedCandidate;
+    }
+
+    /**
+     * Review and apply edits with diff-based preview.
+     */
+    private async reviewAndApply(
+        edits: CandidateEdit[],
+        settings: vscode.WorkspaceConfiguration,
+        reviewMode: 'add' | 'remove'
+    ): Promise<boolean> {
+        if (edits.length === 0) {
+            return false;
+        }
+
+        const askMode = reviewMode === 'add'
+            ? settings.addNewSourceFiles
+            : settings.removeDeletedSourceFiles;
+
+        if (askMode !== 'ask') {
+            // Apply directly without review
+            return this.applyEdits(edits);
+        }
+
+        // Group edits by document
+        const editsByDoc = new Map<string, CandidateEdit[]>();
+        for (const edit of edits) {
+            const key = edit.uri.toString();
+            if (!editsByDoc.has(key)) {
+                editsByDoc.set(key, []);
+            }
+            editsByDoc.get(key)!.push(edit);
+        }
+
+        // For single edit, show diff and confirm
+        if (edits.length === 1) {
+            const edit = edits[0];
+            const confirmed = await this.showDiffAndConfirm(edit.uri, [edit]);
+            if (confirmed) {
+                return this.applyEdits([edit]);
+            }
+            return false;
+        }
+
+        // For multiple edits (especially deletions), use multi-select QuickPick
+        if (reviewMode === 'remove') {
+            return this.reviewRemoveEdits(edits);
+        }
+
+        // For multiple add edits, review each file
+        for (const [uriStr, docEdits] of editsByDoc) {
+            const uri = vscode.Uri.parse(uriStr);
+            const confirmed = await this.showDiffAndConfirm(uri, docEdits);
+            if (!confirmed) {
+                return false;
+            }
+        }
+
+        return this.applyEdits(edits);
+    }
+
+    /**
+     * Show diff view and prompt for confirmation
+     */
+    private async showDiffAndConfirm(
+        originalUri: vscode.Uri,
+        edits: CandidateEdit[]
+    ): Promise<boolean> {
+        const previewUri = this.previewProvider.setEdits(originalUri, edits);
+
+        try {
+            // Open diff view
+            await vscode.commands.executeCommand('vscode.diff',
+                originalUri,
+                previewUri,
+                localize('cmake.edit.preview.title', 'CMake Edit Preview: {0}', path.basename(originalUri.fsPath)),
+                { preview: true }
+            );
+
+            // Show modal confirmation
+            const apply = localize('apply', 'Apply');
+            const discard = localize('discard', 'Discard');
+
+            const editSummary = edits.length === 1
+                ? edits[0].isDelete
+                    ? localize('remove.summary', 'Remove {0}', edits[0].label)
+                    : localize('add.summary', 'Add to {0}', edits[0].label)
+                : localize('edit.count.summary', '{0} edits', edits.length);
+
+            const result = await vscode.window.showInformationMessage(
+                localize('confirm.cmake.edit', 'Confirm CMake edit: {0}', editSummary),
+                { modal: true },
+                apply,
+                discard
+            );
+
+            return result === apply;
+        } finally {
+            // Clean up the preview provider state
+            // Note: We don't close the diff editor automatically - let the user close it
+            // Forcibly closing could close the wrong editor if user clicked around
+            this.previewProvider.clearEdits(originalUri);
+        }
+    }
+
+    /**
+     * Review remove edits with multi-select QuickPick
+     */
+    private async reviewRemoveEdits(edits: CandidateEdit[]): Promise<boolean> {
+        // Group by file for display
+        const items: (vscode.QuickPickItem & { edit: CandidateEdit })[] = edits.map(edit => ({
+            label: edit.label,
+            description: edit.description,
+            detail: `${path.basename(edit.uri.fsPath)}:${edit.range.start.line + 1} - ${edit.previewSnippet}`,
+            picked: true, // Default all selected for deleted files
+            edit
+        }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            canPickMany: true,
+            title: localize('select.removals', 'CMake: Select file references to remove'),
+            placeHolder: localize('select.removals.placeholder', 'All references selected by default')
+        });
+
+        if (!selected || selected.length === 0) {
+            return false;
+        }
+
+        const selectedEdits = selected.map(item => item.edit);
+
+        // Show diffs for affected files if user wants to review
+        const review = localize('review', 'Review Diffs');
+        const applyNow = localize('apply.now', 'Apply Now');
+
+        const reviewChoice = await vscode.window.showInformationMessage(
+            localize('apply.removals', 'Apply {0} removal(s)?', selectedEdits.length),
+            { modal: false },
+            review,
+            applyNow
+        );
+
+        if (reviewChoice === review) {
+            // Show diffs for each affected file
+            const editsByDoc = new Map<string, CandidateEdit[]>();
+            for (const edit of selectedEdits) {
+                const key = edit.uri.toString();
+                if (!editsByDoc.has(key)) {
+                    editsByDoc.set(key, []);
+                }
+                editsByDoc.get(key)!.push(edit);
+            }
+
+            for (const [uriStr, docEdits] of editsByDoc) {
+                const uri = vscode.Uri.parse(uriStr);
+                const confirmed = await this.showDiffAndConfirm(uri, docEdits);
+                if (!confirmed) {
+                    return false;
+                }
+            }
+        } else if (reviewChoice !== applyNow) {
+            return false;
+        }
+
+        return this.applyEdits(selectedEdits);
+    }
+
+    /**
+     * Apply the edits to the workspace
+     */
+    private async applyEdits(edits: CandidateEdit[]): Promise<boolean> {
+        if (edits.length === 0) {
+            return false;
+        }
+
+        // Group edits by document URI
+        const editsByDoc = new Map<string, { doc: vscode.TextDocument; edits: CandidateEdit[] }>();
+        for (const edit of edits) {
+            const key = edit.uri.toString();
+            if (!editsByDoc.has(key)) {
+                const doc = await vscode.workspace.openTextDocument(edit.uri);
+                editsByDoc.set(key, { doc, edits: [] });
+            }
+            editsByDoc.get(key)!.edits.push(edit);
+        }
+
+        // Check for dirty documents - skip them and continue with clean ones
+        const dirtyDocs: vscode.TextDocument[] = [];
+        const cleanDocs: string[] = [];
+        for (const [key, { doc }] of editsByDoc.entries()) {
+            if (doc.isDirty) {
+                dirtyDocs.push(doc);
+            } else {
+                cleanDocs.push(key);
+            }
+        }
+
+        // If all docs are dirty, show error and bail
+        if (cleanDocs.length === 0 && dirtyDocs.length > 0) {
+            const open = localize('open.file', 'Open File');
+            const choice = await vscode.window.showErrorMessage(
+                localize('not.modifying.unsaved.files', 'Cannot modify {0} because it has unsaved changes.', dirtyDocs[0].fileName),
+                open
+            );
+            if (choice === open) {
+                await vscode.window.showTextDocument(dirtyDocs[0]);
+            }
+            return false;
+        }
+
+        // If some docs are dirty, warn and continue with clean ones
+        if (dirtyDocs.length > 0) {
+            void vscode.window.showWarningMessage(
+                localize('skipping.unsaved.files', 'Skipping {0} file(s) with unsaved changes: {1}',
+                    dirtyDocs.length, dirtyDocs.map(d => path.basename(d.fileName)).join(', ')));
+        }
+
+        const workspaceEdit = new vscode.WorkspaceEdit();
+        const editedDocs = new Set<vscode.TextDocument>();
+
+        // Process each clean document's edits
+        for (const key of cleanDocs) {
+            const { doc, edits: docEdits } = editsByDoc.get(key)!;
+
+            // Sort edits by position descending (apply from end to start to preserve offsets)
+            // For deletions, sort by end offset first for safety with adjacent ranges
+            // For same position, sort by source filename for deterministic ordering
+            const sortedEdits = [...docEdits].sort((a, b) => {
+                // For deletions, compare end offset first
+                if (a.isDelete && b.isDelete) {
+                    const endCompare = b.range.end.compareTo(a.range.end);
+                    if (endCompare !== 0) {
+                        return endCompare;
+                    }
+                }
+                const startCompare = b.range.start.compareTo(a.range.start);
+                if (startCompare !== 0) {
+                    return startCompare;
+                }
+                // Same position: sort by source file name for deterministic order
+                return a.sourceUri.fsPath.localeCompare(b.sourceUri.fsPath);
+            });
+
+            // Combine inserts at the same position into a single insert
+            const combinedEdits: CandidateEdit[] = [];
+            for (const edit of sortedEdits) {
+                const last = combinedEdits[combinedEdits.length - 1];
+                if (last && !edit.isDelete && !last.isDelete &&
+                    last.range.start.isEqual(edit.range.start)) {
+                    // Combine: append this edit's text to maintain filename sort order
+                    // (we sorted ascending by filename, so append preserves that order)
+                    last.newText = last.newText + edit.newText;
+                } else {
+                    combinedEdits.push({ ...edit });
+                }
+            }
+
+            // Apply combined edits
+            for (const edit of combinedEdits) {
+                if (edit.isDelete) {
+                    workspaceEdit.delete(edit.uri, edit.range, {
+                        label: localize('edit.label.remove.source.file', 'CMake: Remove deleted source file'),
+                        needsConfirmation: false
+                    });
+                } else {
+                    workspaceEdit.insert(edit.uri, edit.range.start, edit.newText, {
+                        label: localize('edit.label.add.source.file', 'CMake: Add new source file'),
+                        needsConfirmation: false
+                    });
+                }
+            }
+            editedDocs.add(doc);
+        }
+
+        if (editedDocs.size === 0) {
+            return false;
+        }
+
+        try {
+            await vscode.workspace.applyEdit(workspaceEdit);
+            await Promise.all(Array.from(editedDocs).map(doc => doc.save()));
+            return true;
+        } catch (e) {
+            void vscode.window.showErrorMessage(`${e}`);
+            return false;
+        }
+    }
+
+    async addSourceFileToCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always=true) {
+        const settings = vscode.workspace.getConfiguration('cmake.modifyLists', uri);
+        if (settings.addNewSourceFiles === 'no' && !always) {
+            return;
+        }
+
+        uri = uri ?? vscode.window.activeTextEditor?.document.uri;
+        project = project ?? this.project;
+
+        if (uri?.scheme !== 'file') {
+            void vscode.window.showErrorMessage(localize('not.local.file.add', '{0} is not a local file. Not adding to CMake lists.', uri?.toString()));
+            return;
+        }
+        if (!project || !project.codeModelContent) {
+            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
+            return;
+        }
+
+        // Work around for focus race condition with Save As dialog closing
+        await this.workAroundSaveAsFocusBug(uri);
+
+        const newSourceUri = uri;
+        const newSourceFileName = path.basename(newSourceUri.fsPath);
+
+        // Step 1: Collect all candidates
+        const result = await this.collectAddCandidates(newSourceUri, project, settings);
+
+        if (result.error) {
+            void vscode.window.showErrorMessage(result.error);
+            return;
+        }
+        if (result.info) {
+            if (always) {
+                void vscode.window.showErrorMessage(result.info);
+            } else {
+                void vscode.window.showInformationMessage(result.info);
+            }
+            return;
+        }
+        if (result.candidates.length === 0) {
+            void vscode.window.showErrorMessage(
+                localize('no.candidates.found', 'No suitable locations found to add {0}.', newSourceFileName));
+            return;
+        }
+
+        // Step 2: Pick candidate using QuickPick if needed
+        const selectedCandidate = await this.pickAddCandidate(
+            result.candidates, settings, newSourceFileName, result.isVariableCandidate ?? false);
+        if (!selectedCandidate) {
+            return;
+        }
+
+        // Check for dirty document before applying
+        const doc = await vscode.workspace.openTextDocument(selectedCandidate.uri);
+        if (doc.isDirty) {
+            const open = localize('open.file', 'Open File');
+            const choice = await vscode.window.showErrorMessage(
+                localize('not.modifying.unsaved.add', 'Not modifying {0} to add {1} because it has unsaved changes.', doc.fileName, newSourceFileName),
+                open
+            );
+            if (choice === open) {
+                await vscode.window.showTextDocument(doc);
+            }
+            return;
+        }
+
+        // Step 3: Review and apply
+        await this.reviewAndApply([selectedCandidate], settings, 'add');
+    }
+
+    /**
+     * Add multiple source files to CMake lists (batch operation)
+     */
+    private async addMultipleSourceFilesToCMakeLists(uris: vscode.Uri[], project?: CMakeProject) {
+        const settings = vscode.workspace.getConfiguration('cmake.modifyLists');
+        if (settings.addNewSourceFiles === 'no') {
+            return;
+        }
+
+        project = project ?? this.project;
+        if (!project || !project.codeModelContent) {
+            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding files without a valid code model'));
+            return;
+        }
+
+        // Check if user settings require interactive selection
+        // If so, fall back to per-file flow to respect user preferences
+        const variableSelection = settings.variableSelection as string;
+        const targetSelection = settings.targetSelection as string;
+        const needsInteractiveSelection = variableSelection !== 'auto' || targetSelection !== 'auto';
+
+        if (needsInteractiveSelection) {
+            // Fall back to processing files one at a time so user can pick for each
+            for (const uri of uris) {
+                await this.addSourceFileToCMakeLists(uri, project, false);
+            }
+            return;
+        }
+
+        const allCandidates: CandidateEdit[] = [];
+        const errors: string[] = [];
+
+        for (const uri of uris) {
+            if (uri.scheme !== 'file') {
+                continue;
+            }
+
+            const result = await this.collectAddCandidates(uri, project, settings);
+            if (result.error) {
+                errors.push(result.error);
+            } else if (result.candidates.length > 0) {
+                // Pick the best candidate for each file automatically
+                const best = result.candidates[0];
+                allCandidates.push(best);
+            }
+        }
+
+        if (allCandidates.length === 0) {
+            if (errors.length > 0) {
+                void vscode.window.showErrorMessage(errors[0]);
+            }
+            return;
+        }
+
+        // Review and apply all at once
+        await this.reviewAndApply(allCandidates, settings, 'add');
     }
 
     async removeSourceFileFromCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always=true) {
@@ -321,77 +1091,90 @@ export class CMakeListsModifier implements vscode.Disposable {
         if (settings.removeDeletedSourceFiles === 'no' && !always) {
             return;
         }
-        const needsConfirmation = settings.removeDeletedSourceFiles === 'ask';
 
         uri = uri ?? vscode.window.activeTextEditor?.document.uri;
         project = project ?? this.project;
-        const model = this.project?.codeModelContent;
 
         if (uri?.scheme !== 'file') {
             void vscode.window.showErrorMessage(localize('not.local.file.remove', '{0} is not a local file. Not removing from CMake lists.', uri?.toString()));
             return;
         }
 
-        if (!project || !model) {
+        if (!project || !project.codeModelContent) {
             void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
             return;
         }
 
         const deletedUri = uri;
-        const buildType = await project.currentBuildType();
-        const cmakeListsASTs = await findCMakeLists(project, deletedUri);
 
-        const edit = new vscode.WorkspaceEdit();
-        const edited = new Set<vscode.TextDocument>();
+        // Step 1: Collect all deletion candidates
+        const result = await this.collectRemoveCandidates(deletedUri, project, settings);
 
-        const varSourceLists: SourceList[] =
-            variableSourceLists(cmakeListsASTs, project, settings);
-        const seen = new Set<SourceList>();
-        if (varSourceLists.length && settings.variableSelection !== 'never') {
-            for (const sourceList of varSourceLists) {
-                if (seen.has(sourceList)) {
-                    // At time of writing, no two VariableSourceLists can have
-                    // the same invocation.ast, because `set()` and
-                    // `list(APPEND/PREPEND/INSERT)` each only modify one
-                    // variable with one list. This check is out of an abundance
-                    // of caution, so that we don't accidentally try to edit the
-                    // same line twice if that assumption ever stopped holding.
-                    continue;
+        // Show any dirty file errors
+        for (const error of result.errors) {
+            const open = localize('open.file', 'Open File');
+            const choice = await vscode.window.showErrorMessage(error.message, open);
+            if (choice === open && error.fileUri) {
+                try {
+                    const doc = await vscode.workspace.openTextDocument(error.fileUri);
+                    await vscode.window.showTextDocument(doc);
+                } catch {
+                    // Ignore if we can't open the file
                 }
-                seen.add(sourceList);
-                addDeletionsForInvocation(
-                    edit, edited, deletedUri, sourceList.invocation,
-                    `${sourceList.label}`,
-                    needsConfirmation
-                );
             }
         }
 
-        const targets =
-            sourceFileTargets(allBuildTargets(model, buildType), deletedUri);
-        for (const target of targets) {
-            const invocations = await targetSourceCommandInvocations(
-                project, target, cmakeListsASTs, settings.targetSourceCommands);
-            for (const invocation of invocations) {
-                addDeletionsForInvocation(
-                    edit, edited, deletedUri, invocation,
-                    `target ${target.name} sources`,
-                    needsConfirmation
-                );
+        if (result.candidates.length === 0) {
+            if (always) {
+                void vscode.window.showErrorMessage(localize('file.not.found.in.cmake.lists', '{0} not found in CMake lists.', path.basename(deletedUri.fsPath)));
             }
-        }
-
-        if (!edit.size && always) {
-            void vscode.window.showErrorMessage(localize('file.not.found.in.cmake.lists', '{0} not found in CMake lists.', path.basename(deletedUri.fsPath)));
             return;
         }
 
-        try {
-            await vscode.workspace.applyEdit(edit, {isRefactoring: false});
-            await Promise.all(Array.from(edited).map(async d => d.save()));
-        } catch (e) {
-            console.error(`${e}`);
+        // Step 2: Review and apply
+        await this.reviewAndApply(result.candidates, settings, 'remove');
+    }
+
+    /**
+     * Remove multiple source files from CMake lists (batch operation)
+     */
+    private async removeMultipleSourceFilesFromCMakeLists(uris: vscode.Uri[], project?: CMakeProject) {
+        const settings = vscode.workspace.getConfiguration('cmake.modifyLists');
+        if (settings.removeDeletedSourceFiles === 'no') {
+            return;
         }
+
+        project = project ?? this.project;
+        if (!project || !project.codeModelContent) {
+            void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting files without a valid code model'));
+            return;
+        }
+
+        const allCandidates: CandidateEdit[] = [];
+        const allErrors: EditError[] = [];
+
+        for (const uri of uris) {
+            if (uri.scheme !== 'file') {
+                continue;
+            }
+
+            const result = await this.collectRemoveCandidates(uri, project, settings);
+            allCandidates.push(...result.candidates);
+            allErrors.push(...result.errors);
+        }
+
+        // Report first error if no candidates
+        if (allCandidates.length === 0 && allErrors.length > 0) {
+            void vscode.window.showErrorMessage(allErrors[0].message);
+            return;
+        }
+
+        if (allCandidates.length === 0) {
+            return;
+        }
+
+        // Review and apply all at once
+        await this.reviewAndApply(allCandidates, settings, 'remove');
     }
 
     private async workAroundSaveAsFocusBug(uri: vscode.Uri) {
@@ -401,11 +1184,31 @@ export class CMakeListsModifier implements vscode.Disposable {
 
     dispose() {
         this.codeModelDispose();
+        this.previewProviderRegistration?.dispose();
+
+        if (this.addDebounceTimer) {
+            clearTimeout(this.addDebounceTimer);
+        }
+        if (this.deleteDebounceTimer) {
+            clearTimeout(this.deleteDebounceTimer);
+        }
     }
 
     private codeModelDispose() {
         this.codeModelDisposables.forEach(w => w.dispose());
         this.codeModelDisposables = [];
+
+        // Clear any pending debounce timers to prevent stale callbacks
+        if (this.addDebounceTimer) {
+            clearTimeout(this.addDebounceTimer);
+            this.addDebounceTimer = undefined;
+        }
+        if (this.deleteDebounceTimer) {
+            clearTimeout(this.deleteDebounceTimer);
+            this.deleteDebounceTimer = undefined;
+        }
+        this.pendingAddFiles = [];
+        this.pendingDeleteFiles = [];
     }
 }
 
@@ -428,49 +1231,20 @@ function cacheCompilerLanguages(cache: CMakeCache) {
     });
 }
 
-function infoIfSourceInSourceLists(
-    sourceLists: SourceList[], sourceUri: vscode.Uri
-): boolean {
-    for (const sourceList of sourceLists) {
-        const err = messageIfSourceInInvocation(
-            sourceList.invocation, sourceList.destination, sourceUri, 'info');
-        if (err) {
-            return err;
-        }
-    }
-    return false;
-}
-
-function errorIfSourceInInvocations(
-    invocations: CommandInvocation[], destination: string, sourceUri: vscode.Uri
-): boolean {
-    for (const invocation of invocations) {
-        const err = messageIfSourceInInvocation(
-            invocation, destination, sourceUri, 'error');
-        if (err) {
-            return err;
-        }
-    }
-    return false;
-}
-
-function messageIfSourceInInvocation(
-    invocation: CommandInvocation, destination: string, sourceUri: vscode.Uri,
-    type: 'info' | 'error'
-): boolean {
+/**
+ * Check if source is already in invocation without showing a message.
+ * Returns the error message string if found, or null if not found.
+ */
+function checkSourceInInvocation(
+    invocation: CommandInvocation, destination: string, sourceUri: vscode.Uri
+): string | null {
     const indices = findSourceInArgs(sourceUri, invocation);
     if (!indices.length) {
-        return false;
+        return null;
     }
     const { document, ast: { args } } = invocation;
     const line = document.positionAt(args[indices[0]].offset).line;
-    const message = localize('file.already.in.destination', '{0} already in {1} at {2}:{3}', sourceUri.fsPath, destination, document.fileName, line + 1);
-    if (type === 'error') {
-        void vscode.window.showErrorMessage(message);
-    } else {
-        void vscode.window.showInformationMessage(message);
-    }
-    return true;
+    return localize('file.already.in.destination', '{0} already in {1} at {2}:{3}', sourceUri.fsPath, destination, document.fileName, line + 1);
 }
 
 async function targetSourceCommandInvocations(
@@ -578,15 +1352,6 @@ function findSourceInArgs(
     return ret;
 }
 
-async function showVariableSourceListOptions(
-    sourceLists: SourceList[], newSourceFileName: string
-): Promise<SourceList | null> {
-    return await quickPick(
-        sourceLists.map(c => c.quickPickItem(newSourceFileName)),
-        { title: localize('add.to.which.variable', 'CMake: Add {0} to which variable?', newSourceFileName) }
-    ) as SourceList | null;
-}
-
 function allBuildTargets(
     model: codeModel.CodeModelContent,
     buildType: string | null
@@ -647,25 +1412,6 @@ function targetSortKeys(target: codeModel.CodeModelTarget): (number|string)[] {
         // Break ties with target name
         target.name
     ];
-}
-
-async function showTargetOptions(
-    targets: codeModel.CodeModelTarget[],
-    project: CMakeProject, newSourceFileName: string
-) {
-    const binDir = await project.binaryDir;
-    const targetQPTitle = localize('add.to.which.target', 'CMake: Add {0} to which target?', newSourceFileName);
-    const targetQPItems = targets.map(target => {
-        const artifacts = target.artifacts?.map(
-            artifact => path.relative(binDir, artifact));
-        return {
-            label: target.name,
-            description: target.type,
-            detail: artifacts?.join(', ') || target.fullName,
-            payload: target
-        };
-    });
-    return quickPick(targetQPItems, { title: targetQPTitle });
 }
 
 class CommandInvocation {
@@ -793,30 +1539,6 @@ function subdirectoryListNode(
     return subdirectoryListNode(nodes, nodes[node.parent]);
 }
 
-async function showCommandInvocationOptions(
-    sourceCommandInvocations: CommandInvocation[],
-    project: CMakeProject,
-    target: codeModel.CodeModelTarget,
-    newSourceFileName: string
-) {
-    const commandInvocationQPTitle = localize('add.to.which.command.invocation', 'CMake: Add {0} to which command invocation of {1}?', newSourceFileName, target.name);
-    const commandInvocationQPItems = sourceCommandInvocations.map(invocation => ({
-        label: invocation.document.lineAt(invocation.line).text,
-        detail: `${path.relative(project.sourceDir, invocation.document.fileName)}:${invocation.line}`,
-        description: invocation.command !== invocation.builtin
-            ? invocation.builtin : '',
-        payload: invocation
-    }));
-    const selectedCommandInvocation = await quickPick(
-        commandInvocationQPItems,
-        {
-            title: commandInvocationQPTitle,
-            matchOnDescription: true, matchOnDetail: true
-        }
-    );
-    return selectedCommandInvocation;
-}
-
 function targetSourceCommandInvocationCompare(
     builtins: string[], a: CommandInvocation, b: CommandInvocation
 ): number {
@@ -858,19 +1580,6 @@ function targetSourceListOptions(
 ) {
     return SourceList.fromCommandInvocation(project, invocation, target, settings)
         .filter(sourceList => sourceList.canContain(newSourceUri));
-}
-
-async function showTargetSourceListOptions(
-    sourceLists: SourceList[],
-    newSourceFilename: string,
-    invocation: CommandInvocation
-): Promise<SourceList | null> {
-    const title =
-        localize('add.to.which.scope.fileset.keyword', 'CMake: Add {0} to which Scope, File Set, or Keyword of {1}?', newSourceFilename, invocation.command);
-    const items = sourceLists.map(sourceList =>
-        sourceList.quickPickItem(newSourceFilename));
-
-    return quickPick(items, { title: title });
 }
 
 abstract class SourceList {
@@ -925,6 +1634,13 @@ abstract class SourceList {
         const aKeys = this.sortKeys(uri);
         const bKeys = other.sortKeys(uri);
         return compareSortKeys(aKeys, bKeys);
+    }
+
+    /**
+     * Public accessor for sort keys
+     */
+    public getSortKeys(uri: vscode.Uri): (number|string)[] {
+        return this.sortKeys(uri);
     }
 
     protected sortKeys(_uri: vscode.Uri): (number|string)[] {
@@ -1257,43 +1973,6 @@ function findEndOfSourceList(args: Token[], index: number) {
     }
     const finalToken = args[index - 1];
     return finalToken.endOffset;
-}
-
-function addDeletionsForInvocation(
-    edit: vscode.WorkspaceEdit,
-    editedDocuments: Set<vscode.TextDocument>,
-    deletedSourceUri: vscode.Uri,
-    invocation: CommandInvocation,
-    listDescription: string,
-    needsConfirmation: boolean
-) {
-    const basename = path.basename(deletedSourceUri.fsPath);
-    const { document, ast } = invocation;
-    const argIndices = findSourceInArgs(deletedSourceUri, invocation);
-    if (argIndices.length && document.isDirty) {
-        void vscode.window.showErrorMessage(
-            localize('not.modifying.unsaved.delete', 'Not modifying {0} to delete {1} because it has unsaved changes.', invocation.document.fileName, basename));
-        return;
-    }
-    for (const i of argIndices) {
-        const arg = ast.args[i];
-        const prevToken = i ? ast.args[i - 1] : ast.lparen;
-        const delRange = new vscode.Range(
-            document.positionAt(prevToken.endOffset),
-            document.positionAt(arg.endOffset)
-        );
-        const editDesc =
-            localize('remove.from.list.description', 'CMake: Remove {0} from {1}', basename, listDescription);
-        edit.delete(
-            document.uri, delRange,
-            {
-                label: localize('edit.label.remove.source.file', 'CMake: Remove deleted source file'),
-                needsConfirmation: needsConfirmation,
-                description: editDesc
-            }
-        );
-        editedDocuments.add(document);
-    }
 }
 
 async function quickPick<T>(

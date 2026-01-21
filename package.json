@@ -4289,6 +4289,7 @@
           "items": {
             "type": "string"
           },
+          "default": [],
           "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription%",
           "order": 108,
           "scope": "resource"
