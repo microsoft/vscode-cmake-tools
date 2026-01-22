@@ -3,6 +3,33 @@ import { expect } from 'chai';
 import { EnvironmentUtils } from '@cmt/environmentVariables';
 
 suite('[Environment]', () => {
+    test('Environment variable values with null characters should be sanitized', () => {
+        // Simulates corrupted CJK characters in PATH that contain null bytes
+        const corruptedPath = 'C:\\Program Files\\Test\0Path\\bin';
+        const envWithNullChars = {
+            PATH: corruptedPath,
+            NORMAL_VAR: 'normalValue'
+        };
+
+        const result = EnvironmentUtils.create(envWithNullChars, {preserveNull: false, isWin32: true});
+
+        // Null characters should be stripped from the PATH
+        expect(result['PATH']).to.equal('C:\\Program Files\\TestPath\\bin');
+        expect(result['NORMAL_VAR']).to.equal('normalValue');
+
+        // Test with multiple null characters
+        const multiNullPath = 'C:\\\0微信\0web\\dll';
+        const envWithMultiNull = {
+            PATH: multiNullPath
+        };
+        const resultMulti = EnvironmentUtils.create(envWithMultiNull, {preserveNull: false, isWin32: true});
+        expect(resultMulti['PATH']).to.equal('C:\\微信web\\dll');
+
+        // Test via merge as well (common operation)
+        const merged = EnvironmentUtils.merge([{BASE: 'value'}, {CORRUPT: 'test\0value\0end'}], {preserveNull: false, isWin32: false});
+        expect(merged['CORRUPT']).to.equal('testvalueend');
+    });
+
     test('Environment variable to `preserve/non-preserve null` `win/non-win`', () => {
         const envA = {
             A: 'x',

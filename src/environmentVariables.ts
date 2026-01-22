@@ -82,6 +82,12 @@ class EnvironmentPrivate {
             } else if (typeof value !== 'string') {
                 value = '' + value;
             }
+            // Remove null characters from environment variable values.
+            // This can occur when CJK characters in paths are corrupted during encoding.
+            // Node.js child_process will throw an error if null characters are present.
+            if (typeof value === 'string') {
+                value = value.replace(/\0/g, '');
+            }
             const existKey = this.getKey(key, true);
             if (deleteKey) {
                 return Reflect.deleteProperty(this[envProperty], existKey);
