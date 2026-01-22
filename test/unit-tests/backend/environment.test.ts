@@ -18,6 +18,7 @@ suite('[Environment]', () => {
         expect(result['NORMAL_VAR']).to.equal('normalValue');
 
         // Test with multiple null characters
+        // This simulates: C:\ + null + "微信" + null + "web" + \dll
         const multiNullPath = 'C:\\\0微信\0web\\dll';
         const envWithMultiNull = {
             PATH: multiNullPath
