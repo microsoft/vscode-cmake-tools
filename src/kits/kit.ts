@@ -61,7 +61,7 @@ export interface CMakeGenerator {
     platform?: string;
 }
 
-type CompilerVendorEnum = 'Clang' | 'GCC' | 'MSVC';
+type CompilerVendorEnum = 'Clang' | 'ClangCl' | 'GCC' | 'MSVC';
 
 export interface KitDetect {
     /**
@@ -176,7 +176,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     }
     let version_re: RegExp;
     let version_match_index;
-    if (vendor === 'Clang') {
+    if (vendor === 'Clang' || vendor === 'ClangCl') {
         version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)(?:[\s-]|$)/mgi;
         version_match_index = 1;
     } else {
@@ -268,6 +268,8 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
             vendor = 'GCC';
         } else if (kit.name.startsWith('Clang ')) {
             vendor = 'Clang';
+        } else if (kit.name.startsWith('Clang-cl')) {
+            vendor = 'ClangCl';
         }
         if (vendor === undefined) {
             return kit;
