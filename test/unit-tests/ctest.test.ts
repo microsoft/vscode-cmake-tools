@@ -67,6 +67,28 @@ suite('CTest test', () => {
         assertMessageFields(result6, '/path/to/file', 46, 0, 'the message', undefined, undefined);
     });
 
+    test('Find GoogleTest failure patterns in output', () => {
+        const output =
+            'D:/dev/Synaptive/ModusV/embeddedfirmware/test/projects/pwrcon/src/TestLedMgr.cpp:135: Failure\r\n'
+            + 'Value of: led_mgr->is_initialized(led_mgr)\r\n'
+            + '  Actual: true\r\n'
+            + 'Expected: false\r\n';
+        const results = searchOutputForFailures([
+            {
+                regexp: '(.*?):(\\d+): *(?:error: *)(.*)'
+            },
+            {
+                regexp: '(.*?)\\((\\d+)\\): *(?:error: *)(.*)'
+            },
+            {
+                regexp: '(.*?):(\\d+): *(.*)'
+            }
+        ], output);
+        expect(results.length).to.eq(1);
+        const [result1] = results;
+        assertMessageFields(result1, 'D:/dev/Synaptive/ModusV/embeddedfirmware/test/projects/pwrcon/src/TestLedMgr.cpp', 134, 0, 'Failure', undefined, undefined);
+    });
+
     function assertMessageFields(
         tm: TestMessage,
         file: string, line: number, column: number, message: string,
