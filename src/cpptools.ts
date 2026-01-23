@@ -311,6 +311,27 @@ export function getIntelliSenseMode(cptVersion: cpptools.Version, compilerPath: 
 }
 
 /**
+ * Try to find a target configuration with some populated properties.
+ *
+ * All targets get defaults for `compilerPath`, `compilerArgs`, and
+ * `compilerFragments`, even `UTILITY` targets defined with
+ * `add_custom_command()` that provide no other useful configuration, so if
+ * possible, return one with more than just those populated.
+ */
+function fallbackConfiguration(configurations: Map<string, cpptools.SourceFileConfigurationItem> | undefined) {
+    if (!configurations) {
+        return undefined;
+    }
+    for (const item of configurations.values()) {
+        const { configuration: { includePath, defines, intelliSenseMode, standard} } = item;
+        if (includePath.length || defines.length || intelliSenseMode || standard) {
+            return item;
+        }
+    }
+    return configurations.values().next().value;
+}
+
+/**
  * The actual class that provides information to the cpptools extension. See
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
@@ -345,7 +366,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         if (this.activeTarget && configurations?.has(this.activeTarget)) {
             return configurations!.get(this.activeTarget);
         } else {
-            return configurations?.values().next().value; // Any value is fine if the target doesn't match
+            return fallbackConfiguration(configurations);
         }
     }
 
