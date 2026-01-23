@@ -86,6 +86,7 @@ suite('CTest test', () => {
         ], output);
         expect(results.length).to.eq(1);
         const [result1] = results;
+        // Line 135 in output becomes 134 in VSCode (0-based line numbering)
         assertMessageFields(result1, 'D:/dev/Synaptive/ModusV/embeddedfirmware/test/projects/pwrcon/src/TestLedMgr.cpp', 134, 0, 'Failure', undefined, undefined);
     });
 
