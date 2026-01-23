@@ -441,6 +441,7 @@ export class CMakeServerDriver extends CMakeDriver {
         sourceDir: string,
         isMultiProject: boolean,
         useCMakePresets: boolean,
+        expandCMakePresets: boolean,
         kit: Kit | null,
         configurePreset: ConfigurePreset | null,
         buildPreset: BuildPreset | null,
@@ -452,6 +453,7 @@ export class CMakeServerDriver extends CMakeDriver {
         preferredGenerators: CMakeGenerator[]): Promise<CMakeServerDriver> {
         return this.createDerived(new CMakeServerDriver(cmake, config, sourceDir, isMultiProject, workspaceFolder, preconditionHandler),
             useCMakePresets,
+            expandCMakePresets,
             kit,
             configurePreset,
             buildPreset,

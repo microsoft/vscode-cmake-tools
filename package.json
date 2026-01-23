@@ -3736,6 +3736,12 @@
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%",
           "scope": "resource"
         },
+        "cmake.expandCMakePresets": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.expandCMakePresets.description%",
+          "scope": "resource"
+        },
         "cmake.useVsDeveloperEnvironment": {
             "type": "string",
             "enum": [
