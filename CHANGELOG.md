@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.23
+
+Bug Fixes:
+
+- Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
+
 ## 1.22
 
 Features:
