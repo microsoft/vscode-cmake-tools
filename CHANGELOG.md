@@ -26,6 +26,7 @@ Improvements:
 - Added support for clang-cl vendor detection: `${buildKitVendor}`, `${buildKitVersionMajor}`, etc. now expand correctly when using clang-cl on Windows [#4524](https://github.com/microsoft/vscode-cmake-tools/pull/4524) [@wchou158](https://github.com/wchou158)
 
 Bugs:
+- Fix infinite preset reloading when using only CMakeUserPresets.json without CMakePresets.json. [#4668](https://github.com/microsoft/vscode-cmake-tools/issues/4668)
 - Fix Compiler Warnings not shown in Problems Window [#4567]https://github.com/microsoft/vscode-cmake-tools/issues/4567
 - Fix bug in which clicking "Run Test" for filtered tests executed all tests instead [#4501](https://github.com/microsoft/vscode-cmake-tools/pull/4501) [@hippo91](https://github.com/hippo91)
 - Migrate macOS CI from deprecated macOS-13 to macOS-15 Image [#4633](https://github.com/microsoft/vscode-cmake-tools/pull/4633)
