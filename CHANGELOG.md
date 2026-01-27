@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.23
+
+Bug Fixes:
+
+- Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. Task scope is now properly handled for both workspace and user-level tasks.
+
 ## 1.22
 
 Features:
