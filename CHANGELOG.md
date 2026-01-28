@@ -7,7 +7,7 @@ Features:
 
 Bug Fixes:
 
-- Fix infinite preset reloading when using only CMakeUserPresets.json without CMakePresets.json. [#4668](https://github.com/microsoft/vscode-cmake-tools/issues/4668)
+- Fix infinite preset reloading when using only CMakeUserPresets.json without CMakePresets.json. Improved file watcher debouncing for all event types and reduced watcher churn. [#4668](https://github.com/microsoft/vscode-cmake-tools/issues/4668)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 
 ## 1.22

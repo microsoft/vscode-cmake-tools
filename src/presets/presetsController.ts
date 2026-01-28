@@ -147,6 +147,7 @@ export class PresetsController implements vscode.Disposable {
 
         this._isReapplyingPresets = true;
         try {
+            log.debug(localize('preset.reapply.start', 'Starting preset reapply'));
             const referencedFiles: Map<string, preset.PresetsFile | undefined> =
                 new Map();
 
@@ -158,7 +159,9 @@ export class PresetsController implements vscode.Disposable {
             );
 
             // reset all expanded presets storage.
-            this._referencedFiles = Array.from(referencedFiles.keys());
+            const newReferencedFiles = Array.from(referencedFiles.keys());
+            const filesChanged = !lodash.isEqual(new Set(this._referencedFiles), new Set(newReferencedFiles));
+            this._referencedFiles = newReferencedFiles;
 
             this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
 
@@ -167,7 +170,8 @@ export class PresetsController implements vscode.Disposable {
             }
             // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
 
-            await this.watchPresetsChange();
+            await this.watchPresetsChange(filesChanged);
+            log.debug(localize('preset.reapply.complete', 'Preset reapply completed'));
         } finally {
             this._isReapplyingPresets = false;
         }
@@ -1607,7 +1611,7 @@ export class PresetsController implements vscode.Disposable {
         await this.project.projectController?.updateActiveProject(this.workspaceFolder);
     }
 
-    private async watchPresetsChange() {
+    private async watchPresetsChange(forceRecreate: boolean = false) {
 
         const presetChangeHandler = () => {
             void this.reapplyPresets();
@@ -1622,8 +1626,14 @@ export class PresetsController implements vscode.Disposable {
             ["add", presetCreatedHandler]
         ]);
 
-        this._presetsWatchers?.dispose();
-        this._presetsWatchers = new FileWatcher(this._referencedFiles, events, { ignoreInitial: true, followSymlinks: false });
+        // Only recreate watchers if the set of referenced files changed or forced
+        if (forceRecreate || !this._presetsWatchers) {
+            log.debug(localize('preset.recreating.watchers', 'Recreating file watchers for {0} preset files', this._referencedFiles.length));
+            this._presetsWatchers?.dispose();
+            this._presetsWatchers = new FileWatcher(this._referencedFiles, events, { ignoreInitial: true, followSymlinks: false });
+        } else {
+            log.debug(localize('preset.watchers.unchanged', 'File watchers unchanged, skipping recreation'));
+        }
     };
 
     dispose() {
@@ -1641,34 +1651,45 @@ export class PresetsController implements vscode.Disposable {
  */
 class FileWatcher implements vscode.Disposable {
     private watchers: Map<string, chokidar.FSWatcher>;
-    // Debounce the change handler to avoid multiple changes being triggered by a single file change. Two change events are coming in rapid succession without this.
-    private canRunChangeHandler = true;
+    // Debounce all event handlers to avoid event storms from rapid file changes, symlinks, or includes
+    private canRunHandler = true;
+    private readonly debounceDelay = 500;
 
     public constructor(paths: string | string[], eventHandlers: Map<string, () => void>, options?: chokidar.WatchOptions) {
         this.watchers = new Map<string, chokidar.FSWatcher>();
 
-        // We debounce the change event to avoid multiple changes being triggered by a single file change.
-        const onChange = eventHandlers.get('change');
-        if (onChange) {
-            const debouncedOnChange = () => {
-                if (this.canRunChangeHandler) {
-                    onChange();
-                    this.canRunChangeHandler = false;
-                    setTimeout(() => (this.canRunChangeHandler = true), 500);
+        // Create a unified debounced wrapper for all event handlers
+        const createDebouncedHandler = (eventType: string, originalHandler: () => void) => {
+            return (eventPath?: string) => {
+                log.debug(localize('preset.watcher.event', 'File watcher event "{0}" for path: {1}', eventType, eventPath || 'unknown'));
+                if (this.canRunHandler) {
+                    log.debug(localize('preset.watcher.triggering', 'Triggering handler for "{0}" event', eventType));
+                    originalHandler();
+                    this.canRunHandler = false;
+                    setTimeout(() => {
+                        this.canRunHandler = true;
+                        log.debug(localize('preset.watcher.ready', 'File watcher ready for next event'));
+                    }, this.debounceDelay);
+                } else {
+                    log.debug(localize('preset.watcher.debounced', 'Debouncing "{0}" event (too soon after previous event)', eventType));
                 }
             };
-            eventHandlers.set("change", debouncedOnChange);
+        };
+
+        // Apply debouncing to all event types
+        const debouncedHandlers = new Map<string, (eventPath?: string) => void>();
+        for (const [eventType, handler] of eventHandlers) {
+            debouncedHandlers.set(eventType, createDebouncedHandler(eventType, handler));
         }
 
         for (const path of Array.isArray(paths) ? paths : [paths]) {
             try {
                 const watcher = chokidar.watch(path, { ...options });
-                const eventHandlerEntries = Array.from(eventHandlers);
-                for (let i = 0; i < eventHandlerEntries.length; i++) {
-                    const [event, handler] = eventHandlerEntries[i];
+                for (const [event, handler] of debouncedHandlers) {
                     watcher.on(event, handler);
                 }
                 this.watchers.set(path, watcher);
+                log.debug(localize('preset.watcher.created', 'Created file watcher for: {0}', path));
             } catch (error) {
                 log.error(localize('failed.to.watch', 'Watcher could not be created for {0}: {1}', path, util.errorToString(error)));
             }
@@ -1676,6 +1697,7 @@ class FileWatcher implements vscode.Disposable {
     }
 
     public dispose() {
+        log.debug(localize('preset.watcher.disposing', 'Disposing {0} file watchers', this.watchers.size));
         for (const watcher of this.watchers.values()) {
             watcher.close().then(() => {}, () => {});
         }
