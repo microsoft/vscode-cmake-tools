@@ -1611,7 +1611,7 @@ export class PresetsController implements vscode.Disposable {
         await this.project.projectController?.updateActiveProject(this.workspaceFolder);
     }
 
-    private async watchPresetsChange(forceRecreate: boolean = false) {
+    private async watchPresetsChange(filesChanged: boolean = false) {
 
         const presetChangeHandler = () => {
             void this.reapplyPresets();
@@ -1626,8 +1626,8 @@ export class PresetsController implements vscode.Disposable {
             ["add", presetCreatedHandler]
         ]);
 
-        // Only recreate watchers if the set of referenced files changed or forced
-        if (forceRecreate || !this._presetsWatchers) {
+        // Only recreate watchers if the set of referenced files changed or watchers don't exist yet
+        if (filesChanged || !this._presetsWatchers) {
             log.debug(localize('preset.recreating.watchers', 'Recreating file watchers for {0} preset files', this._referencedFiles.length));
             this._presetsWatchers?.dispose();
             this._presetsWatchers = new FileWatcher(this._referencedFiles, events, { ignoreInitial: true, followSymlinks: false });
