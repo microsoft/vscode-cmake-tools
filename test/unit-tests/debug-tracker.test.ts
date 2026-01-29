@@ -1,6 +1,11 @@
-import { DebugTrackerFactory } from "@cmt/debug/cmakeDebugger/debuggerConfigureDriver";
-import { expect } from "@test/util";
-import * as vscode from "vscode";
+/* eslint-disable no-unused-expressions */
+import * as chai from 'chai';
+import * as vscode from 'vscode';
+
+import { expect } from 'chai';
+import { DebugTrackerFactory } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
+
+chai.use(require('chai-as-promised'));
 
 suite('Debug Tracker tests', () => {
     test('Variables response: evaluateName is removed from variables', () => {
@@ -41,13 +46,13 @@ suite('Debug Tracker tests', () => {
         // Verify evaluateName was removed from variables that had it
         expect(message.body.variables[0]).to.not.have.property('evaluateName');
         expect(message.body.variables[1]).to.not.have.property('evaluateName');
-        // VAR3 should remain unchanged
+        // VAR3 should remain unchanged (it never had evaluateName)
         expect(message.body.variables[2]).to.not.have.property('evaluateName');
         
         // Other properties should be preserved
-        expect(message.body.variables[0].name).to.equal('VAR1');
-        expect(message.body.variables[0].value).to.equal('99999');
-        expect(message.body.variables[2].variablesReference).to.equal(1);
+        expect(message.body.variables[0].name).to.be.eq('VAR1');
+        expect(message.body.variables[0].value).to.be.eq('99999');
+        expect(message.body.variables[2].variablesReference).to.be.eq(1);
     });
 
     test('Non-variables messages are not modified', () => {
@@ -75,7 +80,7 @@ suite('Debug Tracker tests', () => {
         }
 
         // Message should remain unchanged
-        expect(JSON.stringify(message)).to.equal(originalMessage);
+        expect(JSON.stringify(message)).to.be.eq(originalMessage);
     });
 
     test('Variables response without body is handled gracefully', () => {
