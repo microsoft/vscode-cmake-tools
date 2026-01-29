@@ -828,6 +828,7 @@ export class CTestDriver implements vscode.Disposable {
             testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
         } else {
             // Update existing test item properties
+            testItem.label = testLabel;
             if (uri) {
                 testItem.uri = uri;
             }
@@ -854,13 +855,28 @@ export class CTestDriver implements vscode.Disposable {
             return;
         }
 
+        // Track test IDs that should exist after refresh (for Legacy tests or direct children)
+        const validTestIds = new Set<string>();
+
         if (testType === "LegacyCTest" && this.legacyTests !== undefined) {
             // Legacy CTest tests
             for (const test of this.legacyTests) {
+                validTestIds.add(test.name);
                 // Reuse existing test item if it exists, to preserve tree state
                 if (!testExplorerRoot.children.get(test.name)) {
                     testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
                 }
+            }
+
+            // Remove obsolete legacy test items
+            const obsoleteIds: string[] = [];
+            testExplorerRoot.children.forEach(child => {
+                if (!validTestIds.has(child.id) && child.id !== testPresetRequired) {
+                    obsoleteIds.push(child.id);
+                }
+            });
+            for (const id of obsoleteIds) {
+                testExplorerRoot.children.delete(id);
             }
         } else if (testType === "CTestInfo" && this.tests !== undefined) {
             if (this.tests && this.tests.kind === 'ctestInfo') {
@@ -900,8 +916,11 @@ export class CTestDriver implements vscode.Disposable {
                     const testItem = testAndParentSuite.test;
                     const parentSuiteItem = testAndParentSuite.parentSuite;
 
+                    // Update range if available, otherwise clear it
                     if (testDefLine !== undefined) {
                         testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                    } else {
+                        testItem.range = undefined;
                     }
 
                     const testTags: vscode.TestTag[] = [];
@@ -917,12 +936,36 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     }
 
-                    if (testTags.length !== 0) {
-                        testItem.tags = [...testItem.tags, ...testTags];
-                    }
+                    // Replace tags to avoid accumulation on refresh
+                    testItem.tags = testTags;
 
                     parentSuiteItem.children.add(testItem);
+
+                    // Track top-level suite or test (direct child of root)
+                    if (parentSuiteItem === testExplorerRoot) {
+                        validTestIds.add(test.name);
+                    } else {
+                        // Track the top-level suite ID
+                        let topLevelParent = parentSuiteItem;
+                        while (topLevelParent.parent && topLevelParent.parent !== testExplorerRoot) {
+                            topLevelParent = topLevelParent.parent;
+                        }
+                        if (topLevelParent.parent === testExplorerRoot) {
+                            validTestIds.add(topLevelParent.id);
+                        }
+                    }
                 });
+
+                // Remove obsolete top-level items (tests or suites)
+                const obsoleteIds: string[] = [];
+                testExplorerRoot.children.forEach(child => {
+                    if (!validTestIds.has(child.id) && child.id !== testPresetRequired) {
+                        obsoleteIds.push(child.id);
+                    }
+                });
+                for (const id of obsoleteIds) {
+                    testExplorerRoot.children.delete(id);
+                }
             };
         }
 
