@@ -7,6 +7,7 @@ Features:
 
 Bug Fixes:
 
+- Fix Test Explorer tree expand/collapse state being reset when running tests. [#4621](https://github.com/microsoft/vscode-cmake-tools/issues/4621)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
 
