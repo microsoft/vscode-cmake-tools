@@ -1,11 +1,7 @@
 /* eslint-disable no-unused-expressions */
-import * as chai from 'chai';
+import { expect } from '@test/util';
 import * as vscode from 'vscode';
-
-import { expect } from 'chai';
 import { DebugTrackerFactory } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
-
-chai.use(require('chai-as-promised'));
 
 suite('Debug Tracker tests', () => {
     test('Variables response: evaluateName is removed from variables', () => {
