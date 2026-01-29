@@ -5,6 +5,7 @@
 Bug Fixes:
 
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
+- Fix incorrect highlighting of `SOURCE_FILES` and other deprecated command names when used as variable names in CMake files. [#4613](https://github.com/microsoft/vscode-cmake-tools/issues/4613)
 
 ## 1.22
 
