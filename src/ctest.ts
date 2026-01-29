@@ -822,7 +822,16 @@ export class CTestDriver implements vscode.Disposable {
                 parentSuiteItem = suiteItem;
             }
         }
-        const testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        // Check if test item already exists, and reuse it to preserve tree state
+        let testItem = parentSuiteItem.children.get(testName);
+        if (!testItem) {
+            testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        } else {
+            // Update existing test item properties
+            if (uri) {
+                testItem.uri = uri;
+            }
+        }
         return { test: testItem, parentSuite: parentSuiteItem };
     }
 
@@ -835,11 +844,11 @@ export class CTestDriver implements vscode.Disposable {
             log.error(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
             return;
         }
-        // Clear all children and re-add later
-        testExplorerRoot.children.replace([]);
 
         if (!ctestArgs) {
             // Happens when testPreset is not selected
+            // Clear all children since no tests are available
+            testExplorerRoot.children.replace([]);
             const testItem = initializedTestExplorer.createTestItem(testPresetRequired, localize('test.preset.required', 'Select a test preset to discover tests'));
             testExplorerRoot.children.add(testItem);
             return;
@@ -848,7 +857,10 @@ export class CTestDriver implements vscode.Disposable {
         if (testType === "LegacyCTest" && this.legacyTests !== undefined) {
             // Legacy CTest tests
             for (const test of this.legacyTests) {
-                testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
+                // Reuse existing test item if it exists, to preserve tree state
+                if (!testExplorerRoot.children.get(test.name)) {
+                    testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
+                }
             }
         } else if (testType === "CTestInfo" && this.tests !== undefined) {
             if (this.tests && this.tests.kind === 'ctestInfo') {
