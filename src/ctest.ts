@@ -818,6 +818,9 @@ export class CTestDriver implements vscode.Disposable {
                 if (!suiteItem) {
                     suiteItem = initializedTestExplorer.createTestItem(suiteId, suiteId);
                     parentSuiteItem.children.add(suiteItem);
+                } else {
+                    // Update suite item label in case it changed
+                    suiteItem.label = suiteId;
                 }
                 parentSuiteItem = suiteItem;
             }
@@ -829,9 +832,7 @@ export class CTestDriver implements vscode.Disposable {
         } else {
             // Update existing test item properties
             testItem.label = testLabel;
-            if (uri) {
-                testItem.uri = uri;
-            }
+            testItem.uri = uri;  // Set to uri (which may be undefined), clearing stale values
         }
         return { test: testItem, parentSuite: parentSuiteItem };
     }
@@ -957,6 +958,9 @@ export class CTestDriver implements vscode.Disposable {
                 });
 
                 // Remove obsolete top-level items (tests or suites)
+                // Note: This only removes top-level items. Nested test items within suites
+                // that are removed from the project will remain until their parent suite is removed.
+                // A full recursive cleanup would be more complex and is not implemented here.
                 const obsoleteIds: string[] = [];
                 testExplorerRoot.children.forEach(child => {
                     if (!validTestIds.has(child.id) && child.id !== testPresetRequired) {
