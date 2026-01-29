@@ -28,6 +28,7 @@ export class PresetsController implements vscode.Disposable {
     private _presetsWatchers: FileWatcher | undefined;
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _isChangingPresets = false;
+    private _isReapplyingPresets = false;
     private _referencedFiles: string[] = [];
     private _presetsParser!: PresetsParser; // Using definite assigment (!) because we initialize it in the init method
 
@@ -139,27 +140,36 @@ export class PresetsController implements vscode.Disposable {
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
     // (need to clean or reload driver)
     async reapplyPresets() {
-        const referencedFiles: Map<string, preset.PresetsFile | undefined> =
-            new Map();
-
-        // Reset all changes due to expansion since parents could change
-        await this._presetsParser.resetPresetsFiles(
-            referencedFiles,
-            this.project.workspaceContext.config.allowCommentsInPresetsFile,
-            this.project.workspaceContext.config.allowUnsupportedPresetsVersions
-        );
-
-        // reset all expanded presets storage.
-        this._referencedFiles = Array.from(referencedFiles.keys());
-
-        this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
-
-        if (this.project.configurePreset) {
-            await this.setConfigurePreset(this.project.configurePreset.name);
+        if (this._isReapplyingPresets) {
+            return;
         }
-        // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
+        this._isReapplyingPresets = true;
 
-        await this.watchPresetsChange();
+        try {
+            const referencedFiles: Map<string, preset.PresetsFile | undefined> =
+                new Map();
+
+            // Reset all changes due to expansion since parents could change
+            await this._presetsParser.resetPresetsFiles(
+                referencedFiles,
+                this.project.workspaceContext.config.allowCommentsInPresetsFile,
+                this.project.workspaceContext.config.allowUnsupportedPresetsVersions
+            );
+
+            // reset all expanded presets storage.
+            this._referencedFiles = Array.from(referencedFiles.keys());
+
+            this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
+
+            if (this.project.configurePreset) {
+                await this.setConfigurePreset(this.project.configurePreset.name);
+            }
+            // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
+
+            await this.watchPresetsChange();
+        } finally {
+            this._isReapplyingPresets = false;
+        }
     }
 
     private showNameInputBox() {
