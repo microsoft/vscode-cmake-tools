@@ -403,11 +403,16 @@ suite('PresetsController re-entry protection', () => {
         // Get the real path (resolves symlinks/junctions)
         const resolvedPath = fs.realpathSync(pathToResolve);
 
+        // On macOS, /var is a symlink to /private/var, so we need to resolve
+        // both paths to compare them correctly
+        const expectedPath = fs.realpathSync(presetsJsonPath);
+        const expectedDir = fs.realpathSync(presetsDir);
+
         // On all platforms, realpath should resolve to the actual file
-        expect(resolvedPath).to.equal(presetsJsonPath);
+        expect(resolvedPath).to.equal(expectedPath);
 
         // Verify the directory structure is consistent
-        expect(path.dirname(resolvedPath)).to.equal(presetsDir);
+        expect(path.dirname(resolvedPath)).to.equal(expectedDir);
         expect(path.basename(resolvedPath)).to.equal('CMakePresets.json');
     });
 });
