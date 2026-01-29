@@ -5,6 +5,7 @@
 Bug Fixes:
 
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
+- Fix `CMake: Set Build Target` command not showing available targets when using presets with defined targets. [#4509](https://github.com/microsoft/vscode-cmake-tools/issues/4509)
 
 ## 1.22
 
