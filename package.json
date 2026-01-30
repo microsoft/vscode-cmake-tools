@@ -119,7 +119,7 @@
         {
             "id": "cmake",
             "extensions": [".cmake"],
-            "filenames": ["CMakelists.txt"],
+            "filenames": ["CMakeLists.txt", "CMakelists.txt"],
             "aliases": ["CMake"]
         },
         {
