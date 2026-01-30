@@ -2279,18 +2279,16 @@ export class CMakeProject {
             return '';
         }
 
-        if (this.useCMakePresets && this.buildPreset?.targets) {
-            const targets = [this.targetsInPresetName];
-            targets.push(...(util.isString(this.buildPreset.targets) ? [this.buildPreset.targets] : this.buildPreset.targets));
-            const sel = await vscode.window.showQuickPick(targets, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
-            return sel || null;
-        }
-
         if (!drv.targets.length) {
             return await vscode.window.showInputBox({ prompt: localize('enter.target.name', 'Enter a target name') }) || null;
         } else {
             const folders: string[] = [];
             const itemsGroup: (RichTarget | NamedTarget | FolderTarget)[] = [];
+
+            // Add special "[Targets In Preset]" option when using presets with defined targets
+            if (this.useCMakePresets && this.buildPreset?.targets) {
+                itemsGroup.push({ type: 'named', name: this.targetsInPresetName });
+            }
 
             // group the data
             drv.uniqueTargets.forEach((t) => {
