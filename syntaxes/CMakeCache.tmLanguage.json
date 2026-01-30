@@ -1,0 +1,42 @@
+{
+    "fileTypes": [
+        "CMakeCache.txt"
+    ],
+    "name": "CMake",
+    "scopeName": "source.cmakecache",
+    "patterns": [
+        {
+            "match": "//+.*$|#+.*$",
+            "name": "comment.line.double-slash.cmakecache"
+        },
+        {
+            "comment": "Properties on Cache Entries",
+            "match": "\\b-ADVANCED\\b",
+            "name": "support.variable.cmakecache"
+        },
+        {
+            "comment": "Literal values",
+            "match": "\\b(?i:(YES|NO|ON|OFF|TRUE|FALSE|Y|N|\\d+))$",
+            "name": "constant.language.cmakecache"
+        },
+        {
+            "comment": "Normal Strings",
+            "begin": "=",
+            "end": "$",
+            "name": "string.unquoted.cmakecache"
+        },
+        {
+            "comment": "Cache Entry Names",
+            "match": "^\\b(?i:(\\w+))\\b",
+            "name": "variable.other.cmakecache"
+        },
+        {
+            "comment": "Cache Entry Types",
+            "begin": ":",
+            "end": "=",
+            "match": "(BOOL|STRING|FILEPATH|PATH|STATIC|INTERNAL)",
+            "name": "constant.language.cmakecache"
+        }
+    ],
+    "repository": {}
+}
