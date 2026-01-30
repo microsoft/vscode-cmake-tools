@@ -79,6 +79,38 @@ suite('Kits scan test', () => {
             abi: 'pe',
             libc: 'mingw'
         });
+        expect(triple.parseTargetTriple('amd64-pc-windows-msvc')).to.deep.equal({
+            triple: 'amd64-pc-windows-msvc',
+            targetOs: 'win32',
+            targetArch: 'x64',
+            vendors: [],
+            abi: 'pe',
+            libc: 'msvcrt'
+        });
+        expect(triple.parseTargetTriple('arm64-pc-windows-msvc')).to.deep.equal({
+            triple: 'arm64-pc-windows-msvc',
+            targetOs: 'win32',
+            targetArch: 'arm64',
+            vendors: [],
+            abi: 'pe',
+            libc: 'msvcrt'
+        });
+        expect(triple.parseTargetTriple('x86-pc-windows-msvc')).to.deep.equal({
+            triple: 'x86-pc-windows-msvc',
+            targetOs: 'win32',
+            targetArch: 'x86',
+            vendors: [],
+            abi: 'pe',
+            libc: 'msvcrt'
+        });
+        expect(triple.parseTargetTriple('i686-pc-windows-msvc')).to.deep.equal({
+            triple: 'i686-pc-windows-msvc',
+            targetOs: 'win32',
+            targetArch: 'x86',
+            vendors: [],
+            abi: 'pe',
+            libc: 'msvcrt'
+        });
     });
 
     test('Detect system kits never throws', async () => {

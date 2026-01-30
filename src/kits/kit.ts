@@ -244,10 +244,14 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
             version = await getCompilerVersion('Clang', c_bin);
         }
         let targetArch = kit.preferredGenerator?.platform ?? kit.visualStudioArchitecture ?? 'i686';
-        if (targetArch === 'win32') {
-            targetArch = 'i686';
-        }
-        const triple = `${targetArch}-pc-windows-msvc`;
+        const archMap: { [key: string]: string } = {
+            amd64: 'x86_64',
+            x64: 'x86_64',
+            win32: 'i686',
+            x86: 'i686'
+        };
+        const normalizedArch = archMap[targetArch.toLowerCase()] ?? targetArch.toLowerCase();
+        const triple = `${normalizedArch}-pc-windows-msvc`;
         let versionCompiler = vs.installationVersion;
         let vendor: CompilerVendorEnum;
         if (version !== null) {
