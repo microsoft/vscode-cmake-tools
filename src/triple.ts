@@ -31,6 +31,7 @@ export function findTargetTriple(line: string): string | null {
 const TriplePossibleArch: { [index: string]: RegExp } = {
     x86: /^(i386|i486|i586|i686|x86)$/,
     aarch64: /^aarch64.*/,
+    arm64: /^arm64$/,
     amdgcn: /^amdgcn/,
     arc: /^arc/,
     arm: /^arm/,
