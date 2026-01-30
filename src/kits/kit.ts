@@ -134,6 +134,21 @@ export interface Kit extends KitDetect {
     visualStudioArchitecture?: string;
 
     /**
+     * Arguments to vcvarsall.bat.
+     * This is used for:
+     *  [platform_type]: {empty} | store | uwp
+     *  [winsdk_version] : full Windows 10 SDK number (e.g. 10.0.10240.0) or "8.1" to use the Windows 8.1 SDK.
+     *  [vc_version] : {none} for latest installed VC++ compiler toolset |
+     *                 "14.0" for VC++ 2015 Compiler Toolset |
+     *                 "14.xx" for the latest 14.xx.yyyyy toolset installed (e.g. "14.11") |
+     *                 "14.xx.yyyyy" for a specific full version number (e.g. "14.11.25503")
+     *  [spectre_mode] : {none} for libraries without spectre mitigations |
+     *                   "spectre" for libraries with spectre mitigations
+     *
+     */
+    visualStudioArguments?: string[];
+
+    /**
      * Filename of a shell script which sets environment variables for the kit
      */
     environmentSetupScript?: string;
@@ -983,7 +998,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Environment | null>
         return null;
     }
 
-    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform, undefined, kit.visualStudioArguments);
 }
 
 /**
@@ -1399,6 +1414,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit | null): boolean {
         compilers: k.compilers,
         vs: k.visualStudio,
         vsArch: k.visualStudioArchitecture,
+        vsArgs: k.visualStudioArguments,
         tc: k.toolchainFile,
         preferredGeneratorName: k.preferredGenerator ? k.preferredGenerator.name : null,
         preferredGeneratorPlatform: k.preferredGenerator && k.preferredGenerator.platform ? k.preferredGenerator.platform : null,
