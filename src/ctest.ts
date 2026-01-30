@@ -818,11 +818,22 @@ export class CTestDriver implements vscode.Disposable {
                 if (!suiteItem) {
                     suiteItem = initializedTestExplorer.createTestItem(suiteId, suiteId);
                     parentSuiteItem.children.add(suiteItem);
+                } else {
+                    // Update suite item label in case it changed
+                    suiteItem.label = suiteId;
                 }
                 parentSuiteItem = suiteItem;
             }
         }
-        const testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        // Check if test item already exists, and reuse it to preserve tree state
+        let testItem = parentSuiteItem.children.get(testName);
+        if (!testItem) {
+            testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        } else {
+            // Update existing test item properties
+            testItem.label = testLabel;
+            testItem.uri = uri;  // Set to uri (which may be undefined), clearing stale values
+        }
         return { test: testItem, parentSuite: parentSuiteItem };
     }
 
@@ -835,20 +846,38 @@ export class CTestDriver implements vscode.Disposable {
             log.error(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
             return;
         }
-        // Clear all children and re-add later
-        testExplorerRoot.children.replace([]);
 
         if (!ctestArgs) {
             // Happens when testPreset is not selected
+            // Clear all children since no tests are available
+            testExplorerRoot.children.replace([]);
             const testItem = initializedTestExplorer.createTestItem(testPresetRequired, localize('test.preset.required', 'Select a test preset to discover tests'));
             testExplorerRoot.children.add(testItem);
             return;
         }
 
+        // Track test IDs that should exist after refresh (for Legacy tests or direct children)
+        const validTestIds = new Set<string>();
+
         if (testType === "LegacyCTest" && this.legacyTests !== undefined) {
             // Legacy CTest tests
             for (const test of this.legacyTests) {
-                testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
+                validTestIds.add(test.name);
+                // Reuse existing test item if it exists, to preserve tree state
+                if (!testExplorerRoot.children.get(test.name)) {
+                    testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
+                }
+            }
+
+            // Remove obsolete legacy test items
+            const obsoleteIds: string[] = [];
+            testExplorerRoot.children.forEach(child => {
+                if (!validTestIds.has(child.id) && child.id !== testPresetRequired) {
+                    obsoleteIds.push(child.id);
+                }
+            });
+            for (const id of obsoleteIds) {
+                testExplorerRoot.children.delete(id);
             }
         } else if (testType === "CTestInfo" && this.tests !== undefined) {
             if (this.tests && this.tests.kind === 'ctestInfo') {
@@ -888,8 +917,11 @@ export class CTestDriver implements vscode.Disposable {
                     const testItem = testAndParentSuite.test;
                     const parentSuiteItem = testAndParentSuite.parentSuite;
 
+                    // Update range if available, otherwise clear it
                     if (testDefLine !== undefined) {
                         testItem.range = new vscode.Range(new vscode.Position(testDefLine - 1, 0), new vscode.Position(testDefLine - 1, 0));
+                    } else {
+                        testItem.range = undefined;
                     }
 
                     const testTags: vscode.TestTag[] = [];
@@ -905,12 +937,39 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     }
 
-                    if (testTags.length !== 0) {
-                        testItem.tags = [...testItem.tags, ...testTags];
-                    }
+                    // Replace tags to avoid accumulation on refresh
+                    testItem.tags = testTags;
 
                     parentSuiteItem.children.add(testItem);
+
+                    // Track top-level suite or test (direct child of root)
+                    if (parentSuiteItem === testExplorerRoot) {
+                        validTestIds.add(test.name);
+                    } else {
+                        // Track the top-level suite ID
+                        let topLevelParent = parentSuiteItem;
+                        while (topLevelParent.parent && topLevelParent.parent !== testExplorerRoot) {
+                            topLevelParent = topLevelParent.parent;
+                        }
+                        if (topLevelParent.parent === testExplorerRoot) {
+                            validTestIds.add(topLevelParent.id);
+                        }
+                    }
                 });
+
+                // Remove obsolete top-level items (tests or suites)
+                // Note: This only removes top-level items. Nested test items within suites
+                // that are removed from the project will remain until their parent suite is removed.
+                // A full recursive cleanup would be more complex and is not implemented here.
+                const obsoleteIds: string[] = [];
+                testExplorerRoot.children.forEach(child => {
+                    if (!validTestIds.has(child.id) && child.id !== testPresetRequired) {
+                        obsoleteIds.push(child.id);
+                    }
+                });
+                for (const id of obsoleteIds) {
+                    testExplorerRoot.children.delete(id);
+                }
             };
         }
 
