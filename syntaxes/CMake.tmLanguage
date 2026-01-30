@@ -210,9 +210,9 @@
 		
 		<dict>
 			<key>comment</key>
-			<string>Derecated keyword</string>
+			<string>Deprecated commands</string>
 			<key>match</key>
-			<string>\b(?i:ABSTRACT_FILES|BUILD_NAME|SOURCE_FILES|SOURCE_FILES_REMOVE|VTK_MAKE_INSTANTIATOR|VTK_WRAP_JAVA|VTK_WRAP_PYTHON|VTK_WRAP_TCL|WRAP_EXCLUDE_FILES)\b</string>
+			<string>^\s*\b(?i:ABSTRACT_FILES|BUILD_NAME|SOURCE_FILES|SOURCE_FILES_REMOVE|VTK_MAKE_INSTANTIATOR|VTK_WRAP_JAVA|VTK_WRAP_PYTHON|VTK_WRAP_TCL|WRAP_EXCLUDE_FILES)\b</string>
 			<key>name</key>
 			<string>invalid.deprecated.source.cmake</string>
 		</dict>
