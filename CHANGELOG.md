@@ -8,6 +8,7 @@ Features:
 Bug Fixes:
 
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
+- Restore CMake syntax highlighting for `CMakeLists.txt` by registering the correct filename casing. [#4676](https://github.com/microsoft/vscode-cmake-tools/issues/4676)
 
 ## 1.22
 
