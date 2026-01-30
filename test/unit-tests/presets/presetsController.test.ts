@@ -5,15 +5,16 @@ import * as fs from 'fs';
 import * as os from 'os';
 
 /**
- * Tests for PresetsController re-entry protection.
+ * Tests for PresetsController file watcher behavior.
  *
  * These tests validate the fix for issue #4668 (Infinity presets reloading)
  * which occurs when preset files are symlinks or include symlinked files.
  *
- * The fix adds an `_isReapplyingPresets` flag to prevent recursive calls
- * to `reapplyPresets()` while it's already in progress.
+ * The fix adds a startup grace period to the FileWatcher class to ignore
+ * spurious events that chokidar may emit when watching symlinked files
+ * with followSymlinks: false.
  */
-suite('PresetsController re-entry protection', () => {
+suite('PresetsController file watcher protection', () => {
     let tempDir: string;
     let presetsDir: string;
     let presetsJsonPath: string;
@@ -171,165 +172,128 @@ suite('PresetsController re-entry protection', () => {
     });
 
     /**
-     * Test the re-entry prevention logic pattern used in PresetsController.
-     * This is a simplified simulation of the fix for issue #4668.
+     * Test the startup grace period pattern used in FileWatcher.
+     * This simulates how events fired during watcher initialization are ignored.
      */
-    test('Re-entry prevention flag blocks concurrent calls', async () => {
-        // Simulate the _isReapplyingPresets flag pattern
-        let isReapplyingPresets = false;
-        let reapplyCallCount = 0;
-        const callOrder: string[] = [];
+    test('Startup grace period ignores events during initialization', async () => {
+        let isInStartupGracePeriod = true;
+        let eventCount = 0;
+        const gracePeriodMs = 100;
 
-        // Simulate the reapplyPresets function with the fix
-        const reapplyPresets = async (): Promise<void> => {
-            if (isReapplyingPresets) {
-                callOrder.push('blocked');
-                return;
+        // Simulate the FileWatcher startup grace period pattern
+        setTimeout(() => (isInStartupGracePeriod = false), gracePeriodMs);
+
+        const handler = () => {
+            if (isInStartupGracePeriod) {
+                return; // Event ignored during grace period
             }
-            isReapplyingPresets = true;
-            reapplyCallCount++;
-            callOrder.push('started');
-
-            try {
-                // Simulate async work that might trigger file watcher events
-                await new Promise(resolve => setTimeout(resolve, 10));
-
-                // Simulate a recursive call (as would happen from file watcher)
-                await reapplyPresets();
-
-                callOrder.push('completed');
-            } finally {
-                isReapplyingPresets = false;
-            }
+            eventCount++;
         };
 
-        // Call reapplyPresets
-        await reapplyPresets();
+        // Simulate events fired immediately during watcher setup (should be ignored)
+        handler();
+        handler();
+        handler();
 
-        // Verify only one actual execution happened
-        expect(reapplyCallCount).to.equal(1);
+        expect(eventCount).to.equal(0);
 
-        // Verify the call order shows the recursive call was blocked
-        expect(callOrder).to.deep.equal(['started', 'blocked', 'completed']);
+        // Wait for grace period to end
+        await new Promise(resolve => setTimeout(resolve, gracePeriodMs + 50));
+
+        // Now events should be processed
+        handler();
+        expect(eventCount).to.equal(1);
     });
 
     /**
-     * Test that multiple rapid calls are properly deduplicated.
-     * This simulates what happens when file watcher fires multiple events.
+     * Test that the debounce mechanism works correctly after grace period.
+     * This simulates rapid file changes being deduplicated.
      */
-    test('Multiple rapid calls are properly deduplicated', async () => {
-        let isReapplyingPresets = false;
-        let reapplyCallCount = 0;
-        const startTimes: number[] = [];
-        const endTimes: number[] = [];
+    test('Debounce mechanism deduplicates rapid events after grace period', async () => {
+        let isInStartupGracePeriod = true;
+        let canRunChangeHandler = true;
+        let eventCount = 0;
+        const gracePeriodMs = 50;
+        const debounceMs = 100;
 
-        const reapplyPresets = async (): Promise<void> => {
-            if (isReapplyingPresets) {
+        // Simulate startup grace period ending
+        setTimeout(() => (isInStartupGracePeriod = false), gracePeriodMs);
+
+        const handler = () => {
+            if (isInStartupGracePeriod) {
                 return;
             }
-            isReapplyingPresets = true;
-            reapplyCallCount++;
-            startTimes.push(Date.now());
-
-            try {
-                // Simulate work that takes some time
-                await new Promise(resolve => setTimeout(resolve, 50));
-                endTimes.push(Date.now());
-            } finally {
-                isReapplyingPresets = false;
+            if (canRunChangeHandler) {
+                eventCount++;
+                canRunChangeHandler = false;
+                setTimeout(() => (canRunChangeHandler = true), debounceMs);
             }
         };
 
-        // Fire multiple calls rapidly (simulating file watcher events)
-        const promises = [
-            reapplyPresets(),
-            reapplyPresets(),
-            reapplyPresets(),
-            reapplyPresets(),
-            reapplyPresets()
-        ];
+        // Wait for grace period to end
+        await new Promise(resolve => setTimeout(resolve, gracePeriodMs + 10));
 
-        await Promise.all(promises);
+        // Fire multiple rapid events - only first should be processed
+        handler();
+        handler();
+        handler();
+        handler();
+        handler();
 
-        // Only the first call should have actually executed
-        expect(reapplyCallCount).to.equal(1);
-        expect(startTimes).to.have.lengthOf(1);
-        expect(endTimes).to.have.lengthOf(1);
+        expect(eventCount).to.equal(1);
+
+        // Wait for debounce to reset
+        await new Promise(resolve => setTimeout(resolve, debounceMs + 10));
+
+        // Now another event should be processed
+        handler();
+        expect(eventCount).to.equal(2);
     });
 
     /**
-     * Test that sequential calls (after the first completes) work correctly.
-     * This ensures we didn't break normal functionality.
+     * Test that sequential operations work correctly after grace period.
+     * This ensures normal file watching behavior isn't broken.
      */
-    test('Sequential calls after completion work normally', async () => {
-        let isReapplyingPresets = false;
-        let reapplyCallCount = 0;
+    test('Sequential events work normally after grace period and debounce', async () => {
+        let isInStartupGracePeriod = true;
+        let canRunChangeHandler = true;
+        let eventCount = 0;
+        const gracePeriodMs = 50;
+        const debounceMs = 50;
 
-        const reapplyPresets = async (): Promise<void> => {
-            if (isReapplyingPresets) {
+        setTimeout(() => (isInStartupGracePeriod = false), gracePeriodMs);
+
+        const handler = () => {
+            if (isInStartupGracePeriod) {
                 return;
             }
-            isReapplyingPresets = true;
-            reapplyCallCount++;
-
-            try {
-                await new Promise(resolve => setTimeout(resolve, 10));
-            } finally {
-                isReapplyingPresets = false;
+            if (canRunChangeHandler) {
+                eventCount++;
+                canRunChangeHandler = false;
+                setTimeout(() => (canRunChangeHandler = true), debounceMs);
             }
         };
 
-        // First call
-        await reapplyPresets();
-        expect(reapplyCallCount).to.equal(1);
+        // Wait for grace period
+        await new Promise(resolve => setTimeout(resolve, gracePeriodMs + 10));
 
-        // Second call (after first completes) should also work
-        await reapplyPresets();
-        expect(reapplyCallCount).to.equal(2);
+        // First event
+        handler();
+        expect(eventCount).to.equal(1);
 
-        // Third call
-        await reapplyPresets();
-        expect(reapplyCallCount).to.equal(3);
-    });
+        // Wait for debounce
+        await new Promise(resolve => setTimeout(resolve, debounceMs + 10));
 
-    /**
-     * Test that the flag is properly reset even if an error occurs.
-     * This ensures the try/finally pattern works correctly.
-     */
-    test('Re-entry flag is reset on error', async () => {
-        let isReapplyingPresets = false;
-        let reapplyCallCount = 0;
-        let shouldThrow = true;
+        // Second event (after debounce) should work
+        handler();
+        expect(eventCount).to.equal(2);
 
-        const reapplyPresets = async (): Promise<void> => {
-            if (isReapplyingPresets) {
-                return;
-            }
-            isReapplyingPresets = true;
-            reapplyCallCount++;
+        // Wait for debounce
+        await new Promise(resolve => setTimeout(resolve, debounceMs + 10));
 
-            try {
-                if (shouldThrow) {
-                    throw new Error('Simulated error');
-                }
-                await new Promise(resolve => setTimeout(resolve, 10));
-            } finally {
-                isReapplyingPresets = false;
-            }
-        };
-
-        // First call throws an error
-        try {
-            await reapplyPresets();
-        } catch {
-            // Expected
-        }
-        expect(reapplyCallCount).to.equal(1);
-
-        // Flag should be reset, so second call should work
-        shouldThrow = false;
-        await reapplyPresets();
-        expect(reapplyCallCount).to.equal(2);
+        // Third event
+        handler();
+        expect(eventCount).to.equal(3);
     });
 
     /**
