@@ -351,10 +351,11 @@ async function collectDevBatVars(hostArch: string, devBat: string, args: string[
         await fs.unlink(envPath);
     } catch (error) {}
 
-    const batContent = bat.join('\r\n');
-    await fs.writeFile(batPath, batContent);
-
     const outputEncoding = await codepages.getWindowsCodepage();
+    const batContent = bat.join('\r\n');
+    // Encode the batch file content with the Windows code page to match cmd.exe's encoding
+    const batBuffer = iconv.encode(batContent, outputEncoding);
+    await fs.writeFile(batPath, batBuffer);
     const execOption: proc.ExecutionOptions = {
         shell: false,
         silent: true,

@@ -7,6 +7,7 @@ Features:
 
 Bug Fixes:
 
+- Fix Scan for Kits failure when Visual Studio is installed into a non-ASCII path. [#4623](https://github.com/microsoft/vscode-cmake-tools/issues/4623)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
