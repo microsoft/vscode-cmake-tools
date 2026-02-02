@@ -8,6 +8,7 @@ Features:
 Bug Fixes:
 
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
+- Fix "No view is registered with id: cmake.bookmarks" error when extension is not yet activated. [#4683](https://github.com/microsoft/vscode-cmake-tools/issues/4683)
 
 ## 1.22
 

@@ -67,7 +67,8 @@
     "workspaceContains:.vscode/cmake-kits.json",
     "onFileSystem:cmake-tools-schema",
     "onLanguage:cmake",
-    "onLanguage:cmake-cache"
+    "onLanguage:cmake-cache",
+    "onView:cmake.bookmarks"
   ],
   "main": "./dist/main",
   "contributes": {
