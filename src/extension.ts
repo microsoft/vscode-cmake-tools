@@ -474,11 +474,6 @@ export class ExtensionManager implements vscode.Disposable {
             return;
         }
 
-        if (!this.isBookmarksViewContributed()) {
-            log.debug('Skipping bookmarks tree creation because view contribution is not available.');
-            return;
-        }
-
         try {
             this.bookmarksTreeView = vscode.window.createTreeView('cmake.bookmarks', {
                 treeDataProvider: this.bookmarksProvider,
@@ -494,15 +489,6 @@ export class ExtensionManager implements vscode.Disposable {
             this.bookmarksTreeView.dispose();
             this.bookmarksTreeView = undefined;
         }
-    }
-
-    private isBookmarksViewContributed(): boolean {
-        const ext = vscode.extensions.getExtension('ms-vscode.cmake-tools');
-        const views = ext?.packageJSON?.contributes?.views;
-        if (!views) {
-            return false;
-        }
-        return Object.values(views).some((v: any) => Array.isArray(v) && v.some((item: any) => item?.id === 'cmake.bookmarks'));
     }
 
     /**
