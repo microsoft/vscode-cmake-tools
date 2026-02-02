@@ -1717,7 +1717,7 @@
         },
         {
           "command": "cmake.bookmarks.clearAll",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && view == cmake.bookmarks",
           "group": "navigation@1"
         }
       ],
@@ -2009,22 +2009,22 @@
         },
         {
           "command": "cmake.outline.removeBookmark",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && view == cmake.bookmarks",
           "group": "inline"
         },
         {
           "command": "cmake.outline.buildTarget",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && view == cmake.bookmarks",
           "group": "bookmarkActions@1"
         },
         {
           "command": "cmake.outline.debugTarget",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && view == cmake.bookmarks",
           "group": "bookmarkActions@2"
         },
         {
           "command": "cmake.outline.launchTarget",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && view == cmake.bookmarks",
           "group": "bookmarkActions@3"
         }
       ],
