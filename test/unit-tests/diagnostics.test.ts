@@ -741,6 +741,22 @@ suite('Diagnostics', () => {
         expect(diagnostic.severity).to.eq('error');
     });
 
+    test('Parse MSVC Linker error', () => {
+        const lines = [
+            'LINK : fatal error LNK1181: cannot open input file "non_existent_file.obj"'
+        ];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.msvc.diagnostics).to.have.length(1);
+        const diagnostic = build_consumer.compilers.msvc.diagnostics[0];
+
+        expect(diagnostic.file).to.eq('linker');
+        expect(diagnostic.location.start.line).to.eq(0);
+        expect(diagnostic.location.start.character).to.eq(0);
+        expect(diagnostic.code).to.eq('LNK1181');
+        expect(diagnostic.message).to.eq('cannot open input file "non_existent_file.obj"');
+        expect(diagnostic.severity).to.eq('fatal error');
+    });
+
     test('Parse IAR fatal error', () => {
         const lines = [
             '  #include <kjlkjl>',
