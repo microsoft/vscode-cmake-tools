@@ -1014,7 +1014,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
                 }
                 if (gen_name === 'FASTBuild') {
-                    return this.testHaveCommand('fbuild');
+                    return await this.testHaveCommand('fbuild');
                 }
                 if (gen_name === 'MinGW Makefiles') {
                     return platform === 'win32' && this.testHaveCommand('mingw32-make');
