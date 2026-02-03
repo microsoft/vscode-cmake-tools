@@ -10,7 +10,7 @@ Bug Fixes:
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
-- Add support for Visual Studio 2026 generator. [#4668](https://github.com/microsoft/vscode-cmake-tools/issues/4668)
+- Add support for Visual Studio 2026 generator. [#4637](https://github.com/microsoft/vscode-cmake-tools/issues/4637)
 
 ## 1.22
 
