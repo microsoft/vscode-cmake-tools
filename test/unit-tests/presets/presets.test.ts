@@ -152,28 +152,47 @@ suite('Preset tests', () => {
         const args2 = configureArgs(preset2);
         expect(args2).to.deep.eq(['-DMY_VAR=value']);
 
-        // Test with object-style cache variable
+        // Test with object-style cache variable with $comment inside the object
+        // This is the main use case from issue #4709 - $comment inside cacheVariable object
         const preset3: any = {
             name: 'test',
             cacheVariables: {
-                '$comment': 'Comment here',
                 'CMAKE_EXE_LINKER_FLAGS': {
                     type: 'STRING',
+                    '$comment': 'Suppress warning about free-nonheap-object',
                     value: '-Wno-error=free-nonheap-object'
                 }
             }
         };
         const args3 = configureArgs(preset3);
         expect(args3).to.deep.eq(['-DCMAKE_EXE_LINKER_FLAGS:STRING=-Wno-error=free-nonheap-object']);
+        // Verify $comment inside the object doesn't affect the output
+        expect(args3.some(arg => arg.includes('$comment'))).to.eq(false);
+
+        // Test with $comment both at top level and inside object
+        const preset4: any = {
+            name: 'test',
+            cacheVariables: {
+                '$comment': 'Top-level comment',
+                'CMAKE_BUILD_TYPE': {
+                    type: 'STRING',
+                    '$comment': 'Build type comment',
+                    value: 'Release'
+                }
+            }
+        };
+        const args4 = configureArgs(preset4);
+        expect(args4).to.deep.eq(['-DCMAKE_BUILD_TYPE:STRING=Release']);
+        expect(args4.some(arg => arg.includes('$comment'))).to.eq(false);
 
         // Test empty cacheVariables (should produce no args)
-        const preset4: any = {
+        const preset5: any = {
             name: 'test',
             cacheVariables: {
                 '$comment': 'Only comment, no vars'
             }
         };
-        const args4 = configureArgs(preset4);
-        expect(args4).to.deep.eq([]);
+        const args5 = configureArgs(preset5);
+        expect(args5).to.deep.eq([]);
     });
 });
