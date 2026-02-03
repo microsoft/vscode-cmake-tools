@@ -7,7 +7,7 @@ suite('Debug Tracker tests', () => {
     test('Variables response: evaluateName is removed from variables', () => {
         const factory = new DebugTrackerFactory();
         const tracker = factory.createDebugAdapterTracker({} as vscode.DebugSession);
-        
+
         // Create a mock variables response with evaluateName set
         const message = {
             type: 'response',
@@ -44,7 +44,7 @@ suite('Debug Tracker tests', () => {
         expect(message.body.variables[1]).to.not.have.property('evaluateName');
         // VAR3 should remain unchanged (it never had evaluateName)
         expect(message.body.variables[2]).to.not.have.property('evaluateName');
-        
+
         // Other properties should be preserved
         expect(message.body.variables[0].name).to.be.eq('VAR1');
         expect(message.body.variables[0].value).to.be.eq('99999');
@@ -54,7 +54,7 @@ suite('Debug Tracker tests', () => {
     test('Non-variables messages are not modified', () => {
         const factory = new DebugTrackerFactory();
         const tracker = factory.createDebugAdapterTracker({} as vscode.DebugSession);
-        
+
         const message = {
             type: 'response',
             command: 'scopes',
@@ -69,7 +69,7 @@ suite('Debug Tracker tests', () => {
         };
 
         const originalMessage = JSON.stringify(message);
-        
+
         // Call onWillReceiveMessage if it exists
         if (tracker && 'onWillReceiveMessage' in tracker) {
             (tracker as any).onWillReceiveMessage(message);
@@ -82,7 +82,7 @@ suite('Debug Tracker tests', () => {
     test('Variables response without body is handled gracefully', () => {
         const factory = new DebugTrackerFactory();
         const tracker = factory.createDebugAdapterTracker({} as vscode.DebugSession);
-        
+
         const message = {
             type: 'response',
             command: 'variables'
