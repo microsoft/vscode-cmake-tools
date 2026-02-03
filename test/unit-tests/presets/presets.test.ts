@@ -1,4 +1,4 @@
-import { Condition, evaluateCondition, getArchitecture, getToolset } from '@cmt/presets/preset';
+import { Condition, configureArgs, evaluateCondition, getArchitecture, getToolset } from '@cmt/presets/preset';
 import { expect } from '@test/util';
 import * as os from "os";
 
@@ -126,5 +126,54 @@ suite('Preset tests', () => {
 
         badCondition = { type: 'equals', lhs: 'lhs' };
         expect(() => evaluateCondition(badCondition)).to.throw();
+    });
+
+    test('configureArgs skips $comment keys in cacheVariables', () => {
+        // Test that $comment at the top level of cacheVariables is skipped
+        const preset1: any = {
+            name: 'test',
+            cacheVariables: {
+                '$comment': 'This is a comment',
+                'CMAKE_BUILD_TYPE': 'Debug'
+            }
+        };
+        const args1 = configureArgs(preset1);
+        expect(args1).to.deep.eq(['-DCMAKE_BUILD_TYPE=Debug']);
+        expect(args1.some(arg => arg.includes('$comment'))).to.eq(false);
+
+        // Test that $comment as an array (multi-line) is also skipped
+        const preset2: any = {
+            name: 'test',
+            cacheVariables: {
+                '$comment': ['Line 1', 'Line 2'],
+                'MY_VAR': 'value'
+            }
+        };
+        const args2 = configureArgs(preset2);
+        expect(args2).to.deep.eq(['-DMY_VAR=value']);
+
+        // Test with object-style cache variable
+        const preset3: any = {
+            name: 'test',
+            cacheVariables: {
+                '$comment': 'Comment here',
+                'CMAKE_EXE_LINKER_FLAGS': {
+                    type: 'STRING',
+                    value: '-Wno-error=free-nonheap-object'
+                }
+            }
+        };
+        const args3 = configureArgs(preset3);
+        expect(args3).to.deep.eq(['-DCMAKE_EXE_LINKER_FLAGS:STRING=-Wno-error=free-nonheap-object']);
+
+        // Test empty cacheVariables (should produce no args)
+        const preset4: any = {
+            name: 'test',
+            cacheVariables: {
+                '$comment': 'Only comment, no vars'
+            }
+        };
+        const args4 = configureArgs(preset4);
+        expect(args4).to.deep.eq([]);
     });
 });
