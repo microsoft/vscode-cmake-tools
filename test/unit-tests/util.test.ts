@@ -32,18 +32,19 @@ suite('Utils test', () => {
     });
 });
 
+// Shared test helper for creating mock workspace folders
+function createMockWorkspaceFolder(fsPath: string, name: string): vscode.WorkspaceFolder {
+    return {
+        uri: vscode.Uri.file(fsPath),
+        name: name,
+        index: 0
+    };
+}
+
+// Test base path that works on both Windows and Unix
+const testBasePath = process.platform === 'win32' ? 'C:\\Projects\\MyProject' : '/home/user/projects/myproject';
+
 suite('expandExcludePath tests', () => {
-    // Create a mock workspace folder for testing
-    function createMockWorkspaceFolder(fsPath: string, name: string): vscode.WorkspaceFolder {
-        return {
-            uri: vscode.Uri.file(fsPath),
-            name: name,
-            index: 0
-        };
-    }
-
-    const testBasePath = process.platform === 'win32' ? 'C:\\Projects\\MyProject' : '/home/user/projects/myproject';
-
     test('Expand ${workspaceFolder} variable', () => {
         const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
         const result = util.expandExcludePath('${workspaceFolder}/subdir', folder);
@@ -79,19 +80,22 @@ suite('expandExcludePath tests', () => {
         const expected = path.normalize(path.join(testBasePath, '..', 'other'));
         expect(result).to.eq(expected);
     });
+
+    test('${workspaceFolder:name} remains unchanged when no workspace folders available', () => {
+        // When vscode.workspace.workspaceFolders is undefined/empty,
+        // ${workspaceFolder:name} should not be replaced, but still gets resolved as relative path
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        // Without workspace folders set, the ${workspaceFolder:OtherFolder} should remain as is
+        // Then be resolved as a relative path (which will likely not exist, but that's okay for path resolution)
+        const input = '${workspaceFolder:NonExistentFolder}/subdir';
+        const result = util.expandExcludePath(input, folder);
+        // The ${workspaceFolder:NonExistentFolder} is resolved relative to testBasePath if not found
+        // This test verifies the fallback behavior when folder is not found
+        expect(result).to.include('NonExistentFolder');
+    });
 });
 
 suite('expandExcludePaths tests', () => {
-    function createMockWorkspaceFolder(fsPath: string, name: string): vscode.WorkspaceFolder {
-        return {
-            uri: vscode.Uri.file(fsPath),
-            name: name,
-            index: 0
-        };
-    }
-
-    const testBasePath = process.platform === 'win32' ? 'C:\\Projects\\MyProject' : '/home/user/projects/myproject';
-
     test('Expand multiple paths', () => {
         const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
         const paths = [

@@ -181,6 +181,8 @@ export function resolvePath(inpath: string, base: string) {
 /**
  * Expands a path that may contain ${workspaceFolder} or ${workspaceFolder:name} variables,
  * and resolves relative paths to absolute paths based on the provided workspace folder.
+ * Note: The ${workspaceFolder:name} lookup is case-insensitive, consistent with VS Code's
+ * behavior on Windows/macOS file systems.
  * @param inputPath The path to expand
  * @param workspaceFolder The workspace folder to use for expansion and resolving relative paths
  * @returns The expanded and resolved path
@@ -193,15 +195,10 @@ export function expandExcludePath(inputPath: string, workspaceFolder: vscode.Wor
 
     // Then expand ${workspaceFolder:name} to the specific workspace folder path
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-        const folderRegex = /\$\{workspaceFolder:(.+?)\}/g;
-        let match: RegExpExecArray | null;
-        while ((match = folderRegex.exec(inputPath)) !== null) {
-            const folderName = match[1];
-            const folder = vscode.workspace.workspaceFolders.find(f => f.name.toLowerCase() === folderName.toLowerCase());
-            if (folder) {
-                expandedPath = expandedPath.replace(match[0], folder.uri.fsPath);
-            }
-        }
+        expandedPath = expandedPath.replace(/\$\{workspaceFolder:(.+?)\}/g, (match, folderName) => {
+            const folder = vscode.workspace.workspaceFolders!.find(f => f.name.toLowerCase() === folderName.toLowerCase());
+            return folder ? folder.uri.fsPath : match;
+        });
     }
 
     // Finally resolve relative paths to absolute paths based on the workspace folder
