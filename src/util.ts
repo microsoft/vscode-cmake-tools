@@ -179,6 +179,47 @@ export function resolvePath(inpath: string, base: string) {
 }
 
 /**
+ * Expands a path that may contain ${workspaceFolder} or ${workspaceFolder:name} variables,
+ * and resolves relative paths to absolute paths based on the provided workspace folder.
+ * @param inputPath The path to expand
+ * @param workspaceFolder The workspace folder to use for expansion and resolving relative paths
+ * @returns The expanded and resolved path
+ */
+export function expandExcludePath(inputPath: string, workspaceFolder: vscode.WorkspaceFolder): string {
+    let expandedPath = inputPath;
+
+    // First expand ${workspaceFolder} to the current workspace folder path
+    expandedPath = expandedPath.replace(/\$\{workspaceFolder\}/g, workspaceFolder.uri.fsPath);
+
+    // Then expand ${workspaceFolder:name} to the specific workspace folder path
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        const folderRegex = /\$\{workspaceFolder:(.+?)\}/g;
+        let match: RegExpExecArray | null;
+        while ((match = folderRegex.exec(inputPath)) !== null) {
+            const folderName = match[1];
+            const folder = vscode.workspace.workspaceFolders.find(f => f.name.toLowerCase() === folderName.toLowerCase());
+            if (folder) {
+                expandedPath = expandedPath.replace(match[0], folder.uri.fsPath);
+            }
+        }
+    }
+
+    // Finally resolve relative paths to absolute paths based on the workspace folder
+    return resolvePath(expandedPath, workspaceFolder.uri.fsPath);
+}
+
+/**
+ * Expands an array of paths that may contain ${workspaceFolder} or ${workspaceFolder:name} variables,
+ * and resolves relative paths to absolute paths based on the provided workspace folder.
+ * @param paths The paths to expand
+ * @param workspaceFolder The workspace folder to use for expansion and resolving relative paths
+ * @returns The expanded and resolved paths
+ */
+export function expandExcludePaths(paths: string[], workspaceFolder: vscode.WorkspaceFolder): string[] {
+    return paths.map(p => expandExcludePath(p, workspaceFolder));
+}
+
+/**
  * Split a path into its elements.
  * @param p The path to split
  */
