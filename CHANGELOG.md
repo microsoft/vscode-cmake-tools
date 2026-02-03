@@ -10,6 +10,7 @@ Bug Fixes:
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
+- Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#2500](https://github.com/microsoft/vscode-cmake-tools/issues/2500)
 
 ## 1.22.27
 
