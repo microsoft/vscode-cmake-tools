@@ -231,6 +231,27 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     };
 }
 
+/**
+ * Detects the compiler vendor from the compiler binary path.
+ * @param compilerPath Path to the compiler binary
+ * @returns The detected vendor or undefined if not detected
+ */
+function detectVendorFromBinaryPath(compilerPath: string): CompilerVendorEnum | undefined {
+    const binBasename = path.basename(compilerPath, '.exe').toLowerCase();
+    // Check for clang-cl first (before clang) to avoid false matches
+    if (binBasename === 'clang-cl' || binBasename.startsWith('clang-cl-')) {
+        return 'ClangCl';
+    }
+    if (binBasename === 'clang' || binBasename.startsWith('clang-')) {
+        return 'Clang';
+    }
+    if (binBasename === 'gcc' || binBasename.startsWith('gcc-') ||
+        binBasename.endsWith('-gcc') || binBasename.includes('-gcc-')) {
+        return 'GCC';
+    }
+    return undefined;
+}
+
 export async function getKitDetect(kit: Kit): Promise<KitDetect> {
     const c_bin = kit?.compilers?.C;
     /* Special handling of visualStudio */
@@ -239,9 +260,9 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
         if (!vs) {
             return kit;
         }
-        // Determine if the compiler is clang-cl based on binary name
-        const isClangCl = c_bin ? (path.basename(c_bin, '.exe') === 'clang-cl') : false;
-        const clangVendor: CompilerVendorEnum = isClangCl ? 'ClangCl' : 'Clang';
+        // Determine if the compiler is clang-cl based on binary name using helper function
+        const detectedVendor = c_bin ? detectVendorFromBinaryPath(c_bin) : undefined;
+        const clangVendor: CompilerVendorEnum = detectedVendor === 'ClangCl' ? 'ClangCl' : 'Clang';
         let version: CompilerVersion | null = null;
         if (c_bin) {
             version = await getCompilerVersion(clangVendor, c_bin);
@@ -276,15 +297,7 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
         }
         // Fallback: detect vendor from compiler binary path if name pattern doesn't match
         if (vendor === undefined && c_bin) {
-            const binBasename = path.basename(c_bin, '.exe').toLowerCase();
-            if (binBasename === 'clang-cl' || binBasename.startsWith('clang-cl-')) {
-                vendor = 'ClangCl';
-            } else if (binBasename === 'clang' || binBasename.startsWith('clang-')) {
-                vendor = 'Clang';
-            } else if (binBasename === 'gcc' || binBasename.startsWith('gcc-') ||
-                       binBasename.endsWith('-gcc') || binBasename.includes('-gcc-')) {
-                vendor = 'GCC';
-            }
+            vendor = detectVendorFromBinaryPath(c_bin);
         }
         if (vendor === undefined) {
             return kit;
