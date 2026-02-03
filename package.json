@@ -67,7 +67,8 @@
     "workspaceContains:.vscode/cmake-kits.json",
     "onFileSystem:cmake-tools-schema",
     "onLanguage:cmake",
-    "onLanguage:cmake-cache"
+    "onLanguage:cmake-cache",
+    "onCustomEditor:cmake.cmakeCacheEditor"
   ],
   "main": "./dist/main",
   "contributes": {
@@ -138,6 +139,18 @@
             "language": "cmake-cache",
             "scopeName": "source.cmakecache",
             "path": "./syntaxes/CMakeCache.tmLanguage"
+        }
+    ],
+    "customEditors": [
+        {
+            "viewType": "cmake.cmakeCacheEditor",
+            "displayName": "%cmake-tools.customEditors.cmakeCacheEditor.displayName%",
+            "selector": [
+                {
+                    "filenamePattern": "CMakeCache.txt"
+                }
+            ],
+            "priority": "option"
         }
     ],
     "commands": [
