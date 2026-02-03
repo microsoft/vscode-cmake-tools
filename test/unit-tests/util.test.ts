@@ -29,3 +29,42 @@ suite('Utils test', () => {
         }
     });
 });
+
+suite('cmakeify test', () => {
+    test('Convert boolean true to CMake BOOL', () => {
+        const result = util.cmakeify(true);
+        expect(result.type).to.eq('BOOL');
+        expect(result.value).to.eq('TRUE');
+    });
+    test('Convert boolean false to CMake BOOL', () => {
+        const result = util.cmakeify(false);
+        expect(result.type).to.eq('BOOL');
+        expect(result.value).to.eq('FALSE');
+    });
+    test('Convert string to CMake STRING', () => {
+        const result = util.cmakeify('hello');
+        expect(result.type).to.eq('STRING');
+        expect(result.value).to.eq('hello');
+    });
+    test('Convert string with semicolons without escaping', () => {
+        const result = util.cmakeify('libc;compiler-rt');
+        expect(result.type).to.eq('STRING');
+        expect(result.value).to.eq('libc;compiler-rt');
+    });
+    test('Convert number to CMake STRING', () => {
+        const result = util.cmakeify(42);
+        expect(result.type).to.eq('STRING');
+        expect(result.value).to.eq('42');
+    });
+    test('Convert array to CMake STRING with semicolon separator', () => {
+        const result = util.cmakeify(['a', 'b', 'c']);
+        expect(result.type).to.eq('STRING');
+        expect(result.value).to.eq('a;b;c');
+    });
+    test('Convert CMakeValue passthrough', () => {
+        const input: util.CMakeValue = { type: 'FILEPATH', value: '/path/to/file' };
+        const result = util.cmakeify(input);
+        expect(result.type).to.eq('FILEPATH');
+        expect(result.value).to.eq('/path/to/file');
+    });
+});
