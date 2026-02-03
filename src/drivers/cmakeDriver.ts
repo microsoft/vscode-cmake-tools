@@ -996,7 +996,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     isCommonGenerator(genName: string): boolean {
         return genName === 'Ninja' || genName === 'Ninja Multi-Config' ||
             genName === 'MinGW Makefiles' || genName === 'NMake Makefiles' ||
-            genName === 'Unix Makefiles' || genName === 'MSYS Makefiles';
+            genName === 'Unix Makefiles' || genName === 'MSYS Makefiles' ||
+            genName === 'FASTBuild';
     }
 
     /**
@@ -1011,6 +1012,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const generator_present = await (async (): Promise<boolean> => {
                 if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
                     return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
+                }
+                if (gen_name === 'FASTBuild') {
+                    return this.testHaveCommand('fbuild');
                 }
                 if (gen_name === 'MinGW Makefiles') {
                     return platform === 'win32' && this.testHaveCommand('mingw32-make');
@@ -1385,6 +1389,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         "Unix Makefiles",
         "Ninja",
         "Ninja Multi-Config",
+        "FASTBuild",
         "Watcom WMake",
         "CodeBlocks - MinGW Makefiles",
         "CodeBlocks - NMake Makefiles",

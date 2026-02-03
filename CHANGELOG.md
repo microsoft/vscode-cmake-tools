@@ -4,6 +4,7 @@
 
 Features:
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
+- Add support for the FASTBuild generator (CMake 4.2+). [#4663](https://github.com/microsoft/vscode-cmake-tools/issues/4663)
 
 Bug Fixes:
 
