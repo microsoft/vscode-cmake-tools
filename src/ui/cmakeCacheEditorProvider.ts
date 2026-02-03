@@ -189,7 +189,7 @@ export class CMakeCacheEditorProvider implements vscode.CustomTextEditorProvider
     private replaceOptionInContent(content: string, option: IOption): string {
         // Handle keys that may need to be quoted (contain special characters)
         const escapedKey = option.key.replace(/[^A-Za-z0-9_]/g, '\\$&');
-        const quotedEscapedKey = `"${option.key.replace(/[^A-Za-z0-9_]/g, '\\$&')}"`;
+        const quotedEscapedKey = `"${escapedKey}"`;
 
         // Try unquoted key first, then quoted
         let re = RegExp(`^(${escapedKey}:[^=]+=)(.*)$`, 'm');
@@ -490,7 +490,7 @@ export class CMakeCacheEditorProvider implements vscode.CustomTextEditorProvider
                 const hasChoices = option.choices.length > 0;
                 if (hasChoices) {
                     editControls = `<datalist id="CHOICES_${id}">
-            ${option.choices.map(ch => `<option value="${escapeAttribute(ch)}">`).join()}
+            ${option.choices.map(ch => `<option value="${escapeAttribute(ch)}">`).join('')}
           </datalist>`;
                 }
                 editControls += `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;"
