@@ -166,6 +166,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         options.environment,
         options.overrideLocale ? localeOverride : {}]);
 
+    const stackTrace = new Error().stack;
+
     const cmdstr = buildCmdStr(command, args);
     if (options && options.silent !== true) {
         log.info(// We do simple quoting of arguments with spaces.
@@ -234,23 +236,23 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         let stderr_acc = '';
         let stderr_line_acc = '';
         child?.on('error', err => {
-            log.warning(localize({key: 'process.error', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} failed with error: {1}', `${cmdstr}`, `${err}`));
+            log.warning(localize({key: 'process.error', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} failed with error: {1} stack: {2}', `${cmdstr}`, `${err}`, `${stackTrace}`));
         });
         child?.on('exit', (code, signal) => {
             if (code !== 0) {
                 if (signal !== null && signal !== undefined) {
-                    log.warning(localize({key: 'process.exit.with.signal', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1} and signal: {2}', `${cmdstr}`, `${code}`, `${signal}`));
+                    log.warning(localize({key: 'process.exit.with.signal', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1} and signal: {2} stack: {3}', `${cmdstr}`, `${code}`, `${signal}`, `${stackTrace}`));
                 } else {
-                    log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1}', `${cmdstr}`, `${code}`));
+                    log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1} stack: {2}', `${cmdstr}`, `${code}`, `${stackTrace}`));
                 }
                 if (options?.showOutputOnError) {
                     if (stdout_acc) {
                         const output = stdout_acc.trimEnd().replace(/\n/g, '\n\t');
-                        log.warning(localize('process.exit.stdout', 'Command output on standard out: {0}', `${output}`));
+                        log.warning(localize('process.exit.stdout', 'Command output on standard out: {0} stack: {1}', `${output}`, `${stackTrace}`));
                     }
                     if (stderr_acc) {
                         const output = stderr_acc.trimEnd().replace(/\n/g, '\n\t');
-                        log.warning(localize('process.exit.stderr', 'Command output on standard error: {0}', `${output}`));
+                        log.warning(localize('process.exit.stderr', 'Command output on standard error: {0} stack: {1}', `${output}`, `${stackTrace}`));
                     }
                 }
             }
