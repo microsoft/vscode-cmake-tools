@@ -1,3 +1,31 @@
+/**
+ * Unit tests for utility functions in util.ts
+ *
+ * Test Updates for cmake.exclude path expansion feature:
+ *
+ * Added tests for expandExcludePath() and expandExcludePaths() functions that support
+ * ${workspaceFolder}, ${workspaceFolder:name} variable expansion and relative path resolution
+ * in the cmake.exclude setting.
+ *
+ * Test suites added:
+ * 1. 'expandExcludePath tests' - Tests for single path expansion:
+ *    - Expand ${workspaceFolder} variable: Verifies ${workspaceFolder} is replaced with workspace path
+ *    - Expand multiple ${workspaceFolder} variables: Tests multiple occurrences in single path
+ *    - Resolve relative path: Verifies relative paths are resolved to absolute paths
+ *    - Absolute path remains unchanged: Ensures absolute paths are not modified
+ *    - Expand ${workspaceFolder} and resolve relative path: Tests parent directory navigation
+ *    - ${workspaceFolder:name} fallback: Tests behavior when named folder is not found
+ *
+ * 2. 'expandExcludePaths tests' - Tests for array path expansion:
+ *    - Expand multiple paths: Verifies correct expansion of mixed path types
+ *    - Empty array returns empty array: Edge case test
+ *
+ * These tests ensure the cmake.exclude setting works correctly with:
+ * - Variable substitution (${workspaceFolder}, ${workspaceFolder:name})
+ * - Relative path resolution
+ * - Cross-platform path handling (Windows/Unix)
+ */
+
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 import { expect } from '@test/util';
