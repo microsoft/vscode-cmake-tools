@@ -81,17 +81,17 @@ suite('expandExcludePath tests', () => {
         expect(result).to.eq(expected);
     });
 
-    test('${workspaceFolder:name} remains unchanged when no workspace folders available', () => {
-        // When vscode.workspace.workspaceFolders is undefined/empty,
-        // ${workspaceFolder:name} should not be replaced, but still gets resolved as relative path
+    test('${workspaceFolder:name} fallback when folder name not found', () => {
+        // When ${workspaceFolder:name} references a folder that doesn't exist in the workspace,
+        // the variable should be left unchanged and then resolved as a relative path
         const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
-        // Without workspace folders set, the ${workspaceFolder:OtherFolder} should remain as is
-        // Then be resolved as a relative path (which will likely not exist, but that's okay for path resolution)
         const input = '${workspaceFolder:NonExistentFolder}/subdir';
         const result = util.expandExcludePath(input, folder);
-        // The ${workspaceFolder:NonExistentFolder} is resolved relative to testBasePath if not found
-        // This test verifies the fallback behavior when folder is not found
-        expect(result).to.include('NonExistentFolder');
+        // If vscode.workspace.workspaceFolders is empty or undefined, or if the folder is not found,
+        // the ${workspaceFolder:NonExistentFolder} variable is left as-is
+        // Then resolvePath treats it as a relative path segment
+        const expectedPath = path.normalize(path.join(testBasePath, '${workspaceFolder:NonExistentFolder}', 'subdir'));
+        expect(result).to.eq(expectedPath);
     });
 });
 
