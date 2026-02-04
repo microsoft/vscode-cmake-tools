@@ -5,6 +5,10 @@
 Features:
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 
+Improvements:
+
+- Reapplying "Refactor and improve colorization language services support" [#4697](https://github.com/microsoft/vscode-cmake-tools/pull/4697)
+
 Bug Fixes:
 
 - Fix infinite presets reloading loop when preset files are symlinks or include symlinked files. [#4668](https://github.com/microsoft/vscode-cmake-tools/issues/4668)
