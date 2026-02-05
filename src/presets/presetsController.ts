@@ -1632,29 +1632,53 @@ class FileWatcher implements vscode.Disposable {
     private watchers: Map<string, chokidar.FSWatcher>;
     // Debounce the change handler to avoid multiple changes being triggered by a single file change. Two change events are coming in rapid succession without this.
     private canRunChangeHandler = true;
+    // Grace period flag to ignore events during watcher startup. When followSymlinks is false and
+    // watched files are symlinks, chokidar may emit spurious events during initialization that
+    // bypass ignoreInitial. This prevents infinite loops when reapplyPresets() recreates the watcher.
+    // See issue #4668.
+    private isInStartupGracePeriod = true;
 
     public constructor(paths: string | string[], eventHandlers: Map<string, () => void>, options?: chokidar.WatchOptions) {
         this.watchers = new Map<string, chokidar.FSWatcher>();
 
-        // We debounce the change event to avoid multiple changes being triggered by a single file change.
-        const onChange = eventHandlers.get('change');
-        if (onChange) {
-            const debouncedOnChange = () => {
-                if (this.canRunChangeHandler) {
-                    onChange();
-                    this.canRunChangeHandler = false;
-                    setTimeout(() => (this.canRunChangeHandler = true), 500);
-                }
-            };
-            eventHandlers.set("change", debouncedOnChange);
+        // Allow a short grace period for the watcher to stabilize before processing events.
+        // This handles the case where symlinks cause spurious events during watcher setup.
+        // See issue #4668.
+        setTimeout(() => (this.isInStartupGracePeriod = false), 100);
+
+        // Wrap all event handlers to respect the startup grace period
+        const wrappedHandlers = new Map<string, () => void>();
+        for (const [event, handler] of eventHandlers) {
+            if (event === 'change') {
+                // Change events get additional debouncing to avoid multiple changes
+                // being triggered by a single file change
+                const debouncedOnChange = () => {
+                    if (this.isInStartupGracePeriod) {
+                        return; // Ignore events during startup grace period
+                    }
+                    if (this.canRunChangeHandler) {
+                        handler();
+                        this.canRunChangeHandler = false;
+                        setTimeout(() => (this.canRunChangeHandler = true), 500);
+                    }
+                };
+                wrappedHandlers.set(event, debouncedOnChange);
+            } else {
+                // Other events just respect the grace period
+                const wrappedHandler = () => {
+                    if (this.isInStartupGracePeriod) {
+                        return; // Ignore events during startup grace period
+                    }
+                    handler();
+                };
+                wrappedHandlers.set(event, wrappedHandler);
+            }
         }
 
         for (const path of Array.isArray(paths) ? paths : [paths]) {
             try {
                 const watcher = chokidar.watch(path, { ...options });
-                const eventHandlerEntries = Array.from(eventHandlers);
-                for (let i = 0; i < eventHandlerEntries.length; i++) {
-                    const [event, handler] = eventHandlerEntries[i];
+                for (const [event, handler] of wrappedHandlers) {
                     watcher.on(event, handler);
                 }
                 this.watchers.set(path, watcher);
