@@ -234,4 +234,113 @@ suite('Kits scan test', () => {
             ]);
         }).timeout(10000);
     });
+
+    suite('getKitDetect vendor detection from binary path', () => {
+        test('Detect ClangCl vendor from clang-cl binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: 'C:/path/to/clang-cl.exe',
+                    CXX: 'C:/path/to/clang-cl.exe'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            // When not trusted, getKitDetect returns the original kit with vendor from binary path detection
+            // Since the binary doesn't exist and we can't get version, it should still detect vendor from path
+            expect(detect.vendor).to.eq('ClangCl');
+        });
+
+        test('Detect Clang vendor from clang binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/clang',
+                    CXX: '/usr/bin/clang++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('Clang');
+        });
+
+        test('Detect GCC vendor from gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/gcc',
+                    CXX: '/usr/bin/g++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Detect GCC vendor from versioned gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/gcc-11',
+                    CXX: '/usr/bin/g++-11'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Detect Clang vendor from versioned clang binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/clang-14',
+                    CXX: '/usr/bin/clang++-14'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('Clang');
+        });
+
+        test('Detect ClangCl vendor from versioned clang-cl binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: 'C:/LLVM/bin/clang-cl-14.exe',
+                    CXX: 'C:/LLVM/bin/clang-cl-14.exe'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('ClangCl');
+        });
+
+        test('Detect GCC vendor from cross-compiler gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/opt/toolchain/arm-linux-gnueabihf-gcc',
+                    CXX: '/opt/toolchain/arm-linux-gnueabihf-g++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Return original kit when vendor cannot be detected', async () => {
+            const testKit: kit.Kit = {
+                name: 'Unknown Kit',
+                compilers: {
+                    C: '/usr/bin/unknown-compiler',
+                    CXX: '/usr/bin/unknown-compiler++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            // Should return original kit when vendor cannot be detected
+            expect(detect.vendor).to.be.undefined;
+        });
+    });
 });
