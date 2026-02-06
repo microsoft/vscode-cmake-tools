@@ -52,7 +52,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.enableLanguageServices` | If `true`, enable CMake language services. | `true` | no |
 | `cmake.enableTraceLogging` | If `true`, enable trace logging. | `false` | no |
 | `cmake.environment` | An object containing `key:value` pairs of environment variables, which will be available when configuring, building, or testing with CTest. | `{}` (no environment variables) | yes |
-| `cmake.exclude` | CMake Tools will ignore the folders defined in this setting. | `[]` | no |
+| `cmake.exclude` | CMake Tools will ignore the folders defined in this setting. | `[]` | yes |
 | `cmake.exportCompileCommandsFile` | If `true`, generate the compile_commands.json file. | `true` | no |
 | `cmake.generator` | Set to a string to override CMake Tools preferred generator logic. If set, CMake will unconditionally use it as the `-G` CMake generator command line argument. | `null` | no |
 | `cmake.ignoreCMakeListsMissing` | If `true`, do not show error when opening a project without CMakeLists.txt. | `false` | no |
