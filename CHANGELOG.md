@@ -7,6 +7,7 @@ Features:
 
 Bug Fixes:
 
+- Fix "CMake: Quick Start" command failing silently when no folder is open. Now shows an error message with an option to open a folder. [#4504](https://github.com/microsoft/vscode-cmake-tools/issues/4504)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
