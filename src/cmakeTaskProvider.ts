@@ -532,6 +532,9 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         if (!project) {
             project = await this.getProject();
             if (!project || !await this.isTaskCompatibleWithPresets(project)) {
+                if (doCloseEmitter) {
+                    this.closeEmitter.fire(-1);
+                }
                 return -1;
             }
         }
