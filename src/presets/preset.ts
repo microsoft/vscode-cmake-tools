@@ -1244,6 +1244,10 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
     if (preset.cacheVariables) {
         expandedPreset.cacheVariables = {};
         for (const cacheVarName in preset.cacheVariables) {
+            // Skip $comment keys as they are only for documentation purposes
+            if (cacheVarName === '$comment') {
+                continue;
+            }
             const cacheVar = preset.cacheVariables[cacheVarName];
             if (typeof cacheVar === 'boolean') {
                 expandedPreset.cacheVariables[cacheVarName] = cacheVar;
@@ -2138,6 +2142,10 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     // CacheVariables
     if (preset.cacheVariables) {
         util.objectPairs(preset.cacheVariables).forEach(([key, value]) => {
+            // Skip $comment keys as they are only for documentation purposes
+            if (key === '$comment') {
+                return;
+            }
             if (util.isString(value) || typeof value === 'boolean') {
                 result.push(`-D${key}=${value}`);
             } else if (value) {

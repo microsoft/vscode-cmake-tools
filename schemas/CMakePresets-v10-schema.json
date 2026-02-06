@@ -385,6 +385,9 @@
                         "type": "object",
                         "description": "An optional map of cache variables. The key is the variable name (which must not be an empty string). Cache variables are inherited through the inherits field, and the preset's variables will be the union of its own cacheVariables and the cacheVariables from all its parents. If multiple presets in this union define the same variable, the standard rules of inherits are applied.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "CMAKE_C_COMPILER": {
                                 "anyOf": [
                                     {
@@ -398,6 +401,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -422,6 +428,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -446,6 +455,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -470,6 +482,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -496,6 +511,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -533,6 +551,9 @@
                                     "type": "object",
                                     "description": "An object representing the type and value of the variable.",
                                     "properties": {
+                                        "$comment": {
+                                            "$ref": "#/definitions/$comment"
+                                        },
                                         "type": {
                                             "type": "string",
                                             "description": "An optional string representing the type of the variable. It should be BOOL, FILEPATH, PATH, STRING, or INTERNAL."
