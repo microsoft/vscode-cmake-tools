@@ -290,6 +290,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.clearBuildDiagnostics",
+        "title": "%cmake-tools.command.cmake.clearBuildDiagnostics.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.selectActiveFolder",
         "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
         "when": "cmake:enableFullFeatureSet",

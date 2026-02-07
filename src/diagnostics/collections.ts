@@ -30,6 +30,15 @@ class LazyCollection implements vscode.Disposable {
         }
         this._collection = undefined;
     }
+
+    /**
+     * Clear the diagnostics in the collection
+     */
+    clear() {
+        if (this._collection) {
+            this._collection.clear();
+        }
+    }
 }
 
 /**
@@ -65,6 +74,15 @@ class Collections {
         this._cmake.dispose();
         this._build.dispose();
         this._presets.dispose();
+    }
+
+    /**
+     * Clear all diagnostics from all collections
+     */
+    clearAll() {
+        this._cmake.clear();
+        this._build.clear();
+        this._presets.clear();
     }
 }
 
