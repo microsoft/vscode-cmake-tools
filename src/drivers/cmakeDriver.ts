@@ -1368,6 +1368,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * The list of generators CMake supports as of 3.21
      */
     private readonly cmakeGenerators = [
+        "Visual Studio 18 2026",
         "Visual Studio 17 2022",
         "Visual Studio 16 2019",
         "Visual Studio 15 2017",

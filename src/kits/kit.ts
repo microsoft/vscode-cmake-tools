@@ -764,8 +764,18 @@ const VsGenerators: { [key: string]: string } = {
     14: 'Visual Studio 14 2015',
     15: 'Visual Studio 15 2017',
     16: 'Visual Studio 16 2019',
-    17: 'Visual Studio 17 2022'
+    17: 'Visual Studio 17 2022',
+    18: 'Visual Studio 18 2026'
 };
+
+/**
+ * Get the CMake generator name for a given Visual Studio version
+ * @param version The major version of Visual Studio (e.g., '17' for VS 2022, '18' for VS 2026)
+ * @returns The CMake generator name, or undefined if the version is not recognized
+ */
+export function vsGeneratorForVersion(version: string): string | undefined {
+    return VsGenerators[version];
+}
 
 /**
  * Try to get a VSKit from a VS installation and architecture
