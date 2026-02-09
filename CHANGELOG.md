@@ -8,6 +8,7 @@ Features:
 
 Bug Fixes:
 
+- Fix "CMake: Run Without Debugging" not changing the working directory when the build directory changes. [#4549](https://github.com/microsoft/vscode-cmake-tools/issues/4549)
 - Fix CMake script path links not working in CHS/CSY/FRA/PLK locales due to localized quotes. [#4383](https://github.com/microsoft/vscode-cmake-tools/issues/4383)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix `cmake.compileFile` failing to find compilation info when using presets without `CMAKE_EXPORT_COMPILE_COMMANDS`. [#4484](https://github.com/microsoft/vscode-cmake-tools/issues/4484)
