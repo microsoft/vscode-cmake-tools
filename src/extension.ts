@@ -1669,8 +1669,22 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.stop());
     }
 
-    quickStart(folder?: vscode.WorkspaceFolder) {
+    async quickStart(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("quickStart");
+
+        // Check if there are no workspace folders open
+        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+            const openFolder = localize('open.folder', 'Open Folder');
+            const result = await vscode.window.showErrorMessage(
+                localize('no.folder.open.for.quickstart', 'No folder is open. Please open a folder to use CMake: Quick Start.'),
+                openFolder
+            );
+            if (result === openFolder) {
+                await vscode.commands.executeCommand('vscode.openFolder');
+            }
+            return -2;
+        }
+
         return this.runCMakeCommandForProject(cmakeProject => cmakeProject.quickStart(folder));
     }
 
