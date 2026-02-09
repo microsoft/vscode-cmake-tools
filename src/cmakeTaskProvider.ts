@@ -228,9 +228,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
-            // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
-            // Only use it as a WorkspaceFolder if it's an object (not a number or null).
-            const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
+            const workspaceFolder = CMakeTaskProvider.getWorkspaceFolderFromTask(task);
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                     new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
@@ -244,9 +242,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
-            // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
-            // Only use it as a WorkspaceFolder if it's an object (not a number or null).
-            const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
+            const workspaceFolder = CMakeTaskProvider.getWorkspaceFolderFromTask(task);
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                     new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
@@ -254,6 +250,21 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             return resolvedTask;
         }
         return task;
+    }
+
+    /**
+     * Extracts the workspace folder from a task's scope.
+     * task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
+     * When the scope is not a WorkspaceFolder (e.g. tasks defined in .code-workspace files),
+     * falls back to the active project's workspace folder or the first available workspace folder.
+     */
+    private static getWorkspaceFolderFromTask(task: CMakeTask): vscode.WorkspaceFolder | undefined {
+        if (task.scope && typeof task.scope === 'object') {
+            return task.scope as vscode.WorkspaceFolder;
+        }
+        // For tasks defined in .code-workspace files, task.scope is TaskScope.Workspace (a number).
+        // Try to resolve a workspace folder from the active project or available workspace folders.
+        return getActiveProject()?.workspaceFolder ?? vscode.workspace.workspaceFolders?.[0];
     }
 
     public static async findBuildTask(workspaceFolder: string, presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {

@@ -7,6 +7,7 @@ Features:
 
 Bug Fixes:
 
+- Fix tasks defined in `.code-workspace` files getting stuck with `Cannot read properties of undefined (reading 'path')` error. [#4529](https://github.com/microsoft/vscode-cmake-tools/issues/4529)
 - Fix CMake script path links not working in CHS/CSY/FRA/PLK locales due to localized quotes. [#4383](https://github.com/microsoft/vscode-cmake-tools/issues/4383)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix `cmake.compileFile` failing to find compilation info when using presets without `CMAKE_EXPORT_COMPILE_COMMANDS`. [#4484](https://github.com/microsoft/vscode-cmake-tools/issues/4484)
