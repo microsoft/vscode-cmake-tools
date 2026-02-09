@@ -1675,7 +1675,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
             const openFolder = localize('open.folder', 'Open Folder');
             const result = await vscode.window.showErrorMessage(
-                localize('no.folder.open', 'No folder is open.'),
+                localize('no.folder.open.for.quickstart', 'No folder is open. Please open a folder to use CMake: Quick Start.'),
                 openFolder
             );
             if (result === openFolder) {
