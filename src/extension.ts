@@ -52,6 +52,7 @@ import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@
 import { deIntegrateTestExplorer } from "@cmt/ctest";
 import collections from '@cmt/diagnostics/collections';
 import { LanguageServiceData } from './languageServices/languageServiceData';
+import { CMakeCacheEditorProvider } from '@cmt/ui/cmakeCacheEditorProvider';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2640,12 +2641,26 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 
     // Register a protocol handler to serve localized schemas
     vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
+
     await setContextAndStore("inCMakeProject", true);
 
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
     await extensionManager.init();
+
+    // Register the CMake Cache Editor custom text editor provider
+    // This enables Ctrl+S to save in the CMake Cache Editor UI
+    // Registered after extensionManager is initialized to ensure it's available in the callback
+    context.subscriptions.push(CMakeCacheEditorProvider.register(context, () => {
+        // Trigger reconfigure after saving the cache
+        if (extensionManager) {
+            const project = extensionManager.getActiveProject();
+            if (project) {
+                void project.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            }
+        }
+    }));
 
     // need the extensionManager to be initialized for this.
     pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
