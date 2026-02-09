@@ -7,7 +7,7 @@ Features:
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
 
 Bug Fixes:
-
+- Clarify that semicolons in `cmake.configureSettings` string values are escaped, and array notation should be used for CMake lists. [#4585](https://github.com/microsoft/vscode-cmake-tools/issues/4585)
 - Fix "CMake: Quick Start" command failing silently when no folder is open. Now shows an error message with an option to open a folder. [#4504](https://github.com/microsoft/vscode-cmake-tools/issues/4504)
 - Fix "CMake: Run Without Debugging" not changing the working directory when the build directory changes. [#4549](https://github.com/microsoft/vscode-cmake-tools/issues/4549)
 - Fix CMake script path links not working in CHS/CSY/FRA/PLK locales due to localized quotes. [#4383](https://github.com/microsoft/vscode-cmake-tools/issues/4383)
