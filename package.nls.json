@@ -21,6 +21,7 @@
         ]
     },
     "cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
+    "cmake-tools.command.cmake.clearBuildDiagnostics.title": "Clear Build Diagnostics",
     "cmake-tools.command.cmake.editKits.title": "Edit User-Local CMake Kits",
     "cmake-tools.command.cmake.scanForKits.title": "Scan for Kits",
     "cmake-tools.command.cmake.scanForCompilers.title": "Scan for Compilers",

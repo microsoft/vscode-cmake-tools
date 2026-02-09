@@ -133,12 +133,12 @@
         {
             "language": "cmake",
             "scopeName": "source.cmake",
-            "path": "./syntaxes/CMake.tmLanguage"
+            "path": "./syntaxes/CMake.tmLanguage.json"
         },
         {
             "language": "cmake-cache",
             "scopeName": "source.cmakecache",
-            "path": "./syntaxes/CMakeCache.tmLanguage"
+            "path": "./syntaxes/CMakeCache.tmLanguage.json"
         }
     ],
     "customEditors": [
@@ -299,6 +299,12 @@
       {
         "command": "cmake.logDiagnostics",
         "title": "%cmake-tools.command.cmake.logDiagnostics.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.clearBuildDiagnostics",
+        "title": "%cmake-tools.command.cmake.clearBuildDiagnostics.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
