@@ -13,6 +13,7 @@ import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/c
 import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { populateCollection } from '@cmt/diagnostics/util';
+import collections from '@cmt/diagnostics/collections';
 import { getTestResourceFilePath } from '@test/util';
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
@@ -974,5 +975,33 @@ suite('Diagnostics', () => {
         expect(all2.code).to.eq(undefined);
         expect(all2.message).to.eq('The full include-list:\n#include "array.h"             // for ARRAY_SIZE');
         expect(all2.severity).to.eq('note');
+    });
+
+    test('clearAll clears all diagnostic collections', () => {
+        // Add some diagnostics to each collection
+        const testUri = vscode.Uri.file('/test/file.cpp');
+        const testDiagnostic = new vscode.Diagnostic(
+            new vscode.Range(0, 0, 0, 10),
+            'Test diagnostic',
+            vscode.DiagnosticSeverity.Error
+        );
+
+        // Populate the collections
+        collections.cmake.set(testUri, [testDiagnostic]);
+        collections.build.set(testUri, [testDiagnostic]);
+        collections.presets.set(testUri, [testDiagnostic]);
+
+        // Verify diagnostics were added
+        expect(collections.cmake.has(testUri)).to.be.true;
+        expect(collections.build.has(testUri)).to.be.true;
+        expect(collections.presets.has(testUri)).to.be.true;
+
+        // Clear all collections
+        collections.clearAll();
+
+        // Verify all collections are cleared
+        expect(collections.cmake.has(testUri)).to.be.false;
+        expect(collections.build.has(testUri)).to.be.false;
+        expect(collections.presets.has(testUri)).to.be.false;
     });
 });
