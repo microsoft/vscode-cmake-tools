@@ -3022,8 +3022,9 @@ export class CMakeProject {
         if (launchBehavior !== "newterminal") {
             for (const [, terminal] of this.launchTerminals) {
                 const creationOptions = terminal.creationOptions! as vscode.TerminalOptions;
-                // If the environment has changed at all since the last run, dispose of this terminal
-                if (JSON.stringify(creationOptions.env) !== JSON.stringify(options.env)) {
+                // If the environment or working directory has changed at all since the last run, dispose of this terminal
+                if (JSON.stringify(creationOptions.env) !== JSON.stringify(options.env) ||
+                    JSON.stringify(creationOptions.cwd) !== JSON.stringify(options.cwd)) {
                     terminal.dispose();
                     break;
                 }
