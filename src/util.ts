@@ -303,7 +303,7 @@ export function cmakeify(value: (string | boolean | number | string[] | CMakeVal
         ret.value = value ? 'TRUE' : 'FALSE';
     } else if (isString(value)) {
         ret.type = 'STRING';
-        ret.value = value;
+        ret.value = replaceAll(value, ';', '\\;');
     } else if (typeof value === 'number') {
         ret.type = 'STRING';
         ret.value = value.toString();
