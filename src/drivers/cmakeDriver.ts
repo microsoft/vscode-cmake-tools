@@ -2,6 +2,7 @@
  * Defines base class for CMake drivers
  */ /** */
 
+import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lodash from "lodash";
@@ -532,6 +533,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     private readonly _compileTerms = new Map<string, vscode.Terminal>();
 
     /**
+     * The maximum number of characters to send directly via terminal.sendText().
+     * Commands longer than this are written to a temporary script file and executed
+     * to avoid truncation by the terminal's input buffer.
+     */
+    private readonly maxDirectTerminalCommandLength = 4000;
+
+    /**
      * Launch the given compilation command in an embedded terminal.
      * @param cmd The compilation command from a compilation database to run
      */
@@ -561,8 +569,35 @@ export abstract class CMakeDriver implements vscode.Disposable {
             existing = term;
         }
         existing.show();
-        existing.sendText(cmd.command + '\r\n');
+
+        if (cmd.command.length > this.maxDirectTerminalCommandLength) {
+            const terminalCommand = await this.createCompileScript(cmd.command);
+            existing.sendText(terminalCommand + '\r\n');
+        } else {
+            existing.sendText(cmd.command + '\r\n');
+        }
         return existing;
+    }
+
+    /**
+     * Write a long compile command to a temporary script file and return
+     * the command string that executes (and then deletes) the script.
+     */
+    private async createCompileScript(command: string): Promise<string> {
+        const isWindows = process.platform === 'win32';
+        const ext = isWindows ? '.cmd' : '.sh';
+        const tmpDir = os.tmpdir();
+        const scriptPath = path.join(tmpDir, `cmake-compile-${Date.now()}-${process.pid}${ext}`);
+
+        if (isWindows) {
+            const scriptContent = `@echo off\r\n${command}\r\n`;
+            await fs.writeFile(scriptPath, scriptContent);
+            return `"${scriptPath}" & del "${scriptPath}"`;
+        } else {
+            const scriptContent = `#!/bin/sh\n${command}\n`;
+            await fs.writeFile(scriptPath, scriptContent);
+            return `sh '${scriptPath}' ; rm -f '${scriptPath}'`;
+        }
     }
 
     /**
