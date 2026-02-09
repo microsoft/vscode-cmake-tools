@@ -5,11 +5,8 @@
 Features:
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 
-Documentation:
-- Clarify that semicolons in `cmake.configureSettings` string values are escaped, and array notation should be used for CMake lists. [#4585](https://github.com/microsoft/vscode-cmake-tools/issues/4585)
-
 Bug Fixes:
-
+- Clarify that semicolons in `cmake.configureSettings` string values are escaped, and array notation should be used for CMake lists. [#4585](https://github.com/microsoft/vscode-cmake-tools/issues/4585)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
