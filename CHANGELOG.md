@@ -15,7 +15,7 @@ Bug Fixes:
 - Fix `cmake.compileFile` failing to find compilation info when using presets without `CMAKE_EXPORT_COMPILE_COMMANDS`. [#4484](https://github.com/microsoft/vscode-cmake-tools/issues/4484)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
-- Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#2500](https://github.com/microsoft/vscode-cmake-tools/issues/2500)
+- Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4660](https://github.com/microsoft/vscode-cmake-tools/pull/4660)
 
 ## 1.22.27
 
