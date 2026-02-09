@@ -7,6 +7,7 @@ Features:
 
 Bug Fixes:
 
+- Fix long compilation commands being truncated when running "Compile Active File" by writing commands exceeding terminal buffer limits to a temporary script file. [#3575](https://github.com/microsoft/vscode-cmake-tools/issues/3575)
 - Fix CMake script path links not working in CHS/CSY/FRA/PLK locales due to localized quotes. [#4383](https://github.com/microsoft/vscode-cmake-tools/issues/4383)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
