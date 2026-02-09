@@ -15,6 +15,7 @@ Bug Fixes:
 - Fix `cmake.compileFile` failing to find compilation info when using presets without `CMAKE_EXPORT_COMPILE_COMMANDS`. [#4484](https://github.com/microsoft/vscode-cmake-tools/issues/4484)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
+- Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 
 ## 1.22.27
 
