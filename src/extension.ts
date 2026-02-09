@@ -50,6 +50,7 @@ import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from "@cmt/ctest";
+import collections from '@cmt/diagnostics/collections';
 import { LanguageServiceData } from './languageServices/languageServiceData';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -1919,6 +1920,11 @@ export class ExtensionManager implements vscode.Disposable {
         output.show();
     }
 
+    async clearBuildDiagnostics() {
+        telemetry.logEvent("clearBuildDiagnostics");
+        collections.clearAll();
+    }
+
     activeCMakeWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
         return this.getActiveProject()?.workspaceFolder;
     }
@@ -2425,6 +2431,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'openSettings',
         'viewLog',
         'logDiagnostics',
+        'clearBuildDiagnostics',
         'compileFile',
         'selectWorkspace',
         'tasksBuildCommand',
