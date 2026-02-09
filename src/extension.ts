@@ -1796,6 +1796,54 @@ export class ExtensionManager implements vscode.Disposable {
         }, folder);
     }
 
+    private async pickTestName(cmakeProject: CMakeProject): Promise<string | undefined> {
+        const testNames = cmakeProject.cTestController.getTestNames();
+        if (!testNames || testNames.length === 0) {
+            void vscode.window.showWarningMessage(localize('no.ctest.tests.found', 'No CTest tests found. Make sure to configure and build your project first.'));
+            return undefined;
+        }
+        if (testNames.length === 1) {
+            return testNames[0];
+        }
+        const chosen = await vscode.window.showQuickPick(testNames, {
+            placeHolder: localize('choose.test', 'Select a test')
+        });
+        return chosen;
+    }
+
+    testProgram(folder?: vscode.WorkspaceFolder | string) {
+        telemetry.logEvent("substitution", { command: "testProgram" });
+        return this.queryCMakeProject(async cmakeProject => {
+            const testName = await this.pickTestName(cmakeProject);
+            if (!testName) {
+                return '';
+            }
+            return cmakeProject.cTestController.testProgram(testName);
+        }, folder);
+    }
+
+    testWorkingDirectory(folder?: vscode.WorkspaceFolder | string) {
+        telemetry.logEvent("substitution", { command: "testWorkingDirectory" });
+        return this.queryCMakeProject(async cmakeProject => {
+            const testName = await this.pickTestName(cmakeProject);
+            if (!testName) {
+                return '';
+            }
+            return cmakeProject.cTestController.testWorkingDirectory(testName);
+        }, folder);
+    }
+
+    testArgs(folder?: vscode.WorkspaceFolder | string) {
+        telemetry.logEvent("substitution", { command: "testArgs" });
+        return this.queryCMakeProject(async cmakeProject => {
+            const testName = await this.pickTestName(cmakeProject);
+            if (!testName) {
+                return [];
+            }
+            return cmakeProject.cTestController.testArgs(testName);
+        }, folder);
+    }
+
     buildTargetName(folder?: vscode.WorkspaceFolder | string) {
         telemetry.logEvent("substitution", { command: "buildTargetName" });
         return this.queryCMakeProject(cmakeProject => cmakeProject.buildTargetName(), folder);
@@ -2401,6 +2449,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'getLaunchTargetDirectory',
         'getLaunchTargetFilename',
         'getLaunchTargetName',
+        'testProgram',
+        'testWorkingDirectory',
+        'testArgs',
         'buildTargetName',
         'buildKit',
         'buildType',

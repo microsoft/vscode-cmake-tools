@@ -213,8 +213,9 @@ You can substitute the value of any variable in the CMake cache by adding a `com
 
 You can also construct launch.json configurations that allow you to debug tests in the Test Explorer.
 
-> **Note:**
-> These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
+There are two forms of these variables:
+- `${command:cmake.testProgram}`, `${command:cmake.testArgs}`, `${command:cmake.testWorkingDirectory}` — These are resolved as VS Code command substitutions and work both from the **Test Explorer** and the **Run and Debug** panel. When launched from Run and Debug, you will be prompted to select a test.
+- `${cmake.testProgram}`, `${cmake.testArgs}`, `${cmake.testWorkingDirectory}` — These are only resolved when launching from the **Test Explorer** UI. If used from the Run and Debug panel, they will not be substituted.
 
 The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, `cmake.testArgs` for 
 the `args` field, and `cmake.testWorkingDirectory` for the `cwd` field.
@@ -227,11 +228,10 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppdbg",
     "request": "launch",
-    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
-    "cwd": "${cmake.testWorkingDirectory}",
-    "program": "${cmake.testProgram}",
-    "args": [ "${cmake.testArgs}"],
+    "cwd": "${command:cmake.testWorkingDirectory}",
+    "program": "${command:cmake.testProgram}",
+    "args": [ "${command:cmake.testArgs}"],
 }
 ```
 ### msvc
@@ -240,10 +240,9 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppvsdbg",
     "request": "launch",
-    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
-    "program": "${cmake.testProgram}",
-    "args": [ "${cmake.testArgs}"],
+    "program": "${command:cmake.testProgram}",
+    "args": [ "${command:cmake.testArgs}"],
 }
 ```
 
