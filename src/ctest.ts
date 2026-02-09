@@ -1264,7 +1264,7 @@ export class CTestDriver implements vscode.Disposable {
         chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${command:cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
 
         // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
-        // since we need to repalce the quotes as well.
+        // since we need to replace the quotes as well.
         chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
         chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${command:cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
 
