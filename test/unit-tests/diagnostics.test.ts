@@ -722,6 +722,216 @@ suite('Diagnostics', () => {
         expect(build_consumer.compilers.msvc.diagnostics[0].location.start.character).to.eq(0);
     });
 
+    interface LinkerTestCase {
+        line: string;
+        expectedFile: string;
+        expectedCode: string;
+        expectedSeverity: string;
+        expectedMessageContains: string;
+    }
+
+    const msvcLinkerTestCases: LinkerTestCase[] = [
+        // Fatal error: cannot open input file
+        {
+            line: 'LINK : fatal error LNK1181: cannot open input file "non_existent_file.obj"',
+            expectedFile: 'linker',
+            expectedCode: 'LNK1181',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'cannot open input file'
+        },
+        // Unresolved external symbol with build prefix
+        {
+            line: '[build] Validation_TCM_SURFACE_BASED.cpp.obj : error LNK2019: unresolved external symbol "class ParameterValidationException __cdecl mw::Toolpath::MakeException_35521(void)" (?MakeException_35521@Toolpath@mw@@YA?AVParameterValidationException@@XZ) referenced in function "class std::vector<class misc::mwException,class std::allocator<class misc::mwException> > __cdecl mw::Toolpath::Validate_TCM_SURFACE_BASED(class mw::Toolpath::CalculationParams const &,class misc::mwAutoPointer<class cadcam::mwTool> const &,bool)" (?Validate_TCM_SURFACE_BASED@Toolpath@mw@@YA?AV?$vector@VmwException@misc@@V?$allocator@VmwException@misc@@@std@@@std@@AEBVCalculationParams@12@AEBV?$mwAutoPointer@VmwTool@cadcam@@@misc@@_N@Z)',
+            expectedFile: 'Validation_TCM_SURFACE_BASED.cpp.obj',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol'
+        },
+        // Simple unresolved external symbol
+        {
+            line: 'main.obj : error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'main.obj',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol _foo'
+        },
+        // Unresolved external with decorated name
+        {
+            line: 'utils.obj : error LNK2019: unresolved external symbol "void __cdecl bar(void)" referenced in function main',
+            expectedFile: 'utils.obj',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol'
+        },
+        // Library object reference
+        {
+            line: 'libmath.lib(math.obj) : error LNK2001: unresolved external symbol _sin',
+            expectedFile: 'libmath.lib(math.obj)',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol _sin'
+        },
+        // Warning: PDB not found
+        {
+            line: 'module.obj : warning LNK4099: PDB \'vc142.pdb\' was not found with \'module.obj\'',
+            expectedFile: 'module.obj',
+            expectedCode: 'LNK4099',
+            expectedSeverity: 'warning',
+            expectedMessageContains: 'PDB'
+        },
+        // Warning: locally defined symbol imported
+        {
+            line: 'lib.lib(other.obj) : warning LNK4049: locally defined symbol _baz imported',
+            expectedFile: 'lib.lib(other.obj)',
+            expectedCode: 'LNK4049',
+            expectedSeverity: 'warning',
+            expectedMessageContains: 'locally defined symbol'
+        },
+        // Fatal error: cannot open file
+        {
+            line: 'fatal error LNK1104: cannot open file \'kernel32.lib\'',
+            expectedFile: 'linker',
+            expectedCode: 'LNK1104',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'cannot open file'
+        },
+        // Fatal error: PDB error
+        {
+            line: 'fatal error LNK1318: Unexpected PDB error; OK (0)',
+            expectedFile: 'linker',
+            expectedCode: 'LNK1318',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'Unexpected PDB error'
+        },
+        // Absolute path
+        {
+            line: 'C:\\projects\\demo\\main.obj : error LNK2019: unresolved external symbol _printf referenced in function main',
+            expectedFile: 'C:\\projects\\demo\\main.obj',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_printf'
+        },
+        // Build directory path
+        {
+            line: 'D:\\build\\lib\\foo.lib(bar.obj) : error LNK2001: unresolved external symbol _bar',
+            expectedFile: 'D:\\build\\lib\\foo.lib(bar.obj)',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_bar'
+        },
+        // Complex decorated name
+        {
+            line: 'utils.obj : error LNK2019: unresolved external symbol "int __cdecl add(int,int)" (?add@@YAHHH@Z) referenced in function main',
+            expectedFile: 'utils.obj',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'add'
+        },
+        // Error summary
+        {
+            line: 'error LNK1120: 1 unresolved externals',
+            expectedFile: 'linker',
+            expectedCode: 'LNK1120',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved externals'
+        },
+        // Multiple definitions error
+        {
+            line: 'error LNK1169: one or more multiply defined symbols found',
+            expectedFile: 'linker',
+            expectedCode: 'LNK1169',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'multiply defined'
+        },
+        // Colon variant (no space after obj)
+        {
+            line: 'main.obj: error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'main.obj',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_foo'
+        },
+        // Library object with colon
+        {
+            line: 'lib.lib(obj.obj):error LNK2019: unresolved external symbol _bar',
+            expectedFile: 'lib.lib(obj.obj)',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_bar'
+        },
+        // Destructor
+        {
+            line: 'file.obj : error LNK2019: unresolved external symbol "public: __cdecl MyClass::~MyClass(void)" (??1MyClass@@QEAA@XZ) referenced in function main',
+            expectedFile: 'file.obj',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'MyClass'
+        },
+        // Template instantiation
+        {
+            line: 'tmpl.obj : error LNK2001: unresolved external symbol "class std::vector<int,class std::allocator<int> > __cdecl getVec(void)"',
+            expectedFile: 'tmpl.obj',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'vector'
+        },
+        // Path with spaces
+        {
+            line: 'C:\\Program Files\\My Project\\main.obj : error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'C:\\Program Files\\My Project\\main.obj',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_foo'
+        },
+        // Entry point error
+        {
+            line: 'LINK : error LNK2001: unresolved external symbol _WinMain@16',
+            expectedFile: 'linker',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'WinMain'
+        },
+        // Entry point must be defined
+        {
+            line: 'LINK : fatal error LNK1561: entry point must be defined',
+            expectedFile: 'linker',
+            expectedCode: 'LNK1561',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'entry point'
+        }
+    ];
+
+    // Generate individual tests for each linker error case
+    msvcLinkerTestCases.forEach((testCase, index) => {
+        test(`Parse MSVC Linker errors - Case ${index + 1}: ${testCase.expectedCode}`, () => {
+            const test_consumer = new diags.CompileOutputConsumer(
+                new ConfigurationReader({} as ExtensionConfigurationSettings)
+            );
+            feedLines(test_consumer, [], [testCase.line]);
+
+            expect(
+                test_consumer.compilers.msvc.diagnostics,
+                `Failed to parse: ${testCase.line}`
+            ).to.have.length(1);
+
+            const diag = test_consumer.compilers.msvc.diagnostics[0];
+            expect(diag.file, `File mismatch for: ${testCase.line}`).to.eq(
+                testCase.expectedFile
+            );
+            expect(diag.code, `Code mismatch for: ${testCase.line}`).to.eq(
+                testCase.expectedCode
+            );
+            expect(
+                diag.severity,
+                `Severity mismatch for: ${testCase.line}`
+            ).to.eq(testCase.expectedSeverity);
+            expect(
+                diag.message,
+                `Message mismatch for: ${testCase.line}`
+            ).to.include(testCase.expectedMessageContains);
+        });
+    });
+
     test('Parse IAR error', () => {
         const lines = [
             '      kjfdlkj kfjg;',
