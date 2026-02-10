@@ -778,6 +778,51 @@ export function vsGeneratorForVersion(version: string): string | undefined {
 }
 
 /**
+ * Get the preferred CMake generator for a Visual Studio kit.
+ * This is useful for kits that were scanned before a VS version was added to the VsGenerators mapping.
+ * @param kit The Visual Studio kit
+ * @returns The preferred generator, or undefined if the kit is not a VS kit or the VS version is not recognized
+ */
+export async function getVsKitPreferredGenerator(kit: Kit): Promise<CMakeGenerator | undefined> {
+    if (!kit.visualStudio || !kit.visualStudioArchitecture) {
+        return undefined;
+    }
+
+    // If the kit already has a preferredGenerator, return it
+    if (kit.preferredGenerator) {
+        return kit.preferredGenerator;
+    }
+
+    // Try to derive the preferredGenerator from the VS installation
+    const vsInstall = await getVSInstallForKit(kit);
+    if (!vsInstall) {
+        return undefined;
+    }
+
+    const version = /^(\d+)+./.exec(vsInstall.installationVersion);
+    if (!version) {
+        return undefined;
+    }
+
+    const generatorName = VsGenerators[version[1]];
+    if (!generatorName) {
+        return undefined;
+    }
+
+    const majorVersion = parseInt(vsInstall.installationVersion);
+    const hostArch = kit.visualStudioArchitecture;
+    const host: string = hostArch.toLowerCase().replace(/ /g, "").startsWith("host=") ? hostArch : "host=" + hostArch;
+    // For VS kits, use the hostArch as the target platform (x64 -> x64)
+    const targetArch = hostArch;
+
+    return {
+        name: generatorName,
+        platform: generatorPlatformFromVSArch[targetArch] as string || targetArch,
+        toolset: majorVersion < 15 ? undefined : host
+    };
+}
+
+/**
  * Try to get a VSKit from a VS installation and architecture
  * @param inst A VS installation from vswhere
  * @param hostArch The host architecture
