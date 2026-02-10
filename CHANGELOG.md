@@ -10,6 +10,7 @@ Improvements:
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
 
 Bug Fixes:
+- Fix spurious preset reloads triggered by unrelated file system events such as builds, git commits, and `cmake.copyCompileCommands`. Migrated file watching from chokidar to VS Code's built-in `FileSystemWatcher` API, which also resolves high CPU usage on Apple M1. [#4703](https://github.com/microsoft/vscode-cmake-tools/issues/4703) [#2967](https://github.com/microsoft/vscode-cmake-tools/issues/2967)
 - Clarify that semicolons in `cmake.configureSettings` string values are escaped, and array notation should be used for CMake lists. [#4585](https://github.com/microsoft/vscode-cmake-tools/issues/4585)
 - Fix "CMake: Quick Start" command failing silently when no folder is open. Now shows an error message with an option to open a folder. [#4504](https://github.com/microsoft/vscode-cmake-tools/issues/4504)
 - Fix "CMake: Run Without Debugging" not changing the working directory when the build directory changes. [#4549](https://github.com/microsoft/vscode-cmake-tools/issues/4549)
