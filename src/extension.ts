@@ -50,6 +50,7 @@ import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
 import { deIntegrateTestExplorer } from "@cmt/ctest";
+import collections from '@cmt/diagnostics/collections';
 import { LanguageServiceData } from './languageServices/languageServiceData';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -1668,8 +1669,22 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.stop());
     }
 
-    quickStart(folder?: vscode.WorkspaceFolder) {
+    async quickStart(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("quickStart");
+
+        // Check if there are no workspace folders open
+        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+            const openFolder = localize('open.folder', 'Open Folder');
+            const result = await vscode.window.showErrorMessage(
+                localize('no.folder.open.for.quickstart', 'No folder is open. Please open a folder to use CMake: Quick Start.'),
+                openFolder
+            );
+            if (result === openFolder) {
+                await vscode.commands.executeCommand('vscode.openFolder');
+            }
+            return -2;
+        }
+
         return this.runCMakeCommandForProject(cmakeProject => cmakeProject.quickStart(folder));
     }
 
@@ -1903,6 +1918,11 @@ export class ExtensionManager implements vscode.Disposable {
         output.clear();
         output.appendLine(JSON.stringify(result, null, 2));
         output.show();
+    }
+
+    async clearBuildDiagnostics() {
+        telemetry.logEvent("clearBuildDiagnostics");
+        collections.clearAll();
     }
 
     activeCMakeWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
@@ -2411,6 +2431,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'openSettings',
         'viewLog',
         'logDiagnostics',
+        'clearBuildDiagnostics',
         'compileFile',
         'selectWorkspace',
         'tasksBuildCommand',

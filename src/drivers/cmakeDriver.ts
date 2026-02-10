@@ -1437,7 +1437,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = await this.generateInitCacheFlags();
         // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
-        return init_cache_flags.concat(preset.configureArgs(configPreset), await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()}))));
+        const expandedConfigureArgs = await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()})));
+        const expandedArgs = init_cache_flags.concat(preset.configureArgs(configPreset), expandedConfigureArgs);
+        const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
+        const config = vscode.workspace.getConfiguration("cmake", configurationScope);
+        const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
+        const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
+        const presetCacheVariables = configPreset.cacheVariables ?? {};
+        const hasExportCompileCommands = Object.prototype.hasOwnProperty.call(presetCacheVariables, 'CMAKE_EXPORT_COMPILE_COMMANDS')
+            || expandedArgs.some(arg => arg.startsWith('-DCMAKE_EXPORT_COMPILE_COMMANDS'));
+        if (!hasExportCompileCommands) {
+            const exportCompileCommandsValue = util.cmakeify(exportCompileCommandsFile);
+            expandedArgs.push(`-DCMAKE_EXPORT_COMPILE_COMMANDS:${exportCompileCommandsValue.type}=${exportCompileCommandsValue.value}`);
+        }
+        return expandedArgs;
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
