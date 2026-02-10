@@ -13,7 +13,7 @@ import { OutputConsumer } from '../../src/proc';
 import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/config';
 import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { populateCollection } from '@cmt/diagnostics/util';
+import { populateCollection, addDiagnosticToCollection, diagnosticSeverity } from '@cmt/diagnostics/util';
 import collections from '@cmt/diagnostics/collections';
 import { getTestResourceFilePath } from '@test/util';
 
@@ -1251,5 +1251,68 @@ suite('Diagnostics', () => {
         expect(collections.cmake.has(testUri)).to.be.false;
         expect(collections.build.has(testUri)).to.be.false;
         expect(collections.presets.has(testUri)).to.be.false;
+    });
+
+    test('diagnosticSeverity returns correct severities', () => {
+        expect(diagnosticSeverity('warning')).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(diagnosticSeverity('error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('fatal error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('catastrophic error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('note')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('info')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('remark')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('unknown')).to.be.undefined;
+    });
+
+    test('addDiagnosticToCollection adds to empty collection', () => {
+        const coll = vscode.languages.createDiagnosticCollection('test-add-diag');
+        const diag = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 10), 'test error', vscode.DiagnosticSeverity.Error);
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag });
+        const uri = vscode.Uri.file('/test/file.cpp');
+        expect(coll.has(uri)).to.be.true;
+        expect(coll.get(uri)!.length).to.eq(1);
+        coll.dispose();
+    });
+
+    test('addDiagnosticToCollection appends to existing diagnostics', () => {
+        const coll = vscode.languages.createDiagnosticCollection('test-add-diag-append');
+        const diag1 = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 10), 'error 1', vscode.DiagnosticSeverity.Error);
+        const diag2 = new vscode.Diagnostic(new vscode.Range(1, 0, 1, 10), 'error 2', vscode.DiagnosticSeverity.Error);
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag: diag1 });
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag: diag2 });
+        const uri = vscode.Uri.file('/test/file.cpp');
+        expect(coll.has(uri)).to.be.true;
+        expect(coll.get(uri)!.length).to.eq(2);
+        coll.dispose();
+    });
+
+    test('CompileOutputConsumer fires onDiagnostic event', () => {
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
+        const fired: diags.RawDiagnosticWithSource[] = [];
+        consumer.onDiagnostic(e => fired.push(e));
+        feedLines(consumer, [], [
+            '/some/path/here:4:26: error: some error message'
+        ]);
+        expect(fired).to.have.length(1);
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('error');
+        expect(fired[0].diagnostic.message).to.eq('some error message');
+        consumer.dispose();
+    });
+
+    test('CompileOutputConsumer fires onDiagnostic for each diagnostic', () => {
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
+        const fired: diags.RawDiagnosticWithSource[] = [];
+        consumer.onDiagnostic(e => fired.push(e));
+        feedLines(consumer, [], [
+            '/path/a.cpp:1:1: warning: first warning',
+            '/path/b.cpp:2:1: error: first error'
+        ]);
+        expect(fired).to.have.length(2);
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('warning');
+        expect(fired[1].source).to.eq('GCC');
+        expect(fired[1].diagnostic.severity).to.eq('error');
+        consumer.dispose();
     });
 });
