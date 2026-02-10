@@ -2120,13 +2120,15 @@ export class CMakeProject {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
                 if (drv.config.parseBuildDiagnostics) {
                     consumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
-                        if (!(drv!.config.enableOutputParsers?.includes(source.toLowerCase()) ?? false)) {
+                        if (!drv!.config.enableOutputParsers?.includes(source.toLowerCase())) {
                             return;
                         }
                         const severity = diagnosticSeverity(rawDiag.severity);
                         if (severity === undefined) {
                             return;
                         }
+                        // Use synchronous path resolution for immediate display;
+                        // final populateCollection call after build corrects paths with async resolution.
                         const filepath = util.resolvePath(rawDiag.file, drv!.binaryDir);
                         const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
                         diag.source = source;
