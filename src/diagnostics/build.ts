@@ -156,7 +156,7 @@ export class CompileOutputConsumer implements OutputConsumer {
      */
     private createLinkerDiagnosticsHandler(basePaths: string[]) {
         const linkErrorsFilename = 'linkerrors.txt';
-        const linkerErrors: Array<{ code: string; message: string; source: string; lineNumber: number }> = [];
+        const linkerErrors: { code: string; message: string; source: string; lineNumber: number }[] = [];
         const linkerDiagIndexMap = new Map<number, number>(); // Maps linkerErrors index to arrs index
         let ensuredLinkErrorsFile = false;
 
