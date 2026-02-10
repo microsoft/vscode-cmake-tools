@@ -336,6 +336,9 @@ export class PresetsParser {
     ): Promise<string> {
         // Merge process.env with settings environment (cmake.environment, cmake.configureEnvironment)
         // so that $penv{} can resolve variables from VS Code settings.
+        // When penvOverride is set, it fully replaces process.env in getParentEnvSubstitutions(),
+        // so we only set it when there are settings to merge — otherwise leave undefined to preserve
+        // the default process.env fallback behavior.
         const penvOverride = Object.keys(this._settingsEnvironment).length > 0
             ? EnvironmentUtils.merge([process.env, this._settingsEnvironment])
             : undefined;
