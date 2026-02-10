@@ -722,6 +722,66 @@ suite('Presets validation, inclusion, and expansion tests', () => {
         }).timeout(100000);
 
         /**
+         * Confirm that $penv{} in include paths resolves environment variables
+         * set via settingsEnvironment (cmake.environment / cmake.configureEnvironment).
+         * Also verify that settingsEnvironment takes precedence over process.env for $penv{}.
+         */
+        test('Validate `include` field supporting penv macro expansion with settings environment in v7', async () => {
+            // Remove any process.env.SETTINGS_TEST that might exist.
+            const origSettingsTest = process.env.SETTINGS_TEST;
+            delete process.env.SETTINGS_TEST;
+
+            // Set the settings environment to provide SETTINGS_TEST variable.
+            presetsParser.settingsEnvironment = { SETTINGS_TEST: sourceDirectory };
+
+            const v7WithInclude: any = lodash.cloneDeep(version7SupportedPresets);
+            v7WithInclude.include = ["$penv{SETTINGS_TEST}/test.json"];
+            v7WithInclude.configurePresets[0].name = "testSettingsName";
+
+            fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(v7WithInclude));
+
+            // Create the include file.
+            fs.writeFileSync(path.join(presetsParser.presetsPath, "..", "test.json"),
+                JSON.stringify(v3SupportedPresets));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            // Should succeed: SETTINGS_TEST is resolved from settingsEnvironment.
+            expect(presetsFileErrors).to.have.lengthOf(0);
+            expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
+
+            // Verify settingsEnvironment takes precedence over process.env for the same variable.
+            presetsFileErrors = [];
+            process.env.SETTINGS_TEST = "/nonexistent/path";
+            presetsParser.settingsEnvironment = { SETTINGS_TEST: sourceDirectory };
+
+            fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(v7WithInclude));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            // Should succeed: settingsEnvironment value (sourceDirectory) takes precedence.
+            expect(presetsFileErrors).to.have.lengthOf(0);
+            expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
+
+            // Clean up.
+            fs.rmSync(path.join(presetsParser.presetsPath, "..", "test.json"));
+            presetsParser.settingsEnvironment = {};
+            if (origSettingsTest !== undefined) {
+                process.env.SETTINGS_TEST = origSettingsTest;
+            } else {
+                delete process.env.SETTINGS_TEST;
+            }
+        }).timeout(100000);
+
+        /**
          * Validate the v8 supports `$schema` field.
          */
         test('Validate version 8 CMake Presets', async () => {

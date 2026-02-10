@@ -13,6 +13,7 @@ import rollbar from '@cmt/rollbar';
 import { ExpansionErrorHandler, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kits/kitsController';
+import { EnvironmentUtils } from '@cmt/environmentVariables';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kits/kit';
 import { getHostTargetArchString } from '@cmt/installs/visualStudio';
 import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode';
@@ -65,6 +66,10 @@ export class PresetsController implements vscode.Disposable {
             );
         }, presetsController._presetsChangedEmitter.fire, presetsController._userPresetsChangedEmitter.fire);
 
+        // Pass cmake.environment and cmake.configureEnvironment settings so that $penv{} in preset
+        // include paths can resolve variables defined in VS Code settings.
+        presetsController.updateSettingsEnvironment();
+
         // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
         // there might be timing issues, since listeners are invoked async.
         await presetsController.reapplyPresets();
@@ -92,10 +97,32 @@ export class PresetsController implements vscode.Disposable {
             await presetsController.reapplyPresets();
         });
 
+        // We need to reapply presets when environment settings change so that $penv{} expansions
+        // in include paths are re-evaluated with the updated environment variables.
+        project.workspaceContext.config.onChange('environment', async () => {
+            presetsController.updateSettingsEnvironment();
+            await presetsController.reapplyPresets();
+        });
+        project.workspaceContext.config.onChange('configureEnvironment', async () => {
+            presetsController.updateSettingsEnvironment();
+            await presetsController.reapplyPresets();
+        });
+
         return presetsController;
     }
 
     private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController, private isMultiProject: boolean) {}
+
+    /**
+     * Merges cmake.environment and cmake.configureEnvironment settings into a single
+     * environment object and passes it to the PresetsParser for $penv{} expansion.
+     * cmake.configureEnvironment takes precedence over cmake.environment.
+     */
+    private updateSettingsEnvironment(): void {
+        const env = this.project.workspaceContext.config.environment;
+        const configureEnv = this.project.workspaceContext.config.configureEnvironment;
+        this._presetsParser.settingsEnvironment = EnvironmentUtils.merge([env, configureEnv]);
+    }
 
     get presetsPath() {
         return this._presetsParser.presetsPath;
