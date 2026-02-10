@@ -22,8 +22,24 @@ export const LINKER_REGEX =
 
 export class Parser extends RawDiagnosticParser {
     doHandleLine(line: string) {
-        // First try the standard compiler diagnostic regex
-        let res = REGEX.exec(line);
+        // Try the linker error regex first (handles LINK prefix, file prefix, or standalone)
+        // Must be checked before compiler regex since linker errors can look similar
+        let res = LINKER_REGEX.exec(line);
+        if (res) {
+            const [full, _file, severity, code, message] = res;
+            return {
+                full,
+                file: 'linkerrors.txt',
+                location: new vscode.Range(0, 0, 0, 999),
+                severity,
+                message,
+                code,
+                related: []
+            };
+        }
+
+        // Then try the standard compiler diagnostic regex
+        res = REGEX.exec(line);
         if (res) {
             const [full, /* proc*/, file, location, severity, code, message] = res;
             const range = (() => {
@@ -48,23 +64,6 @@ export class Parser extends RawDiagnosticParser {
                 full,
                 file,
                 location: range,
-                severity,
-                message,
-                code,
-                related: []
-            };
-        }
-
-        // Try the linker error regex (handles LINK prefix, file prefix, or standalone)
-        res = LINKER_REGEX.exec(line);
-        if (res) {
-            const [full, file, severity, code, message] = res;
-            // Convert 'LINK' to 'linker' for display; undefined or empty means standalone
-            const actualFile = !file || file === 'LINK' ? 'linker' : file;
-            return {
-                full,
-                file: actualFile,
-                location: new vscode.Range(0, 0, 0, 999),
                 severity,
                 message,
                 code,

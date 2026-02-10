@@ -17,6 +17,7 @@ import * as iar from '@cmt/diagnostics/iar';
 import * as iwyu from '@cmt/diagnostics/iwyu';
 import { FileDiagnostic, RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ConfigurationReader } from '@cmt/config';
+import { fs } from '@cmt/pr';
 
 export class Compilers {
     [compiler: string]: RawDiagnosticParser;
@@ -60,6 +61,27 @@ export class CompileOutputConsumer implements OutputConsumer {
 
     async resolveDiagnostics(...basePaths: string[]): Promise<FileDiagnostic[]> {
         const diags_by_file = new Map<string, vscode.Diagnostic[]>();
+        const linkErrorsFilename = 'linkerrors.txt';
+        let ensuredLinkErrorsFile = false;
+
+        const ensureLinkErrorsFile = async () => {
+            if (ensuredLinkErrorsFile) {
+                return;
+            }
+            const buildDir = basePaths[0];
+            if (!buildDir) {
+                return;
+            }
+            const linkErrorsPath = util.resolvePath(linkErrorsFilename, buildDir);
+            if (!await util.checkFileExists(linkErrorsPath)) {
+                try {
+                    await fs.writeFile(linkErrorsPath, '');
+                } catch {
+                    // Best-effort: if this fails, diagnostics will still resolve to the path.
+                }
+            }
+            ensuredLinkErrorsFile = true;
+        };
 
         const severity_of = (p: string) => {
             switch (p) {
@@ -91,8 +113,14 @@ export class CompileOutputConsumer implements OutputConsumer {
         const parsers = util.objectPairs(by_source)
             .filter(([source, _]) => this.config.enableOutputParsers?.includes(source.toLowerCase()) ?? false);
         const arrs: FileDiagnostic[] = [];
+        if (this.compilers.msvc.diagnostics.some(diag => diag.file === linkErrorsFilename)) {
+            await ensureLinkErrorsFile();
+        }
         for (const [ source, diags ] of parsers) {
             for (const raw_diag of diags) {
+                if (raw_diag.file === linkErrorsFilename) {
+                    await ensureLinkErrorsFile();
+                }
                 const filepath = await this.resolvePath(raw_diag.file, basePaths);
                 const severity = severity_of(raw_diag.severity);
                 if (severity === undefined) {

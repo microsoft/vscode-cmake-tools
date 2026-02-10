@@ -734,7 +734,7 @@ suite('Diagnostics', () => {
         // Fatal error: cannot open input file
         {
             line: 'LINK : fatal error LNK1181: cannot open input file "non_existent_file.obj"',
-            expectedFile: 'linker',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK1181',
             expectedSeverity: 'fatal error',
             expectedMessageContains: 'cannot open input file'
@@ -742,7 +742,7 @@ suite('Diagnostics', () => {
         // Unresolved external symbol with build prefix
         {
             line: '[build] Validation_TCM_SURFACE_BASED.cpp.obj : error LNK2019: unresolved external symbol "class ParameterValidationException __cdecl mw::Toolpath::MakeException_35521(void)" (?MakeException_35521@Toolpath@mw@@YA?AVParameterValidationException@@XZ) referenced in function "class std::vector<class misc::mwException,class std::allocator<class misc::mwException> > __cdecl mw::Toolpath::Validate_TCM_SURFACE_BASED(class mw::Toolpath::CalculationParams const &,class misc::mwAutoPointer<class cadcam::mwTool> const &,bool)" (?Validate_TCM_SURFACE_BASED@Toolpath@mw@@YA?AV?$vector@VmwException@misc@@V?$allocator@VmwException@misc@@@std@@@std@@AEBVCalculationParams@12@AEBV?$mwAutoPointer@VmwTool@cadcam@@@misc@@_N@Z)',
-            expectedFile: 'Validation_TCM_SURFACE_BASED.cpp.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2019',
             expectedSeverity: 'error',
             expectedMessageContains: 'unresolved external symbol'
@@ -750,7 +750,7 @@ suite('Diagnostics', () => {
         // Simple unresolved external symbol
         {
             line: 'main.obj : error LNK2001: unresolved external symbol _foo',
-            expectedFile: 'main.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2001',
             expectedSeverity: 'error',
             expectedMessageContains: 'unresolved external symbol _foo'
@@ -758,7 +758,7 @@ suite('Diagnostics', () => {
         // Unresolved external with decorated name
         {
             line: 'utils.obj : error LNK2019: unresolved external symbol "void __cdecl bar(void)" referenced in function main',
-            expectedFile: 'utils.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2019',
             expectedSeverity: 'error',
             expectedMessageContains: 'unresolved external symbol'
@@ -766,7 +766,7 @@ suite('Diagnostics', () => {
         // Library object reference
         {
             line: 'libmath.lib(math.obj) : error LNK2001: unresolved external symbol _sin',
-            expectedFile: 'libmath.lib(math.obj)',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2001',
             expectedSeverity: 'error',
             expectedMessageContains: 'unresolved external symbol _sin'
@@ -774,7 +774,7 @@ suite('Diagnostics', () => {
         // Warning: PDB not found
         {
             line: 'module.obj : warning LNK4099: PDB \'vc142.pdb\' was not found with \'module.obj\'',
-            expectedFile: 'module.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK4099',
             expectedSeverity: 'warning',
             expectedMessageContains: 'PDB'
@@ -782,7 +782,7 @@ suite('Diagnostics', () => {
         // Warning: locally defined symbol imported
         {
             line: 'lib.lib(other.obj) : warning LNK4049: locally defined symbol _baz imported',
-            expectedFile: 'lib.lib(other.obj)',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK4049',
             expectedSeverity: 'warning',
             expectedMessageContains: 'locally defined symbol'
@@ -790,7 +790,7 @@ suite('Diagnostics', () => {
         // Fatal error: cannot open file
         {
             line: 'fatal error LNK1104: cannot open file \'kernel32.lib\'',
-            expectedFile: 'linker',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK1104',
             expectedSeverity: 'fatal error',
             expectedMessageContains: 'cannot open file'
@@ -798,7 +798,7 @@ suite('Diagnostics', () => {
         // Fatal error: PDB error
         {
             line: 'fatal error LNK1318: Unexpected PDB error; OK (0)',
-            expectedFile: 'linker',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK1318',
             expectedSeverity: 'fatal error',
             expectedMessageContains: 'Unexpected PDB error'
@@ -806,7 +806,7 @@ suite('Diagnostics', () => {
         // Absolute path
         {
             line: 'C:\\projects\\demo\\main.obj : error LNK2019: unresolved external symbol _printf referenced in function main',
-            expectedFile: 'C:\\projects\\demo\\main.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2019',
             expectedSeverity: 'error',
             expectedMessageContains: '_printf'
@@ -814,7 +814,7 @@ suite('Diagnostics', () => {
         // Build directory path
         {
             line: 'D:\\build\\lib\\foo.lib(bar.obj) : error LNK2001: unresolved external symbol _bar',
-            expectedFile: 'D:\\build\\lib\\foo.lib(bar.obj)',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2001',
             expectedSeverity: 'error',
             expectedMessageContains: '_bar'
@@ -822,7 +822,7 @@ suite('Diagnostics', () => {
         // Complex decorated name
         {
             line: 'utils.obj : error LNK2019: unresolved external symbol "int __cdecl add(int,int)" (?add@@YAHHH@Z) referenced in function main',
-            expectedFile: 'utils.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2019',
             expectedSeverity: 'error',
             expectedMessageContains: 'add'
@@ -830,7 +830,7 @@ suite('Diagnostics', () => {
         // Error summary
         {
             line: 'error LNK1120: 1 unresolved externals',
-            expectedFile: 'linker',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK1120',
             expectedSeverity: 'error',
             expectedMessageContains: 'unresolved externals'
@@ -838,7 +838,7 @@ suite('Diagnostics', () => {
         // Multiple definitions error
         {
             line: 'error LNK1169: one or more multiply defined symbols found',
-            expectedFile: 'linker',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK1169',
             expectedSeverity: 'error',
             expectedMessageContains: 'multiply defined'
@@ -846,7 +846,7 @@ suite('Diagnostics', () => {
         // Colon variant (no space after obj)
         {
             line: 'main.obj: error LNK2001: unresolved external symbol _foo',
-            expectedFile: 'main.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2001',
             expectedSeverity: 'error',
             expectedMessageContains: '_foo'
@@ -854,7 +854,7 @@ suite('Diagnostics', () => {
         // Library object with colon
         {
             line: 'lib.lib(obj.obj):error LNK2019: unresolved external symbol _bar',
-            expectedFile: 'lib.lib(obj.obj)',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2019',
             expectedSeverity: 'error',
             expectedMessageContains: '_bar'
@@ -862,7 +862,7 @@ suite('Diagnostics', () => {
         // Destructor
         {
             line: 'file.obj : error LNK2019: unresolved external symbol "public: __cdecl MyClass::~MyClass(void)" (??1MyClass@@QEAA@XZ) referenced in function main',
-            expectedFile: 'file.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2019',
             expectedSeverity: 'error',
             expectedMessageContains: 'MyClass'
@@ -870,7 +870,7 @@ suite('Diagnostics', () => {
         // Template instantiation
         {
             line: 'tmpl.obj : error LNK2001: unresolved external symbol "class std::vector<int,class std::allocator<int> > __cdecl getVec(void)"',
-            expectedFile: 'tmpl.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2001',
             expectedSeverity: 'error',
             expectedMessageContains: 'vector'
@@ -878,7 +878,7 @@ suite('Diagnostics', () => {
         // Path with spaces
         {
             line: 'C:\\Program Files\\My Project\\main.obj : error LNK2001: unresolved external symbol _foo',
-            expectedFile: 'C:\\Program Files\\My Project\\main.obj',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2001',
             expectedSeverity: 'error',
             expectedMessageContains: '_foo'
@@ -886,7 +886,7 @@ suite('Diagnostics', () => {
         // Entry point error
         {
             line: 'LINK : error LNK2001: unresolved external symbol _WinMain@16',
-            expectedFile: 'linker',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK2001',
             expectedSeverity: 'error',
             expectedMessageContains: 'WinMain'
@@ -894,7 +894,7 @@ suite('Diagnostics', () => {
         // Entry point must be defined
         {
             line: 'LINK : fatal error LNK1561: entry point must be defined',
-            expectedFile: 'linker',
+            expectedFile: 'linkerrors.txt',
             expectedCode: 'LNK1561',
             expectedSeverity: 'fatal error',
             expectedMessageContains: 'entry point'
