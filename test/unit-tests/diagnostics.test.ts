@@ -2,6 +2,7 @@
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 
 chai.use(chaiAsPromised);
@@ -930,6 +931,43 @@ suite('Diagnostics', () => {
                 `Message mismatch for: ${testCase.line}`
             ).to.include(testCase.expectedMessageContains);
         });
+    });
+
+    test('Linker errors resolve to unique line numbers in linkerrors.txt', async () => {
+        const test_consumer = new diags.CompileOutputConsumer(
+            new ConfigurationReader({} as ExtensionConfigurationSettings)
+        );
+        test_consumer.config.updatePartial({ enabledOutputParsers: ['msvc'] });
+
+        // Feed multiple linker errors
+        const linkerErrorLines = [
+            'main.obj : error LNK2019: unresolved external symbol _foo',
+            'utils.obj : error LNK2019: unresolved external symbol _bar',
+            'test.obj : error LNK2001: unresolved external symbol _baz'
+        ];
+        feedLines(test_consumer, [], linkerErrorLines);
+
+        expect(test_consumer.compilers.msvc.diagnostics).to.have.length(3);
+
+        // Resolve diagnostics (this should create linkerrors.txt and set line numbers)
+        const tmpDir = path.join(__dirname, 'tmp_linker_test');
+        await fs.promises.mkdir(tmpDir, { recursive: true });
+        const resolved = await test_consumer.resolveDiagnostics(tmpDir);
+
+        // All should point to linkerrors.txt
+        expect(resolved.every(d => d.filepath.endsWith('linkerrors.txt'))).to.be.true;
+
+        // Each should have a unique line number (not all pointing to the same line)
+        const lineNumbers = resolved.map(d => d.diag.range.start.line);
+        const uniqueLines = new Set(lineNumbers);
+
+        expect(uniqueLines.size, 'All diagnostics should point to different lines').to.eq(3);
+
+        // Line numbers should be sequential (each error takes 3 lines: header, message, blank)
+        // Header is 6 lines, then each error starts at 7, 10, 13, etc.
+        expect(lineNumbers[0]).to.eq(6); // Line 7 (0-indexed = 6)
+        expect(lineNumbers[1]).to.eq(9); // Line 10 (0-indexed = 9)
+        expect(lineNumbers[2]).to.eq(12); // Line 13 (0-indexed = 12)
     });
 
     test('Parse IAR error', () => {
