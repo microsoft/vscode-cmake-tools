@@ -89,7 +89,7 @@ export class KitsController {
         if (this.project.workspaceContext.config.showSystemKits) {
             return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
         } else {
-            return KitsController.specialKits.concat(this.folderKits);
+            return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits));
         }
     }
 
