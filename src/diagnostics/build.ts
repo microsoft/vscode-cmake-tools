@@ -63,6 +63,7 @@ export class CompileOutputConsumer implements OutputConsumer {
         const diags_by_file = new Map<string, vscode.Diagnostic[]>();
         const linkErrorsFilename = 'linkerrors.txt';
         let ensuredLinkErrorsFile = false;
+        const linkerErrors: Array<{ code: string; message: string; source: string }> = [];
 
         const ensureLinkErrorsFile = async () => {
             if (ensuredLinkErrorsFile) {
@@ -120,6 +121,12 @@ export class CompileOutputConsumer implements OutputConsumer {
             for (const raw_diag of diags) {
                 if (raw_diag.file === linkErrorsFilename) {
                     await ensureLinkErrorsFile();
+                    // Collect linker error for writing to file
+                    linkerErrors.push({
+                        code: raw_diag.code || 'LNK0000',
+                        message: raw_diag.message,
+                        source: source
+                    });
                 }
                 const filepath = await this.resolvePath(raw_diag.file, basePaths);
                 const severity = severity_of(raw_diag.severity);
@@ -147,6 +154,30 @@ export class CompileOutputConsumer implements OutputConsumer {
                 });
             }
         }
+
+        // Write linker errors to the file if any exist
+        if (linkerErrors.length > 0) {
+            const buildDir = basePaths[0];
+            if (buildDir) {
+                const linkErrorsPath = util.resolvePath(linkErrorsFilename, buildDir);
+                const timestamp = new Date().toISOString();
+                let content = `================================================================================\n`;
+                content += `Linker Errors\n`;
+                content += `Generated: ${timestamp}\n`;
+                content += `Total Errors: ${linkerErrors.length}\n`;
+                content += `================================================================================\n\n`;
+                for (const err of linkerErrors) {
+                    content += `[${err.code}] (${err.source})\n`;
+                    content += `${err.message}\n\n`;
+                }
+                try {
+                    await fs.writeFile(linkErrorsPath, content);
+                } catch {
+                    // Best-effort: if writing fails, diagnostics are still available in Problems panel
+                }
+            }
+        }
+
         return arrs;
     }
 }
