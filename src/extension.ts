@@ -2661,6 +2661,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     extensionManager = await ExtensionManager.create(context);
     await extensionManager.init();
 
+    // Register Copilot language model tools (requires extensionManager to be initialized)
+    try {
+        const { registerCopilotTools } = await import('./copilot/index');
+        registerCopilotTools(context, extensionManager);
+    } catch (error) {
+        log.warning(localize('copilot.tools.registration.failed', 'Failed to register Copilot tools: {0}', String(error)));
+    }
+
     // need the extensionManager to be initialized for this.
     pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
 

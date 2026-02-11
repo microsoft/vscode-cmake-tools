@@ -22,7 +22,7 @@
     "syntaxes"
   ],
   "engines": {
-    "vscode": "^1.88.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "Other",
@@ -115,6 +115,63 @@
         }
       }
     },
+    "languageModelTools": [
+      {
+        "name": "cmake_build",
+        "displayName": "CMake: Build",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "cmake:build",
+        "icon": "$(cmake-tools-build)",
+        "userDescription": "Build the CMake project with the active build preset",
+        "modelDescription": "Builds the CMake project using the currently active build preset. Use this tool when the user asks to build, compile, or make the project. The tool, if asked, can optionally build a specific target and can clean before building. This tool requires an active CMake project with a configured preset. Returns the build result including exit code and status.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "The specific build target to compile. If not provided, builds the default target. Examples: 'all', 'myapp', 'tests'"
+            },
+            "clean": {
+              "type": "boolean",
+              "description": "Whether to clean before building. Defaults to false.",
+              "default": false
+            }
+          }
+        }
+      },
+      {
+        "name": "cmake_configure",
+        "displayName": "CMake: Configure",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "cmake:configure",
+        "icon": "$(cmake-tools-configure)",
+        "userDescription": "Configure the CMake project with the active configure preset",
+        "modelDescription": "Configures the CMake project using the currently active configure preset. Use this tool when the user asks to configure, reconfigure, or set up the CMake project. Use this tool if you, the agent, add, remove, or rename source files. The tool, if asked,  can delete the CMake cache before configuring for a clean reconfigure. This tool requires an active CMake project and preset. Returns the configuration result including exit code and preset used.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "cleanFirst": {
+              "type": "boolean",
+              "description": "Whether to delete the CMake cache before configuring. Defaults to false. Set to true for a clean reconfigure.",
+              "default": false
+            }
+          }
+        }
+      },
+      {
+        "name": "cmake_get_errors",
+        "displayName": "CMake: Get Errors",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "cmake:get_errors",
+        "icon": "$(warning)",
+        "userDescription": "Get CMake-specific diagnostics (configure, build, and preset errors)",
+        "modelDescription": "Retrieves diagnostics from CMake-specific sources including configure errors, build/compilation errors, and preset errors. Use this tool when the user asks about CMake errors, build failures, or compilation issues. This tool specifically excludes IntelliSense and clangd diagnostics to focus only on CMake-related problems. Returns a formatted list of errors with file locations, line numbers, and messages grouped by type. Important: This is more focused than the general get_errors tool because it only shows CMake-specific diagnostics.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ],
     "languages": [
         {
             "id": "cmake",
@@ -3980,7 +4037,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.88.0",
+    "@types/vscode": "1.109.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@types/uuid": "~8.3.3",
