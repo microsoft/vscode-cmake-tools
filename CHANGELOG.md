@@ -19,6 +19,7 @@ Bug Fixes:
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
 - Add support for Visual Studio 2026 generator. [#4637](https://github.com/microsoft/vscode-cmake-tools/issues/4637)
+- Fix `$comment` not being accepted inside a cacheVariable object in CMake presets. [#4600](https://github.com/microsoft/vscode-cmake-tools/issues/4600)
 - Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4651](https://github.com/microsoft/vscode-cmake-tools/issues/4651)
 
 ## 1.22.27
