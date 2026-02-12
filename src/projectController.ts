@@ -60,6 +60,7 @@ export class ProjectController implements vscode.Disposable {
     private activePackagePresetSub: vscode.Disposable = new DummyDisposable();
     private activeWorkflowPresetSub: vscode.Disposable = new DummyDisposable();
     private isBusySub = new DummyDisposable();
+    private useCMakePresetsChangedSub: vscode.Disposable = new DummyDisposable();
     private projectSubscriptions: vscode.Disposable[] = [
         this.targetNameSub,
         this.variantNameSub,
@@ -70,7 +71,8 @@ export class ProjectController implements vscode.Disposable {
         this.activeTestPresetSub,
         this.activePackagePresetSub,
         this.activeWorkflowPresetSub,
-        this.isBusySub
+        this.isBusySub,
+        this.useCMakePresetsChangedSub
     ];
 
     get onBeforeAcknowledgeFolder() {
@@ -148,6 +150,7 @@ export class ProjectController implements vscode.Disposable {
             this.activePackagePresetSub = new DummyDisposable();
             this.activeWorkflowPresetSub = new DummyDisposable();
             this.isBusySub = new DummyDisposable();
+            this.useCMakePresetsChangedSub = new DummyDisposable();
         } else {
             this.targetNameSub = project.onTargetNameChanged(FireNow, () => void this.projectStatus.refresh());
             this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => void this.projectStatus.refresh());
@@ -159,6 +162,7 @@ export class ProjectController implements vscode.Disposable {
             this.activePackagePresetSub = project.onActivePackagePresetChanged(FireNow, () => void this.projectStatus.refresh());
             this.activeWorkflowPresetSub = project.onActiveWorkflowPresetChanged(FireNow, () => void this.projectStatus.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, (isBusy) => void this.projectStatus.setIsBusy(isBusy));
+            this.useCMakePresetsChangedSub = project.onUseCMakePresetsChanged(() => void this.updateUsePresetsState(project));
             await setContextAndStore(ext.hideBuildCommandKey, project.hideBuildButton);
             await setContextAndStore(ext.hideDebugCommandKey, project.hideDebugButton);
             await setContextAndStore(ext.hideLaunchCommandKey, project.hideLaunchButton);
