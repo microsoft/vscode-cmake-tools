@@ -1018,15 +1018,19 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
-     * Debugs a single test by name. Public entry point for use outside the test explorer.
+     * Returns the executable path, arguments, and working directory for a given test name.
+     * Used by cmakeProject to auto-generate debug configurations without requiring launch.json.
      */
-    async debugTestByName(workspaceFolder: vscode.WorkspaceFolder, testName: string): Promise<void> {
-        const cts = new vscode.CancellationTokenSource();
-        try {
-            await this.debugCTestImpl(workspaceFolder, testName, cts.token);
-        } finally {
-            cts.dispose();
+    getTestInfo(testName: string): { program: string; args: string[]; workingDirectory: string } | undefined {
+        const program = this.testProgram(testName);
+        if (!program) {
+            return undefined;
         }
+        return {
+            program,
+            args: this.testArgs(testName),
+            workingDirectory: this.testWorkingDirectory(testName)
+        };
     }
 
     clearTests(driver: CMakeDriver) {
