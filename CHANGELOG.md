@@ -9,6 +9,7 @@ Features:
 Improvements:
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
 - Use environment variables from `cmake.environment` and `cmake.configureEnvironment` when expanding `$penv{}` macros in CMake Presets `include` paths. [#3578](https://github.com/microsoft/vscode-cmake-tools/issues/3578)
+- Provide CMAKE_LANG_IMPLICIT_INCLUDE_DIRECTORIES as system includes. [#4718](https://github.com/microsoft/vscode-cmake-tools/pull/4718)
 
 Bug Fixes:
 - Fix extension not switching to preset mode after "CMake: Quick Start" generates a CMakePresets.json, causing variant selection to have no effect. [#4569](https://github.com/microsoft/vscode-cmake-tools/issues/4569)
