@@ -2443,6 +2443,14 @@ export class CMakeProject {
         return this.cTestController.refreshTests(drv);
     }
 
+    async runTest(testName: string): Promise<CommandResult> {
+        return this.ctest(false, undefined, [testName]);
+    }
+
+    async debugCTest(testName: string): Promise<void> {
+        return this.cTestController.debugTestByName(this.workspaceFolder, testName);
+    }
+
     addTestExplorerRoot(folder: string) {
         return this.cTestController.addTestExplorerRoot(folder);
     }

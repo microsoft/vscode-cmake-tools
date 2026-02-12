@@ -1003,6 +1003,32 @@ export class CTestDriver implements vscode.Disposable {
         return undefined;
     }
 
+    /**
+     * Returns test information suitable for the project outline view.
+     * Each entry maps a test name to its executable path.
+     */
+    getTestsForOutline(): { name: string; executablePath: string }[] {
+        if (this.tests) {
+            return this.tests.tests.map(test => ({
+                name: test.name,
+                executablePath: test.command[0]
+            }));
+        }
+        return [];
+    }
+
+    /**
+     * Debugs a single test by name. Public entry point for use outside the test explorer.
+     */
+    async debugTestByName(workspaceFolder: vscode.WorkspaceFolder, testName: string): Promise<void> {
+        const cts = new vscode.CancellationTokenSource();
+        try {
+            await this.debugCTestImpl(workspaceFolder, testName, cts.token);
+        } finally {
+            cts.dispose();
+        }
+    }
+
     clearTests(driver: CMakeDriver) {
         // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
