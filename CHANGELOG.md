@@ -11,6 +11,7 @@ Improvements:
 - Use environment variables from `cmake.environment` and `cmake.configureEnvironment` when expanding `$penv{}` macros in CMake Presets `include` paths. [#3578](https://github.com/microsoft/vscode-cmake-tools/issues/3578)
 
 Bug Fixes:
+- Fix garbled characters (Mojibake) in the Output panel when MSVC outputs UTF-8 (e.g., with `/utf-8`) on non-UTF-8 Windows systems. When `cmake.outputLogEncoding` is `auto`, the build output is now validated as UTF-8 before falling back to the system code page. [#4520](https://github.com/microsoft/vscode-cmake-tools/issues/4520)
 - Fix extension not switching to preset mode after "CMake: Quick Start" generates a CMakePresets.json, causing variant selection to have no effect. [#4569](https://github.com/microsoft/vscode-cmake-tools/issues/4569)
 - Fix spurious preset reloads triggered by unrelated file system events such as builds, git commits, and `cmake.copyCompileCommands`. Migrated file watching from chokidar to VS Code's built-in `FileSystemWatcher` API, which also resolves high CPU usage on Apple M1. [#4703](https://github.com/microsoft/vscode-cmake-tools/issues/4703) [#2967](https://github.com/microsoft/vscode-cmake-tools/issues/2967)
 - Clarify that semicolons in `cmake.configureSettings` string values are escaped, and array notation should be used for CMake lists. [#4585](https://github.com/microsoft/vscode-cmake-tools/issues/4585)
