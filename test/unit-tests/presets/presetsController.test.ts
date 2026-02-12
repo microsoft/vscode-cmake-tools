@@ -7,12 +7,9 @@ import * as os from 'os';
 /**
  * Tests for PresetsController file watcher behavior.
  *
- * These tests validate the fix for issue #4668 (Infinity presets reloading)
- * which occurs when preset files are symlinks or include symlinked files.
- *
- * The fix adds a startup grace period to the FileWatcher class to ignore
- * spurious events that chokidar may emit when watching symlinked files
- * with followSymlinks: false.
+ * These tests validate the file watcher debounce mechanism that prevents
+ * duplicate preset reloads when file change events fire in rapid succession.
+ * The file watcher uses VS Code's built-in FileSystemWatcher API (see issues #4703 and #2967).
  */
 suite('PresetsController file watcher protection', () => {
     let tempDir: string;
@@ -172,66 +169,21 @@ suite('PresetsController file watcher protection', () => {
     });
 
     /**
-     * Test the startup grace period pattern used in FileWatcher.
-     * This simulates how events fired during watcher initialization are ignored.
+     * Test that the debounce mechanism deduplicates rapid change events.
+     * The FileWatcher uses a 500ms throttle to prevent double-fires from text editors.
      */
-    test('Startup grace period ignores events during initialization', async () => {
-        let isInStartupGracePeriod = true;
-        let eventCount = 0;
-        const gracePeriodMs = 100;
-
-        // Simulate the FileWatcher startup grace period pattern
-        setTimeout(() => (isInStartupGracePeriod = false), gracePeriodMs);
-
-        const handler = () => {
-            if (isInStartupGracePeriod) {
-                return; // Event ignored during grace period
-            }
-            eventCount++;
-        };
-
-        // Simulate events fired immediately during watcher setup (should be ignored)
-        handler();
-        handler();
-        handler();
-
-        expect(eventCount).to.equal(0);
-
-        // Wait for grace period to end
-        await new Promise(resolve => setTimeout(resolve, gracePeriodMs + 50));
-
-        // Now events should be processed
-        handler();
-        expect(eventCount).to.equal(1);
-    });
-
-    /**
-     * Test that the debounce mechanism works correctly after grace period.
-     * This simulates rapid file changes being deduplicated.
-     */
-    test('Debounce mechanism deduplicates rapid events after grace period', async () => {
-        let isInStartupGracePeriod = true;
+    test('Debounce mechanism deduplicates rapid events', async () => {
         let canRunChangeHandler = true;
         let eventCount = 0;
-        const gracePeriodMs = 50;
         const debounceMs = 100;
 
-        // Simulate startup grace period ending
-        setTimeout(() => (isInStartupGracePeriod = false), gracePeriodMs);
-
         const handler = () => {
-            if (isInStartupGracePeriod) {
-                return;
-            }
             if (canRunChangeHandler) {
                 eventCount++;
                 canRunChangeHandler = false;
                 setTimeout(() => (canRunChangeHandler = true), debounceMs);
             }
         };
-
-        // Wait for grace period to end
-        await new Promise(resolve => setTimeout(resolve, gracePeriodMs + 10));
 
         // Fire multiple rapid events - only first should be processed
         handler();
@@ -251,31 +203,21 @@ suite('PresetsController file watcher protection', () => {
     });
 
     /**
-     * Test that sequential operations work correctly after grace period.
+     * Test that sequential events separated by the debounce interval all get processed.
      * This ensures normal file watching behavior isn't broken.
      */
-    test('Sequential events work normally after grace period and debounce', async () => {
-        let isInStartupGracePeriod = true;
+    test('Sequential events work normally after debounce', async () => {
         let canRunChangeHandler = true;
         let eventCount = 0;
-        const gracePeriodMs = 50;
         const debounceMs = 50;
 
-        setTimeout(() => (isInStartupGracePeriod = false), gracePeriodMs);
-
         const handler = () => {
-            if (isInStartupGracePeriod) {
-                return;
-            }
             if (canRunChangeHandler) {
                 eventCount++;
                 canRunChangeHandler = false;
                 setTimeout(() => (canRunChangeHandler = true), debounceMs);
             }
         };
-
-        // Wait for grace period
-        await new Promise(resolve => setTimeout(resolve, gracePeriodMs + 10));
 
         // First event
         handler();
@@ -294,6 +236,25 @@ suite('PresetsController file watcher protection', () => {
         // Third event
         handler();
         expect(eventCount).to.equal(3);
+    });
+
+    /**
+     * Test that create events are not debounced and always fire immediately.
+     * The FileWatcher treats create events differently from change events.
+     */
+    test('Create events are not debounced', () => {
+        let createCount = 0;
+
+        const createHandler = () => {
+            createCount++;
+        };
+
+        // Multiple create events should all fire
+        createHandler();
+        createHandler();
+        createHandler();
+
+        expect(createCount).to.equal(3);
     });
 
     /**
