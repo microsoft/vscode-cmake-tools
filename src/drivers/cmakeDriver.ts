@@ -16,7 +16,7 @@ import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ProgressMessage } from '@cmt/drivers/drivers';
 import * as expand from '@cmt/expand';
-import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment } from '@cmt/kits/kit';
+import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment, getVsKitPreferredGenerator } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
@@ -752,8 +752,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
         // Place a kit preferred generator at the front of the list
-        if (kit.preferredGenerator) {
-            preferredGenerators.unshift(kit.preferredGenerator);
+        // For VS kits that don't have preferredGenerator (e.g., scanned before a VS version was added),
+        // try to derive it from the VS installation.
+        let kitPreferredGenerator = kit.preferredGenerator;
+        if (!kitPreferredGenerator && kit.visualStudio) {
+            kitPreferredGenerator = await getVsKitPreferredGenerator(kit);
+        }
+        if (kitPreferredGenerator) {
+            preferredGenerators.unshift(kitPreferredGenerator);
         }
 
         // If no preferred generator is defined by the current kit or the user settings,
@@ -1368,6 +1374,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * The list of generators CMake supports as of 3.21
      */
     private readonly cmakeGenerators = [
+        "Visual Studio 18 2026",
         "Visual Studio 17 2022",
         "Visual Studio 16 2019",
         "Visual Studio 15 2017",
@@ -1436,7 +1443,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = await this.generateInitCacheFlags();
         // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
-        return init_cache_flags.concat(preset.configureArgs(configPreset), await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()}))));
+        const expandedConfigureArgs = await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()})));
+        const expandedArgs = init_cache_flags.concat(preset.configureArgs(configPreset), expandedConfigureArgs);
+        const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
+        const config = vscode.workspace.getConfiguration("cmake", configurationScope);
+        const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
+        const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
+        const presetCacheVariables = configPreset.cacheVariables ?? {};
+        const hasExportCompileCommands = Object.prototype.hasOwnProperty.call(presetCacheVariables, 'CMAKE_EXPORT_COMPILE_COMMANDS')
+            || expandedArgs.some(arg => arg.startsWith('-DCMAKE_EXPORT_COMPILE_COMMANDS'));
+        if (!hasExportCompileCommands) {
+            const exportCompileCommandsValue = util.cmakeify(exportCompileCommandsFile);
+            expandedArgs.push(`-DCMAKE_EXPORT_COMPILE_COMMANDS:${exportCompileCommandsValue.type}=${exportCompileCommandsValue.value}`);
+        }
+        return expandedArgs;
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {

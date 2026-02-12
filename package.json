@@ -132,12 +132,12 @@
         {
             "language": "cmake",
             "scopeName": "source.cmake",
-            "path": "./syntaxes/CMake.tmLanguage"
+            "path": "./syntaxes/CMake.tmLanguage.json"
         },
         {
             "language": "cmake-cache",
             "scopeName": "source.cmakecache",
-            "path": "./syntaxes/CMakeCache.tmLanguage"
+            "path": "./syntaxes/CMakeCache.tmLanguage.json"
         }
     ],
     "commands": [
@@ -286,6 +286,12 @@
       {
         "command": "cmake.logDiagnostics",
         "title": "%cmake-tools.command.cmake.logDiagnostics.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.clearBuildDiagnostics",
+        "title": "%cmake-tools.command.cmake.clearBuildDiagnostics.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
@@ -4019,7 +4025,6 @@
     "@friedemannsommer/lcov-parser": "^5.0.0",
     "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^7.1.0",
-    "chokidar": "^3.5.1",
     "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.1.1",
@@ -4041,7 +4046,6 @@
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
-    "chokidar": "^3.5.1",
     "glob-parent": "^6.0.2",
     "hosted-git-info": "^3.0.8",
     "**/minimist": "^1.2.5",
