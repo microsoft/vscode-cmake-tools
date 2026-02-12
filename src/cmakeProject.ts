@@ -28,7 +28,7 @@ import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { FileDiagnostic, populateCollection } from '@cmt/diagnostics/util';
+import { FileDiagnostic, addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
@@ -2118,6 +2118,20 @@ export class CMakeProject {
                 };
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
+                if (drv.config.parseBuildDiagnostics) {
+                    consumer.onDiagnostic(rawDiag => {
+                        const severity = diagnosticSeverity(rawDiag.severity);
+                        if (severity === undefined) {
+                            return;
+                        }
+                        const filepath = util.resolvePath(rawDiag.file, drv!.binaryDir);
+                        const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                        if (rawDiag.code) {
+                            diag.code = rawDiag.code;
+                        }
+                        addDiagnosticToCollection(collections.build, { filepath, diag });
+                    });
+                }
                 return await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Window,

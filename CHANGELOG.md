@@ -5,7 +5,7 @@
 Features:
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
-- Clear build diagnostics from the Problems pane when a new build starts. [#4608](https://github.com/microsoft/vscode-cmake-tools/issues/4608)
+- Clear build diagnostics from the Problems pane when a new build starts and populate them incrementally during the build. [#4608](https://github.com/microsoft/vscode-cmake-tools/issues/4608)
 
 Improvements:
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
