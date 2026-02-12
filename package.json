@@ -839,12 +839,14 @@
       {
         "command": "cmake.outline.runTest",
         "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.runTest.title%"
+        "title": "%cmake-tools.command.cmake.outline.runTest.title%",
+        "icon": "$(run)"
       },
       {
         "command": "cmake.outline.debugTest",
         "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.debugTest.title%"
+        "title": "%cmake-tools.command.cmake.outline.debugTest.title%",
+        "icon": "$(debug-alt)"
       },
       {
         "command": "cmake.projectStatus.update",
@@ -1935,6 +1937,16 @@
           "command": "cmake.outline.debugTest",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
           "group": "1_testActions@2"
+        },
+        {
+          "command": "cmake.outline.runTest",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
+          "group": "inline@1"
+        },
+        {
+          "command": "cmake.outline.debugTest",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
+          "group": "inline@2"
         },
         {
           "command": "cmake.outline.toggleBookmark",
