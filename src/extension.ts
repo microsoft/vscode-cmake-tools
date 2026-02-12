@@ -5,7 +5,6 @@
 
 'use strict';
 
-import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
@@ -676,7 +675,7 @@ export class ExtensionManager implements vscode.Disposable {
             )
         );
         this.onDidChangeActiveTextEditorSub.dispose();
-        void this.kitsWatcher.close();
+        void this.kitsWatcher.dispose();
         this.projectOutlineTreeView.dispose();
         this.bookmarksTreeView.dispose();
         this.extensionActiveCommandsEmitter.dispose();
@@ -997,9 +996,16 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Watches for changes to the kits file
      */
-    private readonly kitsWatcher = util.chokidarOnAnyChange(
-        chokidar.watch(USER_KITS_FILEPATH, { ignoreInitial: true }),
-        _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this.getActiveProject())));
+    private readonly kitsWatcher: vscode.FileSystemWatcher = (() => {
+        const dirUri = vscode.Uri.file(path.dirname(USER_KITS_FILEPATH));
+        const pattern = new vscode.RelativePattern(dirUri, path.basename(USER_KITS_FILEPATH));
+        const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+        const rereadHandler = () => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this.getActiveProject()));
+        watcher.onDidChange(rereadHandler);
+        watcher.onDidCreate(rereadHandler);
+        watcher.onDidDelete(rereadHandler);
+        return watcher;
+    })();
 
     /**
      * Opens a text editor with the user-local `cmake-kits.json` file.
