@@ -2384,6 +2384,14 @@ export class CMakeProject {
         return (await this.build()).exitCode;
     }
 
+    async cleanConfigureAndBuild(trigger: ConfigureTrigger = ConfigureTrigger.api): Promise<number> {
+        const configureResult = (await this.cleanConfigure(trigger)).exitCode;
+        if (configureResult !== 0) {
+            return configureResult;
+        }
+        return (await this.build()).exitCode;
+    }
+
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.CommandConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }

@@ -618,6 +618,24 @@
         "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
       },
       {
+        "command": "cmake.cleanConfigureAndBuild",
+        "title": "%cmake-tools.command.cmake.cleanConfigureAndBuild.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.cleanConfigureAndBuild",
+        "title": "%cmake-tools.command.cmake.cleanConfigureAndBuild.title%"
+      },
+      {
+        "command": "cmake.cleanConfigureAndBuildAll",
+        "title": "%cmake-tools.command.cmake.cleanConfigureAndBuildAll.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.cleanConfigureAndBuildAll",
+        "title": "%cmake-tools.command.cmake.outline.cleanConfigureAndBuildAll.title%"
+      },
+      {
         "command": "cmake.editCacheUI",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.editCacheUI.title%",
@@ -1339,6 +1357,13 @@
           "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
+          "command": "cmake.cleanConfigureAndBuild"
+        },
+        {
+          "command": "cmake.cleanConfigureAndBuildAll",
+          "when": "cmake:multiProject"
+        },
+        {
           "command": "cmake.editCacheUI",
           "when": "cmake:enableFullFeatureSet"
         },
@@ -1476,6 +1501,14 @@
         },
         {
           "command": "cmake.outline.cleanRebuildAll",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAndBuild",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAndBuildAll",
           "when": "never"
         },
         {
@@ -1707,6 +1740,11 @@
         {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet",
+          "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAndBuildAll",
+          "when": "view == cmake.outline",
           "group": "1_cmakeOutline"
         },
         {
@@ -1964,6 +2002,11 @@
           "group": "1_fileActions@6"
         },
         {
+          "command": "cmake.outline.cleanConfigureAndBuildAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@7"
+        },
+        {
           "command": "cmake.outline.compileFile",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /compilable=true/",
           "group": "1_fileActions@7"
@@ -2092,6 +2135,10 @@
         {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "resourceFilename == CMakeLists.txt && cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAndBuildAll",
+          "when": "resourceFilename == CMakeLists.txt"
         }
       ],
       "touchBar": [
