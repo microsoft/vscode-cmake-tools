@@ -59,27 +59,6 @@ export function oneLess(num: number | string): number {
 }
 
 /**
- * Convert a severity string from compiler output to a `vscode.DiagnosticSeverity`.
- * @param severity The severity string (e.g. 'warning', 'error', 'note')
- * @returns The corresponding `vscode.DiagnosticSeverity`, or `undefined` if unknown
- */
-export function diagnosticSeverity(severity: string): vscode.DiagnosticSeverity | undefined {
-    switch (severity) {
-        case 'warning':
-            return vscode.DiagnosticSeverity.Warning;
-        case 'catastrophic error':
-        case 'fatal error':
-        case 'error':
-            return vscode.DiagnosticSeverity.Error;
-        case 'note':
-        case 'info':
-        case 'remark':
-            return vscode.DiagnosticSeverity.Information;
-    }
-    return undefined;
-}
-
-/**
  * Inserts a list of `FileDiagnostic` instances into a diagnostic collection.
  * @param coll The `vscode.DiagnosticCollecion` to populate.
  * @param fdiags The `FileDiagnostic` objects to insert into the collection
@@ -101,18 +80,6 @@ export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: It
     diags_by_file.forEach((diags, filepath) => {
         coll.set(vscode.Uri.file(filepath), diags);
     });
-}
-
-/**
- * Adds a single `FileDiagnostic` to a diagnostic collection without clearing existing entries.
- * @param coll The `vscode.DiagnosticCollection` to add to.
- * @param fdiag The `FileDiagnostic` to add.
- */
-export function addDiagnosticToCollection(coll: vscode.DiagnosticCollection, fdiag: FileDiagnostic) {
-    const uri = vscode.Uri.file(fdiag.filepath);
-    const existing = coll.get(uri);
-    const diags = existing ? [...existing, fdiag.diag] : [fdiag.diag];
-    coll.set(uri, diags);
 }
 
 /**

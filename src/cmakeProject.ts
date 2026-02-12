@@ -28,7 +28,7 @@ import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { FileDiagnostic, addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
+import { FileDiagnostic, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
@@ -2118,26 +2118,6 @@ export class CMakeProject {
                 };
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
-                if (drv.config.parseBuildDiagnostics) {
-                    consumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
-                        if (!drv!.config.enableOutputParsers?.includes(source.toLowerCase())) {
-                            return;
-                        }
-                        const severity = diagnosticSeverity(rawDiag.severity);
-                        if (severity === undefined) {
-                            return;
-                        }
-                        // Use synchronous path resolution for immediate display;
-                        // final populateCollection call after build corrects paths with async resolution.
-                        const filepath = util.resolvePath(rawDiag.file, drv!.binaryDir);
-                        const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
-                        diag.source = source;
-                        if (rawDiag.code) {
-                            diag.code = rawDiag.code;
-                        }
-                        addDiagnosticToCollection(collections.build, { filepath, diag });
-                    });
-                }
                 return await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Window,

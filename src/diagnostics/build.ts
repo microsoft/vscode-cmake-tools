@@ -15,7 +15,7 @@ import * as gnu_ld from '@cmt/diagnostics/gnu-ld';
 import * as mvsc from '@cmt/diagnostics/msvc';
 import * as iar from '@cmt/diagnostics/iar';
 import * as iwyu from '@cmt/diagnostics/iwyu';
-import { FileDiagnostic, RawDiagnostic, RawDiagnosticParser, diagnosticSeverity } from '@cmt/diagnostics/util';
+import { FileDiagnostic, RawDiagnostic, RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ConfigurationReader } from '@cmt/config';
 import { fs } from '@cmt/pr';
 
@@ -31,38 +31,10 @@ export class Compilers {
     iwyu = new iwyu.Parser();
 }
 
-export interface RawDiagnosticWithSource {
-    source: string;
-    diagnostic: RawDiagnostic;
-}
-
 export class CompileOutputConsumer implements OutputConsumer {
     constructor(readonly config: ConfigurationReader) {}
 
     compilers = new Compilers();
-
-    private readonly _onDiagnosticEmitter = new vscode.EventEmitter<RawDiagnosticWithSource>();
-
-    /**
-     * Event fired when a new diagnostic is parsed from compiler output
-     */
-    get onDiagnostic() {
-        return this._onDiagnosticEmitter.event;
-    }
-
-    dispose() {
-        this._onDiagnosticEmitter.dispose();
-    }
-
-    private static readonly _sourceNames: Record<string, string> = {
-        gcc: 'GCC',
-        gnuld: 'GNULD',
-        ghs: 'GHS',
-        diab: 'DIAB',
-        msvc: 'MSVC',
-        iar: 'IAR',
-        iwyu: 'IWYU'
-    };
 
     // Defer all output to the `error` method
     output(line: string) {
@@ -71,16 +43,7 @@ export class CompileOutputConsumer implements OutputConsumer {
 
     error(line: string) {
         for (const cand in this.compilers) {
-            const parser = this.compilers[cand];
-            const countBefore = parser.diagnostics.length;
-            if (parser.handleLine(line)) {
-                if (parser.diagnostics.length > countBefore) {
-                    const source = CompileOutputConsumer._sourceNames[cand] || cand;
-                    this._onDiagnosticEmitter.fire({
-                        source,
-                        diagnostic: parser.diagnostics[parser.diagnostics.length - 1]
-                    });
-                }
+            if (this.compilers[cand].handleLine(line)) {
                 break;
             }
         }
@@ -100,6 +63,24 @@ export class CompileOutputConsumer implements OutputConsumer {
         const diags_by_file = new Map<string, vscode.Diagnostic[]>();
         const linkerHandler = this.createLinkerDiagnosticsHandler(basePaths);
 
+        const severity_of = (p: string) => {
+            switch (p) {
+                case 'warning':
+                    return vscode.DiagnosticSeverity.Warning;
+                case 'catastrophic error':
+                case 'fatal error':
+                case 'error':
+                    return vscode.DiagnosticSeverity.Error;
+                case 'note':
+                case 'info':
+                case 'remark':
+                    return vscode.DiagnosticSeverity.Information;
+            }
+            // tslint:disable-next-line
+            console.warn('Unknown diagnostic severity level: ' + p);
+            return undefined;
+        };
+
         const by_source = {
             GCC: this.compilers.gcc.diagnostics,
             MSVC: this.compilers.msvc.diagnostics,
@@ -118,7 +99,7 @@ export class CompileOutputConsumer implements OutputConsumer {
             for (const raw_diag of diags) {
                 await linkerHandler.collect(raw_diag, source, arrs.length);
                 const filepath = await this.resolvePath(raw_diag.file, basePaths);
-                const severity = diagnosticSeverity(raw_diag.severity);
+                const severity = severity_of(raw_diag.severity);
                 if (severity === undefined) {
                     continue;
                 }
@@ -295,16 +276,8 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
 
     readonly compileConsumer: CompileOutputConsumer;
 
-    /**
-     * Event fired when a new diagnostic is parsed from compiler output
-     */
-    get onDiagnostic() {
-        return this.compileConsumer.onDiagnostic;
-    }
-
     dispose() {
         this._onProgressEmitter.dispose();
-        this.compileConsumer.dispose();
     }
 
     error(line: string) {
