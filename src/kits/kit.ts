@@ -243,7 +243,7 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
         if (c_bin) {
             version = await getCompilerVersion('Clang', c_bin);
         }
-        let targetArch = kit.preferredGenerator?.platform ?? kit.visualStudioArchitecture ?? 'i686';
+        const targetArch = kit.preferredGenerator?.platform ?? kit.visualStudioArchitecture ?? 'i686';
         const archMap: { [key: string]: string } = {
             amd64: 'x86_64',
             x64: 'x86_64',
