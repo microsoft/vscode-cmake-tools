@@ -1566,6 +1566,16 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanRebuild(), this.ensureActiveBuildPreset, true);
     }
 
+    cleanConfigureAndBuild(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("deleteCacheReconfigureAndBuild", { all: "false"});
+        return this.runCMakeCommand(cmakeProject => cmakeProject.cleanConfigureAndBuild(ConfigureTrigger.commandCleanConfigure), folder, this.ensureActiveBuildPreset, true);
+    }
+
+    cleanConfigureAndBuildAll() {
+        telemetry.logEvent("deleteCacheReconfigureAndBuild", { all: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureAndBuild(ConfigureTrigger.commandCleanConfigureAll), this.ensureActiveBuildPreset, true);
+    }
+
     async buildWithTarget(target?: string) {
         telemetry.logEvent("build", { command: "buildWithTarget", all: "false"});
         this.cleanOutputChannel();
@@ -2420,6 +2430,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'cleanConfigureAllWithDebugger',
         'cleanRebuild',
         'cleanRebuildAll',
+        'cleanConfigureAndBuild',
+        'cleanConfigureAndBuildAll',
         'configure',
         'configureWithDebugger',
         'showConfigureCommand',
@@ -2578,6 +2590,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAllWithDebugger', () => runCommand('cleanConfigureAllWithDebugger', ConfigureTrigger.projectOutlineCleanConfigureAllWithDebugger)),
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
+        vscode.commands.registerCommand('cmake.outline.cleanConfigureAndBuildAll', () => runCommand('cleanConfigureAndBuildAll')),
         // Commands for outline items
         vscode.commands.registerCommand('cmake.outline.configure', async (what: ProjectNode|SourceFileNode) => {
             if (what instanceof ProjectNode) {
