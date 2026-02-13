@@ -1273,19 +1273,19 @@ export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolea
 
     // Scan also when there is no kits version saved in the state.
     if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode()) {
-        // Respect the user's preference to disable automatic kit scanning.
-        if (!project.workspaceContext.config.enableAutomaticKitScan) {
-            await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
-            return false;
-        }
-
-        // Prevent concurrent scans from multiple projects in the same workspace.
+        // Prevent concurrent calls from multiple projects in the same workspace.
         if (scanForKitsInProgress || kitsController.KitsController.isScanningForKits()) {
             return false;
         }
 
         scanForKitsInProgress = true;
         try {
+            // Respect the user's preference to disable automatic kit scanning.
+            if (!project.workspaceContext.config.enableAutomaticKitScan) {
+                await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+                return false;
+            }
+
             log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
             await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
             await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
