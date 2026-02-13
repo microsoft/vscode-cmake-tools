@@ -837,6 +837,18 @@
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
       },
       {
+        "command": "cmake.outline.runTest",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.outline.runTest.title%",
+        "icon": "$(run)"
+      },
+      {
+        "command": "cmake.outline.debugTest",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.outline.debugTest.title%",
+        "icon": "$(debug-alt)"
+      },
+      {
         "command": "cmake.projectStatus.update",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.projectStatus.update.title%",
@@ -1519,6 +1531,14 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.runTest",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.debugTest",
+          "when": "never"
+        },
+        {
           "command": "cmake.projectStatus.update",
           "when": "never"
         },
@@ -1907,6 +1927,26 @@
           "command": "cmake.outline.toggleBookmark",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=target/",
           "group": "1_targetActions@6"
+        },
+        {
+          "command": "cmake.outline.runTest",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
+          "group": "1_testActions@1"
+        },
+        {
+          "command": "cmake.outline.debugTest",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
+          "group": "1_testActions@2"
+        },
+        {
+          "command": "cmake.outline.runTest",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
+          "group": "inline@1"
+        },
+        {
+          "command": "cmake.outline.debugTest",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
+          "group": "inline@2"
         },
         {
           "command": "cmake.outline.toggleBookmark",
