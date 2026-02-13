@@ -30,6 +30,8 @@
 	"cmake.debug.name": "Débogueur CMake",
 	"select.a.cmake.project": "Sélectionner un projet cmake",
 	"compilation information.not.found": "Les informations de compilation sont introuvables pour ce fichier",
+	"open.folder": "Ouvrir un dossier",
+	"no.folder.open.for.quickstart": "Aucun dossier n'est ouvert. Veuillez ouvrir un dossier pour utiliser CMake : démarrage rapide.",
 	"add.config.preset.in.test.mode": "Exécution de CMakeTools en mode test. addConfigurePreset est désactivé.",
 	"add.build.preset.in.test.mode": "Exécution de CMakeTools en mode test. addBuildPreset est désactivé.",
 	"add.test.preset.in.test.mode": "Exécution de CMakeTools en mode test. addTestPreset est désactivé.",

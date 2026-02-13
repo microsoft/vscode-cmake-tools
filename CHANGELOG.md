@@ -5,6 +5,7 @@
 Features:
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
+- Add individual CTest test nodes to the Project Outline with inline run/debug buttons, and enable debugging tests from both the Outline and Test Explorer without requiring a launch.json. [#4721](https://github.com/microsoft/vscode-cmake-tools/pull/4721)
 
 Improvements:
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
@@ -12,6 +13,7 @@ Improvements:
 
 Bug Fixes:
 - Fix `cmake.installPrefix` not being passed to CMake as `CMAKE_INSTALL_PREFIX` when using presets. [#4358](https://github.com/microsoft/vscode-cmake-tools/issues/4358)
+- Fix CPack commands not appearing in the command palette when not using CMake Presets. Also fix CPack environment variables not being set up in non-preset mode. [#4453](https://github.com/microsoft/vscode-cmake-tools/issues/4453)
 - Fix extension not switching to preset mode after "CMake: Quick Start" generates a CMakePresets.json, causing variant selection to have no effect. [#4569](https://github.com/microsoft/vscode-cmake-tools/issues/4569)
 - Fix spurious preset reloads triggered by unrelated file system events such as builds, git commits, and `cmake.copyCompileCommands`. Migrated file watching from chokidar to VS Code's built-in `FileSystemWatcher` API, which also resolves high CPU usage on Apple M1. [#4703](https://github.com/microsoft/vscode-cmake-tools/issues/4703) [#2967](https://github.com/microsoft/vscode-cmake-tools/issues/2967)
 - Clarify that semicolons in `cmake.configureSettings` string values are escaped, and array notation should be used for CMake lists. [#4585](https://github.com/microsoft/vscode-cmake-tools/issues/4585)
