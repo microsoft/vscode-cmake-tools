@@ -1562,19 +1562,77 @@ export class PresetsController implements vscode.Disposable {
         }
     }
 
+    /**
+     * Determines which presets file to target for adding a new preset.
+     * Returns 'user' for CMakeUserPresets.json, 'main' for CMakePresets.json,
+     * null to fall back to the default inheritance-based logic,
+     * or undefined if the user cancelled the selection.
+     */
+    private async determineTargetPresetsFile(): Promise<'user' | 'main' | null | undefined> {
+        // 1. Check if the active text editor is showing a presets file
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor) {
+            const activeFilePath = activeEditor.document.uri.fsPath;
+            if (activeFilePath === this.presetsPath) {
+                return 'main';
+            }
+            if (activeFilePath === this.userPresetsPath) {
+                return 'user';
+            }
+        }
+
+        // 2. Check which presets files exist
+        const presetsExists = await fs.exists(this.presetsPath);
+        const userPresetsExists = await fs.exists(this.userPresetsPath);
+
+        if (presetsExists && userPresetsExists) {
+            // Both files exist: prompt user to choose
+            const cmakePresets = localize('cmake.presets', 'CMakePresets.json');
+            const cmakeUserPresets = localize('cmake.user.presets', 'CMakeUserPresets.json');
+            const selection = await vscode.window.showQuickPick(
+                [cmakePresets, cmakeUserPresets],
+                { placeHolder: localize('select.preset.file', 'Select which presets file to add the new preset to') }
+            );
+            if (!selection) {
+                return undefined; // User cancelled
+            }
+            return selection === cmakeUserPresets ? 'user' : 'main';
+        }
+
+        if (userPresetsExists && !presetsExists) {
+            return 'user';
+        }
+
+        if (presetsExists && !userPresetsExists) {
+            return 'main';
+        }
+
+        // Neither file exists, fall back to default behavior
+        return null;
+    }
+
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
         presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
-        // If the new preset inherits from a user preset, it should be added to the user presets file.
         let presetsFile: preset.PresetsFile;
         let isUserPreset = false;
 
-        if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
-            presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
+        const targetFile = await this.determineTargetPresetsFile();
+        if (targetFile === undefined) {
+            // User cancelled the selection
+            return;
+        }
+        if (targetFile !== null) {
+            isUserPreset = targetFile === 'user';
+        } else if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
+            // Fall back: if the new preset inherits from a user preset, it should be added to the user presets file.
             isUserPreset = true;
+        }
+
+        if (isUserPreset) {
+            presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
         } else {
             presetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
-            isUserPreset = false;
         }
 
         if (!presetsFile[presetType]) {
