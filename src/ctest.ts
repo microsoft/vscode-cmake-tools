@@ -199,7 +199,7 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue | string): string
     }
     let buffer = !!node.$.encoding ? Buffer.from(node._, node.$.encoding) : Buffer.from(node._, 'utf-8');
     if (!!node.$.compression) {
-        buffer = zlib.unzipSync(buffer);
+        buffer = zlib.unzipSync(buffer as Uint8Array);
     }
     return buffer.toString('utf-8');
 }
