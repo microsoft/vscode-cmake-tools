@@ -6,11 +6,11 @@
 {
 	"executing.command": "正在执行命令: {0}",
 	"execution.environment": "  环境为 {0}",
-	"process.error": "命令: {0} 失败，出现错误: {1}",
-	"process.exit.with.signal": "命令: {0} 退出，代码为: {1}，信号为: {2}",
-	"process.exit": "命令“{0}”已退出，代码为 {1}",
-	"process.exit.stdout": "标准输出的命令输出: {0}",
-	"process.exit.stderr": "标准错误的命令输出: {0}",
+	"process.error": "命令: {0} 失败，出现错误: {1} 堆栈: {2}",
+	"process.exit.with.signal": "命令: {0} 退出，出现代码: {1} 和信号: {2} 堆栈: {3}",
+	"process.exit": "命令: {0} 退出，出现代码: {1} 堆栈: {2}",
+	"process.exit.stdout": "有关标准输出的命令输出: {0} 堆栈: {1}",
+	"process.exit.stderr": "有关标准错误的命令输出: {0} 堆栈: {1}",
 	"processing.data.event.stdout": "正在处理 proc stdout 中的 {0} 事件",
 	"processing.data.event.stderr": "正在处理 proc stderr 中的 {0} 事件",
 	"resolving.close.event": "正在解析 {0} 事件上的进程"

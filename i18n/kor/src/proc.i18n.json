@@ -6,11 +6,11 @@
 {
 	"executing.command": "명령 실행 중: {0}",
 	"execution.environment": "환경 포함: {0}",
-	"process.error": "다음 오류로 {0}이(가) 실패했습니다. {1}",
-	"process.exit.with.signal": "명령: {0} 종료된 코드: {1} 및 신호: {2}",
-	"process.exit": "명령 \"{0}\"이(가) 코드 {1}과(와) 함께 종료되었습니다.",
-	"process.exit.stdout": "표준 출력 시 명령 출력: {0}",
-	"process.exit.stderr": "표준 오류 시 명령 출력: {0}",
+	"process.error": "명령 {0}이(가) 오류 {1}과(와) 함께 실패함. 스택 {2}",
+	"process.exit.with.signal": "명령 {0}이(가) 코드 {1} 및 신호 {2}과(와) 함께 종료됨. 스택 {3}",
+	"process.exit": "명령 {0}이(가) 코드 {1}과(와) 함께 종료됨. 스택 {2}",
+	"process.exit.stdout": "표준 출력 시 명령 출력: {0} 스택: {1}",
+	"process.exit.stderr": "표준 오류 시 명령 출력: {0} 스택: {1}",
 	"processing.data.event.stdout": "proc stdout에서 {0} 이벤트 처리 중",
 	"processing.data.event.stderr": "proc stderr에서 {0} 이벤트 처리 중",
 	"resolving.close.event": "{0} 이벤트 해결 프로세스"
