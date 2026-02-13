@@ -1234,7 +1234,21 @@ export class CTestDriver implements vscode.Disposable {
                 }
             } else {
                 run.started(test);
-                await this.debugCTestImpl(workspaceFolder, test.id, cancellation);
+                const session = await project.debugCTest(test.id);
+                if (session) {
+                    // Wait for the debug session to terminate
+                    await new Promise<void>(resolve => {
+                        const disposable = vscode.debug.onDidTerminateDebugSession((s: vscode.DebugSession) => {
+                            if (s.id === session.id) {
+                                disposable.dispose();
+                                resolve();
+                            }
+                        });
+                        cancellation.onCancellationRequested(() => {
+                            void vscode.debug.stopDebugging(session);
+                        });
+                    });
+                }
                 // We have no way to get the result, so just mark it as skipped
                 run.skipped(test);
             }
