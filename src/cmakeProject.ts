@@ -2119,13 +2119,17 @@ export class CMakeProject {
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
                 if (drv.config.parseBuildDiagnostics) {
-                    consumer.onDiagnostic(rawDiag => {
+                    consumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
+                        if (!drv!.config.enableOutputParsers?.includes(source.toLowerCase())) {
+                            return;
+                        }
                         const severity = diagnosticSeverity(rawDiag.severity);
                         if (severity === undefined) {
                             return;
                         }
                         const filepath = util.resolvePath(rawDiag.file, drv!.binaryDir);
                         const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                        diag.source = source;
                         if (rawDiag.code) {
                             diag.code = rawDiag.code;
                         }

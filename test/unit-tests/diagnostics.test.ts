@@ -1286,30 +1286,33 @@ suite('Diagnostics', () => {
         coll.dispose();
     });
 
-    test('CompileOutputConsumer fires onDiagnostic event', () => {
+    test('CompileOutputConsumer fires onDiagnostic event with source', () => {
         const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
-        const fired: import('@cmt/diagnostics/util').RawDiagnostic[] = [];
+        const fired: diags.RawDiagnosticWithSource[] = [];
         consumer.onDiagnostic(e => fired.push(e));
         feedLines(consumer, [], [
             '/some/path/here:4:26: error: some error message'
         ]);
         expect(fired).to.have.length(1);
-        expect(fired[0].severity).to.eq('error');
-        expect(fired[0].message).to.eq('some error message');
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('error');
+        expect(fired[0].diagnostic.message).to.eq('some error message');
         consumer.dispose();
     });
 
-    test('CompileOutputConsumer fires onDiagnostic for each diagnostic', () => {
+    test('CompileOutputConsumer fires onDiagnostic for each diagnostic with source', () => {
         const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
-        const fired: import('@cmt/diagnostics/util').RawDiagnostic[] = [];
+        const fired: diags.RawDiagnosticWithSource[] = [];
         consumer.onDiagnostic(e => fired.push(e));
         feedLines(consumer, [], [
             '/path/a.cpp:1:1: warning: first warning',
             '/path/b.cpp:2:1: error: first error'
         ]);
         expect(fired).to.have.length(2);
-        expect(fired[0].severity).to.eq('warning');
-        expect(fired[1].severity).to.eq('error');
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('warning');
+        expect(fired[1].source).to.eq('GCC');
+        expect(fired[1].diagnostic.severity).to.eq('error');
         consumer.dispose();
     });
 });

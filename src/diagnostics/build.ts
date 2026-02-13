@@ -31,15 +31,23 @@ export class Compilers {
     iwyu = new iwyu.Parser();
 }
 
+export interface RawDiagnosticWithSource {
+    /** The parser that produced this diagnostic (e.g. 'GCC', 'MSVC'). Matches the keys used in `enableOutputParsers`. */
+    source: string;
+    diagnostic: RawDiagnostic;
+}
+
 export class CompileOutputConsumer implements OutputConsumer {
     constructor(readonly config: ConfigurationReader) {}
 
     compilers = new Compilers();
 
-    private readonly _onDiagnosticEmitter = new vscode.EventEmitter<RawDiagnostic>();
+    private readonly _onDiagnosticEmitter = new vscode.EventEmitter<RawDiagnosticWithSource>();
 
     /**
-     * Event fired when a new diagnostic is parsed from compiler output
+     * Event fired when a new diagnostic is parsed from compiler output.
+     * Includes the source parser name so subscribers can filter by `enableOutputParsers`
+     * and set `diag.source` for display in the Problems pane.
      */
     get onDiagnostic() {
         return this._onDiagnosticEmitter.event;
@@ -60,7 +68,10 @@ export class CompileOutputConsumer implements OutputConsumer {
             const countBefore = parser.diagnostics.length;
             if (parser.handleLine(line)) {
                 if (parser.diagnostics.length > countBefore) {
-                    this._onDiagnosticEmitter.fire(parser.diagnostics[parser.diagnostics.length - 1]);
+                    this._onDiagnosticEmitter.fire({
+                        source: cand.toUpperCase(),
+                        diagnostic: parser.diagnostics[parser.diagnostics.length - 1]
+                    });
                 }
                 break;
             }
