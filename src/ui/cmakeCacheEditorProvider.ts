@@ -101,7 +101,7 @@ export class CMakeCacheEditorProvider implements vscode.CustomTextEditorProvider
         const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
             if (e.document.uri.toString() === document.uri.toString() && e.contentChanges.length > 0) {
                 // Reload options from the document
-                this.getConfigurationOptionsFromDocument(document).then(newOptions => {
+                void this.getConfigurationOptionsFromDocument(document).then(newOptions => {
                     options = newOptions;
                     webviewPanel.webview.html = this.getWebviewMarkup(options);
                 });
