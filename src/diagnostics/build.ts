@@ -92,15 +92,10 @@ export class CompileOutputConsumer implements OutputConsumer {
         const diags_by_file = new Map<string, vscode.Diagnostic[]>();
         const linkerHandler = this.createLinkerDiagnosticsHandler(basePaths);
 
-        const by_source = {
-            GCC: this.compilers.gcc.diagnostics,
-            MSVC: this.compilers.msvc.diagnostics,
-            GHS: this.compilers.ghs.diagnostics,
-            DIAB: this.compilers.diab.diagnostics,
-            GNULD: this.compilers.gnuld.diagnostics,
-            IAR: this.compilers.iar.diagnostics,
-            IWYU: this.compilers.iwyu.diagnostics
-        };
+        const by_source: Record<string, readonly RawDiagnostic[]> = {};
+        for (const name in this.compilers) {
+            by_source[name.toUpperCase()] = this.compilers[name].diagnostics;
+        }
         const parsers = util.objectPairs(by_source)
             .filter(([source, _]) => this.config.enableOutputParsers?.includes(source.toLowerCase()) ?? false);
         const arrs: FileDiagnostic[] = [];
