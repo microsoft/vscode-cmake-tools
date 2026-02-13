@@ -668,13 +668,13 @@
       {
         "command": "cmake.cpack",
         "title": "%cmake-tools.command.cmake.cpack.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
         "command": "cmake.projectStatus.cpack",
         "title": "%cmake-tools.command.cmake.cpack.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "icon": "$(package)",
         "category": "CMake"
       },
@@ -694,7 +694,7 @@
       {
         "command": "cmake.cpackAll",
         "title": "%cmake-tools.command.cmake.cpackAll.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -1360,7 +1360,7 @@
         },
         {
           "command": "cmake.cpack",
-          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.workflow",
@@ -1372,7 +1372,7 @@
         },
         {
           "command": "cmake.cpackAll",
-          "when": "cmake:multiProject && cmake:enableFullFeatureSet && useCMakePresets"
+          "when": "cmake:multiProject && cmake:enableFullFeatureSet"
         },
         {
           "command": "cmake.workflowAll",
@@ -1820,7 +1820,7 @@
         },
         {
           "command": "cmake.projectStatus.cpack",
-          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'package' && useCMakePresets",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'package'",
           "group": "inline"
         },
         {
