@@ -1220,7 +1220,6 @@ export class CTestDriver implements vscode.Disposable {
                 this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
                 continue;
             }
-            const workspaceFolder = project.workspaceFolder;
 
             if (test.children.size > 0) {
                 // Shouldn't reach here now, but not hard to write so keeping it in case we want to have more complicated test hierarchies
