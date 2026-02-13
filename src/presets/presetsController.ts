@@ -1587,23 +1587,23 @@ export class PresetsController implements vscode.Disposable {
 
         if (presetsExists && userPresetsExists) {
             // Both files exist: prompt user to choose
-            const cmakePresets = localize('cmake.presets', 'CMakePresets.json');
-            const cmakeUserPresets = localize('cmake.user.presets', 'CMakeUserPresets.json');
+            const cmakePresetsLabel = path.basename(this.presetsPath);
+            const cmakeUserPresetsLabel = path.basename(this.userPresetsPath);
             const selection = await vscode.window.showQuickPick(
-                [cmakePresets, cmakeUserPresets],
+                [cmakePresetsLabel, cmakeUserPresetsLabel],
                 { placeHolder: localize('select.preset.file', 'Select which presets file to add the new preset to') }
             );
             if (!selection) {
                 return undefined; // User cancelled
             }
-            return selection === cmakeUserPresets ? 'user' : 'main';
+            return selection === cmakeUserPresetsLabel ? 'user' : 'main';
         }
 
-        if (userPresetsExists && !presetsExists) {
+        if (userPresetsExists) {
             return 'user';
         }
 
-        if (presetsExists && !userPresetsExists) {
+        if (presetsExists) {
             return 'main';
         }
 
