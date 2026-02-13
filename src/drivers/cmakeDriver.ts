@@ -376,7 +376,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             return envs;
         } else {
-            return {};
+            let envs = this._kitEnvironmentVariables;
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.cpackEnvironment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this._variantEnv, envs)]);
+            return envs;
         }
     }
 
