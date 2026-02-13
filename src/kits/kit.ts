@@ -1263,17 +1263,36 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
     return result.filter(kit => kit.isTrusted);
 }
 
+// Guard to prevent concurrent calls from multiple projects in the same workspace.
+let scanForKitsInProgress = false;
+
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
 export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolean> {
     const kitsVersionSaved = project.workspaceContext.state.extensionContext.globalState.get<number>('kitsVersionSaved');
     const kitsVersionCurrent = 2;
 
     // Scan also when there is no kits version saved in the state.
-    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
-        log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
-        await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
-        return true;
+    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode()) {
+        // Respect the user's preference to disable automatic kit scanning.
+        if (!project.workspaceContext.config.enableAutomaticKitScan) {
+            await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+            return false;
+        }
+
+        // Prevent concurrent scans from multiple projects in the same workspace.
+        if (scanForKitsInProgress || kitsController.KitsController.isScanningForKits()) {
+            return false;
+        }
+
+        scanForKitsInProgress = true;
+        try {
+            log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
+            await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
+            await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+            return true;
+        } finally {
+            scanForKitsInProgress = false;
+        }
     }
 
     return false;
