@@ -92,6 +92,8 @@
     "cmake-tools.command.cmake.outline.setDefaultTarget.title": "Set Build Target",
     "cmake-tools.command.cmake.outline.setLaunchTarget.title": "Set Launch/Debug Target",
     "cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Open CMakeLists.txt",
+    "cmake-tools.command.cmake.outline.runTest.title": "Run Test",
+    "cmake-tools.command.cmake.outline.debugTest.title": "Debug Test",
     "cmake-tools.command.cmake.folders.setActiveFolder.title": "Set Active Folder",
     "cmake-tools.configuration.title": {
         "message": "CMake Tools configuration",

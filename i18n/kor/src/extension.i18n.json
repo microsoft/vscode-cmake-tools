@@ -30,6 +30,8 @@
 	"cmake.debug.name": "CMake 디버거",
 	"select.a.cmake.project": "Cmake 프로젝트 선택",
 	"compilation information.not.found": "이 파일의 컴파일 정보를 찾을 수 없음",
+	"open.folder": "폴더 열기",
+	"no.folder.open.for.quickstart": "열려 있는 폴더가 없습니다. CMake: 빠른 시작을 사용하려면 폴더를 여세요.",
 	"add.config.preset.in.test.mode": "테스트 모드에서 CMakeTools를 실행 중입니다. addConfigurePreset 가 사용 중지되었습니다.",
 	"add.build.preset.in.test.mode": "테스트 모드에서 CMakeTools를 실행 중입니다. addBuildPreset가 사용 중지되었습니다.",
 	"add.test.preset.in.test.mode": "테스트 모드에서 CMakeTools를 실행 중입니다. addTestPreset가 사용 중지되었습니다.",
