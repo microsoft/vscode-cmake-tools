@@ -30,6 +30,8 @@
 	"cmake.debug.name": "CMake Debugger",
 	"select.a.cmake.project": "Seleziona un progetto CMake",
 	"compilation information.not.found": "Non è possibile trovare le informazioni di compilazione per questo file",
+	"open.folder": "Apri cartella",
+	"no.folder.open.for.quickstart": "Nessuna cartella aperta. Aprire una cartella per usare CMake: Avvio rapido.",
 	"add.config.preset.in.test.mode": "Esecuzione di CMakeTools in modalità di test. addConfigurePreset è disabilitato.",
 	"add.build.preset.in.test.mode": "Esecuzione di CMakeTools in modalità di test. addBuildPreset è disabilitato.",
 	"add.test.preset.in.test.mode": "Esecuzione di CMakeTools in modalità di test. addTestPreset è disabilitato.",
