@@ -338,7 +338,7 @@ suite('Kits scan test', () => {
             expect(action).to.eq('no-action');
         });
 
-        test('returns no-action when saved version is 0 (falsy but matching would fail)', () => {
+        test('returns scan when saved version is 0 (falsy value triggers version mismatch)', () => {
             // kitsVersionSaved=0 is falsy, so (!kitsVersionSaved) is true,
             // triggering the scan path. This ensures the function handles
             // edge cases around falsy version numbers correctly.
