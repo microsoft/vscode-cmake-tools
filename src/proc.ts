@@ -8,6 +8,7 @@ import * as proc from 'child_process';
 import * as iconv from 'iconv-lite';
 
 import { createLogger } from '@cmt/logging';
+import { isValidUtf8 } from '@cmt/encodingUtils';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
@@ -118,10 +119,13 @@ export interface ExecutionOptions {
     cwd?: string;
     encoding?: BufferEncoding;
     outputEncoding?: string;
+    useAutoEncoding?: boolean;
     overrideLocale?: boolean;
     timeout?: number;
     showOutputOnError?: boolean;
 }
+
+export { isValidUtf8 } from '@cmt/encodingUtils';
 
 export function buildCmdStr(command: string, args?: string[]): string {
     let cmdarr = [command];
@@ -219,7 +223,20 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         child.stdout?.setEncoding(options.encoding);
     }
 
-    const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
+    const fallbackEncoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
+    // When useAutoEncoding is true (i.e., outputLogEncoding is 'auto' on Windows),
+    // try UTF-8 first for each chunk and fall back to the system code page encoding
+    // only if the chunk contains bytes that are not valid UTF-8.
+    // This correctly handles compilers that output UTF-8 (e.g., MSVC with /utf-8)
+    // on systems where the default code page is non-UTF-8 (e.g., GBK on Chinese Windows).
+    const useAutoEncoding = options.useAutoEncoding === true && fallbackEncoding !== 'utf8';
+    const decodeData = (data: Uint8Array): string => {
+        const buf = Buffer.from(data);
+        if (useAutoEncoding) {
+            return isValidUtf8(buf) ? iconv.decode(buf, 'utf8') : iconv.decode(buf, fallbackEncoding);
+        }
+        return iconv.decode(buf, fallbackEncoding);
+    };
     const accumulate = (str1: string, str2: string) => {
         try {
             return str1 + str2;
@@ -259,7 +276,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         });
         child?.stdout?.on('data', (data: Uint8Array) => {
             rollbar.invoke(localize('processing.data.event.stdout', 'Processing {0} event from proc stdout', "\"data\""), { data, command, args }, () => {
-                const str = iconv.decode(Buffer.from(data), encoding);
+                const str = decodeData(data);
                 const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                 while (lines.length > 1) {
                     line_acc = accumulate(line_acc, lines[0]);
@@ -279,7 +296,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         });
         child?.stderr?.on('data', (data: Uint8Array) => {
             rollbar.invoke(localize('processing.data.event.stderr', 'Processing {0} event from proc stderr', "\"data\""), { data, command, args }, () => {
-                const str = iconv.decode(Buffer.from(data), encoding);
+                const str = decodeData(data);
                 const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
                 while (lines.length > 1) {
                     stderr_line_acc = accumulate(stderr_line_acc, lines[0]);
