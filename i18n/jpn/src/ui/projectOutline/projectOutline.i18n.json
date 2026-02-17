@@ -13,6 +13,7 @@
 	"edit.filter": "フィルターの編集",
 	"open.file": "ファイルを開く",
 	"references": "リファレンス",
+	"test.tooltip": "Test: {0}",
 	"static.library": "スタティック ライブラリ",
 	"module.library": "モジュール ライブラリ",
 	"shared.library": "共有ライブラリ",
