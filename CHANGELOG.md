@@ -11,6 +11,7 @@ Features:
 Improvements:
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
 - Use environment variables from `cmake.environment` and `cmake.configureEnvironment` when expanding `$penv{}` macros in CMake Presets `include` paths. [#3578](https://github.com/microsoft/vscode-cmake-tools/issues/3578)
+- Fix Visual Studio kits reporting `${buildKitTargetArch}` as unknown by mapping VS architectures to parsed target triples.
 
 Bug Fixes:
 - Fix `cmake.installPrefix` not being passed to CMake as `CMAKE_INSTALL_PREFIX` when using presets. [#4358](https://github.com/microsoft/vscode-cmake-tools/issues/4358)
