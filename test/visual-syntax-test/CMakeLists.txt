@@ -219,6 +219,66 @@ target_compile_options(MyApp PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra>)
   This is a bracket comment
 ]]
 
+# Module commands: FindPackageHandleStandardArgs
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  Foo
+  REQUIRED_VARS Foo_LIBRARY Foo_INCLUDE_DIR
+  VERSION_VAR Foo_VERSION
+  HANDLE_VERSION_RANGE
+  HANDLE_COMPONENTS
+  REASON_FAILURE_MESSAGE "Could not find Foo"
+)
+find_package_handle_standard_args(Bar DEFAULT_MSG BAR_LIBRARY BAR_INCLUDE_DIR)
+find_package_check_version(1.2.3 result HANDLE_VERSION_RANGE RESULT_MESSAGE_VARIABLE reason)
+
+# Module commands: FetchContent
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e
+  GIT_SHALLOW    TRUE
+  FIND_PACKAGE_ARGS NAMES GTest
+)
+FetchContent_Declare(
+  mylib
+  URL      https://example.com/mylib-1.0.tar.gz
+  URL_HASH MD5=d41d8cd98f00b204e9800998ecf8427e
+  DOWNLOAD_NO_EXTRACT FALSE
+  OVERRIDE_FIND_PACKAGE
+  SYSTEM
+  EXCLUDE_FROM_ALL
+)
+FetchContent_MakeAvailable(googletest mylib)
+FetchContent_GetProperties(googletest SOURCE_DIR src BINARY_DIR bin POPULATED done)
+
+# Module commands: ExternalProject
+include(ExternalProject)
+ExternalProject_Add(foobar
+  GIT_REPOSITORY    git@github.com:FooCo/FooBar.git
+  GIT_TAG           origin/release/1.2.3
+  PREFIX            ${CMAKE_BINARY_DIR}/external
+  CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+  CMAKE_CACHE_ARGS  -DBUILD_TESTS:BOOL=OFF
+  BUILD_ALWAYS      TRUE
+  INSTALL_COMMAND   ""
+  TEST_BEFORE_INSTALL TRUE
+  LOG_DOWNLOAD      TRUE
+  LOG_BUILD         TRUE
+  USES_TERMINAL_BUILD TRUE
+  DEPENDS           some_other_target
+  STEP_TARGETS      build install
+)
+ExternalProject_Add_Step(foobar docs
+  COMMAND           <SOURCE_DIR>/makedoc <BINARY_DIR>
+  WORKING_DIRECTORY <SOURCE_DIR>
+  COMMENT           "Building foobar docs"
+  DEPENDEES         build
+  ALWAYS            TRUE
+  EXCLUDE_FROM_MAIN TRUE
+)
+
 # Return
 function(early_return)
   if(TRUE)

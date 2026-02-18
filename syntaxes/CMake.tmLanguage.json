@@ -22,6 +22,9 @@
     { "include": "#scopedSetCommand" },
     { "include": "#scopedOptionCommand" },
     { "include": "#scopedInstallCommand" },
+    { "include": "#scopedFindPackageHandleStdArgsCommand" },
+    { "include": "#scopedFetchContentCommand" },
+    { "include": "#scopedExternalProjectCommand" },
     { "include": "#commandControl" },
     { "include": "#conditionalControl" },
     { "include": "#loopControl" },
@@ -351,15 +354,72 @@
         }
       ]
     },
+    "scopedFindPackageHandleStdArgsCommand": {
+      "comment": "find_package_handle_standard_args() and find_package_check_version() with scoped keywords (module: FindPackageHandleStandardArgs)",
+      "begin": "\\b(?i:(find_package_handle_standard_args|find_package_check_version))\\b\\s*(\\()",
+      "beginCaptures": {
+        "1": { "name": "support.function.cmake" },
+        "2": { "name": "punctuation.section.arguments.begin.cmake" }
+      },
+      "end": "\\)",
+      "endCaptures": { "0": { "name": "punctuation.section.arguments.end.cmake" } },
+      "patterns": [
+        { "include": "#nestedParens" },
+        { "include": "#commonArgPatterns" },
+        {
+          "comment": "find_package_handle_standard_args() / find_package_check_version() keywords",
+          "name": "keyword.other.cmake",
+          "match": "\\b(?i:REQUIRED_VARS|VERSION_VAR|HANDLE_VERSION_RANGE|HANDLE_COMPONENTS|CONFIG_MODE|NAME_MISMATCHED|REASON_FAILURE_MESSAGE|FAIL_MESSAGE|FOUND_VAR|DEFAULT_MSG|RESULT_MESSAGE_VARIABLE)\\b"
+        }
+      ]
+    },
+    "scopedFetchContentCommand": {
+      "comment": "FetchContent_Declare/MakeAvailable/Populate/GetProperties/SetPopulated with scoped keywords (module: FetchContent)",
+      "begin": "\\b(?i:(FetchContent_Declare|FetchContent_MakeAvailable|FetchContent_Populate|FetchContent_GetProperties|FetchContent_SetPopulated))\\b\\s*(\\()",
+      "beginCaptures": {
+        "1": { "name": "support.function.cmake" },
+        "2": { "name": "punctuation.section.arguments.begin.cmake" }
+      },
+      "end": "\\)",
+      "endCaptures": { "0": { "name": "punctuation.section.arguments.end.cmake" } },
+      "patterns": [
+        { "include": "#nestedParens" },
+        { "include": "#commonArgPatterns" },
+        {
+          "comment": "FetchContent-specific keywords plus ExternalProject download/update/patch keywords",
+          "name": "keyword.other.cmake",
+          "match": "\\b(?i:EXCLUDE_FROM_ALL|SYSTEM|OVERRIDE_FIND_PACKAGE|FIND_PACKAGE_ARGS|SOURCE_SUBDIR|QUIET|SUBBUILD_DIR|SOURCE_DIR|BINARY_DIR|POPULATED|GIT_REPOSITORY|GIT_TAG|GIT_SHALLOW|GIT_PROGRESS|GIT_SUBMODULES|GIT_SUBMODULES_RECURSE|GIT_REMOTE_NAME|GIT_CONFIG|GIT_REMOTE_UPDATE_STRATEGY|URL|URL_HASH|URL_MD5|SVN_REPOSITORY|SVN_REVISION|SVN_USERNAME|SVN_PASSWORD|SVN_TRUST_CERT|HG_REPOSITORY|HG_TAG|CVS_REPOSITORY|CVS_MODULE|CVS_TAG|DOWNLOAD_COMMAND|DOWNLOAD_NAME|DOWNLOAD_DIR|DOWNLOAD_NO_EXTRACT|DOWNLOAD_NO_PROGRESS|DOWNLOAD_EXTRACT_TIMESTAMP|TIMEOUT|INACTIVITY_TIMEOUT|HTTP_USERNAME|HTTP_PASSWORD|HTTP_HEADER|TLS_VERSION|TLS_VERIFY|TLS_CAINFO|NETRC|NETRC_FILE|UPDATE_COMMAND|UPDATE_DISCONNECTED|PATCH_COMMAND)\\b"
+        }
+      ]
+    },
+    "scopedExternalProjectCommand": {
+      "comment": "ExternalProject_Add/Add_Step/Add_StepTargets/Add_StepDependencies/Get_Property with scoped keywords (module: ExternalProject)",
+      "begin": "\\b(?i:(ExternalProject_Add|ExternalProject_Add_Step|ExternalProject_Add_StepTargets|ExternalProject_Add_StepDependencies|ExternalProject_Get_Property))\\b\\s*(\\()",
+      "beginCaptures": {
+        "1": { "name": "support.function.cmake" },
+        "2": { "name": "punctuation.section.arguments.begin.cmake" }
+      },
+      "end": "\\)",
+      "endCaptures": { "0": { "name": "punctuation.section.arguments.end.cmake" } },
+      "patterns": [
+        { "include": "#nestedParens" },
+        { "include": "#commonArgPatterns" },
+        {
+          "comment": "ExternalProject directory, download, update, patch, configure, build, install, test, logging, terminal, target, step, and misc keywords",
+          "name": "keyword.other.cmake",
+          "match": "\\b(?i:PREFIX|TMP_DIR|STAMP_DIR|LOG_DIR|DOWNLOAD_DIR|SOURCE_DIR|BINARY_DIR|INSTALL_DIR|URL|URL_HASH|URL_MD5|DOWNLOAD_NAME|DOWNLOAD_EXTRACT_TIMESTAMP|DOWNLOAD_NO_EXTRACT|DOWNLOAD_NO_PROGRESS|DOWNLOAD_COMMAND|TIMEOUT|INACTIVITY_TIMEOUT|HTTP_USERNAME|HTTP_PASSWORD|HTTP_HEADER|TLS_VERSION|TLS_VERIFY|TLS_CAINFO|NETRC|NETRC_FILE|GIT_REPOSITORY|GIT_TAG|GIT_REMOTE_NAME|GIT_SUBMODULES|GIT_SUBMODULES_RECURSE|GIT_SHALLOW|GIT_PROGRESS|GIT_CONFIG|GIT_REMOTE_UPDATE_STRATEGY|SVN_REPOSITORY|SVN_REVISION|SVN_USERNAME|SVN_PASSWORD|SVN_TRUST_CERT|HG_REPOSITORY|HG_TAG|CVS_REPOSITORY|CVS_MODULE|CVS_TAG|UPDATE_COMMAND|UPDATE_DISCONNECTED|PATCH_COMMAND|CONFIGURE_COMMAND|CMAKE_COMMAND|CMAKE_GENERATOR|CMAKE_GENERATOR_PLATFORM|CMAKE_GENERATOR_TOOLSET|CMAKE_GENERATOR_INSTANCE|CMAKE_ARGS|CMAKE_CACHE_ARGS|CMAKE_CACHE_DEFAULT_ARGS|SOURCE_SUBDIR|CONFIGURE_HANDLED_BY_BUILD|BUILD_COMMAND|BUILD_IN_SOURCE|BUILD_ALWAYS|BUILD_BYPRODUCTS|BUILD_JOB_SERVER_AWARE|INSTALL_COMMAND|INSTALL_BYPRODUCTS|INSTALL_JOB_SERVER_AWARE|TEST_COMMAND|TEST_BEFORE_INSTALL|TEST_AFTER_INSTALL|TEST_EXCLUDE_FROM_MAIN|LOG_DOWNLOAD|LOG_UPDATE|LOG_PATCH|LOG_CONFIGURE|LOG_BUILD|LOG_INSTALL|LOG_TEST|LOG_MERGED_STDOUTERR|LOG_OUTPUT_ON_FAILURE|USES_TERMINAL_DOWNLOAD|USES_TERMINAL_UPDATE|USES_TERMINAL_PATCH|USES_TERMINAL_CONFIGURE|USES_TERMINAL_BUILD|USES_TERMINAL_INSTALL|USES_TERMINAL_TEST|DEPENDS|EXCLUDE_FROM_ALL|STEP_TARGETS|INDEPENDENT_STEP_TARGETS|LIST_SEPARATOR|COMMAND|DEPENDEES|DEPENDERS|COMMENT|ALWAYS|BYPRODUCTS|EXCLUDE_FROM_MAIN|WORKING_DIRECTORY|LOG|USES_TERMINAL|JOB_SERVER_AWARE|INDEPENDENT)\\b"
+        }
+      ]
+    },
     "deprecatedKeywords": {
       "comment": "Deprecated CMake keywords. All previous entries (ABSTRACT_FILES, BUILD_NAME, SOURCE_FILES, SOURCE_FILES_REMOVE, VTK_MAKE_INSTANTIATOR, VTK_WRAP_JAVA, VTK_WRAP_PYTHON, VTK_WRAP_TCL, WRAP_EXCLUDE_FILES) were removed per #4613 because they were removed from CMake 20+ years ago and collide with common user variable names like SOURCE_FILES. Re-add entries here when CMake deprecates new keywords that need highlighting.",
       "name": "invalid.deprecated.cmake",
       "match": "(?!x)x"
     },
     "builtInCommands": {
-      "comment": "CMake built-in commands including legacy/deprecated commands. The (?=\\s*\\() lookahead is intentional — it prevents command names from being highlighted when used as string arguments (e.g. inside cmake_language(CALL ...)). This is a good trade-off: reduces false positives at the cost of not highlighting the rare case of command names as arguments.",
+      "comment": "CMake built-in commands, legacy/deprecated commands, and well-known standard module commands (FindPackageHandleStandardArgs, FetchContent, ExternalProject). The (?=\\s*\\() lookahead is intentional — it prevents command names from being highlighted when used as string arguments (e.g. inside cmake_language(CALL ...)). This is a good trade-off: reduces false positives at the cost of not highlighting the rare case of command names as arguments.",
       "name": "support.function.cmake",
-      "match": "\\b(?i:add_compile_definitions|add_compile_options|add_custom_command|add_custom_target|add_definitions|add_dependencies|add_executable|add_library|add_link_options|add_subdirectory|add_test|aux_source_directory|block|build_command|build_name|cmake_file_api|cmake_host_system_information|cmake_language|cmake_minimum_required|cmake_parse_arguments|cmake_path|cmake_pkg_config|cmake_policy|configure_file|create_test_sourcelist|ctest_build|ctest_configure|ctest_coverage|ctest_empty_binary_directory|ctest_memcheck|ctest_read_custom_files|ctest_run_script|ctest_sleep|ctest_start|ctest_submit|ctest_test|ctest_update|ctest_upload|define_property|enable_language|enable_testing|endblock|execute_process|exec_program|export|export_library_dependencies|file|find_file|find_library|find_package|find_path|find_program|fltk_wrap_ui|get_cmake_property|get_directory_property|get_filename_component|get_property|get_source_file_property|get_target_property|get_test_property|include|include_directories|include_external_msproject|include_guard|include_regular_expression|install|install_files|install_programs|install_targets|link_directories|link_libraries|list|load_cache|load_command|make_directory|mark_as_advanced|math|message|option|output_required_files|project|qt_wrap_cpp|qt_wrap_ui|remove|remove_definitions|return|separate_arguments|set|set_directory_properties|set_property|set_source_files_properties|set_target_properties|set_tests_properties|site_name|source_group|string|subdirs|subdir_depends|target_compile_definitions|target_compile_features|target_compile_options|target_include_directories|target_link_directories|target_link_libraries|target_link_options|target_precompile_headers|target_sources|try_compile|try_run|unset|use_mangled_mesa|utility_source|variable_requires|variable_watch|write_file)\\b(?=\\s*\\()"
+      "match": "\\b(?i:add_compile_definitions|add_compile_options|add_custom_command|add_custom_target|add_definitions|add_dependencies|add_executable|add_library|add_link_options|add_subdirectory|add_test|aux_source_directory|block|build_command|build_name|cmake_file_api|cmake_host_system_information|cmake_language|cmake_minimum_required|cmake_parse_arguments|cmake_path|cmake_pkg_config|cmake_policy|configure_file|create_test_sourcelist|ctest_build|ctest_configure|ctest_coverage|ctest_empty_binary_directory|ctest_memcheck|ctest_read_custom_files|ctest_run_script|ctest_sleep|ctest_start|ctest_submit|ctest_test|ctest_update|ctest_upload|define_property|enable_language|enable_testing|endblock|execute_process|exec_program|export|export_library_dependencies|ExternalProject_Add|ExternalProject_Add_Step|ExternalProject_Add_StepTargets|ExternalProject_Add_StepDependencies|ExternalProject_Get_Property|FetchContent_Declare|FetchContent_GetProperties|FetchContent_MakeAvailable|FetchContent_Populate|FetchContent_SetPopulated|file|find_file|find_library|find_package|find_package_check_version|find_package_handle_standard_args|find_path|find_program|fltk_wrap_ui|get_cmake_property|get_directory_property|get_filename_component|get_property|get_source_file_property|get_target_property|get_test_property|include|include_directories|include_external_msproject|include_guard|include_regular_expression|install|install_files|install_programs|install_targets|link_directories|link_libraries|list|load_cache|load_command|make_directory|mark_as_advanced|math|message|option|output_required_files|project|qt_wrap_cpp|qt_wrap_ui|remove|remove_definitions|return|separate_arguments|set|set_directory_properties|set_property|set_source_files_properties|set_target_properties|set_tests_properties|site_name|source_group|string|subdirs|subdir_depends|target_compile_definitions|target_compile_features|target_compile_options|target_include_directories|target_link_directories|target_link_libraries|target_link_options|target_precompile_headers|target_sources|try_compile|try_run|unset|use_mangled_mesa|utility_source|variable_requires|variable_watch|write_file)\\b(?=\\s*\\()"
     },
     "commandInvocationIdentifier": {
       "comment": "Generic function call identifier — matches any word before '('. Catches user-defined functions/macros.",
