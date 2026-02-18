@@ -13,6 +13,7 @@
 	"edit.filter": "編輯篩選",
 	"open.file": "開啟檔案",
 	"references": "參考",
+	"test.tooltip": "Test: {0}",
 	"static.library": "靜態程式庫",
 	"module.library": "模組程式庫",
 	"shared.library": "共用程式庫",
