@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "Das postRunCoverageTarget „{0}“ für das Projekt {1} wird erstellt, nachdem die Tests mit Abdeckung ausgeführt wurden.",
 	"test.postRunCoverageTargetFailure": "Fehler beim Erstellen des PostRunCoverageTarget-Ziels für das Projekt in {0}. Die Verarbeitung von Abdeckungsdaten wird übersprungen.",
 	"test.skip.run.build.failure": "Aufgrund eines Buildfehlers werden keine Tests ausgeführt.",
-	"no.launch.config": "Keine Startkonfigurationen gefunden.",
-	"choose.launch.config": "Wählen Sie eine Startkonfiguration aus, mit der der Test gedebuggt werden soll.",
 	"test.skip.debug.build.failure": "Debuggen für Tests kann aufgrund eines Buildfehlers nicht ausgeführt werden.",
 	"build.failed": "Fehler beim Buildvorgang",
 	"run.tests.profile": "Tests ausführen",

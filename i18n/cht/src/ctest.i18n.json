@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "對涵蓋範圍執行測試之後，建置專案 {1} 的 postRunCoverageTarget '{0}'。",
 	"test.postRunCoverageTargetFailure": "在 {0} 的專案上建置目標 postRunCoverageTarget 失敗。正在略過涵蓋範圍資料的處理。",
 	"test.skip.run.build.failure": "由於建置失敗，沒有執行中的測試。",
-	"no.launch.config": "找不到啟動設定。",
-	"choose.launch.config": "選擇要對測試進行偵錯的啟動設定。",
 	"test.skip.debug.build.failure": "由於建置失敗，沒有偵錯中的測試。",
 	"build.failed": "建置失敗",
 	"run.tests.profile": "執行測試",
