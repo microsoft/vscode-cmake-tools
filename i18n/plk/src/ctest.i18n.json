@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "Tworzenie elementu „{0}” postRunCoverageTarget dla projektu {1} po przeprowadzeniu testów z pokryciem.",
 	"test.postRunCoverageTargetFailure": "Nie można utworzyć elementu docelowego postRunCoverageTarget dla projektu w: {0}. Pomijanie obsługi danych dotyczących pokrycia.",
 	"test.skip.run.build.failure": "Testy nie są uruchamiane z powodu niepowodzenia kompilacji.",
-	"no.launch.config": "Nie znaleziono konfiguracji uruchamiania.",
-	"choose.launch.config": "Wybierz konfigurację uruchamiania do debugowania testu.",
 	"test.skip.debug.build.failure": "Testy nie są debugowane z powodu niepowodzenia kompilacji.",
 	"build.failed": "Kompilacja nie powiodła się",
 	"run.tests.profile": "Uruchamianie testów",
