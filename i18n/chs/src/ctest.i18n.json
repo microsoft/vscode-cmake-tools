@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "在运行覆盖率测试后为项目 {1} 生成 postRunCoverageTarget“{0}”。",
 	"test.postRunCoverageTargetFailure": "在 {0} 的项目上生成目标 postRunCoverageTarget 失败。跳过覆盖率数据的处理。",
 	"test.skip.run.build.failure": "由于生成失败而未运行测试。",
-	"no.launch.config": "未找到启动配置。",
-	"choose.launch.config": "选择要调试测试的启动配置。",
 	"test.skip.debug.build.failure": "由于生成失败而未调试测试。",
 	"build.failed": "生成失败",
 	"run.tests.profile": "运行测试",
