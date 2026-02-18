@@ -80,11 +80,11 @@
       ]
     },
     "unquoted": {
+      "comment": "Unquoted arguments. Escape sequences (\\n, \\;, etc.) are not highlighted here — the begin/end patterns both exclude backslash so #escape can never match. This matches the convention of the reference grammar (twxs/vs.language.cmake) and the pre-refactoring behavior. Fixing this properly would require a zero-width begin approach that adds significant complexity for negligible benefit, since escape sequences in unquoted arguments are rare in practice.",
       "name": "string.unquoted.cmake",
       "begin": "[^\\s()#\"\\\\][^\\s()#\"\\\\]*",
       "end": "(?=\\s|\\(|\\)|#|\"|\\\\|$)",
       "patterns": [
-        { "include": "#escape" },
         { "include": "#variableReference" },
         { "include": "#envVariableReference" },
         { "include": "#cacheVariableReference" }
