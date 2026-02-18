@@ -1624,10 +1624,8 @@ export class PresetsController implements vscode.Disposable {
         }
         if (targetFile !== null) {
             isUserPreset = targetFile === 'user';
-        } else if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
-            // Fall back: if the new preset inherits from a user preset, it should be added to the user presets file.
-            isUserPreset = true;
         }
+        // When targetFile is null (neither file exists), default to CMakePresets.json (isUserPreset remains false)
 
         if (isUserPreset) {
             presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
