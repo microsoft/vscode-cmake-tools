@@ -33,7 +33,7 @@ Bug Fixes:
 ## 1.22.28
 
 Improvements:
-- Added extension pack with `ms-vscode.cpp-devtools`
+- Updated extension dependencies (`ms-vscode.cpp-devtools`)
 
 ## 1.22.27
 
