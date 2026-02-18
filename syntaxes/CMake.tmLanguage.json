@@ -152,6 +152,11 @@
         { "include": "#commonArgPatterns" }
       ]
     },
+    "conditionalOperators": {
+      "comment": "Shared conditional operators for if/elseif/while: comparisons, tests, logic",
+      "name": "keyword.operator.cmake",
+      "match": "\\b(?i:NOT|AND|OR|COMMAND|POLICY|TARGET|TEST|DEFINED|IN_LIST|EXISTS|IS_ABSOLUTE|IS_DIRECTORY|IS_SYMLINK|IS_NEWER_THAN|MATCHES|LESS|GREATER|EQUAL|LESS_EQUAL|GREATER_EQUAL|STRLESS|STRGREATER|STREQUAL|STRLESS_EQUAL|STRGREATER_EQUAL|VERSION_LESS|VERSION_GREATER|VERSION_EQUAL|VERSION_LESS_EQUAL|VERSION_GREATER_EQUAL|PATH_EQUAL)\\b"
+    },
     "nestedParensIf": {
       "comment": "Nested parentheses inside if/elseif/while with operators, e.g. if((NOT EXISTS ...))",
       "begin": "\\(",
@@ -159,10 +164,7 @@
       "patterns": [
         { "include": "#nestedParensIf" },
         { "include": "#commonArgPatterns" },
-        {
-          "name": "keyword.operator.cmake",
-          "match": "\\b(?i:NOT|AND|OR|COMMAND|POLICY|TARGET|TEST|DEFINED|IN_LIST|EXISTS|IS_ABSOLUTE|IS_DIRECTORY|IS_SYMLINK|IS_NEWER_THAN|MATCHES|LESS|GREATER|EQUAL|LESS_EQUAL|GREATER_EQUAL|STRLESS|STRGREATER|STREQUAL|STRLESS_EQUAL|STRGREATER_EQUAL|VERSION_LESS|VERSION_GREATER|VERSION_EQUAL|VERSION_LESS_EQUAL|VERSION_GREATER_EQUAL|PATH_EQUAL)\\b"
-        }
+        { "include": "#conditionalOperators" }
       ]
     },
     "scopedIfCommand": {
@@ -177,11 +179,7 @@
       "patterns": [
         { "include": "#nestedParensIf" },
         { "include": "#commonArgPatterns" },
-        {
-          "comment": "if/elseif operators: comparisons, tests, logic",
-          "name": "keyword.operator.cmake",
-          "match": "\\b(?i:NOT|AND|OR|COMMAND|POLICY|TARGET|TEST|DEFINED|IN_LIST|EXISTS|IS_ABSOLUTE|IS_DIRECTORY|IS_SYMLINK|IS_NEWER_THAN|MATCHES|LESS|GREATER|EQUAL|LESS_EQUAL|GREATER_EQUAL|STRLESS|STRGREATER|STREQUAL|STRLESS_EQUAL|STRGREATER_EQUAL|VERSION_LESS|VERSION_GREATER|VERSION_EQUAL|VERSION_LESS_EQUAL|VERSION_GREATER_EQUAL|PATH_EQUAL)\\b"
-        }
+        { "include": "#conditionalOperators" }
       ]
     },
     "scopedForeachCommand": {
@@ -214,11 +212,7 @@
       "patterns": [
         { "include": "#nestedParensIf" },
         { "include": "#commonArgPatterns" },
-        {
-          "comment": "while() operators: same as if()",
-          "name": "keyword.operator.cmake",
-          "match": "\\b(?i:NOT|AND|OR|COMMAND|POLICY|TARGET|TEST|DEFINED|IN_LIST|EXISTS|IS_ABSOLUTE|IS_DIRECTORY|IS_SYMLINK|IS_NEWER_THAN|MATCHES|LESS|GREATER|EQUAL|LESS_EQUAL|GREATER_EQUAL|STRLESS|STRGREATER|STREQUAL|STRLESS_EQUAL|STRGREATER_EQUAL|VERSION_LESS|VERSION_GREATER|VERSION_EQUAL|VERSION_LESS_EQUAL|VERSION_GREATER_EQUAL|PATH_EQUAL)\\b"
-        }
+        { "include": "#conditionalOperators" }
       ]
     },
     "scopedListCommand": {
