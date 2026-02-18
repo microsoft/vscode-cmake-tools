@@ -30,6 +30,11 @@ Bug Fixes:
 - Fix `$comment` not being accepted inside a cacheVariable object in CMake presets. [#4600](https://github.com/microsoft/vscode-cmake-tools/issues/4600)
 - Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4651](https://github.com/microsoft/vscode-cmake-tools/issues/4651)
 
+## 1.22.28
+
+Improvements:
+- Added extension pack with `ms-vscode.cpp-devtools`
+
 ## 1.22.27
 
 Bug Fixes:
