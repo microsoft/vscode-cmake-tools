@@ -1617,15 +1617,21 @@ export class PresetsController implements vscode.Disposable {
         let presetsFile: preset.PresetsFile;
         let isUserPreset = false;
 
-        const targetFile = await this.determineTargetPresetsFile();
-        if (targetFile === undefined) {
-            // User cancelled the selection
-            return;
+        // If the new preset inherits from a user preset, it should be added to the user presets file.
+        if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
+            isUserPreset = true;
+        } else {
+            // Otherwise, let the user choose the target file.
+            const targetFile = await this.determineTargetPresetsFile();
+            if (targetFile === undefined) {
+                // User cancelled the selection
+                return;
+            }
+            if (targetFile !== null) {
+                isUserPreset = targetFile === 'user';
+            }
+            // When targetFile is null (neither file exists), default to CMakePresets.json (isUserPreset remains false)
         }
-        if (targetFile !== null) {
-            isUserPreset = targetFile === 'user';
-        }
-        // When targetFile is null (neither file exists), default to CMakePresets.json (isUserPreset remains false)
 
         if (isUserPreset) {
             presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
