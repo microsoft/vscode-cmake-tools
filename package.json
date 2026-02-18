@@ -69,6 +69,9 @@
     "onLanguage:cmake",
     "onLanguage:cmake-cache"
   ],
+  "extensionPack": [
+    "ms-vscode.cpp-devtools"
+  ],
   "main": "./dist/main",
   "contributes": {
     "icons": {
