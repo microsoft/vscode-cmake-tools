@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "Compilazione di postRunCoverageTarget ''{0}'' nel progetto {1} dopo l'esecuzione dei test con copertura.",
 	"test.postRunCoverageTargetFailure": "La compilazione della destinazione postRunCoverageTarget nel progetto in {0} non è riuscita. La gestione dei dati di copertura verrà ignorata.",
 	"test.skip.run.build.failure": "Non è possibile eseguire i test a causa di un errore di compilazione.",
-	"no.launch.config": "Non sono state trovate configurazioni di avvio.",
-	"choose.launch.config": "Scegliere una configurazione di avvio con cui eseguire il debug del test.",
 	"test.skip.debug.build.failure": "Non è possibile eseguire il debug dei test a causa di un errore di compilazione.",
 	"build.failed": "Compilazione non riuscita",
 	"run.tests.profile": "Esegui i test",

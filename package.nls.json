@@ -21,6 +21,7 @@
         ]
     },
     "cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
+    "cmake-tools.command.cmake.clearBuildDiagnostics.title": "Clear Build Diagnostics",
     "cmake-tools.command.cmake.editKits.title": "Edit User-Local CMake Kits",
     "cmake-tools.command.cmake.scanForKits.title": "Scan for Kits",
     "cmake-tools.command.cmake.scanForCompilers.title": "Scan for Compilers",
@@ -54,6 +55,9 @@
     "cmake-tools.command.cmake.cleanAll.title": "Clean All Projects",
     "cmake-tools.command.cmake.cleanRebuild.title": "Clean Rebuild",
     "cmake-tools.command.cmake.cleanRebuildAll.title": "Clean Rebuild All Projects",
+    "cmake-tools.command.cmake.cleanConfigureAndBuild.title": "Delete Cache, Reconfigure and Build",
+    "cmake-tools.command.cmake.cleanConfigureAndBuildAll.title": "Delete Cache, Reconfigure and Build All Projects",
+    "cmake-tools.command.cmake.outline.cleanConfigureAndBuildAll.title": "Clean Reconfigure and Build All Projects",
     "cmake-tools.command.cmake.ctest.title": "Run Tests",
     "cmake-tools.command.cmake.ctestAll.title": "Run Tests for All Projects",
     "cmake-tools.command.cmake.cpack.title": "Run CPack",
@@ -91,6 +95,8 @@
     "cmake-tools.command.cmake.outline.setDefaultTarget.title": "Set Build Target",
     "cmake-tools.command.cmake.outline.setLaunchTarget.title": "Set Launch/Debug Target",
     "cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Open CMakeLists.txt",
+    "cmake-tools.command.cmake.outline.runTest.title": "Run Test",
+    "cmake-tools.command.cmake.outline.debugTest.title": "Debug Test",
     "cmake-tools.command.cmake.folders.setActiveFolder.title": "Set Active Folder",
     "cmake-tools.configuration.title": {
         "message": "CMake Tools configuration",
