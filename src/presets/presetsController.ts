@@ -202,6 +202,8 @@ export class PresetsController implements vscode.Disposable {
     }
 
     async addConfigurePreset(quickStart?: boolean): Promise<boolean> {
+        const activeDocumentPath = vscode.window.activeTextEditor?.document.uri.fsPath;
+
         interface AddPresetQuickPickItem extends vscode.QuickPickItem {
             name: string;
         }
@@ -423,7 +425,7 @@ export class PresetsController implements vscode.Disposable {
                     return false;
                 }
                 newPreset.name = name;
-                await this.addPresetAddUpdate(newPreset, 'configurePresets');
+                await this.addPresetAddUpdate(newPreset, 'configurePresets', activeDocumentPath);
 
                 // Ensure that we update our local copies of the PresetsFile so that adding the build preset happens as expected.
                 await this.reapplyPresets();
@@ -435,7 +437,7 @@ export class PresetsController implements vscode.Disposable {
                         configurePreset: newPreset.name,
                         configuration: 'Debug'
                     };
-                    await this.addPresetAddUpdate(buildPreset, 'buildPresets');
+                    await this.addPresetAddUpdate(buildPreset, 'buildPresets', activeDocumentPath);
                 }
 
                 if (before.length === 0) {
@@ -463,6 +465,8 @@ export class PresetsController implements vscode.Disposable {
     }
 
     async addBuildPreset(): Promise<boolean> {
+        const activeDocumentPath = vscode.window.activeTextEditor?.document.uri.fsPath;
+
         if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
@@ -532,7 +536,7 @@ export class PresetsController implements vscode.Disposable {
                 }
 
                 newPreset.name = name;
-                await this.addPresetAddUpdate(newPreset, 'buildPresets');
+                await this.addPresetAddUpdate(newPreset, 'buildPresets', activeDocumentPath);
             }
 
             return true;
@@ -540,6 +544,8 @@ export class PresetsController implements vscode.Disposable {
     }
 
     async addTestPreset(): Promise<boolean> {
+        const activeDocumentPath = vscode.window.activeTextEditor?.document.uri.fsPath;
+
         if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
@@ -609,13 +615,15 @@ export class PresetsController implements vscode.Disposable {
                 }
 
                 newPreset.name = name;
-                await this.addPresetAddUpdate(newPreset, 'testPresets');
+                await this.addPresetAddUpdate(newPreset, 'testPresets', activeDocumentPath);
             }
             return true;
         }
     }
 
     async addPackagePreset(): Promise<boolean> {
+        const activeDocumentPath = vscode.window.activeTextEditor?.document.uri.fsPath;
+
         if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
@@ -685,13 +693,15 @@ export class PresetsController implements vscode.Disposable {
                 }
 
                 newPreset.name = name;
-                await this.addPresetAddUpdate(newPreset, 'packagePresets');
+                await this.addPresetAddUpdate(newPreset, 'packagePresets', activeDocumentPath);
             }
             return true;
         }
     }
 
     async addWorkflowPreset(): Promise<boolean> {
+        const activeDocumentPath = vscode.window.activeTextEditor?.document.uri.fsPath;
+
         if (preset.allConfigurePresets(this.folderPath).length === 0) {
             return this.handleNoConfigurePresets();
         }
@@ -774,7 +784,7 @@ export class PresetsController implements vscode.Disposable {
                 }
 
                 newPreset.name = name;
-                await this.addPresetAddUpdate(newPreset, 'workflowPresets');
+                await this.addPresetAddUpdate(newPreset, 'workflowPresets', activeDocumentPath);
             }
             return true;
         }
@@ -1562,19 +1572,80 @@ export class PresetsController implements vscode.Disposable {
         }
     }
 
+    /**
+     * Determines which presets file to target for adding a new preset.
+     * Returns 'user' for CMakeUserPresets.json, 'main' for CMakePresets.json,
+     * null to fall back to the default inheritance-based logic,
+     * or undefined if the user cancelled the selection.
+     */
+    private async determineTargetPresetsFile(activeDocumentPath?: string): Promise<'user' | 'main' | null | undefined> {
+        // 1. Check if the active text editor is showing a presets file
+        if (activeDocumentPath) {
+            const normalizedActivePath = util.platformNormalizePath(activeDocumentPath);
+            if (normalizedActivePath === util.platformNormalizePath(this.presetsPath)) {
+                return 'main';
+            }
+            if (normalizedActivePath === util.platformNormalizePath(this.userPresetsPath)) {
+                return 'user';
+            }
+        }
+
+        // 2. Check which presets files exist
+        const presetsExists = await fs.exists(this.presetsPath);
+        const userPresetsExists = await fs.exists(this.userPresetsPath);
+
+        if (presetsExists && userPresetsExists) {
+            // Both files exist: prompt user to choose
+            const cmakePresetsLabel = path.basename(this.presetsPath);
+            const cmakeUserPresetsLabel = path.basename(this.userPresetsPath);
+            const selection = await vscode.window.showQuickPick(
+                [cmakePresetsLabel, cmakeUserPresetsLabel],
+                { placeHolder: localize('select.preset.file', 'Select which presets file to add the new preset to') }
+            );
+            if (!selection) {
+                return undefined; // User cancelled
+            }
+            return selection === cmakeUserPresetsLabel ? 'user' : 'main';
+        }
+
+        if (userPresetsExists) {
+            return 'user';
+        }
+
+        if (presetsExists) {
+            return 'main';
+        }
+
+        // Neither file exists, fall back to default behavior
+        return null;
+    }
+
     // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
     async addPresetAddUpdate(newPreset: preset.ConfigurePreset | preset.BuildPreset | preset.TestPreset | preset.PackagePreset | preset.WorkflowPreset,
-        presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets') {
-        // If the new preset inherits from a user preset, it should be added to the user presets file.
+        presetType: 'configurePresets' | 'buildPresets' | 'testPresets' | 'packagePresets' | 'workflowPresets', activeDocumentPath?: string) {
         let presetsFile: preset.PresetsFile;
         let isUserPreset = false;
 
+        // If the new preset inherits from a user preset, it should be added to the user presets file.
         if (preset.inheritsFromUserPreset(newPreset, presetType, this.folderPath)) {
-            presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
             isUserPreset = true;
         } else {
+            // Otherwise, let the user choose the target file.
+            const targetFile = await this.determineTargetPresetsFile(activeDocumentPath);
+            if (targetFile === undefined) {
+                // User cancelled the selection
+                return;
+            }
+            if (targetFile !== null) {
+                isUserPreset = targetFile === 'user';
+            }
+            // When targetFile is null (neither file exists), default to CMakePresets.json (isUserPreset remains false)
+        }
+
+        if (isUserPreset) {
+            presetsFile = preset.getOriginalUserPresetsFile(this.folderPath) || { version: 8 };
+        } else {
             presetsFile = preset.getOriginalPresetsFile(this.folderPath) || { version: 8 };
-            isUserPreset = false;
         }
 
         if (!presetsFile[presetType]) {
