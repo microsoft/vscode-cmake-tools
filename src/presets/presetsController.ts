@@ -149,6 +149,18 @@ export class PresetsController implements vscode.Disposable {
     }
 
     /**
+     * Updates the source directory used for locating CMakePresets.json and
+     * CMakeUserPresets.json, then reloads the presets from the new location.
+     * This is needed when the source directory changes after the PresetsController
+     * has already been initialized (e.g., when the user selects a CMakeLists.txt
+     * in a subdirectory via the missing-CMakeLists dialog).
+     */
+    async updateSourceDir(sourceDir: string) {
+        this._presetsParser.sourceDir = sourceDir;
+        await this.reapplyPresets();
+    }
+
+    /**
      * Call configurePresets, buildPresets, testPresets, packagePresets or workflowPresets to get the latest presets when thie event is fired.
      */
     onPresetsChanged(listener: () => any) {
