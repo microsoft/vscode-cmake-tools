@@ -1,4 +1,4 @@
-import { Condition, configureArgs, evaluateCondition, getArchitecture, getToolset } from '@cmt/presets/preset';
+import { buildArgs, Condition, configureArgs, evaluateCondition, getArchitecture, getToolset } from '@cmt/presets/preset';
 import { expect } from '@test/util';
 import * as os from "os";
 
@@ -194,5 +194,73 @@ suite('Preset tests', () => {
         };
         const args5 = configureArgs(preset5);
         expect(args5).to.deep.eq([]);
+    });
+
+    test('buildArgs handles jobs: 0 correctly', () => {
+        const preset: any = {
+            name: 'test',
+            __binaryDir: '/path/to/build',
+            jobs: 0
+        };
+        const args = buildArgs(preset);
+        const idx = args.indexOf('--parallel');
+        expect(idx).to.be.greaterThan(-1);
+        expect(args[idx + 1]).to.eq('0');
+    });
+
+    test('buildArgs handles jobs: positive number', () => {
+        const preset: any = {
+            name: 'test',
+            __binaryDir: '/path/to/build',
+            jobs: 8
+        };
+        const args = buildArgs(preset);
+        const idx = args.indexOf('--parallel');
+        expect(idx).to.be.greaterThan(-1);
+        expect(args[idx + 1]).to.eq('8');
+    });
+
+    test('buildArgs omits --parallel when jobs is undefined and no fallback', () => {
+        const preset: any = {
+            name: 'test',
+            __binaryDir: '/path/to/build'
+        };
+        const args = buildArgs(preset);
+        expect(args).to.not.include('--parallel');
+    });
+
+    test('buildArgs uses fallbackJobs when jobs is undefined', () => {
+        const preset: any = {
+            name: 'test',
+            __binaryDir: '/path/to/build'
+        };
+        const args = buildArgs(preset, undefined, undefined, 4);
+        const idx = args.indexOf('--parallel');
+        expect(idx).to.be.greaterThan(-1);
+        expect(args[idx + 1]).to.eq('4');
+    });
+
+    test('buildArgs prefers preset jobs over fallbackJobs', () => {
+        const preset: any = {
+            name: 'test',
+            __binaryDir: '/path/to/build',
+            jobs: 2
+        };
+        const args = buildArgs(preset, undefined, undefined, 8);
+        const idx = args.indexOf('--parallel');
+        expect(idx).to.be.greaterThan(-1);
+        expect(args[idx + 1]).to.eq('2');
+    });
+
+    test('buildArgs preset jobs: 0 takes precedence over fallbackJobs', () => {
+        const preset: any = {
+            name: 'test',
+            __binaryDir: '/path/to/build',
+            jobs: 0
+        };
+        const args = buildArgs(preset, undefined, undefined, 8);
+        const idx = args.indexOf('--parallel');
+        expect(idx).to.be.greaterThan(-1);
+        expect(args[idx + 1]).to.eq('0');
     });
 });
