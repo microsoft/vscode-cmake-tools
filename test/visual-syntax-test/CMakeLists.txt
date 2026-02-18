@@ -206,8 +206,12 @@ block()
   set(local_var "value")
 endblock()
 
-# Generator expressions
+# Generator expressions (simple, nested, multi-token)
 target_compile_definitions(MyApp PRIVATE $<$<CONFIG:Debug>:DEBUG_MODE>)
+target_link_libraries(MyApp PRIVATE $<$<AND:$<BOOL:${USE_SSL}>,$<NOT:$<PLATFORM_ID:Windows>>>:ssl>)
+target_include_directories(MyApp PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+set(genex_var "$<TARGET_FILE:MyApp>")
+target_compile_options(MyApp PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall -Wextra>)
 
 # Comments
 # This is a line comment

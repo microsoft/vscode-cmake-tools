@@ -231,9 +231,9 @@
         { "include": "#nestedParens" },
         { "include": "#commonArgPatterns" },
         {
-          "comment": "list() sub-commands and keywords",
+          "comment": "list() sub-commands and keywords (from CMake docs: list subcommands, SORT options, FILTER modes, TRANSFORM actions/selectors)",
           "name": "keyword.other.cmake",
-          "match": "\\b(?i:LENGTH|GET|APPEND|FILTER|FIND|INSERT|JOIN|POP_BACK|POP_FRONT|PREPEND|REMOVE_ITEM|REMOVE_AT|REMOVE_DUPLICATES|REVERSE|SORT|SUBLIST|TRANSFORM|INCLUDE|EXCLUDE|REGEX|SELECTOR|COMPARE|CASE|ORDER|ASCENDING|DESCENDING|GENEX_STRIP|STRIP|TOLOWER|TOUPPER|REPLACE|AT|FOR|NATURAL|ACTION)\\b"
+          "match": "\\b(?i:LENGTH|GET|APPEND|FILTER|FIND|INSERT|JOIN|POP_BACK|POP_FRONT|PREPEND|REMOVE_ITEM|REMOVE_AT|REMOVE_DUPLICATES|REVERSE|SORT|SUBLIST|TRANSFORM|INCLUDE|EXCLUDE|REGEX|COMPARE|CASE|ORDER|ASCENDING|DESCENDING|GENEX_STRIP|STRIP|TOLOWER|TOUPPER|REPLACE|AT|FOR|NATURAL|OUTPUT_VARIABLE)\\b"
         }
       ]
     },
