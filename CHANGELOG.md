@@ -29,6 +29,7 @@ Bug Fixes:
 - Add support for Visual Studio 2026 generator. [#4637](https://github.com/microsoft/vscode-cmake-tools/issues/4637)
 - Fix `$comment` not being accepted inside a cacheVariable object in CMake presets. [#4600](https://github.com/microsoft/vscode-cmake-tools/issues/4600)
 - Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4651](https://github.com/microsoft/vscode-cmake-tools/issues/4651)
+- Fix "Scan for Kits" failing to invoke `vcvarsall.bat` when Visual Studio is installed in a non-ASCII directory path, by forcing the generated batch script to use UTF-8 codepage. [#4623](https://github.com/microsoft/vscode-cmake-tools/issues/4623) [@Sp3EdeR](https://github.com/Sp3EdeR)
 
 ## 1.22.28
 
