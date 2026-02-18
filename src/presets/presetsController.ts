@@ -1581,10 +1581,11 @@ export class PresetsController implements vscode.Disposable {
     private async determineTargetPresetsFile(activeDocumentPath?: string): Promise<'user' | 'main' | null | undefined> {
         // 1. Check if the active text editor is showing a presets file
         if (activeDocumentPath) {
-            if (activeDocumentPath === this.presetsPath) {
+            const normalizedActivePath = util.platformNormalizePath(activeDocumentPath);
+            if (normalizedActivePath === util.platformNormalizePath(this.presetsPath)) {
                 return 'main';
             }
-            if (activeDocumentPath === this.userPresetsPath) {
+            if (normalizedActivePath === util.platformNormalizePath(this.userPresetsPath)) {
                 return 'user';
             }
         }
