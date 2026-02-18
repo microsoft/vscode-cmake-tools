@@ -14,6 +14,7 @@ Improvements:
 - Allow preset modification commands to target CMakeUserPresets.json. The target file is determined by the focused editor, or by prompting the user when both files exist. [#4564](https://github.com/microsoft/vscode-cmake-tools/issues/4564)
 
 Bug Fixes:
+- Fix initial kit scan ignoring `cmake.enableAutomaticKitScan: false` on first workspace open, and prevent redundant concurrent scans in multi-project workspaces. [#4726](https://github.com/microsoft/vscode-cmake-tools/issues/4726)
 - Fix `cmake.installPrefix` not being passed to CMake as `CMAKE_INSTALL_PREFIX` when using presets. [#4358](https://github.com/microsoft/vscode-cmake-tools/issues/4358)
 - Fix CPack commands not appearing in the command palette when not using CMake Presets. Also fix CPack environment variables not being set up in non-preset mode. [#4453](https://github.com/microsoft/vscode-cmake-tools/issues/4453)
 - Fix extension not switching to preset mode after "CMake: Quick Start" generates a CMakePresets.json, causing variant selection to have no effect. [#4569](https://github.com/microsoft/vscode-cmake-tools/issues/4569)
