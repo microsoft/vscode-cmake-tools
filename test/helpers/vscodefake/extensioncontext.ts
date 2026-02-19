@@ -38,6 +38,9 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
     get extensionMode(): vscode.ExtensionMode {
         throw new Error(notImplementedErr);
     }
+    get languageModelAccessInformation(): vscode.LanguageModelAccessInformation {
+        throw new Error(notImplementedErr);
+    }
     extension: vscode.Extension<any>;
 
     constructor() {
@@ -84,6 +87,9 @@ export class SmokeTestExtensionContext implements vscode.ExtensionContext {
         return path.join(this.extensionPath, '.smoke-logs');
     }
     get extensionMode(): vscode.ExtensionMode {
+        throw new Error(notImplementedErr);
+    }
+    get languageModelAccessInformation(): vscode.LanguageModelAccessInformation {
         throw new Error(notImplementedErr);
     }
     extension: vscode.Extension<any>;
