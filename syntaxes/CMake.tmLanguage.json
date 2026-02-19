@@ -12,9 +12,7 @@
     { "include": "#envVariableReference" },
     { "include": "#cacheVariableReference" },
     { "comment": "Deprecated keywords — all old entries removed per #4613 (collisions with user variable names like SOURCE_FILES). Re-add here when CMake deprecates new keywords.", "include": "#deprecatedKeywords" },
-    { "include": "#scopedIfCommand" },
-    { "include": "#scopedForeachCommand" },
-    { "include": "#scopedWhileCommand" },
+    { "include": "#scopedControlFlowCommand" },
     { "include": "#scopedListCommand" },
     { "include": "#scopedStringCommand" },
     { "include": "#scopedMessageCommand" },
@@ -167,52 +165,25 @@
         { "include": "#conditionalOperators" }
       ]
     },
-    "scopedIfCommand": {
-      "comment": "if() / elseif() with scoped operators",
-      "begin": "^\\s*\\b(?i:(if|elseif))\\b\\s*(\\()",
+    "scopedControlFlowCommand": {
+      "comment": "Unified control-flow scoped rule for if/elseif, foreach, and while (PR #4740 reviewer feedback). Consolidates the former per-command rules into one. Separate capture groups preserve keyword.control.conditional.cmake (if/elseif) vs keyword.control.loop.cmake (foreach/while). Inner patterns include both conditional operators and foreach-specific keywords; false-positive risk from the union is negligible since these keywords don't overlap in practice.",
+      "begin": "^\\s*\\b(?i:(if|elseif)|(foreach|while))\\b\\s*(\\()",
       "beginCaptures": {
         "1": { "name": "keyword.control.conditional.cmake" },
-        "2": { "name": "punctuation.section.arguments.begin.cmake" }
+        "2": { "name": "keyword.control.loop.cmake" },
+        "3": { "name": "punctuation.section.arguments.begin.cmake" }
       },
       "end": "\\)",
       "endCaptures": { "0": { "name": "punctuation.section.arguments.end.cmake" } },
       "patterns": [
         { "include": "#nestedParensIf" },
         { "include": "#commonArgPatterns" },
-        { "include": "#conditionalOperators" }
-      ]
-    },
-    "scopedForeachCommand": {
-      "comment": "foreach() with scoped keywords",
-      "begin": "^\\s*\\b(?i:(foreach))\\b\\s*(\\()",
-      "beginCaptures": {
-        "1": { "name": "keyword.control.loop.cmake" },
-        "2": { "name": "punctuation.section.arguments.begin.cmake" }
-      },
-      "end": "\\)",
-      "endCaptures": { "0": { "name": "punctuation.section.arguments.end.cmake" } },
-      "patterns": [
-        { "include": "#nestedParens" },
-        { "include": "#commonArgPatterns" },
+        { "include": "#conditionalOperators" },
         {
+          "comment": "foreach()-specific iteration keywords",
           "name": "keyword.other.cmake",
           "match": "\\b(?i:IN|RANGE|ZIP_LISTS|LISTS|ITEMS)\\b"
         }
-      ]
-    },
-    "scopedWhileCommand": {
-      "comment": "while() with scoped operators (same as if)",
-      "begin": "^\\s*\\b(?i:(while))\\b\\s*(\\()",
-      "beginCaptures": {
-        "1": { "name": "keyword.control.loop.cmake" },
-        "2": { "name": "punctuation.section.arguments.begin.cmake" }
-      },
-      "end": "\\)",
-      "endCaptures": { "0": { "name": "punctuation.section.arguments.end.cmake" } },
-      "patterns": [
-        { "include": "#nestedParensIf" },
-        { "include": "#commonArgPatterns" },
-        { "include": "#conditionalOperators" }
       ]
     },
     "scopedListCommand": {
@@ -465,7 +436,7 @@
       "match": "\\b(?i:ALL|APPEND|BOOL|BUILD|BYPRODUCTS|CACHE|CAPTURE_CMAKE_ERROR|CMAKE_FIND_PACKAGE_NAME|CMAKE_FIND_ROOT_PATH_BOTH|CMAKE_FLAGS|COMMAND|COMMAND_EXPAND_LISTS|COMMENT|COMPILE_DEFINITIONS|COMPILE_OUTPUT_VARIABLE|COMPONENT|CONDITION|CONFIGURATION|CONFIGURATIONS|CONTENT|COPY_FILE|COPY_FILE_ERROR|COPYONLY|DEFECT_COUNT|DEPENDS|DEPFILE|DESTINATION|DIRECTORY|DOC|ENCODING|END|ESCAPE_QUOTES|EXCLUDE|EXCLUDE_FIXTURE|EXCLUDE_FIXTURE_CLEANUP|EXCLUDE_FIXTURE_SETUP|EXCLUDE_FROM_ALL|EXCLUDE_LABEL|EXPECTED_HASH|EXPECTED_MD|EXPR|FILEPATH|FILES|FILTER|FIND|FLAGS|GET|GLOBAL|HINTS|HTTPHEADER|IMPLICIT_DEPENDS|INACTIVITY_TIMEOUT|INCLUDE|INCLUDE_LABEL|INPUT|INPUT_FILE|INSERT|INSTALL|INTERNAL|LABELS|LENGTH|LENGTH_MAXIMUM|LENGTH_MINIMUM|LIMIT_COUNT|LIMIT_INPUT|LIMIT_OUTPUT|LINK_LIBRARIES|LOG|MAIN_DEPENDENCY|MD|NAMES|NETRC|NETRC_FILE|NEWLINE_CONSUME|NEWLINE_STYLE|NO_CMAKE_FIND_ROOT_PATH|NO_HEX_CONVERSION|NUMBER_ERRORS|NUMBER_WARNINGS|ONLY_CMAKE_FIND_ROOT_PATH|OPTIONAL|OPTIONS|OUTPUT|OUTPUT_QUIET|OUTPUT_VARIABLE|PACKAGE_FIND_NAME|PACKAGE_VERSION|PARALLEL_LEVEL|PARTS|PATH|PATH_SUFFIXES|PERMISSIONS|PRE_BUILD|PREFIX|PROJECT_NAME|QUIET|REGEX|REGULAR_EXPRESSION|REMOVE_AT|REMOVE_DUPLICATES|RENAME|RESULT_VARIABLE|RESULTS_VARIABLE|RETRY_COUNT|RETRY_DELAY|RETURN_VALUE|REVERSE|RUN_OUTPUT_VARIABLE|SCHEDULE_RANDOM|SHOW_PROGRESS|SORT|SOURCE|SOURCES|START|STATIC|STATUS|STOP_TIME|STRIDE|STRING|TARGET|TEST|TEST_LOAD|TIMEOUT|TLS_CAINFO|TLS_VERIFY|TREE|TYPE|USERPWD|USES_TERMINAL|VARIABLE|VERBATIM|WORKING_DIRECTORY)\\b"
     },
     "operators": {
-      "comment": "Flat fallback for operators — scoped rules (scopedIfCommand, scopedWhileCommand) provide better precision for if()/while() but this catches edge cases",
+      "comment": "Flat fallback for operators — scopedControlFlowCommand provides better precision for if()/elseif()/while() but this catches edge cases",
       "name": "keyword.operator.cmake",
       "match": "\\b(?i:ABSOLUTE|AND|COMMAND|DEFINED|DIRECTORY|EQUAL|EXISTS|GREATER|GREATER_EQUAL|IN_LIST|IS_ABSOLUTE|IS_DIRECTORY|IS_NEWER_THAN|IS_SYMLINK|LAST_EXT|LESS|LESS_EQUAL|MATCHES|NAME|NAME_WE|NAME_WLE|NOT|NOTFOUND|OR|PATH|PATHS|POLICY|PROGRAM|REALPATH|STREQUAL|STRGREATER|STRGREATER_EQUAL|STRING|STRLESS|STRLESS_EQUAL|TARGET|TEST|VERSION_EQUAL|VERSION_GREATER|VERSION_GREATER_EQUAL|VERSION_LESS)\\b"
     },
