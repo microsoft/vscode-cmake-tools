@@ -116,6 +116,7 @@
 	"use.kits.variants": "Usare kit e varianti",
 	"edit.presets": "Individua",
 	"presets.version.error": "CMakePresets versione 1 non è supportato. Come si vuole procedere?",
+	"select.preset.file": "Select which presets file to add the new preset to",
 	"failed.writing.to.file": "Non è stato possibile scrivere nel file {0}",
 	"failed.to.watch": "Non è stato possibile creare Watcher per {0}: {1}"
 }
