@@ -4108,7 +4108,7 @@
     "typescript": "^4.1.5",
     "vscode-cmake-tools": "^1.5.0",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^5.94.0",
+    "webpack": "^5.104.1",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
