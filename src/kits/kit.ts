@@ -1410,7 +1410,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         const errors = validator.errors!;
         log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filePath), filePath));
         for (const err of errors) {
-            log.error(` >> ${err.dataPath}: ${err.message}`);
+            log.error(` >> ${err.instancePath}: ${err.message}`);
         }
         return [];
     }
