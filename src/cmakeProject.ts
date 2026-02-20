@@ -2644,6 +2644,21 @@ export class CMakeProject {
     }
 
     /**
+     * Implementation of `cmake.selectBuildAndLaunchTarget`
+     * Sets both the build target and the launch target simultaneously.
+     */
+    async selectBuildAndLaunchTarget(name?: string): Promise<string | null> {
+        const result = await this.setLaunchTargetByName(name);
+        if (result !== null) {
+            const launchTargetName = this._launchTargetName.value;
+            if (launchTargetName) {
+                await this.setDefaultBuildTarget(launchTargetName);
+            }
+        }
+        return result;
+    }
+
+    /**
      * Used by vscode and as test interface
      */
     async setLaunchTargetByName(name?: string | null) {

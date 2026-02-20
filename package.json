@@ -796,6 +796,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.selectBuildAndLaunchTarget",
+        "title": "%cmake-tools.command.cmake.selectBuildAndLaunchTarget.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.outline.setLaunchTarget",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.setLaunchTarget.title%"
@@ -1440,6 +1446,10 @@
         },
         {
           "command": "cmake.selectLaunchTarget",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.selectBuildAndLaunchTarget",
           "when": "cmake:enableFullFeatureSet"
         },
         {
