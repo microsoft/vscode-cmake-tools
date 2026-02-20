@@ -1,7 +1,8 @@
 # Contribution Report for `hanniavalera`
 
-**Period:** November 2025 – February 20, 2026
+**Period:** November 1, 2025 – February 20, 2026
 **Repository:** `microsoft/vscode-cmake-tools`
+**Report generated:** 2026-02-20 (rerun)
 
 ---
 
@@ -9,19 +10,20 @@
 
 | Role | PRs | Lines Added | Lines Deleted | Total Lines Touched |
 |------|-----|-------------|---------------|---------------------|
-| **Author** | 11 | +1,859 | -1,832 | 3,691 |
-| **Reviewer** (non-self) | 32 | +2,750 | -1,099 | 3,849 |
-| **Merger** (non-self) | 25 | +1,932 | -902 | 2,834 |
+| **Author** | 12 | +1,862 | -1,835 | 3,697 |
+| **Reviewer** (non-self) | 34 | +2,762 | -1,121 | 3,883 |
+| **Merger** (non-self) | 27 | +1,944 | -924 | 2,868 |
 
-- **Unique PRs touched (any role):** 49 out of 59 total merged PRs in this period
-- **Grand total lines across all unique PRs:** +5,062 / -2,951 (8,013 total)
+- **Unique PRs touched (any role):** 52 out of 62 total merged PRs in this period
+- **Grand total lines across all unique PRs:** +5,077 / -2,976 (8,053 total)
 
 ---
 
-## 1. PRs Authored (11 PRs) — +1,859 / -1,832 lines
+## 1. PRs Authored (12 PRs) — +1,862 / -1,835 lines
 
 | PR | Title | +/- |
 |----|-------|-----|
+| [#4746](https://github.com/microsoft/vscode-cmake-tools/pull/4746) | fixing bracket comment issue in which colorization was not consistent | +3 / -3 |
 | [#4740](https://github.com/microsoft/vscode-cmake-tools/pull/4740) | Syntax Highlighting Improvements | +606 / -118 |
 | [#4710](https://github.com/microsoft/vscode-cmake-tools/pull/4710) | Migrating File Watching from Chokidar to VSCode FileSystemWatcher API | +215 / -190 |
 | [#4697](https://github.com/microsoft/vscode-cmake-tools/pull/4697) | Reapply "Refactor colorization language services support" | +239 / -319 |
@@ -36,7 +38,7 @@
 
 ---
 
-## 2. PRs Reviewed (non-self) (32 PRs) — +2,750 / -1,099 lines
+## 2. PRs Reviewed (non-self) (34 PRs) — +2,762 / -1,121 lines
 
 | PR | Title | Author | +/- |
 |----|-------|--------|-----|
@@ -44,8 +46,10 @@
 | [#4743](https://github.com/microsoft/vscode-cmake-tools/pull/4743) | Fix privacy statement link in README | moyo1997 | +1 / -1 |
 | [#4739](https://github.com/microsoft/vscode-cmake-tools/pull/4739) | Add extensionPack (release/1.22) | gcampbell-msft | +8 / -0 |
 | [#4738](https://github.com/microsoft/vscode-cmake-tools/pull/4738) | Add extensionPack | gcampbell-msft | +8 / -0 |
+| [#4736](https://github.com/microsoft/vscode-cmake-tools/pull/4736) | Bump ajv from 7.2.4 to 8.18.0 | dependabot[bot] | +9 / -19 |
 | [#4734](https://github.com/microsoft/vscode-cmake-tools/pull/4734) | [Auto] Localization - Translated Strings | gcampbell-msft | +143 / -78 |
 | [#4733](https://github.com/microsoft/vscode-cmake-tools/pull/4733) | Allow preset modification commands to target CMakeUserPresets.json | Copilot | +82 / -10 |
+| [#4730](https://github.com/microsoft/vscode-cmake-tools/pull/4730) | Bump qs from 6.14.1 to 6.14.2 | dependabot[bot] | +3 / -3 |
 | [#4728](https://github.com/microsoft/vscode-cmake-tools/pull/4728) | Fix CMakePresets.json discovery after CMakeLists.txt selection | Copilot | +111 / -0 |
 | [#4725](https://github.com/microsoft/vscode-cmake-tools/pull/4725) | [Auto] Localization - Translated Strings | gcampbell-msft | +155 / -116 |
 | [#4723](https://github.com/microsoft/vscode-cmake-tools/pull/4723) | Add "Delete Cache, Reconfigure and Build" command | Copilot | +72 / -0 |
@@ -75,13 +79,15 @@
 
 ---
 
-## 3. PRs Merged (non-self) (25 PRs) — +1,932 / -902 lines
+## 3. PRs Merged (non-self) (27 PRs) — +1,944 / -924 lines
 
 | PR | Title | Author | +/- |
 |----|-------|--------|-----|
 | [#4744](https://github.com/microsoft/vscode-cmake-tools/pull/4744) | [Auto] Localization - Translated Strings | gcampbell-msft | +13 / -0 |
 | [#4743](https://github.com/microsoft/vscode-cmake-tools/pull/4743) | Fix privacy statement link in README | moyo1997 | +1 / -1 |
+| [#4736](https://github.com/microsoft/vscode-cmake-tools/pull/4736) | Bump ajv from 7.2.4 to 8.18.0 | dependabot[bot] | +9 / -19 |
 | [#4734](https://github.com/microsoft/vscode-cmake-tools/pull/4734) | [Auto] Localization - Translated Strings | gcampbell-msft | +143 / -78 |
+| [#4730](https://github.com/microsoft/vscode-cmake-tools/pull/4730) | Bump qs from 6.14.1 to 6.14.2 | dependabot[bot] | +3 / -3 |
 | [#4728](https://github.com/microsoft/vscode-cmake-tools/pull/4728) | Fix CMakePresets.json discovery after CMakeLists.txt selection | Copilot | +111 / -0 |
 | [#4725](https://github.com/microsoft/vscode-cmake-tools/pull/4725) | [Auto] Localization - Translated Strings | gcampbell-msft | +155 / -116 |
 | [#4717](https://github.com/microsoft/vscode-cmake-tools/pull/4717) | Bump webpack from 5.94.0 to 5.104.1 | dependabot[bot] | +277 / -209 |
@@ -109,9 +115,26 @@
 
 ## 4. Overlap Analysis
 
-- **Reviewed AND Merged:** 19 PRs (reviewed the code, then merged it)
+- **Reviewed AND Merged:** 21 PRs (reviewed the code, then merged it)
 - **Reviewed but merged by someone else:** 13 PRs
 - **Merged without formal review (by you):** 6 PRs
+
+---
+
+## 5. Changes from Previous Report (2026-02-20 initial → rerun)
+
+| Metric | Previous | Current | Delta |
+|--------|----------|---------|-------|
+| Total merged PRs in period | 59 | 62 | +3 |
+| Authored | 11 PRs | 12 PRs | +1 (#4746) |
+| Reviewed (non-self) | 32 PRs | 34 PRs | +2 (#4736, #4730) |
+| Merged (non-self) | 25 PRs | 27 PRs | +2 (#4736, #4730) |
+| Unique PRs touched | 49 | 52 | +3 |
+
+New PRs since last report:
+- **#4746** — fixing bracket comment colorization (authored + merged by hanniavalera)
+- **#4736** — Bump ajv from 7.2.4 to 8.18.0 (reviewed + merged by hanniavalera)
+- **#4730** — Bump qs from 6.14.1 to 6.14.2 (reviewed + merged by hanniavalera)
 
 ---
 
