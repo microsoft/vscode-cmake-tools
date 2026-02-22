@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "Le pilote CMake a cessé de fonctionner juste après la réussite de la build.",
 	"driver.died.before.workflow": "Le pilote CMake est mort avant de démarrer le flux de travail.",
 	"set.up.and.build.project.before.debugging": "Configurez et générez votre projet CMake avant le débogage.",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "Test introuvable : {0}",
 	"debugging.documentation.button": "Documentation sur le débogage",
 	"failed.to.generate.debugger.configuration": "Échec de la génération de la configuration du débogueur",
 	"unable.to.generate.debugging.configuration": "Impossible de générer une configuration de débogage.",

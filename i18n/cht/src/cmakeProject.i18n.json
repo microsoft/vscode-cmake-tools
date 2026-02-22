@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "建置成功後，CMake 驅動程式已隨即終止。",
 	"driver.died.before.workflow": "CMake 驅動程式在開始工作流程之前已中止。",
 	"set.up.and.build.project.before.debugging": "先設定並建置 CMake 專案再偵錯。",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "找不到測試: {0}",
 	"debugging.documentation.button": "偵錯文件",
 	"failed.to.generate.debugger.configuration": "無法產生偵錯工具組態",
 	"unable.to.generate.debugging.configuration": "無法產生偵錯組態。",

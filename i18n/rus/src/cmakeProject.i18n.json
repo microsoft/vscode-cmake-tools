@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "Драйвер CMake завершил работу сразу же после успешного завершения сборки.",
 	"driver.died.before.workflow": "Драйвер CMake прекратил работу перед запуском рабочего процесса.",
 	"set.up.and.build.project.before.debugging": "Настройте и создайте проект CMake перед отладкой.",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "Тест не найден: {0}",
 	"debugging.documentation.button": "Документация по отладке",
 	"failed.to.generate.debugger.configuration": "Не удалось создать конфигурацию отладчика.",
 	"unable.to.generate.debugging.configuration": "Не удалось создать конфигурацию отладки.",
