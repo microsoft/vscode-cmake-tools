@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "CMake 驱动程序在生成成功后立即终止。",
 	"driver.died.before.workflow": "CMake 驱动程序在启动工作流之前已终止。",
 	"set.up.and.build.project.before.debugging": "请先设置和生成 CMake 项目，然后再进行调试。",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "未找到测试: {0}",
 	"debugging.documentation.button": "正在调试文档",
 	"failed.to.generate.debugger.configuration": "无法生成调试程序配置",
 	"unable.to.generate.debugging.configuration": "无法生成调试配置。",

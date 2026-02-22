@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "Il driver di CMake è stato arrestato subito dopo il completamento della compilazione.",
 	"driver.died.before.workflow": "Il driver CMake è stato eliminato prima di avviare il flusso di lavoro.",
 	"set.up.and.build.project.before.debugging": "Configurare e compilare il progetto CMake prima di eseguire il debug.",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "Test non trovato: {0}",
 	"debugging.documentation.button": "Documentazione sul debug",
 	"failed.to.generate.debugger.configuration": "Non è stato possibile generare la configurazione del debugger",
 	"unable.to.generate.debugging.configuration": "Non è possibile generare una configurazione di debug.",

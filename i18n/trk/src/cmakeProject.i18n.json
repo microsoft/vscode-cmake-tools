@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "CMake sürücüsü, derleme başarılı olduktan hemen sonra sonlandırıldı.",
 	"driver.died.before.workflow": "CMake sürücüsü iş akışı başlatmadan önce sonlandı.",
 	"set.up.and.build.project.before.debugging": "Hata ayıklamadan önce CMake projenizi ayarlayın ve derleyin.",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "Test bulunamadı: {0}",
 	"debugging.documentation.button": "Belgelerde hata ayıklanıyor",
 	"failed.to.generate.debugger.configuration": "Hata ayıklayıcı yapılandırması oluşturulamadı",
 	"unable.to.generate.debugging.configuration": "Hata ayıklama yapılandırması oluşturulamıyor.",
