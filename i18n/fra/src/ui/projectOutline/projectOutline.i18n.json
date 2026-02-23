@@ -13,7 +13,7 @@
 	"edit.filter": "Modifier le filtre",
 	"open.file": "Ouvrir un fichier",
 	"references": "Références",
-	"test.tooltip": "Test: {0}",
+	"test.tooltip": "Test : {0}",
 	"static.library": "Bibliothèque statique",
 	"module.library": "Bibliothèque de modules",
 	"shared.library": "Bibliothèque partagée",

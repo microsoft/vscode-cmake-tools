@@ -13,7 +13,7 @@
 	"edit.filter": "필터 편집",
 	"open.file": "파일 열기",
 	"references": "참조",
-	"test.tooltip": "Test: {0}",
+	"test.tooltip": "테스트: {0}",
 	"static.library": "정적 라이브러리",
 	"module.library": "모듈 라이브러리",
 	"shared.library": "공유 라이브러리",
