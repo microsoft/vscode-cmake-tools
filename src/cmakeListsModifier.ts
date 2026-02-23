@@ -1,12 +1,12 @@
 import CMakeProject from "@cmt/cmakeProject";
 import * as codeModel from '@cmt/drivers/codeModel';
 import * as vscode from 'vscode';
-import { isFileInsideFolder, lightNormalizePath, platformNormalizePath, splitPath } from "./util";
+import { isFileInsideFolder, lightNormalizePath, platformNormalizePath, splitPath } from "@cmt/util";
 import path = require("path");
-import rollbar from "./rollbar";
+import rollbar from "@cmt/rollbar";
 import * as minimatch from 'minimatch';
-import { CMakeCache } from "./cache";
-import { CMakeAST, CMakeParser, CommandInvocationAST, Token } from "./cmakeParser";
+import { CMakeCache } from "@cmt/cache";
+import { CMakeAST, CMakeParser, CommandInvocationAST, Token } from "@cmt/cmakeParser";
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -42,7 +42,7 @@ export interface CandidateEdit {
     /** The target this edit relates to */
     target?: codeModel.CodeModelTarget;
     /** Whether this is a deletion or insertion */
-    isDelete: boolean;
+    isDeletion: boolean;
     /** The source file being added/removed */
     sourceUri: vscode.Uri;
 }
@@ -136,7 +136,7 @@ class CMakeEditPreviewProvider implements vscode.TextDocumentContentProvider {
 const SOURCE_SCOPES = ['PRIVATE', 'INTERFACE', 'PUBLIC'];
 const HEADER_SCOPES = ['PUBLIC', 'PRIVATE', 'INTERFACE'];
 
-/* Taken from CMake v3.30.2 */
+/* Language extensions from CMake latest docs: https://cmake.org/cmake/help/latest/prop_sf/LANGUAGE.html */
 const LANGUAGE_EXTENSIONS: {[name: string]: {source: string[]; cxxModule?: string[]; header?: string[]}} = {
     'ASM': {
         source: [
@@ -472,7 +472,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             previewSnippet: `${lineText.trim()} + ${newSourceArgument}`,
             sourceList,
             target,
-            isDelete: false,
+            isDeletion: false,
             sourceUri: newSourceUri
         };
     }
@@ -573,7 +573,7 @@ export class CMakeListsModifier implements vscode.Disposable {
                 sortKeys: [0],
                 previewSnippet: lineText.trim(),
                 target,
-                isDelete: true,
+                isDeletion: true,
                 sourceUri: deletedUri
             });
         }
@@ -755,7 +755,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             const discard = localize('discard', 'Discard');
 
             const editSummary = edits.length === 1
-                ? edits[0].isDelete
+                ? edits[0].isDeletion
                     ? localize('remove.summary', 'Remove {0}', edits[0].label)
                     : localize('add.summary', 'Add to {0}', edits[0].label)
                 : localize('edit.count.summary', '{0} edits', edits.length);
@@ -899,7 +899,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             // For same position, sort by source filename for deterministic ordering
             const sortedEdits = [...docEdits].sort((a, b) => {
                 // For deletions, compare end offset first
-                if (a.isDelete && b.isDelete) {
+                if (a.isDeletion && b.isDeletion) {
                     const endCompare = b.range.end.compareTo(a.range.end);
                     if (endCompare !== 0) {
                         return endCompare;
@@ -917,7 +917,7 @@ export class CMakeListsModifier implements vscode.Disposable {
             const combinedEdits: CandidateEdit[] = [];
             for (const edit of sortedEdits) {
                 const last = combinedEdits[combinedEdits.length - 1];
-                if (last && !edit.isDelete && !last.isDelete &&
+                if (last && !edit.isDeletion && !last.isDeletion &&
                     last.range.start.isEqual(edit.range.start)) {
                     // Combine: append this edit's text to maintain filename sort order
                     // (we sorted ascending by filename, so append preserves that order)
@@ -929,7 +929,7 @@ export class CMakeListsModifier implements vscode.Disposable {
 
             // Apply combined edits
             for (const edit of combinedEdits) {
-                if (edit.isDelete) {
+                if (edit.isDeletion) {
                     workspaceEdit.delete(edit.uri, edit.range, {
                         label: localize('edit.label.remove.source.file', 'CMake: Remove deleted source file'),
                         needsConfirmation: false
@@ -1326,7 +1326,7 @@ function variableSourceLists(
 }
 
 function invocationsFromCMakeASTs(cmakeListsASTs: CMakeAST[]): CommandInvocation[] {
-    function *generator(): Generator<CommandInvocation> {
+    function* generator(): Generator<CommandInvocation> {
         for (const cml of cmakeListsASTs) {
             for (const ast of cml.invocations) {
                 yield new CommandInvocation(cml.document, ast);

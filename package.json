@@ -3963,7 +3963,6 @@
             "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.yes.description%",
             "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.ask.description%"
           ],
-          "order": 100,
           "scope": "resource"
         },
         "cmake.modifyLists.removeDeletedSourceFiles": {
@@ -3980,7 +3979,6 @@
             "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.yes.description%",
             "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.ask.description%"
           ],
-          "order": 101,
           "scope": "resource"
         },
         "cmake.modifyLists.variableSelection": {
@@ -3999,7 +3997,6 @@
             "%cmake-tools.configuration.cmake.modifyLists.variableSelection.askFirstParentDir.description%",
             "%cmake-tools.configuration.cmake.modifyLists.variableSelection.askParentDirs.description%"
           ],
-          "order": 102,
           "scope": "resource"
         },
         "cmake.modifyLists.sourceVariables": {
@@ -4018,7 +4015,6 @@
             "*_SOURCE_FILES"
           ],
           "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.sourceVariables.markdownDescription%",
-          "order": 103,
           "scope": "resource"
         },
         "cmake.modifyLists.targetSelection": {
@@ -4035,7 +4031,6 @@
             "%cmake-tools.configuration.cmake.modifyLists.targetSelection.askNearestSourceDir.description%",
             "%cmake-tools.configuration.cmake.modifyLists.targetSelection.askParentSourceDirs.description%"
           ],
-          "order": 104,
           "scope": "resource"
         },
         "cmake.modifyLists.targetCommandInvocationSelection": {
@@ -4052,7 +4047,6 @@
             "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askFirstParentDir.description%",
             "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askParentDirs.description%"
           ],
-          "order": 105,
           "scope": "resource"
         },
         "cmake.modifyLists.targetSourceCommands": {
@@ -4066,7 +4060,6 @@
             "add_library"
           ],
           "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.targetSourceCommands.markdownDescription%",
-          "order": 106,
           "scope": "resource"
         },
         "cmake.modifyLists.scopeSelection": {
@@ -4081,7 +4074,6 @@
             "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description%",
             "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description%"
           ],
-          "order": 107,
           "scope": "resource"
         },
         "cmake.modifyLists.sourceListKeywords": {
@@ -4091,7 +4083,6 @@
           },
           "default": [],
           "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription%",
-          "order": 108,
           "scope": "resource"
         }
       }
