@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "CMake ドライバーは、ビルドが成功した直後に停止しました。",
 	"driver.died.before.workflow": "ワークフローを開始する前に CMake ドライバーが終了しました。",
 	"set.up.and.build.project.before.debugging": "デバッグする前に、CMake プロジェクトを設定してビルドしてください。",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "テストが見つかりません: {0}",
 	"debugging.documentation.button": "デバッグ ドキュメント",
 	"failed.to.generate.debugger.configuration": "デバッガーの構成を生成できませんでした",
 	"unable.to.generate.debugging.configuration": "デバッグ構成を生成できません。",

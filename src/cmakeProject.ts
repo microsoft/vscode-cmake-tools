@@ -1014,6 +1014,9 @@ export class CMakeProject {
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
                         await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+                        // Update the PresetsController so that CMakePresets.json is
+                        // looked up relative to the new source directory (fixes #4727).
+                        await this.presetsController.updateSourceDir(this._sourceDir);
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -1612,6 +1615,36 @@ export class CMakeProject {
                 return;
             }
         }
+
+    }
+
+    /**
+     * Execute the postConfigureTask if configured
+     */
+    private async executePostConfigureTask(): Promise<void> {
+        const postConfigureTask = this.workspaceContext.config.postConfigureTask;
+        if (postConfigureTask) {
+            try {
+                log.debug(localize('executing.post.configure.task', 'Executing post configure task: {0}', postConfigureTask));
+
+                // Fetch all available tasks
+                const tasks = await vscode.tasks.fetchTasks();
+
+                // Find the task by label
+                const task = tasks.find(t => t.name === postConfigureTask);
+
+                if (task) {
+                    await vscode.tasks.executeTask(task);
+                } else {
+                    const errorMsg = localize('task.not.found', 'Task "{0}" not found. Available tasks: {1}', postConfigureTask, tasks.map(t => t.name).join(', '));
+                    void vscode.window.showErrorMessage(errorMsg);
+                    log.error(errorMsg);
+                }
+            } catch (error: any) {
+                void vscode.window.showErrorMessage(localize('failed.to.execute.post.configure.task', 'Failed to execute post configure task: {0}', error.toString()));
+                log.error(localize('post.configure.task.error', 'Error executing post configure task'), error);
+            }
+        }
     }
 
     /**
@@ -1635,6 +1668,7 @@ export class CMakeProject {
             const result: ConfigureResult = await drv.configure(trigger, []);
             if (result.exitCode === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
+                await this.executePostConfigureTask();
             } else {
                 log.showChannel(true);
             }
@@ -1736,6 +1770,7 @@ export class CMakeProject {
                                 if (result.exitCode === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
+                                    await this.executePostConfigureTask();
                                 } else if (result.exitCode !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && !cancelInformation.canceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     log.showChannel(true);
                                     const yesButtonTitle: string = localize(
@@ -2638,6 +2673,21 @@ export class CMakeProject {
      */
     async selectLaunchTarget(name?: string): Promise<string | null> {
         return this.setLaunchTargetByName(name);
+    }
+
+    /**
+     * Implementation of `cmake.selectBuildAndLaunchTarget`
+     * Sets both the build target and the launch target simultaneously.
+     */
+    async selectBuildAndLaunchTarget(name?: string): Promise<string | null> {
+        const result = await this.setLaunchTargetByName(name);
+        if (result !== null) {
+            const launchTargetName = this._launchTargetName.value;
+            if (launchTargetName) {
+                await this.setDefaultBuildTarget(launchTargetName);
+            }
+        }
+        return result;
     }
 
     /**

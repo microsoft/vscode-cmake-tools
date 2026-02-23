@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "Sterownik narzędzia CMake zakończył pracę natychmiast po pomyślnym zakończeniu kompilowania.",
 	"driver.died.before.workflow": "Sterownik narzędzia CMake został przerwany przed uruchomieniem przepływu pracy.",
 	"set.up.and.build.project.before.debugging": "Skonfiguruj i skompiluj projekt narzędzia CMake przed debugowaniem.",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "Nie znaleziono testu: {0}",
 	"debugging.documentation.button": "Dokumentacja debugowania",
 	"failed.to.generate.debugger.configuration": "Nie można wygenerować konfiguracji debugera",
 	"unable.to.generate.debugging.configuration": "Nie można wygenerować konfiguracji debugowania.",

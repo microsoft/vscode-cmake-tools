@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "El controlador de CMake finalizó de forma inmediata después de que la compilación se realizara correctamente.",
 	"driver.died.before.workflow": "El controlador de CMake se ha interrumpido antes de iniciar el flujo de trabajo.",
 	"set.up.and.build.project.before.debugging": "Configure y compile el proyecto de CMake antes de la depuración.",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "No se encontró la prueba: {0}",
 	"debugging.documentation.button": "Documentación de depuración",
 	"failed.to.generate.debugger.configuration": "No se pudo generar la configuración del depurador.",
 	"unable.to.generate.debugging.configuration": "No se puede generar una configuración de depuración.",

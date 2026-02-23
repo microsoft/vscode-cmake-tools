@@ -149,7 +149,7 @@
 	"driver.died.after.build.succeeded": "Ovladač CMake se ukončil hned po úspěšném sestavení.",
 	"driver.died.before.workflow": "Ovladač CMake se před spuštěním pracovního postupu ukončil.",
 	"set.up.and.build.project.before.debugging": "Před zahájením ladění nastavte a sestavte projekt CMake.",
-	"test.not.found": "Test not found: {0}",
+	"test.not.found": "Test nebyl nalezen: {0}",
 	"debugging.documentation.button": "Dokumentace ladění",
 	"failed.to.generate.debugger.configuration": "Nepovedlo se vygenerovat konfiguraci ladicího programu.",
 	"unable.to.generate.debugging.configuration": "Nejde vygenerovat konfiguraci ladění.",
