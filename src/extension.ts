@@ -280,8 +280,17 @@ export class ExtensionManager implements vscode.Disposable {
         this.workspaceConfig.onChange('mingwSearchDirs', async _ => { // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         });
-        this.workspaceConfig.onChange('outlineViewType', async _ => {
-            this.updateCodeModel(getActiveProject());
+        this.workspaceConfig.onChange('outlineViewType', _ => {
+            // Defer the rebuild to the next event-loop tick so that every
+            // ConfigurationReader instance (including the per-project ones
+            // stored on cmakeProject.workspaceContext.config) has processed
+            // the onDidChangeConfiguration event before we re-read the value
+            // inside ProjectNode.update().
+            setTimeout(() => {
+                for (const project of this.projectController.getAllCMakeProjects()) {
+                    this.updateCodeModel(project);
+                }
+            }, 0);
         });
         KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
 
