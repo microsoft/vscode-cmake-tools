@@ -1,5 +1,4 @@
 import * as ajv from 'ajv';
-import * as chokidar from 'chokidar';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
 import * as path from 'path';
@@ -192,7 +191,7 @@ export class VariantManager implements vscode.Disposable {
     /**
      * Watches for changes to the variants file on the filesystem
      */
-    private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true, followSymlinks: false });
+    private readonly _variantFileWatchers: vscode.Disposable[] = [];
     private customVariantsFileExists: boolean = false;
 
     /**
@@ -201,7 +200,9 @@ export class VariantManager implements vscode.Disposable {
     private initialized: boolean = false;
 
     dispose() {
-        void this._variantFileWatcher.close();
+        for (const watcher of this._variantFileWatchers) {
+            watcher.dispose();
+        }
         this._activeVariantChanged.dispose();
     }
 
@@ -215,15 +216,19 @@ export class VariantManager implements vscode.Disposable {
             return;  // Nothing we can do. We have no directory open
         }
         // Ref: https://code.visualstudio.com/api/references/vscode-api#Uri
-        for (const filename of ['cmake-variants.yaml',
-            'cmake-variants.json',
-            '.vscode/cmake-variants.yaml',
-            '.vscode/cmake-variants.json']) {
-            this._variantFileWatcher.add(path.join(workspaceFolder.uri.fsPath, filename));
-        }
-        util.chokidarOnAnyChange(
-            this._variantFileWatcher,
-            filePath => rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', filePath), () => this._reloadVariantsFile(filePath)));
+        const variantGlob = new vscode.RelativePattern(
+            workspaceFolder,
+            '{cmake-variants.yaml,cmake-variants.json,.vscode/cmake-variants.yaml,.vscode/cmake-variants.json}'
+        );
+        const variantWatcher = vscode.workspace.createFileSystemWatcher(variantGlob);
+        const reloadHandler = (uri: vscode.Uri) => rollbar.invokeAsync(
+            localize('reloading.variants.file', 'Reloading variants file {0}', uri.fsPath),
+            () => this._reloadVariantsFile(uri.fsPath)
+        );
+        variantWatcher.onDidChange(reloadHandler);
+        variantWatcher.onDidCreate(reloadHandler);
+        variantWatcher.onDidDelete(reloadHandler);
+        this._variantFileWatchers.push(variantWatcher);
 
         config.onChange('defaultVariants', () => {
             rollbar.invokeAsync(localize('reloading.variants.from.settings', 'Reloading variants from settings'), () => this._reloadVariantsFile());
@@ -286,7 +291,7 @@ export class VariantManager implements vscode.Disposable {
             const errors = validate.errors as ajv.ErrorObject[];
             log.error(localize('invalid.variants', 'Invalid variants specified:'));
             for (const err of errors) {
-                log.error(` >> ${err.dataPath}: ${err.message}`);
+                log.error(` >> ${err.instancePath}: ${err.message}`);
             }
             new_variants = DEFAULT_VARIANTS;
             log.info(localize('loaded.default.variants', 'Loaded default variants'));

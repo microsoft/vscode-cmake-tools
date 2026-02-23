@@ -398,7 +398,13 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return this._generatorInformation ? this._generatorInformation.name : null;
     }
     get targets(): Target[] {
-        const targets = this._target_map.get(this.currentBuildType);
+        let targets = this._target_map.get(this.currentBuildType);
+        // For single-config generators (e.g. Ninja), when CMAKE_BUILD_TYPE is not set in
+        // the preset or is changed in CMakeLists.txt, the codemodel configuration name may
+        // not match currentBuildType. Fall back to the only available configuration.
+        if (!targets && this._target_map.size === 1) {
+            targets = this._target_map.values().next().value;
+        }
         if (targets) {
             const metaTargets = [{
                 type: 'rich' as 'rich',

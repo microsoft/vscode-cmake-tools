@@ -748,7 +748,7 @@ export function getSettingsChangePromise(): Promise<any[]> {
 }
 
 export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
-    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || config.installPrefix || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 

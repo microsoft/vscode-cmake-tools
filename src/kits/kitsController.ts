@@ -1,6 +1,5 @@
 'use strict';
 
-import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -22,7 +21,7 @@ import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
-import { chokidarOnAnyChange, ProgressHandle, reportProgress } from '@cmt/util';
+import { ProgressHandle, reportProgress } from '@cmt/util';
 import { ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -57,7 +56,7 @@ export class KitsController {
     folderKits: Kit[] = [];
     additionalKits: Kit[] = [];
 
-    private constructor(readonly project: CMakeProject, private readonly _kitsWatcher: chokidar.FSWatcher) {}
+    private constructor(readonly project: CMakeProject, private readonly _kitsWatchers: vscode.Disposable[]) {}
 
     static async init(project: CMakeProject) {
         if (KitsController.userKits.length === 0) {
@@ -67,10 +66,20 @@ export class KitsController {
 
         const expandedAdditionalKitFiles: string[] = await project.getExpandedAdditionalKitFiles();
         const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(project.workspaceFolder)].concat(expandedAdditionalKitFiles);
-        const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
-        const kitsController = new KitsController(project, kitsWatcher);
-        chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
-            kitsController.readKits(KitsReadMode.folderKits)));
+
+        const kitsWatchers: vscode.Disposable[] = [];
+        const kitsController = new KitsController(project, kitsWatchers);
+        const rereadHandler = () => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
+            kitsController.readKits(KitsReadMode.folderKits));
+        for (const kitFile of folderKitsFiles) {
+            const dirUri = vscode.Uri.file(path.dirname(kitFile));
+            const pattern = new vscode.RelativePattern(dirUri, path.basename(kitFile));
+            const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+            watcher.onDidChange(rereadHandler);
+            watcher.onDidCreate(rereadHandler);
+            watcher.onDidDelete(rereadHandler);
+            kitsWatchers.push(watcher);
+        }
         project.workspaceContext.config.onChange('additionalKits', () => kitsController.readKits(KitsReadMode.folderKits));
 
         await kitsController.readKits(KitsReadMode.folderKits);
@@ -81,7 +90,9 @@ export class KitsController {
         if (this._pickKitCancellationTokenSource) {
             this._pickKitCancellationTokenSource.dispose();
         }
-        void this._kitsWatcher.close();
+        for (const watcher of this._kitsWatchers) {
+            watcher.dispose();
+        }
     }
 
     get availableKits() {
@@ -89,7 +100,7 @@ export class KitsController {
         if (this.project.workspaceContext.config.showSystemKits) {
             return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
         } else {
-            return KitsController.specialKits.concat(this.folderKits);
+            return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits));
         }
     }
 
