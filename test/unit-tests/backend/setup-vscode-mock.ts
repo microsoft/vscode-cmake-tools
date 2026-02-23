@@ -61,12 +61,16 @@ const originalLoad = (Module as any)._load;
                 dispose() {}
             },
             Disposable: class {
-                static from(..._d: any[]) { return { dispose: noop }; }
+                static from(..._d: any[]) {
+                    return { dispose: noop };
+                }
                 dispose() {}
             },
             TreeItem: class {},
             TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
-            ThemeIcon: class { constructor(public id: string) {} },
+            ThemeIcon: class {
+                constructor(public id: string) {}
+            },
             extensions: { getExtension: () => undefined }
         };
     }
