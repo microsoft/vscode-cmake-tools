@@ -153,31 +153,31 @@
       {
         "command": "cmake.addConfigurePreset",
         "title": "%cmake-tools.command.cmake.addConfigurePreset.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable",
         "category": "CMake"
       },
       {
         "command": "cmake.addBuildPreset",
         "title": "%cmake-tools.command.cmake.addBuildPreset.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable",
         "category": "CMake"
       },
       {
         "command": "cmake.addTestPreset",
         "title": "%cmake-tools.command.cmake.addTestPreset.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable",
         "category": "CMake"
       },
       {
         "command": "cmake.addPackagePreset",
         "title": "%cmake-tools.command.cmake.addPackagePreset.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable",
         "category": "CMake"
       },
       {
         "command": "cmake.addWorkflowPreset",
         "title": "%cmake-tools.command.cmake.addWorkflowPreset.title%",
-        "when": "cmake:enableFullFeatureSet && useCMakePresets",
+        "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable",
         "category": "CMake"
       },
       {
@@ -1217,23 +1217,23 @@
         },
         {
           "command": "cmake.addConfigurePreset",
-          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+          "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable"
         },
         {
           "command": "cmake.addBuildPreset",
-          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+          "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable"
         },
         {
           "command": "cmake.addTestPreset",
-          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+          "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable"
         },
         {
           "command": "cmake.addPackagePreset",
-          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+          "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable"
         },
         {
           "command": "cmake.addWorkflowPreset",
-          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+          "when": "cmake:enableFullFeatureSet && cmake:addPresetCommandsAvailable"
         },
         {
           "command": "cmake.selectConfigurePreset",
