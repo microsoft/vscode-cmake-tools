@@ -818,6 +818,15 @@ export function platformPathEquivalent(a: string, b: string): boolean {
 }
 
 /**
+ * Normalizes a URI's file-system path according to the platform's case and Unicode normalization rules.
+ * @param uri The URI whose fsPath to normalize.
+ * @returns The normalized path string.
+ */
+export function platformNormalizeUri(uri: vscode.Uri): string {
+    return platformNormalizePath(uri.fsPath);
+}
+
+/**
  * Sets a context value in the VS Code context.
  * @param key The context key to set.
  * @param value The value to set for the context key.
@@ -825,6 +834,23 @@ export function platformPathEquivalent(a: string, b: string): boolean {
  */
 export function setContextValue(key: string, value: any): Thenable<void> {
     return vscode.commands.executeCommand('setContext', key, value);
+}
+
+/**
+ * Shows a Quick Pick with typed payload items and returns the selected payload.
+ * @param items The Quick Pick items, each with an associated payload value.
+ * @param options Standard VS Code Quick Pick options.
+ * @returns The payload of the selected item, or null if the user cancelled.
+ */
+export async function quickPick<T>(
+    items: (vscode.QuickPickItem & { payload: T })[],
+    options: vscode.QuickPickOptions
+): Promise<T | null> {
+    const selected = await vscode.window.showQuickPick(items, options);
+    if (!selected) {
+        return null;
+    }
+    return selected.payload;
 }
 
 export interface ProgressReport {
