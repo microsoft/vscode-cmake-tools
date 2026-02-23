@@ -1014,6 +1014,9 @@ export class CMakeProject {
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
                         await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+                        // Update the PresetsController so that CMakePresets.json is
+                        // looked up relative to the new source directory (fixes #4727).
+                        await this.presetsController.updateSourceDir(this._sourceDir);
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -1612,6 +1615,36 @@ export class CMakeProject {
                 return;
             }
         }
+
+    }
+
+    /**
+     * Execute the postConfigureTask if configured
+     */
+    private async executePostConfigureTask(): Promise<void> {
+        const postConfigureTask = this.workspaceContext.config.postConfigureTask;
+        if (postConfigureTask) {
+            try {
+                log.debug(localize('executing.post.configure.task', 'Executing post configure task: {0}', postConfigureTask));
+
+                // Fetch all available tasks
+                const tasks = await vscode.tasks.fetchTasks();
+
+                // Find the task by label
+                const task = tasks.find(t => t.name === postConfigureTask);
+
+                if (task) {
+                    await vscode.tasks.executeTask(task);
+                } else {
+                    const errorMsg = localize('task.not.found', 'Task "{0}" not found. Available tasks: {1}', postConfigureTask, tasks.map(t => t.name).join(', '));
+                    void vscode.window.showErrorMessage(errorMsg);
+                    log.error(errorMsg);
+                }
+            } catch (error: any) {
+                void vscode.window.showErrorMessage(localize('failed.to.execute.post.configure.task', 'Failed to execute post configure task: {0}', error.toString()));
+                log.error(localize('post.configure.task.error', 'Error executing post configure task'), error);
+            }
+        }
     }
 
     /**
@@ -1635,6 +1668,7 @@ export class CMakeProject {
             const result: ConfigureResult = await drv.configure(trigger, []);
             if (result.exitCode === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
+                await this.executePostConfigureTask();
             } else {
                 log.showChannel(true);
             }
@@ -1736,6 +1770,7 @@ export class CMakeProject {
                                 if (result.exitCode === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
+                                    await this.executePostConfigureTask();
                                 } else if (result.exitCode !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && !cancelInformation.canceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     log.showChannel(true);
                                     const yesButtonTitle: string = localize(
@@ -2384,6 +2419,14 @@ export class CMakeProject {
         return (await this.build()).exitCode;
     }
 
+    async cleanConfigureAndBuild(trigger: ConfigureTrigger = ConfigureTrigger.api): Promise<number> {
+        const configureResult = (await this.cleanConfigure(trigger)).exitCode;
+        if (configureResult !== 0) {
+            return configureResult;
+        }
+        return (await this.build()).exitCode;
+    }
+
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.CommandConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
@@ -2441,6 +2484,71 @@ export class CMakeProject {
     async refreshTests(): Promise<number> {
         const drv = await this.preTest();
         return this.cTestController.refreshTests(drv);
+    }
+
+    async runTest(testName: string): Promise<CommandResult> {
+        return this.ctest(false, undefined, [testName]);
+    }
+
+    async debugCTest(testName: string): Promise<vscode.DebugSession | null> {
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            void vscode.window.showErrorMessage(localize('set.up.and.build.project.before.debugging', 'Set up and build your CMake project before debugging.'));
+            return null;
+        }
+
+        const testInfo = this.cTestController.getTestInfo(testName);
+        if (!testInfo) {
+            log.error(localize('test.not.found', 'Test not found: {0}', testName));
+            return null;
+        }
+
+        const target: ExecutableTarget = {
+            name: testName,
+            path: testInfo.program
+        };
+
+        let debugConfig;
+        try {
+            const cache = await CMakeCache.fromPath(drv.cachePath);
+            debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, target, process.platform,
+                this.workspaceContext.config.debugConfig?.MIMode,
+                this.workspaceContext.config.debugConfig?.miDebuggerPath);
+        } catch (error: any) {
+            void vscode.window
+                .showErrorMessage(error.message, {
+                    title: localize('debugging.documentation.button', 'Debugging documentation'),
+                    isLearnMore: true
+                })
+                .then(item => {
+                    if (item && item.isLearnMore) {
+                        open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+                    }
+                });
+            return null;
+        }
+
+        if (debugConfig === null) {
+            log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
+            void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
+            return null;
+        }
+
+        // Add test arguments and working directory
+        debugConfig.args = testInfo.args;
+        if (testInfo.workingDirectory) {
+            debugConfig.cwd = testInfo.workingDirectory;
+        }
+
+        // Add debug configuration from settings
+        const userConfig = this.workspaceContext.config.debugConfig;
+        Object.assign(debugConfig, userConfig);
+
+        const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
+        debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
+
+        await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
+        return vscode.debug.activeDebugSession!;
     }
 
     addTestExplorerRoot(folder: string) {
@@ -2565,6 +2673,21 @@ export class CMakeProject {
      */
     async selectLaunchTarget(name?: string): Promise<string | null> {
         return this.setLaunchTargetByName(name);
+    }
+
+    /**
+     * Implementation of `cmake.selectBuildAndLaunchTarget`
+     * Sets both the build target and the launch target simultaneously.
+     */
+    async selectBuildAndLaunchTarget(name?: string): Promise<string | null> {
+        const result = await this.setLaunchTargetByName(name);
+        if (result !== null) {
+            const launchTargetName = this._launchTargetName.value;
+            if (launchTargetName) {
+                await this.setDefaultBuildTarget(launchTargetName);
+            }
+        }
+        return result;
     }
 
     /**
