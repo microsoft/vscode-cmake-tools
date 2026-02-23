@@ -215,18 +215,19 @@ suite('Preset tests', () => {
             jobs: 8
         };
         const args = buildArgs(preset);
-        const idx = args.indexOf('-j');
+        const idx = args.indexOf('--parallel');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('8');
     });
 
-    test('buildArgs omits -j when jobs is undefined and no fallback', () => {
+    test('buildArgs omits -j and --parallel when jobs is undefined and no fallback', () => {
         const preset: any = {
             name: 'test',
             __binaryDir: '/path/to/build'
         };
         const args = buildArgs(preset);
         expect(args).to.not.include('-j');
+        expect(args).to.not.include('--parallel');
     });
 
     test('buildArgs uses fallbackJobs when jobs is undefined', () => {
@@ -235,7 +236,7 @@ suite('Preset tests', () => {
             __binaryDir: '/path/to/build'
         };
         const args = buildArgs(preset, undefined, undefined, 4);
-        const idx = args.indexOf('-j');
+        const idx = args.indexOf('--parallel');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('4');
     });
@@ -247,7 +248,7 @@ suite('Preset tests', () => {
             jobs: 2
         };
         const args = buildArgs(preset, undefined, undefined, 8);
-        const idx = args.indexOf('-j');
+        const idx = args.indexOf('--parallel');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('2');
     });
