@@ -234,6 +234,7 @@ export interface ExtensionConfigurationSettings {
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
     useFolderPropertyInBuildTargetDropdown: boolean;
+    outlineViewType: string;
 }
 
 type EmittersOf<T> = {
@@ -615,6 +616,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.useFolderPropertyInBuildTargetDropdown;
     }
 
+    get outlineViewType(): string {
+        return this.configData.outlineViewType;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
@@ -685,7 +690,8 @@ export class ConfigurationReader implements vscode.Disposable {
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
-        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>()
+        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
+        outlineViewType: new vscode.EventEmitter<string>()
     };
 
     /**

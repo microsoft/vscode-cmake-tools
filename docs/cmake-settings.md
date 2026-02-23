@@ -66,6 +66,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.options.advanced` | Advanced options for CMake Tools. | See package.json | no |
 | `cmake.options.statusBarVisibility` | Controls visibility of the status bar. | `hidden` | no |
 | `cmake.outputLogEncoding` | Encoding to use for tool output. | `auto` | no |
+| `cmake.outlineViewType` | Controls the layout of the Project Outline View. Accepted values: `list` (flat, grouped by CMake FOLDER property) or `tree` (hierarchical by source directory). | `list` | no |
 | `cmake.parallelJobs` | Specify the number of jobs run in parallel during the build. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable build parallelism. | `0` | no |
 | `cmake.parseBuildDiagnostics` | If `true`, parse compiler output for diagnostics. | `true` | no |
 | `cmake.pinnedCommands` | List of commands pinned to the command palette. | `["workbench.action.tasks.configureTaskRunner", "workbench.action.tasks.runTask"]` | no |

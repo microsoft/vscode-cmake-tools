@@ -3086,6 +3086,20 @@
           ],
           "scope": "window"
         },
+        "cmake.outlineViewType": {
+          "type": "string",
+          "enum": [
+            "list",
+            "tree"
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.outlineViewType.list.description%",
+            "%cmake-tools.configuration.cmake.outlineViewType.tree.description%"
+          ],
+          "default": "list",
+          "description": "%cmake-tools.configuration.cmake.outlineViewType.description%",
+          "scope": "resource"
+        },
         "cmake.options.advanced": {
           "type": "object",
           "default": {
