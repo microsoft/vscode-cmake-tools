@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "カバレッジを使用してテストが実行された後にプロジェクト {1} の postRunCoverageTarget '{0}' を構築しています。",
 	"test.postRunCoverageTargetFailure": "{0} のプロジェクトでターゲット postRunCoverageTarget を構築できませんでした。カバレッジ データの処理をスキップしています。",
 	"test.skip.run.build.failure": "ビルド エラーが原因でテストを実行していません。",
-	"no.launch.config": "起動構成が見つかりません。",
-	"choose.launch.config": "テストをデバッグする起動構成を選択します。",
 	"test.skip.debug.build.failure": "ビルド エラーが原因でテストをデバッグしていません。",
 	"build.failed": "ビルドに失敗しました",
 	"run.tests.profile": "テストの実行",

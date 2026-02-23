@@ -69,6 +69,9 @@
     "onLanguage:cmake",
     "onLanguage:cmake-cache"
   ],
+  "extensionPack": [
+    "ms-vscode.cpp-devtools"
+  ],
   "main": "./dist/main",
   "contributes": {
     "icons": {
@@ -4115,13 +4118,13 @@
     "typescript": "^4.1.5",
     "vscode-cmake-tools": "^1.5.0",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^5.94.0",
+    "webpack": "^5.104.1",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
     "@friedemannsommer/lcov-parser": "^5.0.0",
     "@types/string.prototype.matchall": "^4.0.4",
-    "ajv": "^7.1.0",
+    "ajv": "^8.18.0",
     "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.1.1",
@@ -4139,7 +4142,7 @@
     "which": "~2.0.2",
     "xml2js": "^0.5.0",
     "uuid": "~8.3.2",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.23"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",

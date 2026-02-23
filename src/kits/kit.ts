@@ -1263,20 +1263,76 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
     return result.filter(kit => kit.isTrusted);
 }
 
+// Guard to prevent concurrent calls from multiple projects in the same workspace.
+let scanForKitsInProgress = false;
+
+/**
+ * Possible outcomes for the kit scan decision logic.
+ * - 'scan': A version mismatch was detected and scanning is enabled; proceed with scanning.
+ * - 'skip-and-update-version': A version mismatch was detected but scanning is disabled; update the saved version without scanning.
+ * - 'blocked-by-concurrent': A version mismatch was detected but another scan is already in progress.
+ * - 'no-action': The saved version matches the current version, or we're in test mode.
+ */
+export type ScanForKitsAction = 'scan' | 'skip-and-update-version' | 'blocked-by-concurrent' | 'no-action';
+
+/**
+ * Pure decision function for whether to scan for kits.
+ * Extracted for testability from scanForKitsIfNeeded.
+ */
+export function determineScanForKitsAction(
+    kitsVersionSaved: number | undefined,
+    kitsVersionCurrent: number,
+    enableAutomaticKitScan: boolean,
+    isScanInProgress: boolean,
+    isAlreadyScanning: boolean,
+    isTestMode: boolean
+): ScanForKitsAction {
+    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !isTestMode) {
+        if (isScanInProgress || isAlreadyScanning) {
+            return 'blocked-by-concurrent';
+        }
+        if (!enableAutomaticKitScan) {
+            return 'skip-and-update-version';
+        }
+        return 'scan';
+    }
+    return 'no-action';
+}
+
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
 export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolean> {
     const kitsVersionSaved = project.workspaceContext.state.extensionContext.globalState.get<number>('kitsVersionSaved');
     const kitsVersionCurrent = 2;
 
-    // Scan also when there is no kits version saved in the state.
-    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
+    const action = determineScanForKitsAction(
+        kitsVersionSaved,
+        kitsVersionCurrent,
+        project.workspaceContext.config.enableAutomaticKitScan,
+        scanForKitsInProgress,
+        kitsController.KitsController.isScanningForKits(),
+        util.isTestMode()
+    );
+
+    if (action === 'no-action' || action === 'blocked-by-concurrent') {
+        return false;
+    }
+
+    scanForKitsInProgress = true;
+    try {
+        if (action === 'skip-and-update-version') {
+            // Respect the user's preference to disable automatic kit scanning.
+            await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+            return false;
+        }
+
+        // action === 'scan'
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
         await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
         await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
         return true;
+    } finally {
+        scanForKitsInProgress = false;
     }
-
-    return false;
 }
 
 /**
@@ -1354,7 +1410,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         const errors = validator.errors!;
         log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filePath), filePath));
         for (const err of errors) {
-            log.error(` >> ${err.dataPath}: ${err.message}`);
+            log.error(` >> ${err.instancePath}: ${err.message}`);
         }
         return [];
     }

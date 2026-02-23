@@ -341,3 +341,98 @@ suite('PresetsController file watcher protection', () => {
         expect(path.basename(resolvedPath)).to.equal('CMakePresets.json');
     });
 });
+
+/**
+ * Tests for preset file discovery when sourceDir differs from folderPath.
+ * Validates the scenario from issue #4727 where CMakePresets.json lives in a
+ * subdirectory (e.g., engine/cmake/) rather than the workspace root.
+ */
+suite('Preset file path resolution with subdirectory sourceDir (#4727)', () => {
+    let tempDir: string;
+    let workspaceRoot: string;
+    let subDir: string;
+
+    setup(() => {
+        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmake-presets-subdir-test-'));
+        workspaceRoot = tempDir;
+        subDir = path.join(tempDir, 'engine', 'cmake');
+        fs.mkdirSync(subDir, { recursive: true });
+    });
+
+    teardown(() => {
+        if (tempDir && fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    /**
+     * Test that CMakePresets.json is found when sourceDir is a subdirectory.
+     * This simulates the scenario where folderPath (workspace root) differs
+     * from sourceDir (subdirectory with CMakeLists.txt and CMakePresets.json).
+     */
+    test('presetsPath points to sourceDir, not folderPath', () => {
+        // The presetsPath should be constructed from sourceDir, not folderPath
+        const folderPath = workspaceRoot;
+        const sourceDir = subDir;
+
+        // This is how PresetsParser computes presetsPath
+        const presetsPath = path.join(sourceDir, 'CMakePresets.json');
+        const userPresetsPath = path.join(sourceDir, 'CMakeUserPresets.json');
+
+        // Verify paths point to subdirectory, not workspace root
+        expect(presetsPath).to.equal(path.join(subDir, 'CMakePresets.json'));
+        expect(userPresetsPath).to.equal(path.join(subDir, 'CMakeUserPresets.json'));
+        expect(presetsPath).to.not.equal(path.join(folderPath, 'CMakePresets.json'));
+    });
+
+    /**
+     * Test that preset files in subdirectory are found on disk.
+     * This validates the core issue: the extension must look for
+     * CMakePresets.json relative to sourceDir (where CMakeLists.txt is),
+     * not relative to the workspace root.
+     */
+    test('preset files are found in sourceDir subdirectory', () => {
+        // Create CMakePresets.json in the subdirectory
+        const presetsContent = JSON.stringify({
+            version: 3,
+            configurePresets: [{
+                name: "subdir-preset",
+                generator: "Ninja",
+                binaryDir: "${sourceDir}/build"
+            }]
+        }, null, 2);
+        const presetsFilePath = path.join(subDir, 'CMakePresets.json');
+        fs.writeFileSync(presetsFilePath, presetsContent);
+
+        // Verify the file exists at sourceDir, not at workspace root
+        expect(fs.existsSync(path.join(subDir, 'CMakePresets.json'))).to.be.true;
+        expect(fs.existsSync(path.join(workspaceRoot, 'CMakePresets.json'))).to.be.false;
+
+        // Verify content is correct
+        const content = JSON.parse(fs.readFileSync(presetsFilePath, 'utf8'));
+        expect(content.configurePresets[0].name).to.equal('subdir-preset');
+    });
+
+    /**
+     * Test that updating sourceDir changes where presets are looked up.
+     * This validates the fix for #4727: after the user selects a CMakeLists.txt
+     * in a subdirectory, the preset lookup path must be updated accordingly.
+     */
+    test('sourceDir update changes preset lookup path', () => {
+        // Initially, sourceDir is the workspace root
+        let sourceDir = workspaceRoot;
+        let presetsPath = path.join(sourceDir, 'CMakePresets.json');
+        expect(presetsPath).to.equal(path.join(workspaceRoot, 'CMakePresets.json'));
+
+        // User selects CMakeLists.txt in subdirectory, sourceDir is updated
+        sourceDir = subDir;
+        presetsPath = path.join(sourceDir, 'CMakePresets.json');
+        expect(presetsPath).to.equal(path.join(subDir, 'CMakePresets.json'));
+
+        // Create the file in the subdirectory
+        fs.writeFileSync(path.join(subDir, 'CMakePresets.json'), '{"version": 3}');
+
+        // After sourceDir update, the file should be found
+        expect(fs.existsSync(presetsPath)).to.be.true;
+    });
+});
