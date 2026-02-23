@@ -2217,7 +2217,7 @@ export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], temp
     const jobs = preset.jobs ?? fallbackJobs;
     if (jobs !== undefined) {
         if (jobs === 0) {
-            result.push('-j', '0');
+            result.push('-j');
         } else {
             result.push('--parallel', jobs.toString());
         }
