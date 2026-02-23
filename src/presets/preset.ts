@@ -2215,7 +2215,7 @@ export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], temp
 
     preset.__binaryDir && result.push('--build', preset.__binaryDir);
     const jobs = preset.jobs ?? fallbackJobs;
-    (jobs !== undefined) && result.push('--parallel', jobs.toString());
+    (jobs !== undefined) && result.push('-j', jobs.toString());
     preset.configuration && result.push('--config', preset.configuration);
     preset.cleanFirst && result.push('--clean-first');
     preset.verbose && result.push('--verbose');

@@ -203,7 +203,7 @@ suite('Preset tests', () => {
             jobs: 0
         };
         const args = buildArgs(preset);
-        const idx = args.indexOf('--parallel');
+        const idx = args.indexOf('-j');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('0');
     });
@@ -215,18 +215,18 @@ suite('Preset tests', () => {
             jobs: 8
         };
         const args = buildArgs(preset);
-        const idx = args.indexOf('--parallel');
+        const idx = args.indexOf('-j');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('8');
     });
 
-    test('buildArgs omits --parallel when jobs is undefined and no fallback', () => {
+    test('buildArgs omits -j when jobs is undefined and no fallback', () => {
         const preset: any = {
             name: 'test',
             __binaryDir: '/path/to/build'
         };
         const args = buildArgs(preset);
-        expect(args).to.not.include('--parallel');
+        expect(args).to.not.include('-j');
     });
 
     test('buildArgs uses fallbackJobs when jobs is undefined', () => {
@@ -235,7 +235,7 @@ suite('Preset tests', () => {
             __binaryDir: '/path/to/build'
         };
         const args = buildArgs(preset, undefined, undefined, 4);
-        const idx = args.indexOf('--parallel');
+        const idx = args.indexOf('-j');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('4');
     });
@@ -247,7 +247,7 @@ suite('Preset tests', () => {
             jobs: 2
         };
         const args = buildArgs(preset, undefined, undefined, 8);
-        const idx = args.indexOf('--parallel');
+        const idx = args.indexOf('-j');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('2');
     });
@@ -259,18 +259,18 @@ suite('Preset tests', () => {
             jobs: 0
         };
         const args = buildArgs(preset, undefined, undefined, 8);
-        const idx = args.indexOf('--parallel');
+        const idx = args.indexOf('-j');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('0');
     });
 
-    test('buildArgs uses fallbackJobs: 0 to pass --parallel 0', () => {
+    test('buildArgs uses fallbackJobs: 0 to pass -j 0', () => {
         const preset: any = {
             name: 'test',
             __binaryDir: '/path/to/build'
         };
         const args = buildArgs(preset, undefined, undefined, 0);
-        const idx = args.indexOf('--parallel');
+        const idx = args.indexOf('-j');
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('0');
     });
