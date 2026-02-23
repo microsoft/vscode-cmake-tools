@@ -648,11 +648,14 @@ export class ProjectNode extends BaseNode {
             if (target.isGeneratorProvided) {
                 continue;
             }
-            
-            if(this.config.outlineViewType === "tree") {
+
+            if (this.config.outlineViewType === "tree") {
                 const srcdir = target.sourceDirectory || '';
                 const relpath = path.relative(pr.sourceDirectory, srcdir);
-                addToTree(tree, relpath, target);
+                // If the target is outside the project root, fall back to a flat entry
+                // to avoid confusing ".." segments appearing as tree nodes.
+                const safePath = relpath.startsWith('..') ? '' : relpath;
+                addToTree(tree, safePath, target);
             } else {
                 if (target.folder) {
                     addToTree(tree, target.folder.name, target);
@@ -662,7 +665,7 @@ export class ProjectNode extends BaseNode {
             }
         }
 
-        if(this.config.outlineViewType  === "tree") {
+        if (this.config.outlineViewType === "tree") {
             collapseTreeInplace(tree);
         }
 

@@ -281,7 +281,9 @@ export class ExtensionManager implements vscode.Disposable {
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
         });
         this.workspaceConfig.onChange('outlineViewType', async _ => {
-            this.updateCodeModel(getActiveProject());
+            for (const project of this.projectController.getAllCMakeProjects()) {
+                this.updateCodeModel(project);
+            }
         });
         KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
 

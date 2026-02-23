@@ -234,7 +234,7 @@ export interface ExtensionConfigurationSettings {
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
     useFolderPropertyInBuildTargetDropdown: boolean;
-    outlineViewType : string;
+    outlineViewType: string;
 }
 
 type EmittersOf<T> = {
