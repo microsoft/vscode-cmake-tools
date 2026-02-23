@@ -203,9 +203,10 @@ suite('Preset tests', () => {
             jobs: 0
         };
         const args = buildArgs(preset);
+        expect(args).to.include('-j');
+        // -j should be bare (no value) — next arg should NOT be '0'
         const idx = args.indexOf('-j');
-        expect(idx).to.be.greaterThan(-1);
-        expect(args[idx + 1]).to.eq('0');
+        expect(args[idx + 1]).to.not.eq('0');
     });
 
     test('buildArgs handles jobs: positive number', () => {
@@ -260,19 +261,17 @@ suite('Preset tests', () => {
             jobs: 0
         };
         const args = buildArgs(preset, undefined, undefined, 8);
-        const idx = args.indexOf('-j');
-        expect(idx).to.be.greaterThan(-1);
-        expect(args[idx + 1]).to.eq('0');
+        expect(args).to.include('-j');
+        expect(args).to.not.include('--parallel');
     });
 
-    test('buildArgs uses fallbackJobs: 0 to pass -j 0', () => {
+    test('buildArgs uses fallbackJobs: 0 to pass bare -j', () => {
         const preset: any = {
             name: 'test',
             __binaryDir: '/path/to/build'
         };
         const args = buildArgs(preset, undefined, undefined, 0);
-        const idx = args.indexOf('-j');
-        expect(idx).to.be.greaterThan(-1);
-        expect(args[idx + 1]).to.eq('0');
+        expect(args).to.include('-j');
+        expect(args).to.not.include('--parallel');
     });
 });
