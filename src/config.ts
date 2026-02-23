@@ -204,6 +204,7 @@ export interface ExtensionConfigurationSettings {
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
+    postConfigureTask: string | null;
     loadCompileCommands: boolean;
     configureOnOpen: boolean;
     configureOnEdit: boolean;
@@ -522,6 +523,13 @@ export class ConfigurationReader implements vscode.Disposable {
         }
     }
 
+    get numJobsForPreset(): number | undefined {
+        if (this.isDefaultValue("parallelJobs")) {
+            return undefined;
+        }
+        return this.parallelJobs;
+    }
+
     get numCTestJobs(): number {
         const ctestJobs = this.ctestParallelJobs;
         if (!ctestJobs) {
@@ -549,6 +557,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
+    }
+    get postConfigureTask(): string | null {
+        return this.configData.postConfigureTask;
     }
     get loadCompileCommands(): boolean {
         return this.configData.loadCompileCommands;
@@ -661,6 +672,7 @@ export class ConfigurationReader implements vscode.Disposable {
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
+        postConfigureTask: new vscode.EventEmitter<string | null>(),
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
@@ -754,7 +766,7 @@ export function getSettingsChangePromise(): Promise<any[]> {
 }
 
 export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
-    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || config.installPrefix || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 

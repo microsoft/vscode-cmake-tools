@@ -203,6 +203,18 @@
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
+"@isaacs/balanced-match@^4.0.1":
+  version "4.0.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@isaacs/balanced-match/-/balanced-match-4.0.1.tgz#3081dadbc3460661b751e7591d7faea5df39dd29"
+  integrity sha1-MIHa28NGBmG3UedZHX+upd853Sk=
+
+"@isaacs/brace-expansion@^5.0.0":
+  version "5.0.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@isaacs/brace-expansion/-/brace-expansion-5.0.0.tgz#4b3dabab7d8e75a429414a96bd67bf4c1d13e0f3"
+  integrity sha1-Sz2rq32OdaQpQUqWvWe/TB0T4PM=
+  dependencies:
+    "@isaacs/balanced-match" "^4.0.1"
+
 "@isaacs/cliui@^8.0.2":
   version "8.0.2"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@isaacs/cliui/-/cliui-8.0.2.tgz#b37667b7bc181c168782259bab42474fbf52b550"
@@ -252,7 +264,7 @@
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.0.tgz#3188bcb273a414b0d215fd22a58540b989b9409a"
   integrity sha1-MYi8snOkFLDSFf0ipYVAuYm5QJo=
 
-"@jridgewell/trace-mapping@^0.3.20", "@jridgewell/trace-mapping@^0.3.24", "@jridgewell/trace-mapping@^0.3.25":
+"@jridgewell/trace-mapping@^0.3.24", "@jridgewell/trace-mapping@^0.3.25":
   version "0.3.25"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@jridgewell/trace-mapping/-/trace-mapping-0.3.25.tgz#15f190e98895f3fc23276ee14bc76b675c2e50f0"
   integrity sha1-FfGQ6YiV8/wjJ27hS8drZ1wuUPA=
@@ -547,15 +559,26 @@
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/chai/-/chai-4.3.1.tgz"
   integrity sha512-/zPMqDkzSZ8t3VtxOa4KPq7uzzW978M9Tvh+j7GHKuo6k6GTLxPJ4J5gE5cjfJ26pnXst0N5Hax8Sr0T2Mi9zQ==
 
-"@types/demangler-js@^0.1.0":
-  version "0.1.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/demangler-js/-/demangler-js-0.1.0.tgz#938a0f160ece42b3cf8d46f3b0ab1218f46821e6"
-  integrity sha1-k4oPFg7OQrPPjUbzsKsSGPRoIeY=
+"@types/eslint-scope@^3.7.7":
+  version "3.7.7"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/eslint-scope/-/eslint-scope-3.7.7.tgz#3108bd5f18b0cdb277c867b3dd449c9ed7079ac5"
+  integrity sha1-MQi9XxiwzbJ3yGez3UScntcHmsU=
+  dependencies:
+    "@types/eslint" "*"
+    "@types/estree" "*"
 
-"@types/estree@^1.0.5":
-  version "1.0.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/estree/-/estree-1.0.6.tgz#628effeeae2064a1b4e79f78e81d87b7e5fc7b50"
-  integrity sha1-Yo7/7q4gZKG055946B2Ht+X8e1A=
+"@types/eslint@*":
+  version "9.6.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/eslint/-/eslint-9.6.1.tgz#d5795ad732ce81715f27f75da913004a56751584"
+  integrity sha1-1Xla1zLOgXFfJ/ddqRMASlZ1FYQ=
+  dependencies:
+    "@types/estree" "*"
+    "@types/json-schema" "*"
+
+"@types/estree@*", "@types/estree@^1.0.8":
+  version "1.0.8"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/estree/-/estree-1.0.8.tgz#958b91c991b1867ced318bedea0e215ee050726e"
+  integrity sha1-lYuRyZGxhnztMYvt6g4hXuBQcm4=
 
 "@types/glob@*":
   version "7.2.0"
@@ -570,10 +593,10 @@
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/js-yaml/-/js-yaml-4.0.5.tgz"
   integrity sha512-FhpRzf927MNQdRZP0J5DLIdTXhjLYzeUTmLAu69mnVksLH9CJY3IuSeEgbKUki7GQZm0WqDkGzyxju2EZGD2wA==
 
-"@types/json-schema@^7.0.8", "@types/json-schema@^7.0.9":
-  version "7.0.11"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/json-schema/-/json-schema-7.0.11.tgz"
-  integrity sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==
+"@types/json-schema@*", "@types/json-schema@^7.0.15", "@types/json-schema@^7.0.8", "@types/json-schema@^7.0.9":
+  version "7.0.15"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
+  integrity sha1-WWoXRyM2lNUPatinhp/Lb1bPWEE=
 
 "@types/json5@^0.0.29":
   version "0.0.29"
@@ -873,125 +896,125 @@
   optionalDependencies:
     keytar "^7.7.0"
 
-"@webassemblyjs/ast@1.12.1", "@webassemblyjs/ast@^1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/ast/-/ast-1.12.1.tgz#bb16a0e8b1914f979f45864c23819cc3e3f0d4bb"
-  integrity sha1-uxag6LGRT5efRYZMI4Gcw+Pw1Ls=
+"@webassemblyjs/ast@1.14.1", "@webassemblyjs/ast@^1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/ast/-/ast-1.14.1.tgz#a9f6a07f2b03c95c8d38c4536a1fdfb521ff55b6"
+  integrity sha1-qfagfysDyVyNOMRTah/ftSH/VbY=
   dependencies:
-    "@webassemblyjs/helper-numbers" "1.11.6"
-    "@webassemblyjs/helper-wasm-bytecode" "1.11.6"
+    "@webassemblyjs/helper-numbers" "1.13.2"
+    "@webassemblyjs/helper-wasm-bytecode" "1.13.2"
 
-"@webassemblyjs/floating-point-hex-parser@1.11.6":
-  version "1.11.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/floating-point-hex-parser/-/floating-point-hex-parser-1.11.6.tgz#dacbcb95aff135c8260f77fa3b4c5fea600a6431"
-  integrity sha1-2svLla/xNcgmD3f6O0xf6mAKZDE=
+"@webassemblyjs/floating-point-hex-parser@1.13.2":
+  version "1.13.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/floating-point-hex-parser/-/floating-point-hex-parser-1.13.2.tgz#fcca1eeddb1cc4e7b6eed4fc7956d6813b21b9fb"
+  integrity sha1-/Moe7dscxOe27tT8eVbWgTshufs=
 
-"@webassemblyjs/helper-api-error@1.11.6":
-  version "1.11.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-api-error/-/helper-api-error-1.11.6.tgz#6132f68c4acd59dcd141c44b18cbebbd9f2fa768"
-  integrity sha1-YTL2jErNWdzRQcRLGMvrvZ8vp2g=
+"@webassemblyjs/helper-api-error@1.13.2":
+  version "1.13.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-api-error/-/helper-api-error-1.13.2.tgz#e0a16152248bc38daee76dd7e21f15c5ef3ab1e7"
+  integrity sha1-4KFhUiSLw42u523X4h8Vxe86sec=
 
-"@webassemblyjs/helper-buffer@1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-buffer/-/helper-buffer-1.12.1.tgz#6df20d272ea5439bf20ab3492b7fb70e9bfcb3f6"
-  integrity sha1-bfINJy6lQ5vyCrNJK3+3Dpv8s/Y=
+"@webassemblyjs/helper-buffer@1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-buffer/-/helper-buffer-1.14.1.tgz#822a9bc603166531f7d5df84e67b5bf99b72b96b"
+  integrity sha1-giqbxgMWZTH31d+E5ntb+ZtyuWs=
 
-"@webassemblyjs/helper-numbers@1.11.6":
-  version "1.11.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-numbers/-/helper-numbers-1.11.6.tgz#cbce5e7e0c1bd32cf4905ae444ef64cea919f1b5"
-  integrity sha1-y85efgwb0yz0kFrkRO9kzqkZ8bU=
+"@webassemblyjs/helper-numbers@1.13.2":
+  version "1.13.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-numbers/-/helper-numbers-1.13.2.tgz#dbd932548e7119f4b8a7877fd5a8d20e63490b2d"
+  integrity sha1-29kyVI5xGfS4p4d/1ajSDmNJCy0=
   dependencies:
-    "@webassemblyjs/floating-point-hex-parser" "1.11.6"
-    "@webassemblyjs/helper-api-error" "1.11.6"
+    "@webassemblyjs/floating-point-hex-parser" "1.13.2"
+    "@webassemblyjs/helper-api-error" "1.13.2"
     "@xtuc/long" "4.2.2"
 
-"@webassemblyjs/helper-wasm-bytecode@1.11.6":
-  version "1.11.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-wasm-bytecode/-/helper-wasm-bytecode-1.11.6.tgz#bb2ebdb3b83aa26d9baad4c46d4315283acd51e9"
-  integrity sha1-uy69s7g6om2bqtTEbUMVKDrNUek=
+"@webassemblyjs/helper-wasm-bytecode@1.13.2":
+  version "1.13.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-wasm-bytecode/-/helper-wasm-bytecode-1.13.2.tgz#e556108758f448aae84c850e593ce18a0eb31e0b"
+  integrity sha1-5VYQh1j0SKroTIUOWTzhig6zHgs=
 
-"@webassemblyjs/helper-wasm-section@1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-wasm-section/-/helper-wasm-section-1.12.1.tgz#3da623233ae1a60409b509a52ade9bc22a37f7bf"
-  integrity sha1-PaYjIzrhpgQJtQmlKt6bwio3978=
+"@webassemblyjs/helper-wasm-section@1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/helper-wasm-section/-/helper-wasm-section-1.14.1.tgz#9629dda9c4430eab54b591053d6dc6f3ba050348"
+  integrity sha1-lindqcRDDqtUtZEFPW3G87oFA0g=
   dependencies:
-    "@webassemblyjs/ast" "1.12.1"
-    "@webassemblyjs/helper-buffer" "1.12.1"
-    "@webassemblyjs/helper-wasm-bytecode" "1.11.6"
-    "@webassemblyjs/wasm-gen" "1.12.1"
+    "@webassemblyjs/ast" "1.14.1"
+    "@webassemblyjs/helper-buffer" "1.14.1"
+    "@webassemblyjs/helper-wasm-bytecode" "1.13.2"
+    "@webassemblyjs/wasm-gen" "1.14.1"
 
-"@webassemblyjs/ieee754@1.11.6":
-  version "1.11.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/ieee754/-/ieee754-1.11.6.tgz#bb665c91d0b14fffceb0e38298c329af043c6e3a"
-  integrity sha1-u2ZckdCxT//OsOOCmMMprwQ8bjo=
+"@webassemblyjs/ieee754@1.13.2":
+  version "1.13.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/ieee754/-/ieee754-1.13.2.tgz#1c5eaace1d606ada2c7fd7045ea9356c59ee0dba"
+  integrity sha1-HF6qzh1gatosf9cEXqk1bFnuDbo=
   dependencies:
     "@xtuc/ieee754" "^1.2.0"
 
-"@webassemblyjs/leb128@1.11.6":
-  version "1.11.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/leb128/-/leb128-1.11.6.tgz#70e60e5e82f9ac81118bc25381a0b283893240d7"
-  integrity sha1-cOYOXoL5rIERi8JTgaCyg4kyQNc=
+"@webassemblyjs/leb128@1.13.2":
+  version "1.13.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/leb128/-/leb128-1.13.2.tgz#57c5c3deb0105d02ce25fa3fd74f4ebc9fd0bbb0"
+  integrity sha1-V8XD3rAQXQLOJfo/109OvJ/Qu7A=
   dependencies:
     "@xtuc/long" "4.2.2"
 
-"@webassemblyjs/utf8@1.11.6":
-  version "1.11.6"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/utf8/-/utf8-1.11.6.tgz#90f8bc34c561595fe156603be7253cdbcd0fab5a"
-  integrity sha1-kPi8NMVhWV/hVmA75yU8280Pq1o=
+"@webassemblyjs/utf8@1.13.2":
+  version "1.13.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/utf8/-/utf8-1.13.2.tgz#917a20e93f71ad5602966c2d685ae0c6c21f60f1"
+  integrity sha1-kXog6T9xrVYClmwtaFrgxsIfYPE=
 
-"@webassemblyjs/wasm-edit@^1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-edit/-/wasm-edit-1.12.1.tgz#9f9f3ff52a14c980939be0ef9d5df9ebc678ae3b"
-  integrity sha1-n58/9SoUyYCTm+DvnV3568Z4rjs=
+"@webassemblyjs/wasm-edit@^1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-edit/-/wasm-edit-1.14.1.tgz#ac6689f502219b59198ddec42dcd496b1004d597"
+  integrity sha1-rGaJ9QIhm1kZjd7ELc1JaxAE1Zc=
   dependencies:
-    "@webassemblyjs/ast" "1.12.1"
-    "@webassemblyjs/helper-buffer" "1.12.1"
-    "@webassemblyjs/helper-wasm-bytecode" "1.11.6"
-    "@webassemblyjs/helper-wasm-section" "1.12.1"
-    "@webassemblyjs/wasm-gen" "1.12.1"
-    "@webassemblyjs/wasm-opt" "1.12.1"
-    "@webassemblyjs/wasm-parser" "1.12.1"
-    "@webassemblyjs/wast-printer" "1.12.1"
+    "@webassemblyjs/ast" "1.14.1"
+    "@webassemblyjs/helper-buffer" "1.14.1"
+    "@webassemblyjs/helper-wasm-bytecode" "1.13.2"
+    "@webassemblyjs/helper-wasm-section" "1.14.1"
+    "@webassemblyjs/wasm-gen" "1.14.1"
+    "@webassemblyjs/wasm-opt" "1.14.1"
+    "@webassemblyjs/wasm-parser" "1.14.1"
+    "@webassemblyjs/wast-printer" "1.14.1"
 
-"@webassemblyjs/wasm-gen@1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-gen/-/wasm-gen-1.12.1.tgz#a6520601da1b5700448273666a71ad0a45d78547"
-  integrity sha1-plIGAdobVwBEgnNmanGtCkXXhUc=
+"@webassemblyjs/wasm-gen@1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-gen/-/wasm-gen-1.14.1.tgz#991e7f0c090cb0bb62bbac882076e3d219da9570"
+  integrity sha1-mR5/DAkMsLtiu6yIIHbj0hnalXA=
   dependencies:
-    "@webassemblyjs/ast" "1.12.1"
-    "@webassemblyjs/helper-wasm-bytecode" "1.11.6"
-    "@webassemblyjs/ieee754" "1.11.6"
-    "@webassemblyjs/leb128" "1.11.6"
-    "@webassemblyjs/utf8" "1.11.6"
+    "@webassemblyjs/ast" "1.14.1"
+    "@webassemblyjs/helper-wasm-bytecode" "1.13.2"
+    "@webassemblyjs/ieee754" "1.13.2"
+    "@webassemblyjs/leb128" "1.13.2"
+    "@webassemblyjs/utf8" "1.13.2"
 
-"@webassemblyjs/wasm-opt@1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-opt/-/wasm-opt-1.12.1.tgz#9e6e81475dfcfb62dab574ac2dda38226c232bc5"
-  integrity sha1-nm6BR138+2LatXSsLdo4ImwjK8U=
+"@webassemblyjs/wasm-opt@1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-opt/-/wasm-opt-1.14.1.tgz#e6f71ed7ccae46781c206017d3c14c50efa8106b"
+  integrity sha1-5vce18yuRngcIGAX08FMUO+oEGs=
   dependencies:
-    "@webassemblyjs/ast" "1.12.1"
-    "@webassemblyjs/helper-buffer" "1.12.1"
-    "@webassemblyjs/wasm-gen" "1.12.1"
-    "@webassemblyjs/wasm-parser" "1.12.1"
+    "@webassemblyjs/ast" "1.14.1"
+    "@webassemblyjs/helper-buffer" "1.14.1"
+    "@webassemblyjs/wasm-gen" "1.14.1"
+    "@webassemblyjs/wasm-parser" "1.14.1"
 
-"@webassemblyjs/wasm-parser@1.12.1", "@webassemblyjs/wasm-parser@^1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-parser/-/wasm-parser-1.12.1.tgz#c47acb90e6f083391e3fa61d113650eea1e95937"
-  integrity sha1-xHrLkObwgzkeP6YdETZQ7qHpWTc=
+"@webassemblyjs/wasm-parser@1.14.1", "@webassemblyjs/wasm-parser@^1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wasm-parser/-/wasm-parser-1.14.1.tgz#b3e13f1893605ca78b52c68e54cf6a865f90b9fb"
+  integrity sha1-s+E/GJNgXKeLUsaOVM9qhl+Qufs=
   dependencies:
-    "@webassemblyjs/ast" "1.12.1"
-    "@webassemblyjs/helper-api-error" "1.11.6"
-    "@webassemblyjs/helper-wasm-bytecode" "1.11.6"
-    "@webassemblyjs/ieee754" "1.11.6"
-    "@webassemblyjs/leb128" "1.11.6"
-    "@webassemblyjs/utf8" "1.11.6"
+    "@webassemblyjs/ast" "1.14.1"
+    "@webassemblyjs/helper-api-error" "1.13.2"
+    "@webassemblyjs/helper-wasm-bytecode" "1.13.2"
+    "@webassemblyjs/ieee754" "1.13.2"
+    "@webassemblyjs/leb128" "1.13.2"
+    "@webassemblyjs/utf8" "1.13.2"
 
-"@webassemblyjs/wast-printer@1.12.1":
-  version "1.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wast-printer/-/wast-printer-1.12.1.tgz#bcecf661d7d1abdaf989d8341a4833e33e2b31ac"
-  integrity sha1-vOz2YdfRq9r5idg0Gkgz4z4rMaw=
+"@webassemblyjs/wast-printer@1.14.1":
+  version "1.14.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@webassemblyjs/wast-printer/-/wast-printer-1.14.1.tgz#3bb3e9638a8ae5fdaf9610e7a06b4d9f9aa6fe07"
+  integrity sha1-O7PpY4qK5f2vlhDnoGtNn5qm/gc=
   dependencies:
-    "@webassemblyjs/ast" "1.12.1"
+    "@webassemblyjs/ast" "1.14.1"
     "@xtuc/long" "4.2.2"
 
 "@webpack-cli/configtest@^1.1.1":
@@ -1021,10 +1044,10 @@
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@xtuc/long/-/long-4.2.2.tgz"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-acorn-import-attributes@^1.9.5:
-  version "1.9.5"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/acorn-import-attributes/-/acorn-import-attributes-1.9.5.tgz#7eb1557b1ba05ef18b5ed0ec67591bfab04688ef"
-  integrity sha1-frFVexugXvGLXtDsZ1kb+rBGiO8=
+acorn-import-phases@^1.0.3:
+  version "1.0.4"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/acorn-import-phases/-/acorn-import-phases-1.0.4.tgz#16eb850ba99a056cb7cbfe872ffb8972e18c8bd7"
+  integrity sha1-FuuFC6maBWy3y/6HL/uJcuGMi9c=
 
 acorn-jsx@^5.2.0, acorn-jsx@^5.3.2:
   version "5.3.2"
@@ -1041,10 +1064,10 @@ acorn@^7.1.1:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/acorn/-/acorn-7.4.1.tgz"
   integrity sha512-nQyp0o1/mNdbTO1PO6kHkwSrmgZ0MT/jCCpNiwbUjGoRN4dlBhqJtoQuCnEOKzgTVwg0ZWiCoQy6SxMebQVh8A==
 
-acorn@^8.12.0, acorn@^8.7.1, acorn@^8.8.2:
-  version "8.12.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/acorn/-/acorn-8.12.1.tgz#71616bdccbe25e27a54439e0046e89ca76df2248"
-  integrity sha512-tcpGyI9zbizT9JbV6oYE477V6mTlXvvi0T0G3SNIYE2apm/G5huBa1+K89VGeovbg+jycCrfhl3ADxErOuO6Jg==
+acorn@^8.12.0, acorn@^8.15.0, acorn@^8.7.1:
+  version "8.15.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/acorn/-/acorn-8.15.0.tgz#a360898bc415edaac46c8241f6383975b930b816"
+  integrity sha1-o2CJi8QV7arEbIJB9jg5dbkwuBY=
 
 agent-base@6:
   version "6.0.2"
@@ -1060,10 +1083,29 @@ agent-base@^7.1.0:
   dependencies:
     debug "^4.3.4"
 
+agent-base@^7.1.2:
+  version "7.1.4"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/agent-base/-/agent-base-7.1.4.tgz#e3cd76d4c548ee895d3c3fd8dc1f6c5b9032e7a8"
+  integrity sha1-48121MVI7oldPD/Y3B9sW5Ay56g=
+
+ajv-formats@^2.1.1:
+  version "2.1.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/ajv-formats/-/ajv-formats-2.1.1.tgz#6e669400659eb74973bbf2e33327180a0996b520"
+  integrity sha1-bmaUAGWet0lzu/LjMycYCgmWtSA=
+  dependencies:
+    ajv "^8.0.0"
+
 ajv-keywords@^3.5.2:
   version "3.5.2"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/ajv-keywords/-/ajv-keywords-3.5.2.tgz"
   integrity sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==
+
+ajv-keywords@^5.1.0:
+  version "5.1.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/ajv-keywords/-/ajv-keywords-5.1.0.tgz#69d4d385a4733cdbeab44964a1170a88f87f0e16"
+  integrity sha1-adTThaRzPNvqtElkoRcKiPh/DhY=
+  dependencies:
+    fast-deep-equal "^3.1.3"
 
 ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.4, ajv@^6.12.5:
   version "6.12.6"
@@ -1075,15 +1117,15 @@ ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.4, ajv@^6.12.5:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-ajv@^7.1.0:
-  version "7.2.4"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/ajv/-/ajv-7.2.4.tgz"
-  integrity sha512-nBeQgg/ZZA3u3SYxyaDvpvDtgZ/EZPF547ARgZBrG9Bhu1vKDwAIjtIf+sDtJUKa2zOcEbmRLBRSyMraS/Oy1A==
+ajv@^8.0.0, ajv@^8.18.0, ajv@^8.9.0:
+  version "8.18.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/ajv/-/ajv-8.18.0.tgz#8864186b6738d003eb3a933172bb3833e10cefbc"
+  integrity sha1-iGQYa2c40APrOpMxcrs4M+EM77w=
   dependencies:
-    fast-deep-equal "^3.1.1"
+    fast-deep-equal "^3.1.3"
+    fast-uri "^3.0.1"
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
-    uri-js "^4.2.2"
 
 ansi-colors@4.1.1:
   version "4.1.1"
@@ -1153,10 +1195,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-anymatch@~3.1.2:
-  version "3.1.2"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/anymatch/-/anymatch-3.1.2.tgz"
-  integrity sha512-P43ePfOAIupkguHUycrc4qJ9kz8ZiuOUijaETwX7THt0Y/GNK7v0aa8rY816xWjZ7rJdA5XdMcpVFTKMq+RvWg==
+anymatch@~3.1.1:
+  version "3.1.3"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/anymatch/-/anymatch-3.1.3.tgz#790c58b19ba1720a84205b57c618d5ad8524973e"
+  integrity sha1-eQxYsZuhcgqEIFtXxhjVrYUklz4=
   dependencies:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
@@ -1195,13 +1237,6 @@ arg@^4.1.0:
   version "4.1.3"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/arg/-/arg-4.1.3.tgz"
   integrity sha512-58S9QDqG0Xx27YwPSt9fJxivjYl432YCwfDMfZ+71RAqUrZef7LrKQZ3LHLOwCS4FLNBplP533Zx895SeOCHvA==
-
-argparse@^1.0.7:
-  version "1.0.10"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/argparse/-/argparse-1.0.10.tgz"
-  integrity sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==
-  dependencies:
-    sprintf-js "~1.0.2"
 
 argparse@^2.0.1:
   version "2.0.1"
@@ -1403,6 +1438,11 @@ async-done@^1.2.0, async-done@^1.2.2:
     process-nextick-args "^2.0.0"
     stream-exhaust "^1.0.1"
 
+async-each@^1.0.1:
+  version "1.0.6"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/async-each/-/async-each-1.0.6.tgz#52f1d9403818c179b7561e11a5d1b77eb2160e77"
+  integrity sha1-UvHZQDgYwXm3Vh4RpdG3frIWDnc=
+
 async-settle@^1.0.0:
   version "1.0.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/async-settle/-/async-settle-1.0.0.tgz"
@@ -1483,6 +1523,11 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
+baseline-browser-mapping@^2.9.0:
+  version "2.9.19"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/baseline-browser-mapping/-/baseline-browser-mapping-2.9.19.tgz#3e508c43c46d961eb4d7d2e5b8d1dd0f9ee4f488"
+  integrity sha1-PlCMQ8Rtlh6019LluNHdD57k9Ig=
+
 before-after-hook@^2.2.0:
   version "2.2.2"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/before-after-hook/-/before-after-hook-2.2.2.tgz"
@@ -1493,10 +1538,22 @@ big.js@^5.2.2:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/big.js/-/big.js-5.2.2.tgz"
   integrity sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==
 
+binary-extensions@^1.0.0:
+  version "1.13.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/binary-extensions/-/binary-extensions-1.13.1.tgz#598afe54755b2868a5330d2aff9d4ebb53209b65"
+  integrity sha1-WYr+VHVbKGilMw0q/51Ou1Mgm2U=
+
 binary-extensions@^2.0.0:
   version "2.2.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/binary-extensions/-/binary-extensions-2.2.0.tgz"
   integrity sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==
+
+bindings@^1.5.0:
+  version "1.5.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/bindings/-/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
+  integrity sha1-EDU8npRTNLwFEabZCzj7x8nFBN8=
+  dependencies:
+    file-uri-to-path "1.0.0"
 
 bl@^4.0.3:
   version "4.1.0"
@@ -1520,7 +1577,7 @@ brace-expansion@^1.1.7:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
 
-braces@^2.3.1, braces@^3.0.2, braces@^3.0.3, braces@~3.0.2:
+braces@^2.3.1, braces@^2.3.2, braces@^3.0.2, braces@^3.0.3, braces@~3.0.2:
   version "3.0.3"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/braces/-/braces-3.0.3.tgz#490332f40919452272d55a8480adc0c441358789"
   integrity sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==
@@ -1532,25 +1589,26 @@ browser-stdout@1.3.1:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/browser-stdout/-/browser-stdout-1.3.1.tgz"
   integrity sha512-qhAVI1+Av2X7qelOfAIYwXONood6XlZE/fXaBSmW/T5SzLAmCgzi+eiWE7fUvbHaeNBQH13UftjpXxsfLkMpgw==
 
-browserslist@^4.21.10:
-  version "4.23.3"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/browserslist/-/browserslist-4.23.3.tgz#debb029d3c93ebc97ffbc8d9cbb03403e227c800"
-  integrity sha1-3rsCnTyT68l/+8jZy7A0A+InyAA=
+browserslist@^4.28.1:
+  version "4.28.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/browserslist/-/browserslist-4.28.1.tgz#7f534594628c53c63101079e27e40de490456a95"
+  integrity sha1-f1NFlGKMU8YxAQeeJ+QN5JBFapU=
   dependencies:
-    caniuse-lite "^1.0.30001646"
-    electron-to-chromium "^1.5.4"
-    node-releases "^2.0.18"
-    update-browserslist-db "^1.1.0"
+    baseline-browser-mapping "^2.9.0"
+    caniuse-lite "^1.0.30001759"
+    electron-to-chromium "^1.5.263"
+    node-releases "^2.0.27"
+    update-browserslist-db "^1.2.0"
 
 buffer-crc32@~0.2.3:
   version "0.2.13"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/buffer-crc32/-/buffer-crc32-0.2.13.tgz"
   integrity sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==
 
-buffer-equal-constant-time@1.0.1:
+buffer-equal-constant-time@^1.0.1:
   version "1.0.1"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz#f8e71132f7ffe6e01a5c9697a4c6f3e48d5cc819"
-  integrity sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==
+  integrity sha1-+OcRMvf/5uAaXJaXpMbz5I1cyBk=
 
 buffer-equal@^1.0.0:
   version "1.0.0"
@@ -1626,6 +1684,14 @@ call-bind@^1.0.6, call-bind@^1.0.7:
     get-intrinsic "^1.2.4"
     set-function-length "^1.2.1"
 
+call-bound@^1.0.2:
+  version "1.0.4"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/call-bound/-/call-bound-1.0.4.tgz#238de935d2a2a692928c538c7ccfa91067fd062a"
+  integrity sha1-I43pNdKippKSjFOMfM+pEGf9Bio=
+  dependencies:
+    call-bind-apply-helpers "^1.0.2"
+    get-intrinsic "^1.3.0"
+
 callsites@^3.0.0:
   version "3.1.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/callsites/-/callsites-3.1.0.tgz"
@@ -1641,10 +1707,10 @@ camelcase@^6.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/camelcase/-/camelcase-6.3.0.tgz"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
-caniuse-lite@^1.0.30001646:
-  version "1.0.30001662"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/caniuse-lite/-/caniuse-lite-1.0.30001662.tgz#3574b22dfec54a3f3b6787331da1040fe8e763ec"
-  integrity sha1-NXSyLf7FSj87Z4czHaEED+jnY+w=
+caniuse-lite@^1.0.30001759:
+  version "1.0.30001769"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/caniuse-lite/-/caniuse-lite-1.0.30001769.tgz#1ad91594fad7dc233777c2781879ab5409f7d9c2"
+  integrity sha1-GtkVlPrX3CM3d8J4GHmrVAn32cI=
 
 chai-as-promised@^7.1.1:
   version "7.1.1"
@@ -1722,20 +1788,39 @@ cheerio@^1.0.0-rc.9:
     parse5-htmlparser2-tree-adapter "^6.0.1"
     tslib "^2.2.0"
 
-chokidar@3.5.1, chokidar@^2.0.0, chokidar@^3.5.1:
-  version "3.5.3"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/chokidar/-/chokidar-3.5.3.tgz"
-  integrity sha512-Dr3sfKRP6oTcjf2JmUmFJfeVMvXBdegxB0iVQ5eb2V10uFJUCAS8OByZdVAyVb8xXNz3GjjTgj9kLWsZTqE6kw==
+chokidar@3.5.1:
+  version "3.5.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/chokidar/-/chokidar-3.5.1.tgz#ee9ce7bbebd2b79f49f304799d5468e31e14e68a"
+  integrity sha1-7pznu+vSt59J8wR5nVRo4x4U5oo=
   dependencies:
-    anymatch "~3.1.2"
+    anymatch "~3.1.1"
     braces "~3.0.2"
-    glob-parent "~5.1.2"
+    glob-parent "~5.1.0"
     is-binary-path "~2.1.0"
     is-glob "~4.0.1"
     normalize-path "~3.0.0"
-    readdirp "~3.6.0"
+    readdirp "~3.5.0"
   optionalDependencies:
-    fsevents "~2.3.2"
+    fsevents "~2.3.1"
+
+chokidar@^2.0.0:
+  version "2.1.8"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/chokidar/-/chokidar-2.1.8.tgz#804b3a7b6a99358c3c5c61e71d8728f041cff917"
+  integrity sha1-gEs6e2qZNYw8XGHnHYco8EHP+Rc=
+  dependencies:
+    anymatch "^2.0.0"
+    async-each "^1.0.1"
+    braces "^2.3.2"
+    glob-parent "^3.1.0"
+    inherits "^2.0.3"
+    is-binary-path "^1.0.0"
+    is-glob "^4.0.0"
+    normalize-path "^3.0.0"
+    path-is-absolute "^1.0.0"
+    readdirp "^2.2.1"
+    upath "^1.1.1"
+  optionalDependencies:
+    fsevents "^1.2.7"
 
 chownr@^1.1.1:
   version "1.1.4"
@@ -2245,11 +2330,6 @@ delegates@^1.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/delegates/-/delegates-1.0.0.tgz"
   integrity sha1-hMbhWbgZBP3KWaDvRM2HDTElD5o=
 
-demangler-js@^0.1.7:
-  version "0.1.7"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/demangler-js/-/demangler-js-0.1.7.tgz#42454730da691746e35c5e8861900192be1cbc4d"
-  integrity sha1-QkVHMNppF0bjXF6IYZABkr4cvE0=
-
 deprecation@^2.0.0, deprecation@^2.3.1:
   version "2.3.1"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/deprecation/-/deprecation-2.3.1.tgz"
@@ -2375,10 +2455,10 @@ ecdsa-sig-formatter@1.0.11:
   dependencies:
     safe-buffer "^5.0.1"
 
-electron-to-chromium@^1.5.4:
-  version "1.5.26"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/electron-to-chromium/-/electron-to-chromium-1.5.26.tgz#449b4fa90e83ab98abbe3b6a96c8ee395de94452"
-  integrity sha1-RJtPqQ6Dq5irvjtqlsjuOV3pRFI=
+electron-to-chromium@^1.5.263:
+  version "1.5.286"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/electron-to-chromium/-/electron-to-chromium-1.5.286.tgz#142be1ab5e1cd5044954db0e5898f60a4960384e"
+  integrity sha1-FCvhq14c1QRJVNsOWJj2CklgOE4=
 
 emoji-regex@^7.0.1:
   version "7.0.3"
@@ -2416,13 +2496,13 @@ enhanced-resolve@^4.0.0:
     memory-fs "^0.5.0"
     tapable "^1.0.0"
 
-enhanced-resolve@^5.17.1:
-  version "5.17.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/enhanced-resolve/-/enhanced-resolve-5.17.1.tgz#67bfbbcc2f81d511be77d686a90267ef7f898a15"
-  integrity sha1-Z7+7zC+B1RG+d9aGqQJn73+JihU=
+enhanced-resolve@^5.17.4:
+  version "5.19.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/enhanced-resolve/-/enhanced-resolve-5.19.0.tgz#6687446a15e969eaa63c2fa2694510e17ae6d97c"
+  integrity sha1-ZodEahXpaeqmPC+iaUUQ4Xrm2Xw=
   dependencies:
     graceful-fs "^4.2.4"
-    tapable "^2.2.0"
+    tapable "^2.3.0"
 
 entities@^2.0.0:
   version "2.2.0"
@@ -2567,10 +2647,15 @@ es-errors@^1.2.1, es-errors@^1.3.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/es-errors/-/es-errors-1.3.0.tgz#05f75a25dab98e4fb1dcd5e1472c0546d5057c8f"
   integrity sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==
 
-es-module-lexer@^1.2.1, es-module-lexer@^1.5.3:
+es-module-lexer@^1.5.3:
   version "1.5.4"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/es-module-lexer/-/es-module-lexer-1.5.4.tgz#a8efec3a3da991e60efa6b633a7cad6ab8d26b78"
   integrity sha512-MVNK56NiMrOwitFB7cqDwq0CQutbw+0BvLshJSse0MUNU+y1FC3bUS/AQg7oUng+/wKrrki7JfmwtVHkVfPLlw==
+
+es-module-lexer@^2.0.0:
+  version "2.0.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/es-module-lexer/-/es-module-lexer-2.0.0.tgz#f657cd7a9448dcdda9c070a3cb75e5dc1e85f5b1"
+  integrity sha1-9lfNepRI3N2pwHCjy3Xl3B6F9bE=
 
 es-object-atoms@^1.0.0:
   version "1.0.0"
@@ -2679,7 +2764,7 @@ escalade@^3.1.1:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/escalade/-/escalade-3.1.1.tgz"
   integrity sha512-k0er2gUkLf8O0zKJiAhmkTnJlTvINGv7ygDNPbeIsX/TJjGJZHuh9B2UxbsaEkmlEo9MfhrSzmhIlhRlI2GXnw==
 
-escalade@^3.1.2:
+escalade@^3.2.0:
   version "3.2.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/escalade/-/escalade-3.2.0.tgz#011a3f69856ba189dffa7dc8fcce99d2a87903e5"
   integrity sha1-ARo/aYVroYnf+n3I/M6Z0qh5A+U=
@@ -2922,11 +3007,6 @@ espree@^9.3.2:
     acorn-jsx "^5.3.2"
     eslint-visitor-keys "^3.3.0"
 
-esprima@^4.0.0:
-  version "4.0.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/esprima/-/esprima-4.0.1.tgz"
-  integrity sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==
-
 esquery@^1.0.1, esquery@^1.4.0:
   version "1.4.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/esquery/-/esquery-1.4.0.tgz"
@@ -3133,6 +3213,11 @@ fast-levenshtein@^2.0.6, fast-levenshtein@~2.0.6:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz"
   integrity sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=
 
+fast-uri@^3.0.1:
+  version "3.1.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fast-uri/-/fast-uri-3.1.0.tgz#66eecff6c764c0df9b762e62ca7edcfb53b4edfa"
+  integrity sha1-Zu7P9sdkwN+bdi5iyn7c+1O07fo=
+
 fastest-levenshtein@^1.0.12:
   version "1.0.12"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fastest-levenshtein/-/fastest-levenshtein-1.0.12.tgz"
@@ -3172,6 +3257,11 @@ file-entry-cache@^6.0.1:
   integrity sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==
   dependencies:
     flat-cache "^3.0.4"
+
+file-uri-to-path@1.0.0:
+  version "1.0.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz#553a7b8446ff6f684359c445f1e37a05dacc33dd"
+  integrity sha1-VTp7hEb/b2hDWcRF8eN6BdrMM90=
 
 fill-range@^7.1.1:
   version "7.1.1"
@@ -3372,10 +3462,18 @@ fs.realpath@^1.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fs.realpath/-/fs.realpath-1.0.0.tgz"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
 
-fsevents@~2.3.2:
+fsevents@^1.2.7:
+  version "1.2.13"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fsevents/-/fsevents-1.2.13.tgz#f325cb0455592428bcf11b383370ef70e3bfcc38"
+  integrity sha1-8yXLBFVZJCi88Rs4M3DvcOO/zDg=
+  dependencies:
+    bindings "^1.5.0"
+    nan "^2.12.1"
+
+fsevents@~2.3.1:
   version "2.3.3"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fsevents/-/fsevents-2.3.3.tgz#cac6407785d03675a2a5e1a5305c697b347d90d6"
-  integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
+  integrity sha1-ysZAd4XQNnWipeGlMFxpezR9kNY=
 
 function-bind@^1.1.1:
   version "1.1.1"
@@ -3466,7 +3564,7 @@ get-intrinsic@^1.2.3, get-intrinsic@^1.2.4:
     has-symbols "^1.0.3"
     hasown "^2.0.0"
 
-get-intrinsic@^1.2.6:
+get-intrinsic@^1.2.5, get-intrinsic@^1.2.6, get-intrinsic@^1.3.0:
   version "1.3.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/get-intrinsic/-/get-intrinsic-1.3.0.tgz#743f0e3b6964a93a5491ed1bffaae054d7f98d01"
   integrity sha1-dD8OO2lkqTpUke0b/6rgVNf5jQE=
@@ -3527,12 +3625,12 @@ github-from-package@0.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/github-from-package/-/github-from-package-0.0.0.tgz"
   integrity sha1-l/tdlr/eiXMxPyDoKI75oWf6ZM4=
 
-glob-parent@^3.1.0, glob-parent@^5.0.0, glob-parent@^5.1.2, glob-parent@^6.0.1, glob-parent@~5.1.2:
-  version "5.1.2"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/glob-parent/-/glob-parent-5.1.2.tgz"
-  integrity sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==
+glob-parent@^3.1.0, glob-parent@^5.0.0, glob-parent@^5.1.2, glob-parent@^6.0.1, glob-parent@^6.0.2, glob-parent@~5.1.0:
+  version "6.0.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/glob-parent/-/glob-parent-6.0.2.tgz#6d237d99083950c79290f24c7642a3de9a28f9e3"
+  integrity sha1-bSN9mQg5UMeSkPJMdkKj3poo+eM=
   dependencies:
-    is-glob "^4.0.1"
+    is-glob "^4.0.3"
 
 glob-stream@^6.1.0:
   version "6.1.0"
@@ -3971,12 +4069,20 @@ http-proxy-agent@^7.0.0:
     agent-base "^7.1.0"
     debug "^4.3.4"
 
-https-proxy-agent@^5.0.0, https-proxy-agent@^7.0.0:
+https-proxy-agent@^5.0.0:
   version "5.0.1"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/https-proxy-agent/-/https-proxy-agent-5.0.1.tgz"
   integrity sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==
   dependencies:
     agent-base "6"
+    debug "4"
+
+https-proxy-agent@^7.0.0:
+  version "7.0.6"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz#da8dfeac7da130b05c2ba4b59c9b6cd66611a6b9"
+  integrity sha1-2o3+rH2hMLBcK6S1nJts1mYRprk=
+  dependencies:
+    agent-base "^7.1.2"
     debug "4"
 
 human-signals@^2.1.0:
@@ -4176,6 +4282,13 @@ is-bigint@^1.0.1:
   dependencies:
     has-bigints "^1.0.1"
 
+is-binary-path@^1.0.0:
+  version "1.0.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/is-binary-path/-/is-binary-path-1.0.1.tgz#75f16642b480f187a711c814161fd3a4a7655898"
+  integrity sha1-dfFmQrSA8YenEcgUFh/TpKdlWJg=
+  dependencies:
+    binary-extensions "^1.0.0"
+
 is-binary-path@~2.1.0:
   version "2.1.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/is-binary-path/-/is-binary-path-2.1.0.tgz"
@@ -4312,7 +4425,7 @@ is-glob@^3.1.0:
   dependencies:
     is-extglob "^2.1.0"
 
-is-glob@^4.0.0, is-glob@^4.0.1, is-glob@^4.0.3, is-glob@~4.0.1:
+is-glob@^4.0.0, is-glob@^4.0.3, is-glob@~4.0.1:
   version "4.0.3"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/is-glob/-/is-glob-4.0.3.tgz"
   integrity sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg==
@@ -4538,25 +4651,10 @@ js-tokens@^4.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/js-tokens/-/js-tokens-4.0.0.tgz"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
-js-yaml@4.0.0:
-  version "4.0.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/js-yaml/-/js-yaml-4.0.0.tgz"
-  integrity sha512-pqon0s+4ScYUvX30wxQi3PogGFAlUyH0awepWvwkj4jD4v+ova3RiYw8bmA6x2rDrEaj8i/oWKoRxpVNW+Re8Q==
-  dependencies:
-    argparse "^2.0.1"
-
-js-yaml@^3.13.1:
-  version "3.14.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/js-yaml/-/js-yaml-3.14.1.tgz"
-  integrity sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==
-  dependencies:
-    argparse "^1.0.7"
-    esprima "^4.0.0"
-
-js-yaml@^4.0.0, js-yaml@^4.1.0:
-  version "4.1.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/js-yaml/-/js-yaml-4.1.0.tgz"
-  integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
+js-yaml@4.0.0, js-yaml@^3.13.1, js-yaml@^4.1.0, js-yaml@^4.1.1:
+  version "4.1.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/js-yaml/-/js-yaml-4.1.1.tgz#854c292467705b699476e1a2decc0c8a3458806b"
+  integrity sha1-hUwpJGdwW2mUduGi3swMijRYgGs=
   dependencies:
     argparse "^2.0.1"
 
@@ -4657,38 +4755,21 @@ just-extend@^4.0.2:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/just-extend/-/just-extend-4.2.1.tgz"
   integrity sha512-g3UB796vUFIY90VIv/WX3L2c8CS2MdWUww3CNrYmqza1Fg0DURc2K/O4YrnklBdQarSJ/y8JnJYDGc+1iumQjg==
 
-jwa@^1.4.1:
-  version "1.4.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/jwa/-/jwa-1.4.1.tgz#743c32985cb9e98655530d53641b66c8645b039a"
-  integrity sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==
+jwa@^2.0.1:
+  version "2.0.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/jwa/-/jwa-2.0.1.tgz#bf8176d1ad0cd72e0f3f58338595a13e110bc804"
+  integrity sha1-v4F20a0M1y4PP1gzhZWhPhELyAQ=
   dependencies:
-    buffer-equal-constant-time "1.0.1"
+    buffer-equal-constant-time "^1.0.1"
     ecdsa-sig-formatter "1.0.11"
     safe-buffer "^5.0.1"
 
-jwa@^2.0.0:
-  version "2.0.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/jwa/-/jwa-2.0.0.tgz#a7e9c3f29dae94027ebcaf49975c9345593410fc"
-  integrity sha512-jrZ2Qx916EA+fq9cEAeCROWPTfCwi1IVHqT2tapuqLEVVDKFDENFw1oL+MwrTvH6msKxsd1YTDVw6uKEcsrLEA==
+jws@^3.2.2, jws@^4.0.0, jws@^4.0.1:
+  version "4.0.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/jws/-/jws-4.0.1.tgz#07edc1be8fac20e677b283ece261498bd38f0690"
+  integrity sha1-B+3Bvo+sIOZ3soPs4mFJi9OPBpA=
   dependencies:
-    buffer-equal-constant-time "1.0.1"
-    ecdsa-sig-formatter "1.0.11"
-    safe-buffer "^5.0.1"
-
-jws@^3.2.2:
-  version "3.2.2"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/jws/-/jws-3.2.2.tgz#001099f3639468c9414000e99995fa52fb478304"
-  integrity sha512-YHlZCB6lMTllWDtSPHz/ZXTsi8S00usEV6v1tjq8tOUZzw7DpSDWVXjXDre6ed1w/pd495ODpHZYSdkRTsa0HA==
-  dependencies:
-    jwa "^1.4.1"
-    safe-buffer "^5.0.1"
-
-jws@^4.0.0:
-  version "4.0.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/jws/-/jws-4.0.0.tgz#2d4e8cf6a318ffaa12615e9dec7e86e6c97310f4"
-  integrity sha512-KDncfTmOZoOMTFG4mBlG0qUIOlc03fmzH+ru6RgYVZhPkyiy/92Owlt/8UEN+a4TXR1FQetfIpJE8ApdvdVxTg==
-  dependencies:
-    jwa "^2.0.0"
+    jwa "^2.0.1"
     safe-buffer "^5.0.1"
 
 keytar@^7.7.0:
@@ -4817,10 +4898,10 @@ load-json-file@^1.0.0:
     pinkie-promise "^2.0.0"
     strip-bom "^2.0.0"
 
-loader-runner@^4.2.0:
-  version "4.3.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/loader-runner/-/loader-runner-4.3.0.tgz"
-  integrity sha512-3R/1M+yS3j5ou80Me59j7F9IMs4PXs3VqRrm0TU3AbKPxlmpoY1TNscJV/oGJXo8qCatFGTfDbY6W6ipGOYXfg==
+loader-runner@^4.3.1:
+  version "4.3.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/loader-runner/-/loader-runner-4.3.1.tgz#6c76ed29b0ccce9af379208299f07f876de737e3"
+  integrity sha1-bHbtKbDMzprzeSCCmfB/h23nN+M=
 
 loader-utils@^2.0.0:
   version "2.0.4"
@@ -4898,10 +4979,10 @@ lodash.once@^4.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/lodash.once/-/lodash.once-4.1.1.tgz#0dd3971213c7c56df880977d504c88fb471a97ac"
   integrity sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==
 
-lodash@^4.17.14, lodash@^4.17.19, lodash@^4.17.21:
-  version "4.17.21"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/lodash/-/lodash-4.17.21.tgz"
-  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
+lodash@^4.17.14, lodash@^4.17.19, lodash@^4.17.21, lodash@^4.17.23:
+  version "4.17.23"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/lodash/-/lodash-4.17.23.tgz#f113b0378386103be4f6893388c73d0bde7f2c5a"
+  integrity sha1-8ROwN4OGEDvk9okziMc9C95/LFo=
 
 log-symbols@4.0.0:
   version "4.0.0"
@@ -5029,7 +5110,7 @@ merge2@^1.3.0, merge2@^1.4.1:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/merge2/-/merge2-1.4.1.tgz"
   integrity sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==
 
-micromatch@^3.0.4, micromatch@^3.1.4:
+micromatch@^3.0.4, micromatch@^3.1.10, micromatch@^3.1.4:
   version "3.1.10"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/micromatch/-/micromatch-3.1.10.tgz"
   integrity sha512-MWikgl9n9M3w+bpsY3He8L+w9eF9338xRl8IAO5viDizwSzziFEyUzo2xrrloB64ADbTf8uA8vRqqttDTOmccg==
@@ -5083,12 +5164,19 @@ mimic-response@^3.1.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/mimic-response/-/mimic-response-3.1.0.tgz"
   integrity sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==
 
-minimatch@3.0.4, minimatch@^10.0.0, minimatch@^3.0.3, minimatch@^3.0.4, minimatch@^3.0.5, minimatch@^3.1.1, minimatch@^3.1.2:
+minimatch@3.0.4, minimatch@^3.0.3, minimatch@^3.0.4, minimatch@^3.0.5, minimatch@^3.1.1, minimatch@^3.1.2:
   version "3.1.2"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/minimatch/-/minimatch-3.1.2.tgz#19cd194bfd3e428f049a70817c038d89ab4be35b"
-  integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
+  integrity sha1-Gc0ZS/0+Qo8EmnCBfAONiatL41s=
   dependencies:
     brace-expansion "^1.1.7"
+
+minimatch@^10.0.0:
+  version "10.1.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/minimatch/-/minimatch-10.1.1.tgz#e6e61b9b0c1dcab116b5a7d1458e8b6ae9e73a55"
+  integrity sha1-5uYbmwwdyrEWtafRRY6LaunnOlU=
+  dependencies:
+    "@isaacs/brace-expansion" "^5.0.0"
 
 minimist@^1.2.0, minimist@^1.2.3, minimist@^1.2.5, minimist@^1.2.6:
   version "1.2.6"
@@ -5192,10 +5280,15 @@ mute-stream@0.0.8, mute-stream@~0.0.4:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/mute-stream/-/mute-stream-0.0.8.tgz"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
 
+nan@^2.12.1:
+  version "2.25.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/nan/-/nan-2.25.0.tgz#937ed345e63d9481362a7942d49c4860d27eeabd"
+  integrity sha1-k37TReY9lIE2KnlC1JxIYNJ+6r0=
+
 nanoid@3.1.20, nanoid@^3.1.31, nanoid@^3.3.7:
-  version "3.3.7"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/nanoid/-/nanoid-3.3.7.tgz#d0c301a691bc8d54efa0a2226ccf3fe2fd656bd8"
-  integrity sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==
+  version "3.3.11"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/nanoid/-/nanoid-3.3.11.tgz#4f4f112cefbe303202f2199838128936266d185b"
+  integrity sha1-T08RLO++MDIC8hmYOBKJNiZtGFs=
 
 nanomatch@^1.2.9:
   version "1.2.13"
@@ -5277,10 +5370,10 @@ node-loader@^1.0.2:
     loader-utils "^2.0.0"
     schema-utils "^3.0.0"
 
-node-releases@^2.0.18:
-  version "2.0.18"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/node-releases/-/node-releases-2.0.18.tgz#f010e8d35e2fe8d6b2944f03f70213ecedc4ca3f"
-  integrity sha1-8BDo014v6NaylE8D9wIT7O3Eyj8=
+node-releases@^2.0.27:
+  version "2.0.27"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/node-releases/-/node-releases-2.0.27.tgz#eedca519205cf20f650f61d56b070db111231e4e"
+  integrity sha1-7tylGSBc8g9lD2HVawcNsREjHk4=
 
 normalize-package-data@^2.3.2:
   version "2.5.0"
@@ -5358,6 +5451,11 @@ object-inspect@^1.13.1:
   version "1.13.1"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/object-inspect/-/object-inspect-1.13.1.tgz"
   integrity sha512-5qoj1RUiKOMsCCNLV1CBiPYE10sziTsnmNxkAI/rZhiD63CF7IqdFGC/XzjWjpSgLf0LxXX3bDFIh0E18f6UhQ==
+
+object-inspect@^1.13.3:
+  version "1.13.4"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/object-inspect/-/object-inspect-1.13.4.tgz#8375265e21bc20d0fa582c22e1b13485d6e00213"
+  integrity sha1-g3UmXiG8IND6WCwi4bE0hdbgAhM=
 
 object-inspect@^1.9.0:
   version "1.12.0"
@@ -5530,11 +5628,6 @@ os-locale@^1.4.0:
   integrity sha1-IPnxeuKe00XoveWDsT0gCYA8FNk=
   dependencies:
     lcid "^1.0.0"
-
-os-tmpdir@~1.0.2:
-  version "1.0.2"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/os-tmpdir/-/os-tmpdir-1.0.2.tgz"
-  integrity sha1-u+Z0BseaqFxc/sdm/lc0VV36EnQ=
 
 p-limit@^2.0.0, p-limit@^2.2.0:
   version "2.3.0"
@@ -5769,10 +5862,10 @@ picocolors@^1.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/picocolors/-/picocolors-1.0.0.tgz"
   integrity sha512-1fygroTLlHu66zi26VoTDv8yRgm0Fccecssto+MhsZ0D/DGW2sm8E8AjW7NU5VVTRt5GxbeZ5qBuJr+HyLYkjQ==
 
-picocolors@^1.0.1:
-  version "1.1.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/picocolors/-/picocolors-1.1.0.tgz#5358b76a78cde483ba5cef6a9dc9671440b27d59"
-  integrity sha1-U1i3anjN5IO6XO9qnclnFECyfVk=
+picocolors@^1.1.1:
+  version "1.1.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/picocolors/-/picocolors-1.1.1.tgz#3d321af3eab939b083c8f929a1d12cda81c26b6b"
+  integrity sha1-PTIa8+q5ObCDyPkpodEs2oHCa2s=
 
 picomatch@^2.0.4, picomatch@^2.2.1, picomatch@^2.3.1:
   version "2.3.1"
@@ -5931,11 +6024,11 @@ punycode@^2.1.0:
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
 qs@^6.9.1:
-  version "6.10.3"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/qs/-/qs-6.10.3.tgz"
-  integrity sha512-wr7M2E0OFRfIfJZjKGieI8lBKb7fRCH4Fv5KNPEs7gJ8jadvotdsS08PzOKR7opXhZ/Xkjtt3WF9g38drmyRqQ==
+  version "6.15.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/qs/-/qs-6.15.0.tgz#db8fd5d1b1d2d6b5b33adaf87429805f1909e7b3"
+  integrity sha1-24/V0bHS1rWzOtr4dCmAXxkJ57M=
   dependencies:
-    side-channel "^1.0.4"
+    side-channel "^1.1.0"
 
 queue-microtask@^1.2.2:
   version "1.2.3"
@@ -6005,10 +6098,32 @@ readable-stream@^2.0.0, readable-stream@^2.0.1, readable-stream@^2.0.5, readable
     string_decoder "~1.1.1"
     util-deprecate "~1.0.1"
 
-readdirp@~3.6.0:
-  version "3.6.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/readdirp/-/readdirp-3.6.0.tgz"
-  integrity sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==
+readable-stream@^2.0.2:
+  version "2.3.8"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/readable-stream/-/readable-stream-2.3.8.tgz#91125e8042bba1b9887f49345f6277027ce8be9b"
+  integrity sha1-kRJegEK7obmIf0k0X2J3Anzovps=
+  dependencies:
+    core-util-is "~1.0.0"
+    inherits "~2.0.3"
+    isarray "~1.0.0"
+    process-nextick-args "~2.0.0"
+    safe-buffer "~5.1.1"
+    string_decoder "~1.1.1"
+    util-deprecate "~1.0.1"
+
+readdirp@^2.2.1:
+  version "2.2.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/readdirp/-/readdirp-2.2.1.tgz#0e87622a3325aa33e892285caf8b4e846529a525"
+  integrity sha1-DodiKjMlqjPokihcr4tOhGUppSU=
+  dependencies:
+    graceful-fs "^4.1.11"
+    micromatch "^3.1.10"
+    readable-stream "^2.0.2"
+
+readdirp@~3.5.0:
+  version "3.5.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/readdirp/-/readdirp-3.5.0.tgz#9ba74c019b15d365278d2e91bb8c48d7b4d42c9e"
+  integrity sha1-m6dMAZsV02UnjS6Ru4xI17TULJ4=
   dependencies:
     picomatch "^2.2.1"
 
@@ -6290,7 +6405,7 @@ sax@>=0.6.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/sax/-/sax-1.2.4.tgz"
   integrity sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
 
-schema-utils@^3.0.0, schema-utils@^3.1.1, schema-utils@^3.2.0:
+schema-utils@^3.0.0:
   version "3.3.0"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/schema-utils/-/schema-utils-3.3.0.tgz#f50a88877c3c01652a15b622ae9e9795df7a60fe"
   integrity sha1-9QqIh3w8AWUqFbYirp6Xld96YP4=
@@ -6298,6 +6413,16 @@ schema-utils@^3.0.0, schema-utils@^3.1.1, schema-utils@^3.2.0:
     "@types/json-schema" "^7.0.8"
     ajv "^6.12.5"
     ajv-keywords "^3.5.2"
+
+schema-utils@^4.3.0, schema-utils@^4.3.3:
+  version "4.3.3"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/schema-utils/-/schema-utils-4.3.3.tgz#5b1850912fa31df90716963d45d9121fdfc09f46"
+  integrity sha1-WxhQkS+jHfkHFpY9RdkSH9/An0Y=
+  dependencies:
+    "@types/json-schema" "^7.0.9"
+    ajv "^8.9.0"
+    ajv-formats "^2.1.1"
+    ajv-keywords "^5.1.0"
 
 semver-compare@^1.0.0:
   version "1.0.0"
@@ -6345,7 +6470,7 @@ serialize-javascript@5.0.1:
   dependencies:
     randombytes "^2.1.0"
 
-serialize-javascript@^6.0.1:
+serialize-javascript@^6.0.2:
   version "6.0.2"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/serialize-javascript/-/serialize-javascript-6.0.2.tgz#defa1e055c83bf6d59ea805d8da862254eb6a6c2"
   integrity sha1-3voeBVyDv21Z6oBdjahiJU62psI=
@@ -6445,6 +6570,35 @@ shebang-regex@^3.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/shebang-regex/-/shebang-regex-3.0.0.tgz"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
 
+side-channel-list@^1.0.0:
+  version "1.0.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/side-channel-list/-/side-channel-list-1.0.0.tgz#10cb5984263115d3b7a0e336591e290a830af8ad"
+  integrity sha1-EMtZhCYxFdO3oOM2WR4pCoMK+K0=
+  dependencies:
+    es-errors "^1.3.0"
+    object-inspect "^1.13.3"
+
+side-channel-map@^1.0.1:
+  version "1.0.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/side-channel-map/-/side-channel-map-1.0.1.tgz#d6bb6b37902c6fef5174e5f533fab4c732a26f42"
+  integrity sha1-1rtrN5Asb+9RdOX1M/q0xzKib0I=
+  dependencies:
+    call-bound "^1.0.2"
+    es-errors "^1.3.0"
+    get-intrinsic "^1.2.5"
+    object-inspect "^1.13.3"
+
+side-channel-weakmap@^1.0.2:
+  version "1.0.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/side-channel-weakmap/-/side-channel-weakmap-1.0.2.tgz#11dda19d5368e40ce9ec2bdc1fb0ecbc0790ecea"
+  integrity sha1-Ed2hnVNo5Azp7CvcH7DsvAeQ7Oo=
+  dependencies:
+    call-bound "^1.0.2"
+    es-errors "^1.3.0"
+    get-intrinsic "^1.2.5"
+    object-inspect "^1.13.3"
+    side-channel-map "^1.0.1"
+
 side-channel@^1.0.4:
   version "1.0.4"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/side-channel/-/side-channel-1.0.4.tgz"
@@ -6453,6 +6607,17 @@ side-channel@^1.0.4:
     call-bind "^1.0.0"
     get-intrinsic "^1.0.2"
     object-inspect "^1.9.0"
+
+side-channel@^1.1.0:
+  version "1.1.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/side-channel/-/side-channel-1.1.0.tgz#c3fcff9c4da932784873335ec9765fa94ff66bc9"
+  integrity sha1-w/z/nE2pMnhIczNeyXZfqU/2a8k=
+  dependencies:
+    es-errors "^1.3.0"
+    object-inspect "^1.13.3"
+    side-channel-list "^1.0.0"
+    side-channel-map "^1.0.1"
+    side-channel-weakmap "^1.0.2"
 
 signal-exit@^3.0.0, signal-exit@^3.0.2, signal-exit@^3.0.3:
   version "3.0.7"
@@ -6627,11 +6792,6 @@ split@^1.0.1:
   integrity sha512-mTyOoPbrivtXnwnIxZRFYRrPNtEFKlpB2fvjSnCQUiAA6qAZzqwna5envK4uk6OIeP17CsdF3rSBGYVBsU0Tkg==
   dependencies:
     through "2"
-
-sprintf-js@~1.0.2:
-  version "1.0.3"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/sprintf-js/-/sprintf-js-1.0.3.tgz"
-  integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
 
 stack-trace@0.0.10:
   version "0.0.10"
@@ -6944,10 +7104,10 @@ tapable@^1.0.0:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tapable/-/tapable-1.1.3.tgz"
   integrity sha512-4WK/bYZmj8xLr+HUCODHGF1ZFzsYffasLUgEiMBY4fgtltdO6B4WJtlSbPaDTLpYTcGVwM2qLnFTICEcNxs3kA==
 
-tapable@^2.1.1, tapable@^2.2.0:
-  version "2.2.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tapable/-/tapable-2.2.1.tgz"
-  integrity sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==
+tapable@^2.3.0:
+  version "2.3.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tapable/-/tapable-2.3.0.tgz#7e3ea6d5ca31ba8e078b560f0d83ce9a14aa8be6"
+  integrity sha1-fj6m1coxuo4Hi1YPDYPOmhSqi+Y=
 
 tar-fs@^2.0.0:
   version "2.1.4"
@@ -6975,24 +7135,24 @@ tas-client@0.2.33:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tas-client/-/tas-client-0.2.33.tgz#451bf114a8a64748030ce4068ab7d079958402e6"
   integrity sha512-V+uqV66BOQnWxvI6HjDnE4VkInmYZUQ4dgB7gzaDyFyFSK1i1nF/j7DpS9UbQAgV9NaF1XpcyuavnM1qOeiEIg==
 
-terser-webpack-plugin@^5.3.10:
-  version "5.3.10"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/terser-webpack-plugin/-/terser-webpack-plugin-5.3.10.tgz#904f4c9193c6fd2a03f693a2150c62a92f40d199"
-  integrity sha1-kE9MkZPG/SoD9pOiFQxiqS9A0Zk=
+terser-webpack-plugin@^5.3.16:
+  version "5.3.16"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/terser-webpack-plugin/-/terser-webpack-plugin-5.3.16.tgz#741e448cc3f93d8026ebe4f7ef9e4afacfd56330"
+  integrity sha1-dB5EjMP5PYAm6+T3755K+s/VYzA=
   dependencies:
-    "@jridgewell/trace-mapping" "^0.3.20"
+    "@jridgewell/trace-mapping" "^0.3.25"
     jest-worker "^27.4.5"
-    schema-utils "^3.1.1"
-    serialize-javascript "^6.0.1"
-    terser "^5.26.0"
+    schema-utils "^4.3.0"
+    serialize-javascript "^6.0.2"
+    terser "^5.31.1"
 
-terser@^5.26.0:
-  version "5.33.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/terser/-/terser-5.33.0.tgz#8f9149538c7468ffcb1246cfec603c16720d2db1"
-  integrity sha1-j5FJU4x0aP/LEkbP7GA8FnINLbE=
+terser@^5.31.1:
+  version "5.46.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/terser/-/terser-5.46.0.tgz#1b81e560d584bbdd74a8ede87b4d9477b0ff9695"
+  integrity sha1-G4HlYNWEu910qO3oe02Ud7D/lpU=
   dependencies:
     "@jridgewell/source-map" "^0.3.3"
-    acorn "^8.8.2"
+    acorn "^8.15.0"
     commander "^2.20.0"
     source-map-support "~0.5.20"
 
@@ -7050,14 +7210,7 @@ timers-ext@^0.1.7:
     es5-ext "~0.10.46"
     next-tick "1"
 
-tmp@^0.0.33:
-  version "0.0.33"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tmp/-/tmp-0.0.33.tgz"
-  integrity sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==
-  dependencies:
-    os-tmpdir "~1.0.2"
-
-tmp@^0.2.3, tmp@^0.2.4:
+tmp@^0.0.33, tmp@^0.2.3, tmp@^0.2.4:
   version "0.2.4"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tmp/-/tmp-0.2.4.tgz#c6db987a2ccc97f812f17137b36af2b6521b0d13"
   integrity sha1-xtuYeizMl/gS8XE3s2rytlIbDRM=
@@ -7457,13 +7610,18 @@ unset-value@^1.0.0:
     has-value "^0.3.1"
     isobject "^3.0.0"
 
-update-browserslist-db@^1.1.0:
-  version "1.1.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/update-browserslist-db/-/update-browserslist-db-1.1.0.tgz#7ca61c0d8650766090728046e416a8cde682859e"
-  integrity sha1-fKYcDYZQdmCQcoBG5BaozeaChZ4=
+upath@^1.1.1:
+  version "1.2.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/upath/-/upath-1.2.0.tgz#8f66dbcd55a883acdae4408af8b035a5044c1894"
+  integrity sha1-j2bbzVWog6za5ECK+LA1pQRMGJQ=
+
+update-browserslist-db@^1.2.0:
+  version "1.2.3"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/update-browserslist-db/-/update-browserslist-db-1.2.3.tgz#64d76db58713136acbeb4c49114366cc6cc2e80d"
+  integrity sha1-ZNdttYcTE2rL60xJEUNmzGzC6A0=
   dependencies:
-    escalade "^3.1.2"
-    picocolors "^1.0.1"
+    escalade "^3.2.0"
+    picocolors "^1.1.1"
 
 uri-js@^4.2.2:
   version "4.4.1"
@@ -7610,10 +7768,10 @@ vscode-tas-client@^0.1.45:
   dependencies:
     tas-client "0.2.33"
 
-watchpack@^2.4.1:
-  version "2.4.2"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/watchpack/-/watchpack-2.4.2.tgz#2feeaed67412e7c33184e5a79ca738fbd38564da"
-  integrity sha1-L+6u1nQS58MxhOWnnKc4+9OFZNo=
+watchpack@^2.4.4:
+  version "2.5.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/watchpack/-/watchpack-2.5.1.tgz#dd38b601f669e0cbf567cb802e75cead82cde102"
+  integrity sha1-3Ti2AfZp4Mv1Z8uALnXOrYLN4QI=
   dependencies:
     glob-to-regexp "^0.4.1"
     graceful-fs "^4.1.2"
@@ -7649,39 +7807,41 @@ webpack-merge@^5.7.3:
     clone-deep "^4.0.1"
     wildcard "^2.0.0"
 
-webpack-sources@^3.2.3:
-  version "3.2.3"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/webpack-sources/-/webpack-sources-3.2.3.tgz"
-  integrity sha512-/DyMEOrDgLKKIG0fmvtz+4dUX/3Ghozwgm6iPp8KRhvn+eQf9+Q7GWxVNMk3+uCPWfdXYC4ExGBckIXdFEfH1w==
+webpack-sources@^3.3.3:
+  version "3.3.3"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/webpack-sources/-/webpack-sources-3.3.3.tgz#d4bf7f9909675d7a070ff14d0ef2a4f3c982c723"
+  integrity sha1-1L9/mQlnXXoHD/FNDvKk88mCxyM=
 
-webpack@^5.94.0:
-  version "5.94.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/webpack/-/webpack-5.94.0.tgz#77a6089c716e7ab90c1c67574a28da518a20970f"
-  integrity sha1-d6YInHFuerkMHGdXSijaUYoglw8=
+webpack@^5.104.1:
+  version "5.104.1"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/webpack/-/webpack-5.104.1.tgz#94bd41eb5dbf06e93be165ba8be41b8260d4fb1a"
+  integrity sha1-lL1B612/Buk74WW6i+QbgmDU+xo=
   dependencies:
-    "@types/estree" "^1.0.5"
-    "@webassemblyjs/ast" "^1.12.1"
-    "@webassemblyjs/wasm-edit" "^1.12.1"
-    "@webassemblyjs/wasm-parser" "^1.12.1"
-    acorn "^8.7.1"
-    acorn-import-attributes "^1.9.5"
-    browserslist "^4.21.10"
+    "@types/eslint-scope" "^3.7.7"
+    "@types/estree" "^1.0.8"
+    "@types/json-schema" "^7.0.15"
+    "@webassemblyjs/ast" "^1.14.1"
+    "@webassemblyjs/wasm-edit" "^1.14.1"
+    "@webassemblyjs/wasm-parser" "^1.14.1"
+    acorn "^8.15.0"
+    acorn-import-phases "^1.0.3"
+    browserslist "^4.28.1"
     chrome-trace-event "^1.0.2"
-    enhanced-resolve "^5.17.1"
-    es-module-lexer "^1.2.1"
+    enhanced-resolve "^5.17.4"
+    es-module-lexer "^2.0.0"
     eslint-scope "5.1.1"
     events "^3.2.0"
     glob-to-regexp "^0.4.1"
     graceful-fs "^4.2.11"
     json-parse-even-better-errors "^2.3.1"
-    loader-runner "^4.2.0"
+    loader-runner "^4.3.1"
     mime-types "^2.1.27"
     neo-async "^2.6.2"
-    schema-utils "^3.2.0"
-    tapable "^2.1.1"
-    terser-webpack-plugin "^5.3.10"
-    watchpack "^2.4.1"
-    webpack-sources "^3.2.3"
+    schema-utils "^4.3.3"
+    tapable "^2.3.0"
+    terser-webpack-plugin "^5.3.16"
+    watchpack "^2.4.4"
+    webpack-sources "^3.3.3"
 
 whatwg-url@^5.0.0:
   version "5.0.0"

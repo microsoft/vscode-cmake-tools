@@ -1244,6 +1244,10 @@ export async function expandConfigurePresetVariables(preset: ConfigurePreset, fo
     if (preset.cacheVariables) {
         expandedPreset.cacheVariables = {};
         for (const cacheVarName in preset.cacheVariables) {
+            // Skip $comment keys as they are only for documentation purposes
+            if (cacheVarName === '$comment') {
+                continue;
+            }
             const cacheVar = preset.cacheVariables[cacheVarName];
             if (typeof cacheVar === 'boolean') {
                 expandedPreset.cacheVariables[cacheVarName] = cacheVar;
@@ -2138,6 +2142,10 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     // CacheVariables
     if (preset.cacheVariables) {
         util.objectPairs(preset.cacheVariables).forEach(([key, value]) => {
+            // Skip $comment keys as they are only for documentation purposes
+            if (key === '$comment') {
+                return;
+            }
             if (util.isString(value) || typeof value === 'boolean') {
                 result.push(`-D${key}=${value}`);
             } else if (value) {
@@ -2202,11 +2210,18 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     return result;
 }
 
-export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], tempOverrideBuildToolArgs?: string[]): string[] {
+export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], tempOverrideBuildToolArgs?: string[], fallbackJobs?: number): string[] {
     const result: string[] = [];
 
     preset.__binaryDir && result.push('--build', preset.__binaryDir);
-    preset.jobs && result.push('--parallel', preset.jobs.toString());
+    const jobs = preset.jobs ?? fallbackJobs;
+    if (jobs !== undefined) {
+        if (jobs === 0) {
+            result.push('-j');
+        } else {
+            result.push('--parallel', jobs.toString());
+        }
+    }
     preset.configuration && result.push('--config', preset.configuration);
     preset.cleanFirst && result.push('--clean-first');
     preset.verbose && result.push('--verbose');
@@ -2282,7 +2297,7 @@ export function testArgs(preset: TestPreset): string[] {
     if (preset.execution) {
         preset.execution.stopOnFailure && result.push('--stop-on-failure');
         preset.execution.enableFailover && result.push('-F');
-        preset.execution.jobs && result.push('--parallel', preset.execution.jobs.toString());
+        (preset.execution.jobs !== undefined) && result.push('--parallel', preset.execution.jobs.toString());
         preset.execution.resourceSpecFile && result.push('--resource-spec-file', preset.execution.resourceSpecFile);
         preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
         preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);

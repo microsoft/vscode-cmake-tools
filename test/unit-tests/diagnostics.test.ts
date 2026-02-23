@@ -2,6 +2,7 @@
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 
 chai.use(chaiAsPromised);
@@ -13,6 +14,7 @@ import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/c
 import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { populateCollection } from '@cmt/diagnostics/util';
+import collections from '@cmt/diagnostics/collections';
 import { getTestResourceFilePath } from '@test/util';
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
@@ -54,7 +56,7 @@ suite('Diagnostics', () => {
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(diag.diag.source).to.eq('CMake (message)');
-        expect(diag.diag.message).to.endsWith('I am a warning!');
+        expect(diag.diag.message).to.match(/I am a warning!$/);
         expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
     });
     test('Parse a deprecation warning', () => {
@@ -70,7 +72,7 @@ suite('Diagnostics', () => {
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(diag.diag.source).to.eq('CMake (message)');
-        expect(diag.diag.message).to.endsWith('I am deprecated!');
+        expect(diag.diag.message).to.match(/I am deprecated!$/);
         expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
     });
     test('Parse two diags', () => {
@@ -97,8 +99,8 @@ suite('Diagnostics', () => {
         expect(error.diag.range.start.line).to.eq(12);
         expect(warning.diag.source).to.eq('CMake (message)');
         expect(error.diag.source).to.eq('CMake (some_error_function)');
-        expect(warning.diag.message).to.endsWith('I am a warning!');
-        expect(error.diag.message).to.endsWith('I am an error!');
+        expect(warning.diag.message).to.match(/I am a warning!$/);
+        expect(error.diag.message).to.match(/I am an error!$/);
     });
     test('Parse diags with call stacks', () => {
         const error_output = [
@@ -115,7 +117,7 @@ suite('Diagnostics', () => {
         expect(consumer.diagnostics.length).to.eq(1);
         const warning = consumer.diagnostics[0];
         expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-        expect(warning.diag.message).to.endsWith('I\'m an inner warning');
+        expect(warning.diag.message).to.match(/I'm an inner warning$/);
         expect(warning.diag.range.start.line).to.eq(14);
         expect(warning.diag.source).to.eq('CMake (message)');
     });
@@ -134,7 +136,7 @@ suite('Diagnostics', () => {
         expect(consumer.diagnostics.length).to.eq(1);
         const warning = consumer.diagnostics[0];
         expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-        expect(warning.diag.message).to.endsWith('I\'m an inner warning');
+        expect(warning.diag.message).to.match(/I'm an inner warning$/);
         expect(warning.diag.range.start.line).to.eq(14);
         expect(warning.diag.source).to.eq('CMake (message)');
     });
@@ -721,6 +723,253 @@ suite('Diagnostics', () => {
         expect(build_consumer.compilers.msvc.diagnostics[0].location.start.character).to.eq(0);
     });
 
+    interface LinkerTestCase {
+        line: string;
+        expectedFile: string;
+        expectedCode: string;
+        expectedSeverity: string;
+        expectedMessageContains: string;
+    }
+
+    const msvcLinkerTestCases: LinkerTestCase[] = [
+        // Fatal error: cannot open input file
+        {
+            line: 'LINK : fatal error LNK1181: cannot open input file "non_existent_file.obj"',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1181',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'cannot open input file'
+        },
+        // Unresolved external symbol with build prefix
+        {
+            line: '[build] Validation_TCM_SURFACE_BASED.cpp.obj : error LNK2019: unresolved external symbol "class ParameterValidationException __cdecl mw::Toolpath::MakeException_35521(void)" (?MakeException_35521@Toolpath@mw@@YA?AVParameterValidationException@@XZ) referenced in function "class std::vector<class misc::mwException,class std::allocator<class misc::mwException> > __cdecl mw::Toolpath::Validate_TCM_SURFACE_BASED(class mw::Toolpath::CalculationParams const &,class misc::mwAutoPointer<class cadcam::mwTool> const &,bool)" (?Validate_TCM_SURFACE_BASED@Toolpath@mw@@YA?AV?$vector@VmwException@misc@@V?$allocator@VmwException@misc@@@std@@@std@@AEBVCalculationParams@12@AEBV?$mwAutoPointer@VmwTool@cadcam@@@misc@@_N@Z)',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol'
+        },
+        // Simple unresolved external symbol
+        {
+            line: 'main.obj : error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol _foo'
+        },
+        // Unresolved external with decorated name
+        {
+            line: 'utils.obj : error LNK2019: unresolved external symbol "void __cdecl bar(void)" referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol'
+        },
+        // Library object reference
+        {
+            line: 'libmath.lib(math.obj) : error LNK2001: unresolved external symbol _sin',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol _sin'
+        },
+        // Warning: PDB not found
+        {
+            line: 'module.obj : warning LNK4099: PDB \'vc142.pdb\' was not found with \'module.obj\'',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK4099',
+            expectedSeverity: 'warning',
+            expectedMessageContains: 'PDB'
+        },
+        // Warning: locally defined symbol imported
+        {
+            line: 'lib.lib(other.obj) : warning LNK4049: locally defined symbol _baz imported',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK4049',
+            expectedSeverity: 'warning',
+            expectedMessageContains: 'locally defined symbol'
+        },
+        // Fatal error: cannot open file
+        {
+            line: 'fatal error LNK1104: cannot open file \'kernel32.lib\'',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1104',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'cannot open file'
+        },
+        // Fatal error: PDB error
+        {
+            line: 'fatal error LNK1318: Unexpected PDB error; OK (0)',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1318',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'Unexpected PDB error'
+        },
+        // Absolute path
+        {
+            line: 'C:\\projects\\demo\\main.obj : error LNK2019: unresolved external symbol _printf referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_printf'
+        },
+        // Build directory path
+        {
+            line: 'D:\\build\\lib\\foo.lib(bar.obj) : error LNK2001: unresolved external symbol _bar',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_bar'
+        },
+        // Complex decorated name
+        {
+            line: 'utils.obj : error LNK2019: unresolved external symbol "int __cdecl add(int,int)" (?add@@YAHHH@Z) referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'add'
+        },
+        // Error summary
+        {
+            line: 'error LNK1120: 1 unresolved externals',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1120',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved externals'
+        },
+        // Multiple definitions error
+        {
+            line: 'error LNK1169: one or more multiply defined symbols found',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1169',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'multiply defined'
+        },
+        // Colon variant (no space after obj)
+        {
+            line: 'main.obj: error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_foo'
+        },
+        // Library object with colon
+        {
+            line: 'lib.lib(obj.obj):error LNK2019: unresolved external symbol _bar',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_bar'
+        },
+        // Destructor
+        {
+            line: 'file.obj : error LNK2019: unresolved external symbol "public: __cdecl MyClass::~MyClass(void)" (??1MyClass@@QEAA@XZ) referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'MyClass'
+        },
+        // Template instantiation
+        {
+            line: 'tmpl.obj : error LNK2001: unresolved external symbol "class std::vector<int,class std::allocator<int> > __cdecl getVec(void)"',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'vector'
+        },
+        // Path with spaces
+        {
+            line: 'C:\\Program Files\\My Project\\main.obj : error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_foo'
+        },
+        // Entry point error
+        {
+            line: 'LINK : error LNK2001: unresolved external symbol _WinMain@16',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'WinMain'
+        },
+        // Entry point must be defined
+        {
+            line: 'LINK : fatal error LNK1561: entry point must be defined',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1561',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'entry point'
+        }
+    ];
+
+    // Generate individual tests for each linker error case
+    msvcLinkerTestCases.forEach((testCase, index) => {
+        test(`Parse MSVC Linker errors - Case ${index + 1}: ${testCase.expectedCode}`, () => {
+            const test_consumer = new diags.CompileOutputConsumer(
+                new ConfigurationReader({} as ExtensionConfigurationSettings)
+            );
+            feedLines(test_consumer, [], [testCase.line]);
+
+            expect(
+                test_consumer.compilers.msvc.diagnostics,
+                `Failed to parse: ${testCase.line}`
+            ).to.have.length(1);
+
+            const diag = test_consumer.compilers.msvc.diagnostics[0];
+            expect(diag.file, `File mismatch for: ${testCase.line}`).to.eq(
+                testCase.expectedFile
+            );
+            expect(diag.code, `Code mismatch for: ${testCase.line}`).to.eq(
+                testCase.expectedCode
+            );
+            expect(
+                diag.severity,
+                `Severity mismatch for: ${testCase.line}`
+            ).to.eq(testCase.expectedSeverity);
+            expect(
+                diag.message,
+                `Message mismatch for: ${testCase.line}`
+            ).to.include(testCase.expectedMessageContains);
+        });
+    });
+
+    test('Linker errors resolve to unique line numbers in linkerrors.txt', async () => {
+        const test_consumer = new diags.CompileOutputConsumer(
+            new ConfigurationReader({} as ExtensionConfigurationSettings)
+        );
+        test_consumer.config.updatePartial({ enabledOutputParsers: ['msvc'] });
+
+        // Feed multiple linker errors
+        const linkerErrorLines = [
+            'main.obj : error LNK2019: unresolved external symbol _foo',
+            'utils.obj : error LNK2019: unresolved external symbol _bar',
+            'test.obj : error LNK2001: unresolved external symbol _baz'
+        ];
+        feedLines(test_consumer, [], linkerErrorLines);
+
+        expect(test_consumer.compilers.msvc.diagnostics).to.have.length(3);
+
+        // Resolve diagnostics (this should create linkerrors.txt and set line numbers)
+        const tmpDir = path.join(__dirname, 'tmp_linker_test');
+        await fs.promises.mkdir(tmpDir, { recursive: true });
+        const resolved = await test_consumer.resolveDiagnostics(tmpDir);
+
+        // All should point to linkerrors.txt
+        expect(resolved.every(d => d.filepath.endsWith('linkerrors.txt'))).to.be.true;
+
+        // Each should have a unique line number (not all pointing to the same line)
+        const lineNumbers = resolved.map(d => d.diag.range.start.line);
+        const uniqueLines = new Set(lineNumbers);
+
+        expect(uniqueLines.size, 'All diagnostics should point to different lines').to.eq(3);
+
+        // Line numbers should be sequential (each error takes 3 lines: header, message, blank)
+        // Header is 6 lines, then each error starts at 7, 10, 13, etc.
+        expect(lineNumbers[0]).to.eq(6); // Line 7 (0-indexed = 6)
+        expect(lineNumbers[1]).to.eq(9); // Line 10 (0-indexed = 9)
+        expect(lineNumbers[2]).to.eq(12); // Line 13 (0-indexed = 12)
+    });
+
     test('Parse IAR error', () => {
         const lines = [
             '      kjfdlkj kfjg;',
@@ -783,5 +1032,224 @@ suite('Diagnostics', () => {
         expect(resolved.length).to.eq(1);
         diagnostic = resolved[0];
         expect(diagnostic.filepath).to.eq(resolvePath('main.cpp', project_dir));
+    });
+
+    test('Parse IWYU', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '#include <stdbool.h>           // for bool',
+            '#include <stdint.h>            // for uint32_t, uint8_t',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '- #include <alloca.h>  // lines 24-24',
+            '- #include <stdalign.h>  // lines 25-26',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include <stdbool.h>           // for bool',
+            '#include <stdint.h>            // for uint32_t, uint8_t',
+            '#include <stdio.h>             // for fprintf, FILE, printf, NULL, stdout',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(4);
+        const [add, rem1, rem2, all] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(add.file).to.eq('/home/user/src/project/main.c');
+        expect(add.location.start.line).to.eq(0);
+        expect(add.location.start.character).to.eq(0);
+        expect(add.location.end.line).to.eq(0);
+        expect(add.location.end.character).to.eq(999);
+        expect(add.code).to.eq(undefined);
+        expect(add.message).to.eq('should add these lines:\n#include <stdbool.h>           // for bool\n#include <stdint.h>            // for uint32_t, uint8_t');
+        expect(add.severity).to.eq('warning');
+
+        expect(rem1.file).to.eq('/home/user/src/project/main.c');
+        expect(rem1.location.start.line).to.eq(23);
+        expect(rem1.location.start.character).to.eq(0);
+        expect(rem1.location.end.line).to.eq(23);
+        expect(rem1.location.end.character).to.eq(999);
+        expect(rem1.code).to.eq(undefined);
+        expect(rem1.message).to.eq('should remove: #include <alloca.h>');
+        expect(rem1.severity).to.eq('warning');
+
+        expect(rem2.file).to.eq('/home/user/src/project/main.c');
+        expect(rem2.location.start.line).to.eq(24);
+        expect(rem2.location.start.character).to.eq(0);
+        expect(rem2.location.end.line).to.eq(25);
+        expect(rem2.location.end.character).to.eq(999);
+        expect(rem2.code).to.eq(undefined);
+        expect(rem2.message).to.eq('should remove: #include <stdalign.h>');
+        expect(rem2.severity).to.eq('warning');
+
+        expect(all.file).to.eq('/home/user/src/project/main.c');
+        expect(all.location.start.line).to.eq(0);
+        expect(all.location.start.character).to.eq(0);
+        expect(all.location.end.line).to.eq(0);
+        expect(all.location.end.character).to.eq(999);
+        expect(all.code).to.eq(undefined);
+        expect(all.message).to.eq('The full include-list:\n#include <stdbool.h>           // for bool\n#include <stdint.h>            // for uint32_t, uint8_t\n#include <stdio.h>             // for fprintf, FILE, printf, NULL, stdout\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all.severity).to.eq('note');
+    });
+
+    test('Parse IWYU with only additions', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '#include <stdbool.h>           // for bool',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include <stdbool.h>           // for bool',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(2);
+        const [add, all] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(add.file).to.eq('/home/user/src/project/main.c');
+        expect(add.location.start.line).to.eq(0);
+        expect(add.location.start.character).to.eq(0);
+        expect(add.location.end.line).to.eq(0);
+        expect(add.location.end.character).to.eq(999);
+        expect(add.code).to.eq(undefined);
+        expect(add.message).to.eq('should add these lines:\n#include <stdbool.h>           // for bool');
+        expect(add.severity).to.eq('warning');
+
+        expect(all.file).to.eq('/home/user/src/project/main.c');
+        expect(all.location.start.line).to.eq(0);
+        expect(all.location.start.character).to.eq(0);
+        expect(all.location.end.line).to.eq(0);
+        expect(all.location.end.character).to.eq(999);
+        expect(all.code).to.eq(undefined);
+        expect(all.message).to.eq('The full include-list:\n#include <stdbool.h>           // for bool\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all.severity).to.eq('note');
+    });
+
+    test('Parse IWYU with only removals', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '- #include <alloca.h>  // lines 24-24',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(2);
+        const [rem, all] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(rem.file).to.eq('/home/user/src/project/main.c');
+        expect(rem.location.start.line).to.eq(23);
+        expect(rem.location.start.character).to.eq(0);
+        expect(rem.location.end.line).to.eq(23);
+        expect(rem.location.end.character).to.eq(999);
+        expect(rem.code).to.eq(undefined);
+        expect(rem.message).to.eq('should remove: #include <alloca.h>');
+        expect(rem.severity).to.eq('warning');
+
+        expect(all.file).to.eq('/home/user/src/project/main.c');
+        expect(all.location.start.line).to.eq(0);
+        expect(all.location.start.character).to.eq(0);
+        expect(all.location.end.line).to.eq(0);
+        expect(all.location.end.character).to.eq(999);
+        expect(all.code).to.eq(undefined);
+        expect(all.message).to.eq('The full include-list:\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all.severity).to.eq('note');
+    });
+
+    test('Parse IWYU with multiple files', () => {
+        const lines = [
+            '/home/user/src/project/main.c should add these lines:',
+            '#include <stdbool.h>           // for bool',
+            '',
+            '/home/user/src/project/main.c should remove these lines:',
+            '',
+            'The full include-list for /home/user/src/project/main.c:',
+            '#include <stdbool.h>           // for bool',
+            '---',
+            '/home/user/src/project/module.c should add these lines:',
+            '',
+            '/home/user/src/project/module.c should remove these lines:',
+            '- #include <alloca.h>  // lines 24-24',
+            '',
+            'The full include-list for /home/user/src/project/module.c:',
+            '#include "array.h"             // for ARRAY_SIZE',
+            '---'
+        ];
+
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.iwyu.diagnostics).to.have.length(4);
+        const [add, all1, rem, all2] = build_consumer.compilers.iwyu.diagnostics;
+
+        expect(add.file).to.eq('/home/user/src/project/main.c');
+        expect(add.location.start.line).to.eq(0);
+        expect(add.location.start.character).to.eq(0);
+        expect(add.location.end.line).to.eq(0);
+        expect(add.location.end.character).to.eq(999);
+        expect(add.code).to.eq(undefined);
+        expect(add.message).to.eq('should add these lines:\n#include <stdbool.h>           // for bool');
+        expect(add.severity).to.eq('warning');
+
+        expect(all1.file).to.eq('/home/user/src/project/main.c');
+        expect(all1.location.start.line).to.eq(0);
+        expect(all1.location.start.character).to.eq(0);
+        expect(all1.location.end.line).to.eq(0);
+        expect(all1.location.end.character).to.eq(999);
+        expect(all1.code).to.eq(undefined);
+        expect(all1.message).to.eq('The full include-list:\n#include <stdbool.h>           // for bool');
+        expect(all1.severity).to.eq('note');
+
+        expect(rem.file).to.eq('/home/user/src/project/module.c');
+        expect(rem.location.start.line).to.eq(23);
+        expect(rem.location.start.character).to.eq(0);
+        expect(rem.location.end.line).to.eq(23);
+        expect(rem.location.end.character).to.eq(999);
+        expect(rem.code).to.eq(undefined);
+        expect(rem.message).to.eq('should remove: #include <alloca.h>');
+        expect(rem.severity).to.eq('warning');
+
+        expect(all2.file).to.eq('/home/user/src/project/module.c');
+        expect(all2.location.start.line).to.eq(0);
+        expect(all2.location.start.character).to.eq(0);
+        expect(all2.location.end.line).to.eq(0);
+        expect(all2.location.end.character).to.eq(999);
+        expect(all2.code).to.eq(undefined);
+        expect(all2.message).to.eq('The full include-list:\n#include "array.h"             // for ARRAY_SIZE');
+        expect(all2.severity).to.eq('note');
+    });
+
+    test('clearAll clears all diagnostic collections', () => {
+        // Add some diagnostics to each collection
+        const testUri = vscode.Uri.file('/test/file.cpp');
+        const testDiagnostic = new vscode.Diagnostic(
+            new vscode.Range(0, 0, 0, 10),
+            'Test diagnostic',
+            vscode.DiagnosticSeverity.Error
+        );
+
+        // Populate the collections
+        collections.cmake.set(testUri, [testDiagnostic]);
+        collections.build.set(testUri, [testDiagnostic]);
+        collections.presets.set(testUri, [testDiagnostic]);
+
+        // Verify diagnostics were added
+        expect(collections.cmake.has(testUri)).to.be.true;
+        expect(collections.build.has(testUri)).to.be.true;
+        expect(collections.presets.has(testUri)).to.be.true;
+
+        // Clear all collections
+        collections.clearAll();
+
+        // Verify all collections are cleared
+        expect(collections.cmake.has(testUri)).to.be.false;
+        expect(collections.build.has(testUri)).to.be.false;
+        expect(collections.presets.has(testUri)).to.be.false;
     });
 });

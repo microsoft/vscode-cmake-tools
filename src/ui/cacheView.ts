@@ -470,6 +470,7 @@ export class ConfigurationWebview {
               validateInput(editbox)
               editbox.oninput = () => edit(editbox);
             });
+            document.querySelector('#search').focus();
           }
         </script>
     </head>
@@ -477,7 +478,7 @@ export class ConfigurationWebview {
       <div class="container">
         <button id="save" onclick="save()">${saveButtonText}</button>
         <h1>${this.cmakeCacheEditorText}<span class="invisible" id="not-saved">*</span></h1>
-        <input class="search" type="text" id="search" oninput="search()" placeholder="${searchButtonText}" autofocus>
+        <input class="search" type="text" id="search" oninput="search()" placeholder="${searchButtonText}">
         <table style="width:100%">
           <tr style="height: 25px;">
             <th style="width: 30px"></th>
