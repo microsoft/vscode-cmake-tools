@@ -1952,7 +1952,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         } else {
             buildPreset.__targets = buildPreset.targets;
         }
-        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs);
+        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs, this.config.numJobsForPreset);
         const initialEnvironment = EnvironmentUtils.create(buildPreset.environment);
         const build_env = await this.getCMakeBuildCommandEnvironment(initialEnvironment);
         const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...this.expansionOptions, envOverride: build_env }));
