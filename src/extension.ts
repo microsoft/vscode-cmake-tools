@@ -881,12 +881,12 @@ export class ExtensionManager implements vscode.Disposable {
         this.projectOutline.updateCodeModel(cmakeProject, cmakeProject.codeModelContent);
         // Try to reattach bookmarks to live TargetNodes after outline refresh
         void this.bookmarksProvider.reattachTargets();
-        rollbar.invokeAsync('Update code model for automatic list file modifier', {}, async () => {
+        rollbar.invokeAsync(localize('update.code.model.for.list.modifier', 'Update code model for automatic list file modifier'), {}, async () => {
             let cache: CMakeCache;
             try {
                 cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
             } catch (e: any) {
-                rollbar.exception(localize('filed.to.open.cache.file.on.code.model.update', 'Failed to open CMake cache file on code model update'), e);
+                rollbar.exception(localize('failed.to.open.cache.file.on.code.model.update', 'Failed to open CMake cache file on code model update'), e);
                 return;
             }
             this.cmakeListsModifier.updateCodeModel(cmakeProject, cache);
@@ -912,7 +912,7 @@ export class ExtensionManager implements vscode.Disposable {
                 try {
                     cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
                 } catch (e: any) {
-                    rollbar.exception(localize('filed.to.open.cache.file.on.code.model.update', 'Failed to open CMake cache file on code model update'), e);
+                    rollbar.exception(localize('failed.to.open.cache.file.on.code.model.update', 'Failed to open CMake cache file on code model update'), e);
                     return;
                 }
                 const drv: CMakeDriver | null = await cmakeProject.getCMakeDriverInstance();

@@ -269,7 +269,7 @@ export class CMakeListsModifier implements vscode.Disposable {
                 clearTimeout(this.addDebounceTimer);
             }
             this.addDebounceTimer = setTimeout(() => {
-                this.processPendingAddFiles().catch(e => rollbar.exception(localize('error.processing.add.files', 'Error processing added files'), e as Error));
+                this.processPendingAddFiles().catch(err => rollbar.exception(localize('error.processing.add.files', 'Error processing added files'), err as Error));
             }, FILE_EVENT_DEBOUNCE_MS);
         });
     }
@@ -305,7 +305,7 @@ export class CMakeListsModifier implements vscode.Disposable {
                 clearTimeout(this.deleteDebounceTimer);
             }
             this.deleteDebounceTimer = setTimeout(() => {
-                this.processPendingDeleteFiles().catch(e => rollbar.exception(localize('error.processing.delete.files', 'Error processing deleted files'), e as Error));
+                this.processPendingDeleteFiles().catch(err => rollbar.exception(localize('error.processing.delete.files', 'Error processing deleted files'), err as Error));
             }, FILE_EVENT_DEBOUNCE_MS);
         });
     }
@@ -958,7 +958,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         }
     }
 
-    async addSourceFileToCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always=true) {
+    async addSourceFileToCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always = true) {
         const settings = vscode.workspace.getConfiguration('cmake.modifyLists', uri);
         if (settings.addNewSourceFiles === 'no' && !always) {
             return;
@@ -1086,7 +1086,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         await this.reviewAndApply(allCandidates, settings, 'add');
     }
 
-    async removeSourceFileFromCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always=true) {
+    async removeSourceFileFromCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always = true) {
         const settings = vscode.workspace.getConfiguration('cmake.modifyLists', uri);
         if (settings.removeDeletedSourceFiles === 'no' && !always) {
             return;
@@ -1912,7 +1912,7 @@ abstract class VariableSourceList extends SourceList {
     protected details(_file: string): string {
         const pos = this.invocation.document.positionAt(this.invocation.ast.command.offset);
         const relPath = path.relative(this.projectDir, this.invocation.document.fileName);
-        return `${relPath}:${pos.line}`;
+        return `${relPath}:${pos.line + 1}`;
     }
 
     protected sortKeys(uri: vscode.Uri): (number|string)[] {
@@ -2089,7 +2089,7 @@ function* documentLines(document: vscode.TextDocument): Generator<vscode.TextLin
     }
 }
 
-function compareSortKeys(aKeys: (number|string)[], bKeys: (number|string)[]): number {
+export function compareSortKeys(aKeys: (number|string)[], bKeys: (number|string)[]): number {
     const n = Math.min(aKeys.length, bKeys.length);
 
     for (let i = 0; i < n; i++) {
@@ -2125,7 +2125,7 @@ function extension(uri: vscode.Uri): string {
     return path.extname(uri.fsPath).slice(1);
 }
 
-function quoteArgument(s: string): string {
+export function quoteArgument(s: string): string {
     if (!s.match(/[\s()#"\\]/)) {
         return s;
     }

@@ -443,5 +443,6 @@
     "cmake-tools.configuration.cmake.modifyLists.scopeSelection.description": "How to choose which of a target's visibility scopes, file sets, or source keyword parameters to edit when adding source files to CMake lists.",
     "cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Choose the best candidate automatically.",
     "cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Present a Quick Pick with options from the selected target source command invocation.",
-    "cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns"
+    "cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns.",
+    "update.code.model.for.list.modifier": "Update code model for automatic list file modifier"
 }
