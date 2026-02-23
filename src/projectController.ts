@@ -558,6 +558,8 @@ export class ProjectController implements vscode.Disposable {
     private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
         const state: boolean = project?.useCMakePresets || false;
         await setContextAndStore('useCMakePresets', state);
+        const useCMakePresetsSetting = project?.workspaceContext.config.useCMakePresets;
+        await setContextAndStore('cmake:addPresetCommandsAvailable', useCMakePresetsSetting !== 'never' && useCMakePresetsSetting !== undefined);
         await this.projectStatus.refresh();
         const statusBar: StatusBar | undefined = getStatusBar();
         if (statusBar) {

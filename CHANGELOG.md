@@ -11,6 +11,7 @@ Features:
 - Add "Set Build and Launch/Debug Target" command that sets both the build target and launch target simultaneously. [#4732](https://github.com/microsoft/vscode-cmake-tools/pull/4732)
 
 Improvements:
+- Make "CMake: Add ... Preset" commands available in the command palette when `cmake.useCMakePresets` is set to `auto`, even before a CMakePresets.json file exists. [#4401](https://github.com/microsoft/vscode-cmake-tools/issues/4401)
 - Improve CMake syntax highlighting with command-scoped keyword rules, expanded variable recognition, and better generator-expression support. Remove obsolete deprecated-keyword entries that caused false positives on user-defined names. [#4709](https://github.com/microsoft/vscode-cmake-tools/issues/4709) [#4508](https://github.com/microsoft/vscode-cmake-tools/issues/4508) [#4613](https://github.com/microsoft/vscode-cmake-tools/issues/4613)
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
 - Use environment variables from `cmake.environment` and `cmake.configureEnvironment` when expanding `$penv{}` macros in CMake Presets `include` paths. [#3578](https://github.com/microsoft/vscode-cmake-tools/issues/3578)
