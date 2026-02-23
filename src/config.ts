@@ -521,6 +521,13 @@ export class ConfigurationReader implements vscode.Disposable {
         }
     }
 
+    get numJobsForPreset(): number | undefined {
+        if (this.isDefaultValue("parallelJobs")) {
+            return undefined;
+        }
+        return this.parallelJobs;
+    }
+
     get numCTestJobs(): number {
         const ctestJobs = this.ctestParallelJobs;
         if (!ctestJobs) {

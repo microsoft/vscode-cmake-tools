@@ -263,4 +263,15 @@ suite('Preset tests', () => {
         expect(idx).to.be.greaterThan(-1);
         expect(args[idx + 1]).to.eq('0');
     });
+
+    test('buildArgs uses fallbackJobs: 0 to pass --parallel 0', () => {
+        const preset: any = {
+            name: 'test',
+            __binaryDir: '/path/to/build'
+        };
+        const args = buildArgs(preset, undefined, undefined, 0);
+        const idx = args.indexOf('--parallel');
+        expect(idx).to.be.greaterThan(-1);
+        expect(args[idx + 1]).to.eq('0');
+    });
 });
