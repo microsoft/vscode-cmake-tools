@@ -13,7 +13,7 @@
 	"edit.filter": "编辑筛选器",
 	"open.file": "打开文件",
 	"references": "引用",
-	"test.tooltip": "Test: {0}",
+	"test.tooltip": "测试: {0}",
 	"static.library": "静态库",
 	"module.library": "模块库",
 	"shared.library": "共享库",
