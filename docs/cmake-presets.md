@@ -251,6 +251,7 @@ The following settings in `settings.json` either duplicate options in `CMakePres
 | `cmake.generator` | `configurePresets.generator` |
 | `cmake.ignoreKitEnv` | Doesn't apply |
 | `cmake.installPrefix` | `configurePresets.cacheVariables.CMAKE_INSTALL_PREFIX` |
+| `cmake.parallelJobs` | `buildPresets.jobs` |
 | `cmake.platform` | `configurePresets.architecture` |
 | `cmake.preferredGenerators` | `configurePresets.generator` |
 | `cmake.setBuildTypeOnMultiConfig` | `configurePresets.cacheVariables.CMAKE_BUILD_TYPE` |
@@ -267,7 +268,6 @@ The following settings can be used temporarily when CMakePresets integration is 
 | `cmake.buildToolsArgs` | `buildPresets.nativeToolOptions` |
 | `cmake.configureArgs` | Various options in `configurePreset` |
 | `cmake.configureEnvironment` | `configurePresets.environment` |
-| `cmake.parallelJobs` | `buildPresets.jobs` |
 | `cmake.testEnvironment` | `testPresets.environment` |
 
 ## Unsupported commands
