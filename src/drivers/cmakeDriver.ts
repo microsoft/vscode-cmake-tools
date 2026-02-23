@@ -848,14 +848,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);
 
+            const installPrefix = this.config.installPrefix;
+            if (installPrefix) {
+                this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
+            }
+
             if (!this.useCMakePresets) {
                 const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
                 this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), opts));
-
-                const installPrefix = this.config.installPrefix;
-                if (installPrefix) {
-                    this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
-                }
             }
         });
     }
@@ -1459,6 +1459,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (!hasExportCompileCommands) {
             const exportCompileCommandsValue = util.cmakeify(exportCompileCommandsFile);
             expandedArgs.push(`-DCMAKE_EXPORT_COMPILE_COMMANDS:${exportCompileCommandsValue.type}=${exportCompileCommandsValue.value}`);
+        }
+        // Only use the installPrefix config if the user didn't
+        // provide one via the preset or configureArgs
+        const hasInstallPrefix = Object.prototype.hasOwnProperty.call(presetCacheVariables, 'CMAKE_INSTALL_PREFIX')
+            || expandedArgs.some(arg => arg.startsWith('-DCMAKE_INSTALL_PREFIX'));
+        if (!hasInstallPrefix && this.installDir) {
+            const installPrefixValue = util.cmakeify(this.installDir);
+            expandedArgs.push(`-DCMAKE_INSTALL_PREFIX:${installPrefixValue.type}=${installPrefixValue.value}`);
         }
         return expandedArgs;
     }
