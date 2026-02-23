@@ -2214,7 +2214,7 @@ export function buildArgs(preset: BuildPreset, tempOverrideArgs?: string[], temp
     const result: string[] = [];
 
     preset.__binaryDir && result.push('--build', preset.__binaryDir);
-    const jobs = preset.jobs ?? fallbackJobs;
+    const jobs = (preset.jobs !== undefined && preset.jobs !== 0) ? preset.jobs : (fallbackJobs ?? preset.jobs);
     if (jobs !== undefined) {
         if (jobs === 0) {
             result.push('-j', '0');

@@ -251,7 +251,7 @@ The following settings in `settings.json` either duplicate options in `CMakePres
 | `cmake.generator` | `configurePresets.generator` |
 | `cmake.ignoreKitEnv` | Doesn't apply |
 | `cmake.installPrefix` | `configurePresets.cacheVariables.CMAKE_INSTALL_PREFIX` |
-| `cmake.parallelJobs` | `buildPresets.jobs`. Used as a fallback when `buildPresets.jobs` is not defined. |
+| `cmake.parallelJobs` | `buildPresets.jobs`. Used as a fallback when `buildPresets.jobs` is `0` or is not defined. |
 | `cmake.platform` | `configurePresets.architecture` |
 | `cmake.preferredGenerators` | `configurePresets.generator` |
 | `cmake.setBuildTypeOnMultiConfig` | `configurePresets.cacheVariables.CMAKE_BUILD_TYPE` |

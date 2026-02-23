@@ -253,16 +253,16 @@ suite('Preset tests', () => {
         expect(args[idx + 1]).to.eq('2');
     });
 
-    test('buildArgs preset jobs: 0 takes precedence over fallbackJobs', () => {
+    test('buildArgs uses fallbackJobs when preset jobs is 0', () => {
         const preset: any = {
             name: 'test',
             __binaryDir: '/path/to/build',
             jobs: 0
         };
         const args = buildArgs(preset, undefined, undefined, 8);
-        const idx = args.indexOf('-j');
+        const idx = args.indexOf('--parallel');
         expect(idx).to.be.greaterThan(-1);
-        expect(args[idx + 1]).to.eq('0');
+        expect(args[idx + 1]).to.eq('8');
     });
 
     test('buildArgs uses fallbackJobs: 0 to pass -j 0', () => {
