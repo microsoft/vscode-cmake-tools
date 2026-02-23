@@ -1,7 +1,7 @@
 import CMakeProject from "@cmt/cmakeProject";
 import * as codeModel from '@cmt/drivers/codeModel';
 import * as vscode from 'vscode';
-import { isFileInsideFolder, lightNormalizePath, platformNormalizePath, splitPath } from "@cmt/util";
+import { isFileInsideFolder, lightNormalizePath, platformNormalizePath, platformNormalizeUri, platformPathEquivalent, quickPick, splitPath } from "@cmt/util";
 import path = require("path");
 import rollbar from "@cmt/rollbar";
 import * as minimatch from 'minimatch';
@@ -357,7 +357,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         let varSourceLists = variableSourceLists(cmakeListsASTs, project, settings);
         varSourceLists.sort(sourceListCompare);
         if (settings.variableSelection === 'askFirstParentDir') {
-            varSourceLists = varSourceLists.filter(sourceList => sameFile(
+            varSourceLists = varSourceLists.filter(sourceList => platformPathEquivalent(
                 sourceList.document.fileName,
                 varSourceLists[0].document.fileName
             ));
@@ -391,7 +391,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         let targets = candidateTargetsForSource(allTargets, newSourceUri);
         targets.sort(targetCompare);
         if (settings.targetSelection === 'askNearestSourceDir') {
-            targets = targets.filter(target => sameFile(
+            targets = targets.filter(target => platformPathEquivalent(
                 target.sourceDirectory as string,
                 targets[0].sourceDirectory as string
             ));
@@ -1975,17 +1975,6 @@ function findEndOfSourceList(args: Token[], index: number) {
     return finalToken.endOffset;
 }
 
-async function quickPick<T>(
-    items: (vscode.QuickPickItem & { payload: T })[],
-    options: vscode.QuickPickOptions
-): Promise<T | null> {
-    const selected = await vscode.window.showQuickPick(items, options);
-    if (!selected) {
-        return null;
-    }
-    return selected.payload;
-}
-
 function freshLineIndent(invocation: CommandInvocation, insertPos: vscode.Position) {
     const currentLine = invocation.document.lineAt(insertPos.line);
     const currentLineIndent =
@@ -2107,14 +2096,6 @@ export function compareSortKeys(aKeys: (number|string)[], bKeys: (number|string)
 
 export function resolveNormalized(base: string, inpath: string) {
     return platformNormalizePath(path.resolve(base, inpath));
-}
-
-export function sameFile(a: string, b: string): boolean {
-    return platformNormalizePath(a) === platformNormalizePath(b);
-}
-
-export function platformNormalizeUri(uri: vscode.Uri): string {
-    return platformNormalizePath(uri.fsPath);
 }
 
 function splitNormalizedPath(p: string): string[] {

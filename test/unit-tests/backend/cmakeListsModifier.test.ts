@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { resolveNormalized, sameFile, compareSortKeys, quoteArgument } from '@cmt/cmakeListsModifier';
-import { platformNormalizePath, splitPath } from '@cmt/util';
+import { resolveNormalized, compareSortKeys, quoteArgument } from '@cmt/cmakeListsModifier';
+import { platformNormalizePath, platformPathEquivalent, splitPath } from '@cmt/util';
 import * as path from 'path';
 
 suite('cmakeListsModifier pure functions', () => {
@@ -115,22 +115,22 @@ suite('cmakeListsModifier pure functions', () => {
         });
     });
 
-    suite('sameFile', () => {
-        test('Identical paths are same file', () => {
-            expect(sameFile('/project/src/main.cpp', '/project/src/main.cpp')).to.be.true;
+    suite('platformPathEquivalent', () => {
+        test('Identical paths are equivalent', () => {
+            expect(platformPathEquivalent('/project/src/main.cpp', '/project/src/main.cpp')).to.be.true;
         });
 
-        test('Different paths are not same file', () => {
-            expect(sameFile('/project/src/a.cpp', '/project/src/b.cpp')).to.be.false;
+        test('Different paths are not equivalent', () => {
+            expect(platformPathEquivalent('/project/src/a.cpp', '/project/src/b.cpp')).to.be.false;
         });
 
         if (process.platform === 'win32') {
             test('Case-insensitive comparison on Windows', () => {
-                expect(sameFile('C:\\Project\\Src\\Main.cpp', 'c:\\project\\src\\main.cpp')).to.be.true;
+                expect(platformPathEquivalent('C:\\Project\\Src\\Main.cpp', 'c:\\project\\src\\main.cpp')).to.be.true;
             });
 
             test('Forward and back slashes treated same on Windows', () => {
-                expect(sameFile('C:/project/src/main.cpp', 'C:\\project\\src\\main.cpp')).to.be.true;
+                expect(platformPathEquivalent('C:/project/src/main.cpp', 'C:\\project\\src\\main.cpp')).to.be.true;
             });
         }
     });
