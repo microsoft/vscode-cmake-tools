@@ -71,3 +71,51 @@
 | 30 | 2/12 | 2/23 | #4520 / PR #4724 | | Success | Copilot fixed garbled characters (Mojibake) in Output panel for UTF-8 build output on non-UTF-8 Windows. When `outputLogEncoding` is `auto`, the extension now validates each output chunk as UTF-8 first before falling back to system code page. Extracted `isValidUtf8()` to `src/encodingUtils.ts`. Added `useAutoEncoding` flag to `ExecutionOptions`. Includes 20 unit tests covering ASCII, CJK UTF-8, GBK rejection, overlong sequences, surrogates, boundary splits, and invalid bytes. 5 files, +206/−5. Strong fix with comprehensive testing. |
 | 31 | 2/13 | 2/18 | #4727 / PR #4728 | | Success | CMakePresets.json discovery failed after selecting CMakeLists.txt in a subdirectory of a workspace. Copilot added `PresetsController.updateSourceDir()` to propagate source directory changes to the `PresetsParser` and reload presets from the new location. Includes unit tests for path resolution with subdirectory `sourceDir`. 4 files, +111/−0. |
 | 32 | 2/13 | 2/18 | #4726 / PR #4729 | | Success | Kit scan ignored `cmake.enableAutomaticKitScan: false` and had N×scan race condition in multi-project workspaces. Copilot extracted decision logic into pure `determineScanForKitsAction()` function with synchronous module-level guard. 10 regression tests added. 3 files, +153/−4. High quality — pure function extraction for testability is excellent engineering. |
+
+---
+
+## Key Findings & Analysis
+
+### What the Agent Did Well
+
+- **Root cause analysis is consistently strong.** Across all 32 PRs, Copilot correctly identified the root cause in the vast majority of cases — even when it failed to deliver a working fix, the diagnosis was often reusable (e.g., #4669's preset watcher analysis informed the manual fix in #4670, and #4677's grammar registration analysis informed PR #4697). In the merged PRs, the root cause was correct 100% of the time.
+
+- **Pattern replication is a core strength.** When an established pattern already exists in the codebase, Copilot replicates it accurately. The strongest merged PRs all followed existing conventions: PR #4706 (installPrefix) mirrored the `CMAKE_EXPORT_COMPILE_COMMANDS` pattern; PR #4712 (preset mode switch) followed the existing event subscription pattern; PR #4681 (compileFile presets) mirrored kit behavior; PR #4729 (kit scan) extracted a pure function following the codebase's testability pattern. The agent excels at "do the same thing that already works, but for this new case."
+
+- **Small, defensive, single-concern fixes have the highest success rate.** PRs under 50 lines changed have a ~75% merge rate. The clearest successes (#4659, #4660, #4706, #4712, #4719) are all minimal, targeted changes that fix one thing without broad refactoring. The agent delivers the most value when the fix is scoped to a single function or conditional.
+
+- **Unit test generation improves with explicit, simplified prompts.** When explicitly asked to generate tests as a scoped task, Copilot delivered high-quality test suites — PR #4724 (20 encoding tests), PR #4729 (10 kit scan tests), PR #4728 (preset discovery tests), PR #4672 (debug tracker tests). Prompt engineering significantly impacts test output quality.
+
+- **Changelog discipline is reliable.** In the majority of PRs, Copilot created a properly formatted CHANGELOG.md entry without prompting. This is a notable improvement — early PRs occasionally missed changelogs, but later batches were consistent.
+
+### Where the Agent Struggled
+
+- **Iterative refinement degrades quality.** The clearest anti-pattern is #4669 (preset watcher): across 4 sessions, each iteration introduced more problems than it solved. Additional context and feedback led to regression rather than improvement. The "band-aid fix" pattern suggests the agent prioritizes quick solutions over root cause analysis when pressed for iterations. **Recommendation:** If the first attempt fails, prefer a fresh session with clean context over building on a failed attempt.
+
+- **No awareness of concurrent community work.** PR #4678 diverged from a contributor's PR that used established codebase patterns. PR #4705 duplicated a fix already merged in #4659. The agent does not check for existing open PRs or recently merged fixes before starting work. **Recommendation:** Before assigning Copilot, verify no community PR or recent merge already addresses the same issue.
+
+- **Cross-platform validation is a blind spot.** PR #4663 (regex for test output) and PR #4677 (grammar registration) both failed due to Windows-specific path normalization or cross-platform behavior differences that the agent couldn't validate in its Linux sandbox. **Recommendation:** Treat any PR touching file paths, URIs, or platform-specific APIs as requiring mandatory manual cross-platform testing.
+
+- **Large architectural changes lack test coverage.** PR #4696 (cache editor rewrite, +552 lines) is architecturally sound but ships with zero unit tests. The agent can execute large refactors, but does not proactively identify the need for proportional test coverage on significant changes. **Recommendation:** For PRs over ~100 lines, explicitly prompt for unit tests as a separate follow-up task.
+
+- **Stalled/zero-code PRs indicate scope limits.** PRs #4704, #4707, #4686, and #4682 were opened with placeholder descriptions but never received code. This pattern suggests the agent gets stuck during investigation on issues requiring deep architectural understanding (multi-root workspaces, VS toolset version compatibility). **Recommendation:** Assign these as paired sessions where a human provides initial direction on the approach.
+
+### Model Performance Comparison
+
+| Model | Total PRs | Merged | Positive (Success + Potential) | True Failures | Failure Rate |
+|-------|-----------|--------|-------------------------------|---------------|-------------|
+| **Opus 4.6** | 7 | 2 | 6 (86%) | **0** | **0%** |
+| Opus 4.5 | 3 | 2 | 3 (100%) | 0 | 0% |
+| Sonnet 4.5 | 8 | 2 | 4 (50%) | 3 | **37.5%** |
+| GPT-5.2-Codex | 1 | 0 | 0 (0%) | 1 | 100% |
+| Unknown (later batch) | 13 | 6 | 8 (62%) | 3 | 23% |
+
+**Key observation: Opus 4.6 has zero true failures across 7 PRs.** Its one closed PR (#4705) was correctly diagnosed but redundant — closed because the fix was already merged, not because the solution was wrong. Opus 4.6 also produced the strongest individual fixes in the batch: PR #4708 (target resolution with unit tests), PR #4706 (preset installPrefix with pattern matching), and the still-open PR #4696 (cache editor architectural rewrite).
+
+**This improved performance from Opus 4.6 is the primary reason for increasing its allocation in later batches.** Compared to Sonnet 4.5 (37.5% failure rate, including the compounding-errors problem in #4669), Opus 4.6 demonstrated:
+- Deeper root cause analysis (PR #4708's target map mismatch analysis is the strongest in the entire set)
+- Better pattern recognition and reuse (PR #4706 mirrors `CMAKE_EXPORT_COMPILE_COMMANDS` handling exactly)
+- More complete implementations (PR #4702's temp-file approach reuses `visualStudio.ts` and `kit.ts` patterns)
+- Zero compounding-error iterations — every Opus 4.6 PR was either correct or correctly diagnosed but unimplemented
+
+The later "unknown model" batch (PRs #27–32, all merged) reflects the shift toward Opus 4.6 and shows a 100% merge rate with consistently high-quality fixes including unit tests — confirming that the model upgrade delivered measurable quality improvement.
