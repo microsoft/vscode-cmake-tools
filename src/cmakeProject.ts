@@ -1882,6 +1882,13 @@ export class CMakeProject {
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
+        // After saving files, explicitly refresh presets from disk so that any
+        // just-saved changes to preset files (including included files) are picked
+        // up before configure runs.  Without this, the asynchronous file-watcher
+        // may not have re-expanded the presets yet (see #4502).
+        if (this.useCMakePresets) {
+            await this.presetsController.reapplyPresets();
+        }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
                 await vscode.window.showErrorMessage(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
