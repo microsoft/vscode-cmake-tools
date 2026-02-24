@@ -171,6 +171,10 @@ export namespace CodeModelKind {
         name: string;
     }
 
+    export interface DebuggerInfo {
+        workingDirectory?: string;
+    }
+
     export interface TargetObject {
         name: string;
         type: string;
@@ -183,6 +187,7 @@ export namespace CodeModelKind {
         folder?: Folder;
         isGeneratorProvided?: boolean;
         install?: InstallInfo;
+        debugger?: DebuggerInfo;
     }
 }
 
@@ -427,7 +432,8 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
         targetType: targetObject.type,
         folder: targetObject.folder,
         type: 'rich' as 'rich',
-        installPaths: installPaths
+        installPaths: installPaths,
+        debuggerWorkingDirectory: targetObject.debugger?.workingDirectory
     } as RichTarget;
 }
 

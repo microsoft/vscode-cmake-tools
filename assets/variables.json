@@ -535,6 +535,10 @@
     "name": "CMAKE_DEBUG_TARGET_PROPERTIES",
     "description": "Enables tracing output for target properties."
   },
+  "CMAKE_DEBUGGER_WORKING_DIRECTORY": {
+    "name": "CMAKE_DEBUGGER_WORKING_DIRECTORY",
+    "description": "This variable is used to initialize the DEBUGGER_WORKING_DIRECTORY property on each target as it is created."
+  },
   "CMAKE_DEFAULT_BUILD_TYPE": {
     "name": "CMAKE_DEFAULT_BUILD_TYPE",
     "description": "Specifies the configuration to use by default in a build.ninja file in the Ninja Multi-Config generator. If this variable is specified, build.ninja uses build rules from build-<Config>.ninja by default. All custom commands are executed with this configuration. If the variable is not specified, the first item from CMAKE_CONFIGURATION_TYPES is used instead."
@@ -3902,6 +3906,10 @@
   "DEBUG_POSTFIX": {
     "name": "DEBUG_POSTFIX",
     "description": "See target property <CONFIG>_POSTFIX."
+  },
+  "DEBUGGER_WORKING_DIRECTORY": {
+    "name": "DEBUGGER_WORKING_DIRECTORY",
+    "description": "Sets the working directory for the debugger when launching executables. This property is honored by IDEs and tools that read the CMake file API. It is initialized by the value of the variable CMAKE_DEBUGGER_WORKING_DIRECTORY if it is set when a target is created."
   },
   "DEFINE_SYMBOL": {
     "name": "DEFINE_SYMBOL",
