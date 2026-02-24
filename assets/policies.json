@@ -1,0 +1,907 @@
+{
+  "CMP0000": {
+    "name": "CMP0000",
+    "version": "2.6.0",
+    "description": "A minimum required CMake version must be specified."
+  },
+  "CMP0001": {
+    "name": "CMP0001",
+    "version": "2.6.0",
+    "description": "CMAKE_BACKWARDS_COMPATIBILITY should no longer be used."
+  },
+  "CMP0002": {
+    "name": "CMP0002",
+    "version": "2.6.0",
+    "description": "Logical target names must be globally unique."
+  },
+  "CMP0003": {
+    "name": "CMP0003",
+    "version": "2.6.0",
+    "description": "Libraries linked via full path no longer produce linker search paths."
+  },
+  "CMP0004": {
+    "name": "CMP0004",
+    "version": "2.6.0",
+    "description": "Libraries linked may not have leading or trailing whitespace."
+  },
+  "CMP0005": {
+    "name": "CMP0005",
+    "version": "2.6.0",
+    "description": "Preprocessor definition values are now escaped automatically."
+  },
+  "CMP0006": {
+    "name": "CMP0006",
+    "version": "2.6.0",
+    "description": "Installing MACOSX_BUNDLE targets requires a BUNDLE DESTINATION."
+  },
+  "CMP0007": {
+    "name": "CMP0007",
+    "version": "2.6.0",
+    "description": "list command no longer ignores empty elements."
+  },
+  "CMP0008": {
+    "name": "CMP0008",
+    "version": "2.6.1",
+    "description": "Libraries linked by full-path must have a valid library file name."
+  },
+  "CMP0009": {
+    "name": "CMP0009",
+    "version": "2.6.2",
+    "description": "FILE GLOB_RECURSE calls should not follow symlinks by default."
+  },
+  "CMP0010": {
+    "name": "CMP0010",
+    "version": "2.6.3",
+    "description": "Bad variable reference syntax is an error."
+  },
+  "CMP0011": {
+    "name": "CMP0011",
+    "version": "2.6.3",
+    "description": "Included scripts do automatic cmake_policy() PUSH and POP."
+  },
+  "CMP0012": {
+    "name": "CMP0012",
+    "version": "2.8.0",
+    "description": "if() recognizes numbers and boolean constants."
+  },
+  "CMP0013": {
+    "name": "CMP0013",
+    "version": "2.8.0",
+    "description": "Duplicate binary directories are not allowed."
+  },
+  "CMP0014": {
+    "name": "CMP0014",
+    "version": "2.8.0",
+    "description": "Input directories must have CMakeLists.txt."
+  },
+  "CMP0015": {
+    "name": "CMP0015",
+    "version": "2.8.1",
+    "description": "link_directories() treats paths relative to the source dir."
+  },
+  "CMP0016": {
+    "name": "CMP0016",
+    "version": "2.8.3",
+    "description": "target_link_libraries() reports error if its only argument"
+  },
+  "CMP0017": {
+    "name": "CMP0017",
+    "version": "2.8.4",
+    "description": "Prefer files from the CMake module directory when including from there."
+  },
+  "CMP0018": {
+    "name": "CMP0018",
+    "version": "2.8.9",
+    "description": "Ignore CMAKE_SHARED_LIBRARY_<Lang>_FLAGS variable."
+  },
+  "CMP0019": {
+    "name": "CMP0019",
+    "version": "2.8.11",
+    "description": "Do not re-expand variables in include and link information."
+  },
+  "CMP0020": {
+    "name": "CMP0020",
+    "version": "2.8.11",
+    "description": "Automatically link Qt executables to qtmain target on Windows."
+  },
+  "CMP0021": {
+    "name": "CMP0021",
+    "version": "2.8.12",
+    "description": "Fatal error on relative paths in INCLUDE_DIRECTORIES target"
+  },
+  "CMP0022": {
+    "name": "CMP0022",
+    "version": "2.8.12",
+    "description": "INTERFACE_LINK_LIBRARIES defines the link interface."
+  },
+  "CMP0023": {
+    "name": "CMP0023",
+    "version": "2.8.12",
+    "description": "Plain and keyword target_link_libraries() signatures cannot be mixed."
+  },
+  "CMP0024": {
+    "name": "CMP0024",
+    "version": "3.0",
+    "description": "Disallow include export result."
+  },
+  "CMP0025": {
+    "name": "CMP0025",
+    "version": "3.0",
+    "description": "Compiler id for Apple Clang is now AppleClang."
+  },
+  "CMP0026": {
+    "name": "CMP0026",
+    "version": "3.0",
+    "description": "Disallow use of the LOCATION property for build targets."
+  },
+  "CMP0027": {
+    "name": "CMP0027",
+    "version": "3.0",
+    "description": "Conditionally linked imported targets with missing include directories."
+  },
+  "CMP0028": {
+    "name": "CMP0028",
+    "version": "3.0",
+    "description": "Double colon in target name means ALIAS or IMPORTED target."
+  },
+  "CMP0029": {
+    "name": "CMP0029",
+    "version": "3.0",
+    "description": "The subdir_depends() command should not be called."
+  },
+  "CMP0030": {
+    "name": "CMP0030",
+    "version": "3.0",
+    "description": "The use_mangled_mesa() command should not be called."
+  },
+  "CMP0031": {
+    "name": "CMP0031",
+    "version": "3.0",
+    "description": "The load_command() command should not be called."
+  },
+  "CMP0032": {
+    "name": "CMP0032",
+    "version": "3.0",
+    "description": "The output_required_files() command should not be called."
+  },
+  "CMP0033": {
+    "name": "CMP0033",
+    "version": "3.0",
+    "description": "The export_library_dependencies() command should not be called."
+  },
+  "CMP0034": {
+    "name": "CMP0034",
+    "version": "3.0",
+    "description": "The utility_source() command should not be called."
+  },
+  "CMP0035": {
+    "name": "CMP0035",
+    "version": "3.0",
+    "description": "The variable_requires() command should not be called."
+  },
+  "CMP0036": {
+    "name": "CMP0036",
+    "version": "3.0",
+    "description": "The build_name() command should not be called."
+  },
+  "CMP0037": {
+    "name": "CMP0037",
+    "version": "3.0",
+    "description": "Target names should not be reserved and should match a validity pattern."
+  },
+  "CMP0038": {
+    "name": "CMP0038",
+    "version": "3.0",
+    "description": "Targets may not link directly to themselves."
+  },
+  "CMP0039": {
+    "name": "CMP0039",
+    "version": "3.0",
+    "description": "Utility targets may not have link dependencies."
+  },
+  "CMP0040": {
+    "name": "CMP0040",
+    "version": "3.0",
+    "description": "The target in the TARGET signature of add_custom_command()"
+  },
+  "CMP0041": {
+    "name": "CMP0041",
+    "version": "3.0",
+    "description": "Error on relative include with generator expression."
+  },
+  "CMP0042": {
+    "name": "CMP0042",
+    "version": "3.0",
+    "description": "MACOSX_RPATH is enabled by default."
+  },
+  "CMP0043": {
+    "name": "CMP0043",
+    "version": "3.0",
+    "description": "Ignore COMPILE_DEFINITIONS_<Config> properties"
+  },
+  "CMP0044": {
+    "name": "CMP0044",
+    "version": "3.0",
+    "description": "Case sensitive <LANG>_COMPILER_ID generator expressions"
+  },
+  "CMP0045": {
+    "name": "CMP0045",
+    "version": "3.0",
+    "description": "Error on non-existent target in get_target_property."
+  },
+  "CMP0046": {
+    "name": "CMP0046",
+    "version": "3.0",
+    "description": "Error on non-existent dependency in add_dependencies."
+  },
+  "CMP0047": {
+    "name": "CMP0047",
+    "version": "3.0",
+    "description": "Use QCC compiler id for the qcc drivers on QNX."
+  },
+  "CMP0048": {
+    "name": "CMP0048",
+    "version": "3.0",
+    "description": "The project() command manages VERSION variables."
+  },
+  "CMP0049": {
+    "name": "CMP0049",
+    "version": "3.0",
+    "description": "Do not expand variables in target source entries."
+  },
+  "CMP0050": {
+    "name": "CMP0050",
+    "version": "3.0",
+    "description": "Disallow add_custom_command SOURCE signatures."
+  },
+  "CMP0051": {
+    "name": "CMP0051",
+    "version": "3.1",
+    "description": "List TARGET_OBJECTS in SOURCES target property."
+  },
+  "CMP0052": {
+    "name": "CMP0052",
+    "version": "3.1",
+    "description": "Reject source and build dirs in installed"
+  },
+  "CMP0053": {
+    "name": "CMP0053",
+    "version": "3.1",
+    "description": "Simplify variable reference and escape sequence evaluation."
+  },
+  "CMP0054": {
+    "name": "CMP0054",
+    "version": "3.1",
+    "description": "Only interpret if() arguments as variables or keywords when unquoted."
+  },
+  "CMP0055": {
+    "name": "CMP0055",
+    "version": "3.2",
+    "description": "Strict checking for the break() command."
+  },
+  "CMP0056": {
+    "name": "CMP0056",
+    "version": "3.2",
+    "description": "Honor link flags in try_compile() source-file signature."
+  },
+  "CMP0057": {
+    "name": "CMP0057",
+    "version": "3.3",
+    "description": "Support new if() IN_LIST operator."
+  },
+  "CMP0058": {
+    "name": "CMP0058",
+    "version": "3.3",
+    "description": "Ninja requires custom command byproducts to be explicit."
+  },
+  "CMP0059": {
+    "name": "CMP0059",
+    "version": "3.3",
+    "description": "Do not treat DEFINITIONS as a built-in directory property."
+  },
+  "CMP0060": {
+    "name": "CMP0060",
+    "version": "3.3",
+    "description": "Link libraries by full path even in implicit directories."
+  },
+  "CMP0061": {
+    "name": "CMP0061",
+    "version": "3.3",
+    "description": "CTest does not by default tell make to ignore errors (-i)."
+  },
+  "CMP0062": {
+    "name": "CMP0062",
+    "version": "3.3",
+    "description": "Disallow install() of export() result."
+  },
+  "CMP0063": {
+    "name": "CMP0063",
+    "version": "3.3",
+    "description": "Honor visibility properties for all target types."
+  },
+  "CMP0064": {
+    "name": "CMP0064",
+    "version": "3.4",
+    "description": "Recognize TEST as a operator for the if() command."
+  },
+  "CMP0065": {
+    "name": "CMP0065",
+    "version": "3.4",
+    "description": "Do not add flags to export symbols from executables without"
+  },
+  "CMP0066": {
+    "name": "CMP0066",
+    "version": "3.7",
+    "description": "Honor per-config flags in try_compile() source-file signature."
+  },
+  "CMP0067": {
+    "name": "CMP0067",
+    "version": "3.8",
+    "description": "Honor language standard in try_compile() source-file signature."
+  },
+  "CMP0068": {
+    "name": "CMP0068",
+    "version": "3.9",
+    "description": "RPATH settings on macOS do not affect install_name."
+  },
+  "CMP0069": {
+    "name": "CMP0069",
+    "version": "3.9",
+    "description": "INTERPROCEDURAL_OPTIMIZATION is enforced when enabled."
+  },
+  "CMP0070": {
+    "name": "CMP0070",
+    "version": "3.10",
+    "description": "Define file(GENERATE) behavior for relative paths."
+  },
+  "CMP0071": {
+    "name": "CMP0071",
+    "version": "3.10",
+    "description": "Let AUTOMOC and AUTOUIC process"
+  },
+  "CMP0072": {
+    "name": "CMP0072",
+    "version": "3.11",
+    "description": "FindOpenGL prefers GLVND by default when available."
+  },
+  "CMP0073": {
+    "name": "CMP0073",
+    "version": "3.12",
+    "description": "Do not produce legacy _LIB_DEPENDS cache entries."
+  },
+  "CMP0074": {
+    "name": "CMP0074",
+    "version": "3.12",
+    "description": "find_package() uses <PackageName>_ROOT variables."
+  },
+  "CMP0075": {
+    "name": "CMP0075",
+    "version": "3.12",
+    "description": "Include file check macros honor CMAKE_REQUIRED_LIBRARIES."
+  },
+  "CMP0076": {
+    "name": "CMP0076",
+    "version": "3.13",
+    "description": "The target_sources() command converts relative paths to absolute."
+  },
+  "CMP0077": {
+    "name": "CMP0077",
+    "version": "3.13",
+    "description": "option() honors normal variables."
+  },
+  "CMP0078": {
+    "name": "CMP0078",
+    "version": "3.13",
+    "description": "UseSWIG generates standard target names."
+  },
+  "CMP0079": {
+    "name": "CMP0079",
+    "version": "3.13",
+    "description": "target_link_libraries() allows use with targets in other directories."
+  },
+  "CMP0080": {
+    "name": "CMP0080",
+    "version": "3.13",
+    "description": "BundleUtilities cannot be included at configure time."
+  },
+  "CMP0081": {
+    "name": "CMP0081",
+    "version": "3.13",
+    "description": "Relative paths not allowed in LINK_DIRECTORIES target property."
+  },
+  "CMP0082": {
+    "name": "CMP0082",
+    "version": "3.14",
+    "description": "Install rules from add_subdirectory() calls are interleaved with"
+  },
+  "CMP0083": {
+    "name": "CMP0083",
+    "version": "3.14",
+    "description": "To control generation of Position Independent Executable (PIE) or not, some"
+  },
+  "CMP0084": {
+    "name": "CMP0084",
+    "version": "3.14",
+    "description": "The FindQt module does not exist for find_package()."
+  },
+  "CMP0085": {
+    "name": "CMP0085",
+    "version": "3.14",
+    "description": "$<IN_LIST:...> handles empty list items."
+  },
+  "CMP0086": {
+    "name": "CMP0086",
+    "version": "3.14",
+    "description": "UseSWIG honors SWIG_MODULE_NAME via -module flag."
+  },
+  "CMP0087": {
+    "name": "CMP0087",
+    "version": "3.14",
+    "description": "install(CODE) and install(SCRIPT) support generator"
+  },
+  "CMP0088": {
+    "name": "CMP0088",
+    "version": "3.14",
+    "description": "FindBISON runs bison in CMAKE_CURRENT_BINARY_DIR"
+  },
+  "CMP0089": {
+    "name": "CMP0089",
+    "version": "3.15",
+    "description": "Compiler id for IBM Clang-based XL compilers is now XLClang."
+  },
+  "CMP0090": {
+    "name": "CMP0090",
+    "version": "3.15",
+    "description": "export(PACKAGE) does not populate package registry by default."
+  },
+  "CMP0091": {
+    "name": "CMP0091",
+    "version": "3.15",
+    "description": "MSVC runtime library flags are selected by an abstraction."
+  },
+  "CMP0092": {
+    "name": "CMP0092",
+    "version": "3.15",
+    "description": "MSVC warning flags are not in CMAKE_<LANG>_FLAGS by default."
+  },
+  "CMP0093": {
+    "name": "CMP0093",
+    "version": "3.15",
+    "description": "FindBoost reports Boost_VERSION in x.y.z format."
+  },
+  "CMP0094": {
+    "name": "CMP0094",
+    "version": "3.15",
+    "description": "Modules FindPython3, FindPython2 and FindPython"
+  },
+  "CMP0095": {
+    "name": "CMP0095",
+    "version": "3.16",
+    "description": "RPATH entries are properly escaped in the intermediary CMake install script."
+  },
+  "CMP0096": {
+    "name": "CMP0096",
+    "version": "3.16",
+    "description": "The project() command preserves leading zeros in version components."
+  },
+  "CMP0097": {
+    "name": "CMP0097",
+    "version": "3.16",
+    "description": "ExternalProject_Add() with GIT_SUBMODULES \"\" initializes no"
+  },
+  "CMP0098": {
+    "name": "CMP0098",
+    "version": "3.17",
+    "description": "FindFLEX runs flex in directory"
+  },
+  "CMP0099": {
+    "name": "CMP0099",
+    "version": "3.17",
+    "description": "Link properties are transitive over private dependencies of static libraries."
+  },
+  "CMP0100": {
+    "name": "CMP0100",
+    "version": "3.17",
+    "description": "Let AUTOMOC and AUTOUIC process"
+  },
+  "CMP0101": {
+    "name": "CMP0101",
+    "version": "3.17",
+    "description": "target_compile_options() now always honors the BEFORE keyword."
+  },
+  "CMP0102": {
+    "name": "CMP0102",
+    "version": "3.17",
+    "description": "The mark_as_advanced() command no longer creates a cache entry if one"
+  },
+  "CMP0103": {
+    "name": "CMP0103",
+    "version": "3.18",
+    "description": "Multiple calls to export() command with same FILE without"
+  },
+  "CMP0104": {
+    "name": "CMP0104",
+    "version": "3.18",
+    "description": "Initialize CMAKE_CUDA_ARCHITECTURES when"
+  },
+  "CMP0105": {
+    "name": "CMP0105",
+    "version": "3.18",
+    "description": "LINK_OPTIONS and INTERFACE_LINK_OPTIONS target"
+  },
+  "CMP0106": {
+    "name": "CMP0106",
+    "version": "3.18",
+    "description": "The Documentation module is removed."
+  },
+  "CMP0107": {
+    "name": "CMP0107",
+    "version": "3.18",
+    "description": "It is not allowed to create an ALIAS target with the same name as an"
+  },
+  "CMP0108": {
+    "name": "CMP0108",
+    "version": "3.18",
+    "description": "A target is not allowed to link to itself even through an ALIAS target."
+  },
+  "CMP0109": {
+    "name": "CMP0109",
+    "version": "3.19",
+    "description": "find_program() requires permission to execute but not to read."
+  },
+  "CMP0110": {
+    "name": "CMP0110",
+    "version": "3.19",
+    "description": "add_test() supports arbitrary characters in test names."
+  },
+  "CMP0111": {
+    "name": "CMP0111",
+    "version": "3.19",
+    "description": "An imported target missing its location property fails during generation."
+  },
+  "CMP0112": {
+    "name": "CMP0112",
+    "version": "3.19",
+    "description": "Target file component generator expressions do not add target dependencies."
+  },
+  "CMP0113": {
+    "name": "CMP0113",
+    "version": "3.19",
+    "description": "Makefile Generators do not repeat custom commands from target"
+  },
+  "CMP0114": {
+    "name": "CMP0114",
+    "version": "3.19",
+    "description": "ExternalProject step targets fully adopt their steps."
+  },
+  "CMP0115": {
+    "name": "CMP0115",
+    "version": "3.20",
+    "description": "Source file extensions must be explicit."
+  },
+  "CMP0116": {
+    "name": "CMP0116",
+    "version": "3.20",
+    "description": "Ninja generators transform DEPFILE s from add_custom_command()."
+  },
+  "CMP0117": {
+    "name": "CMP0117",
+    "version": "3.20",
+    "description": "MSVC RTTI flag /GR is not added to"
+  },
+  "CMP0118": {
+    "name": "CMP0118",
+    "version": "3.20",
+    "description": "GENERATED sources may be used across directories without manual marking."
+  },
+  "CMP0119": {
+    "name": "CMP0119",
+    "version": "3.20",
+    "description": "LANGUAGE source file property explicitly compiles as specified"
+  },
+  "CMP0120": {
+    "name": "CMP0120",
+    "version": "3.20",
+    "description": "The WriteCompilerDetectionHeader module is removed."
+  },
+  "CMP0121": {
+    "name": "CMP0121",
+    "version": "3.21",
+    "description": "The list() command now detects invalid indices."
+  },
+  "CMP0122": {
+    "name": "CMP0122",
+    "version": "3.21",
+    "description": "UseSWIG use library name conventions for CSharp language."
+  },
+  "CMP0123": {
+    "name": "CMP0123",
+    "version": "3.21",
+    "description": "ARMClang cpu/arch compile and link flags must be set explicitly."
+  },
+  "CMP0124": {
+    "name": "CMP0124",
+    "version": "3.21",
+    "description": "foreach() loop variables are only available in the loop scope."
+  },
+  "CMP0125": {
+    "name": "CMP0125",
+    "version": "3.21",
+    "description": "The find_file(), find_path(), find_library() and"
+  },
+  "CMP0126": {
+    "name": "CMP0126",
+    "version": "3.21",
+    "description": "When this policy is set to NEW, the set(CACHE) command does not"
+  },
+  "CMP0127": {
+    "name": "CMP0127",
+    "version": "3.22",
+    "description": "cmake_dependent_option() supports full Condition Syntax."
+  },
+  "CMP0128": {
+    "name": "CMP0128",
+    "version": "3.22",
+    "description": "When this policy is set to NEW:"
+  },
+  "CMP0129": {
+    "name": "CMP0129",
+    "version": "3.23",
+    "description": "Compiler id for MCST LCC compilers is now LCC, not GNU."
+  },
+  "CMP0130": {
+    "name": "CMP0130",
+    "version": "3.24",
+    "description": "while() diagnoses condition evaluation errors."
+  },
+  "CMP0131": {
+    "name": "CMP0131",
+    "version": "3.24",
+    "description": "LINK_LIBRARIES supports the $<LINK_ONLY:...>"
+  },
+  "CMP0132": {
+    "name": "CMP0132",
+    "version": "3.24",
+    "description": "Do not set compiler environment variables on first run."
+  },
+  "CMP0133": {
+    "name": "CMP0133",
+    "version": "3.24",
+    "description": "The CPack module disables SLA by default in the"
+  },
+  "CMP0134": {
+    "name": "CMP0134",
+    "version": "3.24",
+    "description": "The default registry view is TARGET for the find_file(),"
+  },
+  "CMP0135": {
+    "name": "CMP0135",
+    "version": "3.24",
+    "description": "When using the URL download method with the ExternalProject_Add()"
+  },
+  "CMP0136": {
+    "name": "CMP0136",
+    "version": "3.24",
+    "description": "Watcom runtime library flags are selected by an abstraction."
+  },
+  "CMP0137": {
+    "name": "CMP0137",
+    "version": "3.24",
+    "description": "try_compile() passes platform variables in project mode."
+  },
+  "CMP0138": {
+    "name": "CMP0138",
+    "version": "3.24",
+    "description": "CheckIPOSupported uses flags from calling project."
+  },
+  "CMP0139": {
+    "name": "CMP0139",
+    "version": "3.24",
+    "description": "The if() command supports path comparisons using PATH_EQUAL"
+  },
+  "CMP0140": {
+    "name": "CMP0140",
+    "version": "3.25",
+    "description": "The return() command checks its parameters."
+  },
+  "CMP0141": {
+    "name": "CMP0141",
+    "version": "3.25",
+    "description": "MSVC debug information format flags are selected by an abstraction."
+  },
+  "CMP0142": {
+    "name": "CMP0142",
+    "version": "3.25",
+    "description": "The Xcode generator does not append per-config suffixes to"
+  },
+  "CMP0143": {
+    "name": "CMP0143",
+    "version": "3.26",
+    "description": "USE_FOLDERS global property is treated as ON by default."
+  },
+  "CMP0144": {
+    "name": "CMP0144",
+    "version": "3.27",
+    "description": "find_package() uses upper-case <PACKAGENAME>_ROOT variables."
+  },
+  "CMP0145": {
+    "name": "CMP0145",
+    "version": "3.27",
+    "description": "The Dart and FindDart modules are removed."
+  },
+  "CMP0146": {
+    "name": "CMP0146",
+    "version": "3.27",
+    "description": "The FindCUDA module is removed."
+  },
+  "CMP0147": {
+    "name": "CMP0147",
+    "version": "3.27",
+    "description": "Visual Studio Generators build custom commands in parallel."
+  },
+  "CMP0148": {
+    "name": "CMP0148",
+    "version": "3.27",
+    "description": "The FindPythonInterp and FindPythonLibs modules are removed."
+  },
+  "CMP0149": {
+    "name": "CMP0149",
+    "version": "3.27",
+    "description": "Visual Studio Generators select latest Windows SDK by default."
+  },
+  "CMP0150": {
+    "name": "CMP0150",
+    "version": "3.27",
+    "description": "ExternalProject_Add() and FetchContent_Declare() commands"
+  },
+  "CMP0151": {
+    "name": "CMP0151",
+    "version": "3.27",
+    "description": "AUTOMOC include directory is a system include directory by default."
+  },
+  "CMP0152": {
+    "name": "CMP0152",
+    "version": "3.28",
+    "description": "file(REAL_PATH) resolves symlinks before collapsing ../ components."
+  },
+  "CMP0153": {
+    "name": "CMP0153",
+    "version": "3.28",
+    "description": "The exec_program() command should not be called."
+  },
+  "CMP0154": {
+    "name": "CMP0154",
+    "version": "3.28",
+    "description": "Generated files are private by default in targets using file sets."
+  },
+  "CMP0155": {
+    "name": "CMP0155",
+    "version": "3.28",
+    "description": "C++ sources in targets with at least C++20 are scanned for imports"
+  },
+  "CMP0156": {
+    "name": "CMP0156",
+    "version": "3.29",
+    "description": "De-duplicate libraries on link lines based on linker capabilities."
+  },
+  "CMP0157": {
+    "name": "CMP0157",
+    "version": "3.29",
+    "description": "Swift compilation mode is selected by an abstraction."
+  },
+  "CMP0158": {
+    "name": "CMP0158",
+    "version": "3.29",
+    "description": "add_test() honors CMAKE_CROSSCOMPILING_EMULATOR only"
+  },
+  "CMP0159": {
+    "name": "CMP0159",
+    "version": "3.29",
+    "description": "file(STRINGS) with REGEX updates CMAKE_MATCH_<n>."
+  },
+  "CMP0160": {
+    "name": "CMP0160",
+    "version": "3.29",
+    "description": "More read-only target properties now error when trying to set them."
+  },
+  "CMP0161": {
+    "name": "CMP0161",
+    "version": "3.29",
+    "description": "The CPACK_PRODUCTBUILD_DOMAINS variable defaults to true."
+  },
+  "CMP0162": {
+    "name": "CMP0162",
+    "version": "3.30",
+    "description": "Visual Studio Generators add UseDebugLibraries indicators by default."
+  },
+  "CMP0163": {
+    "name": "CMP0163",
+    "version": "3.30",
+    "description": "The GENERATED source file property is now visible in all directories."
+  },
+  "CMP0164": {
+    "name": "CMP0164",
+    "version": "3.30",
+    "description": "add_library() rejects SHARED libraries when not supported by"
+  },
+  "CMP0165": {
+    "name": "CMP0165",
+    "version": "3.30",
+    "description": "enable_language() must not be called before project()."
+  },
+  "CMP0166": {
+    "name": "CMP0166",
+    "version": "3.30",
+    "description": "TARGET_PROPERTY evaluates link properties transitively over private"
+  },
+  "CMP0167": {
+    "name": "CMP0167",
+    "version": "3.30",
+    "description": "The FindBoost module is removed."
+  },
+  "CMP0168": {
+    "name": "CMP0168",
+    "version": "3.30",
+    "description": "The FetchContent module implements steps directly instead of through"
+  },
+  "CMP0169": {
+    "name": "CMP0169",
+    "version": "3.30",
+    "description": "Calling FetchContent_Populate() with a single argument (the name of"
+  },
+  "CMP0170": {
+    "name": "CMP0170",
+    "version": "3.30",
+    "description": "When FETCHCONTENT_FULLY_DISCONNECTED is set to true,"
+  },
+  "CMP0171": {
+    "name": "CMP0171",
+    "version": "3.31",
+    "description": "codegen is a reserved target name."
+  },
+  "CMP0172": {
+    "name": "CMP0172",
+    "version": "3.31",
+    "description": "The CPack module enables per-machine installation by default"
+  },
+  "CMP0173": {
+    "name": "CMP0173",
+    "version": "3.31",
+    "description": "The CMakeFindFrameworks module is removed."
+  },
+  "CMP0174": {
+    "name": "CMP0174",
+    "version": "3.31",
+    "description": "cmake_parse_arguments(PARSE_ARGV) defines a variable for an empty"
+  },
+  "CMP0175": {
+    "name": "CMP0175",
+    "version": "3.31",
+    "description": "add_custom_command() rejects invalid arguments."
+  },
+  "CMP0176": {
+    "name": "CMP0176",
+    "version": "3.31",
+    "description": "execute_process() ENCODING is UTF-8 by default."
+  },
+  "CMP0177": {
+    "name": "CMP0177",
+    "version": "3.31",
+    "description": "install() DESTINATION paths are normalized."
+  },
+  "CMP0178": {
+    "name": "CMP0178",
+    "version": "3.31",
+    "description": "Test command lines preserve empty arguments."
+  },
+  "CMP0179": {
+    "name": "CMP0179",
+    "version": "3.31",
+    "description": "De-duplication of static libraries on link lines keeps first occurrence."
+  },
+  "CMP0180": {
+    "name": "CMP0180",
+    "version": "3.31",
+    "description": "project() always sets <PROJECT-NAME>_* as normal variables."
+  }
+}
