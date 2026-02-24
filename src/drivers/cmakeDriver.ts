@@ -1952,7 +1952,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         } else {
             buildPreset.__targets = buildPreset.targets;
         }
-        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs);
+        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs, this.config.numJobsForPreset);
         const initialEnvironment = EnvironmentUtils.create(buildPreset.environment);
         const build_env = await this.getCMakeBuildCommandEnvironment(initialEnvironment);
         const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...this.expansionOptions, envOverride: build_env }));
@@ -2036,7 +2036,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
             let outputEnc = this.config.outputLogEncoding;
-            if (outputEnc === 'auto') {
+            const isAutoEncoding = outputEnc === 'auto';
+            if (isAutoEncoding) {
                 if (process.platform === 'win32') {
                     outputEnc = await codepages.getWindowsCodepage();
                 } else {
@@ -2053,7 +2054,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                 }
             } else {
-                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding };
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
             const result = await this.cmakeBuildRunner.getResult();
