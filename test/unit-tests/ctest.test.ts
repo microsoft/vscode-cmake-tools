@@ -67,6 +67,44 @@ suite('CTest test', () => {
         assertMessageFields(result6, '/path/to/file', 46, 0, 'the message', undefined, undefined);
     });
 
+    test('Find GoogleTest failure patterns in output', () => {
+        // Default patterns from package.json
+        const defaultPatterns = [
+            { regexp: '(.*?):(\\d+): *(?:error: *)(.*)' },
+            { regexp: '(.*?)\\((\\d+)\\): *(?:error: *)(.*)' },
+            { regexp: '(.*?):(\\d+): *(Failure.*)' }
+        ];
+
+        // GoogleTest failure on Linux
+        const linuxOutput = '/path/to/TestFile.cpp:135: Failure\nValue of: expr\n  Actual: true\nExpected: false\n';
+        const linuxResults = searchOutputForFailures(defaultPatterns, linuxOutput);
+        expect(linuxResults.length).to.eq(1);
+        assertMessageFields(linuxResults[0], '/path/to/TestFile.cpp', 134, 0, 'Failure', undefined, undefined);
+
+        // GoogleTest failure on Windows with forward slashes
+        const windowsOutput = 'D:/dev/project/test/TestFile.cpp:42: Failure\nExpected equality\n';
+        const windowsResults = searchOutputForFailures(defaultPatterns, windowsOutput);
+        expect(windowsResults.length).to.eq(1);
+        assertMessageFields(windowsResults[0], 'D:/dev/project/test/TestFile.cpp', 41, 0, 'Failure', undefined, undefined);
+
+        // GCC/Clang error format still works (no regression)
+        const gccOutput = '/path/to/file.cpp:10: error: undefined reference\n';
+        const gccResults = searchOutputForFailures(defaultPatterns, gccOutput);
+        expect(gccResults.length).to.eq(1);
+        assertMessageFields(gccResults[0], '/path/to/file.cpp', 9, 0, 'undefined reference', undefined, undefined);
+
+        // MSVC error format still works (no regression)
+        const msvcOutput = 'C:\\project\\file.cpp(20): error: something went wrong\n';
+        const msvcResults = searchOutputForFailures(defaultPatterns, msvcOutput);
+        expect(msvcResults.length).to.eq(1);
+        assertMessageFields(msvcResults[0], 'C:\\project\\file.cpp', 19, 0, 'something went wrong', undefined, undefined);
+
+        // Lines without "Failure" or "error:" should not match
+        const noMatchOutput = '[ RUN      ] MyTest.TestCase\n[  PASSED  ] 1 test.\n';
+        const noMatchResults = searchOutputForFailures(defaultPatterns, noMatchOutput);
+        expect(noMatchResults.length).to.eq(0);
+    });
+
     function assertMessageFields(
         tm: TestMessage,
         file: string, line: number, column: number, message: string,
