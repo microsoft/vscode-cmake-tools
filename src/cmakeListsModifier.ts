@@ -601,7 +601,12 @@ export class CMakeListsModifier implements vscode.Disposable {
             ? settings.variableSelection as string
             : settings.targetSelection as string;
 
-        if (candidates.length === 1 || selectionMode === 'auto') {
+        if (candidates.length === 1) {
+            return candidates[0];
+        }
+
+        // In 'auto' mode for variable candidates, auto-select the first
+        if (isVariableCandidate && selectionMode === 'auto') {
             return candidates[0];
         }
 
@@ -705,7 +710,41 @@ export class CMakeListsModifier implements vscode.Disposable {
             editsByDoc.get(key)!.push(edit);
         }
 
-        // For single edit, show diff and confirm
+        // For single add edit, show a simple confirmation instead of a full diff
+        if (edits.length === 1 && !edits[0].isDeletion) {
+            const edit = edits[0];
+            const apply = localize('apply', 'Apply');
+            const openDiff = localize('review.diff', 'Review Diff');
+            const discard = localize('discard', 'Discard');
+
+            const sourceFileName = path.basename(edit.sourceUri.fsPath);
+            const targetFileName = path.basename(edit.uri.fsPath);
+
+            const result = await vscode.window.showInformationMessage(
+                localize('confirm.add.source',
+                    'Add {0} to {1} in {2}:{3}?',
+                    sourceFileName,
+                    edit.description || edit.label,
+                    targetFileName,
+                    edit.range.start.line + 1
+                ),
+                apply,
+                openDiff,
+                discard
+            );
+
+            if (result === apply) {
+                return this.applyEdits([edit]);
+            } else if (result === openDiff) {
+                const confirmed = await this.showDiffAndConfirm(edit.uri, [edit]);
+                if (confirmed) {
+                    return this.applyEdits([edit]);
+                }
+            }
+            return false;
+        }
+
+        // For single delete edit, show diff and confirm
         if (edits.length === 1) {
             const edit = edits[0];
             const confirmed = await this.showDiffAndConfirm(edit.uri, [edit]);
@@ -976,6 +1015,22 @@ export class CMakeListsModifier implements vscode.Disposable {
             return;
         }
 
+        // For auto-triggered flow with 'ask' mode, show a non-blocking notification
+        // first so the user can decide whether to proceed before any QuickPicks appear
+        let userPreConsented = false;
+        if (!always && settings.addNewSourceFiles === 'ask') {
+            const addAction = localize('add.to.cmake.lists', 'Add to CMakeLists');
+            const fileName = path.basename(uri.fsPath);
+            const result = await vscode.window.showInformationMessage(
+                localize('new.source.file.detected', 'New source file detected: {0}', fileName),
+                addAction
+            );
+            if (result !== addAction) {
+                return;
+            }
+            userPreConsented = true;
+        }
+
         // Work around for focus race condition with Save As dialog closing
         await this.workAroundSaveAsFocusBug(uri);
 
@@ -1024,8 +1079,14 @@ export class CMakeListsModifier implements vscode.Disposable {
             return;
         }
 
-        // Step 3: Review and apply
-        await this.reviewAndApply([selectedCandidate], settings, 'add');
+        // Step 3: Apply the edit
+        // If user already consented via the notification, apply directly.
+        // Otherwise go through the normal review flow.
+        if (userPreConsented) {
+            await this.applyEdits([selectedCandidate]);
+        } else {
+            await this.reviewAndApply([selectedCandidate], settings, 'add');
+        }
     }
 
     /**
@@ -1043,6 +1104,22 @@ export class CMakeListsModifier implements vscode.Disposable {
             return;
         }
 
+        // For 'ask' mode, show a non-blocking notification first
+        // (this method is only called from the auto-triggered flow)
+        let userPreConsented = false;
+        if (settings.addNewSourceFiles === 'ask') {
+            const fileNames = uris.map(u => path.basename(u.fsPath)).join(', ');
+            const addAction = localize('add.to.cmake.lists', 'Add to CMakeLists');
+            const result = await vscode.window.showInformationMessage(
+                localize('new.source.files.detected', 'New source files detected: {0}', fileNames),
+                addAction
+            );
+            if (result !== addAction) {
+                return;
+            }
+            userPreConsented = true;
+        }
+
         // Check if user settings require interactive selection
         // If so, fall back to per-file flow to respect user preferences
         const variableSelection = settings.variableSelection as string;
@@ -1050,9 +1127,10 @@ export class CMakeListsModifier implements vscode.Disposable {
         const needsInteractiveSelection = variableSelection !== 'auto' || targetSelection !== 'auto';
 
         if (needsInteractiveSelection) {
-            // Fall back to processing files one at a time so user can pick for each
+            // Fall back to processing files one at a time so user can pick for each.
+            // Pass always=true since user already consented via the notification.
             for (const uri of uris) {
-                await this.addSourceFileToCMakeLists(uri, project, false);
+                await this.addSourceFileToCMakeLists(uri, project, true);
             }
             return;
         }
@@ -1082,8 +1160,13 @@ export class CMakeListsModifier implements vscode.Disposable {
             return;
         }
 
-        // Review and apply all at once
-        await this.reviewAndApply(allCandidates, settings, 'add');
+        // Apply directly — user already consented via the notification,
+        // or setting is 'yes' (auto-apply)
+        if (userPreConsented) {
+            await this.applyEdits(allCandidates);
+        } else {
+            await this.reviewAndApply(allCandidates, settings, 'add');
+        }
     }
 
     async removeSourceFileFromCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always = true) {
@@ -1356,8 +1439,21 @@ function allBuildTargets(
     model: codeModel.CodeModelContent,
     buildType: string | null
 ): codeModel.CodeModelTarget[] {
-    return model.configurations
-        .filter(c => c.name === buildType)
+    let configs = model.configurations;
+
+    // If buildType is specified, filter to matching config
+    // If no match found or buildType is null/empty, fall back to first config
+    if (buildType) {
+        const matching = configs.filter(c => c.name === buildType);
+        if (matching.length) {
+            configs = matching;
+        }
+    }
+    if (!configs.length && model.configurations.length) {
+        configs = [model.configurations[0]];
+    }
+
+    return configs
         .flatMap(c => c.projects.flatMap(p => p.targets))
         .filter(target => target.sourceDirectory);
 }
