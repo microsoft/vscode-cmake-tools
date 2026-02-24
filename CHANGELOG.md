@@ -7,6 +7,7 @@ Features:
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
 - Add individual CTest test nodes to the Project Outline with inline run/debug buttons, and enable debugging tests from both the Outline and Test Explorer without requiring a launch.json. [#4721](https://github.com/microsoft/vscode-cmake-tools/pull/4721)
 - Add "Delete Cache, Reconfigure and Build" command that chains cache deletion, reconfiguration, and build into a single action. [#4723](https://github.com/microsoft/vscode-cmake-tools/pull/4723)
+- Add `cmake.postConfigureTask` setting to execute a named VS Code task after every successful CMake configure. [#4566](https://github.com/microsoft/vscode-cmake-tools/pull/4566) [@Francois-Le](https://github.com/Francois-Le)
 - Add "Set Build and Launch/Debug Target" command that sets both the build target and launch target simultaneously. [#4732](https://github.com/microsoft/vscode-cmake-tools/pull/4732)
 
 Improvements:
