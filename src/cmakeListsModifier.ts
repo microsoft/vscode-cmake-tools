@@ -181,7 +181,7 @@ const LANGUAGE_EXTENSIONS: {[name: string]: {source: string[]; cxxModule?: strin
         header: ['inl', 'h', 'hpp', 'HPP', 'H']
     },
     'Swift': { source: ['swift'] },
-    'SWIG': { source: ['.i', '.swg'] },
+    'SWIG': { source: ['i', 'swg'] },
     'HIP': { source: ['hip'] },
     'ISPC': { source: ['ispc'] },
     'RC': { source: ['rc', 'RC'] }
@@ -1031,8 +1031,12 @@ export class CMakeListsModifier implements vscode.Disposable {
             userPreConsented = true;
         }
 
-        // Work around for focus race condition with Save As dialog closing
-        await this.workAroundSaveAsFocusBug(uri);
+        // Work around for focus race condition with Save As dialog closing.
+        // Only apply in the auto-triggered path (always=false) to avoid stealing
+        // editor focus when the user explicitly invokes the command.
+        if (!always) {
+            await this.workAroundSaveAsFocusBug(uri);
+        }
 
         const newSourceUri = uri;
         const newSourceFileName = path.basename(newSourceUri.fsPath);
@@ -1613,11 +1617,15 @@ function outermostCallNode(
     if (node.parent === undefined) {
         return undefined;
     }
-    const parent = nodes[node.parent];
-    if (parent.command === undefined) {
-        return node;
+    let current = node;
+    while (current.parent !== undefined) {
+        const parent = nodes[current.parent];
+        if (parent.command === undefined) {
+            return current;
+        }
+        current = parent;
     }
-    return outermostCallNode(nodes, parent);
+    return undefined;
 }
 
 /**
@@ -1629,10 +1637,11 @@ function subdirectoryListNode(
     nodes: codeModel.BacktraceGraphNode[],
     node: codeModel.BacktraceGraphNode
 ): codeModel.BacktraceGraphNode | undefined {
-    if (node.parent === undefined) {
-        return node;
+    let current = node;
+    while (current.parent !== undefined) {
+        current = nodes[current.parent];
     }
-    return subdirectoryListNode(nodes, nodes[node.parent]);
+    return current;
 }
 
 function targetSourceCommandInvocationCompare(
@@ -2061,10 +2070,11 @@ function isCxxModule(uri: vscode.Uri): boolean {
 }
 
 function findEndOfSourceList(args: Token[], index: number) {
+    const startIndex = index;
     while (index < args.length && !args[index].value.match(/^[A-Z_]+$/)) {
         index++;
     }
-    if (!index) {
+    if (index === startIndex) {
         return null;
     }
     const finalToken = args[index - 1];

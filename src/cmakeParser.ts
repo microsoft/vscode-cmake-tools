@@ -43,13 +43,13 @@ const BRACKETED: TokenType = { name: 'BRACKETED', re: BRACKETED_RE };
 const QUOTED: TokenType = { name: 'QUOTED', re: /"(?:\\.|[^"])*"/s };
 const UNQUOTED: TokenType = { name: 'UNQUOTED', re: /(?:\\.|[^\s()#"\\'])+/s };
 // TODO: "legacy" identifiers with quotes in them
-const LINE_COMMENT: TokenType = { name: 'LINE_COMMENT', re: /#.*\n/ };
+const LINE_COMMENT: TokenType = { name: 'LINE_COMMENT', re: /#[^\n]*/ };
 const BRACKETED_COMMENT: TokenType = { name: 'BRACKETED_COMMENT', re: regexpPrepend('#', BRACKETED_RE) };
 const EOF: TokenType = { name: 'EOF', re: /$/ };
 const SPACE_TYPES: TokenType[] = [SPACE, NEWLINE];
 const COMMENT_TYPES: TokenType[] = [LINE_COMMENT, BRACKETED_COMMENT];
 const ARG_TYPES: TokenType[] = [
-    LPAREN, RPAREN, UNQUOTED, QUOTED, BRACKETED
+    LPAREN, RPAREN, BRACKETED, QUOTED, UNQUOTED
 ];
 
 export class CMakeParser {
