@@ -197,6 +197,11 @@ export class CMakeListsModifier implements vscode.Disposable {
     // Known source file extensions for path-based filtering (used for deleted files)
     private knownExtensions = new Set<string>();
 
+    // Set when applyEdits succeeds, cleared on updateCodeModel. When true, the
+    // backtrace graph's line numbers are potentially stale and the AST-based
+    // fallback should be used instead.
+    private codeModelDirty = false;
+
     // Debounce state for batching file events
     private pendingAddFiles: vscode.Uri[] = [];
     private pendingDeleteFiles: vscode.Uri[] = [];
@@ -209,6 +214,7 @@ export class CMakeListsModifier implements vscode.Disposable {
 
     updateCodeModel(project: CMakeProject, cache: CMakeCache) {
         this.project = project;
+        this.codeModelDirty = false;
         const model = project.codeModelContent;
         const languages = new Set<string>();
         if (model) {
@@ -403,13 +409,25 @@ export class CMakeListsModifier implements vscode.Disposable {
             };
         }
 
+        // When a CMakeLists.txt exists in the same directory as the new
+        // source file, restrict target source command candidates to that
+        // local file.  This prevents files from a subdirectory being
+        // silently added to a parent CMakeLists.txt that belongs to a
+        // different scope (e.g. adding utils/file.cpp into the parent's
+        // add_executable instead of the local target_sources).
+        const fileDir = path.dirname(newSourceUri.fsPath);
+        const hasLocalCMakeLists = cmakeListsASTs.length > 0 &&
+            platformPathEquivalent(path.dirname(cmakeListsASTs[0].document.fileName), fileDir);
+        const invocationFilter = hasLocalCMakeLists
+            ? (i: CommandInvocation) => platformPathEquivalent(path.dirname(i.document.fileName), fileDir)
+            : (i: CommandInvocation) => isFileInsideFolder(newSourceUri, path.dirname(i.document.fileName));
+
         // Collect candidates from all targets and invocations
         const candidates: CandidateEdit[] = [];
         for (const target of targets) {
-            const invocations = (await targetSourceCommandInvocations(
-                project, target, cmakeListsASTs, settings.targetSourceCommands))
-                .filter(i =>
-                    isFileInsideFolder(newSourceUri, path.dirname(i.document.fileName)));
+            const invocations = await targetSourceCommandInvocations(
+                project, target, cmakeListsASTs, settings.targetSourceCommands,
+                this.codeModelDirty, invocationFilter);
 
             // Check if source already in invocations
             for (const invocation of invocations) {
@@ -518,7 +536,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         const targets = sourceFileTargets(allBuildTargets(model, buildType), deletedUri);
         for (const target of targets) {
             const invocations = await targetSourceCommandInvocations(
-                project, target, cmakeListsASTs, settings.targetSourceCommands);
+                project, target, cmakeListsASTs, settings.targetSourceCommands, this.codeModelDirty);
             for (const invocation of invocations) {
                 const deleteEdits = this.buildDeleteCandidates(
                     deletedUri, invocation, `target ${target.name} sources`, target);
@@ -990,6 +1008,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         try {
             await vscode.workspace.applyEdit(workspaceEdit);
             await Promise.all(Array.from(editedDocs).map(doc => doc.save()));
+            this.codeModelDirty = true;
             return true;
         } catch (e) {
             void vscode.window.showErrorMessage(`${e}`);
@@ -1139,8 +1158,12 @@ export class CMakeListsModifier implements vscode.Disposable {
             return;
         }
 
-        const allCandidates: CandidateEdit[] = [];
+        // Process files one at a time. Each successful edit shifts line
+        // numbers in CMakeLists.txt, so subsequent files must re-parse from
+        // disk to get correct offsets. Collecting all candidates upfront
+        // would use stale ASTs/backtrace data for files after the first.
         const errors: string[] = [];
+        let anyApplied = false;
 
         for (const uri of uris) {
             if (uri.scheme !== 'file') {
@@ -1150,26 +1173,26 @@ export class CMakeListsModifier implements vscode.Disposable {
             const result = await this.collectAddCandidates(uri, project, settings);
             if (result.error) {
                 errors.push(result.error);
-            } else if (result.candidates.length > 0) {
-                // Pick the best candidate for each file automatically
-                const best = result.candidates[0];
-                allCandidates.push(best);
+                continue;
+            }
+            if (result.candidates.length === 0) {
+                continue;
+            }
+
+            const best = result.candidates[0];
+            if (userPreConsented) {
+                if (await this.applyEdits([best])) {
+                    anyApplied = true;
+                }
+            } else {
+                if (await this.reviewAndApply([best], settings, 'add')) {
+                    anyApplied = true;
+                }
             }
         }
 
-        if (allCandidates.length === 0) {
-            if (errors.length > 0) {
-                void vscode.window.showErrorMessage(errors[0]);
-            }
-            return;
-        }
-
-        // Apply directly — user already consented via the notification,
-        // or setting is 'yes' (auto-apply)
-        if (userPreConsented) {
-            await this.applyEdits(allCandidates);
-        } else {
-            await this.reviewAndApply(allCandidates, settings, 'add');
+        if (!anyApplied && errors.length > 0) {
+            void vscode.window.showErrorMessage(errors[0]);
         }
     }
 
@@ -1338,13 +1361,24 @@ async function targetSourceCommandInvocations(
     project: CMakeProject,
     target: codeModel.CodeModelTarget,
     cmakeListsASTs: CMakeAST[],
-    builtins: string[]
+    builtins: string[],
+    codeModelDirty = false,
+    invocationFilter?: (i: CommandInvocation) => boolean
 ) {
-    if (target.backtraceGraph) {
-        return sourceCommandInvocationsFromBacktrace(project, target, builtins);
-    } else {
-        return sourceCommandInvocationsFromCMakeLists(cmakeListsASTs, target, builtins);
+    // When the code model is dirty (edits applied since last configure), the
+    // backtrace graph's line numbers are stale and cannot be trusted. Skip
+    // straight to the AST-based search which re-parses from disk.
+    if (target.backtraceGraph && !codeModelDirty) {
+        const fromBacktrace = await sourceCommandInvocationsFromBacktrace(project, target, builtins);
+        const filtered = invocationFilter ? fromBacktrace.filter(invocationFilter) : fromBacktrace;
+        if (filtered.length > 0) {
+            return filtered;
+        }
+        // Backtrace returned no matching results — fall back to AST-based
+        // search.
     }
+    const fromAST = sourceCommandInvocationsFromCMakeLists(cmakeListsASTs, target, builtins);
+    return invocationFilter ? fromAST.filter(invocationFilter) : fromAST;
 }
 
 function sourceCommandInvocationsFromCMakeLists(
