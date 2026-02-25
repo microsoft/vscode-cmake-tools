@@ -3827,5 +3827,3 @@ export class CMakeProject {
 }
 
 export default CMakeProject;
-
-export { parseInstallComponentsFromContent } from '@cmt/installUtils';
