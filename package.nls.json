@@ -340,7 +340,7 @@
     "cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Target to build after running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.coverageInfoFiles.description": "LCOV coverage info files to be processed after running tests with coverage using the test explorer.",
     "cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description": "Controls if the default build target dropdown is grouped by the CMake folder groups.",
-    "cmake-tools.configuration.cmake.setBuildTargetSameAsLaunchTarget.description": "When the launch target is set, the build target is set to match it.",
+    "cmake-tools.configuration.cmake.setBuildTargetSameAsLaunchTarget.description": "When enabled, setting the launch/debug target automatically sets the build target to match. The build target can still be changed independently.",
     "cmake-tools.debugger.pipeName.description": "Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.",
     "cmake-tools.debugger.clean.description": "Clean prior to configuring.",
     "cmake-tools.debugger.configureAll.description": "Configure for all projects.",

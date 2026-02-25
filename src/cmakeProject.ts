@@ -2670,14 +2670,19 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.selectLaunchTarget`
+     * When cmake.setBuildTargetSameAsLaunchTarget is true, delegates to
+     * selectBuildAndLaunchTarget so the build target is also updated.
      */
     async selectLaunchTarget(name?: string): Promise<string | null> {
+        if (this.workspaceContext.config.setBuildTargetSameAsLaunchTarget) {
+            return this.selectBuildAndLaunchTarget(name);
+        }
         return this.setLaunchTargetByName(name);
     }
 
     /**
      * Implementation of `cmake.selectBuildAndLaunchTarget`
-     * Sets both the build target and the launch target simultaneously.
+     * Sets both the build target and the launch/debug target simultaneously.
      */
     async selectBuildAndLaunchTarget(name?: string): Promise<string | null> {
         const result = await this.setLaunchTargetByName(name);
@@ -2729,9 +2734,6 @@ export class CMakeProject {
 
     private async setLaunchTargetName(name: string) {
         await this.workspaceContext.state.setLaunchTargetName(this.folderName, name, this.isMultiProjectFolder);
-        if (this.workspaceContext.config.setBuildTargetSameAsLaunchTarget) {
-            await this.setDefaultBuildTarget(name);
-        }
         this._launchTargetName.set(name);
     }
 
