@@ -8,6 +8,7 @@
 
 import * as cache from '@cmt/cache';
 import {
+    BacktraceGraph,
     CodeModelConfiguration,
     CodeModelContent,
     CodeModelFileGroup,
@@ -183,6 +184,7 @@ export namespace CodeModelKind {
         folder?: Folder;
         isGeneratorProvided?: boolean;
         install?: InstallInfo;
+        backtraceGraph?: BacktraceGraph;
     }
 }
 
@@ -538,6 +540,7 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
         sysroot,
         folder: targetObject.folder,
         dependencies: targetObject.dependencies,
+        backtraceGraph: targetObject.backtraceGraph,
         install: targetObject.install,
         isGeneratorProvided: targetObject.isGeneratorProvided
     } as CodeModelTarget;
@@ -595,9 +598,9 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
     return toolchains.toolchains.reduce((acc, el) => {
         if (el.compiler.path) {
             if (el.compiler.target) {
-                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
+                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target, sourceFileExtensions: el.sourceFileExtensions });
             } else {
-                acc.set(el.language, { path: el.compiler.path });
+                acc.set(el.language, { path: el.compiler.path, sourceFileExtensions: el.sourceFileExtensions });
             }
         }
         return acc;
