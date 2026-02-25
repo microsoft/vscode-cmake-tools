@@ -1827,7 +1827,13 @@ abstract class SourceList {
             optionIndices = findIndices(args, v => !!(v.value.match(/^[A-Z_]+$/)));
         }
         if (optionIndices.length) {
-            return optionIndices.map(index => new MultiValueSourceList(invocation, sourceListKeywords, index, target.name));
+            // Filter out source lists whose insert position falls before the
+            // command's lparen — that indicates a structural mismatch (e.g.
+            // treating a library-type keyword like STATIC as a source-list
+            // keyword when there are no sources).
+            return optionIndices
+                .map(index => new MultiValueSourceList(invocation, sourceListKeywords, index, target.name))
+                .filter(sl => sl.insertOffset >= invocation.ast.lparen.endOffset);
         }
         return [ new SimpleSourceList(invocation, target.name) ];
     }
@@ -1882,7 +1888,12 @@ class ScopeSourceList extends SourceList {
             }
         }
 
-        super(findEndOfSourceList(args, index) as number, invocation, target);
+        // When there are no source files yet (e.g. target_sources(mylib PRIVATE)),
+        // fall back to the end of the last keyword token so the insertion
+        // goes right after the keyword rather than at offset 0.
+        const insertOffset = findEndOfSourceList(args, index)
+            ?? (index > 0 ? args[index - 1].endOffset : invocation.ast.lparen.endOffset);
+        super(insertOffset, invocation, target);
         this.scope = scope;
         if (fileSetName) {
             this.fileSet = {
@@ -1989,7 +2000,9 @@ class MultiValueSourceList extends SourceList {
     ) {
         const { args } = invocation.ast;
         const keyword = args[index++].value;
-        super(findEndOfSourceList(args, index) as number, invocation, target);
+        // Fall back to keyword's endOffset when no source files follow it yet.
+        const insertOffset = findEndOfSourceList(args, index) ?? args[index - 1].endOffset;
+        super(insertOffset, invocation, target);
         this.keyword = keyword;
     }
 
@@ -2037,7 +2050,9 @@ abstract class VariableSourceList extends SourceList {
     ) {
         const { args } = invocation.ast;
         const variable = args[variableIndex].value;
-        const insertOffset = findEndOfSourceList(args, listIndex) as number;
+        // Fall back to the preceding token's endOffset when no values follow.
+        const insertOffset = findEndOfSourceList(args, listIndex)
+            ?? (listIndex > 0 ? args[listIndex - 1].endOffset : invocation.ast.lparen.endOffset);
         super(insertOffset, invocation, variable);
         this.variable = variable;
         this.sourceVariables = settings.sourceVariables;
