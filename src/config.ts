@@ -12,6 +12,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { CppDebugConfiguration } from '@cmt/debug/debugger';
 import { Environment } from '@cmt/environmentVariables';
+import { BuildProblemMatcherConfig } from '@cmt/diagnostics/custom';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -234,6 +235,7 @@ export interface ExtensionConfigurationSettings {
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
     useFolderPropertyInBuildTargetDropdown: boolean;
+    additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
 }
 
 type EmittersOf<T> = {
@@ -419,6 +421,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get enableOutputParsers(): string[] | null {
         return this.configData.enabledOutputParsers;
+    }
+    get additionalBuildProblemMatchers(): BuildProblemMatcherConfig[] {
+        return this.configData.additionalBuildProblemMatchers ?? [];
     }
     get pinnedCommands(): string[] | null {
         return this.configData.pinnedCommands;
@@ -692,7 +697,8 @@ export class ConfigurationReader implements vscode.Disposable {
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
-        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>()
+        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
+        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>()
     };
 
     /**
