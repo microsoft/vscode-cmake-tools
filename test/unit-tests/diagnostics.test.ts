@@ -1320,6 +1320,8 @@ suite('Diagnostics', () => {
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(diag.diag.message).to.match(/I am a warning!$/);
+    });
+
     // ===== Custom Problem Matcher (cmake.additionalBuildProblemMatchers) tests =====
 
     test('CustomParser matches clang-tidy-style output', () => {
