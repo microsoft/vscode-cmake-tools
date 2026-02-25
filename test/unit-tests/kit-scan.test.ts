@@ -35,6 +35,10 @@ suite('Kits scan test', () => {
         await fs.rename(mingwMakePath, mingwMakePathBackup);
     }
 
+    suiteSetup(function () {
+        expect(fakebin).to.satisfy(fs.existsSync, `${fakebin} not found. Run 'yarn pretest-buildfakebin'.`);
+    });
+
     teardown(async () => {
         if (await fs.exists(mingwMakePathBackup)) {
             await fs.rename(mingwMakePathBackup, mingwMakePath);

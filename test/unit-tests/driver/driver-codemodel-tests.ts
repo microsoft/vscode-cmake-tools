@@ -21,13 +21,13 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function cleanupBuildDir(build_dir: string): boolean {
-    fs.rmSync(build_dir, {recursive: true, force: true});
+    fs.rmSync(build_dir, { recursive: true, force: true });
     return !fs.existsSync(build_dir);
 }
 
 let driver: CMakeDriver | null = null;
 
-export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+export function makeCodeModelDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>, driverSupportsCMake: (cmake: CMakeExecutable) => boolean) {
     suite(`CMake CodeModel ${driverName} Driver tests`, () => {
         const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
         const workspacePath: string = 'test/unit-tests/driver/workspace';
@@ -43,7 +43,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 name: 'Visual Studio Community 2022',
                 visualStudio: 'VisualStudio.17.0',
                 visualStudioArchitecture: 'x64',
-                preferredGenerator: {name: 'Visual Studio 17 2022', platform: 'x64', toolset: 'host=x64'}
+                preferredGenerator: { name: 'Visual Studio 17 2022', platform: 'x64', toolset: 'host=x64' }
             } as Kit;
         } else {
             kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;
@@ -74,11 +74,14 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             }
         });
 
-        async function generateCodeModelForConfiguredDriver(args: string[] = [],
+        async function generateCodeModelForConfiguredDriver(testContext: Mocha.Context, args: string[] = [],
             workspaceFolder: string = defaultWorkspaceFolder):
             Promise<null | CodeModelContent> {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                testContext.skip();
+            }
 
             driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => true, []);
             let code_model: null | CodeModelContent = null;
@@ -91,28 +94,28 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             return code_model;
         }
 
-        test('Test generation of code model with multi configuration like VS', async () => {
+        test('Test generation of code model with multi configuration like VS', async function () {
             if (process.platform !== 'win32') {
                 return;
             }
 
-            const codemodel_data = await generateCodeModelForConfiguredDriver();
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this);
             expect(codemodel_data).to.be.not.null;
             expect(codemodel_data!.configurations.length).to.be.eql(4);
         }).timeout(90000);
 
-        test('Test generation of code model with one configuration like make on linux', async () => {
+        test('Test generation of code model with one configuration like make on linux', async function () {
             if (process.platform === 'win32') {
                 return;
             }
 
-            const codemodel_data = await generateCodeModelForConfiguredDriver();
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this);
             expect(codemodel_data).to.be.not.null;
             expect(codemodel_data!.configurations.length).to.be.eql(1);
         }).timeout(90000);
 
-        test('Test project information', async () => {
-            const codemodel_data = await generateCodeModelForConfiguredDriver();
+        test('Test project information', async function () {
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this);
             expect(codemodel_data).to.be.not.null;
 
             const project = codemodel_data!.configurations[0].projects[0];
@@ -126,8 +129,8 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 .to.eq(path.normalize(path.join(root, 'test_project')).toLowerCase());
         }).timeout(90000);
 
-        test('Test executable target information', async () => {
-            const codemodel_data = await generateCodeModelForConfiguredDriver();
+        test('Test executable target information', async function () {
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this);
             expect(codemodel_data).to.be.not.null;
 
             const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess');
@@ -152,8 +155,8 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             expect(compile_information!.sources).to.include('main.cpp');
         }).timeout(90000);
 
-        test('Test first static library target directory', async () => {
-            const codemodel_data = await generateCodeModelForConfiguredDriver();
+        test('Test first static library target directory', async function () {
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this);
             expect(codemodel_data).to.be.not.null;
 
             const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'STATIC_LIBRARY');
@@ -185,8 +188,8 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             }
         }).timeout(90000);
 
-        test('Test first shared library target directory', async () => {
-            const codemodel_data = await generateCodeModelForConfiguredDriver();
+        test('Test first shared library target directory', async function () {
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this);
             expect(codemodel_data).to.be.not.null;
 
             const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'SHARED_LIBRARY');
@@ -222,8 +225,8 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
 
         }).timeout(90000);
 
-        test('Test cache access', async () => {
-            const codemodel_data = await generateCodeModelForConfiguredDriver();
+        test('Test cache access', async function () {
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this);
             expect(codemodel_data).to.be.not.null;
 
             const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'UTILITY'
@@ -235,7 +238,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             expect(target!.fileGroups![last].isGenerated).to.be.true;
         }).timeout(90000);
 
-        test('Test sysroot access', async () => {
+        test('Test sysroot access', async function () {
             // This test does not work with VisualStudio.
             // VisualStudio generator does not provide the sysroot in the code model.
             // macOS has separate sysroot variable (see CMAKE_OSX_SYSROOT); this build fails.
@@ -243,7 +246,7 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
                 return;
             }
 
-            const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this, ['-DCMAKE_SYSROOT=/tmp', '-DCMAKE_C_COMPILER_WORKS=1', '-DCMAKE_CXX_COMPILER_WORKS=1']);
             expect(codemodel_data).to.be.not.null;
 
             const target = codemodel_data!.configurations[0].projects[0].targets.find((t: any) => t.type === 'EXECUTABLE');
@@ -251,9 +254,9 @@ export function makeCodeModelDriverTestsuite(driverName: string, driver_generato
             expect(target!.sysroot).to.be.eq('/tmp');
         }).timeout(90000);
 
-        test('Test source files outside of workspace root', async () => {
+        test('Test source files outside of workspace root', async function () {
             const project_name: string = 'source_outside_of_workspace';
-            const codemodel_data = await generateCodeModelForConfiguredDriver([], sourceOutsideOfWorkspace);
+            const codemodel_data = await generateCodeModelForConfiguredDriver(this, [], sourceOutsideOfWorkspace);
             expect(codemodel_data).to.be.not.null;
 
             for (const [target_name, target_subdir, sourcefile_name] of [['root_target', '', '../main.cpp'], ['subdir_target', 'subdir', '../../main.cpp']] as const) {

@@ -4122,6 +4122,7 @@
     "translations-import": "gulp translations-import",
     "package": "vsce package --yarn -o cmake-tools.vsix",
     "pretest": "tsc -p test.tsconfig.json",
+    "pretest-buildfakebin": "cmake -DCMAKE_INSTALL_PREFIX=test/fakebin -DCMAKE_BUILD_TYPE=Release -S test/fakeOutputGenerator -B test/fakeOutputGenerator/build && cmake --build test/fakeOutputGenerator/build && cmake --install test/fakeOutputGenerator/build && cmake -E rm -rf test/fakeOutputGenerator/build",
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/badProject/runTest.js && node ./out/test/smoke/goodProject/runTest.js && node ./out/test/smoke/noCtest/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
