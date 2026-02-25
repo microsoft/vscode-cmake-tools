@@ -1385,7 +1385,7 @@ suite('Diagnostics', () => {
             additionalBuildProblemMatchers: [
                 {
                     name: 'my-tool',
-                    regexp: '^\\[MYTOOL\\]\\s+(.+?)\\((\\d+)\\):\\s+(warning|error):\\s+(.+)$',
+                    regexp: '^>>MYTOOL>>\\s+(\\S+)\\|(\\d+)\\|(warning|error)\\|(.+)$',
                     file: 1,
                     line: 2,
                     severity: 3,
@@ -1397,8 +1397,8 @@ suite('Diagnostics', () => {
 
         // Feed a GCC-style error (should be captured by built-in GCC parser)
         consumer.error('/home/user/src/main.cpp:15:3: error: undeclared identifier');
-        // Feed a custom tool line (uses bracket/paren format that no built-in parser matches)
-        consumer.error('[MYTOOL] /home/user/src/utils.cpp(20): warning: possible null dereference');
+        // Feed a custom tool line (pipe-separated format that no built-in parser matches)
+        consumer.error('>>MYTOOL>> /home/user/src/utils.cpp|20|warning|possible null dereference');
 
         // The GCC parser should have captured the first line
         expect(consumer.compilers.gcc.diagnostics).to.have.length(1);
