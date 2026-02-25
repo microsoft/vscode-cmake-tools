@@ -11,6 +11,7 @@ import { expect } from 'chai';
 import * as diags from '@cmt/diagnostics/build';
 import { OutputConsumer } from '../../src/proc';
 import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/config';
+import { CustomParser, BuildProblemMatcherConfig } from '@cmt/diagnostics/custom';
 import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { populateCollection } from '@cmt/diagnostics/util';
@@ -1319,5 +1320,186 @@ suite('Diagnostics', () => {
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(diag.diag.message).to.match(/I am a warning!$/);
+    // ===== Custom Problem Matcher (cmake.additionalBuildProblemMatchers) tests =====
+
+    test('CustomParser matches clang-tidy-style output', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'clang-tidy',
+            regexp: '^(.+?):(\\d+):(\\d+):\\s+(warning|error|note):\\s+(.+?)\\s*(?:\\[(.+)\\])?$',
+            file: 1,
+            line: 2,
+            column: 3,
+            severity: 4,
+            message: 5,
+            code: 6
+        };
+        const parser = new CustomParser(config);
+        expect(parser.name).to.eq('clang-tidy');
+
+        const handled = parser.handleLine('/path/to/file.cpp:10:5: warning: some check message [bugprone-some-check]');
+        expect(handled).to.be.true;
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('/path/to/file.cpp');
+        expect(diag.location.start.line).to.eq(9); // 0-based
+        expect(diag.location.start.character).to.eq(4); // 0-based
+        expect(diag.severity).to.eq('warning');
+        expect(diag.message).to.eq('some check message');
+        expect(diag.code).to.eq('bugprone-some-check');
+    });
+
+    test('CustomParser matches PCLint-style output', () => {
+        // PCLint Plus format: "file.cpp(42): error 1234: some lint message"
+        const config: BuildProblemMatcherConfig = {
+            name: 'pclint',
+            regexp: '^(.+?)\\((\\d+)\\):\\s+(error|warning|info|note)\\s+(\\d+):\\s+(.+)$',
+            file: 1,
+            line: 2,
+            severity: 3,
+            code: 4,
+            message: 5
+        };
+        const parser = new CustomParser(config);
+
+        const handled = parser.handleLine('src/main.cpp(42): error 1234: some lint message');
+        expect(handled).to.be.true;
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('src/main.cpp');
+        expect(diag.location.start.line).to.eq(41); // 0-based
+        expect(diag.severity).to.eq('error');
+        expect(diag.code).to.eq('1234');
+        expect(diag.message).to.eq('some lint message');
+    });
+
+    test('CustomParser matches cppcheck-style output', () => {
+        // cppcheck format: "[file.cpp:10]: (warning) message"
+        const config: BuildProblemMatcherConfig = {
+            name: 'cppcheck',
+            regexp: '^\\[(.+?):(\\d+)\\]:\\s+\\((error|warning|style|performance|portability|information)\\)\\s+(.+)$',
+            file: 1,
+            line: 2,
+            severity: 3,
+            message: 4
+        };
+        const parser = new CustomParser(config);
+
+        const handled = parser.handleLine('[src/utils.cpp:25]: (warning) Variable is not initialized');
+        expect(handled).to.be.true;
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('src/utils.cpp');
+        expect(diag.location.start.line).to.eq(24);
+        expect(diag.severity).to.eq('warning');
+        expect(diag.message).to.eq('Variable is not initialized');
+    });
+
+    test('CustomParser with fixed severity string', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'custom-linter',
+            regexp: '^LINT:\\s+(.+?):(\\d+):\\s+(.+)$',
+            file: 1,
+            line: 2,
+            severity: 'error',
+            message: 3
+        };
+        const parser = new CustomParser(config);
+
+        parser.handleLine('LINT: foo.cpp:7: bad style detected');
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('foo.cpp');
+        expect(diag.location.start.line).to.eq(6);
+        expect(diag.severity).to.eq('error');
+        expect(diag.message).to.eq('bad style detected');
+    });
+
+    test('CustomParser does not match unrelated lines', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'simple',
+            regexp: '^ERROR:\\s+(.+):(\\d+):\\s+(.+)$',
+            file: 1,
+            line: 2,
+            message: 3
+        };
+        const parser = new CustomParser(config);
+
+        const handled = parser.handleLine('All good, no errors here.');
+        expect(handled).to.be.false;
+        expect(parser.diagnostics).to.have.length(0);
+    });
+
+    test('CustomParser with invalid regex does not crash', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'broken',
+            regexp: '([invalid'  // Invalid regex
+        };
+        const parser = new CustomParser(config);
+
+        // Should not throw and should not match anything
+        const handled = parser.handleLine('some random line');
+        expect(handled).to.be.false;
+        expect(parser.diagnostics).to.have.length(0);
+    });
+
+    test('Custom parsers integrate with CompileOutputConsumer alongside built-in parsers', () => {
+        const configSettings = {
+            additionalBuildProblemMatchers: [
+                {
+                    name: 'my-tool',
+                    regexp: '^>>MYTOOL>>\\s+(\\S+)\\|(\\d+)\\|(warning|error)\\|(.+)$',
+                    file: 1,
+                    line: 2,
+                    severity: 3,
+                    message: 4
+                }
+            ]
+        } as unknown as ExtensionConfigurationSettings;
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader(configSettings));
+
+        // Feed a GCC-style error (should be captured by built-in GCC parser)
+        consumer.error('/home/user/src/main.cpp:15:3: error: undeclared identifier');
+        // Feed a custom tool line (pipe-separated format that no built-in parser matches)
+        consumer.error('>>MYTOOL>> /home/user/src/utils.cpp|20|warning|possible null dereference');
+
+        // The GCC parser should have captured the first line
+        expect(consumer.compilers.gcc.diagnostics).to.have.length(1);
+
+        // The custom parser should have captured the second line
+        expect(consumer.customParsers.has('my-tool')).to.be.true;
+        const customDiags = consumer.customParsers.get('my-tool')!.diagnostics;
+        expect(customDiags).to.have.length(1);
+        expect(customDiags[0].file).to.eq('/home/user/src/utils.cpp');
+        expect(customDiags[0].severity).to.eq('warning');
+        expect(customDiags[0].message).to.eq('possible null dereference');
+    });
+
+    test('Built-in parsers take priority over custom parsers', () => {
+        // Configure a custom parser that could also match GCC output
+        const configSettings = {
+            additionalBuildProblemMatchers: [
+                {
+                    name: 'greedy',
+                    regexp: '^(.+?):(\\d+):(\\d+):\\s+(warning|error):\\s+(.+)$',
+                    file: 1,
+                    line: 2,
+                    column: 3,
+                    severity: 4,
+                    message: 5
+                }
+            ]
+        } as unknown as ExtensionConfigurationSettings;
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader(configSettings));
+
+        // Feed a line that both GCC and the custom parser could match
+        consumer.error('/home/user/src/main.cpp:15:3: error: undeclared identifier');
+
+        // GCC should claim this line, NOT the custom parser
+        expect(consumer.compilers.gcc.diagnostics).to.have.length(1);
+        expect(consumer.customParsers.get('greedy')!.diagnostics).to.have.length(0);
     });
 });
