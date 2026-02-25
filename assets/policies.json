@@ -903,5 +903,125 @@
     "name": "CMP0180",
     "version": "3.31",
     "description": "project() always sets <PROJECT-NAME>_* as normal variables."
+  },
+  "CMP0181": {
+    "name": "CMP0181",
+    "version": "4.0",
+    "description": "The CMAKE_EXE_LINKER_FLAGS, CMAKE_EXE_LINKER_FLAGS_<CONFIG>, CMAKE_SHARED_LINKER_FLAGS, CMAKE_SHARED_LINKER_FLAGS_<CONFIG>, CMAKE_MODULE_LINKER_FLAGS, and CMAKE_MODULE_LINKER_FLAGS_<CONFIG> variables are parsed and re-quoted and support the LINKER: prefix."
+  },
+  "CMP0182": {
+    "name": "CMP0182",
+    "version": "4.0",
+    "description": "Create shared library archives by default on AIX."
+  },
+  "CMP0183": {
+    "name": "CMP0183",
+    "version": "4.0",
+    "description": "add_feature_info() supports full Condition Syntax."
+  },
+  "CMP0184": {
+    "name": "CMP0184",
+    "version": "4.0",
+    "description": "MSVC runtime checks flags are selected by an abstraction."
+  },
+  "CMP0185": {
+    "name": "CMP0185",
+    "version": "4.0",
+    "description": "FindRuby no longer provides upper-case RUBY_* variables."
+  },
+  "CMP0186": {
+    "name": "CMP0186",
+    "version": "4.1",
+    "description": "Regular expressions match ^ at most once in repeated searches."
+  },
+  "CMP0187": {
+    "name": "CMP0187",
+    "version": "4.1",
+    "description": "Include source file without an extension after the same name with an extension."
+  },
+  "CMP0188": {
+    "name": "CMP0188",
+    "version": "4.1",
+    "description": "The FindGCCXML module is removed."
+  },
+  "CMP0189": {
+    "name": "CMP0189",
+    "version": "4.1",
+    "description": "TARGET_PROPERTY evaluates LINK_LIBRARIES properties transitively."
+  },
+  "CMP0190": {
+    "name": "CMP0190",
+    "version": "4.1",
+    "description": "Modules FindPython3, FindPython2 and FindPython enforce consistency of artifacts in cross-compiling mode."
+  },
+  "CMP0191": {
+    "name": "CMP0191",
+    "version": "4.1",
+    "description": "The FindCABLE module is removed."
+  },
+  "CMP0192": {
+    "name": "CMP0192",
+    "version": "4.1",
+    "description": "GNUInstallDirs uses absolute SYSCONFDIR, LOCALSTATEDIR, and RUNSTATEDIR in special prefixes."
+  },
+  "CMP0193": {
+    "name": "CMP0193",
+    "version": "4.1",
+    "description": "GNUInstallDirs caches CMAKE_INSTALL_* with leading usr/ for install prefix /."
+  },
+  "CMP0194": {
+    "name": "CMP0194",
+    "version": "4.1",
+    "description": "MSVC is not an assembler for language ASM."
+  },
+  "CMP0195": {
+    "name": "CMP0195",
+    "version": "4.1",
+    "description": "Swift modules in build trees use the Swift module directory structure."
+  },
+  "CMP0196": {
+    "name": "CMP0196",
+    "version": "4.1",
+    "description": "The CMakeDetermineVSServicePack module is removed."
+  },
+  "CMP0197": {
+    "name": "CMP0197",
+    "version": "4.1",
+    "description": "MSVC link -machine: flag is not in CMAKE_*_LINKER_FLAGS."
+  },
+  "CMP0198": {
+    "name": "CMP0198",
+    "version": "4.2",
+    "description": "CMAKE_PARENT_LIST_FILE is not defined in CMakeLists.txt."
+  },
+  "CMP0199": {
+    "name": "CMP0199",
+    "version": "4.2",
+    "description": "$<CONFIG:cfgs> does not match mapped configurations that are not selected."
+  },
+  "CMP0200": {
+    "name": "CMP0200",
+    "version": "4.2",
+    "description": "Location and configuration selection for imported targets is more consistent."
+  },
+  "CMP0201": {
+    "name": "CMP0201",
+    "version": "4.2",
+    "description": "Python::NumPy does not depend on Python::Development.Module."
+  },
+  "CMP0202": {
+    "name": "CMP0202",
+    "version": "4.2",
+    "description": "PDB file names always include their target's per-config POSTFIX."
+  },
+  "CMP0203": {
+    "name": "CMP0203",
+    "version": "4.2",
+    "description": "_WINDLL is defined for shared libraries targeting the MSVC ABI."
+  },
+  "CMP0204": {
+    "name": "CMP0204",
+    "version": "4.2",
+    "description": "A character set is always defined when targeting the MSVC ABI."
   }
 }
