@@ -778,6 +778,40 @@ export class CTestDriver implements vscode.Disposable {
         return undefined;
     }
 
+    /**
+     * Builds a map from normalized executable paths to source file information
+     * by looking at the code model content from the CMake driver.
+     */
+    private buildExecutableToSourcesMap(driver: CMakeDriver): Map<string, { sourceDir: string; sources: string[] }> {
+        const map = new Map<string, { sourceDir: string; sources: string[] }>();
+        const codeModelContent = driver.codeModelContent;
+        if (!codeModelContent) {
+            return map;
+        }
+        for (const config of codeModelContent.configurations) {
+            for (const project of config.projects) {
+                for (const target of project.targets) {
+                    if (target.artifacts && target.fileGroups && target.sourceDirectory) {
+                        // Collect compilable (non-generated) source files from file groups
+                        const sources: string[] = [];
+                        for (const fg of target.fileGroups) {
+                            if (fg.language && !fg.isGenerated && fg.sources) {
+                                sources.push(...fg.sources);
+                            }
+                        }
+                        if (sources.length > 0) {
+                            for (const artifact of target.artifacts) {
+                                const normalizedArtifact = util.platformNormalizePath(artifact);
+                                map.set(normalizedArtifact, { sourceDir: target.sourceDirectory, sources });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
     private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri): TestAndParentSuite {
         let parentSuiteItem = testExplorerRoot;
         let testLabel = testName;
@@ -848,6 +882,9 @@ export class CTestDriver implements vscode.Disposable {
             }
         } else if (testType === "CTestInfo" && this.tests !== undefined) {
             if (this.tests && this.tests.kind === 'ctestInfo') {
+                // Build a map from executable paths to source files using the code model
+                const executableToSources = this.buildExecutableToSourcesMap(driver);
+
                 this.tests.tests.forEach(test => {
                     let testDefFile: string | undefined;
                     let testDefLine: number | undefined;
@@ -865,6 +902,16 @@ export class CTestDriver implements vscode.Disposable {
                                 testDefLine = undefined;
                                 testDefFile = undefined;
                             }
+                        }
+                    }
+
+                    // Try to find the test source file by matching the test executable to a CMake target
+                    if (!testDefFile && test.command.length > 0) {
+                        const testExe = util.platformNormalizePath(test.command[0]);
+                        const targetInfo = executableToSources.get(testExe);
+                        if (targetInfo && targetInfo.sources.length > 0) {
+                            testDefFile = path.resolve(targetInfo.sourceDir, targetInfo.sources[0]);
+                            testDefLine = 1;
                         }
                     }
 
