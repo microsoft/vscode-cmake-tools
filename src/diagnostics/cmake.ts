@@ -51,7 +51,7 @@ export class CMakeOutputConsumer extends CommandConsumer {
      */
     output(line: string) {
         if (this.logger) {
-            this.logger.info(line);
+            this.logger.trace(line);
         }
         super.output(line);
         this._parseDiags(line);
@@ -88,7 +88,7 @@ export class CMakeOutputConsumer extends CommandConsumer {
     error(line: string) {
         // First, just log the line
         if (this.logger) {
-            this.logger.error(line);
+            this.logger.warning(line);
         }
         super.error(line);
         this._parseDiags(line);

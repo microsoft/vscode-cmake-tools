@@ -17,6 +17,7 @@ Improvements:
 - Allow preset modification commands to target CMakeUserPresets.json. The target file is determined by the focused editor, or by prompting the user when both files exist. [#4564](https://github.com/microsoft/vscode-cmake-tools/issues/4564)
 
 Bug Fixes:
+- Reduce overly verbose logging when CMake configure or build fails. The Output panel no longer floods with duplicated output, and the channel is only revealed on error rather than unconditionally. [#4749](https://github.com/microsoft/vscode-cmake-tools/issues/4749)
 - Fix wrong path created for artifact when parsing code model using CMake File API. [#3015](https://github.com/microsoft/vscode-cmake-tools/issues/3015)
 - Fix garbled characters (Mojibake) in the Output panel when MSVC outputs UTF-8 (e.g., with `/utf-8`) on non-UTF-8 Windows systems. When `cmake.outputLogEncoding` is `auto`, the build output is now validated as UTF-8 before falling back to the system code page. [#4520](https://github.com/microsoft/vscode-cmake-tools/issues/4520)
 - Fix CMakePresets.json discovery failing in multi-folder workspaces when the presets file is in a subdirectory specified by `cmake.sourceDirectory`. [#4727](https://github.com/microsoft/vscode-cmake-tools/issues/4727)
