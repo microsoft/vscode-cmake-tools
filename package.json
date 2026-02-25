@@ -4027,7 +4027,7 @@
         },
         "cmake.modifyLists.addNewSourceFiles": {
           "type": "string",
-          "default": "yes",
+          "default": "ask",
           "enum": [
             "no",
             "yes",
@@ -4043,7 +4043,7 @@
         },
         "cmake.modifyLists.removeDeletedSourceFiles": {
           "type": "string",
-          "default": "yes",
+          "default": "ask",
           "enum": [
             "no",
             "yes",
