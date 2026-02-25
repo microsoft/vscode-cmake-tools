@@ -49,6 +49,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.emscriptenSearchDirs` | List of paths to search for Emscripten. | `[]` | no |
 | `cmake.enableAutomaticKitScan` | Enable automatic kit scanning. | `true` | no |
 | `cmake.enabledOutputParsers` | List of enabled output parsers. | `["cmake", "gcc", "gnuld", "msvc", "ghs", "diab", "iwyu"]` | no |
+| `cmake.additionalBuildProblemMatchers` | Array of user-defined problem matchers for build output. Each entry has `name`, `regexp`, and optional capture group indices (`file`, `line`, `column`, `severity`, `message`, `code`). See [Additional Build Problem Matchers](#additional-build-problem-matchers) below. | `[]` | no |
 | `cmake.enableLanguageServices` | If `true`, enable CMake language services. | `true` | no |
 | `cmake.enableTraceLogging` | If `true`, enable trace logging. | `false` | no |
 | `cmake.environment` | An object containing `key:value` pairs of environment variables, which will be available when configuring, building, or testing with CTest. | `{}` (no environment variables) | yes |
@@ -149,6 +150,74 @@ Supported commands for substitution:
 |`cmake.activeConfigurePresetName`|The name of the active configure preset.|
 |`cmake.activeBuildPresetName`|The name of the active build preset.|
 |`cmake.activeTestPresetName`|The name of the active test preset.|
+
+## Additional build problem matchers
+
+The `cmake.additionalBuildProblemMatchers` setting lets you define custom problem matchers that are applied to build output. This is useful when you integrate tools like **clang-tidy**, **PCLint Plus**, **cppcheck**, or custom scripts into your CMake build via `add_custom_command` or `add_custom_target`. Diagnostics from these tools will appear in the VS Code **Problems** pane alongside the standard compiler errors.
+
+Custom matchers run **after** the built-in parsers (`gcc`, `msvc`, `gnuld`, etc.), so they will not interfere with standard compiler diagnostics.
+
+Each matcher entry has the following properties:
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `name` | string | **yes** | — | Friendly name shown as the diagnostic source in the Problems pane. |
+| `regexp` | string | **yes** | — | Regular expression applied to each build output line. |
+| `file` | integer | no | `1` | Capture group index for the file path. |
+| `line` | integer | no | `2` | Capture group index for the line number. |
+| `column` | integer | no | — | Capture group index for the column number. |
+| `severity` | integer or string | no | `"warning"` | Either a capture group index (integer) that captures `"error"`, `"warning"`, or `"info"`, or a fixed string. |
+| `message` | integer | no | `3` | Capture group index for the diagnostic message. |
+| `code` | integer | no | — | Capture group index for a diagnostic code. |
+
+### Examples
+
+**clang-tidy** (`/path/file.cpp:10:5: warning: some message [check-name]`):
+
+```json
+"cmake.additionalBuildProblemMatchers": [
+  {
+    "name": "clang-tidy",
+    "regexp": "^(.+?):(\\d+):(\\d+):\\s+(warning|error|note):\\s+(.+?)\\s*(?:\\[(.+)\\])?$",
+    "file": 1,
+    "line": 2,
+    "column": 3,
+    "severity": 4,
+    "message": 5,
+    "code": 6
+  }
+]
+```
+
+**cppcheck** (`[file.cpp:10]: (warning) message`):
+
+```json
+"cmake.additionalBuildProblemMatchers": [
+  {
+    "name": "cppcheck",
+    "regexp": "^\\[(.+?):(\\d+)\\]:\\s+\\((error|warning|style|performance|portability|information)\\)\\s+(.+)$",
+    "file": 1,
+    "line": 2,
+    "severity": 3,
+    "message": 4
+  }
+]
+```
+
+**Custom script with fixed severity** (`LINT: file.cpp:7: message`):
+
+```json
+"cmake.additionalBuildProblemMatchers": [
+  {
+    "name": "my-lint",
+    "regexp": "^LINT:\\s+(.+?):(\\d+):\\s+(.+)$",
+    "file": 1,
+    "line": 2,
+    "severity": "error",
+    "message": 3
+  }
+]
+```
 
 ## Next steps
 

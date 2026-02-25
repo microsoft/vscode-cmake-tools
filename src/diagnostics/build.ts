@@ -15,6 +15,7 @@ import * as gnu_ld from '@cmt/diagnostics/gnu-ld';
 import * as mvsc from '@cmt/diagnostics/msvc';
 import * as iar from '@cmt/diagnostics/iar';
 import * as iwyu from '@cmt/diagnostics/iwyu';
+import { CustomParser } from '@cmt/diagnostics/custom';
 import { FileDiagnostic, RawDiagnostic, RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ConfigurationReader } from '@cmt/config';
 import { fs } from '@cmt/pr';
@@ -32,7 +33,15 @@ export class Compilers {
 }
 
 export class CompileOutputConsumer implements OutputConsumer {
-    constructor(readonly config: ConfigurationReader) {}
+    readonly customParsers: Map<string, CustomParser> = new Map();
+
+    constructor(readonly config: ConfigurationReader) {
+        for (const matcherConfig of config.additionalBuildProblemMatchers ?? []) {
+            if (matcherConfig.name && matcherConfig.regexp) {
+                this.customParsers.set(matcherConfig.name, new CustomParser(matcherConfig));
+            }
+        }
+    }
 
     compilers = new Compilers();
 
@@ -42,9 +51,16 @@ export class CompileOutputConsumer implements OutputConsumer {
     }
 
     error(line: string) {
+        // Built-in parsers get first priority
         for (const cand in this.compilers) {
             if (this.compilers[cand].handleLine(line)) {
-                break;
+                return;
+            }
+        }
+        // Custom user-defined parsers run after built-ins
+        for (const [, parser] of this.customParsers) {
+            if (parser.handleLine(line)) {
+                return;
             }
         }
     }
@@ -127,6 +143,37 @@ export class CompileOutputConsumer implements OutputConsumer {
         }
 
         await linkerHandler.finalize(arrs);
+
+        // Include diagnostics from custom user-defined parsers (always enabled)
+        for (const [name, parser] of this.customParsers) {
+            for (const raw_diag of parser.diagnostics) {
+                const filepath = await this.resolvePath(raw_diag.file, basePaths);
+                const severity = severity_of(raw_diag.severity);
+                if (severity === undefined) {
+                    continue;
+                }
+
+                const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity);
+                diag.source = name;
+                if (raw_diag.code) {
+                    diag.code = raw_diag.code;
+                }
+                if (!diags_by_file.has(filepath)) {
+                    diags_by_file.set(filepath, []);
+                }
+                diag.relatedInformation = [];
+                for (const rel of raw_diag.related) {
+                    const relFilePath = vscode.Uri.file(await this.resolvePath(rel.file, basePaths));
+                    const related = new vscode.DiagnosticRelatedInformation(new vscode.Location(relFilePath, rel.location), rel.message);
+                    diag.relatedInformation.push(related);
+                }
+                diags_by_file.get(filepath)!.push(diag);
+                arrs.push({
+                    filepath,
+                    diag
+                });
+            }
+        }
 
         return arrs;
     }
