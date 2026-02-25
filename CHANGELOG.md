@@ -3,6 +3,7 @@
 ## 1.23
 
 Features:
+- Add "CMake: Install Component" command for installing specific CMake install components. [#4281](https://github.com/microsoft/vscode-cmake-tools/issues/4281)
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
 - Clear build diagnostics from the Problems pane when a new build starts and populate them incrementally during the build. [#4608](https://github.com/microsoft/vscode-cmake-tools/issues/4608)
