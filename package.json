@@ -2528,6 +2528,9 @@
             },
             {
               "regexp": "(.*?)\\((\\d+)\\): *(?:error: *)(.*)"
+            },
+            {
+              "regexp": "(.*?):(\\d+): *(Failure.*)"
             }
           ],
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.failurePatterns.markdownDescription%",
@@ -2910,12 +2913,6 @@
           "type": "string",
           "default": null,
           "description": "%cmake-tools.configuration.cmake.copyCompileCommands.description%",
-          "scope": "resource"
-        },
-        "cmake.postConfigureTask": {
-          "type": "string",
-          "default": null,
-          "description": "%cmake-tools.configuration.cmake.postConfigureTask.description%",
           "scope": "resource"
         },
         "cmake.configureOnOpen": {
