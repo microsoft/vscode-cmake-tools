@@ -2919,7 +2919,8 @@ export class CMakeProject {
         // multiple ${input:...} variables resolve the same target in quick succession.
         if (name) {
             const cached = this._prepareCache.get(name);
-            if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS) {
+            if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
+                && await fs.exists(cached.result.path)) {
                 return cached.result;
             }
         }
