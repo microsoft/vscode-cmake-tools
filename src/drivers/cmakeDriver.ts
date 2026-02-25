@@ -519,7 +519,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
         const environment = this.getEffectiveSubprocessEnvironment(options);
-        const exec_options = { ...options, environment };
+        const shell = options?.shell ?? this.config.shell ?? undefined;
+        const exec_options = { ...options, environment, shell };
         return proc.execute(command, args, consumer, exec_options);
     }
 
@@ -554,7 +555,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             existing = undefined;
         }
         if (!existing) {
-            const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
+            const shellPath = this.config.shell ?? (process.platform === 'win32' ? 'cmd.exe' : undefined);
             const term = vscode.window.createTerminal({
                 name: localize('file.compilation', 'File Compilation'),
                 cwd: cmd.directory,

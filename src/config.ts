@@ -236,6 +236,7 @@ export interface ExtensionConfigurationSettings {
     coverageInfoFiles: string[];
     useFolderPropertyInBuildTargetDropdown: boolean;
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
+    shell: string | null;
 }
 
 type EmittersOf<T> = {
@@ -627,6 +628,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.useFolderPropertyInBuildTargetDropdown;
     }
 
+    get shell(): string | null {
+        return this.configData.shell;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
@@ -698,7 +703,8 @@ export class ConfigurationReader implements vscode.Disposable {
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
-        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>()
+        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
+        shell: new vscode.EventEmitter<string | null>()
     };
 
     /**

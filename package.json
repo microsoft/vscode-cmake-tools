@@ -2394,6 +2394,15 @@
           "description": "%cmake-tools.configuration.cmake.platform.description%",
           "scope": "resource"
         },
+        "cmake.shell": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.shell.description%",
+          "scope": "resource"
+        },
         "cmake.configureArgs": {
           "type": "array",
           "description": "%cmake-tools.configuration.cmake.configureArgs.description%",
