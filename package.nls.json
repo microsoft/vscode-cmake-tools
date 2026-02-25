@@ -40,6 +40,7 @@
     "cmake-tools.command.cmake.outline.compileFile.title": "Compile File",
     "cmake-tools.command.cmake.install.title": "Install",
     "cmake-tools.command.cmake.installAll.title": "Install All Projects",
+    "cmake-tools.command.cmake.installComponent.title": "Install Component",
     "cmake-tools.command.cmake.buildWithTarget.title": "Build Target",
     "cmake-tools.command.cmake.setDefaultTarget.title": "Set Build Target",
     "cmake-tools.command.cmake.cleanConfigure.title": "Delete Cache and Reconfigure",

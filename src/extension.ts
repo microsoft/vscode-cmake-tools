@@ -1541,6 +1541,19 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.install(), undefined, true);
     }
 
+    async installComponent(component?: string) {
+        telemetry.logEvent("install", { command: "installComponent"});
+        this.cleanOutputChannel();
+        let activeProject: CMakeProject | undefined = this.getActiveProject();
+        if (!activeProject) {
+            activeProject = await this.pickCMakeProject();
+            if (!activeProject) {
+                return; // Error or nothing is opened
+            }
+        }
+        return activeProject.installComponent(component);
+    }
+
     editCache(folder: vscode.WorkspaceFolder) {
         telemetry.logEvent("editCMakeCache", { command: "editCMakeCache" });
         return this.runCMakeCommand(cmakeProject => cmakeProject.editCache(), folder);
@@ -2425,6 +2438,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'setVariantAll',
         'install',
         'installAll',
+        'installComponent',
         'editCache',
         'clean',
         'cleanAll',
