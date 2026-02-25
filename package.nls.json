@@ -176,6 +176,41 @@
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.markdownDescription": {
+        "message": "Additional problem matchers for build output. Use this to surface diagnostics from tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target` in CMake.\n\nEach entry defines a `name` (used as the diagnostic source label), a `regexp`, and capture group indices for `file`, `line`, `column`, `severity`, `message`, and `code`.\n\nFor example, to match clang-tidy output like `/path/file.cpp:10:5: warning: some message [check-name]`:\n```json\n[\n  {\n    \"name\": \"clang-tidy\",\n    \"regexp\": \"^(.+?):(\\\\d+):(\\\\d+):\\\\s+(warning|error|note):\\\\s+(.+?)\\\\s*(?:\\\\[(.+)\\\\])?$\",\n    \"file\": 1,\n    \"line\": 2,\n    \"column\": 3,\n    \"severity\": 4,\n    \"message\": 5,\n    \"code\": 6\n  }\n]\n```\n\nCustom matchers run **after** the built-in parsers (`gcc`, `msvc`, etc.) so they do not steal lines from built-in compilers.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.name": "A unique name for this matcher, used as the diagnostic source label in the Problems pane.",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.regexp": "The regular expression to match against each build output line.",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.file": {
+        "message": "The capture group index for the file path. Defaults to `1`.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.line": {
+        "message": "The capture group index for the line number. Defaults to `2`.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.column": {
+        "message": "The capture group index for the column number. Optional.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.severity.group": "The capture group index for the severity (should capture 'error', 'warning', or 'info').",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.severity.fixed": "A fixed severity to apply to all matches from this pattern.",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.message": {
+        "message": "The capture group index for the diagnostic message. Defaults to `3`.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.code": "The capture group index for an optional diagnostic code.",
     "cmake-tools.configuration.cmake.debugConfig.description": "The debug configuration to use when debugging a target.",
     "cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Visual Studio debugger symbol search paths.",
     "cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Paths for GDB or LLDB to search for .so files.",

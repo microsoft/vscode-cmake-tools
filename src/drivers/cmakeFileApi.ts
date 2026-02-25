@@ -534,7 +534,7 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
         sourceDirectory: convertToAbsolutePath(targetObject.paths.source, rootPaths.source),
         fullName: targetObject.nameOnDisk,
         artifacts: targetObject.artifacts ? targetObject.artifacts.map(
-            a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), rootPaths.build))
+            a => convertToAbsolutePath(a.path, rootPaths.build))
             : [],
         fileGroups,
         sysroot,

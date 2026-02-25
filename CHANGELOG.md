@@ -8,6 +8,7 @@ Features:
 - Add individual CTest test nodes to the Project Outline with inline run/debug buttons, and enable debugging tests from both the Outline and Test Explorer without requiring a launch.json. [#4721](https://github.com/microsoft/vscode-cmake-tools/pull/4721)
 - Add "Delete Cache, Reconfigure and Build" command that chains cache deletion, reconfiguration, and build into a single action. [#4723](https://github.com/microsoft/vscode-cmake-tools/pull/4723)
 - Add "Set Build and Launch/Debug Target" command that sets both the build target and launch target simultaneously. [#4732](https://github.com/microsoft/vscode-cmake-tools/pull/4732)
+- Add `cmake.additionalBuildProblemMatchers` setting to define custom problem matchers for build output. Supports tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target`. [#4077](https://github.com/microsoft/vscode-cmake-tools/issues/4077)
 
 Improvements:
 - Make "CMake: Add ... Preset" commands available in the command palette when `cmake.useCMakePresets` is set to `auto`, even before a CMakePresets.json file exists. [#4401](https://github.com/microsoft/vscode-cmake-tools/issues/4401)
@@ -17,6 +18,8 @@ Improvements:
 - Allow preset modification commands to target CMakeUserPresets.json. The target file is determined by the focused editor, or by prompting the user when both files exist. [#4564](https://github.com/microsoft/vscode-cmake-tools/issues/4564)
 
 Bug Fixes:
+- Fix Test Results panel not hyperlinking file paths for GoogleTest failures. The default `cmake.ctest.failurePatterns` now includes a pattern matching GoogleTest's `file:line: Failure` output format. [#4589](https://github.com/microsoft/vscode-cmake-tools/issues/4589)
+- Fix wrong path created for artifact when parsing code model using CMake File API. [#3015](https://github.com/microsoft/vscode-cmake-tools/issues/3015)
 - Fix garbled characters (Mojibake) in the Output panel when MSVC outputs UTF-8 (e.g., with `/utf-8`) on non-UTF-8 Windows systems. When `cmake.outputLogEncoding` is `auto`, the build output is now validated as UTF-8 before falling back to the system code page. [#4520](https://github.com/microsoft/vscode-cmake-tools/issues/4520)
 - Fix CMakePresets.json discovery failing in multi-folder workspaces when the presets file is in a subdirectory specified by `cmake.sourceDirectory`. [#4727](https://github.com/microsoft/vscode-cmake-tools/issues/4727)
 - Fix initial kit scan ignoring `cmake.enableAutomaticKitScan: false` on first workspace open, and prevent redundant concurrent scans in multi-project workspaces. [#4726](https://github.com/microsoft/vscode-cmake-tools/issues/4726)
