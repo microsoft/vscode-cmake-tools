@@ -698,7 +698,7 @@ export class ConfigurationReader implements vscode.Disposable {
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
-        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>()
     };
 
     /**
