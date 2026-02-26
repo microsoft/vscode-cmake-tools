@@ -4,8 +4,9 @@ import * as path from 'path';
 
 interface Policy {
     name: string;
-    version: string;
     description: string;
+    introduced_version: string;
+    removed_version?: string;
 }
 
 interface Policies {
@@ -36,7 +37,7 @@ suite('policies.json', () => {
         for (const [key, policy] of Object.entries(policies)) {
             expect(policy.name, `${key} missing name`).to.be.a('string').and.not.empty;
             expect(policy.name, `${key} name mismatch`).to.equal(key);
-            expect(policy.version, `${key} missing version`).to.be.a('string').and.not.empty;
+            expect(policy.introduced_version, `${key} missing introduced_version`).to.be.a('string').and.not.empty;
             expect(policy.description, `${key} missing description`).to.be.a('string').and.not.empty;
         }
     });
@@ -50,7 +51,7 @@ suite('policies.json', () => {
     test('CMP0177 should have correct data', () => {
         const policy = policies['CMP0177'];
         expect(policy.name).to.equal('CMP0177');
-        expect(policy.version).to.equal('3.31');
+        expect(policy.introduced_version).to.equal('3.31');
         expect(policy.description).to.include('DESTINATION');
     });
 });

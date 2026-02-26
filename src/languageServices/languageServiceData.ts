@@ -34,8 +34,9 @@ interface Policies {
 
 interface Policy {
     name: string;
-    version: string;
     description: string;
+    introduced_version: string;
+    removed_version?: string;
 }
 
 enum LanguageType {
@@ -166,8 +167,11 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         const policy = this.policies[value];
         if (policy) {
             const markdown: vscode.MarkdownString = new vscode.MarkdownString();
-            if (policy.version) {
-                markdown.appendMarkdown(`Added in CMake ${policy.version}.  \n`);
+            if (policy.introduced_version) {
+                markdown.appendMarkdown(`Added in CMake ${policy.introduced_version}.  \n`);
+            }
+            if (policy.removed_version) {
+                markdown.appendMarkdown(`Removed in CMake ${policy.removed_version}.  \n`);
             }
             markdown.appendMarkdown(`${policy.description}  \n`);
             const policyUrl = `https://cmake.org/cmake/help/latest/policy/${policy.name}.html`;
