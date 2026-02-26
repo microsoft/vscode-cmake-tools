@@ -30,7 +30,7 @@ import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { FileDiagnostic, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
-import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
+import { CMakeGenerator, Kit, SpecialKits, effectiveKitEnvironment } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
@@ -1407,7 +1407,14 @@ export class CMakeProject {
 
     async getCMakePathofProject(): Promise<string> {
         const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
-        return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting) || '';
+        // Evaluate the kit's environment (including environmentSetupScript) before searching
+        // for the cmake executable, so that PATH changes from the script are respected.
+        let searchPATH: string | undefined;
+        if (this._activeKit?.environmentSetupScript) {
+            const kitEnv = await effectiveKitEnvironment(this._activeKit);
+            searchPATH = kitEnv['PATH'];
+        }
+        return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting, searchPATH) || '';
     }
 
     async getCMakeExecutable() {
