@@ -1905,7 +1905,6 @@ export class CMakeProject {
             log.debug(localize('no.preset.abort', 'No preset selected. Abort configure'));
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
-        log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
         const result = await cb(consumer);
         result.stdout = consumer.stdout;
@@ -2135,7 +2134,6 @@ export class CMakeProject {
                         });
                         const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
                         combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
-                        log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
