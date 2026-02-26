@@ -86,6 +86,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         postRunCoverageTarget: null,
         coverageInfoFiles: [],
         useFolderPropertyInBuildTargetDropdown: true,
+        setBuildTargetSameAsLaunchTarget: false,
         additionalBuildProblemMatchers: []
     });
     ret.updatePartial(conf);

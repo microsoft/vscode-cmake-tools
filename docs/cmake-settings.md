@@ -76,6 +76,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer. | `null` | no |
 | `cmake.revealLog` | Controls when the CMake output log should be revealed. | `always` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
+| `cmake.setBuildTargetSameAsLaunchTarget` | If `true`, setting the launch/debug target automatically sets the build target to match. | `false` | no |
 | `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |
 | `cmake.showConfigureWithDebuggerNotification` | If `true`, show notification when configure with debugger. | `true` | no |
 | `cmake.showNotAllDocumentsSavedQuestion` | If `true`, show not all documents saved question. | `true` | no |

@@ -4014,6 +4014,12 @@
             "default": false,
             "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
             "scope": "resource"
+        },
+        "cmake.setBuildTargetSameAsLaunchTarget": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.setBuildTargetSameAsLaunchTarget.description%",
+          "scope": "resource"
         }
       }
     },

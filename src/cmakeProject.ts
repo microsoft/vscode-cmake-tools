@@ -2636,14 +2636,19 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.selectLaunchTarget`
+     * When cmake.setBuildTargetSameAsLaunchTarget is true, delegates to
+     * selectBuildAndLaunchTarget so the build target is also updated.
      */
     async selectLaunchTarget(name?: string): Promise<string | null> {
+        if (this.workspaceContext.config.setBuildTargetSameAsLaunchTarget) {
+            return this.selectBuildAndLaunchTarget(name);
+        }
         return this.setLaunchTargetByName(name);
     }
 
     /**
      * Implementation of `cmake.selectBuildAndLaunchTarget`
-     * Sets both the build target and the launch target simultaneously.
+     * Sets both the build target and the launch/debug target simultaneously.
      */
     async selectBuildAndLaunchTarget(name?: string): Promise<string | null> {
         const result = await this.setLaunchTargetByName(name);
@@ -2671,8 +2676,7 @@ export class CMakeProject {
             return null;
         } if (executableTargets.length === 1) {
             const target = executableTargets[0];
-            await this.workspaceContext.state.setLaunchTargetName(this.folderName, target.name, this.isMultiProjectFolder);
-            this._launchTargetName.set(target.name);
+            await this.setLaunchTargetName(target.name);
             return target.path;
         }
 
@@ -2690,9 +2694,13 @@ export class CMakeProject {
         if (!chosen) {
             return null;
         }
-        await this.workspaceContext.state.setLaunchTargetName(this.folderName, chosen.label, this.isMultiProjectFolder);
-        this._launchTargetName.set(chosen.label);
+        await this.setLaunchTargetName(chosen.label);
         return chosen.detail;
+    }
+
+    private async setLaunchTargetName(name: string) {
+        await this.workspaceContext.state.setLaunchTargetName(this.folderName, name, this.isMultiProjectFolder);
+        this._launchTargetName.set(name);
     }
 
     async getCurrentLaunchTarget(): Promise<ExecutableTarget | null> {
