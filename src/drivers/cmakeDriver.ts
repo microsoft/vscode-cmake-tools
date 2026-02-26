@@ -598,6 +598,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (configurePreset) {
             log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
 
+            // Skip the full doSetConfigurePreset (which unconditionally sets
+            // _needsReconfigure = true) when the expanded preset hasn't changed.
+            // This avoids unnecessary reconfigures when reapplyPresets() is called
+            // but preset files on disk are identical (see #4502).
+            if (this._configurePreset && lodash.isEqual(configurePreset, this._configurePreset)) {
+                return;
+            }
+
             const newBinaryDir = configurePreset.binaryDir;
             const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
             await this.doSetConfigurePreset(needs_clean, async () => {

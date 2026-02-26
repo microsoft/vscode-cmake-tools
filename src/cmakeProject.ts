@@ -1987,6 +1987,14 @@ export class CMakeProject {
         if (!await this.maybeAutoSaveAll()) {
             return { exitCode: -1 };
         }
+        // After saving, explicitly refresh presets from disk so that the
+        // needsReconfigure check below sees up-to-date preset state.
+        // Without this, the async file-watcher's fire-and-forget reapplyPresets()
+        // may not have completed yet, causing needsReconfigure() to return false
+        // even though preset files just changed on disk (see #4502).
+        if (this.useCMakePresets) {
+            await this.presetsController.reapplyPresets();
+        }
         if (await this.needsReconfigure()) {
             return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken);
         } else {
