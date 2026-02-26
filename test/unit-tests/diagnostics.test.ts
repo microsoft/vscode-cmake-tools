@@ -1356,6 +1356,8 @@ suite('Diagnostics', () => {
         expect(fired[1].source).to.eq('GCC');
         expect(fired[1].diagnostic.severity).to.eq('error');
         consumer.dispose();
+    });
+
     test('CMakeOutputConsumer logs stdout lines at trace level, not info', () => {
         const spy = new SpyLogger();
         const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);

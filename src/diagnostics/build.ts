@@ -161,7 +161,7 @@ export class CompileOutputConsumer implements OutputConsumer {
         for (const [name, parser] of this.customParsers) {
             for (const raw_diag of parser.diagnostics) {
                 const filepath = await this.resolvePath(raw_diag.file, basePaths);
-                const severity = severity_of(raw_diag.severity);
+                const severity = diagnosticSeverity(raw_diag.severity);
                 if (severity === undefined) {
                     continue;
                 }
