@@ -17,7 +17,7 @@ suite('policies.json', () => {
     let policies: Policies;
 
     suiteSetup(() => {
-        const filePath = path.join(__dirname, '..', '..', '..', 'assets', 'policies.json');
+        const filePath = path.join(process.cwd(), 'assets', 'policies.json');
         const content = fs.readFileSync(filePath, 'utf-8');
         policies = JSON.parse(content);
     });
