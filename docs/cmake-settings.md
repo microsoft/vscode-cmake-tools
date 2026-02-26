@@ -219,6 +219,27 @@ Each matcher entry has the following properties:
 ]
 ```
 
+#### Resolving a specific target with `${input:...}`
+
+All launch-target commands (`cmake.launchTargetPath`, `cmake.getLaunchTargetPath`, and their directory/filename/name variants) accept an optional `targetName` argument. When `targetName` is provided, the command resolves that specific executable target **without changing the active launch target**. This is useful for projects with multiple executables, allowing stable per-target `launch.json` configurations.
+
+Use VS Code [input variables](https://code.visualstudio.com/docs/editor/variables-reference#_input-variables) to pass arguments:
+
+```jsonc
+{
+    "inputs": [
+        {
+            "id": "serverPath",
+            "type": "command",
+            "command": "cmake.launchTargetPath",
+            "args": { "targetName": "my_server" }
+        }
+    ]
+}
+```
+
+Then reference it in a launch configuration as `"program": "${input:serverPath}"`. See [Debugging a specific target](debug-launch.md#debugging-a-specific-target-multi-executable-projects) for full examples.
+
 ## Next steps
 
 - Learn about [user vs. workspace settings](https://code.visualstudio.com/docs/getstarted/settings)
