@@ -51,7 +51,7 @@ export class CMakeOutputConsumer extends CommandConsumer {
      */
     output(line: string) {
         if (this.logger) {
-            this.logger.info(line);
+            this.logger.trace(line);
         }
         super.output(line);
         this._parseDiags(line);
@@ -88,7 +88,7 @@ export class CMakeOutputConsumer extends CommandConsumer {
     error(line: string) {
         // First, just log the line
         if (this.logger) {
-            this.logger.error(line);
+            this.logger.warning(line);
         }
         super.error(line);
         this._parseDiags(line);
@@ -106,10 +106,10 @@ export class CMakeOutputConsumer extends CommandConsumer {
         // Switch on the state to implement our crude FSM
         switch (this._errorState.state) {
             case 'init': {
-                const re = /CMake (.*?)(?: \(dev\))? at (.*?):(\d+) \((.*?)\):/;
+                const re = /CMake (.*?)(?: \(dev\))? at (.*?):(\d+)(?: \((.*?)\))?:/;
                 const result = re.exec(line);
                 if (result) {
-                    // We have encountered and error
+                    // We have encountered an error
                     const [full, level, filename, linestr, command] = result;
                     const lineno = oneLess(linestr);
                     const diagmap: { [k: string]: vscode.DiagnosticSeverity } = {
@@ -118,7 +118,7 @@ export class CMakeOutputConsumer extends CommandConsumer {
                         Error: vscode.DiagnosticSeverity.Error
                     };
                     const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), full, diagmap[level]);
-                    vsdiag.source = `CMake (${command})`;
+                    vsdiag.source = command ? `CMake (${command})` : 'CMake';
                     vsdiag.relatedInformation = [];
                     const filepath = util.resolvePath(filename, this.sourceDir);
                     this._errorState.diag = {
