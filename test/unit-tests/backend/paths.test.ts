@@ -21,30 +21,44 @@ suite('[Paths - which with custom PATH]', () => {
     });
 
     test('which finds executable on custom search PATH', async () => {
-        // Create a fake executable in our temp directory
-        const fakeName = 'cmt-test-fake-exe';
+        // Create a fake executable in our temp directory.
+        // On Windows, which uses PATHEXT (.EXE;.CMD;.BAT;.COM) to find executables,
+        // so the file needs a recognized extension.
+        const isWindows = process.platform === 'win32';
+        const fakeName = isWindows ? 'cmt-test-fake-exe.cmd' : 'cmt-test-fake-exe';
         const fakePath = path.join(tmpDir, fakeName);
-        fs.writeFileSync(fakePath, '#!/bin/sh\necho hello\n');
-        fs.chmodSync(fakePath, 0o755);
+        const searchName = isWindows ? 'cmt-test-fake-exe' : fakeName;
+        if (isWindows) {
+            fs.writeFileSync(fakePath, '@echo off\r\necho hello\r\n');
+        } else {
+            fs.writeFileSync(fakePath, '#!/bin/sh\necho hello\n');
+            fs.chmodSync(fakePath, 0o755);
+        }
 
         // which should find it when we pass our tmpDir as the search path
-        const result = await which(fakeName, { path: tmpDir });
+        const result = await which(searchName, { path: tmpDir });
         expect(result).to.equal(fakePath);
     });
 
     test('which does not find executable when custom PATH does not include its directory', async () => {
         // Create a fake executable in our temp directory
-        const fakeName = 'cmt-test-fake-exe-missing';
+        const isWindows = process.platform === 'win32';
+        const fakeName = isWindows ? 'cmt-test-fake-exe-missing.cmd' : 'cmt-test-fake-exe-missing';
         const fakePath = path.join(tmpDir, fakeName);
-        fs.writeFileSync(fakePath, '#!/bin/sh\necho hello\n');
-        fs.chmodSync(fakePath, 0o755);
+        const searchName = isWindows ? 'cmt-test-fake-exe-missing' : fakeName;
+        if (isWindows) {
+            fs.writeFileSync(fakePath, '@echo off\r\necho hello\r\n');
+        } else {
+            fs.writeFileSync(fakePath, '#!/bin/sh\necho hello\n');
+            fs.chmodSync(fakePath, 0o755);
+        }
 
         // Create a different empty directory that doesn't contain the executable
         const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmt-paths-empty-'));
         try {
             let found: string | null = null;
             try {
-                found = await which(fakeName, { path: emptyDir });
+                found = await which(searchName, { path: emptyDir });
             } catch {
                 found = null;
             }
