@@ -107,6 +107,109 @@ suite('Debug/Launch interface', () => {
         expect(await cmakeProject.getLaunchTargetName()).to.be.eq(path.parse(executablesTargets[0].path).name);
     });
 
+    test('Test launchTargetPath with explicit targetName resolves correct path', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetPath(targetName)).to.be.eq(executablesTargets[0].path);
+    });
+
+    test('Test launchTargetPath with explicit targetName does NOT change active target', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        // Clear any existing launch target by not setting one
+        const beforeTarget = await cmakeProject.getCurrentLaunchTarget();
+
+        // Resolve a named target
+        await cmakeProject.launchTargetPath(executablesTargets[0].name);
+
+        // Active target should remain unchanged
+        const afterTarget = await cmakeProject.getCurrentLaunchTarget();
+        expect(afterTarget).to.deep.eq(beforeTarget);
+    });
+
+    test('Test getLaunchTargetPath with explicit targetName resolves correct path', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.getLaunchTargetPath(targetName)).to.be.eq(executablesTargets[0].path);
+    });
+
+    test('Test launchTargetPath with invalid targetName returns null', async () => {
+        expect(await cmakeProject.launchTargetPath('nonexistent_target')).to.be.null;
+    });
+
+    test('Test getLaunchTargetPath with invalid targetName returns null', async () => {
+        expect(await cmakeProject.getLaunchTargetPath('nonexistent_target')).to.be.null;
+    });
+
+    test('Test launchTargetDirectory with explicit targetName', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetDirectory(targetName)).to.be.eq(path.dirname(executablesTargets[0].path));
+    });
+
+    test('Test launchTargetFilename with explicit targetName', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetFilename(targetName)).to.be.eq(path.basename(executablesTargets[0].path));
+    });
+
+    test('Test launchTargetNameForSubstitution with explicit targetName', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetNameForSubstitution(targetName)).to.be.eq(path.parse(executablesTargets[0].path).name);
+    });
+
+    test('Test build on launch with explicit targetName honors buildBeforeRun', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: true });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        const launchProgramPath = await cmakeProject.launchTargetPath(targetName);
+        expect(launchProgramPath).to.be.not.null;
+        const validPath: string = launchProgramPath!;
+
+        // Remove the binary
+        fs.unlinkSync(validPath);
+        expect(fs.existsSync(validPath)).to.be.false;
+
+        // buildBeforeRun should rebuild it
+        await cmakeProject.launchTargetPath(targetName);
+        expect(fs.existsSync(validPath)).to.be.true;
+    }).timeout(60000);
+
+    test('Test build on launch with explicit targetName skips build when disabled', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: false });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        const launchProgramPath = await cmakeProject.launchTargetPath(targetName);
+        expect(launchProgramPath).to.be.not.null;
+        const validPath: string = launchProgramPath!;
+
+        // Remove the binary
+        fs.unlinkSync(validPath);
+        expect(fs.existsSync(validPath)).to.be.false;
+
+        // buildBeforeRun is off, so it should NOT rebuild
+        await cmakeProject.launchTargetPath(targetName);
+        expect(fs.existsSync(validPath)).to.be.false;
+    }).timeout(60000);
+
     test('Test build on launch (default)', async () => {
         testEnv.config.updatePartial({ buildBeforeRun: undefined });
 
