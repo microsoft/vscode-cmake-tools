@@ -17,7 +17,18 @@ suite('policies.json', () => {
     let policies: Policies;
 
     suiteSetup(() => {
-        const filePath = path.join(process.cwd(), 'assets', 'policies.json');
+        // Walk up from __dirname to find the repo root containing assets/.
+        // Needed because __dirname differs between ts-node (test/unit-tests/backend)
+        // and compiled output (out/test/unit-tests/backend).
+        let dir = __dirname;
+        while (!fs.existsSync(path.join(dir, 'assets', 'policies.json'))) {
+            const parent = path.dirname(dir);
+            if (parent === dir) {
+                throw new Error('Could not find assets/policies.json from ' + __dirname);
+            }
+            dir = parent;
+        }
+        const filePath = path.join(dir, 'assets', 'policies.json');
         const content = fs.readFileSync(filePath, 'utf-8');
         policies = JSON.parse(content);
     });
