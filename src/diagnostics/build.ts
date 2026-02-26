@@ -121,7 +121,7 @@ export class CompileOutputConsumer implements OutputConsumer {
                 }
 
                 const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity);
-                diag.source = source;
+                diag.source = `cmake ${source}`;
                 if (raw_diag.code) {
                     diag.code = raw_diag.code;
                 }
@@ -154,7 +154,7 @@ export class CompileOutputConsumer implements OutputConsumer {
                 }
 
                 const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity);
-                diag.source = name;
+                diag.source = `cmake ${name}`;
                 if (raw_diag.code) {
                     diag.code = raw_diag.code;
                 }

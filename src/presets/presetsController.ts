@@ -1559,7 +1559,7 @@ export class PresetsController implements vscode.Disposable {
             const diagnostic: Diagnostic = {
                 severity: DiagnosticSeverity.Error,
                 message: error[0],
-                source: error[1],
+                source: `cmake ${error[1]}`,
                 range: new Range(new Position(0, 0), new Position(0, 0))    // TODO in the future we can add the range of the error - parse originalPresetsFile
             };
             // avoid duplicate diagnostics

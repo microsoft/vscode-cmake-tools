@@ -118,7 +118,8 @@ export class CMakeOutputConsumer extends CommandConsumer {
                         Error: vscode.DiagnosticSeverity.Error
                     };
                     const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), full, diagmap[level]);
-                    vsdiag.source = command ? `CMake (${command})` : 'CMake';
+                    vsdiag.source = 'cmake';
+                    vsdiag.code = command ? command : undefined;
                     vsdiag.relatedInformation = [];
                     const filepath = util.resolvePath(filename, this.sourceDir);
                     this._errorState.diag = {
