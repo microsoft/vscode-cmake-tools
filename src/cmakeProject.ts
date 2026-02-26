@@ -2942,6 +2942,17 @@ export class CMakeProject {
 
         let chosen: ExecutableTarget;
 
+        // Save dirty editors and refresh presets from disk before checking whether
+        // reconfiguration is needed.  This mirrors the logic in ensureConfigured()
+        // and doConfigure() so that unsaved changes to included preset files are
+        // picked up for debug/launch paths as well (see #4502).
+        if (!await this.maybeAutoSaveAll()) {
+            return null;
+        }
+        if (this.useCMakePresets) {
+            await this.presetsController.reapplyPresets();
+        }
+
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
         // executable targets and may show an uneccessary prompt to the user
         const isReconfigurationNeeded = await this.needsReconfigure();
