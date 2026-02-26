@@ -116,6 +116,7 @@
 	"use.kits.variants": "キットとバリアントを使用する",
 	"edit.presets": "検索する",
 	"presets.version.error": "CMakePresets バージョン 1 はサポートされていません。続行する方法を選択してください。",
+	"select.preset.file": "新しいプリセットを追加するプリセット ファイルを選択してください",
 	"failed.writing.to.file": "ファイル {0} への書き込みが失敗しました",
 	"failed.to.watch": "{0} の Watcher を作成できませんでした: {1}"
 }
