@@ -28,7 +28,7 @@ import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { FileDiagnostic, populateCollection } from '@cmt/diagnostics/util';
+import { FileDiagnostic, addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
@@ -757,6 +757,14 @@ export class CMakeProject {
         return this._launchTargetName.changeEvent;
     }
     private readonly _launchTargetName = new Property<string | null>(null);
+
+    /**
+     * Short-lived cache for `prepareLaunchTargetExecutable` results keyed by target name.
+     * Prevents duplicate builds when multiple `${input:...}` variables resolve the same
+     * target within a single launch.json evaluation (typically < 1 s apart).
+     */
+    private readonly _prepareCache = new Map<string, { timestamp: number; result: ExecutableTarget }>();
+    private static readonly PREPARE_CACHE_TTL_MS = 10_000;
 
     /**
      * Whether CTest is enabled
@@ -1905,7 +1913,6 @@ export class CMakeProject {
             log.debug(localize('no.preset.abort', 'No preset selected. Abort configure'));
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
-        log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
         const result = await cb(consumer);
         result.stdout = consumer.stdout;
@@ -2099,6 +2106,9 @@ export class CMakeProject {
         try {
             this.statusMessage.set(localize('building.status', 'Building'));
             this.isBusy.set(true);
+            if (drv.config.parseBuildDiagnostics) {
+                collections.build.clear();
+            }
             let rc: number | null;
             if (taskConsumer) {
                 buildLogger.info(localize('starting.build', 'Starting build'));
@@ -2118,6 +2128,24 @@ export class CMakeProject {
                 };
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
+                if (drv.config.parseBuildDiagnostics) {
+                    consumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
+                        if (!drv!.config.enableOutputParsers?.includes(source.toLowerCase())) {
+                            return;
+                        }
+                        const severity = diagnosticSeverity(rawDiag.severity);
+                        if (severity === undefined) {
+                            return;
+                        }
+                        const filepath = util.resolvePath(rawDiag.file, drv!.binaryDir);
+                        const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                        diag.source = source;
+                        if (rawDiag.code) {
+                            diag.code = rawDiag.code;
+                        }
+                        addDiagnosticToCollection(collections.build, { filepath, diag });
+                    });
+                }
                 return await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Window,
@@ -2135,7 +2163,6 @@ export class CMakeProject {
                         });
                         const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
                         combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
-                        log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
@@ -2638,14 +2665,19 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.selectLaunchTarget`
+     * When cmake.setBuildTargetSameAsLaunchTarget is true, delegates to
+     * selectBuildAndLaunchTarget so the build target is also updated.
      */
     async selectLaunchTarget(name?: string): Promise<string | null> {
+        if (this.workspaceContext.config.setBuildTargetSameAsLaunchTarget) {
+            return this.selectBuildAndLaunchTarget(name);
+        }
         return this.setLaunchTargetByName(name);
     }
 
     /**
      * Implementation of `cmake.selectBuildAndLaunchTarget`
-     * Sets both the build target and the launch target simultaneously.
+     * Sets both the build target and the launch/debug target simultaneously.
      */
     async selectBuildAndLaunchTarget(name?: string): Promise<string | null> {
         const result = await this.setLaunchTargetByName(name);
@@ -2673,8 +2705,7 @@ export class CMakeProject {
             return null;
         } if (executableTargets.length === 1) {
             const target = executableTargets[0];
-            await this.workspaceContext.state.setLaunchTargetName(this.folderName, target.name, this.isMultiProjectFolder);
-            this._launchTargetName.set(target.name);
+            await this.setLaunchTargetName(target.name);
             return target.path;
         }
 
@@ -2692,9 +2723,13 @@ export class CMakeProject {
         if (!chosen) {
             return null;
         }
-        await this.workspaceContext.state.setLaunchTargetName(this.folderName, chosen.label, this.isMultiProjectFolder);
-        this._launchTargetName.set(chosen.label);
+        await this.setLaunchTargetName(chosen.label);
         return chosen.detail;
+    }
+
+    private async setLaunchTargetName(name: string) {
+        await this.workspaceContext.state.setLaunchTargetName(this.folderName, name, this.isMultiProjectFolder);
+        this._launchTargetName.set(name);
     }
 
     async getCurrentLaunchTarget(): Promise<ExecutableTarget | null> {
@@ -2709,9 +2744,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetPath`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetPath(): Promise<string | null> {
-        const executable = await this.prepareLaunchTargetExecutable();
+    async launchTargetPath(name?: string): Promise<string | null> {
+        const executable = await this.prepareLaunchTargetExecutable(name);
         if (!executable) {
             log.showChannel();
             log.warning('=======================================================');
@@ -2726,9 +2762,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetDirectory`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetDirectory(): Promise<string | null> {
-        const targetPath = await this.launchTargetPath();
+    async launchTargetDirectory(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2737,9 +2774,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetFilename`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetFilename(): Promise<string | null> {
-        const targetPath = await this.launchTargetPath();
+    async launchTargetFilename(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2748,9 +2786,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetName`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetNameForSubstitution(): Promise<string | null> {
-        const targetPath = await this.launchTargetPath();
+    async launchTargetNameForSubstitution(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2759,15 +2798,21 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetPath`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetPath(): Promise<string | null> {
+    async getLaunchTargetPath(name?: string): Promise<string | null> {
         if (await this.needsReconfigure()) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
             if (rc.exitCode !== 0) {
                 return null;
             }
         }
-        const target = await this.getOrSelectLaunchTarget();
+        let target: ExecutableTarget | null;
+        if (name) {
+            target = (await this.executableTargets).find(e => e.name === name) || null;
+        } else {
+            target = await this.getOrSelectLaunchTarget();
+        }
         if (!target) {
             log.showChannel();
             log.warning('=======================================================');
@@ -2783,9 +2828,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetDirectory`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetDirectory(): Promise<string | null> {
-        const targetPath = await this.getLaunchTargetPath();
+    async getLaunchTargetDirectory(name?: string): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2794,9 +2840,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetFilename`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetFilename(): Promise<string | null> {
-        const targetPath = await this.getLaunchTargetPath();
+    async getLaunchTargetFilename(name?: string): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2805,9 +2852,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetName`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetName(): Promise<string | null> {
-        const targetPath = await this.getLaunchTargetPath();
+    async getLaunchTargetName(name?: string): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2888,6 +2936,16 @@ export class CMakeProject {
     }
 
     async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
+        // Return cached result for named targets to avoid duplicate builds when
+        // multiple ${input:...} variables resolve the same target in quick succession.
+        if (name) {
+            const cached = this._prepareCache.get(name);
+            if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
+                && await fs.exists(cached.result.path)) {
+                return cached.result;
+            }
+        }
+
         let chosen: ExecutableTarget;
 
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
@@ -2938,6 +2996,12 @@ export class CMakeProject {
             }
 
         }
+
+        // Cache the result for named targets
+        if (name) {
+            this._prepareCache.set(name, { timestamp: Date.now(), result: chosen });
+        }
+
         return chosen;
     }
 

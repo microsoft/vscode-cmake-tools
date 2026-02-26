@@ -186,6 +186,57 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
 
 The value of the `program` attribute is expanded by CMake Tools to be the absolute path of the program to run.
 
+### Debugging a specific target (multi-executable projects)
+
+If your project defines multiple executables (for example, a `client` and a `server`), you can create stable per-target debug configurations using VS Code's [input variables](https://code.visualstudio.com/docs/editor/variables-reference#_input-variables). Pass the `targetName` argument to any launch-target command so that it resolves a specific executable **without changing the active launch target**. If `cmake.buildBeforeRun` is enabled, the named target is built automatically.
+
+```jsonc
+{
+    "version": "0.2.0",
+    "inputs": [
+        {
+            "id": "serverPath",
+            "type": "command",
+            "command": "cmake.launchTargetPath",
+            "args": { "targetName": "my_server" }
+        },
+        {
+            "id": "serverDir",
+            "type": "command",
+            "command": "cmake.getLaunchTargetDirectory",
+            "args": { "targetName": "my_server" }
+        },
+        {
+            "id": "clientPath",
+            "type": "command",
+            "command": "cmake.launchTargetPath",
+            "args": { "targetName": "my_client" }
+        }
+    ],
+    "configurations": [
+        {
+            "name": "Debug Server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${input:serverPath}",
+            "cwd": "${input:serverDir}"
+        },
+        {
+            "name": "Debug Client",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${input:clientPath}",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
+```
+
+When multiple `${input:...}` variables reference the same target (for example, `serverPath` and `serverDir` above), the build is triggered only once — results are cached for 10 seconds to avoid redundant builds.
+
+> **Tip:**
+> For large projects, consider setting `cmake.buildBeforeRun` to `false` and using a `preLaunchTask` instead to keep launch times predictable.
+
 ### Cache variable substitution
 
 You can substitute the value of any variable in the CMake cache by adding a `command`-type input for the `cmake.cacheVariable` command to the `inputs` section of `launch.json` with `args.name` as the name of the cache variable. That input can then be used with input variable substitution of values in the `configuration` section of `launch.json`. The optional `args.default` can provide a default value if the named variable isn't found in the CMake cache.
