@@ -56,10 +56,9 @@ suite('[Paths - which with custom PATH]', () => {
 
     test('which falls back to process.env.PATH when no custom path is given', async () => {
         // When no path option is provided, which searches process.env.PATH
-        // This should find a common system executable
-        if (process.platform !== 'win32') {
-            const result = await which('sh');
-            expect(result).to.not.be.null;
-        }
+        // This should find a common system executable on any platform
+        const exeName = process.platform === 'win32' ? 'cmd' : 'sh';
+        const result = await which(exeName);
+        expect(result).to.not.be.null;
     });
 });
