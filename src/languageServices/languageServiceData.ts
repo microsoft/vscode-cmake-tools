@@ -167,13 +167,13 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         const policy = this.policies[value];
         if (policy) {
             const markdown: vscode.MarkdownString = new vscode.MarkdownString();
-            if (policy.introduced_version) {
-                markdown.appendMarkdown(`Added in CMake ${policy.introduced_version}.  \n`);
+            if (policy.introduced_version && policy.removed_version) {
+                markdown.appendMarkdown(`Added in CMake ${policy.introduced_version} and removed in CMake ${policy.removed_version}.\n\n`);
+            } else if (policy.introduced_version) {
+                markdown.appendMarkdown(`Added in CMake ${policy.introduced_version}.\n\n`);
             }
-            if (policy.removed_version) {
-                markdown.appendMarkdown(`Removed in CMake ${policy.removed_version}.  \n`);
-            }
-            markdown.appendMarkdown(`${policy.description}  \n`);
+
+            markdown.appendMarkdown(`${policy.description}\n\n`);
             const policyUrl = `https://cmake.org/cmake/help/latest/policy/${policy.name}.html`;
             markdown.appendMarkdown(`[${policy.name} Documentation](${policyUrl})`);
             return new vscode.Hover(markdown);
