@@ -165,6 +165,23 @@ suite('Diagnostics', () => {
         expect(warning.diag.range.start.line).to.eq(14);
         expect(warning.diag.source).to.eq('CMake (message)');
     });
+    test('Parse error without command name', () => {
+        const error_output = [
+            'CMake Error at CMakeLists.txt:5:',
+            '  Parse error.  Expected "(", got newline with text "',
+            '',
+            '   ".',
+            '',
+            ''
+        ];
+        feedLines(consumer, [], error_output);
+        expect(consumer.diagnostics.length).to.eq(1);
+        const diag = consumer.diagnostics[0];
+        expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
+        expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diag.diag.source).to.eq('CMake');
+        expect(diag.diag.range.start.line).to.eq(4);
+    });
     test('Populate a diagnostic collection', () => {
         const error_output = [
             'CMake Warning at CMakeLists.txt:14 (message):',
