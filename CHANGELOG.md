@@ -8,6 +8,9 @@ Features:
 - Add individual CTest test nodes to the Project Outline with inline run/debug buttons, and enable debugging tests from both the Outline and Test Explorer without requiring a launch.json. [#4721](https://github.com/microsoft/vscode-cmake-tools/pull/4721)
 - Add "Delete Cache, Reconfigure and Build" command that chains cache deletion, reconfiguration, and build into a single action. [#4723](https://github.com/microsoft/vscode-cmake-tools/pull/4723)
 - Add "Set Build and Launch/Debug Target" command that sets both the build target and launch target simultaneously. [#4732](https://github.com/microsoft/vscode-cmake-tools/pull/4732)
+- Add `cmake.setBuildTargetSameAsLaunchTarget` setting to automatically set the build target when the launch/debug target is changed. [#4519](https://github.com/microsoft/vscode-cmake-tools/pull/4519) [@nikita-karatun](https://github.com/nikita-karatun)
+- Add `cmake.additionalBuildProblemMatchers` setting to define custom problem matchers for build output. Supports tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target`. [#4077](https://github.com/microsoft/vscode-cmake-tools/issues/4077)
+- Support `targetName` argument for launch-target command substitutions (`cmake.launchTargetPath`, etc.) via `${input:...}` variables, enabling build-before-run for non-active executable targets without changing the active launch target. [#4656](https://github.com/microsoft/vscode-cmake-tools/issues/4656)
 
 Improvements:
 - Make "CMake: Add ... Preset" commands available in the command palette when `cmake.useCMakePresets` is set to `auto`, even before a CMakePresets.json file exists. [#4401](https://github.com/microsoft/vscode-cmake-tools/issues/4401)
@@ -18,6 +21,9 @@ Improvements:
 
 Bug Fixes:
 - Fix configure/build sometimes using stale preset values when unsaved changes to included preset files are auto-saved before configure. The extension now explicitly refreshes presets from disk after saving, instead of relying solely on the asynchronous file watcher. [#4502](https://github.com/microsoft/vscode-cmake-tools/issues/4502)
+- Reduce overly verbose logging when CMake configure or build fails. The Output panel no longer floods with duplicated output, and the channel is only revealed on error rather than unconditionally. [#4749](https://github.com/microsoft/vscode-cmake-tools/issues/4749)
+- Fix Test Results panel not hyperlinking file paths for GoogleTest failures. The default `cmake.ctest.failurePatterns` now includes a pattern matching GoogleTest's `file:line: Failure` output format. [#4589](https://github.com/microsoft/vscode-cmake-tools/issues/4589)
+- Fix wrong path created for artifact when parsing code model using CMake File API. [#3015](https://github.com/microsoft/vscode-cmake-tools/issues/3015)
 - Fix garbled characters (Mojibake) in the Output panel when MSVC outputs UTF-8 (e.g., with `/utf-8`) on non-UTF-8 Windows systems. When `cmake.outputLogEncoding` is `auto`, the build output is now validated as UTF-8 before falling back to the system code page. [#4520](https://github.com/microsoft/vscode-cmake-tools/issues/4520)
 - Fix CMakePresets.json discovery failing in multi-folder workspaces when the presets file is in a subdirectory specified by `cmake.sourceDirectory`. [#4727](https://github.com/microsoft/vscode-cmake-tools/issues/4727)
 - Fix initial kit scan ignoring `cmake.enableAutomaticKitScan: false` on first workspace open, and prevent redundant concurrent scans in multi-project workspaces. [#4726](https://github.com/microsoft/vscode-cmake-tools/issues/4726)
@@ -38,6 +44,7 @@ Bug Fixes:
 - Fix `$comment` not being accepted inside a cacheVariable object in CMake presets. [#4600](https://github.com/microsoft/vscode-cmake-tools/issues/4600)
 - Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4651](https://github.com/microsoft/vscode-cmake-tools/issues/4651)
 - Fix how `jobs` is handled in build presets. Also update how `cmake.parallelJobs` is handled as a fallback when a build preset does not define `jobs`. [#4176](https://github.com/microsoft/vscode-cmake-tools/issues/4176)
+- Fix diagnostics to handle when there isn't a command in the error output. [PR #4765](https://github.com/microsoft/vscode-cmake-tools/pull/4765)
 
 ## 1.22.28
 
