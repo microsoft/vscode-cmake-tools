@@ -3,6 +3,7 @@
 ## 1.23
 
 Features:
+- Add `cmake.shell` setting to route CMake/CTest/CPack subprocess invocations through a custom shell (e.g., Git Bash, MSYS2), enabling embedded toolchains that require POSIX path translation on Windows. [#1750](https://github.com/microsoft/vscode-cmake-tools/issues/1750)
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
 - Add individual CTest test nodes to the Project Outline with inline run/debug buttons, and enable debugging tests from both the Outline and Test Explorer without requiring a launch.json. [#4721](https://github.com/microsoft/vscode-cmake-tools/pull/4721)

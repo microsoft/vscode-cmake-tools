@@ -86,7 +86,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         postRunCoverageTarget: null,
         coverageInfoFiles: [],
         useFolderPropertyInBuildTargetDropdown: true,
-        additionalBuildProblemMatchers: []
+        additionalBuildProblemMatchers: [],
+        shell: null
     });
     ret.updatePartial(conf);
     return ret;
@@ -154,5 +155,22 @@ suite('Configuration', () => {
         const conf = createConfig({ parallelJobs: 5 });
         conf.updatePartial({ buildDirectory: 'Foo' });
         expect(conf.parallelJobs).to.eq(5);
+    });
+
+    test('Read shell as null by default', () => {
+        const conf = createConfig({});
+        expect(conf.shell).to.be.null;
+    });
+
+    test('Read shell as string when set', () => {
+        const conf = createConfig({ shell: 'C:\\Program Files\\Git\\bin\\bash.exe' });
+        expect(conf.shell).to.eq('C:\\Program Files\\Git\\bin\\bash.exe');
+    });
+
+    test('Update shell setting', () => {
+        const conf = createConfig({ shell: null });
+        expect(conf.shell).to.be.null;
+        conf.updatePartial({ shell: '/usr/bin/bash' });
+        expect(conf.shell).to.eq('/usr/bin/bash');
     });
 });

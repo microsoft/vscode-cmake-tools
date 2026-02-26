@@ -77,6 +77,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.revealLog` | Controls when the CMake output log should be revealed. | `always` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
 | `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |
+| `cmake.shell` | Path to a shell executable to route all CMake/CTest/CPack subprocess invocations through (e.g., Git Bash or MSYS2). Useful for embedded toolchains that require POSIX path translation on Windows. When `null`, the default system shell behavior is used. | `null` | no |
 | `cmake.showConfigureWithDebuggerNotification` | If `true`, show notification when configure with debugger. | `true` | no |
 | `cmake.showNotAllDocumentsSavedQuestion` | If `true`, show not all documents saved question. | `true` | no |
 | `cmake.showSystemKits` | If `true`, show system kits in kit selection. | `true` | no |
