@@ -603,8 +603,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             // and the CMake cache still exists on disk.
             // This avoids unnecessary reconfigures when reapplyPresets() is called
             // but preset files on disk are identical (see #4502).
-            if (this._configurePreset && lodash.isEqual(configurePreset, this._configurePreset)
-                && await fs.exists(this.cachePath)) {
+            if (this._configurePreset && lodash.isEqual(configurePreset, this._configurePreset) && await fs.exists(this.cachePath)) {
                 return;
             }
 
