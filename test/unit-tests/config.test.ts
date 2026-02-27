@@ -162,26 +162,24 @@ suite('Configuration', () => {
         expect(conf.buildDirectory(false)).to.eq('/my/build/path');
     });
 
-    test('buildDirectory object form returns singleConfig for single-config generator', () => {
+    test('buildDirectory object form returns singleConfig when isMultiConfig is false', () => {
         const conf = createConfig({
             buildDirectory: {
                 singleConfig: '/build/single-${buildType}',
                 multiConfig: '/build/multi'
             }
         });
-        // 'Unix Makefiles' is a single-config generator
-        expect(conf.buildDirectory(false, undefined, 'Unix Makefiles')).to.eq('/build/single-${buildType}');
+        expect(conf.buildDirectory(false, undefined, false)).to.eq('/build/single-${buildType}');
     });
 
-    test('buildDirectory object form returns multiConfig for multi-config generator', () => {
+    test('buildDirectory object form returns multiConfig when isMultiConfig is true', () => {
         const conf = createConfig({
             buildDirectory: {
                 singleConfig: '/build/single-${buildType}',
                 multiConfig: '/build/multi'
             }
         });
-        // 'Ninja Multi-Config' is a multi-config generator
-        expect(conf.buildDirectory(false, undefined, 'Ninja Multi-Config')).to.eq('/build/multi');
+        expect(conf.buildDirectory(false, undefined, true)).to.eq('/build/multi');
     });
 
     test('buildDirectory object form with only singleConfig falls back for multi-config generator', () => {
@@ -189,7 +187,7 @@ suite('Configuration', () => {
             buildDirectory: { singleConfig: '/build/single' }
         });
         // No multiConfig set, should fall back to singleConfig
-        expect(conf.buildDirectory(false, undefined, 'Ninja Multi-Config')).to.eq('/build/single');
+        expect(conf.buildDirectory(false, undefined, true)).to.eq('/build/single');
     });
 
     test('buildDirectory object form with only multiConfig falls back for single-config generator', () => {
@@ -197,24 +195,25 @@ suite('Configuration', () => {
             buildDirectory: { multiConfig: '/build/multi' }
         });
         // No singleConfig set, should fall back to multiConfig
-        expect(conf.buildDirectory(false, undefined, 'Unix Makefiles')).to.eq('/build/multi');
+        expect(conf.buildDirectory(false, undefined, false)).to.eq('/build/multi');
     });
 
     test('buildDirectory object form with empty object falls back to default', () => {
         const conf = createConfig({
             buildDirectory: {}
         });
-        expect(conf.buildDirectory(false, undefined, 'Unix Makefiles')).to.eq('${workspaceFolder}/build');
+        expect(conf.buildDirectory(false, undefined, false)).to.eq('${workspaceFolder}/build');
     });
 
-    test('buildDirectory object form with Visual Studio generator returns multiConfig', () => {
+    test('buildDirectory object form defaults to singleConfig when isMultiConfig is undefined', () => {
         const conf = createConfig({
             buildDirectory: {
                 singleConfig: '/build/single',
                 multiConfig: '/build/multi'
             }
         });
-        expect(conf.buildDirectory(false, undefined, 'Visual Studio 17 2022')).to.eq('/build/multi');
+        // When isMultiConfig is not provided, defaults to false (single-config)
+        expect(conf.buildDirectory(false)).to.eq('/build/single');
     });
 
     test('buildDirectory multiProject default override still works with plain string', () => {

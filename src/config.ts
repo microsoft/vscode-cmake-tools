@@ -22,6 +22,8 @@ export function defaultNumJobs (): number {
 
 const log = logging.createLogger('config');
 
+export const defaultBuildDirectoryValue = '${workspaceFolder}/build';
+
 export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
 export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'automatic';
 export type StatusBarOptionVisibility = "visible" | "compact" | "icon" | "hidden" | "inherit";
@@ -341,8 +343,7 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.exclude;
     }
 
-    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope, generatorName?: string | null): string {
-        const defaultBuildDir = '${workspaceFolder}/build';
+    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope, isMultiConfig?: boolean): string {
         if (multiProject && this.isDefaultValue('buildDirectory', workspaceFolder)) {
             return '${sourceDirectory}/build';
         }
@@ -351,13 +352,12 @@ export class ConfigurationReader implements vscode.Disposable {
             return raw;
         }
         // Object form: pick the branch based on the generator type.
-        // isMultiConfGeneratorFast is a fast/pre-configure heuristic and may not be
-        // authoritative until after the first configure run.
-        const isMultiConf = util.isMultiConfGeneratorFast(generatorName ?? undefined);
-        if (isMultiConf) {
-            return raw.multiConfig ?? raw.singleConfig ?? defaultBuildDir;
+        // The isMultiConfig flag is typically derived from isMultiConfGeneratorFast(),
+        // a fast/pre-configure heuristic that may not be authoritative until after the first configure run.
+        if (isMultiConfig) {
+            return raw.multiConfig ?? raw.singleConfig ?? defaultBuildDirectoryValue;
         } else {
-            return raw.singleConfig ?? raw.multiConfig ?? defaultBuildDir;
+            return raw.singleConfig ?? raw.multiConfig ?? defaultBuildDirectoryValue;
         }
     }
     get installPrefix(): string | null {

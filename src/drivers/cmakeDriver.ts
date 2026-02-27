@@ -742,7 +742,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this._setKit(kit, preferredGenerators);
             await this._refreshExpansions();
             const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
-            const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope, this.generatorName), this.expansionOptions));
+            const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope, this.isMultiConfFast), this.expansionOptions));
             if (needsCleanIfKitChange && (newBinaryDir === oldBinaryDir)) {
                 await this._cleanPriorConfiguration();
             }
@@ -855,7 +855,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             if (!this.useCMakePresets) {
                 const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
-                this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope, this.generatorName), opts));
+                this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope, this.isMultiConfFast), opts));
             }
         });
     }

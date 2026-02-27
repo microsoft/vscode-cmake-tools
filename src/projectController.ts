@@ -308,8 +308,8 @@ export class ProjectController implements vscode.Disposable {
             return;
         }
         // When the object form is used, check both branches since the generator is not yet known.
-        const singleConfDir: string = config.buildDirectory(sourceDirectories.length > 1, undefined, 'Unix Makefiles');
-        const multiConfDir: string = config.buildDirectory(sourceDirectories.length > 1, undefined, 'Ninja Multi-Config');
+        const singleConfDir: string = config.buildDirectory(sourceDirectories.length > 1, undefined, false);
+        const multiConfDir: string = config.buildDirectory(sourceDirectories.length > 1, undefined, true);
         const dirsToCheck = new Set([singleConfDir, multiConfDir]);
 
         const allContainSourceDir = [...dirsToCheck].every(
