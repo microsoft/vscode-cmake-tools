@@ -10,7 +10,7 @@ Features:
 - Add "Set Build and Launch/Debug Target" command that sets both the build target and launch target simultaneously. [#4732](https://github.com/microsoft/vscode-cmake-tools/pull/4732)
 
 Improvements:
-- Clicking on a CTest unit test in the Test Explorer now navigates to the test source file by matching the test executable to its CMake target's source files. [#4449](https://github.com/microsoft/vscode-cmake-tools/issues/4449) [#4761](https://github.com/microsoft/vscode-cmake-tools/pull/4761)
+- Clicking on a CTest unit test in the Test Explorer now navigates to the test source file by matching the test executable to its CMake target's source files. [#4449](https://github.com/microsoft/vscode-cmake-tools/issues/4449)
 - Make "CMake: Add ... Preset" commands available in the command palette when `cmake.useCMakePresets` is set to `auto`, even before a CMakePresets.json file exists. [#4401](https://github.com/microsoft/vscode-cmake-tools/issues/4401)
 - Improve CMake syntax highlighting with command-scoped keyword rules, expanded variable recognition, and better generator-expression support. Remove obsolete deprecated-keyword entries that caused false positives on user-defined names. [#4709](https://github.com/microsoft/vscode-cmake-tools/issues/4709) [#4508](https://github.com/microsoft/vscode-cmake-tools/issues/4508) [#4613](https://github.com/microsoft/vscode-cmake-tools/issues/4613)
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
