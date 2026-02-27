@@ -3,6 +3,7 @@
 ## 1.23
 
 Features:
+- Evaluate kit's `environmentSetupScript` before searching for the CMake executable, so that `$PATH` changes from the script are respected during cmake lookup. [#2301](https://github.com/microsoft/vscode-cmake-tools/issues/2301)
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
 - Clear build diagnostics from the Problems pane when a new build starts and populate them incrementally during the build. [#4608](https://github.com/microsoft/vscode-cmake-tools/issues/4608)

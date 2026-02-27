@@ -189,9 +189,13 @@ class Paths {
         return this._ninjaPath;
     }
 
-    async which(name: string): Promise<string | null> {
+    async which(name: string, searchPATH?: string): Promise<string | null> {
         return new Promise<string | null>(resolve => {
-            which(name, (err, resolved) => {
+            const options: which.AsyncOptions & which.OptionsFirst = { all: false };
+            if (searchPATH) {
+                options.path = searchPATH;
+            }
+            which(name, options, (err, resolved) => {
                 if (err) {
                     resolve(null);
                 } else {
@@ -202,10 +206,10 @@ class Paths {
         });
     }
 
-    async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
+    async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string, searchPATH?: string): Promise<string | null> {
         const ctestPath = await this.expandStringPath(wsc.config.rawCTestPath, wsc);
         if (!ctestPath || ctestPath === 'auto' || overWriteCMakePathSetting) {
-            const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
+            const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting, searchPATH);
             if (cmake === null) {
                 return null;
             } else {
@@ -225,10 +229,10 @@ class Paths {
         }
     }
 
-    async getCPackPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
+    async getCPackPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string, searchPATH?: string): Promise<string | null> {
         const cpackPath = await this.expandStringPath(wsc.config.rawCPackPath, wsc);
         if (!cpackPath || cpackPath === 'auto' || overWriteCMakePathSetting) {
-            const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
+            const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting, searchPATH);
             if (cmake === null) {
                 return null;
             } else {
@@ -248,7 +252,7 @@ class Paths {
         }
     }
 
-    async getCMakePath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
+    async getCMakePath(wsc: DirectoryContext, overWriteCMakePathSetting?: string, searchPATH?: string): Promise<string | null> {
         this._ninjaPath = undefined;
 
         let raw = overWriteCMakePathSetting;
@@ -258,7 +262,7 @@ class Paths {
 
         if (raw === 'auto' || raw === 'cmake') {
             // We start by searching $PATH for cmake
-            const on_path = await this.which('cmake');
+            const on_path = await this.which('cmake', searchPATH);
             if (on_path) {
                 return on_path;
             }
