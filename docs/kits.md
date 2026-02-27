@@ -157,7 +157,8 @@ The following additional options may be specified:
 
 `environmentSetupScript`
 
-> The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
+> The absolute path to a script or a string in form of `"script path" [arg ...]`that modifies/adds environment variables for the kit. 
+Uses `call` on Windows and `source` in `bash` otherwise.
 
 `description`
 
