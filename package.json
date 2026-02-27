@@ -4225,7 +4225,7 @@
     "postcss": "^8.2.10",
     "yargs-parser": "^20.2.4",
     "xml2js": "^0.5.0",
-    "**/mocha/minimatch": "^3.0.5",
+    "**/mocha/minimatch": "^3.1.5",
     "**/braces": "^3.0.3",
     "js-yaml": "^4.1.1",
     "tmp": "^0.2.4",
