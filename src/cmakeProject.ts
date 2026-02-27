@@ -54,6 +54,7 @@ import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@
 import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
 
 import { CommandResult, ConfigurationType } from 'vscode-cmake-tools';
+import { parseInstallComponentsFromContent, containsPermissionError } from '@cmt/installUtils';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2582,6 +2583,135 @@ export class CMakeProject {
      */
     install(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
         return this.build(['install'], false, false, cancellationToken);
+    }
+
+    /**
+     * Parse cmake_install.cmake in the build directory to discover install component names.
+     */
+    async getInstallComponents(): Promise<string[]> {
+        const binaryDir = await this.binaryDir;
+        if (!binaryDir) {
+            return [];
+        }
+        const cmakeInstallFile = path.join(binaryDir, 'cmake_install.cmake');
+        if (!await fs.exists(cmakeInstallFile)) {
+            return [];
+        }
+        try {
+            const content = await fs.readFile(cmakeInstallFile);
+            return parseInstallComponentsFromContent(content);
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * Show a picker for selecting an install component. Falls back to input box when no components found.
+     */
+    async showComponentSelector(): Promise<string | null> {
+        const components = await this.getInstallComponents();
+        if (components.length > 0) {
+            const sel = await vscode.window.showQuickPick(
+                components.map(c => ({ label: c, description: localize('install.component.description', 'Install component') })),
+                { placeHolder: localize('select.install.component', 'Select an install component') }
+            );
+            return sel ? sel.label : null;
+        }
+        return await vscode.window.showInputBox({ prompt: localize('enter.component.name', 'Enter a component name') }) || null;
+    }
+
+    /**
+     * Implementation of `cmake.installComponent`
+     */
+    async installComponent(component?: string): Promise<CommandResult> {
+        if (!component) {
+            const selected = await this.showComponentSelector();
+            if (!selected) {
+                return { exitCode: -1 };
+            }
+            component = selected;
+        }
+
+        const cmake = await this.getCMakeExecutable();
+        if (!cmake.isPresent) {
+            void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
+            return { exitCode: -1 };
+        }
+
+        const minInstallVersion = util.parseVersion('3.15.0');
+        if (!cmake.version || !util.versionGreaterOrEquals(cmake.version, minInstallVersion)) {
+            void vscode.window.showErrorMessage(localize('cmake.install.component.version.error', 'CMake version 3.15 or later is required for component-based install. Current version: {0}', cmake.version ? util.versionToString(cmake.version) : 'unknown'));
+            return { exitCode: -1 };
+        }
+
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            void vscode.window.showErrorMessage(localize('set.up.before.install.component', 'Set up your CMake project before installing a component.'));
+            return { exitCode: -1 };
+        }
+
+        const configResult = await this.ensureConfigured();
+        if (configResult === null || configResult.exitCode !== 0) {
+            return { exitCode: configResult?.exitCode ?? -1 };
+        }
+
+        // Re-fetch driver after configure
+        const driver = await this.getCMakeDriverInstance();
+        if (!driver) {
+            return { exitCode: -1 };
+        }
+
+        const binaryDir = driver.binaryDir;
+        const args: string[] = ['--install', binaryDir, '--component', component];
+
+        const buildType = await this.currentBuildType();
+        if (buildType) {
+            args.push('--config', buildType);
+        }
+
+        const installPrefix = this.workspaceContext.config.installPrefix;
+        if (installPrefix) {
+            const opts = driver.expansionOptions;
+            const expandedPrefix = await expandString(installPrefix, opts);
+            args.push('--prefix', expandedPrefix);
+        }
+
+        log.showChannel();
+        buildLogger.info(localize('starting.install.component', 'Installing component: {0}', component));
+
+        return vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Window,
+                title: localize('installing.component', 'Installing component: {0}', component),
+                cancellable: true
+            },
+            async (_progress, cancel) => {
+                cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
+                const consumer: proc.OutputConsumer = {
+                    output(line: string) {
+                        buildLogger.info(line);
+                    },
+                    error(line: string) {
+                        buildLogger.error(line);
+                    }
+                };
+                const child = driver.executeCommand(cmake.path, args, consumer, {});
+                const result = await child.result;
+                if (result.retc !== 0) {
+                    buildLogger.error(localize('install.component.failed', 'Install component failed with exit code {0}', result.retc));
+                    log.showChannel(true);
+                    const combinedOutput = [result.stdout, result.stderr].filter(s => s).join('\n');
+                    if (containsPermissionError(combinedOutput)) {
+                        void vscode.window.showErrorMessage(
+                            localize('install.component.permission.error',
+                                'Install failed due to a permission error. Consider setting "cmake.installPrefix" to a writable directory (e.g. $\{workspaceFolder}/_install).'));
+                    }
+                } else {
+                    buildLogger.info(localize('install.component.finished', 'Install component finished successfully'));
+                }
+                return { exitCode: result.retc ?? -1 };
+            }
+        );
     }
 
     /**
