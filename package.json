@@ -2261,7 +2261,25 @@
           "scope": "resource"
         },
         "cmake.buildDirectory": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "singleConfig": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.buildDirectory.singleConfig.description%"
+                },
+                "multiConfig": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.buildDirectory.multiConfig.description%"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
           "default": "${workspaceFolder}/build",
           "description": "%cmake-tools.configuration.cmake.buildDirectory.description%",
           "scope": "resource"

@@ -106,7 +106,9 @@
         ]
     },
     "cmake-tools.configuration.cmake.cmakePath.description": "Name/path of the CMake executable to use.",
-    "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go.",
+    "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go. Can be a string (used for all generators) or an object with `singleConfig` and/or `multiConfig` properties to specify separate build directories for single-config (e.g. Make, Ninja) and multi-config (e.g. Ninja Multi-Config, Visual Studio) generators.",
+    "cmake-tools.configuration.cmake.buildDirectory.singleConfig.description": "Build directory template for single-config generators (e.g. Make, Ninja).",
+    "cmake-tools.configuration.cmake.buildDirectory.multiConfig.description": "Build directory template for multi-config generators (e.g. Ninja Multi-Config, Visual Studio, Xcode).",
     "cmake-tools.configuration.cmake.installPrefix.description": "The directory where CMake installed files will go.",
     "cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
     "cmake-tools.configuration.cmake.saveBeforeBuild.description": "Save open files before building.",

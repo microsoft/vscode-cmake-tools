@@ -156,4 +156,71 @@ suite('Configuration', () => {
         conf.updatePartial({ buildDirectory: 'Foo' });
         expect(conf.parallelJobs).to.eq(5);
     });
+
+    test('buildDirectory plain string form returns the string', () => {
+        const conf = createConfig({ buildDirectory: '/my/build/path' });
+        expect(conf.buildDirectory(false)).to.eq('/my/build/path');
+    });
+
+    test('buildDirectory object form returns singleConfig when isMultiConfig is false', () => {
+        const conf = createConfig({
+            buildDirectory: {
+                singleConfig: '/build/single-${buildType}',
+                multiConfig: '/build/multi'
+            }
+        });
+        expect(conf.buildDirectory(false, undefined, false)).to.eq('/build/single-${buildType}');
+    });
+
+    test('buildDirectory object form returns multiConfig when isMultiConfig is true', () => {
+        const conf = createConfig({
+            buildDirectory: {
+                singleConfig: '/build/single-${buildType}',
+                multiConfig: '/build/multi'
+            }
+        });
+        expect(conf.buildDirectory(false, undefined, true)).to.eq('/build/multi');
+    });
+
+    test('buildDirectory object form with only singleConfig falls back for multi-config generator', () => {
+        const conf = createConfig({
+            buildDirectory: { singleConfig: '/build/single' }
+        });
+        // No multiConfig set, should fall back to singleConfig
+        expect(conf.buildDirectory(false, undefined, true)).to.eq('/build/single');
+    });
+
+    test('buildDirectory object form with only multiConfig falls back for single-config generator', () => {
+        const conf = createConfig({
+            buildDirectory: { multiConfig: '/build/multi' }
+        });
+        // No singleConfig set, should fall back to multiConfig
+        expect(conf.buildDirectory(false, undefined, false)).to.eq('/build/multi');
+    });
+
+    test('buildDirectory object form with empty object falls back to default', () => {
+        const conf = createConfig({
+            buildDirectory: {}
+        });
+        expect(conf.buildDirectory(false, undefined, false)).to.eq('${workspaceFolder}/build');
+    });
+
+    test('buildDirectory object form defaults to singleConfig when isMultiConfig is undefined', () => {
+        const conf = createConfig({
+            buildDirectory: {
+                singleConfig: '/build/single',
+                multiConfig: '/build/multi'
+            }
+        });
+        // When isMultiConfig is not provided, defaults to false (single-config)
+        expect(conf.buildDirectory(false)).to.eq('/build/single');
+    });
+
+    test('buildDirectory plain string form works with multiProject=false', () => {
+        // Note: we cannot test multiProject=true with a non-default value here because
+        // isDefaultValue() checks the real vscode.workspace.getConfiguration (not configData),
+        // which always reports the default in the test host environment.
+        const conf = createConfig({ buildDirectory: '/custom/build' });
+        expect(conf.buildDirectory(false)).to.eq('/custom/build');
+    });
 });
