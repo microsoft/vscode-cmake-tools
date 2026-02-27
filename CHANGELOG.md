@@ -22,6 +22,7 @@ Improvements:
 - Display info tooltip when hovering over CMake policy identifiers (e.g., `CMP0177`), showing the CMake version that introduced the policy, a short description, and a link to the official documentation. [#4544](https://github.com/microsoft/vscode-cmake-tools/issues/4544)
 
 Bug Fixes:
+- Fix configure/build sometimes using stale preset values when unsaved changes to included preset files are auto-saved before configure. The extension now explicitly refreshes presets from disk after saving, instead of relying solely on the asynchronous file watcher. [#4502](https://github.com/microsoft/vscode-cmake-tools/issues/4502)
 - Reduce overly verbose logging when CMake configure or build fails. The Output panel no longer floods with duplicated output, and the channel is only revealed on error rather than unconditionally. [#4749](https://github.com/microsoft/vscode-cmake-tools/issues/4749)
 - Fix Test Results panel not hyperlinking file paths for GoogleTest failures. The default `cmake.ctest.failurePatterns` now includes a pattern matching GoogleTest's `file:line: Failure` output format. [#4589](https://github.com/microsoft/vscode-cmake-tools/issues/4589)
 - Fix wrong path created for artifact when parsing code model using CMake File API. [#3015](https://github.com/microsoft/vscode-cmake-tools/issues/3015)
