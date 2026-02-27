@@ -28,6 +28,17 @@ interface Variable {
     description: string;
 }
 
+interface Policies {
+    [key: string]: Policy;
+}
+
+interface Policy {
+    name: string;
+    description: string;
+    introduced_version: string;
+    removed_version?: string;
+}
+
 enum LanguageType {
     Variable,
     Command,
@@ -38,6 +49,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
     private commands: Commands = {};
     private variables: Variables = {}; // variables and properties
     private modules: Modules = {};
+    private policies: Policies = {};
 
     private constructor() {
     }
@@ -56,6 +68,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         this.commands = JSON.parse(await this.getFile("commands.json", locale));
         this.variables = JSON.parse(await this.getFile("variables.json", locale));
         this.modules = JSON.parse(await this.getFile("modules.json", locale));
+        this.policies = JSON.parse(await this.getFile("policies.json", locale));
     }
 
     /**
@@ -148,6 +161,22 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
 
         if (token.isCancellationRequested) {
             return null;
+        }
+
+        // Check for CMake policy identifiers (e.g., CMP0177)
+        const policy = this.policies[value];
+        if (policy) {
+            const markdown: vscode.MarkdownString = new vscode.MarkdownString();
+            if (policy.introduced_version && policy.removed_version) {
+                markdown.appendMarkdown(`Added in CMake ${policy.introduced_version} and removed in CMake ${policy.removed_version}.\n\n`);
+            } else if (policy.introduced_version) {
+                markdown.appendMarkdown(`Added in CMake ${policy.introduced_version}.\n\n`);
+            }
+
+            markdown.appendMarkdown(`${policy.description}\n\n`);
+            const policyUrl = `https://cmake.org/cmake/help/latest/policy/${policy.name}.html`;
+            markdown.appendMarkdown(`[${policy.name} Documentation](${policyUrl})`);
+            return new vscode.Hover(markdown);
         }
 
         const hoverSuggestions = this.commands[value] || this.variables[value] || this.modules[value] || this.modules[`Find${value}`];
