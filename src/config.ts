@@ -169,7 +169,7 @@ export interface ExtensionConfigurationSettings {
     defaultActiveFolder: string | null;
     exclude: string[];
     cmakePath: string;
-    buildDirectory: string;
+    buildDirectory: string | { singleConfig?: string; multiConfig?: string };
     installPrefix: string | null;
     sourceDirectory: string | string[];
     saveBeforeBuild: boolean;
@@ -341,11 +341,24 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.exclude;
     }
 
-    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope): string {
+    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope, generatorName?: string | null): string {
+        const defaultBuildDir = '${workspaceFolder}/build';
         if (multiProject && this.isDefaultValue('buildDirectory', workspaceFolder)) {
             return '${sourceDirectory}/build';
         }
-        return this.configData.buildDirectory;
+        const raw = this.configData.buildDirectory;
+        if (typeof raw === 'string') {
+            return raw;
+        }
+        // Object form: pick the branch based on the generator type.
+        // isMultiConfGeneratorFast is a fast/pre-configure heuristic and may not be
+        // authoritative until after the first configure run.
+        const isMultiConf = util.isMultiConfGeneratorFast(generatorName ?? undefined);
+        if (isMultiConf) {
+            return raw.multiConfig ?? raw.singleConfig ?? defaultBuildDir;
+        } else {
+            return raw.singleConfig ?? raw.multiConfig ?? defaultBuildDir;
+        }
     }
     get installPrefix(): string | null {
         return this.configData.installPrefix;
