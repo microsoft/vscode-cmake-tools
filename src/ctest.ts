@@ -906,7 +906,7 @@ export class CTestDriver implements vscode.Disposable {
                     }
 
                     // Try to find the test source file by matching the test executable to a CMake target
-                    if (!testDefFile && test.command.length > 0) {
+                    if (!testDefFile && test.command && test.command.length > 0) {
                         const testExe = util.platformNormalizePath(test.command[0]);
                         const targetInfo = executableToSources.get(testExe);
                         if (targetInfo && targetInfo.sources.length > 0) {
