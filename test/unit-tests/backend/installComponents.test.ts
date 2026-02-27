@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { parseInstallComponentsFromContent } from '@cmt/installUtils';
+import { parseInstallComponentsFromContent, containsPermissionError } from '@cmt/installUtils';
 
 suite('parseInstallComponentsFromContent', () => {
     test('parses single component', () => {
@@ -119,5 +119,34 @@ endif()
 `;
         const components = parseInstallComponentsFromContent(content);
         expect(components).to.deep.equal(['my-component_v2']);
+    });
+});
+
+suite('containsPermissionError', () => {
+    test('detects "permission" keyword', () => {
+        expect(containsPermissionError('file cannot copy: Permission denied')).to.be.true;
+    });
+
+    test('detects "cannot create directory" from CMake', () => {
+        expect(containsPermissionError(
+            'file cannot create directory: C:/Program Files/MyProject/include. Maybe need administrative privileges.'
+        )).to.be.true;
+    });
+
+    test('detects "Access is denied" (Windows)', () => {
+        expect(containsPermissionError('Error: Access is denied.')).to.be.true;
+    });
+
+    test('is case-insensitive', () => {
+        expect(containsPermissionError('PERMISSION DENIED')).to.be.true;
+        expect(containsPermissionError('Cannot Create Directory: /opt/app')).to.be.true;
+    });
+
+    test('returns false for unrelated errors', () => {
+        expect(containsPermissionError('CMake Error: install(TARGETS) given no ARCHIVE DESTINATION')).to.be.false;
+    });
+
+    test('returns false for empty string', () => {
+        expect(containsPermissionError('')).to.be.false;
     });
 });

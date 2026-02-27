@@ -16,3 +16,12 @@ export function parseInstallComponentsFromContent(content: string): string[] {
     }
     return Array.from(components).sort();
 }
+
+/**
+ * Check whether cmake --install output indicates a permission/access error.
+ * Used to provide an actionable hint to the user.
+ */
+export function containsPermissionError(output: string): boolean {
+    const lower = output.toLowerCase();
+    return lower.includes('permission') || lower.includes('access is denied') || lower.includes('cannot create directory');
+}

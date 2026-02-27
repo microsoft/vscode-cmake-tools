@@ -54,7 +54,7 @@ import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@
 import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
 
 import { CommandResult, ConfigurationType } from 'vscode-cmake-tools';
-import { parseInstallComponentsFromContent } from '@cmt/installUtils';
+import { parseInstallComponentsFromContent, containsPermissionError } from '@cmt/installUtils';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -2687,11 +2687,25 @@ export class CMakeProject {
             },
             async (_progress, cancel) => {
                 cancel.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
-                const child = driver.executeCommand(cmake.path, args, undefined, {});
+                const consumer: proc.OutputConsumer = {
+                    output(line: string) {
+                        buildLogger.info(line);
+                    },
+                    error(line: string) {
+                        buildLogger.error(line);
+                    }
+                };
+                const child = driver.executeCommand(cmake.path, args, consumer, {});
                 const result = await child.result;
                 if (result.retc !== 0) {
                     buildLogger.error(localize('install.component.failed', 'Install component failed with exit code {0}', result.retc));
                     log.showChannel(true);
+                    const combinedOutput = [result.stdout, result.stderr].filter(s => s).join('\n');
+                    if (containsPermissionError(combinedOutput)) {
+                        void vscode.window.showErrorMessage(
+                            localize('install.component.permission.error',
+                                'Install failed due to a permission error. Consider setting "cmake.installPrefix" to a writable directory (e.g. $\{workspaceFolder}/_install).'));
+                    }
                 } else {
                     buildLogger.info(localize('install.component.finished', 'Install component finished successfully'));
                 }
