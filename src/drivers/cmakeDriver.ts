@@ -743,7 +743,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return;
         }
 
-        log.info(localize('switching.to.kit', 'Switching to kit: {0}', kit.name));
+        let switch_to_kit_info = localize('switching.to.kit', 'Switching to kit: {0}', kit.name);
+        if (Array.isArray(kit.visualStudioArguments)) {
+            switch_to_kit_info += ` visualStudioArguments: ${JSON.stringify(kit.visualStudioArguments)}`;
+        }
+        log.info(switch_to_kit_info);
 
         const oldBinaryDir = this.binaryDir;
         const needsCleanIfKitChange = kitChangeNeedsClean(kit, this._kit);
@@ -1643,6 +1647,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (this._kit?.visualStudioArchitecture) {
                     telemetryProperties.VisualStudioArchitecture =
                         this._kit?.visualStudioArchitecture;
+                }
+                if (Array.isArray(this._kit?.visualStudioArguments)) {
+                    telemetryProperties.VisualStudioArguments = JSON.stringify(this._kit?.visualStudioArguments);
                 }
             }
 
