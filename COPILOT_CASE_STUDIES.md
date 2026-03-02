@@ -19,6 +19,8 @@
 
 **Updates:** Senior engineer reviewed and gave positive feedback. Merged in 5 days.
 
+**Why it made sense to merge:** The fix addressed a clear regression where user-level tasks.json files caused infinite spinners — a broken workflow with no workaround other than downgrading. The type guard approach is the correct VS Code API pattern for handling `TaskScope` vs `WorkspaceFolder`. The change was minimal (+14/−6), defensive, and localized to task resolution without affecting the happy path for workspace-scoped tasks.
+
 ---
 
 ## ✅ Issue #4651 / PR #4660: [Bug] additionalKits not shown when showSystemKits is false [Success]
@@ -37,6 +39,8 @@
 **Original prompt:** CMake Prompt
 
 **Updates:** Originally assessed as "Potential" — promoted to merged after manual testing confirmed behavior. PR hygiene (linkage, boilerplate) remains a weak point.
+
+**Why it made sense to merge:** The bug had a clear, narrow scope — `additionalKits` being hidden when `showSystemKits` was false violated user expectations since additional kits are explicitly user-specified. The one-line fix to include `additionalKits` in the `else` branch was semantically correct, low-risk, and trivially verified via the kit picker UI.
 
 ---
 
@@ -177,6 +181,8 @@
 
 **Updates:** Simplified, focused prompts yielded better results. Copilot performed better when given clear, scoped tasks (e.g., "generate unit test") rather than open-ended problem-solving. Prompt engineering significantly impacts output quality.
 
+**Why it made sense to merge:** The fix addressed a verifiable DAP protocol issue confirmed by the CMake 3.27+ release notes. The approach — stripping `evaluateName` from DAP `variables` responses — is surgical and only affects the specific message type causing the bug. Unit tests validate the interception behavior. The fix improves debugger UX for all CMake users without any behavioral side effects.
+
 ---
 
 ## 🟡 Issue #4509 / PR #4671: [Bug] CMake: Set Build Target shows only preset targets [Potential Failure]
@@ -233,6 +239,8 @@
 **Original prompt:** CMake Prompt
 
 **Updates:** None needed. Clean first-attempt fix that followed existing patterns.
+
+**Why it made sense to merge:** The fix closed a parity gap between kits and presets — `compile_commands.json` generation was automatic with kits but silently missing with presets, breaking a core workflow (`cmake.compileFile`). The fix mirrors the exact pattern used for kits, properly checks for existing user-defined values, and is a minimal +15/−1 change with clear precedent.
 
 ---
 
@@ -386,6 +394,8 @@
 
 **Updates:** This is one of the strongest fixes in the batch. Clean root cause analysis, targeted fix, unit tests included, and it addresses a frequently reported issue.
 
+**Why it made sense to merge:** This addressed a frequently reported issue where target resolution silently failed with single-config generators and presets that don't set `CMAKE_BUILD_TYPE`. The fallback logic (use the single available entry when `_target_map.size === 1`) is safe by construction — single-config generators can only have one configuration entry. Unit tests verify both the fallback case and non-interference with multi-config generators. The fix was one of the highest-quality in the entire batch, with clear root cause analysis and comprehensive testing.
+
 ---
 
 ## 🟡 Issue #4051 / PR #4707: [Bug] Invalid field 'host=x86' in CMake configuration for VS 2017 [Potential]
@@ -423,6 +433,8 @@
 **Original prompt:** CMake Prompt (Opus 4.6 model)
 
 **Updates:** High maintainer confidence. The fix mirrors an established pattern, minimal risk.
+
+**Why it made sense to merge:** The `cmake.installPrefix` setting was silently broken for all preset users — a clear behavioral gap. The fix mirrors the exact `CMAKE_EXPORT_COMPILE_COMMANDS` handling pattern already established in the same function, meaning the code follows a proven template. The precedence chain (preset `cacheVars` > `configureArgs` > setting) respects user intent at every level. Minimal change (+15/−6) with high confidence.
 
 ---
 
@@ -519,6 +531,8 @@
 
 **Updates:** Clean, minimal fix. One of the best examples of Copilot following existing patterns.
 
+**Why it made sense to merge:** The bug left users stranded — after Quick Start generated `CMakePresets.json`, they had to manually restart or switch modes. The fix is a single event subscription line following the identical pattern used elsewhere in the same function for other preset state changes. One-line change (+6/−1) with effectively zero regression risk.
+
 ---
 
 ## ✅ Issue #3578 / PR #4713: [Bug] $penv{} in preset includes ignores cmake.environment settings [Success]
@@ -537,6 +551,8 @@
 **Original prompt:** CMake Prompt
 
 **Updates:** Well-executed fix with proper testing.
+
+**Why it made sense to merge:** `$penv{}` silently ignoring `cmake.environment` settings in preset includes broke a core preset workflow — users couldn't reference VS Code settings in include paths, making environment-based preset composition unusable. The fix cleanly extends the existing `penvOverride` pattern and includes an integration test. Well-scoped change (+110/−2) that resolves a blocking issue for environment-driven workflows.
 
 ---
 
@@ -557,6 +573,8 @@
 
 **Updates:** None needed. Clean fix that mirrors the CTest pattern.
 
+**Why it made sense to merge:** The asymmetry between CPack button (always visible) and CPack commands (hidden without presets) was a clear UI inconsistency confusing users. The fix removes the unnecessary `useCMakePresets` gate and properly implements `getCPackCommandEnvironment()` to match the existing `getCTestCommandEnvironment()` pattern. Small change (+12/−7) that unifies behavior across preset and non-preset modes.
+
 ---
 
 ## ✅ Issue #4520 / PR #4724: [Bug] Garbled characters (Mojibake) in Output panel for UTF-8 build output [Success]
@@ -575,6 +593,8 @@
 **Original prompt:** CMake Prompt
 
 **Updates:** One of the strongest fixes in terms of test coverage. The unit test suite is comprehensive and covers real-world encoding scenarios.
+
+**Why it made sense to merge:** Mojibake in build output is a high-visibility, high-frustration bug affecting all non-UTF-8 Windows users — particularly developers in CJK locales using MSVC with `/utf-8`. The UTF-8-first detection approach is safe because GBK multi-byte sequences rarely form valid UTF-8. The fix includes 20 unit tests — the most comprehensive test suite in the entire batch — covering ASCII, CJK, GBK rejection, overlong sequences, surrogates, boundary splits, and invalid bytes. The `encodingUtils.ts` extraction avoids vscode dependency, enabling backend testing.
 
 ---
 
@@ -595,6 +615,8 @@
 
 **Updates:** Clean fix that leverages existing but unused API surface.
 
+**Why it made sense to merge:** Preset discovery failing after subdirectory selection left users unable to use presets in non-root source directory layouts — a blocking issue for monorepo and subdirectory project structures. The fix properly wires up an already-existing `sourceDir` setter on `PresetsParser` that was never called post-construction, along with a `reapplyPresets()` call to re-establish file watchers at the correct location. Unit tests verify path resolution behavior. Clean +111/−0 addition.
+
 ---
 
 ## ✅ Issue #4726 / PR #4729: [Bug] Kit scan ignoring cmake.enableAutomaticKitScan and N×scan race condition [Success]
@@ -613,6 +635,8 @@
 **Original prompt:** CMake Prompt
 
 **Updates:** High quality fix. The pure function extraction pattern is the gold standard for making complex decision logic testable.
+
+**Why it made sense to merge:** The kit scan bugs caused 80+ redundant scan operations in large workspaces, significantly degrading startup performance. The fix addresses two distinct bugs (config setting ignored, N×concurrent races) through a single architectural improvement: extracting the decision logic into a pure, testable function with a synchronous concurrency guard. The 10 regression tests cover all decision paths. This is the gold standard for how to make complex decision logic testable — pure function extraction with comprehensive unit tests.
 
 ---
 
@@ -633,6 +657,8 @@
 
 **Updates:** Notable that this issue (#4589) previously had a failed PR #4663 (row 5 in the tracking table, Sonnet 4.5) that attempted a regex approach but failed CI due to Windows path/URI normalization. This second attempt with a different, much simpler approach succeeded — demonstrating that retrying a failed issue with a fresh session and better-scoped approach can work.
 
+**Why it made sense to merge:** GoogleTest is one of the most popular C++ testing frameworks, and its failure output format (`file:line: Failure`) not being clickable in the Test Results panel was a high-visibility UX gap. The fix is purely additive — a new regex pattern appended to defaults — with zero risk to existing functionality. Unit tests validate both the new pattern and regression-test existing patterns. The retry success story (failed with Sonnet 4.5 / PR #4663, succeeded on second attempt with simpler approach) also demonstrates the value of retrying failed issues with fresh sessions.
+
 ---
 
 ## ✅ Issue #4656 / PR #4757: [Feature] Support build-before-run for non-active executable targets [Success]
@@ -651,6 +677,8 @@
 **Original prompt:** CMake Prompt with detailed investigation guidance and recommended approach.
 
 **Updates:** One of the strongest feature implementations. The build dedup cache is a thoughtful addition not explicitly requested but needed to avoid redundant builds when multiple input variables resolve the same target.
+
+**Why it made sense to merge:** This was a long-requested feature that eliminated a core UX friction — projects with multiple executables couldn't create stable `launch.json` configs without constantly switching the active target. The fix is backward-compatible (no-args behavior unchanged), introduces no side effects (routes around `setLaunchTargetByName()` when `targetName` is provided), and includes 9 tests covering named resolution, active target preservation, invalid target handling, and `buildBeforeRun` behavior. The build dedup cache prevents redundant builds when multiple `${input:...}` variables resolve the same target, and the `fs.exists` check correctly invalidates stale entries. Documentation updates provide copy-paste JSON examples for users.
 
 ---
 
@@ -706,3 +734,22 @@
 **Original prompt:** CMake Prompt with detailed investigation guidance covering two areas: FileWatcher event handling and configureInternal preset refresh.
 
 **Updates:** This is a strong fix for a real-world pain point affecting Conan users. The investigation guidance in the prompt was detailed and accurate, which likely contributed to the quality of the output. Needs manual testing with Conan-generated presets.
+
+---
+
+## 🟡 Issue #4225 / PR #4779: [Feature] Improve automatic setup of MSVC dev environment with presets [Potential]
+
+**Reported behavior:** Users with presets that use Ninja + MSVC (a common cross-IDE pattern) must currently add `"CMAKE_CXX_COMPILER": "cl"` explicitly to their `cacheVariables` for cmake-tools to automatically set up the VS Developer Environment. Visual Studio and CLion do not require this — they infer MSVC intent from the `toolset` and `architecture` fields alone. This is a friction point for users sharing presets across IDEs.
+
+**Agent patch (as implemented/claimed):** PR is [WIP] and in draft. Copilot's investigation checklist identifies the correct entry point (`tryApplyVsDevEnv` in `src/presets/preset.ts`) and the planned approach: detect MSVC intent from VS generator name, `toolset.strategy === 'external'`, and `architecture.strategy === 'external'` — not just from explicit `CMAKE_CXX_COMPILER`/`CMAKE_C_COMPILER` cache variables. Also plans to add a `log.info` hint when auto mode skips VS Dev Env on Windows with no MSVC signals, and export a `hasVsDevEnvSignals()` helper for testability. Planned changes span `preset.ts`, unit tests, and documentation. 1 commit so far with investigation work.
+
+**Initial Assessment:**
+
+- **Correctness:** 🟡 Pending. The approach is sound — inferring MSVC intent from generator name, toolset `external` strategy, and architecture `external` strategy aligns with how Visual Studio and CLion handle it. But implementation is not yet complete.
+- **Regression risk:** ⚠️ Medium. Changing `tryApplyVsDevEnv` auto-detection logic affects all preset users on Windows. The new signals (VS generator, external strategy) need careful validation to avoid false positives on non-MSVC setups.
+- **Test hygiene / verification:** 🟡 Planned. Investigation checklist includes unit tests covering all acceptance criteria, but not yet implemented.
+- **Documentation & traceability:** 🟢 Good. Detailed investigation checklist with specific file references and approach guidance. PR links correct issue.
+
+**Original prompt:** CMake Prompt with detailed investigation guidance including specific function entry points (`tryApplyVsDevEnv`, `getToolset`, `getArchitecture`, `isSupportedCompiler`), suggested approach with code snippets, and explicit acceptance criteria.
+
+**Updates:** Brand new PR opened March 2. The prompt includes unusually detailed implementation guidance, including suggested code structure for the `infersMsvc` detection. This level of detail in the prompt reflects learnings from earlier PRs where less-guided prompts led to incomplete implementations. The `hasVsDevEnvSignals()` helper extraction for testability follows the pattern established in PR #4729 (kit scan's `determineScanForKitsAction()`).

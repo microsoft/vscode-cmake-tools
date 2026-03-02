@@ -2,32 +2,32 @@
 
 **Period:** January – March 2, 2026
 **Repository:** `microsoft/vscode-cmake-tools`
-**Report generated:** 2026-03-02
+**Report generated:** 2026-03-02 (updated)
 **Data source:** GitHub API (live PR status as of report date)
 
 ---
 
 ## Overall Stats
 
-37 PRs have been raised so far.
+38 PRs have been raised so far.
 
-**14/37 PRs were successes and merged.** (#4555/PR #4659, #4484/PR #4681, #4551/PR #4672, #4651/PR #4660, #4219/PR #4708, #4358/PR #4706, #4569/PR #4712, #3578/PR #4713, #4453/PR #4719, #4520/PR #4724, #4726/PR #4729, #4727/PR #4728, #4589/PR #4756, #4656/PR #4757)
+**14/38 PRs were successes and merged.** (#4555/PR #4659, #4484/PR #4681, #4551/PR #4672, #4651/PR #4660, #4219/PR #4708, #4358/PR #4706, #4569/PR #4712, #3578/PR #4713, #4453/PR #4719, #4520/PR #4724, #4726/PR #4729, #4727/PR #4728, #4589/PR #4756, #4656/PR #4757)
 
-**14/37 PRs are still open.**
+**15/38 PRs are still open.**
 
-- 5/14 PRs are potential successes. Copilot's solution looks correct, but manual testing needs to be done before merging. (#3575/PR #4702, #4574/PR #4701, #4000/PR #4696, #4563/PR #4679, #4639/PR #4661)
+- 5/15 PRs are potential successes. Copilot's solution looks correct, but manual testing needs to be done before merging. (#3575/PR #4702, #4574/PR #4701, #4000/PR #4696, #4563/PR #4679, #4639/PR #4661)
 
-- 4/14 PRs have potential. More prompting/testing needs to be done before determining the validity of Copilot's solution. (#4051/PR #4707, #4621/PR #4674, #4560/PR #4680, #4313/PR #4682)
+- 4/15 PRs have potential. More prompting/testing needs to be done before determining the validity of Copilot's solution. (#4051/PR #4707, #4621/PR #4674, #4560/PR #4680, #4313/PR #4682)
 
-- 1/14 PRs seem like they are potential failures. (#4623/PR #4678)
+- 1/15 PRs seem like they are potential failures. (#4623/PR #4678)
 
-- 1/14 PRs is a stalled draft with no code committed. (#4667/PR #4686)
+- 1/15 PRs is a stalled draft with no code committed. (#4667/PR #4686)
 
-- 1/14 PRs has potential but needs further prompting. (#4509/PR #4671)
+- 1/15 PRs has potential but needs further prompting. (#4509/PR #4671)
 
-- 2/14 PRs are newly opened and need initial review. (#2426/PR #4772, #4777/PR #4778)
+- 3/15 PRs are newly opened and need initial review. (#2426/PR #4772, #4777/PR #4778, #4225/PR #4779)
 
-**9/37 PRs were closed without being merged.**
+**9/38 PRs were closed without being merged.**
 
 - 5/9 PRs were failures. (#4668/PR #4669, #4589/PR #4663, #4267/PR #4665, #4613/PR #4673, #4676/PR #4677)
 
@@ -80,6 +80,7 @@
 | 35 | 2/26 | 2/26 | PR #4769 | | Closed (Superseded) | Copilot attempted to fix unit test failures in the diagnostic source prepending work (#4766, gcampbell-msft's branch). The tests expected `'cmake'` prepended to diagnostic source strings but the assertions still used old values. Copilot created a draft PR with 1 commit to update test assertions. **Why closed:** The PR targeted a non-main branch (`dev/gcampbell/PrependDiagnostics`) and was closed the same day it was opened. The fix was handled directly in the parent PR's branch instead. |
 | 36 | 2/27 | | #2426 / PR #4772 | | Potential | Feature request from 2022 to support per-generator-type `cmake.buildDirectory` values (single-config vs multi-config generators). Copilot implemented an object form alongside the existing string form: `{ "singleConfig": "...", "multiConfig": "..." }`. Changes span `package.json` schema (`oneOf`), `config.ts` (type widening + `isMultiConfig?` parameter), `cmakeDriver.ts` (pass `isMultiConfFast`), `projectController.ts` (check both branches in duplicate-directory warning), and 8 new unit tests. Draft with +117/−10 across 7 files. Backward-compatible: existing string form unchanged. Needs manual testing with various generator types. |
 | 37 | 3/2 | | #4777 / PR #4778 | | Potential Success | Changes to files referenced via `include` in `CMakePresets.json` or `CMakeUserPresets.json` were not detected by the extension until VS Code restart — even "Delete Cache / Reconfigure" didn't pick up new content. Copilot unified FileWatcher event handling: all filesystem events (change, create, delete) now use a single debounced callback. Previously, `onDidCreate` had a separate non-debounced handler causing a race condition when tools like Conan regenerate included files via atomic write (delete→create). Also added `reapplyPresets()` call in `configureInternal()` so explicit user commands always use fresh preset state. Includes unit tests for unified debouncing and atomic write handling. 4 files, +72/−23. Changelog included. Well-scoped fix with clear root cause analysis. |
+| 38 | 3/2 | | #4225 / PR #4779 | | Potential | [WIP] draft to improve automatic MSVC dev environment setup with presets. Users currently must add `"CMAKE_CXX_COMPILER": "cl"` to cacheVariables — Visual Studio and CLion infer MSVC intent from toolset/architecture fields alone. Copilot's planned approach: detect MSVC intent from VS generator name, `toolset.strategy === 'external'`, and `architecture.strategy === 'external'`. Also plans `log.info` hint when auto mode skips VS Dev Env on Windows. 1 commit with investigation work, implementation not yet complete. Detailed prompt with suggested code structure and acceptance criteria. |
 
 ---
 
@@ -87,7 +88,7 @@
 
 ### What the Agent Did Well
 
-- **Root cause analysis is consistently strong.** Across all 37 PRs, Copilot correctly identified the root cause in the vast majority of cases — even when it failed to deliver a working fix, the diagnosis was often reusable (e.g., #4669's preset watcher analysis informed the manual fix in #4670, and #4677's grammar registration analysis informed PR #4697). In the merged PRs, the root cause was correct 100% of the time.
+- **Root cause analysis is consistently strong.** Across all 38 PRs, Copilot correctly identified the root cause in the vast majority of cases — even when it failed to deliver a working fix, the diagnosis was often reusable (e.g., #4669's preset watcher analysis informed the manual fix in #4670, and #4677's grammar registration analysis informed PR #4697). In the merged PRs, the root cause was correct 100% of the time.
 
 - **Pattern replication is a core strength.** When an established pattern already exists in the codebase, Copilot replicates it accurately. The strongest merged PRs all followed existing conventions: PR #4706 (installPrefix) mirrored the `CMAKE_EXPORT_COMPILE_COMMANDS` pattern; PR #4712 (preset mode switch) followed the existing event subscription pattern; PR #4681 (compileFile presets) mirrored kit behavior; PR #4729 (kit scan) extracted a pure function following the codebase's testability pattern. The agent excels at "do the same thing that already works, but for this new case."
 
@@ -117,7 +118,7 @@
 | Opus 4.5 | 3 | 2 | 3 (100%) | 0 | 0% |
 | Sonnet 4.5 | 8 | 2 | 4 (50%) | 3 | **37.5%** |
 | GPT-5.2-Codex | 1 | 0 | 0 (0%) | 1 | 100% |
-| Unknown (later batch) | 18 | 8 | 13 (72%) | 2 | 11% |
+| Unknown (later batch) | 19 | 8 | 14 (74%) | 2 | 11% |
 
 **Key observation: Opus 4.6 has zero true failures across 7 PRs.** Its one closed PR (#4705) was correctly diagnosed but redundant — closed because the fix was already merged, not because the solution was wrong. Opus 4.6 also produced the strongest individual fixes in the batch: PR #4708 (target resolution with unit tests), PR #4706 (preset installPrefix with pattern matching), and the still-open PR #4696 (cache editor architectural rewrite).
 
@@ -127,4 +128,4 @@
 - More complete implementations (PR #4702's temp-file approach reuses `visualStudio.ts` and `kit.ts` patterns)
 - Zero compounding-error iterations — every Opus 4.6 PR was either correct or correctly diagnosed but unimplemented
 
-The later "unknown model" batch (PRs #27–37, 8 merged out of 18) reflects the shift toward Opus 4.6 and shows a high merge rate with consistently high-quality fixes including unit tests — confirming that the model upgrade delivered measurable quality improvement. Notable additions include PR #4756 (retry of previously-failed #4663 with a simpler approach — succeeded) and PR #4757 (feature implementation with build dedup cache and 9 tests).
+The later "unknown model" batch (PRs #27–38, 8 merged out of 19) reflects the shift toward Opus 4.6 and shows a high merge rate with consistently high-quality fixes including unit tests — confirming that the model upgrade delivered measurable quality improvement. Notable additions include PR #4756 (retry of previously-failed #4663 with a simpler approach — succeeded), PR #4757 (feature implementation with build dedup cache and 9 tests), and PR #4779 (MSVC dev env auto-detection with detailed prompt guidance).
