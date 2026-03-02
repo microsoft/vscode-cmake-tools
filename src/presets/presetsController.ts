@@ -181,6 +181,9 @@ export class PresetsController implements vscode.Disposable {
     // in setConfigurePreset and to ensure consistent preset state.
     async reapplyPresets() {
         const doReapply = async () => {
+            // Capture pre-reload state to detect root presets file creation.
+            const existedBefore = this.presetsFileExist;
+
             const referencedFiles: Map<string, preset.PresetsFile | undefined> =
                 new Map();
 
@@ -202,6 +205,13 @@ export class PresetsController implements vscode.Disposable {
             // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
 
             await this.watchPresetsChange();
+
+            // If a root presets file was freshly created (transitioned from absent to present),
+            // update the active project so the UI reflects preset mode. This replaces
+            // the previous onCreatePresetsFile() handler that was wired only to onDidCreate.
+            if (!existedBefore && this.presetsFileExist) {
+                await this.project.projectController?.updateActiveProject(this.workspaceFolder);
+            }
         };
         this._reapplyInProgress = this._reapplyInProgress.then(doReapply, doReapply);
         return this._reapplyInProgress;
@@ -1706,23 +1716,14 @@ export class PresetsController implements vscode.Disposable {
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));
     }
 
-    // this is used for the file watcher on adding a new presets file
-    async onCreatePresetsFile() {
-        await this.reapplyPresets();
-        await this.project.projectController?.updateActiveProject(this.workspaceFolder);
-    }
-
     private async watchPresetsChange() {
 
         const presetChangeHandler = () => {
             void this.reapplyPresets();
         };
-        const presetCreatedHandler = () => {
-            void this.onCreatePresetsFile();
-        };
 
         this._presetsWatchers?.dispose();
-        this._presetsWatchers = new FileWatcher(this._referencedFiles, presetChangeHandler, presetCreatedHandler);
+        this._presetsWatchers = new FileWatcher(this._referencedFiles, presetChangeHandler);
     };
 
     dispose() {
@@ -1746,7 +1747,7 @@ class FileWatcher implements vscode.Disposable {
     // Two change events are coming in rapid succession without this.
     private canRunChangeHandler = true;
 
-    public constructor(filePaths: string[], changeHandler: () => void, createHandler: () => void) {
+    public constructor(filePaths: string[], changeHandler: () => void) {
         const debouncedOnChange = () => {
             if (this.canRunChangeHandler) {
                 changeHandler();
@@ -1762,7 +1763,7 @@ class FileWatcher implements vscode.Disposable {
                 const watcher = vscode.workspace.createFileSystemWatcher(pattern);
 
                 watcher.onDidChange(debouncedOnChange);
-                watcher.onDidCreate(createHandler);
+                watcher.onDidCreate(debouncedOnChange);
                 watcher.onDidDelete(debouncedOnChange);
 
                 this.watchers.push(watcher);
