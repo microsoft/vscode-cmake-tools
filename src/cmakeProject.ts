@@ -847,6 +847,11 @@ export class CMakeProject {
         await this.reloadCMakeDriver();
     });
 
+    private readonly shellSub = this.workspaceContext.config.onChange('shell', async () => {
+        log.info(localize('shell.changed.restart.driver', "Restarting the CMake driver after a shell change."));
+        await this.reloadCMakeDriver();
+    });
+
     /**
      * The variant manager keeps track of build variants. Has two-phase init.
      */
@@ -890,7 +895,8 @@ export class CMakeProject {
             this.generatorSub,
             this.preferredGeneratorsSub,
             this.communicationModeSub,
-            this.cmakePathSub
+            this.cmakePathSub,
+            this.shellSub
         ]) {
             sub.dispose();
         }
