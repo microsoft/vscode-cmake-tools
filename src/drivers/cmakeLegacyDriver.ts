@@ -126,8 +126,6 @@ export class CMakeLegacyDriver extends CMakeDriver {
             this.configureProcess = child;
             const result = await child.result;
             this.configureProcess = null;
-            log.trace(result.stderr);
-            log.trace(result.stdout);
             if (result.retc === 0 && (!configurePreset || (configurePreset && defaultConfigurePresetName && configurePreset.name === defaultConfigurePresetName))) {
                 this._needsReconfigure = false;
             }

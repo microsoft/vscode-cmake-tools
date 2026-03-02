@@ -2528,6 +2528,9 @@
             },
             {
               "regexp": "(.*?)\\((\\d+)\\): *(?:error: *)(.*)"
+            },
+            {
+              "regexp": "(.*?):(\\d+): *(Failure.*)"
             }
           ],
           "markdownDescription": "%cmake-tools.configuration.cmake.ctest.failurePatterns.markdownDescription%",
@@ -2569,6 +2572,69 @@
             "ghs",
             "diab"
           ],
+          "scope": "resource"
+        },
+        "cmake.additionalBuildProblemMatchers": {
+          "type": "array",
+          "markdownDescription": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.markdownDescription%",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "regexp"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.name%"
+              },
+              "regexp": {
+                "type": "string",
+                "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.regexp%"
+              },
+              "file": {
+                "type": "integer",
+                "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.file%",
+                "default": 1
+              },
+              "line": {
+                "type": "integer",
+                "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.line%",
+                "default": 2
+              },
+              "column": {
+                "type": "integer",
+                "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.column%"
+              },
+              "severity": {
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.severity.group%"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "error",
+                      "warning",
+                      "info"
+                    ],
+                    "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.severity.fixed%"
+                  }
+                ]
+              },
+              "message": {
+                "type": "integer",
+                "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.message%",
+                "default": 3
+              },
+              "code": {
+                "type": "integer",
+                "description": "%cmake-tools.configuration.cmake.additionalBuildProblemMatchers.code%"
+              }
+            }
+          },
+          "default": [],
           "scope": "resource"
         },
         "cmake.debugConfig": {
@@ -3948,6 +4014,12 @@
             "default": false,
             "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
             "scope": "resource"
+        },
+        "cmake.setBuildTargetSameAsLaunchTarget": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.setBuildTargetSameAsLaunchTarget.description%",
+          "scope": "resource"
         }
       }
     },
@@ -4153,7 +4225,7 @@
     "postcss": "^8.2.10",
     "yargs-parser": "^20.2.4",
     "xml2js": "^0.5.0",
-    "**/mocha/minimatch": "^3.0.5",
+    "**/mocha/minimatch": "^3.1.5",
     "**/braces": "^3.0.3",
     "js-yaml": "^4.1.1",
     "tmp": "^0.2.4",
