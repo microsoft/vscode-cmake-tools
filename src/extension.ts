@@ -2512,6 +2512,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         if (what instanceof BookmarkNode && what.bookmark.sourceNode instanceof TargetNode) {
             return what.bookmark.sourceNode;
         }
+        if (what instanceof BookmarkNode) {
+            log.error(localize('bookmark.target.not.resolved', 'Bookmark "{0}" could not be resolved to a target. The project may need to be reconfigured.', what.bookmark.name));
+        }
         return undefined;
     };
 
