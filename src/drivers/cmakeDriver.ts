@@ -570,13 +570,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // issues with long command lines (see https://github.com/microsoft/vscode/issues/233420).
         // The arguments array is always populated by CompilationDatabase, either from the
         // compile_commands.json or by parsing the command string.
-        const args = cmd.arguments!;
-        if (args.length > 0) {
+        const args = cmd.arguments;
+        if (args && args.length > 0) {
             existing.sendText(shlex.quote(args[0]), false);
             for (let i = 1; i < args.length; i++) {
                 existing.sendText(` ${shlex.quote(args[i])}`, false);
             }
             existing.sendText('', true); // Send newline to execute the command
+        } else {
+            // Fallback to original behavior if arguments not available
+            existing.sendText(cmd.command + '\r\n');
         }
         return existing;
     }
