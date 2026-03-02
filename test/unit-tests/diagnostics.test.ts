@@ -80,7 +80,8 @@ suite('Diagnostics', () => {
         const diag = consumer.diagnostics[0];
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-        expect(diag.diag.source).to.eq('CMake (message)');
+        expect(diag.diag.source).to.eq('cmake');
+        expect(diag.diag.code).to.eq('message');
         expect(diag.diag.message).to.match(/I am a warning!$/);
         expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
     });
@@ -96,7 +97,8 @@ suite('Diagnostics', () => {
         const diag = consumer.diagnostics[0];
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-        expect(diag.diag.source).to.eq('CMake (message)');
+        expect(diag.diag.source).to.eq('cmake');
+        expect(diag.diag.code).to.eq('message');
         expect(diag.diag.message).to.match(/I am deprecated!$/);
         expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
     });
@@ -122,8 +124,10 @@ suite('Diagnostics', () => {
         expect(error.diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
         expect(warning.diag.range.start.line).to.eq(13);
         expect(error.diag.range.start.line).to.eq(12);
-        expect(warning.diag.source).to.eq('CMake (message)');
-        expect(error.diag.source).to.eq('CMake (some_error_function)');
+        expect(warning.diag.source).to.eq('cmake');
+        expect(warning.diag.code).to.eq('message');
+        expect(error.diag.source).to.eq('cmake');
+        expect(error.diag.code).to.eq('some_error_function');
         expect(warning.diag.message).to.match(/I am a warning!$/);
         expect(error.diag.message).to.match(/I am an error!$/);
     });
@@ -144,7 +148,8 @@ suite('Diagnostics', () => {
         expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(warning.diag.message).to.match(/I'm an inner warning$/);
         expect(warning.diag.range.start.line).to.eq(14);
-        expect(warning.diag.source).to.eq('CMake (message)');
+        expect(warning.diag.source).to.eq('cmake');
+        expect(warning.diag.code).to.eq('message');
     });
     test('Parse Author Warnings', () => {
         const error_output = [
@@ -163,7 +168,8 @@ suite('Diagnostics', () => {
         expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(warning.diag.message).to.match(/I'm an inner warning$/);
         expect(warning.diag.range.start.line).to.eq(14);
-        expect(warning.diag.source).to.eq('CMake (message)');
+        expect(warning.diag.source).to.eq('cmake');
+        expect(warning.diag.code).to.eq('message');
     });
     test('Parse error without command name', () => {
         const error_output = [
@@ -179,7 +185,7 @@ suite('Diagnostics', () => {
         const diag = consumer.diagnostics[0];
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
-        expect(diag.diag.source).to.eq('CMake');
+        expect(diag.diag.source).to.eq('cmake');
         expect(diag.diag.range.start.line).to.eq(4);
     });
     test('Populate a diagnostic collection', () => {
