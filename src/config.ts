@@ -237,6 +237,7 @@ export interface ExtensionConfigurationSettings {
     useFolderPropertyInBuildTargetDropdown: boolean;
     setBuildTargetSameAsLaunchTarget: boolean;
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
+    shell: string | null;
 }
 
 type EmittersOf<T> = {
@@ -628,6 +629,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.useFolderPropertyInBuildTargetDropdown;
     }
 
+    get shell(): string | null {
+        return this.configData.shell;
+    }
+
     get setBuildTargetSameAsLaunchTarget(): boolean {
         return this.configData.setBuildTargetSameAsLaunchTarget;
     }
@@ -703,8 +708,9 @@ export class ConfigurationReader implements vscode.Disposable {
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
-        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
-        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>()
+        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
+        shell: new vscode.EventEmitter<string | null>(),
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>()
     };
 
     /**
