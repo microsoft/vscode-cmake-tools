@@ -962,6 +962,25 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
 }
 
 /**
+ * Checks whether a configure preset has structural signals indicating that the VS Developer Environment
+ * should be activated, even without an explicit CMAKE_CXX_COMPILER or CMAKE_C_COMPILER setting.
+ *
+ * This detects:
+ * 1. A Visual Studio generator (e.g. "Visual Studio 17 2022")
+ * 2. A toolset with strategy "external" (meaning the IDE should set up the environment)
+ * 3. An architecture with strategy "external"
+ *
+ * @param preset The configure preset to inspect.
+ * @returns true if the preset has MSVC-intent signals, false otherwise.
+ */
+export function hasVsDevEnvSignals(preset: ConfigurePreset): boolean {
+    const hasVsGenerator = /Visual Studio \d+/.test(preset.generator ?? '');
+    const toolsetStrategy = typeof preset.toolset === 'object' ? (preset.toolset as ValueStrategy).strategy : undefined;
+    const archStrategy = typeof preset.architecture === 'object' ? (preset.architecture as ValueStrategy).strategy : undefined;
+    return hasVsGenerator || toolsetStrategy === 'external' || archStrategy === 'external';
+}
+
+/**
  * This method tries to apply, based on the useVsDeveloperEnvironment setting value and, in "auto" mode, whether certain preset compilers/generators are used and not found, the VS Dev Env.
  * @param preset Preset to modify the parentEnvironment of. If the developer environment should be applied, the preset.environment is modified by reference.
  * @param workspaceFolder The workspace folder of the CMake project.
@@ -979,12 +998,17 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
     // [Windows Only] We only support VS Dev Env on Windows.
     if (!preset.__parentEnvironment && process.platform === "win32") {
         if (useVsDeveloperEnvironmentMode === "auto") {
-            if (preset.cacheVariables) {
-                const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-                const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-                // The env variables for the supported compilers are the same.
-                const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+            const cxxCompiler = preset.cacheVariables ? getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase() : undefined;
+            const cCompiler = preset.cacheVariables ? getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase() : undefined;
+            // The env variables for the supported compilers are the same.
+            const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
 
+            // Also check for structural MSVC signals in the preset (VS generator, external strategy)
+            const infersMsvc = !compilerName && hasVsDevEnvSignals(preset);
+            // If MSVC is inferred from preset signals, treat 'cl' as the effective compiler name for env setup
+            const effectiveCompilerName = compilerName ?? (infersMsvc ? 'cl' : undefined);
+
+            if (effectiveCompilerName) {
                 // find where.exe using process.env since we're on windows.
                 let whereExecutable;
                 // assume in this call that it exists
@@ -1004,7 +1028,7 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                     }
                 }
 
-                if (compilerName && whereExecutable) {
+                if (whereExecutable) {
                     // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
                     // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
                     const env = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
@@ -1019,7 +1043,7 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                         }
                     }
 
-                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                    const compilerLocation = await execute(whereExecutable, [effectiveCompilerName], null, {
                         environment: EnvironmentUtils.create(presetEnv),
                         silent: true,
                         encoding: 'utf8',
@@ -1041,10 +1065,16 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                         developerEnvironment = await getVsDevEnv({
                             preset,
                             shouldInterrogateForNinja,
-                            compilerName
+                            compilerName: effectiveCompilerName
                         });
                     }
                 }
+            } else {
+                log.info(localize(
+                    'vs.dev.env.skipped.hint',
+                    'Configure preset "{0}": VS Developer Environment was not set up automatically. To enable it, set CMAKE_CXX_COMPILER to "cl" in cacheVariables, or set cmake.useVsDeveloperEnvironment to "always".',
+                    preset.name
+                ));
             }
         } else if (useVsDeveloperEnvironmentMode === "always") {
             developerEnvironment = await getVsDevEnv({
