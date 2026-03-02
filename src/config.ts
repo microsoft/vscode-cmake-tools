@@ -22,6 +22,8 @@ export function defaultNumJobs (): number {
 
 const log = logging.createLogger('config');
 
+export const defaultBuildDirectoryValue = '${workspaceFolder}/build';
+
 export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
 export type CMakeCommunicationMode = 'legacy' | 'serverApi' | 'fileApi' | 'automatic';
 export type StatusBarOptionVisibility = "visible" | "compact" | "icon" | "hidden" | "inherit";
@@ -169,7 +171,7 @@ export interface ExtensionConfigurationSettings {
     defaultActiveFolder: string | null;
     exclude: string[];
     cmakePath: string;
-    buildDirectory: string;
+    buildDirectory: string | { singleConfig?: string; multiConfig?: string };
     installPrefix: string | null;
     sourceDirectory: string | string[];
     saveBeforeBuild: boolean;
@@ -341,11 +343,22 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.exclude;
     }
 
-    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope): string {
+    buildDirectory(multiProject: boolean, workspaceFolder?: vscode.ConfigurationScope, isMultiConfig?: boolean): string {
         if (multiProject && this.isDefaultValue('buildDirectory', workspaceFolder)) {
             return '${sourceDirectory}/build';
         }
-        return this.configData.buildDirectory;
+        const raw = this.configData.buildDirectory;
+        if (typeof raw === 'string') {
+            return raw;
+        }
+        // Object form: pick the branch based on the generator type.
+        // The isMultiConfig flag is typically derived from isMultiConfGeneratorFast(),
+        // a fast/pre-configure heuristic that may not be authoritative until after the first configure run.
+        if (isMultiConfig) {
+            return raw.multiConfig ?? raw.singleConfig ?? defaultBuildDirectoryValue;
+        } else {
+            return raw.singleConfig ?? raw.multiConfig ?? defaultBuildDirectoryValue;
+        }
     }
     get installPrefix(): string | null {
         return this.configData.installPrefix;

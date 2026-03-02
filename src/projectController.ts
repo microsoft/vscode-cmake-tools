@@ -307,9 +307,15 @@ export class ProjectController implements vscode.Disposable {
         if (sourceDirectories.length <= 1) {
             return;
         }
-        const unresolvedBuildDirectory: string = config.buildDirectory(sourceDirectories.length > 1);
+        // When the object form is used, check both branches since the generator is not yet known.
+        const singleConfDir: string = config.buildDirectory(sourceDirectories.length > 1, undefined, false);
+        const multiConfDir: string = config.buildDirectory(sourceDirectories.length > 1, undefined, true);
+        const dirsToCheck = new Set([singleConfDir, multiConfDir]);
 
-        if (unresolvedBuildDirectory.includes("${sourceDirectory}") || unresolvedBuildDirectory.includes("${sourceDir}")) {
+        const allContainSourceDir = [...dirsToCheck].every(
+            d => d.includes("${sourceDirectory}") || d.includes("${sourceDir}")
+        );
+        if (allContainSourceDir) {
             return;
         } else {
             const sameBinaryDir = localize('duplicate.build.directory.1', 'Multiple CMake projects in this folder are using the same CMAKE_BINARY_DIR.');

@@ -3,6 +3,7 @@
 ## 1.23
 
 Features:
+- Add `singleConfig`/`multiConfig` object form for `cmake.buildDirectory` to allow separate build directory templates for single- and multi-config generators. [#2426](https://github.com/microsoft/vscode-cmake-tools/issues/2426)
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
 - Clear build diagnostics from the Problems pane when a new build starts and populate them incrementally during the build. [#4608](https://github.com/microsoft/vscode-cmake-tools/issues/4608)
