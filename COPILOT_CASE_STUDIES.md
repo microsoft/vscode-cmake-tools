@@ -753,3 +753,22 @@
 **Original prompt:** CMake Prompt with detailed investigation guidance including specific function entry points (`tryApplyVsDevEnv`, `getToolset`, `getArchitecture`, `isSupportedCompiler`), suggested approach with code snippets, and explicit acceptance criteria.
 
 **Updates:** Brand new PR opened March 2. The prompt includes unusually detailed implementation guidance, including suggested code structure for the `infersMsvc` detection. This level of detail in the prompt reflects learnings from earlier PRs where less-guided prompts led to incomplete implementations. The `hasVsDevEnvSignals()` helper extraction for testability follows the pattern established in PR #4729 (kit scan's `determineScanForKitsAction()`).
+
+---
+
+## 🟡 Issue #2301 / PR #4763: [Feature] Evaluate environmentSetupScript before CMake executable search [Potential]
+
+**Reported behavior:** When a kit defines an `environmentSetupScript` that modifies `$PATH` to include a directory containing the cmake binary, the extension failed to find cmake because it resolved the executable via `process.env.PATH` (VS Code launch-time PATH) *before* `effectiveKitEnvironment()` ever ran. The script ran too late (during driver `_setKit()`), so cmake was never found on the script-modified PATH.
+
+**Agent patch (as implemented/claimed):** Copilot threaded an optional `searchPATH` parameter through the resolution chain: `Paths.which()` → `getCMakePath()` / `getCTestPath()` / `getCPackPath()` → `DirectoryContext` wrappers, using the `which` npm package's native `path` option. In `getCMakePathofProject()`, when the active kit has an `environmentSetupScript`, it now calls `effectiveKitEnvironment()` to capture the script-modified PATH and passes it into the resolution chain. The same pattern is applied to CTest and CPack lookups. Draft with +106/−16 across 5 files (`paths.ts`, `workspace.ts`, `cmakeProject.ts`, `cmakeDriver.ts`, `CHANGELOG.md`).
+
+**Initial Assessment:**
+
+- **Correctness:** 🟡 Pending but promising. The approach correctly identifies the ordering problem and threads the kit environment through the existing `which` infrastructure. The `which` npm package's `path` option is the right API to use. However, the setup script may run twice (once for cmake resolution, once in driver `_setKit()`), which is accepted as pragmatic.
+- **Regression risk:** ⚠️ Low. All new parameters are optional, preserving behavior when no `environmentSetupScript` is present. Presets mode is unaffected (uses `configurePreset.cmakeExecutable`). The `extension.ts` init() startup check is intentionally left unchanged since no kit is active at that point.
+- **Test hygiene / verification:** ⚠️ Limited. No unit tests yet. The change is difficult to test without actual kit environment scripts, but a mock-based test could verify the parameter threading.
+- **Documentation & traceability:** 🟢 Good. PR description clearly explains the ordering problem with a code snippet, identifies all affected functions, and notes backward compatibility. Changelog included.
+
+**Original prompt:** CMake Prompt with detailed investigation guidance mapping the entire resolution chain (`getCMakePathofProject()` → `getCMakePath()` → `Paths.which()`) and identifying the ordering problem relative to `effectiveKitEnvironment()` / `_setKit()`.
+
+**Updates:** Draft opened Feb 26 with 4 commits. Implementation is substantive (+106/−16) and spans the full resolution chain. The approach of threading `searchPATH` through existing APIs rather than restructuring the initialization order is pragmatic and minimally invasive. Accepts double script execution as an acceptable trade-off, noting it can be optimized with caching later.
