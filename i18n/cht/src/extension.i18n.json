@@ -30,6 +30,8 @@
 	"cmake.debug.name": "CMake 偵錯工具",
 	"select.a.cmake.project": "選取 Cmake 專案",
 	"compilation information.not.found": "找不到此檔案的編譯資訊",
+	"open.folder": "開啟資料夾",
+	"no.folder.open.for.quickstart": "未開啟任何資料夾。請開啟資料夾以使用 CMake: 快速入門。",
 	"add.config.preset.in.test.mode": "在測試模式中執行 CMakeTools。addConfigurePreset 已停用。",
 	"add.build.preset.in.test.mode": "在測試模式中執行 CMakeTools。addBuildPreset 已停用。",
 	"add.test.preset.in.test.mode": "在測試模式中執行 CMakeTools。addTestPreset 已停用。",

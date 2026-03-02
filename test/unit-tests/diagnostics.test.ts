@@ -2,6 +2,7 @@
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 
 chai.use(chaiAsPromised);
@@ -10,11 +11,36 @@ import { expect } from 'chai';
 import * as diags from '@cmt/diagnostics/build';
 import { OutputConsumer } from '../../src/proc';
 import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/config';
+import { CustomParser, BuildProblemMatcherConfig } from '@cmt/diagnostics/custom';
 import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { populateCollection } from '@cmt/diagnostics/util';
+import { populateCollection, addDiagnosticToCollection, diagnosticSeverity } from '@cmt/diagnostics/util';
 import collections from '@cmt/diagnostics/collections';
 import { getTestResourceFilePath } from '@test/util';
+import { Logger } from '@cmt/logging';
+
+/** A spy logger that records which log methods were called and at what level. */
+class SpyLogger extends Logger {
+    readonly calls: { level: string; args: string[] }[] = [];
+    constructor() {
+        super('spy');
+    }
+    override trace(...args: any[]) {
+        this.calls.push({ level: 'trace', args: args.map(String) });
+    }
+    override debug(...args: any[]) {
+        this.calls.push({ level: 'debug', args: args.map(String) });
+    }
+    override info(...args: any[]) {
+        this.calls.push({ level: 'info', args: args.map(String) });
+    }
+    override warning(...args: any[]) {
+        this.calls.push({ level: 'warning', args: args.map(String) });
+    }
+    override error(...args: any[]) {
+        this.calls.push({ level: 'error', args: args.map(String) });
+    }
+}
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
     for (const line of output) {
@@ -55,7 +81,7 @@ suite('Diagnostics', () => {
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(diag.diag.source).to.eq('CMake (message)');
-        expect(diag.diag.message).to.endsWith('I am a warning!');
+        expect(diag.diag.message).to.match(/I am a warning!$/);
         expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
     });
     test('Parse a deprecation warning', () => {
@@ -71,7 +97,7 @@ suite('Diagnostics', () => {
         expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
         expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
         expect(diag.diag.source).to.eq('CMake (message)');
-        expect(diag.diag.message).to.endsWith('I am deprecated!');
+        expect(diag.diag.message).to.match(/I am deprecated!$/);
         expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
     });
     test('Parse two diags', () => {
@@ -98,8 +124,8 @@ suite('Diagnostics', () => {
         expect(error.diag.range.start.line).to.eq(12);
         expect(warning.diag.source).to.eq('CMake (message)');
         expect(error.diag.source).to.eq('CMake (some_error_function)');
-        expect(warning.diag.message).to.endsWith('I am a warning!');
-        expect(error.diag.message).to.endsWith('I am an error!');
+        expect(warning.diag.message).to.match(/I am a warning!$/);
+        expect(error.diag.message).to.match(/I am an error!$/);
     });
     test('Parse diags with call stacks', () => {
         const error_output = [
@@ -116,7 +142,7 @@ suite('Diagnostics', () => {
         expect(consumer.diagnostics.length).to.eq(1);
         const warning = consumer.diagnostics[0];
         expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-        expect(warning.diag.message).to.endsWith('I\'m an inner warning');
+        expect(warning.diag.message).to.match(/I'm an inner warning$/);
         expect(warning.diag.range.start.line).to.eq(14);
         expect(warning.diag.source).to.eq('CMake (message)');
     });
@@ -135,9 +161,26 @@ suite('Diagnostics', () => {
         expect(consumer.diagnostics.length).to.eq(1);
         const warning = consumer.diagnostics[0];
         expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-        expect(warning.diag.message).to.endsWith('I\'m an inner warning');
+        expect(warning.diag.message).to.match(/I'm an inner warning$/);
         expect(warning.diag.range.start.line).to.eq(14);
         expect(warning.diag.source).to.eq('CMake (message)');
+    });
+    test('Parse error without command name', () => {
+        const error_output = [
+            'CMake Error at CMakeLists.txt:5:',
+            '  Parse error.  Expected "(", got newline with text "',
+            '',
+            '   ".',
+            '',
+            ''
+        ];
+        feedLines(consumer, [], error_output);
+        expect(consumer.diagnostics.length).to.eq(1);
+        const diag = consumer.diagnostics[0];
+        expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
+        expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diag.diag.source).to.eq('CMake');
+        expect(diag.diag.range.start.line).to.eq(4);
     });
     test('Populate a diagnostic collection', () => {
         const error_output = [
@@ -722,6 +765,253 @@ suite('Diagnostics', () => {
         expect(build_consumer.compilers.msvc.diagnostics[0].location.start.character).to.eq(0);
     });
 
+    interface LinkerTestCase {
+        line: string;
+        expectedFile: string;
+        expectedCode: string;
+        expectedSeverity: string;
+        expectedMessageContains: string;
+    }
+
+    const msvcLinkerTestCases: LinkerTestCase[] = [
+        // Fatal error: cannot open input file
+        {
+            line: 'LINK : fatal error LNK1181: cannot open input file "non_existent_file.obj"',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1181',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'cannot open input file'
+        },
+        // Unresolved external symbol with build prefix
+        {
+            line: '[build] Validation_TCM_SURFACE_BASED.cpp.obj : error LNK2019: unresolved external symbol "class ParameterValidationException __cdecl mw::Toolpath::MakeException_35521(void)" (?MakeException_35521@Toolpath@mw@@YA?AVParameterValidationException@@XZ) referenced in function "class std::vector<class misc::mwException,class std::allocator<class misc::mwException> > __cdecl mw::Toolpath::Validate_TCM_SURFACE_BASED(class mw::Toolpath::CalculationParams const &,class misc::mwAutoPointer<class cadcam::mwTool> const &,bool)" (?Validate_TCM_SURFACE_BASED@Toolpath@mw@@YA?AV?$vector@VmwException@misc@@V?$allocator@VmwException@misc@@@std@@@std@@AEBVCalculationParams@12@AEBV?$mwAutoPointer@VmwTool@cadcam@@@misc@@_N@Z)',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol'
+        },
+        // Simple unresolved external symbol
+        {
+            line: 'main.obj : error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol _foo'
+        },
+        // Unresolved external with decorated name
+        {
+            line: 'utils.obj : error LNK2019: unresolved external symbol "void __cdecl bar(void)" referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol'
+        },
+        // Library object reference
+        {
+            line: 'libmath.lib(math.obj) : error LNK2001: unresolved external symbol _sin',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved external symbol _sin'
+        },
+        // Warning: PDB not found
+        {
+            line: 'module.obj : warning LNK4099: PDB \'vc142.pdb\' was not found with \'module.obj\'',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK4099',
+            expectedSeverity: 'warning',
+            expectedMessageContains: 'PDB'
+        },
+        // Warning: locally defined symbol imported
+        {
+            line: 'lib.lib(other.obj) : warning LNK4049: locally defined symbol _baz imported',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK4049',
+            expectedSeverity: 'warning',
+            expectedMessageContains: 'locally defined symbol'
+        },
+        // Fatal error: cannot open file
+        {
+            line: 'fatal error LNK1104: cannot open file \'kernel32.lib\'',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1104',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'cannot open file'
+        },
+        // Fatal error: PDB error
+        {
+            line: 'fatal error LNK1318: Unexpected PDB error; OK (0)',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1318',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'Unexpected PDB error'
+        },
+        // Absolute path
+        {
+            line: 'C:\\projects\\demo\\main.obj : error LNK2019: unresolved external symbol _printf referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_printf'
+        },
+        // Build directory path
+        {
+            line: 'D:\\build\\lib\\foo.lib(bar.obj) : error LNK2001: unresolved external symbol _bar',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_bar'
+        },
+        // Complex decorated name
+        {
+            line: 'utils.obj : error LNK2019: unresolved external symbol "int __cdecl add(int,int)" (?add@@YAHHH@Z) referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'add'
+        },
+        // Error summary
+        {
+            line: 'error LNK1120: 1 unresolved externals',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1120',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'unresolved externals'
+        },
+        // Multiple definitions error
+        {
+            line: 'error LNK1169: one or more multiply defined symbols found',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1169',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'multiply defined'
+        },
+        // Colon variant (no space after obj)
+        {
+            line: 'main.obj: error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_foo'
+        },
+        // Library object with colon
+        {
+            line: 'lib.lib(obj.obj):error LNK2019: unresolved external symbol _bar',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_bar'
+        },
+        // Destructor
+        {
+            line: 'file.obj : error LNK2019: unresolved external symbol "public: __cdecl MyClass::~MyClass(void)" (??1MyClass@@QEAA@XZ) referenced in function main',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2019',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'MyClass'
+        },
+        // Template instantiation
+        {
+            line: 'tmpl.obj : error LNK2001: unresolved external symbol "class std::vector<int,class std::allocator<int> > __cdecl getVec(void)"',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'vector'
+        },
+        // Path with spaces
+        {
+            line: 'C:\\Program Files\\My Project\\main.obj : error LNK2001: unresolved external symbol _foo',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: '_foo'
+        },
+        // Entry point error
+        {
+            line: 'LINK : error LNK2001: unresolved external symbol _WinMain@16',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK2001',
+            expectedSeverity: 'error',
+            expectedMessageContains: 'WinMain'
+        },
+        // Entry point must be defined
+        {
+            line: 'LINK : fatal error LNK1561: entry point must be defined',
+            expectedFile: 'linkerrors.txt',
+            expectedCode: 'LNK1561',
+            expectedSeverity: 'fatal error',
+            expectedMessageContains: 'entry point'
+        }
+    ];
+
+    // Generate individual tests for each linker error case
+    msvcLinkerTestCases.forEach((testCase, index) => {
+        test(`Parse MSVC Linker errors - Case ${index + 1}: ${testCase.expectedCode}`, () => {
+            const test_consumer = new diags.CompileOutputConsumer(
+                new ConfigurationReader({} as ExtensionConfigurationSettings)
+            );
+            feedLines(test_consumer, [], [testCase.line]);
+
+            expect(
+                test_consumer.compilers.msvc.diagnostics,
+                `Failed to parse: ${testCase.line}`
+            ).to.have.length(1);
+
+            const diag = test_consumer.compilers.msvc.diagnostics[0];
+            expect(diag.file, `File mismatch for: ${testCase.line}`).to.eq(
+                testCase.expectedFile
+            );
+            expect(diag.code, `Code mismatch for: ${testCase.line}`).to.eq(
+                testCase.expectedCode
+            );
+            expect(
+                diag.severity,
+                `Severity mismatch for: ${testCase.line}`
+            ).to.eq(testCase.expectedSeverity);
+            expect(
+                diag.message,
+                `Message mismatch for: ${testCase.line}`
+            ).to.include(testCase.expectedMessageContains);
+        });
+    });
+
+    test('Linker errors resolve to unique line numbers in linkerrors.txt', async () => {
+        const test_consumer = new diags.CompileOutputConsumer(
+            new ConfigurationReader({} as ExtensionConfigurationSettings)
+        );
+        test_consumer.config.updatePartial({ enabledOutputParsers: ['msvc'] });
+
+        // Feed multiple linker errors
+        const linkerErrorLines = [
+            'main.obj : error LNK2019: unresolved external symbol _foo',
+            'utils.obj : error LNK2019: unresolved external symbol _bar',
+            'test.obj : error LNK2001: unresolved external symbol _baz'
+        ];
+        feedLines(test_consumer, [], linkerErrorLines);
+
+        expect(test_consumer.compilers.msvc.diagnostics).to.have.length(3);
+
+        // Resolve diagnostics (this should create linkerrors.txt and set line numbers)
+        const tmpDir = path.join(__dirname, 'tmp_linker_test');
+        await fs.promises.mkdir(tmpDir, { recursive: true });
+        const resolved = await test_consumer.resolveDiagnostics(tmpDir);
+
+        // All should point to linkerrors.txt
+        expect(resolved.every(d => d.filepath.endsWith('linkerrors.txt'))).to.be.true;
+
+        // Each should have a unique line number (not all pointing to the same line)
+        const lineNumbers = resolved.map(d => d.diag.range.start.line);
+        const uniqueLines = new Set(lineNumbers);
+
+        expect(uniqueLines.size, 'All diagnostics should point to different lines').to.eq(3);
+
+        // Line numbers should be sequential (each error takes 3 lines: header, message, blank)
+        // Header is 6 lines, then each error starts at 7, 10, 13, etc.
+        expect(lineNumbers[0]).to.eq(6); // Line 7 (0-indexed = 6)
+        expect(lineNumbers[1]).to.eq(9); // Line 10 (0-indexed = 9)
+        expect(lineNumbers[2]).to.eq(12); // Line 13 (0-indexed = 12)
+    });
+
     test('Parse IAR error', () => {
         const lines = [
             '      kjfdlkj kfjg;',
@@ -1003,5 +1293,312 @@ suite('Diagnostics', () => {
         expect(collections.cmake.has(testUri)).to.be.false;
         expect(collections.build.has(testUri)).to.be.false;
         expect(collections.presets.has(testUri)).to.be.false;
+    });
+
+    test('diagnosticSeverity returns correct severities', () => {
+        expect(diagnosticSeverity('warning')).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(diagnosticSeverity('error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('fatal error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('catastrophic error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('note')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('info')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('remark')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('unknown')).to.be.undefined;
+    });
+
+    test('addDiagnosticToCollection adds to empty collection', () => {
+        const coll = vscode.languages.createDiagnosticCollection('test-add-diag');
+        const diag = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 10), 'test error', vscode.DiagnosticSeverity.Error);
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag });
+        const uri = vscode.Uri.file('/test/file.cpp');
+        expect(coll.has(uri)).to.be.true;
+        expect(coll.get(uri)!.length).to.eq(1);
+        coll.dispose();
+    });
+
+    test('addDiagnosticToCollection appends to existing diagnostics', () => {
+        const coll = vscode.languages.createDiagnosticCollection('test-add-diag-append');
+        const diag1 = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 10), 'error 1', vscode.DiagnosticSeverity.Error);
+        const diag2 = new vscode.Diagnostic(new vscode.Range(1, 0, 1, 10), 'error 2', vscode.DiagnosticSeverity.Error);
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag: diag1 });
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag: diag2 });
+        const uri = vscode.Uri.file('/test/file.cpp');
+        expect(coll.has(uri)).to.be.true;
+        expect(coll.get(uri)!.length).to.eq(2);
+        coll.dispose();
+    });
+
+    test('CompileOutputConsumer fires onDiagnostic event with source', () => {
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
+        const fired: diags.RawDiagnosticWithSource[] = [];
+        consumer.onDiagnostic(e => fired.push(e));
+        feedLines(consumer, [], [
+            '/some/path/here:4:26: error: some error message'
+        ]);
+        expect(fired).to.have.length(1);
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('error');
+        expect(fired[0].diagnostic.message).to.eq('some error message');
+        consumer.dispose();
+    });
+
+    test('CompileOutputConsumer fires onDiagnostic for each diagnostic with source', () => {
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
+        const fired: diags.RawDiagnosticWithSource[] = [];
+        consumer.onDiagnostic(e => fired.push(e));
+        feedLines(consumer, [], [
+            '/path/a.cpp:1:1: warning: first warning',
+            '/path/b.cpp:2:1: error: first error'
+        ]);
+        expect(fired).to.have.length(2);
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('warning');
+        expect(fired[1].source).to.eq('GCC');
+        expect(fired[1].diagnostic.severity).to.eq('error');
+        consumer.dispose();
+    });
+
+    test('CMakeOutputConsumer logs milestone stdout at info and routine stdout at debug', () => {
+        const spy = new SpyLogger();
+        const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);
+        // Routine CMake status lines → debug
+        consumerWithLogger.output('-- The C compiler identification is GNU 9.3.0');
+        consumerWithLogger.output('-- Detecting CXX compiler ABI info');
+        // Milestone lines → info
+        consumerWithLogger.output('-- Configuring done');
+        consumerWithLogger.output('-- Generating done');
+        consumerWithLogger.output('-- Build files have been written to: /path/to/build');
+        consumerWithLogger.output('-- Configuring incomplete, errors occurred!');
+
+        const infoCalls = spy.calls.filter(c => c.level === 'info');
+        const debugCalls = spy.calls.filter(c => c.level === 'debug');
+        const traceCalls = spy.calls.filter(c => c.level === 'trace');
+        // 4 milestones at info
+        expect(infoCalls.length).to.eq(4);
+        expect(infoCalls.map(c => c.args[0])).to.deep.eq([
+            '-- Configuring done',
+            '-- Generating done',
+            '-- Build files have been written to: /path/to/build',
+            '-- Configuring incomplete, errors occurred!'
+        ]);
+        // 2 routine lines at debug
+        expect(debugCalls.length).to.eq(2);
+        // Nothing at trace
+        expect(traceCalls.length).to.eq(0);
+    });
+
+    test('CMakeOutputConsumer logs stderr lines at warning level, not error', () => {
+        const spy = new SpyLogger();
+        const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);
+        consumerWithLogger.error('CMake Error at CMakeLists.txt:1 (message):');
+        consumerWithLogger.error('  Something went wrong');
+
+        const warningCalls = spy.calls.filter(c => c.level === 'warning');
+        const errorCalls = spy.calls.filter(c => c.level === 'error');
+        expect(warningCalls.length).to.eq(2);
+        expect(errorCalls.length).to.eq(0);
+    });
+
+    test('CMakeOutputConsumer still parses diagnostics after log level change', () => {
+        const spy = new SpyLogger();
+        const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);
+        const error_output = [
+            'CMake Warning at CMakeLists.txt:14 (message):',
+            '  I am a warning!',
+            '',
+            ''
+        ];
+        for (const line of error_output) {
+            consumerWithLogger.error(line);
+        }
+        // Diagnostics should still be parsed correctly regardless of log level
+        expect(consumerWithLogger.diagnostics.length).to.eq(1);
+        const diag = consumerWithLogger.diagnostics[0];
+        expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
+        expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(diag.diag.message).to.match(/I am a warning!$/);
+    });
+
+    // ===== Custom Problem Matcher (cmake.additionalBuildProblemMatchers) tests =====
+
+    test('CustomParser matches clang-tidy-style output', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'clang-tidy',
+            regexp: '^(.+?):(\\d+):(\\d+):\\s+(warning|error|note):\\s+(.+?)\\s*(?:\\[(.+)\\])?$',
+            file: 1,
+            line: 2,
+            column: 3,
+            severity: 4,
+            message: 5,
+            code: 6
+        };
+        const parser = new CustomParser(config);
+        expect(parser.name).to.eq('clang-tidy');
+
+        const handled = parser.handleLine('/path/to/file.cpp:10:5: warning: some check message [bugprone-some-check]');
+        expect(handled).to.be.true;
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('/path/to/file.cpp');
+        expect(diag.location.start.line).to.eq(9); // 0-based
+        expect(diag.location.start.character).to.eq(4); // 0-based
+        expect(diag.severity).to.eq('warning');
+        expect(diag.message).to.eq('some check message');
+        expect(diag.code).to.eq('bugprone-some-check');
+    });
+
+    test('CustomParser matches PCLint-style output', () => {
+        // PCLint Plus format: "file.cpp(42): error 1234: some lint message"
+        const config: BuildProblemMatcherConfig = {
+            name: 'pclint',
+            regexp: '^(.+?)\\((\\d+)\\):\\s+(error|warning|info|note)\\s+(\\d+):\\s+(.+)$',
+            file: 1,
+            line: 2,
+            severity: 3,
+            code: 4,
+            message: 5
+        };
+        const parser = new CustomParser(config);
+
+        const handled = parser.handleLine('src/main.cpp(42): error 1234: some lint message');
+        expect(handled).to.be.true;
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('src/main.cpp');
+        expect(diag.location.start.line).to.eq(41); // 0-based
+        expect(diag.severity).to.eq('error');
+        expect(diag.code).to.eq('1234');
+        expect(diag.message).to.eq('some lint message');
+    });
+
+    test('CustomParser matches cppcheck-style output', () => {
+        // cppcheck format: "[file.cpp:10]: (warning) message"
+        const config: BuildProblemMatcherConfig = {
+            name: 'cppcheck',
+            regexp: '^\\[(.+?):(\\d+)\\]:\\s+\\((error|warning|style|performance|portability|information)\\)\\s+(.+)$',
+            file: 1,
+            line: 2,
+            severity: 3,
+            message: 4
+        };
+        const parser = new CustomParser(config);
+
+        const handled = parser.handleLine('[src/utils.cpp:25]: (warning) Variable is not initialized');
+        expect(handled).to.be.true;
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('src/utils.cpp');
+        expect(diag.location.start.line).to.eq(24);
+        expect(diag.severity).to.eq('warning');
+        expect(diag.message).to.eq('Variable is not initialized');
+    });
+
+    test('CustomParser with fixed severity string', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'custom-linter',
+            regexp: '^LINT:\\s+(.+?):(\\d+):\\s+(.+)$',
+            file: 1,
+            line: 2,
+            severity: 'error',
+            message: 3
+        };
+        const parser = new CustomParser(config);
+
+        parser.handleLine('LINT: foo.cpp:7: bad style detected');
+        expect(parser.diagnostics).to.have.length(1);
+
+        const diag = parser.diagnostics[0];
+        expect(diag.file).to.eq('foo.cpp');
+        expect(diag.location.start.line).to.eq(6);
+        expect(diag.severity).to.eq('error');
+        expect(diag.message).to.eq('bad style detected');
+    });
+
+    test('CustomParser does not match unrelated lines', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'simple',
+            regexp: '^ERROR:\\s+(.+):(\\d+):\\s+(.+)$',
+            file: 1,
+            line: 2,
+            message: 3
+        };
+        const parser = new CustomParser(config);
+
+        const handled = parser.handleLine('All good, no errors here.');
+        expect(handled).to.be.false;
+        expect(parser.diagnostics).to.have.length(0);
+    });
+
+    test('CustomParser with invalid regex does not crash', () => {
+        const config: BuildProblemMatcherConfig = {
+            name: 'broken',
+            regexp: '([invalid'  // Invalid regex
+        };
+        const parser = new CustomParser(config);
+
+        // Should not throw and should not match anything
+        const handled = parser.handleLine('some random line');
+        expect(handled).to.be.false;
+        expect(parser.diagnostics).to.have.length(0);
+    });
+
+    test('Custom parsers integrate with CompileOutputConsumer alongside built-in parsers', () => {
+        const configSettings = {
+            additionalBuildProblemMatchers: [
+                {
+                    name: 'my-tool',
+                    regexp: '^>>MYTOOL>>\\s+(\\S+)\\|(\\d+)\\|(warning|error)\\|(.+)$',
+                    file: 1,
+                    line: 2,
+                    severity: 3,
+                    message: 4
+                }
+            ]
+        } as unknown as ExtensionConfigurationSettings;
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader(configSettings));
+
+        // Feed a GCC-style error (should be captured by built-in GCC parser)
+        consumer.error('/home/user/src/main.cpp:15:3: error: undeclared identifier');
+        // Feed a custom tool line (pipe-separated format that no built-in parser matches)
+        consumer.error('>>MYTOOL>> /home/user/src/utils.cpp|20|warning|possible null dereference');
+
+        // The GCC parser should have captured the first line
+        expect(consumer.compilers.gcc.diagnostics).to.have.length(1);
+
+        // The custom parser should have captured the second line
+        expect(consumer.customParsers.has('my-tool')).to.be.true;
+        const customDiags = consumer.customParsers.get('my-tool')!.diagnostics;
+        expect(customDiags).to.have.length(1);
+        expect(customDiags[0].file).to.eq('/home/user/src/utils.cpp');
+        expect(customDiags[0].severity).to.eq('warning');
+        expect(customDiags[0].message).to.eq('possible null dereference');
+    });
+
+    test('Built-in parsers take priority over custom parsers', () => {
+        // Configure a custom parser that could also match GCC output
+        const configSettings = {
+            additionalBuildProblemMatchers: [
+                {
+                    name: 'greedy',
+                    regexp: '^(.+?):(\\d+):(\\d+):\\s+(warning|error):\\s+(.+)$',
+                    file: 1,
+                    line: 2,
+                    column: 3,
+                    severity: 4,
+                    message: 5
+                }
+            ]
+        } as unknown as ExtensionConfigurationSettings;
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader(configSettings));
+
+        // Feed a line that both GCC and the custom parser could match
+        consumer.error('/home/user/src/main.cpp:15:3: error: undeclared identifier');
+
+        // GCC should claim this line, NOT the custom parser
+        expect(consumer.compilers.gcc.diagnostics).to.have.length(1);
+        expect(consumer.customParsers.get('greedy')!.diagnostics).to.have.length(0);
     });
 });

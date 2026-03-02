@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "Compilar postRunCoverageTarget ''{0}'' para el proyecto {1} después de que las pruebas se hayan ejecutado con cobertura.",
 	"test.postRunCoverageTargetFailure": "Error al compilar el destino postRunCoverageTarget en el proyecto. {0} Omitiendo el control de los datos de cobertura.",
 	"test.skip.run.build.failure": "No se ejecutan pruebas debido a una falla en la compilación.",
-	"no.launch.config": "No se encontraron configuraciones de inicio.",
-	"choose.launch.config": "Elija una configuración de inicio con la que depurar la prueba.",
 	"test.skip.debug.build.failure": "No se ejecutan pruebas de depuración debido a una falla en la compilación.",
 	"build.failed": "Error de compilación",
 	"run.tests.profile": "Ejecutar pruebas",

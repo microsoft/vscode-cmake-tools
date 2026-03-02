@@ -1,5 +1,4 @@
 import * as child_process from 'child_process';
-import * as chokidar from 'chokidar';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -1011,18 +1010,6 @@ export function reportProgress(message: string, progress?: ProgressHandle) {
     if (progress) {
         progress.report({ message });
     }
-}
-
-/**
- * Sets up a chokidar watcher to listen for any file changes (add, change, unlink).
- * @param watcher The chokidar FSWatcher instance.
- * @param listener The listener function to call on file changes.
- * @returns The chokidar FSWatcher instance with the listener attached.
- */
-export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
-    return watcher.on('add', listener)
-        .on('change', listener)
-        .on('unlink', listener);
 }
 
 /**

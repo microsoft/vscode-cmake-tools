@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "Sestavení postRunCoverageTarget {0} pro projekt {1} po spuštění testů s pokrytím",
 	"test.postRunCoverageTargetFailure": "Sestavení cíle postRunCoverageTarget v projektu v {0} se nezdařilo. Přeskakuje se zpracování dat pokrytí.",
 	"test.skip.run.build.failure": "Kvůli selhání sestavení se nespouští testy.",
-	"no.launch.config": "Nenašly se žádné konfigurace spuštění.",
-	"choose.launch.config": "Zvolte konfiguraci spuštění, se kterou chcete test ladit.",
 	"test.skip.debug.build.failure": "Kvůli selhání sestavení se neladí testy.",
 	"build.failed": "Sestavení selhalo",
 	"run.tests.profile": "Spustit testy",
