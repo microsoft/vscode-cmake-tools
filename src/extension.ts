@@ -1753,7 +1753,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetPath" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.launchTargetPath(targetName);
             }
             const targetPath = await cmakeProject.launchTargetPath();
             return targetPath;
@@ -1766,7 +1766,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetDirectory" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.launchTargetDirectory(targetName);
             }
             const targetDirectory = await cmakeProject.launchTargetDirectory();
             return targetDirectory;
@@ -1779,7 +1779,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetFilename" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.launchTargetFilename(targetName);
             }
             const targetFilename = await cmakeProject.launchTargetFilename();
             return targetFilename;
@@ -1792,7 +1792,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetName" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.launchTargetNameForSubstitution(targetName);
             }
             const targetFilename = await cmakeProject.launchTargetNameForSubstitution();
             return targetFilename;
@@ -1805,7 +1805,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "getLaunchTargetPath" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.getLaunchTargetPath(targetName);
             }
             const targetPath = await cmakeProject.getLaunchTargetPath();
             return targetPath;
@@ -1818,7 +1818,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "getLaunchTargetDirectory" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.getLaunchTargetDirectory(targetName);
             }
             const targetDirectory = await cmakeProject.getLaunchTargetDirectory();
             return targetDirectory;
@@ -1831,7 +1831,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "getLaunchTargetFilename" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.getLaunchTargetFilename(targetName);
             }
             const targetFilename = await cmakeProject.getLaunchTargetFilename();
             return targetFilename;
@@ -1844,7 +1844,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "getLaunchTargetName" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                await cmakeProject.setLaunchTargetByName(targetName);
+                return cmakeProject.getLaunchTargetName(targetName);
             }
             const targetFilename = await cmakeProject.getLaunchTargetName();
             return targetFilename;

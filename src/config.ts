@@ -235,6 +235,7 @@ export interface ExtensionConfigurationSettings {
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
     useFolderPropertyInBuildTargetDropdown: boolean;
+    setBuildTargetSameAsLaunchTarget: boolean;
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
     shell: string | null;
 }
@@ -630,6 +631,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
     get shell(): string | null {
         return this.configData.shell;
+    get setBuildTargetSameAsLaunchTarget(): boolean {
+        return this.configData.setBuildTargetSameAsLaunchTarget;
     }
 
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
@@ -705,6 +708,8 @@ export class ConfigurationReader implements vscode.Disposable {
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
         additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
         shell: new vscode.EventEmitter<string | null>()
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
+        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>()
     };
 
     /**

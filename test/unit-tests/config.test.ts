@@ -88,6 +88,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         useFolderPropertyInBuildTargetDropdown: true,
         additionalBuildProblemMatchers: [],
         shell: null
+        setBuildTargetSameAsLaunchTarget: false,
+        additionalBuildProblemMatchers: []
     });
     ret.updatePartial(conf);
     return ret;

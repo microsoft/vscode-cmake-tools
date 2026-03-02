@@ -14,9 +14,33 @@ import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/c
 import { CustomParser, BuildProblemMatcherConfig } from '@cmt/diagnostics/custom';
 import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { populateCollection } from '@cmt/diagnostics/util';
+import { populateCollection, addDiagnosticToCollection, diagnosticSeverity } from '@cmt/diagnostics/util';
 import collections from '@cmt/diagnostics/collections';
 import { getTestResourceFilePath } from '@test/util';
+import { Logger } from '@cmt/logging';
+
+/** A spy logger that records which log methods were called and at what level. */
+class SpyLogger extends Logger {
+    readonly calls: { level: string; args: string[] }[] = [];
+    constructor() {
+        super('spy');
+    }
+    override trace(...args: any[]) {
+        this.calls.push({ level: 'trace', args: args.map(String) });
+    }
+    override debug(...args: any[]) {
+        this.calls.push({ level: 'debug', args: args.map(String) });
+    }
+    override info(...args: any[]) {
+        this.calls.push({ level: 'info', args: args.map(String) });
+    }
+    override warning(...args: any[]) {
+        this.calls.push({ level: 'warning', args: args.map(String) });
+    }
+    override error(...args: any[]) {
+        this.calls.push({ level: 'error', args: args.map(String) });
+    }
+}
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
     for (const line of output) {
@@ -140,6 +164,23 @@ suite('Diagnostics', () => {
         expect(warning.diag.message).to.match(/I'm an inner warning$/);
         expect(warning.diag.range.start.line).to.eq(14);
         expect(warning.diag.source).to.eq('CMake (message)');
+    });
+    test('Parse error without command name', () => {
+        const error_output = [
+            'CMake Error at CMakeLists.txt:5:',
+            '  Parse error.  Expected "(", got newline with text "',
+            '',
+            '   ".',
+            '',
+            ''
+        ];
+        feedLines(consumer, [], error_output);
+        expect(consumer.diagnostics.length).to.eq(1);
+        const diag = consumer.diagnostics[0];
+        expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
+        expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diag.diag.source).to.eq('CMake');
+        expect(diag.diag.range.start.line).to.eq(4);
     });
     test('Populate a diagnostic collection', () => {
         const error_output = [
@@ -1252,6 +1293,130 @@ suite('Diagnostics', () => {
         expect(collections.cmake.has(testUri)).to.be.false;
         expect(collections.build.has(testUri)).to.be.false;
         expect(collections.presets.has(testUri)).to.be.false;
+    });
+
+    test('diagnosticSeverity returns correct severities', () => {
+        expect(diagnosticSeverity('warning')).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(diagnosticSeverity('error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('fatal error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('catastrophic error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(diagnosticSeverity('note')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('info')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('remark')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(diagnosticSeverity('unknown')).to.be.undefined;
+    });
+
+    test('addDiagnosticToCollection adds to empty collection', () => {
+        const coll = vscode.languages.createDiagnosticCollection('test-add-diag');
+        const diag = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 10), 'test error', vscode.DiagnosticSeverity.Error);
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag });
+        const uri = vscode.Uri.file('/test/file.cpp');
+        expect(coll.has(uri)).to.be.true;
+        expect(coll.get(uri)!.length).to.eq(1);
+        coll.dispose();
+    });
+
+    test('addDiagnosticToCollection appends to existing diagnostics', () => {
+        const coll = vscode.languages.createDiagnosticCollection('test-add-diag-append');
+        const diag1 = new vscode.Diagnostic(new vscode.Range(0, 0, 0, 10), 'error 1', vscode.DiagnosticSeverity.Error);
+        const diag2 = new vscode.Diagnostic(new vscode.Range(1, 0, 1, 10), 'error 2', vscode.DiagnosticSeverity.Error);
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag: diag1 });
+        addDiagnosticToCollection(coll, { filepath: '/test/file.cpp', diag: diag2 });
+        const uri = vscode.Uri.file('/test/file.cpp');
+        expect(coll.has(uri)).to.be.true;
+        expect(coll.get(uri)!.length).to.eq(2);
+        coll.dispose();
+    });
+
+    test('CompileOutputConsumer fires onDiagnostic event with source', () => {
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
+        const fired: diags.RawDiagnosticWithSource[] = [];
+        consumer.onDiagnostic(e => fired.push(e));
+        feedLines(consumer, [], [
+            '/some/path/here:4:26: error: some error message'
+        ]);
+        expect(fired).to.have.length(1);
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('error');
+        expect(fired[0].diagnostic.message).to.eq('some error message');
+        consumer.dispose();
+    });
+
+    test('CompileOutputConsumer fires onDiagnostic for each diagnostic with source', () => {
+        const consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
+        const fired: diags.RawDiagnosticWithSource[] = [];
+        consumer.onDiagnostic(e => fired.push(e));
+        feedLines(consumer, [], [
+            '/path/a.cpp:1:1: warning: first warning',
+            '/path/b.cpp:2:1: error: first error'
+        ]);
+        expect(fired).to.have.length(2);
+        expect(fired[0].source).to.eq('GCC');
+        expect(fired[0].diagnostic.severity).to.eq('warning');
+        expect(fired[1].source).to.eq('GCC');
+        expect(fired[1].diagnostic.severity).to.eq('error');
+        consumer.dispose();
+    });
+
+    test('CMakeOutputConsumer logs milestone stdout at info and routine stdout at debug', () => {
+        const spy = new SpyLogger();
+        const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);
+        // Routine CMake status lines → debug
+        consumerWithLogger.output('-- The C compiler identification is GNU 9.3.0');
+        consumerWithLogger.output('-- Detecting CXX compiler ABI info');
+        // Milestone lines → info
+        consumerWithLogger.output('-- Configuring done');
+        consumerWithLogger.output('-- Generating done');
+        consumerWithLogger.output('-- Build files have been written to: /path/to/build');
+        consumerWithLogger.output('-- Configuring incomplete, errors occurred!');
+
+        const infoCalls = spy.calls.filter(c => c.level === 'info');
+        const debugCalls = spy.calls.filter(c => c.level === 'debug');
+        const traceCalls = spy.calls.filter(c => c.level === 'trace');
+        // 4 milestones at info
+        expect(infoCalls.length).to.eq(4);
+        expect(infoCalls.map(c => c.args[0])).to.deep.eq([
+            '-- Configuring done',
+            '-- Generating done',
+            '-- Build files have been written to: /path/to/build',
+            '-- Configuring incomplete, errors occurred!'
+        ]);
+        // 2 routine lines at debug
+        expect(debugCalls.length).to.eq(2);
+        // Nothing at trace
+        expect(traceCalls.length).to.eq(0);
+    });
+
+    test('CMakeOutputConsumer logs stderr lines at warning level, not error', () => {
+        const spy = new SpyLogger();
+        const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);
+        consumerWithLogger.error('CMake Error at CMakeLists.txt:1 (message):');
+        consumerWithLogger.error('  Something went wrong');
+
+        const warningCalls = spy.calls.filter(c => c.level === 'warning');
+        const errorCalls = spy.calls.filter(c => c.level === 'error');
+        expect(warningCalls.length).to.eq(2);
+        expect(errorCalls.length).to.eq(0);
+    });
+
+    test('CMakeOutputConsumer still parses diagnostics after log level change', () => {
+        const spy = new SpyLogger();
+        const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);
+        const error_output = [
+            'CMake Warning at CMakeLists.txt:14 (message):',
+            '  I am a warning!',
+            '',
+            ''
+        ];
+        for (const line of error_output) {
+            consumerWithLogger.error(line);
+        }
+        // Diagnostics should still be parsed correctly regardless of log level
+        expect(consumerWithLogger.diagnostics.length).to.eq(1);
+        const diag = consumerWithLogger.diagnostics[0];
+        expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
+        expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(diag.diag.message).to.match(/I am a warning!$/);
     });
 
     // ===== Custom Problem Matcher (cmake.additionalBuildProblemMatchers) tests =====

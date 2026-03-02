@@ -306,8 +306,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
             const result = await child.result;
             this.configureProcess = null;
-            log.trace(result.stderr);
-            log.trace(result.stdout);
             if (result.retc === 0) {
                 if (!configurePreset || (configurePreset && defaultConfigurePresetName && configurePreset.name === defaultConfigurePresetName)) {
                     this._needsReconfigure = false;

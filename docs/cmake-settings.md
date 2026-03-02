@@ -76,6 +76,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer. | `null` | no |
 | `cmake.revealLog` | Controls when the CMake output log should be revealed. | `always` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
+| `cmake.setBuildTargetSameAsLaunchTarget` | If `true`, setting the launch/debug target automatically sets the build target to match. | `false` | no |
 | `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |
 | `cmake.shell` | Path to a shell executable to route all CMake/CTest/CPack subprocess invocations through (e.g., Git Bash or MSYS2). Useful for embedded toolchains that require POSIX path translation on Windows. When `null`, the default system shell behavior is used. | `null` | no |
 | `cmake.showConfigureWithDebuggerNotification` | If `true`, show notification when configure with debugger. | `true` | no |
@@ -218,6 +219,27 @@ Each matcher entry has the following properties:
   }
 ]
 ```
+
+#### Resolving a specific target with `${input:...}`
+
+All launch-target commands (`cmake.launchTargetPath`, `cmake.getLaunchTargetPath`, and their directory/filename/name variants) accept an optional `targetName` argument. When `targetName` is provided, the command resolves that specific executable target **without changing the active launch target**. This is useful for projects with multiple executables, allowing stable per-target `launch.json` configurations.
+
+Use VS Code [input variables](https://code.visualstudio.com/docs/editor/variables-reference#_input-variables) to pass arguments:
+
+```jsonc
+{
+    "inputs": [
+        {
+            "id": "serverPath",
+            "type": "command",
+            "command": "cmake.launchTargetPath",
+            "args": { "targetName": "my_server" }
+        }
+    ]
+}
+```
+
+Then reference it in a launch configuration as `"program": "${input:serverPath}"`. See [Debugging a specific target](debug-launch.md#debugging-a-specific-target-multi-executable-projects) for full examples.
 
 ## Next steps
 
