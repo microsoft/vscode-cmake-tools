@@ -13,6 +13,7 @@
 	"edit.filter": "Filtreyi Düzenle",
 	"open.file": "Dosyayı aç",
 	"references": "Başvurular",
+	"test.tooltip": "Test: {0}",
 	"static.library": "Statik kitaplık",
 	"module.library": "Modül kitaplığı",
 	"shared.library": "Paylaşılan kitaplık",

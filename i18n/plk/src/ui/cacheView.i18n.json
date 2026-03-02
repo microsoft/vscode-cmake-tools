@@ -16,5 +16,9 @@
 	"search": "Wyszukaj",
 	"save": "Zapisz",
 	"key": "Klucz",
-	"value": "Wartość"
+	"value": "Wartość",
+	"source": "Źródło",
+	"not.set.in.presets": "Pamięć podręczna CMake",
+	"differs.from.preset": "Zmienione w pamięci podręcznej",
+	"matches.preset": "Zgodne z ustawieniem wstępnym"
 }

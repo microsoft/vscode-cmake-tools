@@ -8,6 +8,7 @@ import { fs } from "@cmt/pr";
 import * as lodash from "lodash";
 import { expandString, ExpansionErrorHandler, MinimalPresetContextVars } from "@cmt/expand";
 import { loadSchema } from "@cmt/schema";
+import { Environment, EnvironmentUtils } from "@cmt/environmentVariables";
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -36,6 +37,7 @@ export class PresetsParser {
     private collectionsModifier: (filePath: string) => void;
     private presetsChangedHandler: (presets: preset.PresetsFile | undefined) => void;
     private userPresetsChangedHandler: (presets: preset.PresetsFile | undefined) => void;
+    private _settingsEnvironment: Environment = {};
 
     /**
      * Constructs the PresetsParser object
@@ -73,6 +75,14 @@ export class PresetsParser {
 
     set sourceDir(sourceDir: string) {
         this._sourceDir = sourceDir;
+    }
+
+    /**
+     * Sets additional environment variables from VS Code settings (cmake.environment, cmake.configureEnvironment)
+     * that should be available for $penv{} macro expansion in preset include paths.
+     */
+    set settingsEnvironment(env: Environment) {
+        this._settingsEnvironment = env;
     }
 
     get presetsFileExists(): boolean {
@@ -144,7 +154,7 @@ export class PresetsParser {
             )
         );
         let schemaFile;
-        const maxSupportedVersion = 10;
+        const maxSupportedVersion = 11;
         const validationErrorsAreWarnings =
             presetsFile.version > maxSupportedVersion &&
             allowUnsupportedPresetsVersions;
@@ -166,8 +176,11 @@ export class PresetsParser {
         } else if (presetsFile.version === 8 || presetsFile.version === 9) {
             // This can be used for v9 as well, there is no schema difference.
             schemaFile = "./schemas/CMakePresets-v8-schema.json";
-        } else {
+        } else if (presetsFile.version === 10) {
             schemaFile = "./schemas/CMakePresets-v10-schema.json";
+        } else {
+            // v11+
+            schemaFile = "./schemas/CMakePresets-v11-schema.json";
         }
 
         const validator = await loadSchema(schemaFile);
@@ -186,13 +199,13 @@ export class PresetsParser {
                 for (const err of errors) {
                     if (err.params && "additionalProperty" in err.params) {
                         logFunc(
-                            ` >> ${err.dataPath}: ${localize(
+                            ` >> ${err.instancePath}: ${localize(
                                 "no.additional.properties",
                                 "should NOT have additional properties"
                             )}: ${err.params.additionalProperty}`
                         );
                     } else {
-                        logFunc(` >> ${err.dataPath}: ${err.message}`);
+                        logFunc(` >> ${err.instancePath}: ${err.message}`);
                     }
                 }
             };
@@ -324,6 +337,14 @@ export class PresetsParser {
         hostSystemName: string,
         expansionErrors: ExpansionErrorHandler
     ): Promise<string> {
+        // Merge process.env with settings environment (cmake.environment, cmake.configureEnvironment)
+        // so that $penv{} can resolve variables from VS Code settings.
+        // When penvOverride is set, it fully replaces process.env in getParentEnvSubstitutions(),
+        // so we only set it when there are settings to merge — otherwise leave undefined to preserve
+        // the default process.env fallback behavior.
+        const penvOverride = Object.keys(this._settingsEnvironment).length > 0
+            ? EnvironmentUtils.merge([process.env, this._settingsEnvironment])
+            : undefined;
         return presetsFile.version >= 9
             ? expandString(
                 include,
@@ -336,7 +357,8 @@ export class PresetsParser {
                         fileDir: path.dirname(file),
                         pathListSep: path.delimiter
                     },
-                    envOverride: {} // $env{} expansions are not supported in `include` v9
+                    envOverride: {}, // $env{} expansions are not supported in `include` v9
+                    penvOverride
                 },
                 expansionErrors
             )
@@ -347,7 +369,8 @@ export class PresetsParser {
                     {
                         // No vars are supported in Version 7 for include paths.
                         vars: {} as MinimalPresetContextVars,
-                        envOverride: {} // $env{} expansions are not supported in `include` v9
+                        envOverride: {}, // $env{} expansions are not supported in `include` v9
+                        penvOverride
                     },
                     expansionErrors
                 )
@@ -624,6 +647,9 @@ export class PresetsParser {
                     util.errorToString(e)
                 )
             );
+            if (e instanceof Error && e.stack) {
+                log.debug(e.stack);
+            }
             return undefined;
         }
         return presetsFile;

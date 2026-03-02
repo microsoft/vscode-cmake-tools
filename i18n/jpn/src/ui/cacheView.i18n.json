@@ -16,5 +16,9 @@
 	"search": "検索",
 	"save": "保存",
 	"key": "キー",
-	"value": "値"
+	"value": "値",
+	"source": "ソース",
+	"not.set.in.presets": "Cmake キャッシュ",
+	"differs.from.preset": "キャッシュで変更されました",
+	"matches.preset": "プリセットに一致します"
 }

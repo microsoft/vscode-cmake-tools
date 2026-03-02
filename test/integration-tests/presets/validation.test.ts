@@ -722,6 +722,66 @@ suite('Presets validation, inclusion, and expansion tests', () => {
         }).timeout(100000);
 
         /**
+         * Confirm that $penv{} in include paths resolves environment variables
+         * set via settingsEnvironment (cmake.environment / cmake.configureEnvironment).
+         * Also verify that settingsEnvironment takes precedence over process.env for $penv{}.
+         */
+        test('Validate `include` field supporting penv macro expansion with settings environment in v7', async () => {
+            // Remove any process.env.SETTINGS_TEST that might exist.
+            const origSettingsTest = process.env.SETTINGS_TEST;
+            delete process.env.SETTINGS_TEST;
+
+            // Set the settings environment to provide SETTINGS_TEST variable.
+            presetsParser.settingsEnvironment = { SETTINGS_TEST: sourceDirectory };
+
+            const v7WithInclude: any = lodash.cloneDeep(version7SupportedPresets);
+            v7WithInclude.include = ["$penv{SETTINGS_TEST}/test.json"];
+            v7WithInclude.configurePresets[0].name = "testSettingsName";
+
+            fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(v7WithInclude));
+
+            // Create the include file.
+            fs.writeFileSync(path.join(presetsParser.presetsPath, "..", "test.json"),
+                JSON.stringify(v3SupportedPresets));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            // Should succeed: SETTINGS_TEST is resolved from settingsEnvironment.
+            expect(presetsFileErrors).to.have.lengthOf(0);
+            expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
+
+            // Verify settingsEnvironment takes precedence over process.env for the same variable.
+            presetsFileErrors = [];
+            process.env.SETTINGS_TEST = "/nonexistent/path";
+            presetsParser.settingsEnvironment = { SETTINGS_TEST: sourceDirectory };
+
+            fs.writeFileSync(presetsParser.presetsPath, JSON.stringify(v7WithInclude));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            // Should succeed: settingsEnvironment value (sourceDirectory) takes precedence.
+            expect(presetsFileErrors).to.have.lengthOf(0);
+            expect(preset.configurePresets(sourceDirectory).length).to.be.equal(2);
+
+            // Clean up.
+            fs.rmSync(path.join(presetsParser.presetsPath, "..", "test.json"));
+            presetsParser.settingsEnvironment = {};
+            if (origSettingsTest !== undefined) {
+                process.env.SETTINGS_TEST = origSettingsTest;
+            } else {
+                delete process.env.SETTINGS_TEST;
+            }
+        }).timeout(100000);
+
+        /**
          * Validate the v8 supports `$schema` field.
          */
         test('Validate version 8 CMake Presets', async () => {
@@ -820,6 +880,145 @@ suite('Presets validation, inclusion, and expansion tests', () => {
             expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
             expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
             expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
+        }).timeout(100000);
+
+        const version10SupportedPresets: any = {
+            "version": 10,
+            "$comment": "This is a top-level comment",
+            "configurePresets": [
+                {
+                    "$comment": "Comment on configure preset",
+                    "name": "configure",
+                    "hidden": false,
+                    "generator": "Ninja",
+                    "installDir": "${workspaceFolder}/install",
+                    "condition": {
+                        "type": "equals",
+                        "lhs": "${hostSystemName}",
+                        "rhs": "Windows"
+                    },
+                    "toolchainFile": "",
+                    "trace": {},
+                    "graphviz": "${sourceDir}/build/deps.dot"
+                }
+            ],
+            "buildPresets": [
+                {
+                    "name": "x64-debug",
+                    "configurePreset": "configure",
+                    "cleanFirst": true,
+                    "resolvePackageReferences": "on"
+                }
+            ],
+            "testPresets": [
+                {
+                    "name": "x64-debug",
+                    "configurePreset": "configure",
+                    "output": {
+                        "testOutputTruncation": "tail"
+                    }
+                }
+            ],
+            "packagePresets": [
+                {
+                    "name": "x64-debug-package"
+                }
+            ],
+            "workflowPresets": [
+                {
+                    "name": "x64-debug-workflow",
+                    "steps": [
+                        {
+                            "type": "configure",
+                            "name": "configure"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        /**
+         * Validate v10 supports `$comment` at any level and `graphviz` on configure presets.
+         * Then confirm that `graphviz` is rejected on v9.
+         */
+        test('Validate version 10 CMake Presets', async () => {
+            fs.writeFileSync(presetsParser.presetsPath,
+                JSON.stringify(version10SupportedPresets));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            expect(presetsFileErrors).to.have.lengthOf(0);
+            expect(preset.configurePresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
+
+            // Confirm graphviz is NOT allowed in v9
+            const v9WithGraphviz = lodash.cloneDeep(version10SupportedPresets);
+            v9WithGraphviz.version = 9;
+            delete v9WithGraphviz["$comment"];
+            delete v9WithGraphviz.configurePresets[0]["$comment"];
+
+            fs.writeFileSync(presetsParser.presetsPath,
+                JSON.stringify(v9WithGraphviz));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            expect(presetsFileErrors.length).to.be.greaterThan(0);
+            expect(presetsFileErrors.filter((e) => e.includes("graphviz"))).to.have.lengthOf(1);
+        }).timeout(100000);
+
+        /**
+         * Validate v11 supports the `jobs` field as an empty string in test preset execution.
+         * Then confirm that an empty string `jobs` is rejected on v10.
+         */
+        test('Validate version 11 CMake Presets', async () => {
+            const v11Presets: any = lodash.cloneDeep(version10SupportedPresets);
+            v11Presets.version = 11;
+            v11Presets.testPresets[0].execution = {
+                "jobs": ""
+            };
+
+            fs.writeFileSync(presetsParser.presetsPath,
+                JSON.stringify(v11Presets));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            expect(presetsFileErrors).to.have.lengthOf(0);
+            expect(preset.configurePresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.buildPresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.testPresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.packagePresets(sourceDirectory).length).to.be.equal(1);
+            expect(preset.workflowPresets(sourceDirectory).length).to.be.equal(1);
+
+            // Confirm that empty string `jobs` is rejected on v10
+            const v10WithStringJobs: any = lodash.cloneDeep(v11Presets);
+            v10WithStringJobs.version = 10;
+
+            fs.writeFileSync(presetsParser.presetsPath,
+                JSON.stringify(v10WithStringJobs));
+
+            await presetsParser.resetPresetsFiles(
+                new Map<string, PresetsFile>(),
+                false,
+                false
+            );
+
+            expect(presetsFileErrors.length).to.be.greaterThan(0);
+            expect(presetsFileErrors.filter((e) => e.includes("jobs"))).to.have.lengthOf(1);
         }).timeout(100000);
     });
 

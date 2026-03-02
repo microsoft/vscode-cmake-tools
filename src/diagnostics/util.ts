@@ -59,6 +59,27 @@ export function oneLess(num: number | string): number {
 }
 
 /**
+ * Convert a severity string from compiler output to a `vscode.DiagnosticSeverity`.
+ * @param severity The severity string (e.g. 'warning', 'error', 'note')
+ * @returns The corresponding `vscode.DiagnosticSeverity`, or `undefined` if unknown
+ */
+export function diagnosticSeverity(severity: string): vscode.DiagnosticSeverity | undefined {
+    switch (severity) {
+        case 'warning':
+            return vscode.DiagnosticSeverity.Warning;
+        case 'catastrophic error':
+        case 'fatal error':
+        case 'error':
+            return vscode.DiagnosticSeverity.Error;
+        case 'note':
+        case 'info':
+        case 'remark':
+            return vscode.DiagnosticSeverity.Information;
+    }
+    return undefined;
+}
+
+/**
  * Inserts a list of `FileDiagnostic` instances into a diagnostic collection.
  * @param coll The `vscode.DiagnosticCollecion` to populate.
  * @param fdiags The `FileDiagnostic` objects to insert into the collection
@@ -80,6 +101,18 @@ export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: It
     diags_by_file.forEach((diags, filepath) => {
         coll.set(vscode.Uri.file(filepath), diags);
     });
+}
+
+/**
+ * Adds a single `FileDiagnostic` to a diagnostic collection without clearing existing entries.
+ * @param coll The `vscode.DiagnosticCollection` to add to.
+ * @param fdiag The `FileDiagnostic` to add.
+ */
+export function addDiagnosticToCollection(coll: vscode.DiagnosticCollection, fdiag: FileDiagnostic) {
+    const uri = vscode.Uri.file(fdiag.filepath);
+    const existing = coll.get(uri);
+    const diags = existing ? [...existing, fdiag.diag] : [fdiag.diag];
+    coll.set(uri, diags);
 }
 
 /**
@@ -108,6 +141,32 @@ export abstract class RawDiagnosticParser {
             this._diagnostics.push(result);
             return true;
         }
+    }
+
+    /**
+     * Flush any diagnostic still buffered once the output stream has ended.
+     *
+     * Some parsers only emit a completed diagnostic when a *following* line
+     * arrives (e.g. IAR waits for the line after the message). Without a flush
+     * at end-of-output, the final diagnostic of a build would be silently
+     * dropped. Returns `true` if a pending diagnostic was produced. Idempotent:
+     * calling it again after it has flushed produces nothing.
+     */
+    finish(): boolean {
+        const result = this.doFinish();
+        if (result === FeedLineResult.Ok || result === FeedLineResult.NotMine) {
+            return false;
+        }
+        this._diagnostics.push(result);
+        return true;
+    }
+
+    /**
+     * Implement in derived classes that buffer a pending diagnostic to emit it
+     * when the output stream ends. Defaults to producing nothing.
+     */
+    protected doFinish(): RawDiagnostic | FeedLineResult {
+        return FeedLineResult.NotMine;
     }
 
     /**

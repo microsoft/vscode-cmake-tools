@@ -26,7 +26,9 @@ export class CompilationDatabase {
                 file: cur.file,
                 output: cur.output,
                 command: cur.command,
-                arguments: cur.arguments ? cur.arguments : [...shlex.split(cur.command)]
+                // compile_commands.json "command" entries are shell-escaped strings;
+                // convert them to raw argv before runCompileCommand() spawns directly.
+                arguments: cur.arguments ? cur.arguments : [...shlex.splitCommandLine(cur.command)]
             }),
             new Map<string, CompileCommand>()
         );
@@ -50,6 +52,9 @@ export class CompilationDatabase {
                 database.push(...content);
             } catch (e) {
                 log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database {0}: {1}', `"${path}"`, util.errorToString(e)));
+                if (e instanceof Error && e.stack) {
+                    log.debug(e.stack);
+                }
                 return null;
             }
         }

@@ -1,6 +1,5 @@
 'use strict';
 
-import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -19,11 +18,12 @@ import {
     getAdditionalKits
 } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
-import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
-import { chokidarOnAnyChange, ProgressHandle, reportProgress } from '@cmt/util';
+import { ProgressHandle, reportProgress } from '@cmt/util';
 import { ConfigurationType } from 'vscode-cmake-tools';
+import * as which from 'which';
+import { CompilerPathState, classifyCompilerPathProbe, classifyWhichResult } from '@cmt/kits/compilerPathState';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -34,6 +34,68 @@ export enum KitsReadMode {
     userKits,
     folderKits,
     allAvailable
+}
+
+export interface ScanForKitsControllerOptions {
+    directoriesToScan?: string[];
+    removeStaleCompilerKits?: boolean;
+}
+
+export function shouldKeepUserKitAfterScan(kit: Kit, discoveredKitNames: ReadonlySet<string>, removeStaleCompilerKits: boolean): boolean {
+    if (!removeStaleCompilerKits) {
+        return true;
+    }
+    if (!kit.compilers) {
+        return true;
+    }
+    if (kit.keep === true) {
+        return true;
+    }
+    return discoveredKitNames.has(kit.name);
+}
+
+/**
+ * Recursively collect subdirectories of `folder` (down to `depth` levels) to
+ * scan for kits, skipping directories that cannot be read or entries that
+ * cannot be stat-ed rather than aborting the whole scan. See #5020.
+ */
+export async function accumulateDirsToScan(folder: string, progress: ProgressHandle, cancel: vscode.CancellationToken, depth: number = 5): Promise<string[]> {
+    if (cancel.isCancellationRequested) {
+        return [];
+    }
+
+    const files: string[] = [];
+    progress.report({ message: folder });
+    let entries: string[];
+    try {
+        entries = await fs.readdir(folder);
+    } catch (e: any) {
+        log.debug(localize('skip.unreadable.dir', 'Skipping directory that could not be read while scanning for kits: {0} ({1})', folder, e.code ?? e.message ?? String(e)));
+        return files;
+    }
+    // At the deepest level nothing is traversed or added, so skip the loop
+    // entirely to avoid stat-ing every entry in large directories.
+    if (depth > 0) {
+        for (const file of entries) {
+            if (cancel.isCancellationRequested) {
+                break;
+            }
+            const filePath = path.join(folder, file);
+            let isDirectory = false;
+            try {
+                isDirectory = (await fs.stat(filePath)).isDirectory();
+            } catch (e: any) {
+                log.debug(localize('skip.unstattable.entry', 'Skipping entry that could not be inspected while scanning for kits: {0} ({1})', filePath, e.code ?? e.message ?? String(e)));
+                continue;
+            }
+            if (isDirectory) {
+                files.push(...await accumulateDirsToScan(filePath, progress, cancel, depth - 1));
+                files.push(filePath);
+            }
+        }
+    }
+
+    return files;
 }
 
 // TODO: migrate all kit related things in extension.ts to this class.
@@ -57,7 +119,7 @@ export class KitsController {
     folderKits: Kit[] = [];
     additionalKits: Kit[] = [];
 
-    private constructor(readonly project: CMakeProject, private readonly _kitsWatcher: chokidar.FSWatcher) {}
+    private constructor(readonly project: CMakeProject, private readonly _kitsWatchers: vscode.Disposable[]) {}
 
     static async init(project: CMakeProject) {
         if (KitsController.userKits.length === 0) {
@@ -67,10 +129,20 @@ export class KitsController {
 
         const expandedAdditionalKitFiles: string[] = await project.getExpandedAdditionalKitFiles();
         const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(project.workspaceFolder)].concat(expandedAdditionalKitFiles);
-        const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
-        const kitsController = new KitsController(project, kitsWatcher);
-        chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
-            kitsController.readKits(KitsReadMode.folderKits)));
+
+        const kitsWatchers: vscode.Disposable[] = [];
+        const kitsController = new KitsController(project, kitsWatchers);
+        const rereadHandler = () => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
+            kitsController.readKits(KitsReadMode.folderKits));
+        for (const kitFile of folderKitsFiles) {
+            const dirUri = vscode.Uri.file(path.dirname(kitFile));
+            const pattern = new vscode.RelativePattern(dirUri, path.basename(kitFile));
+            const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+            watcher.onDidChange(rereadHandler);
+            watcher.onDidCreate(rereadHandler);
+            watcher.onDidDelete(rereadHandler);
+            kitsWatchers.push(watcher);
+        }
         project.workspaceContext.config.onChange('additionalKits', () => kitsController.readKits(KitsReadMode.folderKits));
 
         await kitsController.readKits(KitsReadMode.folderKits);
@@ -81,7 +153,9 @@ export class KitsController {
         if (this._pickKitCancellationTokenSource) {
             this._pickKitCancellationTokenSource.dispose();
         }
-        void this._kitsWatcher.close();
+        for (const watcher of this._kitsWatchers) {
+            watcher.dispose();
+        }
     }
 
     get availableKits() {
@@ -89,7 +163,7 @@ export class KitsController {
         if (this.project.workspaceContext.config.showSystemKits) {
             return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
         } else {
-            return KitsController.specialKits.concat(this.folderKits);
+            return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits));
         }
     }
 
@@ -128,10 +202,10 @@ export class KitsController {
         // Load user-kits
         reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
-        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, project.workspaceContext.folder.uri.fsPath, await project.getExpansionOptions());
-
-        // Pruning requires user interaction, so it happens fully async
-        KitsController._startPruneOutdatedKitsAsync(await project.getCMakePathofProject());
+        const kits = await readKitsFile(USER_KITS_FILEPATH, project.workspaceContext.folder.uri.fsPath, await project.getExpansionOptions());
+        if (kits !== undefined) {
+            KitsController.userKits = kits;
+        }
     }
 
     /**
@@ -144,7 +218,10 @@ export class KitsController {
 
         if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
             // Read default folder kits
-            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.workspaceFolder), this.project.workspaceContext.folder.uri.fsPath, await this.project.getExpansionOptions());
+            const folderKitsResult = await readKitsFile(KitsController._workspaceKitsPath(this.workspaceFolder), this.project.workspaceContext.folder.uri.fsPath, await this.project.getExpansionOptions());
+            if (folderKitsResult !== undefined) {
+                this.folderKits = folderKitsResult;
+            }
 
             // Read additional folder kits
             this.additionalKits = await getAdditionalKits(this.project);
@@ -218,7 +295,9 @@ export class KitsController {
         // We don't have any kits defined. Scan for kits
         if (!KitsController.checkingHaveKits) {
             KitsController.checkingHaveKits = true;
-            await KitsController.scanForKits(await this.project.getCMakePathofProject());
+            await KitsController.scanForKits(await this.project.getCMakePathofProject(), {
+                removeStaleCompilerKits: this.project.workspaceContext.config.removeStaleKitsOnScan
+            });
             KitsController.checkingHaveKits = false;
             return true;
         } else {
@@ -232,7 +311,7 @@ export class KitsController {
     /**
      * Show UI to allow the user to select an active kit
      */
-    async selectKit(): Promise<boolean> {
+    async selectKit(reconfigureAfterSelection: boolean = true): Promise<boolean> {
         // Check that we have kits
         const state = await this.checkHaveKits();
         if (!state) {
@@ -278,7 +357,9 @@ export class KitsController {
             return false;
         } else {
             if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                await KitsController.scanForKits(await this.project.getCMakePathofProject());
+                await KitsController.scanForKits(await this.project.getCMakePathofProject(), {
+                    removeStaleCompilerKits: this.project.workspaceContext.config.removeStaleKitsOnScan
+                });
                 return false;
             } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
                 await KitsController.scanForKitsInSpecificFolder(this.project);
@@ -291,7 +372,9 @@ export class KitsController {
                     this.project.notifyOnSelectedConfigurationChanged(ConfigurationType.Kit);
                 }
 
-                if (chosen_kit.kit.name !== SpecialKits.Unspecified && kitChanged && this.project.workspaceContext.config.automaticReconfigure) {
+                // Skip the automatic reconfigure when the caller (e.g. configure-on-open) is going to
+                // run its own configure immediately after selection, so the project is not configured twice.
+                if (chosen_kit.kit.name !== SpecialKits.Unspecified && kitChanged && this.project.workspaceContext.config.automaticReconfigure && reconfigureAfterSelection) {
                     await this.project.configureInternal(ConfigureTrigger.selectKit, [], ConfigureType.Normal);
                 }
                 return true;
@@ -313,13 +396,30 @@ export class KitsController {
     }
 
     /**
+     * Single-flight guard for {@link _startPruneOutdatedKitsAsync}. Prevents
+     * overlapping scans from stacking additional bursts of filesystem probes.
+     */
+    private static prunePromise?: Promise<void>;
+
+    /**
+     * Set when a scan requests pruning while a prune is already running, so that
+     * exactly one more pass runs afterward (coalesced) instead of stacking a
+     * concurrent burst of probes. Kits already kept (`keep === true`) or removed
+     * are not re-prompted on the follow-up pass.
+     */
+    private static pruneAgain = false;
+
+    /**
      * User-interactive kit pruning:
      *
      * This function will find all user-local kits that identify files that are
      * no longer present (such as compiler binaries), and will show a popup
      * notification to the user requesting an action.
      *
-     * This function will not prune kits that have the `keep` field marked `true`
+     * This function will not prune kits that have the `keep` field marked `true`,
+     * and it will never prompt to remove a kit whose compiler could not be
+     * probed reliably (for example under file-handle exhaustion) -- only
+     * definitively-missing compilers are treated as stale.
      *
      * If the user chooses to remove the kit, we call `_removeKit()` and erase it
      * from the user-local file.
@@ -330,6 +430,56 @@ export class KitsController {
      * Always returns immediately.
      */
     private static _startPruneOutdatedKitsAsync(cmakePath: string) {
+        if (KitsController.prunePromise) {
+            // A prune is already running; don't launch another concurrent burst of
+            // probes. Instead request a single coalesced follow-up pass so a scan
+            // that finishes mid-prune still gets its (newly) stale kits checked.
+            KitsController.pruneAgain = true;
+            return;
+        }
+        const pr = KitsController._pruneOutdatedKits(cmakePath).finally(() => {
+            // Clear the guard so a later scan can prune again, even if this run
+            // failed for a transient reason.
+            KitsController.prunePromise = undefined;
+            if (KitsController.pruneAgain) {
+                KitsController.pruneAgain = false;
+                KitsController._startPruneOutdatedKitsAsync(cmakePath);
+            }
+        });
+        KitsController.prunePromise = pr;
+        rollbar.takePromise(localize('pruning.kit', "Pruning kit"), {}, pr);
+    }
+
+    /**
+     * Probe whether a kit compiler binary exists, preserving the error cause so
+     * that transient failures (e.g. `EMFILE`) are not misread as "missing".
+     *
+     * Absolute paths are stat'd directly (error codes are preserved). Relative
+     * names are resolved with the `which` package; because `which` cannot reliably
+     * distinguish a missing binary from a transient probe failure, any `which`
+     * failure is treated as `unknown` rather than `absent`.
+     */
+    private static async probeCompilerPath(compilerPath: string): Promise<CompilerPathState> {
+        if (path.isAbsolute(compilerPath)) {
+            try {
+                await fs.stat(compilerPath);
+                return 'present';
+            } catch (e) {
+                return classifyCompilerPathProbe(e as NodeJS.ErrnoException);
+            }
+        }
+        return new Promise<CompilerPathState>(resolve => {
+            which(compilerPath, (err: Error | null, resolved?: string) => {
+                resolve(classifyWhichResult(err, resolved));
+            });
+        });
+    }
+
+    private static async _pruneOutdatedKits(cmakePath: string): Promise<void> {
+        // Cache probe results within a single run so multiple kits that reference
+        // the same compiler binary do not re-stat it.
+        const pathStates = new Map<string, CompilerPathState>();
+
         // Iterate over _user_ kits. We don't care about workspace-local kits
         for (const kit of KitsController.userKits) {
             if (kit.keep === true) {
@@ -340,57 +490,64 @@ export class KitsController {
                 // We only prune kits with a `compilers` field.
                 continue;
             }
-            // Accrue a list of promises that resolve to whether a give file exists
-            interface FileInfo {
-                path: string;
-                exists: boolean;
-            }
-            const missing_paths_prs: Promise<FileInfo>[] = [];
+
+            let missingPath: string | undefined;
+            let hasUnknown = false;
             for (const lang in kit.compilers) {
-                const comp_path = kit.compilers[lang];
-                // Get a promise that resolve to whether the given path/name exists
-                const exists_pr = path.isAbsolute(comp_path)
-                    // Absolute path, just check if it exists
-                    ? fs.exists(comp_path)
-                    // Non-absolute. Check on $PATH
-                    : paths.which(comp_path).then(v => v !== null);
-                // Add it to the list
-                missing_paths_prs.push(exists_pr.then(exists => ({ exists, path: comp_path })));
+                const compilerPath = kit.compilers[lang];
+                let state = pathStates.get(compilerPath);
+                if (state === undefined) {
+                    // Probe sequentially to avoid launching an unbounded burst of
+                    // filesystem/PATH probes at once.
+                    state = await KitsController.probeCompilerPath(compilerPath);
+                    pathStates.set(compilerPath, state);
+                }
+                if (state === 'unknown') {
+                    // The probe failed transiently; this is not proof the compiler
+                    // is missing, so never prompt to remove this kit.
+                    hasUnknown = true;
+                    break;
+                }
+                if (state === 'absent' && missingPath === undefined) {
+                    missingPath = compilerPath;
+                }
             }
-            const pr = Promise.all(missing_paths_prs).then(async infos => {
-                const missing = infos.find(i => !i.exists);
-                if (!missing) {
-                    return;
+
+            if (hasUnknown || missingPath === undefined) {
+                continue;
+            }
+
+            // This kit contains a compiler that definitively does not exist. Ask
+            // the user what to do, one prompt at a time so notifications don't
+            // compete.
+            interface UpdateKitsItem extends vscode.MessageItem {
+                action: 'remove' | 'keep';
+            }
+            const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
+                localize('kit.references.non-existent',
+                    'The kit {0} references a non-existent compiler binary [{1}]. What would you like to do?',
+                    `"${kit.name}"`, missingPath),
+                {},
+                {
+                    action: 'remove',
+                    title: localize('remove.it.button', 'Remove it')
+                },
+                {
+                    action: 'keep',
+                    title: localize('keep.it.button', 'Keep it')
                 }
-                // This kit contains a compiler that does not exist. What to do?
-                interface UpdateKitsItem extends vscode.MessageItem {
-                    action: 'remove' | 'keep';
-                }
-                const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
-                    localize('kit.references.non-existent',
-                        'The kit {0} references a non-existent compiler binary [{1}]. What would you like to do?',
-                        `"${kit.name}"`, missing.path),
-                    {},
-                    {
-                        action: 'remove',
-                        title: localize('remove.it.button', 'Remove it')
-                    },
-                    {
-                        action: 'keep',
-                        title: localize('keep.it.button', 'Keep it')
-                    }
-                );
-                if (chosen === undefined) {
-                    return;
-                }
-                switch (chosen.action) {
-                    case 'keep':
-                        return KitsController._keepKit(cmakePath, kit);
-                    case 'remove':
-                        return KitsController._removeKit(cmakePath, kit);
-                }
-            });
-            rollbar.takePromise(localize('pruning.kit', "Pruning kit"), { kit }, pr);
+            );
+            if (chosen === undefined) {
+                continue;
+            }
+            switch (chosen.action) {
+                case 'keep':
+                    await KitsController._keepKit(cmakePath, kit);
+                    break;
+                case 'remove':
+                    await KitsController._removeKit(cmakePath, kit);
+                    break;
+            }
         }
     }
 
@@ -496,8 +653,11 @@ export class KitsController {
      *
      * @returns if any duplicate vs kits are removed.
      */
-    static async scanForKits(cmakePath: string, directoriesToScan?: string[]) {
+    static async scanForKits(cmakePath: string, options?: ScanForKitsControllerOptions) {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
+
+        const directoriesToScan = options?.directoriesToScan;
+        const removeStaleCompilerKits = options?.removeStaleCompilerKits === true && !directoriesToScan;
 
         // Do the scan:
         const discovered_kits = await scanForKits(cmakePath, !!directoriesToScan ? {
@@ -559,7 +719,15 @@ export class KitsController {
             old_kits_by_name
         );
 
-        const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
+        // Build the set of kit names found in this scan so we can drop stale entries.
+        const discovered_kit_names = new Set(discovered_kits.map(k => k.name));
+
+        // Optionally remove compiler-based kits that were not rediscovered in a
+        // full scan. Partial scans of specific directories never remove existing
+        // kits because they do not represent the full discovery set.
+        const new_kits = Object.keys(new_kits_by_name)
+            .map(k => new_kits_by_name[k])
+            .filter(kit => shouldKeepUserKitAfterScan(kit, discovered_kit_names, removeStaleCompilerKits));
         KitsController.userKits = new_kits;
         await KitsController._writeUserKitsFile(cmakePath, new_kits);
 
@@ -575,24 +743,6 @@ export class KitsController {
             canSelectMany: false,
             openLabel: localize('select.folder', 'Select Folder')
         });
-        const dirPathWithDepth = async (folder: string, progress: ProgressHandle, cancel: vscode.CancellationToken, depth: number = 5): Promise<string[]> => {
-            if (cancel.isCancellationRequested) {
-                return [];
-            }
-
-            const dir = await fs.readdir(folder);
-            const files: string[] = [];
-            progress.report({ message: folder });
-            for (const file of dir) {
-                const filePath = path.join(folder, file);
-                if (depth > 0 && (await fs.stat(filePath)).isDirectory()) {
-                    files.push(...await dirPathWithDepth(filePath, progress, cancel, depth - 1));
-                    files.push(filePath);
-                }
-            }
-
-            return files;
-        };
 
         if (!dir || dir.length === 0) {
             return;
@@ -607,14 +757,13 @@ export class KitsController {
             },
             async (progress, cancel) => {
                 accumulatedDirs.push(dir[0].fsPath);
-                accumulatedDirs.push(...(await dirPathWithDepth(dir[0].fsPath, progress, cancel)));
+                accumulatedDirs.push(...(await accumulateDirsToScan(dir[0].fsPath, progress, cancel)));
             }
         );
 
-        await KitsController.scanForKits(
-            await project.getCMakePathofProject(),
-            accumulatedDirs
-        );
+        await KitsController.scanForKits(await project.getCMakePathofProject(), {
+            directoriesToScan: accumulatedDirs
+        });
     }
 
     static isBetterMatch(newKit: Kit, existingKit?: Kit): boolean {

@@ -10,9 +10,15 @@
 </div>
 
 <div align=center>
-    <img alt="VS Code Marketplace Downloads" src="https://img.shields.io/visual-studio-marketplace/d/ms-vscode.cmake-tools?style=for-the-badge&color=064f8c&cacheSeconds=3600&link=https%3A%2F%2Fmarketplace.visualstudio.com%2Fitems%3FitemName%3Dms-vscode.cmake-tools">
-    <img alt="VS Code Marketplace Version" src="https://img.shields.io/visual-studio-marketplace/v/ms-vscode.cmake-tools?style=for-the-badge&color=be2128&cacheSeconds=3600&link=https%3A%2F%2Fmarketplace.visualstudio.com%2Fitems%2Fms-vscode.cmake-tools%2Fchangelog">
-    <img alt="Closed Issues" src="https://img.shields.io/github/issues-closed/microsoft/vscode-cmake-tools?style=for-the-badge&color=249847&cacheSeconds=3600&link=https%3A%2F%2Fgithub.com%2Fmicrosoft%2Fvscode-cmake-tools%2Fissues">
+    <a href="https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools">
+        <img alt="VS Code Marketplace Downloads" src="https://vsmarketplacebadges.dev/downloads-short/ms-vscode.cmake-tools.svg?style=for-the-badge&color=064f8c&cacheSeconds=3600">
+    </a>
+    <a href="https://marketplace.visualstudio.com/items/ms-vscode.cmake-tools/changelog">
+        <img alt="VS Code Marketplace Version" src="https://vsmarketplacebadges.dev/version/ms-vscode.cmake-tools.svg?style=for-the-badge&color=be2128&cacheSeconds=3600">
+    </a>
+    <a href="https://github.com/microsoft/vscode-cmake-tools/issues?q=is%3Aissue%20state%3Aclosed">
+        <img alt="Closed Issues" src="https://img.shields.io/github/issues-closed/microsoft/vscode-cmake-tools?style=for-the-badge&color=249847&cacheSeconds=3600">
+    </a>
 </div>
 
 <br/>
@@ -82,7 +88,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ### Data/Telemetry
 
-This extension collects usage data and sends it to Microsoft to help improve our products and services. Collection of telemetry is controlled via the same setting provided by Visual Studio Code: `"telemetry.enableTelemetry"`. Read our [privacy statement](https://privacy.microsoft.com/en-us/privacystatement) to learn more.
+This extension collects usage data and sends it to Microsoft to help improve our products and services. Collection of telemetry is controlled via the same setting provided by Visual Studio Code: `"telemetry.enableTelemetry"`. Read our [privacy statement](https://go.microsoft.com/fwlink/?LinkId=521839) to learn more.
 
 ### Credits
 

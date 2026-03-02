@@ -16,5 +16,9 @@
 	"search": "搜尋",
 	"save": "儲存",
 	"key": "索引鍵",
-	"value": "值"
+	"value": "值",
+	"source": "來源",
+	"not.set.in.presets": "CMake 快取",
+	"differs.from.preset": "已在快取中變更",
+	"matches.preset": "符合預設值"
 }

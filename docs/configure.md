@@ -16,6 +16,7 @@ The following concepts will help you understand how CMake Tools interacts with C
     |Generator |Description|
     |---------|---------|
     |Ninja | Emits files for the [Ninja build tool](https://ninja-build.org). This is the generator CMake Tools tries first, unless configured otherwise. See [cmake.preferredGenerators](cmake-settings.md#cmake-settings). |
+    |FASTBuild | Emits files for the [FASTBuild build tool](https://www.fastbuild.org/). Requires CMake 4.2+. |
     |Makefile |  Emits a `Makefile` for the project that can be built via `make`.|
     |Visual Studio     | Emits visual studio solutions and project files. There are many different Visual Studio generators, so it is recommended to let CMake Tools automatically determine the appropriate generator.|
 
@@ -55,6 +56,12 @@ A clean configure deletes the `CMakeCache.txt` file and `CMakeFiles` directory f
 A clean configure is required for certain build system changes, such as when the active kit changes, but may also be convenient as a reset if you have changed configuration settings outside of CMake Tools.
 
 CMake Tools will do a clean configure automatically if you change the active kit.
+
+## Full clean configure
+
+To get CMake Tools to do a full clean configure, run **CMake: Delete Build Directory and Reconfigure** from the command palette in VS Code.
+
+A full clean configure deletes the entire build directory before reconfiguring. This goes beyond the standard clean configure by removing all build artifacts, not just CMake's cache and internal files. This is useful when CMake reuses stale build artifacts that cause unexpected errors, or when third-party tools write extra files into the build directory.
 
 ## Configure with CMake Debugger
 

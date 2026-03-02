@@ -1,5 +1,4 @@
 import * as child_process from 'child_process';
-import * as chokidar from 'chokidar';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -179,6 +178,44 @@ export function resolvePath(inpath: string, base: string) {
 }
 
 /**
+ * Expands a path that may contain ${workspaceFolder} or ${workspaceFolder:name} variables,
+ * and resolves relative paths to absolute paths based on the provided workspace folder.
+ * Note: The ${workspaceFolder:name} lookup is case-insensitive, consistent with VS Code's
+ * behavior on Windows/macOS file systems.
+ * @param inputPath The path to expand
+ * @param workspaceFolder The workspace folder to use for expansion and resolving relative paths
+ * @returns The expanded and resolved path
+ */
+export function expandExcludePath(inputPath: string, workspaceFolder: vscode.WorkspaceFolder): string {
+    let expandedPath = inputPath;
+
+    // First expand ${workspaceFolder} to the current workspace folder path
+    expandedPath = expandedPath.replace(/\$\{workspaceFolder\}/g, workspaceFolder.uri.fsPath);
+
+    // Then expand ${workspaceFolder:name} to the specific workspace folder path
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        expandedPath = expandedPath.replace(/\$\{workspaceFolder:(.+?)\}/g, (match, folderName) => {
+            const folder = vscode.workspace.workspaceFolders!.find(f => f.name.toLowerCase() === folderName.toLowerCase());
+            return folder ? folder.uri.fsPath : match;
+        });
+    }
+
+    // Finally resolve relative paths to absolute paths based on the workspace folder
+    return resolvePath(expandedPath, workspaceFolder.uri.fsPath);
+}
+
+/**
+ * Expands an array of paths that may contain ${workspaceFolder} or ${workspaceFolder:name} variables,
+ * and resolves relative paths to absolute paths based on the provided workspace folder.
+ * @param paths The paths to expand
+ * @param workspaceFolder The workspace folder to use for expansion and resolving relative paths
+ * @returns The expanded and resolved paths
+ */
+export function expandExcludePaths(paths: string[], workspaceFolder: vscode.WorkspaceFolder): string[] {
+    return paths.map(p => expandExcludePath(p, workspaceFolder));
+}
+
+/**
  * Split a path into its elements.
  * @param p The path to split
  */
@@ -281,43 +318,9 @@ export function product<T>(arrays: T[][]): T[][] {
         [[]] as T[][]);
 }
 
-export interface CMakeValue {
-    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH' | 'PATH' | '');  // There are more types, but we don't care ATM
-    value: string;
-}
-
-/**
- * Converts a given value to a CMake-compatible value.
- * The function determines the type of the input value and converts it to a corresponding CMakeValue object.
- * @param value The value to convert. It can be a string, boolean, number, string array, or CMakeValue.
- * @returns A CMakeValue object with the appropriate type and value.
- * @throws An error if the input value is invalid or cannot be converted to a CMakeValue.
- */
-export function cmakeify(value: (string | boolean | number | string[] | CMakeValue)): CMakeValue {
-    const ret: CMakeValue = {
-        type: 'UNKNOWN',
-        value: ''
-    };
-    if (value === true || value === false) {
-        ret.type = 'BOOL';
-        ret.value = value ? 'TRUE' : 'FALSE';
-    } else if (isString(value)) {
-        ret.type = 'STRING';
-        ret.value = replaceAll(value, ';', '\\;');
-    } else if (typeof value === 'number') {
-        ret.type = 'STRING';
-        ret.value = value.toString();
-    } else if (value instanceof Array) {
-        ret.type = 'STRING';
-        ret.value = value.join(';');
-    } else if (Object.getOwnPropertyNames(value).filter(e => e === 'type' || e === 'value').length === 2) {
-        ret.type = value.type;
-        ret.value = value.value;
-    } else {
-        throw new Error(localize('invalid.value', 'Invalid value to convert to cmake value: {0}', JSON.stringify(value)));
-    }
-    return ret;
-}
+// Re-export CMakeValue types and function from the pure module (no vscode dependency)
+// This allows backward compatibility for existing imports from @cmt/util
+export { CMakeValue, cmakeify } from '@cmt/cmakeValue';
 
 /**
  * Terminates a child process and its descendant processes.
@@ -447,15 +450,14 @@ export function versionToString(ver: Version): string {
 }
 
 /**
- * Converts an error object to a string.
- * If the error has a stack trace, it includes the stack trace in the string.
+ * Converts an error object to a human-readable string.
+ * Only includes the error message, not the stack trace.
  * @param e The error object to convert.
- * @returns A string representation of the error.
+ * @returns A string representation of the error message.
  */
 export function errorToString(e: any): string {
-    if (e.stack) {
-        // e.stack has both the message and the stack in it.
-        return `\n\t${e.stack}`;
+    if (e.message) {
+        return `\n\t${e.message}`;
     }
     return `\n\t${e.toString()}`;
 }
@@ -781,6 +783,43 @@ export function versionLessOrEquals(lhs: Version | string, rhs: Version | string
 }
 
 /**
+ * CMake version at which the legacy configure diagnostic flags (such as
+ * `--no-warn-unused-cli`, `-Wdev`, and `--warn-uninitialized`) were deprecated in favor of
+ * the category-based `-W` diagnostics documented in the cmake-diagnostics(7) manual.
+ */
+export const cmakeDiagnosticFlagsDeprecatedVersion: Version = { major: 4, minor: 4, patch: 0 };
+
+/**
+ * Maps legacy CMake configure diagnostic flags to their modern (category-based) equivalents.
+ * Only flags that CMake 4.4 actually deprecated are listed; other diagnostic flags
+ * (e.g. `-Wdeprecated`, `--warn-unused-cli`, `--check-system-vars`) are still current and
+ * must be left unchanged.
+ */
+const modernCMakeDiagnosticFlags: { [legacy: string]: string } = {
+    '--no-warn-unused-cli': '-Wno-unused-cli',
+    '--warn-uninitialized': '-Wuninitialized',
+    '-Wdev': '-Wauthor',
+    '-Wno-dev': '-Wno-author',
+    '-Werror=dev': '-Werror=author',
+    '-Wno-error=dev': '-Wno-error=author'
+};
+
+/**
+ * Translates a legacy CMake configure diagnostic flag to its modern equivalent when the active
+ * CMake version has deprecated the legacy spelling (>= 4.4). The new spellings do not exist in
+ * older CMake, so when the version is unknown or older than 4.4 the legacy flag is preserved.
+ * Flags that were never deprecated, and unknown flags, are returned unchanged.
+ * @param flag The diagnostic flag CMake Tools would emit.
+ * @param cmakeVersion The version of the active CMake, if known.
+ */
+export function modernizeCMakeDiagnosticFlag(flag: string, cmakeVersion?: Version): string {
+    if (cmakeVersion && versionGreaterOrEquals(cmakeVersion, cmakeDiagnosticFlagsDeprecatedVersion)) {
+        return modernCMakeDiagnosticFlags[flag] ?? flag;
+    }
+    return flag;
+}
+
+/**
  * Compares two values by converting them to JSON strings and comparing the strings.
  * @param a The first value to compare.
  * @param b The second value to compare.
@@ -819,6 +858,15 @@ export function platformPathEquivalent(a: string, b: string): boolean {
 }
 
 /**
+ * Normalizes a URI's file-system path according to the platform's case and Unicode normalization rules.
+ * @param uri The URI whose fsPath to normalize.
+ * @returns The normalized path string.
+ */
+export function platformNormalizeUri(uri: vscode.Uri): string {
+    return platformNormalizePath(uri.fsPath);
+}
+
+/**
  * Sets a context value in the VS Code context.
  * @param key The context key to set.
  * @param value The value to set for the context key.
@@ -826,6 +874,23 @@ export function platformPathEquivalent(a: string, b: string): boolean {
  */
 export function setContextValue(key: string, value: any): Thenable<void> {
     return vscode.commands.executeCommand('setContext', key, value);
+}
+
+/**
+ * Shows a Quick Pick with typed payload items and returns the selected payload.
+ * @param items The Quick Pick items, each with an associated payload value.
+ * @param options Standard VS Code Quick Pick options.
+ * @returns The payload of the selected item, or null if the user cancelled.
+ */
+export async function quickPick<T>(
+    items: (vscode.QuickPickItem & { payload: T })[],
+    options: vscode.QuickPickOptions
+): Promise<T | null> {
+    const selected = await vscode.window.showQuickPick(items, options);
+    if (!selected) {
+        return null;
+    }
+    return selected.payload;
 }
 
 export interface ProgressReport {
@@ -1014,18 +1079,6 @@ export function reportProgress(message: string, progress?: ProgressHandle) {
 }
 
 /**
- * Sets up a chokidar watcher to listen for any file changes (add, change, unlink).
- * @param watcher The chokidar FSWatcher instance.
- * @param listener The listener function to call on file changes.
- * @returns The chokidar FSWatcher instance with the listener attached.
- */
-export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
-    return watcher.on('add', listener)
-        .on('change', listener)
-        .on('unlink', listener);
-}
-
-/**
  * Checks if the given value is a string.
  * @param x The value to check.
  * @returns True if the value is a string, false otherwise.
@@ -1170,6 +1223,68 @@ async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], r
         }
     }
     return result;
+}
+
+/**
+ * Directory names that are never plausible locations for a project's root CMakeLists.txt
+ * (build outputs, dependency/vendor trees, VCS and editor metadata). They are skipped when
+ * auto-detecting a nested source directory so we don't adopt a generated or third-party file.
+ */
+const nestedSourceScanExcludedDirs: Set<string> = new Set<string>([
+    '.git', '.hg', '.svn', '.vs', '.vscode', '.cache',
+    'build', 'builds', 'out', 'bin', 'obj', 'dist',
+    'node_modules', 'cmakefiles', '_deps', 'vcpkg_installed',
+    'vendor', 'third_party', 'thirdparty', 'external', 'externals', 'submodules'
+]);
+
+/**
+ * Scans for the top-most `CMakeLists.txt` directories under `folderPath`, used to auto-detect a
+ * source directory when the workspace root itself has no `CMakeLists.txt`. Common build/dependency
+ * directories are excluded and the search is bounded to `maxDepth` directories deep (matching the
+ * extension's `workspaceContains` activation globs). Recursion stops at the first `CMakeLists.txt`
+ * found along each branch, so only the shallowest candidate per branch is returned.
+ * @param folderPath The workspace folder to search.
+ * @param maxDepth The maximum directory depth to descend (default 3).
+ * @returns The directories (not the files) that directly contain a `CMakeLists.txt`, sorted shallowest-first.
+ */
+export async function getNestedCMakeListsDirs(folderPath: string, maxDepth: number = 3): Promise<string[]> {
+    const found: string[] = [];
+    await recScanForCMakeLists(folderPath, folderPath, 0, maxDepth, found);
+    found.sort((a, b) => a.split(path.sep).length - b.split(path.sep).length);
+    return found;
+}
+
+async function recScanForCMakeLists(rootDir: string, dir: string, depth: number, maxDepth: number, found: string[]): Promise<void> {
+    let entries: string[];
+    try {
+        entries = await readDir(dir);
+    } catch (error) {
+        return;
+    }
+    // Record this directory as a candidate if it directly contains a CMakeLists.txt (but never the
+    // root, which the caller has already determined to lack one). Stop descending this branch so we
+    // only return the shallowest CMakeLists.txt per branch.
+    if (dir !== rootDir && entries.some(entry => entry.toLowerCase() === 'cmakelists.txt')) {
+        found.push(dir);
+        return;
+    }
+    if (depth >= maxDepth) {
+        return;
+    }
+    for (const item of entries) {
+        if (nestedSourceScanExcludedDirs.has(item.toLowerCase())) {
+            continue;
+        }
+        const child = path.join(dir, item);
+        try {
+            const status = await getLStat(child);
+            if (status && status.isDirectory() && !status.isSymbolicLink()) {
+                await recScanForCMakeLists(rootDir, child, depth + 1, maxDepth, found);
+            }
+        } catch (error) {
+            continue;
+        }
+    }
 }
 
 /**

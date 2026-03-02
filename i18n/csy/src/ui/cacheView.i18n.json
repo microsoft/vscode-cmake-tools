@@ -16,5 +16,9 @@
 	"search": "Hledat",
 	"save": "Uložit",
 	"key": "Klíč",
-	"value": "Hodnota"
+	"value": "Hodnota",
+	"source": "Zdroj",
+	"not.set.in.presets": "Mezipaměť Cmake",
+	"differs.from.preset": "Změněno v mezipaměti",
+	"matches.preset": "Shoda s předvolbou"
 }

@@ -14,7 +14,7 @@ We recommend `CMakePresets.json` as an alternative to kits and variants files. T
 
 ## Supported CMake and `CMakePresets.json` versions
 
-The CMake Tools extension supports version 2 or later for the `CMakePresets.json` and `CMakeUserPresets.json` files. You can update your file version by incrementing the version field in the root object. For an example and more information, see [`CMakePresets.json`](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#format).
+The CMake Tools extension supports version 2 through 11 for the `CMakePresets.json` and `CMakeUserPresets.json` files. You can update your file version by incrementing the version field in the root object. For an example and more information, see [`CMakePresets.json`](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#format).
 
 CMake version 3.20 or later is required when you're invoking CMake with `CMakePresets.json` (version 2 or later) from the command line. CMake Tools reads and evaluates `CMakePresets.json` and `CMakeUserPresets.json`. It doesn't invoke CMake directly with the `--preset` option. So, CMake version 3.20 or later isn't strictly required when you're building with `CMakePresets.json` inside Visual Studio Code. We recommend using CMake version 3.14 or later.
 
