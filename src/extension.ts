@@ -326,6 +326,14 @@ export class ExtensionManager implements vscode.Disposable {
         }
     }
 
+    public onFullFeatureSetChanged(fullFeatureSet: boolean) {
+        if (fullFeatureSet) {
+            this.ensureBookmarksTreeView();
+        } else {
+            this.disposeBookmarksTreeView();
+        }
+    }
+
     public onExtensionActiveCommandsChanged(listener: () => any, thisObject: any | null) {
         this.extensionActiveCommandsEmitter.event(listener, thisObject);
     }
@@ -404,10 +412,29 @@ export class ExtensionManager implements vscode.Disposable {
      * The bookmarks tree data provider
      */
     private readonly bookmarksProvider = new BookmarksProvider(this.extensionContext);
-    private readonly bookmarksTreeView = vscode.window.createTreeView('cmake.bookmarks', {
-        treeDataProvider: this.bookmarksProvider,
-        showCollapseAll: false
-    });
+    private bookmarksTreeView?: vscode.TreeView<BaseNode>;
+
+    private ensureBookmarksTreeView() {
+        if (this.bookmarksTreeView) {
+            return;
+        }
+
+        try {
+            this.bookmarksTreeView = vscode.window.createTreeView('cmake.bookmarks', {
+                treeDataProvider: this.bookmarksProvider,
+                showCollapseAll: false
+            });
+        } catch (err) {
+            log.error('Failed to create bookmarks tree view', err as Error);
+        }
+    }
+
+    private disposeBookmarksTreeView() {
+        if (this.bookmarksTreeView) {
+            this.bookmarksTreeView.dispose();
+            this.bookmarksTreeView = undefined;
+        }
+    }
 
     /**
      * CppTools project configuration provider. Tells cpptools how to search for
@@ -678,7 +705,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.onDidChangeActiveTextEditorSub.dispose();
         void this.kitsWatcher.dispose();
         this.projectOutlineTreeView.dispose();
-        this.bookmarksTreeView.dispose();
+        this.disposeBookmarksTreeView();
         this.extensionActiveCommandsEmitter.dispose();
         pinnedCommands.dispose();
         if (this.cppToolsAPI) {
@@ -2725,6 +2752,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 // The scope of this is the whole workspace.
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
     await setContextAndStore("cmake:enableFullFeatureSet", fullFeatureSet);
+    extensionManager?.onFullFeatureSetChanged(fullFeatureSet);
     extensionManager?.showStatusBar(fullFeatureSet);
 }
 
