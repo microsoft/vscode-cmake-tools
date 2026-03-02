@@ -121,6 +121,7 @@
     "cmake-tools.configuration.cmake.generator.description": "The CMake generator to use.",
     "cmake-tools.configuration.cmake.toolset.description": "The CMake toolset to use when configuring.",
     "cmake-tools.configuration.cmake.platform.description": "The CMake platform to use when configuring.",
+    "cmake-tools.configuration.cmake.shell.description": "Path to a shell executable to use when running CMake, CTest, and CPack commands (e.g., Git Bash or MSYS2). When set, all subprocess invocations are routed through this shell. Useful for embedded toolchains that require POSIX path translation. When null, the default system shell behavior is used.",
     "cmake-tools.configuration.cmake.configureArgs.description": "Additional arguments to pass to CMake when configuring. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active configure preset.",
     "cmake-tools.configuration.cmake.buildArgs.description": "Additional arguments to pass to CMake when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset.",
     "cmake-tools.configuration.cmake.buildToolArgs.description": "Additional arguments to pass to the underlying build tool when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset to invoke the build tool.",
