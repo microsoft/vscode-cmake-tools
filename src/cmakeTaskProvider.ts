@@ -587,7 +587,9 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
         try {
-            const shell = cmakeDriver.config.shell ?? undefined;
+            // On Windows, command-type-specific detection takes precedence over config.shell
+            const commandShell = process.platform === 'win32' ? proc.determineShell(cmakePath) : false;
+            const shell = (commandShell || undefined) ?? cmakeDriver.config.shell ?? undefined;
             this._process = proc.execute(cmakePath, args, this, { ...this.options, shell });
             const result: proc.ExecutionResult = await this._process.result;
             this._process = undefined;

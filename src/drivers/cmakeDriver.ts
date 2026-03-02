@@ -519,7 +519,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
         const environment = this.getEffectiveSubprocessEnvironment(options);
-        const shell = options?.shell ?? this.config.shell ?? undefined;
+        // On Windows, command-type-specific detection (e.g. .cmd → cmd, .ps1 → powershell)
+        // must take precedence over config.shell to avoid routing commands through
+        // an incompatible shell (e.g. .cmd files through Git Bash).
+        const commandShell = process.platform === 'win32' ? proc.determineShell(command) : false;
+        const shell = options?.shell ?? (commandShell || undefined) ?? this.config.shell ?? undefined;
         const exec_options = { ...options, environment, shell };
         return proc.execute(command, args, consumer, exec_options);
     }
