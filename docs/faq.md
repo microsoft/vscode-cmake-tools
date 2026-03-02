@@ -12,6 +12,16 @@ Please visit [the end-user support chat](https://gitter.im/vscode-cmake-tools/su
 
 If you're having issues with CMake itself, view the [Kitware CMake Forum](https://gitlab.kitware.com/cmake/community) or [Kitware CMake issues](https://gitlab.kitware.com/cmake/cmake/-/issues)
 
+## How can I detect when CMake is run from VS Code?
+
+CMake Tools automatically sets the `VSCODE_CMAKE_TOOLS` environment variable to `1` for all subprocesses that it spawns, including configure, build, and test commands. You can check for this variable in your `CMakeLists.txt` to detect if the current CMake invocation is being run from the CMake Tools extension:
+
+```cmake
+if(DEFINED ENV{VSCODE_CMAKE_TOOLS})
+    message(STATUS "CMake is being run from VS Code CMake Tools extension")
+endif()
+```
+
 ## How do I learn about CMake?
 
 CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake.
