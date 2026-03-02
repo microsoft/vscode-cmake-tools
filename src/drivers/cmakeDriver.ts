@@ -8,6 +8,7 @@ import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
+import * as shlex from '@cmt/shlex';
 import { ConfigureCancelInformation, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
@@ -565,7 +566,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
             existing = term;
         }
         existing.show();
-        existing.sendText(cmd.command + '\r\n');
+        // Send the command and arguments individually to avoid terminal buffer truncation
+        // issues with long command lines (see https://github.com/microsoft/vscode/issues/233420).
+        // The arguments array is always populated by CompilationDatabase, either from the
+        // compile_commands.json or by parsing the command string.
+        const args = cmd.arguments!;
+        if (args.length > 0) {
+            existing.sendText(shlex.quote(args[0]), false);
+            for (let i = 1; i < args.length; i++) {
+                existing.sendText(` ${shlex.quote(args[i])}`, false);
+            }
+            existing.sendText('', true); // Send newline to execute the command
+        }
         return existing;
     }
 
