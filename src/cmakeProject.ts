@@ -28,7 +28,7 @@ import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { FileDiagnostic, populateCollection } from '@cmt/diagnostics/util';
+import { FileDiagnostic, addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
@@ -1890,6 +1890,13 @@ export class CMakeProject {
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
+        // After saving files, explicitly refresh presets from disk so that any
+        // just-saved changes to preset files (including included files) are picked
+        // up before configure runs.  Without this, the asynchronous file-watcher
+        // may not have re-expanded the presets yet (see #4502).
+        if (this.useCMakePresets) {
+            await this.presetsController.reapplyPresets();
+        }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
                 await vscode.window.showErrorMessage(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
@@ -1979,6 +1986,14 @@ export class CMakeProject {
         // First, save open files
         if (!await this.maybeAutoSaveAll()) {
             return { exitCode: -1 };
+        }
+        // After saving, explicitly refresh presets from disk so that the
+        // needsReconfigure check below sees up-to-date preset state.
+        // Without this, the async file-watcher's fire-and-forget reapplyPresets()
+        // may not have completed yet, causing needsReconfigure() to return false
+        // even though preset files just changed on disk (see #4502).
+        if (this.useCMakePresets) {
+            await this.presetsController.reapplyPresets();
         }
         if (await this.needsReconfigure()) {
             return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken);
@@ -2106,6 +2121,9 @@ export class CMakeProject {
         try {
             this.statusMessage.set(localize('building.status', 'Building'));
             this.isBusy.set(true);
+            if (drv.config.parseBuildDiagnostics) {
+                collections.build.clear();
+            }
             let rc: number | null;
             if (taskConsumer) {
                 buildLogger.info(localize('starting.build', 'Starting build'));
@@ -2125,6 +2143,24 @@ export class CMakeProject {
                 };
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
+                if (drv.config.parseBuildDiagnostics) {
+                    consumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
+                        if (!drv!.config.enableOutputParsers?.includes(source.toLowerCase())) {
+                            return;
+                        }
+                        const severity = diagnosticSeverity(rawDiag.severity);
+                        if (severity === undefined) {
+                            return;
+                        }
+                        const filepath = util.resolvePath(rawDiag.file, drv!.binaryDir);
+                        const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                        diag.source = source;
+                        if (rawDiag.code) {
+                            diag.code = rawDiag.code;
+                        }
+                        addDiagnosticToCollection(collections.build, { filepath, diag });
+                    });
+                }
                 return await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Window,
@@ -2926,6 +2962,17 @@ export class CMakeProject {
         }
 
         let chosen: ExecutableTarget;
+
+        // Save dirty editors and refresh presets from disk before checking whether
+        // reconfiguration is needed.  This mirrors the logic in ensureConfigured()
+        // and doConfigure() so that unsaved changes to included preset files are
+        // picked up for debug/launch paths as well (see #4502).
+        if (!await this.maybeAutoSaveAll()) {
+            return null;
+        }
+        if (this.useCMakePresets) {
+            await this.presetsController.reapplyPresets();
+        }
 
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
         // executable targets and may show an uneccessary prompt to the user
