@@ -2057,7 +2057,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (useBuildTask) {
                 const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this.workspaceFolder, this._buildPreset?.name, targets, this.expansionOptions);
                 if (task) {
-                    const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
+                    const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task, consumer);
                     if (resolvedTask) {
                         await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolvedTask));
                     }

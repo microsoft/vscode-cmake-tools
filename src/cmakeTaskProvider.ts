@@ -240,7 +240,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         return undefined;
     }
 
-    public static async resolveInternalTask(task: CMakeTask): Promise<CMakeTask | undefined> {
+    public static async resolveInternalTask(task: CMakeTask, consumer?: proc.OutputConsumer): Promise<CMakeTask | undefined> {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
@@ -249,7 +249,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, consumer)
                 ), []);
             return resolvedTask;
         }
@@ -363,7 +363,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
+    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }, private externalConsumer?: proc.OutputConsumer) {
         super();
     }
 
@@ -372,11 +372,13 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
     override output(line: string): void {
         this.writeEmitter.fire(line + endOfLine);
         super.output(line);
+        this.externalConsumer?.output(line);
     }
 
     override error(error: string): void {
         this.writeEmitter.fire(error + endOfLine);
         super.error(error);
+        this.externalConsumer?.error(error);
     }
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
