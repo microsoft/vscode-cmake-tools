@@ -14,6 +14,7 @@ Features:
 - Support `targetName` argument for launch-target command substitutions (`cmake.launchTargetPath`, etc.) via `${input:...}` variables, enabling build-before-run for non-active executable targets without changing the active launch target. [#4656](https://github.com/microsoft/vscode-cmake-tools/issues/4656)
 
 Improvements:
+- Clicking on a CTest unit test in the Test Explorer now navigates to the test source file by matching the test executable to its CMake target's source files. [#4449](https://github.com/microsoft/vscode-cmake-tools/issues/4449)
 - Make "CMake: Add ... Preset" commands available in the command palette when `cmake.useCMakePresets` is set to `auto`, even before a CMakePresets.json file exists. [#4401](https://github.com/microsoft/vscode-cmake-tools/issues/4401)
 - Improve CMake syntax highlighting with command-scoped keyword rules, expanded variable recognition, and better generator-expression support. Remove obsolete deprecated-keyword entries that caused false positives on user-defined names. [#4709](https://github.com/microsoft/vscode-cmake-tools/issues/4709) [#4508](https://github.com/microsoft/vscode-cmake-tools/issues/4508) [#4613](https://github.com/microsoft/vscode-cmake-tools/issues/4613)
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
@@ -48,6 +49,7 @@ Bug Fixes:
 - Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4651](https://github.com/microsoft/vscode-cmake-tools/issues/4651)
 - Fix how `jobs` is handled in build presets. Also update how `cmake.parallelJobs` is handled as a fallback when a build preset does not define `jobs`. [#4176](https://github.com/microsoft/vscode-cmake-tools/issues/4176)
 - Fix diagnostics to handle when there isn't a command in the error output. [PR #4765](https://github.com/microsoft/vscode-cmake-tools/pull/4765)
+- Fix bug in which running "CMake: Build" would always run "CMake: Clean Rebuild" when `cmake.buildTask` is enabled [#4421](https://github.com/microsoft/vscode-cmake-tools/issues/4421) [@RedSkittleFox](https://github.com/RedSkittleFox)
 
 ## 1.22.28
 
