@@ -491,6 +491,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.installComponent",
+        "title": "%cmake-tools.command.cmake.installComponent.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.buildWithTarget",
         "title": "%cmake-tools.command.cmake.buildWithTarget.title%",
         "when": "cmake:enableFullFeatureSet",
