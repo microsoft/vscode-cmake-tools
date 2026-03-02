@@ -21,6 +21,7 @@ Improvements:
 - Use environment variables from `cmake.environment` and `cmake.configureEnvironment` when expanding `$penv{}` macros in CMake Presets `include` paths. [#3578](https://github.com/microsoft/vscode-cmake-tools/issues/3578)
 - Allow preset modification commands to target CMakeUserPresets.json. The target file is determined by the focused editor, or by prompting the user when both files exist. [#4564](https://github.com/microsoft/vscode-cmake-tools/issues/4564)
 - Display info tooltip when hovering over CMake policy identifiers (e.g., `CMP0177`), showing the CMake version that introduced the policy, a short description, and a link to the official documentation. [#4544](https://github.com/microsoft/vscode-cmake-tools/issues/4544)
+- Append `cmake` to diagnostics that this extension contributes to the Problems Pane. [PR #4766](https://github.com/microsoft/vscode-cmake-tools/pull/4766)
 
 Bug Fixes:
 - Fix configure/build sometimes using stale preset values when unsaved changes to included preset files are auto-saved before configure. The extension now explicitly refreshes presets from disk after saving, instead of relying solely on the asynchronous file watcher. [#4502](https://github.com/microsoft/vscode-cmake-tools/issues/4502)
