@@ -613,3 +613,96 @@
 **Original prompt:** CMake Prompt
 
 **Updates:** High quality fix. The pure function extraction pattern is the gold standard for making complex decision logic testable.
+
+---
+
+## ✅ Issue #4589 / PR #4756: [Bug] Test Results panel doesn't hyperlink file paths — GoogleTest failure pattern [Success]
+
+**Reported behavior:** When running GoogleTest-based tests using CTest via Test Explorer, the Test Results panel showed test output but file paths in failure messages were not hyperlinked. GoogleTest emits `file:line: Failure` format, but the default `cmake.ctest.failurePatterns` only matched lines containing `error:` (GCC/Clang and MSVC formats).
+
+**Agent patch (as implemented/claimed):** Copilot added a third default pattern `(.*?):(\d+): *(Failure.*)` to `cmake.ctest.failurePatterns` in `package.json`. This is narrow enough to avoid false positives (matches "Failure" specifically) but broad enough to catch standard GoogleTest output on any platform. Existing patterns are preserved; only an additive default is introduced. Users with custom `failurePatterns` override defaults entirely and are unaffected. 3 files, +36/−3, including unit tests for the new pattern and regression tests for existing patterns. Changelog entry included.
+
+**Initial Assessment:**
+
+- **Correctness:** 🟢 Correct. The regex matches GoogleTest's standard output format across all platforms.
+- **Regression risk:** ⚠️ Very Low. Additive-only change to defaults; existing patterns unchanged.
+- **Test hygiene / verification:** 🟢 Good. Unit tests validate the new pattern and regression tests verify existing patterns still work.
+- **Documentation & traceability:** 🟢 Good. PR description clearly explains the gap and the fix with before/after examples.
+
+**Original prompt:** CMake Prompt
+
+**Updates:** Notable that this issue (#4589) previously had a failed PR #4663 (row 5 in the tracking table, Sonnet 4.5) that attempted a regex approach but failed CI due to Windows path/URI normalization. This second attempt with a different, much simpler approach succeeded — demonstrating that retrying a failed issue with a fresh session and better-scoped approach can work.
+
+---
+
+## ✅ Issue #4656 / PR #4757: [Feature] Support build-before-run for non-active executable targets [Success]
+
+**Reported behavior:** `${command:cmake.launchTargetPath}` was tied to the single active launch target. Projects with multiple executables couldn't create stable per-target `launch.json` configs that honor `cmake.buildBeforeRun` because passing `targetName` programmatically called `setLaunchTargetByName()`, permanently mutating global state. Users had to constantly switch the active target in the UI.
+
+**Agent patch (as implemented/claimed):** Copilot implemented VS Code input variables support so users can parameterize launch target resolution without side effects. When `targetName` is provided via args, the extension routes directly to `cmakeProject` methods instead of calling `setLaunchTargetByName()`. Added optional `name` parameter to `launchTargetPath()`, `launchTargetDirectory()`, `launchTargetFilename()`, and `launchTargetNameForSubstitution()` and all `get*` variants. Added build deduplication cache (`_prepareCache`, 10s TTL) to avoid redundant builds when multiple `${input:...}` variables resolve the same target in one `launch.json` evaluation. Cache validates built artifact still exists on disk before returning. Documentation updated in `debug-launch.md` and `cmake-settings.md` with full `${input:...}` examples. 6 files, +237/−24, including 9 new tests covering named resolution, active target preservation, invalid target → null, and `buildBeforeRun` honored/skipped with explicit targetName.
+
+**Initial Assessment:**
+
+- **Correctness:** 🟢 Correct. No-args usage (`${command:cmake.launchTargetPath}`) is unchanged. The build dedup cache's `fs.exists` check correctly invalidates stale entries.
+- **Regression risk:** ⚠️ Low. Backward-compatible: existing behavior preserved for no-args case. New behavior only activates with explicit `targetName`.
+- **Test hygiene / verification:** 🟢 Excellent. 9 tests covering multiple scenarios including edge cases.
+- **Documentation & traceability:** 🟢 Excellent. PR includes detailed documentation with JSON examples users can copy-paste.
+
+**Original prompt:** CMake Prompt with detailed investigation guidance and recommended approach.
+
+**Updates:** One of the strongest feature implementations. The build dedup cache is a thoughtful addition not explicitly requested but needed to avoid redundant builds when multiple input variables resolve the same target.
+
+---
+
+## ❌ PR #4769: [WIP] Fix failures in unit tests for kit rescanning [Closed — Superseded]
+
+**Reported behavior:** Unit tests in PR #4766 (gcampbell-msft's "Prepend cmake to diagnostics" branch) were failing because diagnostic source assertions expected old values (`'cmake'`) but needed the new prepended format (`'CMake (message)'`, `'CMake'`, etc.). Six diagnostic tests were red.
+
+**Agent patch (as implemented/claimed):** Copilot opened a draft PR with 1 commit to update test assertions to match the new diagnostic source format. The PR targeted the feature branch `dev/gcampbell/PrependDiagnostics` rather than `main`.
+
+**Initial Assessment:**
+
+- **Correctness:** 🟡 Partial. The test assertion updates were directionally correct but the PR was opened and closed the same day.
+- **Regression risk:** ⚠️ N/A. The fix never left draft state.
+- **Test hygiene / verification:** ⚠️ N/A. No CI results.
+- **Documentation & traceability:** ⚠️ Weak. Placeholder description copied from the assignment prompt.
+
+**Why closed:** The PR targeted a non-main branch and was closed within hours. The test fixes were handled directly in the parent PR's branch by the original author (gcampbell-msft). This is an example of Copilot being assigned a narrow task (fix failing tests in someone else's feature branch) where the overhead of a separate PR isn't justified.
+
+---
+
+## 🟡 Issue #2426 / PR #4772: [Feature] Add per-generator-type cmake.buildDirectory support [Potential]
+
+**Reported behavior:** Single-config generators (Make, Ninja) typically need `${buildType}` in the build path to separate configurations; multi-config generators (Visual Studio, Ninja Multi-Config, Xcode) don't. There was no way to use different `cmake.buildDirectory` templates per generator type, forcing users to choose one or the other.
+
+**Agent patch (as implemented/claimed):** Copilot implemented a new object form alongside the existing string form: `{ "singleConfig": "...", "multiConfig": "..." }`. The `package.json` schema uses `oneOf` for the two forms. In `config.ts`, the `buildDirectory` type is widened and an `isMultiConfig?: boolean` parameter is added to the resolution method. `cmakeDriver.ts` passes `this.isMultiConfFast` to the config reader for branch resolution. `projectController.ts` checks both branches in the `checkBuildDirectories` duplicate-directory warning. 8 new unit tests covering string form, object form, fallbacks, and defaults. Draft with +117/−10 across 7 files.
+
+**Initial Assessment:**
+
+- **Correctness:** 🟢 Likely correct. The approach is clean and backward-compatible (existing string form unchanged). The `oneOf` schema pattern is standard for VS Code settings that accept multiple types.
+- **Regression risk:** ⚠️ Medium. Config type widening touches a hot path — `buildDirectory` is resolved frequently. The unit tests cover the key cases but manual testing with various generator types is essential.
+- **Test hygiene / verification:** 🟢 Good. 8 unit tests covering the main scenarios.
+- **Documentation & traceability:** 🟢 Good. Clear before/after examples in PR description. Changelog included.
+
+**Original prompt:** CMake Prompt with detailed implementation guidance per file.
+
+**Updates:** This addresses a 4-year-old feature request (#2426, from 2022). The implementation is clean and follows the exact pattern suggested in the issue thread. Needs manual testing on Windows with VS generators and on Linux/macOS with single-config generators before merge.
+
+---
+
+## 🟡 Issue #4777 / PR #4778: [Bug] Changes in file included from CMakeUserPreset.json don't apply until VS Code restart [Potential Success]
+
+**Reported behavior:** When using Conan (or other tools) that regenerate included preset files, changes to files referenced via the `include` directive in `CMakePresets.json` or `CMakeUserPresets.json` were not detected by the extension until VS Code was restarted. Even "Delete Cache / Reconfigure" did not pick up new content. The root cause: tools like Conan regenerate files via atomic write (delete→create), and the `FileWatcher` had a separate non-debounced `onDidCreate` handler that raced with the debounced `onDidChange`/`onDidDelete` handler.
+
+**Agent patch (as implemented/claimed):** Copilot unified FileWatcher event handling so all filesystem events (change, create, delete) use a single debounced callback. Previously, the delete would trigger `reapplyPresets()` while the file was absent, rebuilding the watcher list without the included file — so the subsequent create event was silently lost. Root presets file creation is now detected inside `reapplyPresets()` by checking `presetsFileExist` before/after reload. Explicit user commands (configure, clean-configure, etc.) now call `reapplyPresets()` before proceeding. Includes unit tests for unified debouncing and atomic write (delete+create) handling. 4 files, +72/−23. Changelog included.
+
+**Initial Assessment:**
+
+- **Correctness:** 🟢 Likely correct. The unified debounce approach eliminates the race condition. The `_reapplyInProgress` serialization prevents double-calls from `ensureConfigured()` → `configureInternal()`.
+- **Regression risk:** ⚠️ Medium. File watcher changes affect all preset users. The debounce unification is sound but needs testing with various tools (Conan, vcpkg, manual edits) to confirm no events are lost.
+- **Test hygiene / verification:** 🟢 Good. Unit tests validate the key scenarios.
+- **Documentation & traceability:** 🟢 Good. Clear root cause analysis with the delete→create race condition explained.
+
+**Original prompt:** CMake Prompt with detailed investigation guidance covering two areas: FileWatcher event handling and configureInternal preset refresh.
+
+**Updates:** This is a strong fix for a real-world pain point affecting Conan users. The investigation guidance in the prompt was detailed and accurate, which likely contributed to the quality of the output. Needs manual testing with Conan-generated presets.
