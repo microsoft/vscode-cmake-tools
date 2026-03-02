@@ -1072,7 +1072,7 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
             } else {
                 log.info(localize(
                     'vs.dev.env.skipped.hint',
-                    'Configure preset "{0}": VS Developer Environment was not set up automatically. To enable it, set CMAKE_CXX_COMPILER to "cl" in cacheVariables, or set cmake.useVsDeveloperEnvironment to "always".',
+                    'Configure preset "{0}": VS Developer Environment was not set up automatically. To enable it, set CMAKE_CXX_COMPILER to "cl" in cacheVariables, use a Visual Studio generator, set toolset or architecture strategy to "external", or set cmake.useVsDeveloperEnvironment to "always".',
                     preset.name
                 ));
             }
