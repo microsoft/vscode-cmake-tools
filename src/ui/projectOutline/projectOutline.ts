@@ -361,7 +361,8 @@ export class CTestTestNode extends BaseNode {
         readonly targetId: string,
         readonly testName: string,
         readonly folder: vscode.WorkspaceFolder,
-        readonly sourceDir: string
+        readonly sourceDir: string,
+        readonly sourceFilePath?: string
     ) {
         super(`${targetId}::test::${testName}`);
     }
@@ -384,6 +385,14 @@ export class CTestTestNode extends BaseNode {
         item.iconPath = new vscode.ThemeIcon('beaker');
         item.contextValue = 'nodeType=test';
         item.tooltip = localize('test.tooltip', 'Test: {0}', this.testName);
+        if (this.sourceFilePath) {
+            const uri = vscode.Uri.file(this.sourceFilePath);
+            item.command = {
+                title: localize('open.file', 'Open file'),
+                command: 'vscode.open',
+                arguments: [uri]
+            };
+        }
         return item;
     }
 }
@@ -551,9 +560,9 @@ export class TargetNode extends BaseNode {
         }
     }
 
-    updateTests(testNames: string[]) {
-        this._testNodes = testNames.map(name =>
-            new CTestTestNode(this.id, name, this.folder, this.sourceDir)
+    updateTests(tests: { name: string; sourceFilePath?: string }[]) {
+        this._testNodes = tests.map(test =>
+            new CTestTestNode(this.id, test.name, this.folder, this.sourceDir, test.sourceFilePath)
         );
     }
 }
@@ -749,7 +758,7 @@ export class WorkspaceFolderNode extends BaseNode {
         return children.sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
     }
 
-    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string }[]) {
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string }[]) {
         const sub_map = this._projects.get(cmakeProject.folderPath);
         if (!sub_map) {
             return;
@@ -772,7 +781,7 @@ export class WorkspaceFolderNode extends BaseNode {
         }
 
         // Group tests by their executable path (matching to targets)
-        const testsByTarget = new Map<TargetNode, string[]>();
+        const testsByTarget = new Map<TargetNode, { name: string; sourceFilePath?: string }[]>();
         for (const test of tests) {
             const normalizedExe = platformNormalizePath(test.executablePath);
             const target = targetsByPath.get(normalizedExe);
@@ -782,7 +791,7 @@ export class WorkspaceFolderNode extends BaseNode {
                     arr = [];
                     testsByTarget.set(target, arr);
                 }
-                arr.push(test.name);
+                arr.push({ name: test.name, sourceFilePath: test.sourceFilePath });
             }
         }
 
@@ -794,8 +803,8 @@ export class WorkspaceFolderNode extends BaseNode {
         }
 
         // Update each target with its tests
-        for (const [target, testNames] of testsByTarget) {
-            target.updateTests(testNames);
+        for (const [target, targetTests] of testsByTarget) {
+            target.updateTests(targetTests);
         }
     }
 }
@@ -928,7 +937,7 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         this._changeEvent.fire(null);
     }
 
-    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string }[]) {
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string }[]) {
         const folder = cmakeProject.workspaceContext.folder;
         const existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {

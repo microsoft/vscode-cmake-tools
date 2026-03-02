@@ -5,6 +5,7 @@ import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
 import { CMakeDriver } from '@cmt/drivers/drivers';
+import { CodeModelContent } from '@cmt/drivers/codeModel';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
@@ -782,9 +783,8 @@ export class CTestDriver implements vscode.Disposable {
      * Builds a map from normalized executable paths to source file information
      * by looking at the code model content from the CMake driver.
      */
-    private buildExecutableToSourcesMap(driver: CMakeDriver): Map<string, { sourceDir: string; sources: string[] }> {
+    private buildExecutableToSourcesMap(codeModelContent: CodeModelContent | null): Map<string, { sourceDir: string; sources: string[] }> {
         const map = new Map<string, { sourceDir: string; sources: string[] }>();
-        const codeModelContent = driver.codeModelContent;
         if (!codeModelContent) {
             return map;
         }
@@ -883,7 +883,7 @@ export class CTestDriver implements vscode.Disposable {
         } else if (testType === "CTestInfo" && this.tests !== undefined) {
             if (this.tests && this.tests.kind === 'ctestInfo') {
                 // Build a map from executable paths to source files using the code model
-                const executableToSources = this.buildExecutableToSourcesMap(driver);
+                const executableToSources = this.buildExecutableToSourcesMap(driver.codeModelContent);
 
                 this.tests.tests.forEach(test => {
                     let testDefFile: string | undefined;
@@ -1048,14 +1048,52 @@ export class CTestDriver implements vscode.Disposable {
 
     /**
      * Returns test information suitable for the project outline view.
-     * Each entry maps a test name to its executable path.
+     * Each entry maps a test name to its executable path and optionally
+     * the resolved source file path for click-to-navigate.
      */
-    getTestsForOutline(): { name: string; executablePath: string }[] {
+    getTestsForOutline(codeModelContent?: CodeModelContent | null): { name: string; executablePath: string; sourceFilePath?: string }[] {
         if (this.tests) {
-            return this.tests.tests.map(test => ({
-                name: test.name,
-                executablePath: test.command[0]
-            }));
+            const executableToSources = codeModelContent ? this.buildExecutableToSourcesMap(codeModelContent) : undefined;
+
+            return this.tests.tests.map(test => {
+                let sourceFilePath: string | undefined;
+
+                // 1. Use DEF_SOURCE_LINE CMake test property
+                const defSourceLineProperty = test.properties.filter(p => p.name === "DEF_SOURCE_LINE")[0];
+                if (defSourceLineProperty && defSourceLineProperty.value && typeof defSourceLineProperty.value === 'string') {
+                    const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
+                    if (match && match[1]) {
+                        sourceFilePath = match[1];
+                    }
+                }
+
+                // 2. Match test executable to CMake target sources
+                if (!sourceFilePath && test.command && test.command.length > 0 && executableToSources) {
+                    const testExe = util.platformNormalizePath(test.command[0]);
+                    const targetInfo = executableToSources.get(testExe);
+                    if (targetInfo && targetInfo.sources.length > 0) {
+                        sourceFilePath = path.resolve(targetInfo.sourceDir, targetInfo.sources[0]);
+                    }
+                }
+
+                // 3. Backtrace graph (falls back to CMakeLists.txt)
+                if (!sourceFilePath && this.tests) {
+                    const nodes = this.tests.backtraceGraph.nodes;
+                    if (test.backtrace !== undefined && nodes[test.backtrace] !== undefined) {
+                        let node = nodes[test.backtrace];
+                        while (node.parent !== undefined && nodes[node.parent].command !== undefined) {
+                            node = nodes[node.parent];
+                        }
+                        sourceFilePath = this.tests.backtraceGraph.files[node.file];
+                    }
+                }
+
+                return {
+                    name: test.name,
+                    executablePath: test.command[0],
+                    sourceFilePath
+                };
+            });
         }
         return [];
     }
