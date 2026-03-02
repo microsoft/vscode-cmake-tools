@@ -1051,19 +1051,25 @@ export class CTestDriver implements vscode.Disposable {
      * Each entry maps a test name to its executable path and optionally
      * the resolved source file path for click-to-navigate.
      */
-    getTestsForOutline(codeModelContent?: CodeModelContent | null): { name: string; executablePath: string; sourceFilePath?: string }[] {
+    getTestsForOutline(codeModelContent?: CodeModelContent | null): { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[] {
         if (this.tests) {
             const executableToSources = codeModelContent ? this.buildExecutableToSourcesMap(codeModelContent) : undefined;
 
             return this.tests.tests.map(test => {
                 let sourceFilePath: string | undefined;
+                let sourceFileLine: number | undefined;
 
                 // 1. Use DEF_SOURCE_LINE CMake test property
                 const defSourceLineProperty = test.properties.filter(p => p.name === "DEF_SOURCE_LINE")[0];
                 if (defSourceLineProperty && defSourceLineProperty.value && typeof defSourceLineProperty.value === 'string') {
                     const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
-                    if (match && match[1]) {
+                    if (match && match[1] && match[2]) {
                         sourceFilePath = match[1];
+                        sourceFileLine = parseInt(match[2]);
+                        if (isNaN(sourceFileLine)) {
+                            sourceFileLine = undefined;
+                            sourceFilePath = undefined;
+                        }
                     }
                 }
 
@@ -1073,6 +1079,7 @@ export class CTestDriver implements vscode.Disposable {
                     const targetInfo = executableToSources.get(testExe);
                     if (targetInfo && targetInfo.sources.length > 0) {
                         sourceFilePath = path.resolve(targetInfo.sourceDir, targetInfo.sources[0]);
+                        sourceFileLine = 1;
                     }
                 }
 
@@ -1085,13 +1092,15 @@ export class CTestDriver implements vscode.Disposable {
                             node = nodes[node.parent];
                         }
                         sourceFilePath = this.tests.backtraceGraph.files[node.file];
+                        sourceFileLine = node.line;
                     }
                 }
 
                 return {
                     name: test.name,
                     executablePath: test.command[0],
-                    sourceFilePath
+                    sourceFilePath,
+                    sourceFileLine
                 };
             });
         }
