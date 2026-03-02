@@ -631,6 +631,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
     get shell(): string | null {
         return this.configData.shell;
+    }
+
     get setBuildTargetSameAsLaunchTarget(): boolean {
         return this.configData.setBuildTargetSameAsLaunchTarget;
     }
@@ -707,9 +709,8 @@ export class ConfigurationReader implements vscode.Disposable {
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
         additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
-        shell: new vscode.EventEmitter<string | null>()
-        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
-        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>()
+        shell: new vscode.EventEmitter<string | null>(),
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>()
     };
 
     /**
