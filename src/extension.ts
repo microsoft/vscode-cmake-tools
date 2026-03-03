@@ -862,7 +862,7 @@ export class ExtensionManager implements vscode.Disposable {
         if (!cmakeProject) {
             return;
         }
-        const tests = cmakeProject.cTestController.getTestsForOutline();
+        const tests = cmakeProject.cTestController.getTestsForOutline(cmakeProject.codeModelContent);
         this.projectOutline.updateTests(cmakeProject, tests);
     }
 
