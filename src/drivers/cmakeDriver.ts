@@ -95,6 +95,10 @@ export interface ExecutableTarget {
      * The install locations of the target.
      */
     isInstallTarget?: boolean;
+    /**
+     * The working directory for the debugger, from the DEBUGGER_WORKING_DIRECTORY target property.
+     */
+    debuggerWorkingDirectory?: string;
 }
 
 /**
@@ -124,6 +128,7 @@ export interface RichTarget {
     targetType: string;
     folder?: CodeModelKind.TargetObject;
     installPaths?: InstallPath[];
+    debuggerWorkingDirectory?: string;
 }
 
 export type Target = NamedTarget | RichTarget;
